@@ -43,7 +43,7 @@ def cron_run(request, oid):
         cron.run()
         return JsonResp(request, message=_("The cron process has started"))
 
-    return render(request, 'system/cron_run.html', {
+    return render(request, 'tasks/cron_run.html', {
         'cron': cron,
     })
 
@@ -54,6 +54,6 @@ def rsync_run(request, oid):
         rsync.run()
         return JsonResp(request, message=_("The rsync process has started"))
 
-    return render(request, 'system/rsync_run.html', {
+    return render(request, 'tasks/rsync_run.html', {
         'rsync': rsync,
     })

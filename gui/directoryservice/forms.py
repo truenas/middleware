@@ -32,16 +32,108 @@ from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
 )
-from freenasUI.directoryservice import models
+from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 
 log = logging.getLogger('directoryservice.form')
+
+
+class idmap_ad_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_ad
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_autorid_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_autorid
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_hash_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_hash
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_ldap_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_ldap
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_nss_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_nss
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_rfc2307_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_rfc2307
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_rid_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_rid
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_tdb_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_tdb
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_tdb2_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_tdb
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class NT4Form(ModelForm):
@@ -51,6 +143,11 @@ class NT4Form(ModelForm):
         widget=forms.widgets.PasswordInput(),
         required=False,
     )
+
+    advanced_fields = [
+        'nt4_use_default_domain',
+        'nt4_idmap_backend'
+    ]
 
     class Meta:
         model = models.NT4
@@ -65,7 +162,8 @@ class NT4Form(ModelForm):
             'nt4_adminpw',
             'nt4_adminpw2',
             'nt4_use_default_domain',
-            'nt4_enable',
+            'nt4_idmap_backend',
+            'nt4_enable'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -74,6 +172,9 @@ class NT4Form(ModelForm):
             self.fields['nt4_adminpw'].required = False
         if self._api is True:
             del self.fields['nt4_adminpw2']
+
+        self.instance._original_nt4_idmap_backend = \
+            self.instance.nt4_idmap_backend
 
         self.fields["nt4_enable"].widget.attrs["onChange"] = (
             "nt4_mutex_toggle();"
@@ -87,6 +188,17 @@ class NT4Form(ModelForm):
                 _("The two password fields didn't match.")
             )
         return password2
+
+    def clean_nt4_idmap_backend(self):
+        nt4_idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
+        if not nt4_idmap_backend:
+            nt4_idmap_backend = None
+        return nt4_idmap_backend
+
+    def clean_nt4_idmap_backend(self):
+        idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
+        utils.get_idmap(models.DS_TYPE_NT4, idmap_backend) 
+        return idmap_backend
 
     def clean(self):
         cdata = self.cleaned_data
@@ -115,11 +227,37 @@ class NT4Form(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
-    ad_certfile = FileField(label=_("Certificate"), required=False)
-    ad_keytab = FileField(label=_("Kerberos keytab"), required=False)
+    ad_certfile = FileField(
+        label=_("Certificate"),
+        required=False
+    )
+    ad_keytab = FileField(
+        label=_("Kerberos keytab"),
+        required=False
+    )
+
+    advanced_fields = [
+        'ad_netbiosname',
+        'ad_use_keytab',
+        'ad_keytab',
+        'ad_ssl',
+        'ad_certfile',
+        'ad_verbose_logging',
+        'ad_unix_extensions',
+        'ad_allow_trusted_doms',
+        'ad_use_default_domain',
+        'ad_dcname',
+        'ad_gcname',
+        'ad_krbname',
+        'ad_kpwdname',
+        'ad_timeout',
+        'ad_dns_timeout',
+        'ad_idmap_backend'
+    ]
 
     class Meta:
         fields = '__all__'
+        exclude = ['ad_idmap_backend_type']
         model = models.ActiveDirectory
         widgets = {
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -213,6 +351,11 @@ class ActiveDirectoryForm(ModelForm):
 
         return filename
 
+    def clean_ad_idmap_backend(self):
+        idmap_backend = self.cleaned_data.get("ad_idmap_backend")
+        utils.get_idmap(models.DS_TYPE_ACTIVEDIRECTORY, idmap_backend) 
+        return idmap_backend
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
@@ -270,10 +413,26 @@ class NISForm(ModelForm):
 
 
 class LDAPForm(ModelForm):
-    ldap_certfile = FileField(label=_("Certificate"), required=False)
+    ldap_certfile = FileField(
+        label=_("Certificate"),
+        required=False
+    )
+
+    advanced_fields = [
+        'ldap_anonbind',
+        'ldap_usersuffix',
+        'ldap_groupsuffix',
+        'ldap_passwordsuffix',
+        'ldap_machinesuffix',
+        'ldap_use_default_domain',
+        'ldap_ssl',
+        'ldap_certfile',
+        'ldap_idmap_backend'
+    ]
 
     class Meta:
         fields = '__all__'
+        exclude = ['ldap_idmap_backend_type']
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
@@ -302,6 +461,11 @@ class LDAPForm(ModelForm):
             self.instance.ldap_certfile = filename
 
         return filename
+
+    def clean_ldap_idmap_backend(self):
+        idmap_backend = self.cleaned_data.get("ldap_idmap_backend")
+        utils.get_idmap(models.DS_TYPE_LDAP, idmap_backend) 
+        return idmap_backend
 
     def clean(self):
         cdata = self.cleaned_data

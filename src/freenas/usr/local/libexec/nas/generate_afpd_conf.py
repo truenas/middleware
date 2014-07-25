@@ -14,6 +14,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI.sharing.models import AFP_Share
+from freenasUI.services.models import AFP
 
 def main():
     """Use the django ORM to generate a config file.  We'll build the
@@ -23,12 +25,6 @@ def main():
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
-    # We do this early to set vol dbnest in the global section
-    # based on whether a share path has been set.
-    from freenasUI.sharing.models import AFP_Share
-    afp_share = AFP_Share.objects.all()
-
-    from freenasUI.services.models import AFP
     afp = AFP.objects.order_by('id')[0]
 
     cf_contents.append("[Global]\n")
@@ -54,7 +50,7 @@ def main():
         cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
         cf_contents.append("\n")
 
-    for share in afp_share:
+    for share in AFP_Share.objects.all():
         cf_contents.append("[%s]\n" % share.afp_name)
         cf_contents.append("\tpath = %s\n" % share.afp_path)
         if share.afp_allow:
@@ -81,10 +77,9 @@ def main():
             if share.afp_umask:
                 cf_contents.append("\tumask = %s\n" % share.afp_umask)
 
-    fh = open(afp_config, "w")
-    for line in cf_contents:
-        fh.write(line)
-    fh.close()
+    with open(afp_config, "w") as fh:
+        for line in cf_contents:
+            fh.write(line)
 
 if __name__ == "__main__":
     main()

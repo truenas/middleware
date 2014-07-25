@@ -269,14 +269,12 @@ require([
     }
 
     add_formset = function(a, url, name) {
-
         xhr.get(url, {
             query: {
                 fsname: name
             },
             sync: true
             }).then(function(data) {
-
                 var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
                 var extran = extra.get("value");
                 data = data.replace(/__prefix__/g, extran);
@@ -734,6 +732,53 @@ require([
     nt4_mutex_toggle = function() {
         nt4 = registry.byId("id_nt4_enable");
         directoryservice_mutex_toggle('nt4_enable', nt4);
+    }
+
+    directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
+        var widget = registry.byId(eid);
+        var idmap_backend = widget.get("value");
+        var idmap_url = "/directoryservice/idmap_backend/" +
+            ds_type + "/" + ds_id + "/" + idmap_backend + "/";
+        var edit_url = null;
+        var id = -1;
+
+        //console.log(idmap_url);
+
+        xhr.get(idmap_url, {
+            sync: true
+        }).then(function(data) {
+            obj = JSON.parse(data);
+            id = obj.idmap_id;
+        });
+
+        if (id > 0) {
+            edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+        }
+
+        //console.log(edit_url);
+
+        return (edit_url);
+    }
+
+    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
+        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
+
+        editObject("Edit Idmap", edit_url, [this,]);
+    }
+
+    directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
+        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
+
+        var table = dojo.query("#" + eid)[0];
+        var td = table.parentNode;
+        var node = domConstruct.create("a", {
+            "href": "#",
+            "title": "Edit",
+            "innerHTML": "Edit",
+            "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
+        });
+
+        td.appendChild(node);
     }
 
     mpAclChange = function(acl) {
@@ -1723,6 +1768,8 @@ require([
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
                 _webshell = new WebShell();
+            } else if(item.action == 'wizard') {
+                editObject(gettext("Initial Wizard"), wizardUrl, []);
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
             } else if(item.type == 'opensharing') {
@@ -1813,6 +1860,7 @@ require([
             }
         });
         registry.byId("menupane").set('content', mytree);
+        if(wizardShow) editObject(gettext("Initial Wizard"), wizardUrl, []);
 
     });
 });

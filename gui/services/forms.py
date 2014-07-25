@@ -872,44 +872,16 @@ class iSCSITargetToExtentForm(ModelForm):
 
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
-    iscsi_luc_authgroup = forms.ChoiceField(
-        label=_("Controller Auth Group"),
-        help_text=_(
-            "The istgtcontrol can access the targets with correct user"
-            "and secret in specific Auth Group."),
-    )
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
 
     class Meta:
         fields = '__all__'
         model = models.iSCSITargetGlobalConfiguration
-        widgets = {
-            'iscsi_lucport': forms.widgets.TextInput(),
-        }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_luc_authgroup'].required = False
-        self.fields['iscsi_luc_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
         self.fields['iscsi_discoveryauthgroup'].required = False
         self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
-        self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_iscsi_toggleluc", ["id_iscsi_lucip", "id_iscsi_lucport", "id_iscsi_luc_authnetwork", "id_iscsi_luc_authmethod", "id_iscsi_luc_authgroup"], true);'
-
-        self.__lucenabled = self.instance.iscsi_toggleluc
-
-        ro = True
-        if len(self.data) > 0:
-            if self.data.get("iscsi_toggleluc", None) == "on":
-                ro = False
-        else:
-            if self.instance.iscsi_toggleluc is True:
-                ro = False
-        if ro:
-            self.fields['iscsi_lucip'].widget.attrs['disabled'] = 'disabled'
-            self.fields['iscsi_lucport'].widget.attrs['disabled'] = 'disabled'
-            self.fields['iscsi_luc_authnetwork'].widget.attrs['disabled'] = 'disabled'
-            self.fields['iscsi_luc_authmethod'].widget.attrs['disabled'] = 'disabled'
-            self.fields['iscsi_luc_authgroup'].widget.attrs['disabled'] = 'disabled'
 
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
@@ -935,94 +907,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
             return None
         return discoverygroup
 
-    def clean_iscsi_iotimeout(self):
-        return self._clean_number_range("iscsi_iotimeout", 0, 300)
-
-    def clean_iscsi_nopinint(self):
-        return self._clean_number_range("iscsi_nopinint", 0, 300)
-
-    def clean_iscsi_maxsesh(self):
-        return self._clean_number_range("iscsi_maxsesh", 1, 65535)
-
-    def clean_iscsi_maxconnect(self):
-        return self._clean_number_range("iscsi_maxconnect", 1, 65535)
-
-    def clean_iscsi_r2t(self):
-        return self._clean_number_range("iscsi_r2t", 0, 256)
-
-    def clean_iscsi_maxoutstandingr2t(self):
-        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 65535)
-
-    def clean_iscsi_firstburst(self):
-        return self._clean_number_range("iscsi_firstburst", 1, pow(2, 32))
-
-    def clean_iscsi_maxburst(self):
-        return self._clean_number_range("iscsi_maxburst", 1, pow(2, 32))
-
-    def clean_iscsi_maxrecdata(self):
-        return self._clean_number_range("iscsi_maxrecdata", 1, pow(2, 32))
-
-    def clean_iscsi_defaultt2w(self):
-        return self._clean_number_range("iscsi_defaultt2w", 1, 3600)
-
-    def clean_iscsi_defaultt2r(self):
-        return self._clean_number_range("iscsi_defaultt2r", 1, 3600)
-
-    def clean_iscsi_lucport(self):
-        if self.cleaned_data.get('iscsi_toggleluc', False):
-            return self._clean_number_range("iscsi_lucport", 1000, pow(2, 16))
-        return None
-
-    def clean_iscsi_luc_authgroup(self):
-        lucmethod = self.cleaned_data.get('iscsi_luc_authmethod')
-        lucgroup = self.cleaned_data.get('iscsi_luc_authgroup')
-        if lucgroup in ('', None):
-            return None
-        if lucmethod in ('CHAP', 'CHAP Mutual'):
-            if lucgroup != '' and int(lucgroup) == -1:
-                raise forms.ValidationError(_("This field is required whether CHAP or Mutual CHAP are set for Controller Auth Method."))
-        elif lucgroup != '' and int(lucgroup) == -1:
-            return None
-        return lucgroup
-
-    def clean_iscsi_luc_authnetwork(self):
-        luc = self.cleaned_data.get('iscsi_toggleluc')
-        if not luc:
-            return ''
-        network = self.cleaned_data.get('iscsi_luc_authnetwork').strip()
-        try:
-            network = IPNetwork(network.encode('utf-8'))
-        except (NetmaskValueError, ValueError):
-            raise forms.ValidationError(_("This is not a valid network"))
-        return str(network)
-
     def clean(self):
         cdata = self.cleaned_data
-
-        luc = cdata.get("iscsi_toggleluc", False)
-        if luc:
-            for field in (
-                'iscsi_lucip', 'iscsi_luc_authnetwork',
-                'iscsi_luc_authmethod', 'iscsi_luc_authgroup'
-            ):
-                if field in cdata and cdata[field] == '':
-                    self._errors[field] = self.error_class([
-                        _("This field is required.")
-                    ])
-                    del cdata[field]
-        else:
-            cdata['iscsi_lucip'] = None
-            cdata['iscsi_lucport'] = None
-            cdata['iscsi_luc_authgroup'] = None
-
         return cdata
 
     def save(self):
         obj = super(iSCSITargetGlobalConfigurationForm, self).save()
-        if self.__lucenabled != obj.iscsi_toggleluc:
-            started = notifier().restart("iscsitarget")
-        else:
-            started = notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 

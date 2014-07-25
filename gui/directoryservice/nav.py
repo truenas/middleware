@@ -43,7 +43,18 @@ BLACKLIST = [
     'ActiveDirectory',
     'LDAP',
     'NIS',
-    'NT4'
+    'NT4',
+    'idmap_ad',
+    'idmap_autorid',
+    'idmap_hash',
+    'idmap_ldap',
+    'idmap_nss',
+    'idmap_rfc2307',
+    'idmap_rid',
+    'idmap_tdb',
+    'idmap_tdb2',
+    'directoryservice_idmap'
+
 ]
 ORDER = 25
 

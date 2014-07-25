@@ -32,27 +32,9 @@ List resource
       Content-Type: application/json
 
         {
-                "iscsi_multithreaded": false,
-                "iscsi_maxconnect": 8,
-                "iscsi_luc_authnetwork": "",
-                "iscsi_iotimeout": 30,
-                "iscsi_lucip": "127.0.0.1",
-                "iscsi_firstburst": 65536,
-                "iscsi_r2t": 32,
                 "iscsi_discoveryauthmethod": "None",
-                "iscsi_defaultt2w": 2,
-                "iscsi_maxrecdata": 262144,
                 "iscsi_basename": "iqn.2011-03.org.example.istgt",
-                "iscsi_defaultt2r": 60,
-                "iscsi_nopinint": 20,
                 "iscsi_discoveryauthgroup": null,
-                "iscsi_maxburst": 262144,
-                "iscsi_toggleluc": false,
-                "iscsi_lucport": 3261,
-                "iscsi_luc_authgroup": null,
-                "iscsi_maxsesh": 16,
-                "iscsi_luc_authmethod": "",
-                "iscsi_maxoutstandingr2t": 16,
                 "id": 1
         }
 
@@ -87,51 +69,15 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_multithreaded": false,
-                "iscsi_maxconnect": 16,
-                "iscsi_luc_authnetwork": "",
-                "iscsi_iotimeout": 30,
-                "iscsi_lucip": "127.0.0.1",
-                "iscsi_firstburst": 65536,
-                "iscsi_r2t": 32,
                 "iscsi_discoveryauthmethod": "None",
-                "iscsi_defaultt2w": 2,
-                "iscsi_maxrecdata": 262144,
                 "iscsi_basename": "iqn.2011-03.org.example.istgt",
-                "iscsi_defaultt2r": 60,
-                "iscsi_nopinint": 20,
                 "iscsi_discoveryauthgroup": null,
-                "iscsi_maxburst": 262144,
-                "iscsi_toggleluc": false,
-                "iscsi_lucport": 3261,
-                "iscsi_luc_authgroup": null,
-                "iscsi_maxsesh": 16,
-                "iscsi_luc_authmethod": "",
-                "iscsi_maxoutstandingr2t": 16,
                 "id": 1
         }
 
    :json string iscsi_basename: base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for details)
    :json string iscsi_discoveryauthmethod: None, Auto, CHAP, CHAP Mutual
    :json string iscsi_discoveryauthgroup: id of auth group
-   :json string iscsi_iotimeout: I/O timeout in seconds
-   :json string iscsi_nopinint: NOPIN sending interval in seconds
-   :json string iscsi_maxsesh: maximum number of sessions holding at same time
-   :json string iscsi_maxconnect: maximum number of connections in each session
-   :json string iscsi_r2t: maximum number of pre-send R2T in each connection
-   :json string iscsi_maxoutstandingr2t: MaxOutstandingR2T
-   :json string iscsi_firstburst: first burst length
-   :json string iscsi_maxburst: max burst length
-   :json string iscsi_maxrecdata: max receive data segment length
-   :json string iscsi_defaultt2w: DefaultTime2Wait
-   :json string iscsi_defaultt2r: DefaultTime2Retain
-   :json boolean iscsi_toggleluc: Enable LUC
-   :json boolean iscsi_multithreaded: enable multithreaded server
-   :json string iscsi_lucip: Controller IP address
-   :json string iscsi_lucport: Controller TCP port
-   :json string iscsi_luc_authnetwork: Controller Authorized Network
-   :json string iscsi_luc_authmethod: None, Auto, CHAP, CHAP Mutual
-   :json string iscsi_luc_authgroup: id of auth group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
@@ -648,7 +594,6 @@ List resource
                 "iscsi_target_logical_blocksize": 512,
                 "iscsi_target_portalgroup": 1,
                 "iscsi_target_initialdigest": "Auto",
-                "iscsi_target_queue_depth": 32,
                 "iscsi_target_name": "target",
                 "iscsi_target_initiatorgroup": 1,
                 "iscsi_target_alias": null,
@@ -699,7 +644,6 @@ Create resource
                 "iscsi_target_logical_blocksize": 512,
                 "iscsi_target_portalgroup": 1,
                 "iscsi_target_initialdigest": "Auto",
-                "iscsi_target_queue_depth": 32,
                 "iscsi_target_name": "target",
                 "iscsi_target_initiatorgroup": 1,
                 "iscsi_target_alias": null,
@@ -720,7 +664,6 @@ Create resource
    :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
    :json integer iscsi_target_authgroup: Authentication Group ID
    :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication
-   :json integer iscsi_target_queue_depth: 0=disabled, 1-255=enabled command queuing with specified depth. The recommended queue depth is 32
    :json integer iscsi_target_logical_blocksize: yYou may specify logical block length (512 by default)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
@@ -742,7 +685,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_target_queue_depth": 64
+                "iscsi_target_alias": "test"
         }
 
    **Example response**:
@@ -757,10 +700,9 @@ Update resource
                 "iscsi_target_logical_blocksize": 512,
                 "iscsi_target_portalgroup": 1,
                 "iscsi_target_initialdigest": "Auto",
-                "iscsi_target_queue_depth": 64,
                 "iscsi_target_name": "target",
                 "iscsi_target_initiatorgroup": 1,
-                "iscsi_target_alias": null,
+                "iscsi_target_alias": "test",
                 "iscsi_target_type": "Disk",
                 "iscsi_target_authgroup": null,
                 "iscsi_target_authtype": "Auto",
@@ -778,7 +720,6 @@ Update resource
    :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
    :json integer iscsi_target_authgroup: Authentication Group ID
    :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication
-   :json integer iscsi_target_queue_depth: 0=disabled, 1-255=enabled command queuing with specified depth. The recommended queue depth is 32
    :json integer iscsi_target_logical_blocksize: yYou may specify logical block length (512 by default)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type

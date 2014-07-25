@@ -219,7 +219,7 @@ class InitShutdown(Model):
             ('shutdown', _('Shutdown')),
         ),
         max_length=15,
-        verbose_name=_("Type"),
+        verbose_name=_("When"),
     )
 
     def __unicode__(self):

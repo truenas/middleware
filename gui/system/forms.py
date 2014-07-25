@@ -25,8 +25,11 @@
 #
 #####################################################################
 
+from collections import defaultdict, OrderedDict
+import cPickle as pickle
 import json
 import logging
+import math
 import os
 import re
 import stat
@@ -36,20 +39,42 @@ import tempfile
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
+from django.db import transaction
 from django.forms import FileField
+from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as __
 
 from dojango import forms
 from freenasUI import choices
+from freenasUI.account.models import bsdGroups, bsdUsers
+from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import MountPoint, Volume
+from freenasUI.services.models import (
+    services,
+    iSCSITarget,
+    iSCSITargetAuthorizedInitiator,
+    iSCSITargetExtent,
+    iSCSITargetPortal,
+    iSCSITargetPortalIP,
+    iSCSITargetToExtent,
+)
+from freenasUI.sharing.models import (
+    AFP_Share,
+    CIFS_Share,
+    NFS_Share,
+    NFS_Share_Path,
+)
+from freenasUI.storage.models import MountPoint, Volume, Scrub
 from freenasUI.system import models
 
 log = logging.getLogger('system.forms')
+WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
 
 
 def clean_path_execbit(path):
@@ -86,13 +111,13 @@ def clean_path_locked(mp):
             )
 
 
-class FileWizard(SessionWizardView):
+class CommonWizard(SessionWizardView):
 
-    file_storage = FileSystemStorage(location='/var/tmp/firmware')
+    template_done = 'system/done.html'
 
     def done(self, form_list, **kwargs):
-        response = render_to_response('system/done.html', {
-            # 'form_list': form_list,
+        response = render_to_response(self.template_done, {
+            #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
@@ -103,14 +128,8 @@ class FileWizard(SessionWizardView):
             )
         return response
 
-    def get_template_names(self):
-        return [
-            'system/wizard_%s.html' % self.get_step_index(),
-            'system/wizard.html',
-        ]
-
     def process_step(self, form):
-        proc = super(FileWizard, self).process_step(form)
+        proc = super(CommonWizard, self).process_step(form)
         """
         We execute the form done method if there is one, for each step
         """
@@ -124,7 +143,7 @@ class FileWizard(SessionWizardView):
         return proc
 
     def render_to_response(self, context, **kwargs):
-        response = super(FileWizard, self).render_to_response(
+        response = super(CommonWizard, self).render_to_response(
             context,
             **kwargs)
         # This is required for the workaround dojo.io.frame for file upload
@@ -135,6 +154,280 @@ class FileWizard(SessionWizardView):
                 "</textarea></boby></html>"
             )
         return response
+
+
+class FileWizard(CommonWizard):
+
+    file_storage = FileSystemStorage(location='/var/tmp/firmware')
+
+
+class InitialWizard(CommonWizard):
+
+    template_done = 'system/initialwizard_done.html'
+
+    def get_template_names(self):
+        return [
+            'system/initialwizard_%s.html' % self.steps.current,
+            'system/initialwizard.html',
+            'system/wizard.html',
+        ]
+
+    def done(self, form_list, **kwargs):
+
+        progress = {
+            'step': 1,
+            'indeterminate': True,
+            'percent': 0,
+        }
+
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        cleaned_data = self.get_all_cleaned_data()
+        volume_name = cleaned_data.get('volume_name')
+        volume_type = cleaned_data.get('volume_type')
+        shares = cleaned_data.get('formset-shares')
+
+        form_list = self.get_form_list()
+        volume_form = form_list['volume']
+
+        with transaction.atomic():
+            volume = Volume(
+                vol_name=volume_name,
+                vol_fstype='ZFS',
+            )
+            volume.save()
+
+            mp = MountPoint(
+                mp_volume=volume,
+                mp_path='/mnt/' + volume_name,
+                mp_options='rw',
+            )
+            mp.save()
+
+            bysize = volume_form._get_unused_disks_by_size()
+
+            if volume_type == 'auto':
+                groups = volume_form._grp_autoselect(bysize)
+            else:
+                groups = volume_form._grp_predefined(bysize, volume_type)
+
+            _n = notifier()
+            _n.init(
+                "volume",
+                volume,
+                groups=groups,
+                init_rand=False,
+            )
+            Scrub.objects.create(scrub_volume=volume)
+
+            progress['step'] = 2
+            progress['indeterminate'] = False
+            progress['percent'] = 0
+            with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                f.write(pickle.dumps(progress))
+
+            services_restart = []
+            for i, share in enumerate(shares):
+                if not share:
+                    continue
+
+                share_name = share.get('share_name')
+                share_purpose = share.get('share_purpose')
+                share_allowguest = share.get('share_allowguest')
+                share_timemachine = share.get('share_timemachine')
+                share_iscsisize = share.get('share_iscsisize')
+                share_user = share.get('share_user')
+                share_usercreate = share.get('share_usercreate')
+                share_group = share.get('share_group')
+                share_groupcreate = share.get('share_groupcreate')
+                share_mode = share.get('share_mode')
+
+                if share_purpose != 'iscsitarget':
+                    errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
+                        volume_name,
+                        share_name
+                    ), _restart_collectd=False)
+
+                    qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
+                    if not qs.exists():
+                        if not share_groupcreate:
+                            raise MiddlewareError(
+                                _('Group does not exist: %s') % share_group
+                            )
+                        gid = _n.group_create(share_group)
+                        group = bsdGroups.objects.create(
+                            bsdgrp_gid=gid,
+                            bsdgrp_group=share_group,
+                        )
+                    else:
+                        group = qs[0]
+
+                    qs = bsdUsers.objects.filter(bsdusr_username=share_user)
+                    if not qs.exists():
+                        if not share_usercreate:
+                            raise MiddlewareError(
+                                _('User does not exist: %s') % share_user
+                            )
+                        uid, gid, unixhash, smbhash = _n.user_create(
+                            share_user, share_user, '!', password_disabled=True
+                        )
+                        bsdUsers.objects.create(
+                            bsdusr_username=share_user,
+                            bsdusr_full_name=share_user,
+                            bsdusr_uid=uid,
+                            bsdusr_group=group,
+                            bsdusr_unixhash=unixhash,
+                            bsdusr_smbhash=smbhash,
+                        )
+
+                    if share_purpose in ('cifs', 'afp'):
+                        share_acl = 'windows'
+                    else:
+                        share_acl = 'unix'
+
+                    _n.mp_change_permission(
+                        path='/mnt/%s/%s' % (volume_name, share_name),
+                        user=share_user,
+                        group=share_group,
+                        mode=share_mode,
+                        recursive=False,
+                        acl=share_acl,
+                    )
+                else:
+                    errno, errmsg = _n.create_zfs_vol(
+                        '%s/%s' % (volume_name, share_name),
+                        share_iscsisize,
+                        sparse=True,
+                    )
+
+                if errno > 0:
+                    raise MiddlewareError(
+                        _('Failed to create ZFS: %s') % errmsg
+                    )
+
+                path = '/mnt/%s/%s' % (volume_name, share_name)
+
+                sharekwargs = {}
+
+                if 'cifs' == share_purpose:
+                    if share_allowguest:
+                        sharekwargs['cifs_guestok'] = True
+                    CIFS_Share.objects.create(
+                        cifs_name=share_name,
+                        cifs_path=path,
+                        **sharekwargs
+                    )
+
+                if 'afp' == share_purpose:
+                    if share_timemachine:
+                        sharekwargs['afp_timemachine'] = True
+                    AFP_Share.objects.create(
+                        afp_name=share_name,
+                        afp_path=path,
+                        **sharekwargs
+                    )
+
+                if 'nfs' == share_purpose:
+                    nfs_share = NFS_Share.objects.create(
+                        nfs_comment=share_name,
+                    )
+                    NFS_Share_Path.objects.create(
+                        share=nfs_share,
+                        path=path,
+                    )
+
+                if 'iscsitarget' == share_purpose:
+
+                    qs = iSCSITargetPortal.objects.all()
+                    if qs.exists():
+                        portal = qs[0]
+                    else:
+                        portal = iSCSITargetPortal.objects.create()
+                        iSCSITargetPortalIP.objects.create(
+                            iscsi_target_portalip_portal=portal,
+                            iscsi_target_portalip_ip='0.0.0.0',
+                        )
+
+                    qs = iSCSITargetAuthorizedInitiator.objects.all()
+                    if qs.exists():
+                        authini = qs[0]
+                    else:
+                        authini = (
+                            iSCSITargetAuthorizedInitiator.objects.create()
+                        )
+                    target = iSCSITarget.objects.create(
+                        iscsi_target_name='%sTarget' % share_name,
+                        iscsi_target_portalgroup=portal,
+                        iscsi_target_initiatorgroup=authini,
+                    )
+
+                    iscsi_target_extent_path = 'zvol/%s/%s' % (
+                        volume_name,
+                        share_name,
+                    )
+
+                    extent = iSCSITargetExtent.objects.create(
+                        iscsi_target_extent_name='%sExtent' % share_name,
+                        iscsi_target_extent_type='ZVOL',
+                        iscsi_target_extent_path=iscsi_target_extent_path,
+                    )
+                    iSCSITargetToExtent.objects.create(
+                        iscsi_target=target,
+                        iscsi_extent=extent,
+                    )
+
+                if share_purpose not in services_restart:
+                    services.objects.filter(srv_service=share_purpose).update(
+                        srv_enable=True
+                    )
+                    services_restart.append(share_purpose)
+
+                progress['percent'] = int(
+                    (float(i + 1) / float(len(shares))) * 100
+                )
+                with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                    f.write(pickle.dumps(progress))
+
+        progress['step'] = 3
+        progress['indeterminate'] = False
+        progress['percent'] = 1
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        # This must be outside transaction block to make sure the changes
+        # are committed before the call of ix-fstab
+
+        _n.reload("disk")  # Reloads collectd as well
+
+        progress['percent'] = 50
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        _n.start("ix-system")
+        _n.start("ix-syslogd")
+        _n.restart("system_datasets")  # FIXME: may reload collectd again
+
+        progress['percent'] = 70
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        _n.restart("cron")
+        _n.reload("user")
+
+        for service in services_restart:
+            _n.restart(service)
+
+        progress['percent'] = 100
+        with open(WIZARD_PROGRESSFILE, 'wb') as f:
+            f.write(pickle.dumps(progress))
+
+        os.unlink(WIZARD_PROGRESSFILE)
+
+        return JsonResp(
+            self.request,
+            message=__('Initial configuration succeeded.')
+        )
 
 
 class FirmwareWizard(FileWizard):
@@ -735,7 +1028,7 @@ class TunableForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        value = cdata.get('tun_value')
+        value = cdata.get('tun_var')
         if value:
             if (
                 cdata.get('tun_type') == 'loader' and
@@ -835,3 +1128,320 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
             notifier().restart("collectd")
+
+
+class InitialWizardShareForm(Form):
+
+    share_name = forms.CharField(
+        label=_('Share Name'),
+        max_length=80,
+    )
+    share_purpose = forms.ChoiceField(
+        label=_('Purpose'),
+        choices=(
+            ('cifs', _('Windows (CIFS)')),
+            ('afp', _('Apple (AFP)')),
+            ('nfs', _('Unix (NFS)')),
+            ('iscsitarget', _('Block Storage (iSCSI)')),
+        ),
+    )
+    share_allowguest = forms.BooleanField(
+        label=_('Allow Guest'),
+        required=False,
+    )
+    share_timemachine = forms.BooleanField(
+        label=_('Time Machine'),
+        required=False,
+    )
+    share_iscsisize = forms.CharField(
+        label=_('iSCSI Size'),
+        max_length=255,
+        required=False,
+    )
+    share_user = forms.CharField(
+        max_length=100,
+        required=False,
+    )
+    share_group = forms.CharField(
+        max_length=100,
+        required=False,
+    )
+    share_usercreate = forms.BooleanField(
+        required=False,
+    )
+    share_groupcreate = forms.BooleanField(
+        required=False,
+    )
+    share_mode = forms.CharField(
+        max_length=3,
+        required=False,
+    )
+
+
+class SharesBaseFormSet(BaseFormSet):
+
+    RE_FIELDS = re.compile(r'^shares-(\d+)-share_(.+)$')
+
+    def data_to_store(self):
+        """
+        Returns an array suitable to use in the dojo memory store.
+        """
+        keys = defaultdict(dict)
+        for key, val in self.data.items():
+            reg = self.RE_FIELDS.search(key)
+            if not reg:
+                continue
+            idx, name = reg.groups()
+            keys[idx][name] = val
+
+        return json.dumps(keys.values())
+
+InitialWizardShareFormSet = formset_factory(
+    InitialWizardShareForm,
+    formset=SharesBaseFormSet,
+)
+
+
+class InitialWizardVolumeForm(Form):
+
+    volume_name = forms.CharField(
+        label=_('Pool Name'),
+        max_length=200,
+    )
+    volume_type = forms.ChoiceField(
+        label=_('Type'),
+        choices=(),
+        widget=forms.RadioSelect,
+        initial='auto',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardVolumeForm, self).__init__(*args, **kwargs)
+        self.fields['volume_type'].choices = (
+            (
+                'auto',
+                _('Automatic')
+            ),
+            (
+                'raid10',
+                _('VMWare (RAID 10: Good Reliability, Good Performance)')
+            ),
+            (
+                'raidz2',
+                _('Backups (RAID Z2: Best Reliability, Less Storage)')
+            ),
+            (
+                'raidz1',
+                _('Media (RAID Z1: Less Reliability, More Storage)')
+            ),
+            (
+                'stripe',
+                _('Logs (RAID 0: No Reliability, Max Performance / Storage)')
+            ),
+        )
+
+        self.types_avail = self._types_avail(self._get_unused_disks_by_size())
+
+    @staticmethod
+    def _get_unused_disks():
+        _n = notifier()
+        disks = _n.get_disks()
+        for volume in Volume.objects.all():
+            for disk in volume.get_disks():
+                disks.pop(disk, None)
+        return disks
+
+    @classmethod
+    def _get_unused_disks_by_size(cls):
+        disks = cls._get_unused_disks()
+        bysize = defaultdict(list)
+        for disk, attrs in disks.items():
+            size = int(attrs['capacity'])
+            # Some disks might have a few sectors of difference.
+            # We still want to group them together.
+            # This is not ideal but good enough for now.
+            size = size - (size % 10000)
+            bysize[size].append(disk)
+        return bysize
+
+    @staticmethod
+    def _higher_disks_group(bysize):
+        higher = (None, 0)
+        for size, _disks in bysize.items():
+            if len(_disks) > higher[1]:
+                higher = (size, len(_disks))
+        return higher
+
+    def _types_avail(self, disks):
+        types = []
+        ndisks = self._higher_disks_group(disks)[1]
+        if ndisks >= 4:
+            types.extend(['raid10', 'raidz2'])
+        if ndisks >= 3:
+            types.append('raidz1')
+        if ndisks > 0:
+            types.extend(['auto', 'stripe'])
+        return types
+
+    @staticmethod
+    def _grp_type(num):
+        check = OrderedDict((
+            ('mirror', lambda y: y == 2),
+            (
+                'raidz',
+                lambda y: False if y < 3 else math.log(y - 1, 2) % 1 == 0
+            ),
+            (
+                'raidz2',
+                lambda y: False if y < 4 else math.log(y - 2, 2) % 1 == 0
+            ),
+            (
+                'raidz3',
+                lambda y: False if y < 5 else math.log(y - 3, 2) % 1 == 0
+            ),
+            ('stripe', lambda y: True),
+        ))
+        for name, func in check.items():
+            if func(num):
+                return name
+        return 'stripe'
+
+    @classmethod
+    def _grp_autoselect(cls, disks):
+
+        higher = cls._higher_disks_group(disks)
+        groups = OrderedDict()
+        grpid = 0
+
+        for size, devs in [(higher[0], disks[higher[0]])]:
+            num = len(devs)
+            if num in (4, 8):
+                mod = 0
+                perrow = num / 2
+                rows = 2
+                vdevtype = cls._grp_type(num / 2)
+            elif num < 12:
+                mod = 0
+                perrow = num
+                rows = 1
+                vdevtype = cls._grp_type(num)
+            elif num < 18:
+                mod = num % 2
+                rows = 2
+                perrow = (num - mod) / 2
+                vdevtype = cls._grp_type(perrow)
+            elif num < 99:
+                div9 = int(num / 9)
+                div10 = int(num / 10)
+                mod9 = num % 9
+                mod10 = num % 10
+
+                if mod9 >= 0.75 * div9 and mod10 >= 0.75 * div10:
+                    perrow = 9
+                    rows = div9
+                    mod = mod9
+                else:
+                    perrow = 10
+                    rows = div10
+                    mod = mod10
+
+                vdevtype = cls._grp_type(perrow)
+            else:
+                perrow = num
+                rows = 1
+                vdevtype = 'stripe'
+                mod = 0
+
+            for i in range(rows):
+                groups[grpid] = {
+                    'type': vdevtype,
+                    'disks': devs[i * perrow:perrow * (i + 1)],
+                }
+                grpid += 1
+            if mod > 0:
+                groups[grpid] = {
+                    'type': 'spare',
+                    'disks': devs[-mod:],
+                }
+                grpid += 1
+        return groups
+
+    @classmethod
+    def _grp_predefined(cls, disks, grptype):
+
+        higher = cls._higher_disks_group(disks)
+
+        maindisks = disks[higher[0]]
+
+        groups = OrderedDict()
+        grpid = 0
+
+        if grptype == 'raid10':
+            for i in range(len(maindisks) / 2):
+                groups[grpid] = {
+                    'type': 'mirror',
+                    'disks': maindisks[i * 2:2 * (i + 1)],
+                }
+                grpid += 1
+        else:
+            groups[grpid] = {
+                'type': grptype,
+                'disks': maindisks,
+
+            }
+
+        return groups
+
+    def _get_disk_size(self, disk, bysize):
+        size = None
+        for _size, disks in bysize.items():
+            if disk in disks:
+                size = _size
+                break
+        return size
+
+    def _groups_to_size(self, bysize, groups, swapsize):
+        size = 0
+        for group in groups.values():
+            lower = None
+            for disk in group['disks']:
+                _size = self._get_disk_size(disk, bysize)
+                if _size and (not lower or lower > _size):
+                    lower = _size - swapsize
+            if not lower:
+                continue
+
+            if group['type'] == 'mirror':
+                size += lower
+            elif group['type'] == 'raidz1':
+                size += lower * (len(group['disks']) - 1)
+            elif group['type'] == 'raidz2':
+                size += lower * (len(group['disks']) - 2)
+            elif group['type'] == 'stripe':
+                size += lower * len(group['disks'])
+        return humanize_size(size)
+
+    def choices_size(self):
+        swapsize = models.Advanced.objects.order_by('-id')[0].adv_swapondrive
+        swapsize *= 1024 * 1024 * 1024
+        types = defaultdict(dict)
+        bysize = self._get_unused_disks_by_size()
+        for _type, descr in self.fields['volume_type'].choices:
+            if _type == 'auto':
+                groups = self._grp_autoselect(bysize)
+            else:
+                groups = self._grp_predefined(bysize, _type)
+            types[_type] = self._groups_to_size(bysize, groups, swapsize)
+        return json.dumps(types)
+
+    def clean(self):
+        volume_type = self.cleaned_data.get('volume_type')
+        if not volume_type:
+            self._errors['volume_type'] = self.error_class([
+                _('No available disks have been found.'),
+            ])
+        return self.cleaned_data
+
+
+class InitialWizardConfirmForm(Form):
+    pass

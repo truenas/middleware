@@ -131,7 +131,9 @@ What's New in 9.3
 
 FreeNAS® 9.3 fixes this list of bugs.
 
-It is based on FreeBSD 9.3 which adds these features and supports this hardware.
+It is based on the stable version of FreeBSD 9.3 which adds these features, supports this hardware, and incorporates all of the
+`security releases <http://www.freebsd.org/security/advisories.html>`_
+issued since FreeBSD 9.3 RELEASE.
 
 FreeNAS® is now 64-bit only. 
 
@@ -162,11 +164,57 @@ The GUI has been reorganized as follows:
 
 The following features have been added or changed:
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox has been added.
+* The "WebGUI -> HTTPS Port" field has been added to System → General.
+
+* The "System dataset pool" and "Use system dataset for syslog" fields have been removed from System → Advanced as these are now set in System
+  → System Dataset.
+
+* A "Performance Test" button has been added to System → Advanced.
+
+* The "Directory Services" field is now deprecated and has been removed from System → General. FreeNAS® now supports the
+  `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
+  which provides support for multiple directory services.
+
+* The "Rebuild LDAP/AD Cache" button has been removed from System → Advanced. It has been renamed to "Rebuild Directory Service Cache" and now appears in
+  the configuration screen for each type of directory service in Services → Directory Services.
+
+* The "HTTP Proxy" field has been added to Network → Global Configuration.
+
+* A "Run Now" button has been added for the highlighted cron job in Tasks → Cron Jobs → View Cron Jobs.
+
+* An "Upgrade" button has been added to the available icons for a highlighted volume in Storage → Volumes → View Volumes. This means that you no longer
+  need to upgrade a ZFS pool from the command line.
 
 * The "Domain logons" checkbox has been added to Services → CIFS.
 
-* The "IP Server" field has been added to Services → Dynamic DNS. 
+* The "Workgroup Name" field is deprecated and has been removed from Directory Service → Active Directory. The "Encryption Mode", "Certificate", and
+  "Enable" fields have been added to Directory Service → Active Directory.
+
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox and "Use default domain"
+  field have been added.
+  
+* The "Enable" checkbox has been added to Directory Service → NIS.
+
+* The "Use default domain" and "Enable" checkboxes have been added to Directory Service → NT4.
+
+* The "Database Path" field has been moved from Sharing → Apple (AFP) Share → Add Apple (AFP) Share to Services → AFP.
+
+* The "Zero Device Numbers" field has been moved from Services → AFP to Sharing → Apple (AFP) Share → Add Apple (AFP) Share.
+
+* The "Obey pam restrictions" has been added to Services → CIFS.
+
+* The "IP Server" field has been added to Services → Dynamic DNS.
+
+* Kernel iSCSI has replaced **istgt**. This improves support for VMWare VAAI acceleration and Windows 2012 clustering.
+
+* The "Enable TPC" field has been added to Services → iSCSI → Extents → Add Extent.
+
+* Services → iSCSI → Target Global Configuration has been reduced to three configuration options used by kernel iSCSI.
+
+* The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from Services → iSCSI → Targets → Add Target.
+
+* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
+  Ethernet LAN.
 
 Known Issues
 ------------
@@ -212,8 +260,8 @@ RAM
 ~~~
 
 The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. If your RAM is limited, consider using UFS until you can
-afford better hardware. FreeNAS® with ZFS typically requires a minimum of 8 GB of RAM in order to provide good performance and stability. The more RAM, the
-better the performance, and the
+afford better hardware. FreeNAS® with ZFS requires a minimum of 8 GB of RAM in order to provide good stability regardless of the number of users or size of
+the pool. The more RAM, the better the performance, and the
 `FreeNAS® Forums <http://forums.freenas.org/>`_
 provide anecdotal evidence from users on how much performance is gained by adding more RAM. For systems with large disk capacity (greater than 8 TB), a
 general rule of thumb is 1 GB of RAM for every 1 TB of storage. This
@@ -221,8 +269,8 @@ general rule of thumb is 1 GB of RAM for every 1 TB of storage. This
 describes how RAM is used by ZFS.
 
 If you plan to use your server for home use, you can often soften the rule of thumb of 1 GB of RAM for every 1 TB of storage, though 8 GB of RAM is still the
-recommended minimum. If performance is inadequate you should consider adding more RAM as a first remedy. The sweet spot for most users in home/small business
-is 16GB of RAM.
+minimum. If performance is inadequate you should consider adding more RAM as a first remedy. The sweet spot for most users in home/small business is 16GB of
+RAM.
 
 It is possible to use ZFS on systems with less than 8 GB of RAM. However, FreeNAS® as distributed is configured to be suitable for systems meeting the sizing
 recommendations above. If you wish to use ZFS on a smaller memory system, some tuning will be necessary, and performance will be (likely substantially)
@@ -242,7 +290,12 @@ If you are installing FreeNAS® on a headless system, disable the shared memory 
 If you only plan to use UFS, you may be able to get by with as little as 2GB of RAM.
 
 If you don't have at least 8GB of RAM with ZFS or 2GB of RAM with UFS, you should consider getting more powerful hardware before using FreeNAS® to store your
-data. Otherwise, data loss may result.
+data. Otherwise, data loss may result. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
+bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
+IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
+
+**NOTE:** adding an L2ARC is not a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized
+ARC you will not be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability.
 
 **WARNING:** to ensure consistency for the checksumming and parity calculations performed by ZFS, ECC RAM is highly recommended. Using non-ECC RAM can cause
 unrecoverable damage to a zpool resulting in a loss of all data in the pool.
@@ -255,6 +308,8 @@ that is at least 2 GB in size. If you don't have compact flash, you can instead 
 inserted in the USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the
 drive. In other words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
 
+**NOTE:** many devices that are labeled as 2GB are not really 2GB size.  For this reason, it is recommended to use media that is 4GB or larger.
+
 The FreeNAS® installation will partition the operating system drive into two partitions. One partition holds the current operating system and the other
 partition is used when you upgrade. This allows you to safely upgrade to a new image or to revert to an older image should you encounter problems.
 
@@ -265,7 +320,7 @@ named *xhci_load*, set its value to *YES*, and reboot the system.
 
 It is highly recommended that when using a USB stick, that only name brand USB sticks are used as off-brand sticks may not be fully compatible with FreeNAS®.
 
-**NOTE:** SD cards to USB converters are not recommended as these have caused problems for many users. When using a CF adapter, avoid the no-name brands to
+**NOTE:** SD card to USB converters are not recommended as these have caused problems for many users. When using a CF adapter, avoid the no-name brands to
 ensure compatibility, reliability, and performance.
 
 Storage Disks and Controllers
@@ -1224,15 +1279,9 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~
 
-ZFS pools that are created using ZFS Volume Manager on FreeNAS® 9.x have
-`ZFS feature flags <http://blog.vx.sk/archives/35-New-features-in-open-source-ZFS.html>`_
-enabled. Feature flags are sometimes referred to as ZFS version 5000. ZFS pools that were created in FreeNAS® 8.3.x use ZFSv28. Any ZFS pools that were
-created in any previous 8.x versions of FreeNAS® use ZFSv15. If you auto-import a ZFS pool from any 8.x version, it will remain at its original ZFS version
-unless you upgrade the pool. This means that the pool will not understand any feature flags, such as LZ4 compression, until the pool is upgraded.
+Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical administrative interface.
 
-If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the following caveats first:
-
-* the ZFS version upgrade must be performed from the command line, it can not be performed using the GUI.
+Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
 * the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version** or downgrade to an earlier
   version of FreeNAS® that does not support feature flags.
@@ -1240,47 +1289,15 @@ If you wish to upgrade an existing ZFSv15 or ZFSv28 pool, be aware of the follow
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
-To perform the ZFS version upgrade, open Shell. The following commands will determine the pool state and version. In this example, the pool name is *volume1*
-and the ZFS version is 28.::
+To perform the ZFS pool upgrade, go to Storage → Volumes → View Volumes and highlight the volume (ZFS pool) to upgrade. Click the "Upgrade" button as seen
+in Figure 2.7g.
 
- zpool status
- pool: volume1
- state: ONLINE
- status: The pool is formatted using a legacy on-disk format. The pool can still be used, but some features are unavailable.
- action: Upgrade the pool using 'zpool upgrade'. Once this is done, the pool will no longer be accessible on software that does not
-	 support feature flags.
- scan: none requested
- config:
- 
- NAME						STATE	READ WRITE CKSUM
- volume1					ONLINE  0    0     0
- gptid/ea16925b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/ea8f3a7b-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/eb064d06-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- gptid/eb7ba402-e96e-11e2-9ed5-e06995777a82	ONLINE  0    0     0
- 
- errors: No known data errors
+**Figure 2.7g: Upgrading a ZFS Pool**
 
- zpool get version volume1
- NAME		PROPERTY	VALUE	SOURCE
- volume1	version		28	local
 
-Next, verify that the status of the pool is healthy::
+|Figure27g_png|
 
- zpool status -x
- all pools are healthy
-
-**NOTE:** do not upgrade the pool if its status does not show as healthy.
-
-To upgrade a pool named *volume1* ::
-
- zpool upgrade volume1
- This system supports ZFS pool feature flags.
- Successfully upgraded 'volume1' from version 28 to feature flags.
- Enabled the following features on 'volume1':
- async_destroy
- empty_bpobj
- lz4_compress
+The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
 The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
@@ -1401,23 +1418,21 @@ create depends upon the operating system(s) running in your network, your securi
 types of shares and services are available:
 
 * **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
-  Mac OS X. Configuration examples can be found in Apple (AFP) Shares.
+  Mac OS X.
 
 * **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
-  are many different operating systems in your network. Configuration examples can be found in Unix (NFS) Shares.
+  are many different operating systems in your network.
 
 * **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
-  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice. Configuration examples can be found
-  in Windows (CIFS) Shares.
+  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice.
 
 * **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
-  FreeNAS® supports encryption and chroot for FTP. Configuration examples can be found in FTP.
+  FreeNAS® supports encryption and chroot for FTP.
 
 * **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
-  Windows clients. Configuration examples can be found in SSH.
+  Windows clients.
 
-* **iSCSI:** FreeNAS® uses istgt to export virtual disk drives that are accessible to clients running iSCSI initiator software. Configuration examples can
-  be found in iSCSI.
+* **iSCSI:** FreeNAS® supports the export of virtual disk drives that are accessible to clients running iSCSI initiator software.
 
 Start Service(s)
 ----------------
@@ -1560,7 +1575,7 @@ is allowed to use **sudo**. To reorder the list, click the desired column.
 
 If you click a user account, the following buttons will appear for that account:
 
-* **Modify User:** used to modify the account's settings, as listed in Table 3.2b.
+* **Modify User:** used to modify the account's settings, as listed in Table 4.2b.
 
 * **Change E-mail:** used to change the email address associated with the account.
 
@@ -1607,12 +1622,12 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Primary Group              | drop-down menu  | must uncheck *Create a new primary group* in order to access this menu; for security reasons, FreeBSD will                                            |
 |                            |                 | not give a user **su** permissions if                                                                                                                 |
-|                            |                 | *wheel* is their primary grou                                                                                                                         |
+|                            |                 | *wheel* is their primary group; to give a user                                                                                                        |
 |                            |                 | **su** access, add them to the                                                                                                                        |
 |                            |                 | *wheel* group in the Auxiliary groups section                                                                                                         |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Home Directory             | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
+| Create Home Directory In   | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
 |                            |                 | **existing** volume or dataset that the user will be assigned permission to access                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1636,7 +1651,7 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 |                            |                 |                                                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Disable password login     | checkbox        | when checked, the user can not log into the FreeNAS® system or authenticate to a CIFS share; to undo this                                            |
+| Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
 |                            |                 | setting, set a password for the user using the "Change Password" button for the user in "View Users";                                                 |
 |                            |                 | checking this box will grey out *Lock user* which is mutually exclusive                                                                               |
 |                            |                 |                                                                                                                                                       |
@@ -1696,15 +1711,15 @@ the network does not use a domain name add *.local* to the end of the hostname.
 General
 -------
 
-The General tab, shown in Figure 5.2a, contains 4 tabs: General, Advanced, Email, and SSL.
+System → General is shown in Figure 5.2a.
 
-**Figure 5.2a: General Tab of Settings**
+**Figure 5.2a: General Screen**
 
 |Figure52a_png|
 
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
-**Table 5.2a: General Tab's Configuration Settings**
+**Table 5.2a: General Configuration Settings**
 
 
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -1722,7 +1737,7 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | WebGUI IPv6 Address  | drop-down menu | choose from a list of recent IPv6 addresses to limit the one to use when accessing the administrative GUI; the                 |
-|                      |                | built-in HTTP server will automatically bind to the wildcard address of *::* (any address) and will issue an alert             |
+|                      |                | built-in HTTP server will automatically bind to any address and will issue an alert                                            |
 |                      |                | if the specified address becomes unavailable                                                                                   |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -1732,6 +1747,9 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                    |
+|                      |                |                                                                                                                                |
++----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| WebGUI -> HTTPS Port | checkbox       |                                                                                                                                |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at             |
@@ -1744,30 +1762,15 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Syslog server        | string         | IP address or hostname of remote syslog server to send FreeNAS® logs to; once set, log entries will be written to             |
-|                      |                | both the FreeNAS® console and the remote server                                                                               |
-|                      |                |                                                                                                                                |
-+----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Directory Service    | drop-down menu | can select one of *Active Directory*,                                                                                          |                                               
-|                      |                | *Domain Controller*,                                                                                                           |                                                                                                                                                                               
-|                      |                | *LDAP*,                                                                                                                        |                                                                                                                                                                                   
-|                      |                | *NIS*, or                                                                                                                      |                                                                                                                                                                                  
-|                      |                | *NT4*; if a service is selected, an entry named                                                                                |
-|                      |                | *Directory Services* will be added to Services → Control Services for managing that selected service                        |
+| Syslog server        | string         | IP address or hostname of remote syslog server to send logs to; once set, log entries will be written to                       |
+|                      |                | both the console and the remote server                                                                                         |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 
 
-**NOTE:** by default, logs are stored in RAM as there is no space on the embedded device to store logs. This means that logs are deleted whenever the system
-reboots. If you wish to save the system logs, either:
+If you make any changes, click the "Save" button.
 
-* configure a remote syslog server on another Unix-like operating system, or
-
-* create a ZFS dataset called *syslog* and reboot the system; FreeNAS® will automatically create a *log/* directory in this dataset which contains the logs
-
-If you make any changes, click the Save button.
-
-This tab also contains the following buttons:
+This screen also contains the following buttons:
 
 **Factory Restore:** resets the configuration database to the default base version. However, it does not delete user SSH keys or any other data stored in a
 user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
@@ -1784,24 +1787,26 @@ contains a script for backing up the configuration from another system.
 
 **Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
 
-The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful operation of time
-sensitive applications such as Active Directory.
-
-By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is using Active Directory, ensure that the FreeNAS® system and the
-Active Directory Domain Controller have been configured to use the same NTP servers.
-
-To change a default server to match the settings used by your network's domain
-controller, click an entry to access its “Edit” button. Figure 5.2b shows the “Add NTP Server” screen and Table 5.2b summarizes the options when
-adding or editing an NTP server.
+**NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
+operation of time sensitive applications such as Active Directory. By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is
+using Active Directory, ensure that the FreeNAS® system and the Active Directory Domain Controller have been configured to use the same NTP servers. To
+add a NTP server to match the settings used by your network's domain
+controller, click NTP Servers → Add NTP Server to open the screen shown in Figure 5.2b. Table 5.2b summarizes the options when adding an NTP server.
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Figure 5.2b: Add or Edit a NTP Server**
+**Set SSL Certificate:** If you change the "Protocol" value to "HTTPS" or "HTTP+HTTPS", an unsigned RSA certificate and key are auto-generated. To view these,
+click "Set SSL Certificate" and review its "SSL Certificate" field. If you already have a signed certificate that you wish to use for SSL/TLS connections,
+replace the values in the "SSL certificate" field with a copy/paste of your own key and certificate. Table 5.2c summarizes the settings that can be configured using the SSL tab. This
+`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
+shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
+
+**Figure 5.2b: Add a NTP Server**
 
 
 |100000000000011C0000016E12EDFEE5_jpg|
 
-**Table 5.2b: NTP Server Options**
+**Table 5.2b: NTP Servers Configuration Options**
 
 
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -1823,15 +1828,13 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
-|             |           | *4*                                                                                                                   |
-|             |           | or higher than                                                                                                        |
+|             |           | *4* or higher than                                                                                                    |
 |             |           | *Max. Poll*                                                                                                           |
 |             |           |                                                                                                                       |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
-|             |           | *17*                                                                                                                  |
-|             |           | or lower than                                                                                                         |
+|             |           | *17* or lower than                                                                                                    |
 |             |           | *Min. Poll*                                                                                                           |
 |             |           |                                                                                                                       |
 |             |           |                                                                                                                       |
@@ -1840,66 +1843,54 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
-When you change the Protocol value to HTTPS in System → Settings → General, an unsigned RSA certificate and key are auto-generated. Once generated,
-the certificate and key will be displayed in the SSL Certificate field in System → Settings → SSL. If you already have your own
-signed certificate that you wish to use for SSL/TLS connections, replace the values in the SSL certificate field with a copy/paste of your own key and certificate. The certificate can be used to secure the HTTP connection (enabled in the Settings → General Tab) to the FreeNAS® system.
-
-Table 5.2c summarizes the settings that can be configured using the SSL tab. This
-`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
-shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
-
-**Table 5.2c: SSL Tab's Configuration Settings**
+**Table 5.2c: SSL Certificate Configuration Settings**
 
 
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Setting             | Value  | Description                                                                                                      |
-|                     |        |                                                                                                                  |
-+=====================+========+==================================================================================================================+
-| Organization        | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Organizational Unit | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Email Address       | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Locality            | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| State               | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Country             | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Common Name         | string | optional                                                                                                         |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| Passphrase          | string | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
-| SSL                 | string | paste the                                                                                                        |
-| Certificate         |        | private                                                                                                          |
-|                     |        | key and certificate                                                                                              |
-|                     |        | into the box                                                                                                     |
-|                     |        |                                                                                                                  |
-+---------------------+--------+------------------------------------------------------------------------------------------------------------------+
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| **Setting**         | **Value**  | **Description**                                                                                                  |
+|                     |            |                                                                                                                  |
++=====================+============+==================================================================================================================+
+| Organization        | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Organizational Unit | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Email Address       | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Locality            | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| State               | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Country             | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Common Name         | string     | optional                                                                                                         |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| Passphrase          | string     | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
+| SSL Certificate     | string     | paste the private key and certificate into the box; the validity of the certificate and key will be checked and  |
+|                     |            | the system will fallback to HTTP if either appears to be invalid                                                 |
+|                     |            |                                                                                                                  |
++---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 
-
-**NOTE:** FreeNAS® will check the validity of the certificate and key and will fallback to HTTP if they appear to be invalid.
 
 Advanced
 --------
 
-The Advanced tab, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
+System → Advanced, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings are summarized in
 Table 5.3a.
 
-**Figure 5.3a: Advanced Tab**
+**Figure 5.3a: Advanced Screen**
 
 |Figure53a_png|
 
-**Table 5.3a: Advanced Tab's Configuration Settings**
+**Table 5.3a: Advanced Configuration Settings**
 
 
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
@@ -1950,35 +1941,25 @@ Table 5.3a.
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the FreeNAS®       |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
 | crash dumps                             |                                  | development team for diagnosis                                               |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| System dataset pool                     | drop-down menu                   | by default, the *.system* dataset is automatically created in the first ZFS  |
-|                                         |                                  | volume in order to store persistent Samba permissions, collecting core files,|
-|                                         |                                  | and storing system log files; the drop-down menu can be used to select a     |
-|                                         |                                  | different ZFS volume                                                         |
-|                                         |                                  |                                                                              |
-+-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Use system dataset for syslog           | checkbox                         | uncheck this box if you don't want logging to spin up the disks and it will  |
-|                                         |                                  | write to */var/log/* instead of the system dataset                           |
-|                                         |                                  |                                                                              |
-+-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 
-If you make any changes, click the Save button.
+If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
-
-**Rebuild LDAP/AD Cache:** click if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs automatically once a day
-as a cron job.
 
 **Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
 
 **Firmware Update:** used to Upgrade FreeNAS®.
+
+**Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
+warning is provided and the tests should be run at a time that will least impact users.
 
 Autotune
 ~~~~~~~~
@@ -2004,24 +1985,24 @@ If you wish to read the script to see which checks are performed, the script is 
 Email
 -----
 
-The Email tab, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings that can be
+System → Email, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings that can be
 configured using the Email tab.
 
 **NOTE:** it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
 containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure 5.4a: Email Tab**
+**Figure 5.4a: Email Screen**
 
 
 |Figure54a_png|
 
 
 
-**Table 5.4a: Email Tab's Configuration Settings**
+**Table 5.4a: Email Configuration Settings**
 
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Setting              | Value                | Description                                                                                     |
+| **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
 | From email           | string               | the **From** email address to be used when sending email notifications                          |
@@ -2051,20 +2032,19 @@ containing important information such as the health of the disks. Alert events a
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
-|                      |                      | **To** email address by clicking the Change E-mail button for the                               |
-|                      |                      | *root*                                                                                          |
-|                      |                      | account in Accounts → Users → View Users                                                 |
+|                      |                      | **To** email address by clicking the "Change E-mail" button for the                             |
+|                      |                      | *root* account in View Users                                                                    |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
 System Dataset
 --------------
 
-System → Dataset, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system dataset stores debugging
-core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be a Domain Controller, all
-of the domain controller state is stored there as well, including domain controller users and groups.
+System → System Dataset, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system dataset stores
+debugging core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be a Domain
+Controller, all of the domain controller state is stored there as well, including domain controller users and groups.
 
-**Figure 5.5a: System Dataset**
+**Figure 5.5a: System Dataset Screen**
 
 |Figure55a_png|
 
@@ -2084,10 +2064,11 @@ location.
 Tunables
 --------
 
+This section of the administrative GUI can be used to either set a FreeBSD sysctl or loader value. A
 `sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
-is an interface that is used to make changes to the FreeBSD kernel running on a FreeNAS® system. It can be used to tune the system in order to meet the
-specific needs of a network. Over five hundred system variables can be set using sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set
-of components. Since these MIBs are specific to the kernel feature that is being tuned, descriptions can be found in many FreeBSD man pages (e.g.
+makes changes to the FreeBSD kernel running on a FreeNAS® system and can be used to tune the system. Over five hundred system variables can be set using
+sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set of components. Since these MIBs are specific to the kernel feature that is being
+tuned, descriptions can be found in many FreeBSD man pages (e.g.
 `sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_
 ,
 `tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
@@ -2095,42 +2076,36 @@ and
 `tuning(7) <http://www.freebsd.org/cgi/man.cgi?query=tuning>`_
 ) and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
+. 
 
 **DANGER!** changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
 **Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to become
 unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS® software.
 This means that you should always test the impact of any changes on a test system first.
 
-When a FreeBSD-based system boots,
+A loader is only loaded when a FreeBSD-based system boots, as
 `loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
 is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
 values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
 the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_
-.
-
-FreeNAS® provides a graphical interface for managing loader values. This advanced functionality is intended to make it easier to load additional kernel
-modules at boot time. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
+. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a FreeNAS® installation. The default
 FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one another or cause stability issues,
 some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not automatically loaded, you need to add a
-tunable.
+loader.
 
-**DANGER!** adding a tunable is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-**very important** that you do not have a typo when adding a tunable as this could halt the boot process. Fixing this problem requires physical access to the
+**DANGER!** adding a loader is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
+**very important** that you do not have a typo when adding a loader as this could halt the boot process. Fixing this problem requires physical access to the
 FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should always test
 the impact of any changes on a test system first.
 
-To add a tunable or sysctl, go to System → Tunables → Add Tunable, as seen in Figure 5.6a.
+To add a loader or sysctl, go to System → Tunables → Add Tunable, as seen in Figure 5.6a.
 
 **Figure 5.6a: Adding a Tunable**
 
 |Figure56a_png|
 
-Table 5.6a summarizes the options when adding a tunable. The changes you make will not take effect until the system is rebooted as loader settings are only
-read when the kernel is loaded at boot time. As long as the tunable exists, your changes will persist at each boot and across upgrades. Any tunables that you
-add will be listed alphabetically in System → Tunables → View Tunables. To change the value of a tunable, click its Edit button. To remove a tunable,
-click its Delete button.
+Table 5.6a summarizes the options when adding a tunable.
 
 **Table 5.6a: Adding a Tunable**
 
@@ -2138,13 +2113,16 @@ click its Delete button.
 | **Setting** | **Value**         | **Description**                                                           |
 |             |                   |                                                                           |
 |             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
++=============+===================+===========================================================================+
 | Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with variable; typically this is set to                |
-|             |                   | *YES*                                                                     |
+| Value       | integer or string | value to associate with variable; typically this is set to *YES*          |
 |             |                   | to enable the driver specified by the variable                            |
+|             |                   |                                                                           |
++-------------+-------------------+---------------------------------------------------------------------------+
+| Type        | drop-down menu    | choices are *Loader* or                                                   |
+|             |                   | *Sysctl*                                                                  |
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
 | Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
@@ -2154,16 +2132,17 @@ click its Delete button.
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
 
-As soon as you add or edit a sysctl, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that value will
-persist across reboots and upgrades.
+**NOTE:** as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that
+value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is rebooted as
+loaders are only read when the kernel is loaded at boot time. As long as the loader exists, your changes will persist at each boot and across upgrades. 
 
-Note that any sysctl that is read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by attempting to change it
-from Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command  
+Any sysctls or loaders that you add will be listed alphabetically in System → Tunables → View Tunables. To change the value of an existing tunable, click
+its Edit button. To remove a tunable, click its Delete button.
+
+Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
+Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command
 **sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
 error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in System → Sysctls.
-
-Any MIBs that you add will be listed in System → Sysctls → View Sysctls. To change the value of a MIB, click its Edit button. To remove a MIB, click
-its Delete button.
 
 At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
 
@@ -2176,7 +2155,7 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
 
 **Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
 
-At this time, the GUI does not display the tunables that are pre-set in the installation image. 9.3 ships with the following tunables set::
+At this time, the GUI does not display the loaders that are pre-set in the installation image. 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas-logo"
@@ -2197,7 +2176,7 @@ At this time, the GUI does not display the tunables that are pre-set in the inst
 
 **Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
 
-The ZFS version used in 9.2.2 deprecates the following tunables::
+The ZFS version used in 9.2.2 deprecates the following loaders::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -2207,7 +2186,7 @@ The ZFS version used in 9.2.2 deprecates the following tunables::
  vfs.zfs.no_write_throttle
 
 If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
-tunables back.
+loaders back.
 
 Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2329,6 +2308,7 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 |                   |                             |                                                                                                         |
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 
+Created cron jobs will be listed in View Cron Jobs. If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
 Init/Shutdown Scripts
 ---------------------
@@ -2418,7 +2398,7 @@ configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 |                                  |                             |                                                                                           |
 +==================================+=============================+===========================================================================================+
-| Path                             | browse button               | browse to the volume/dataset/directory that you wish to copy; note that a path length     |
+| Path                             | browse button               | browse to the path that you wish to copy; note that a path length                         |
 |                                  |                             | greater than 255 characters will fail                                                     |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
@@ -2429,18 +2409,19 @@ configured when creating an rsync task.
 |                                  |                             | other than the default of *22*                                                            |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Rsync mode                       | drop-down menu              | choices are *Rsync module* or *Rsync over SSH*                                            | 
+| Rsync mode                       | drop-down menu              | choices are *Rsync module* or                                                             |
+|                                  |                             | *Rsync over SSH*                                                                          |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |                                                                                                         
+| Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |
 |                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
-|                                  |                             | of rsync server or in Services → Rsync → Rsync Modules of another FreeNAS®        |
-|                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |   _
+|                                  |                             | of rsync server or in the Rsync Modules of another                                        |
+|                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |
 |                                  |                             | pull (e.g. */mnt/volume*)                                                                 |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |
-|                                  |                             | *Pull*; default is to push from the FreeNAS® system to a remote host                     |                                                                                                                                                         
+|                                  |                             | *Pull*; default is to push to a remote host                                               |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Short Description                | string                      | optional                                                                                  |
@@ -2808,6 +2789,9 @@ the FreeNAS® system in the “Host name database” field.
 | Nameserver 3           | IP address | tertiary DNS server                                                                                                  |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
+| HTTP Proxy             | string     |                                                                                                                      |
+|                        |            |                                                                                                                      |
++------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable netwait feature | checkbox   | if enabled, network services will not be started at boot time until the interface is able to ping the addresses      |
 |                        |            | listed in *Netwait IP list*                                                                                          |
 |                        |            |                                                                                                                      |
@@ -2903,7 +2887,8 @@ includes a Baseboard Management Controller (BMC) and the IPMI kernel module is l
 IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
 such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may be a dedicated IPMI interface.
 
-Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load* and a "Value" of
+Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load*, a "Type" of
+*Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
 *ipmi* kernel module now, without rebooting, type this from Shell::
 
@@ -3207,7 +3192,7 @@ Table 7.7a summarizes the configurable fields.
 
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
-| Setting           | Value          | Description                                                                                       |
+| **Setting**       | **Value**      | **Description**                                                                                   |
 |                   |                |                                                                                                   |
 +===================+================+===================================================================================================+
 | Virtual Interface | string         | use the format *vlanX* where                                                                      |
@@ -3215,7 +3200,7 @@ Table 7.7a summarizes the configurable fields.
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; if using a newly created |
-|                   |                | Link Aggregation,_it will not appear in the drop-down until the FreeNAS® system is rebooted      |
+|                   |                | Link Aggregation,_it will not appear in the drop-down until the system is rebooted                |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | VLAN Tag          | integer        | should match a numeric tag set up in the switched network                                         |
@@ -3450,13 +3435,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 #.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in ZFS Scrubs. This button allows you to manually initiate a scrub. A
     scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A cancel button is
-    provided should you need to cancel a scrub.
-
-**NOTE:** if you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
-
-**Figure 8.1h: Detaching or Deleting a Volume**
-
-|Figure81h_png|
+    provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
 
 #.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
     newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
@@ -3476,6 +3455,12 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
     device's options (shown in Figure 8.1j), offline the device, or replace the device (as described in Replacing a Failed Drive).
 
+#.  **Upgrade:**
+
+**Figure 8.1h: Detaching or Deleting a Volume**
+
+|Figure81h_png|
+
 **Figure 8.1i: Volume Status**
 
 |Figure81i_png|
@@ -3490,7 +3475,7 @@ configurable options.
 **Table 8.1b: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Setting                                                | Value          | Description                                                                                                          |
+| **Setting**                                            | **Value**      | **Description**                                                                                                      |
 |                                                        |                |                                                                                                                      |
 +========================================================+================+======================================================================================================================+
 | Name                                                   | string         | read-only value showing FreeBSD device name for disk                                                                 |
@@ -3514,8 +3499,8 @@ configurable options.
 |                                                        |                | `AAM <http://en.wikipedia.org/wiki/Automatic_acoustic_management>`_                                                  |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable                                                 | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured S.M.A.R.T Tests  |
-| `S.M.A.R.T <http://en.wikipedia.org/wiki/S.M.A.R.T.>`_ |                | for the disk                                    _                                                                    |                                                                                                           |
+| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured S.M.A.R.T Tests  |
+|                                                      _ |                | for the disk                                    _                                                                    |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | S.M.A.R.T. extra options                               | string         | `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                            |
@@ -3527,8 +3512,8 @@ configurable options.
 **NOTE:** versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level
 settings. As of 8.3.1, changes to these settings are applied immediately.
 
-A ZFS dataset only has five icons as the scrub volume, create ZFS volume, and volume status buttons only apply to volumes. In a dataset, the Detach Volume
-button is replaced with the Destroy Dataset button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
+A ZFS dataset only has six icons as the "Scrub Volume", "Volume Status", and "Upgrade" buttons only apply to volumes. In a dataset, the "Detach Volume" button
+is replaced with the "Destroy Dataset" button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
 action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
 
 View Multipaths
@@ -3788,9 +3773,8 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 +===============+==================+================================================================================================+
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
 |               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_          |
-|               |                  | ; it is recommended to choose a name that will stick out in the logs (e.g. **not**             |
-|               |                  | *data* or                                                                                      |
-|               |                  | *freenas*)                                                                                     |
+|               |                  | ; it is recommended to choose a name that will stick out in the logs (e.g.                     |
+|               |                  | **not data or freenas**)                                                                       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | Encryption    | checkbox         | read the section on Encryption before choosing to use encryption                               |
@@ -3799,7 +3783,7 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 | Member disks  | list             | highlight desired number of disks from list of available disks                                 |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
-| Deduplication | drop-down menu   | choices are *Off*,                                                                             |                                                                                             |
+| Deduplication | drop-down menu   | choices are *Off*,                                                                             |
 |               |                  | *Verify*, and                                                                                  |
 |               |                  | *On*; carefully consider the section on Deduplication before changing this setting             |
 |               |                  |                                                                                                |
@@ -3886,14 +3870,13 @@ Permissions icon for a specific volume/dataset, you will see the screen shown in
 | Mode                       | checkboxes       | check the desired **Unix** permissions for user, group, and other                                          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Type of ACL                | bullet selection | Unix and Windows ACLs are mutually exclusive, this means that                                              |
+| Type of ACL                | bullet selection | Unix and Windows/Mac ACLs are mutually exclusive, this means that                                          |
 |                            |                  | **you must select the correct type of ACL to match the share**; see the paragraphs below this Table for    |
 |                            |                  | more details                                                                                               |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume or dataset; if data already exists |
-|                            |                  | on the volume/dataset, change the permissions on the **client side** to prevent a performance lag on the   |
-|                            |                  | FreeNAS® system                                                                                           |
+|                            |                  | on the volume/dataset, change the permissions on the **client side** to prevent a performance lag          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 
@@ -4379,9 +4362,6 @@ dataset that you wish to snapshot.
 | Setting        | Value                      | Description                                                                                                  |
 |                |                            |                                                                                                              |
 +================+============================+==============================================================================================================+
-| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
-|                |                            |                                                                                                              |
-+----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be     |
 |                |                            | created for each of its datasets                                                                             |
 |                |                            |                                                                                                              |
@@ -4407,7 +4387,9 @@ dataset that you wish to snapshot.
 | Weekday        | checkboxes                 | which days of the week to take snapshots                                                                     |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-
+| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
+|                |                            |                                                                                                              |
++----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 
 If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
 there is no way to exclude certain datasets from being included in a recursive snapshot.
@@ -4432,7 +4414,22 @@ but failed, an entry will be added to */var/log/messages*. This log file can be 
 
 |Figure82c_png|
 
-The most recent snapshot for a volume or dataset will be listed last and will have 3 icons. The icons associated with a snapshot allow you to:
+The listing will include the name of the volume or dataset, the name of each snapshot, as well as the amount of used and referenced data, where:
+
+**Used:** indicates the amount of space consumed by this dataset and all its descendents. This value is checked against this dataset's quota and reservation.
+The space used does not include this dataset's reservation, but does take into account the reservations of any descendent datasets. The amount of space that
+a dataset consumes from its parent, as well as the amount of space that are freed if this dataset is recursively destroyed, is the greater of its space used
+and its reservation. When a snapshot is created, its space is initially shared between the snapshot and the filesystem, and possibly with previous snapshots.
+As the filesystem  changes, space  that was previously shared becomes unique to the snapshot, and is counted in the snapshot's space used. Additionally,
+deleting snapshots can increase the amount of space unique to (and used by) other snapshots. The  amount of space used, available, or referenced does not take
+into account pending changes. While pending changes are generally accounted for within a few  seconds, disk changes do not necessarily guarantee that the
+space usage information is updated immediately.
+
+**Refer:** indicates the amount of data that is accessible by this dataset, which may or may not be shared  with other  datasets  in  the pool. When a
+snapshot or clone is created, it initially references the same amount of space as the file system or snapshot it was created from, since its contents are
+identical.
+
+The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
 
 **Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
 which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
@@ -4561,9 +4558,6 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +===========================+================+==============================================================================================================+
-| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                        |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Volume/Dataset            | drop-down menu | the ZFS volume or dataset on *PUSH* containing the snapshots to be replicated; the drop-down menu will be    |
 |                           |                | empty if a snapshot does not already exist                                                                   |
 |                           |                |                                                                                                              |
@@ -4591,6 +4585,9 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 |                           |                | below)                                                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Enabled                   | checkbox       | uncheck to disable the scheduled replication task without deleting it                                        |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Remote hostname           | string         | IP address or DNS name of *PULL*                                                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
@@ -4606,7 +4603,7 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of *PULL*                                             |                                                                                                                    |
+| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of *PULL*                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
@@ -4766,12 +4763,6 @@ FreeNAS® supports the following directory services:
 
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
 
-
-**NOTE:** at this time,
-**only one directory service can be configured**. That service must first be selected in the System → Settings → General → Directory Service
-drop-down menu. Once selected, a Directory Service entry will be added to Services → Control Services so that the service can be started, stopped, and
-configured.
-
 Active Directory
 ----------------
 
@@ -4818,19 +4809,11 @@ display these settings by checking the box “Show advanced fields by default”
 
 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                  | Value         | Description                                                                                                                                |
+| **Setting**              | **Value**     | **Description**                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +==========================+===============+============================================================================================================================================+
 | Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                 |
 |                          |               | *sales.example.com*)                                                                                                                       |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the FreeNAS® system; **use caution when changing this setting**                              |
-|                          |               | as setting an                                                                                                                              |
-|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Workgroup Name           | string        | name of Windows server's workgroup (for older Microsoft clients)                                                                           |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Domain Account Name      | string        | name of the Active Directory administrator account                                                                                         |
@@ -4840,11 +4823,23 @@ display these settings by checking the box “Show advanced fields by default”
 |                          |               |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
+|                          |               | as setting an                                                                                                                              |
+|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Use keytab               | checkbox      | only available in Advanced Mode; if selected, browse to the *Kerberos keytab*                                                              |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Kerberos keytab          | browse button | only available in Advanced Mode; browse to the location of the keytab created using the instructions in Using a                            |
 |                          |               | Keytab                                                                                                                                     |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Encryption Mode          | drop-down     |                                                                                                                                            |
+|                          | menu          |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------|
+| Certificate              | browse button |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in Advanced Mode; if checked, logs attempts to join the domain to */var/log/messages*                                       |
@@ -4885,7 +4880,12 @@ display these settings by checking the box “Show advanced fields by default”
 | DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable                   | checkbox      |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
+automatically once a day as a cron job.
 
 **NOTE:** Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
 realm,
@@ -5021,7 +5021,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Setting                 | Value          | Description                                                                                           |
+| **Setting**             | **Value**      | **Description**                                                                                       |
 |                         |                |                                                                                                       |
 +=========================+================+=======================================================================================================+
 | Hostname                | string         | hostname or IP address of LDAP server                                                                 |
@@ -5031,17 +5031,17 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 |                         |                | *dc=test,dc=org*)                                                                                     |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read/write access to any client      |
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Bind password           | string         | password for *Root bind DN*                                                                           |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
 | Binding                 |                |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org)*                      |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind password           | string         | password for *Root bind DN*                                                                           |                                                                                                |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |                                                          |
+| User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Group Suffix            | string         | optional, can be added to name when group added to LDAP directory (e.g. dept. or company name)        |
@@ -5053,18 +5053,23 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Machine Suffix          | string         | optional, can be added to name when system added to LDAP directory (e.g. server, accounting)          |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |                                                                                               |
+| Use default domain      | checkbox       |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
 |                         |                | *SSL*, or                                                                                             |
-|                         |                | *TLS*                                                                                                 |                                                                                                 |
+|                         |                | *TLS*                                                                                                 |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable                  | checkbox       |                                                                          _                            |
+| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to LDAP who needs immediate access to FreeNAS®; otherwise this occurs automatically once
+a day as a cron job.
 
 **NOTE:** FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
 password, and machine suffixes.
@@ -5099,7 +5104,7 @@ options.
 | **Setting** | **Value** | **Description**                                                                                                            |
 |             |           |                                                                                                                            |
 |             |           |                                                                                                                            |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
++=============+===========+============================================================================================================================+
 | NIS domain  | string    | name of NIS domain                                                                                                         |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
@@ -5115,7 +5120,12 @@ options.
 |             |           | on the same subnet                                                                                                         |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
+| Enable      | checkbox  |                                                                                                                            |
+|             |           |                                                                                                                            |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to NIS who needs immediate access to FreeNAS®; otherwise this occurs automatically once
+a day as a cron job.
 
 NT4
 ---
@@ -5153,7 +5163,15 @@ After configuring the NT4 service, start it in Services → Control Services →
 | Administrator Password | string    | input and confirm the password for the domain administrator account |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
+| Use default domain     | checkbox  |                                                                     |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Enable                 | checkbox  |                                                                     |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
 
+Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
+automatically once a day as a cron job.
 
 Sharing
 =======
@@ -5234,14 +5252,15 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 | Setting                      | Value         | Description                                                                                                 |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
+| Path                         | browse button | browse to the volume/dataset to share; do not nest additional volumes, datasets, or symbolic links beneath  |
+|                              |               | this path because Netatalk lacks complete support                                                           |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | volume name that will appear in the Mac computer's "connect to server" dialogue; limited to 27 characters   |
 |                              |               | and can not contain a period                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Share Comment                | string        | optional                                                                                                    |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Path                         | browse button | browse to the volume/dataset to share                                                                       |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow List                   | string        | comma delimited list of allowed users and/or groups where groupname begins with a @                         |
@@ -5260,8 +5279,7 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 |                              |               | checking *Time Machine* on multiple shares may result in intermittent failed backups                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Database Path                | string        | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must |
-|                              |               | be writable                                                                                                 |
+| Zero Device Numbers          | checkbox      | only available in Advanced Mode; enable when the device number is not constant across a reboot              |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | No Stat                      | checkbox      | only available in Advanced Mode; if checked, AFP won't stat the volume path when enumerating the volumes    |
@@ -5432,6 +5450,9 @@ Control Services will open and indicate whether or not the NFS service successfu
 | Setting             | Value          | Description                                                                                                        |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
+| Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
+|                     |                |                                                                                                                    |
++---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected Paths                           |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
@@ -5464,9 +5485,6 @@ Control Services will open and indicate whether or not the NFS service successfu
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Mapall Group        | drop-down menu | the specified group's permission are used by all clients                                                           |
-|                     |                |                                                                                                                    |
-+---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
@@ -5708,16 +5726,16 @@ enable this service?” Click Yes and Services → Control Services will open an
 
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Setting                      | Value         | Description                                                                                                 |
+| **Setting**                  | **Value**     | **Description**                                                                                             |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
+| Path                         | browse button | select volume/dataset/directory to share                                                                    |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | mandatory; name of share                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Comment                      | string        | optional description                                                                                        |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Path                         | browse button | select volume/dataset/directory to share                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when   |
@@ -5737,7 +5755,7 @@ enable this service?” Click Yes and Services → Control Services will open an
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
-|                              |               | guest user defined in Services → CIFS                                                                   |
+|                              |               | guest user defined in Services ->  CIFS                                                                     |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Only Allow Guest Access      | checkbox      | requires *Allow guest access* to also be checked; forces guest access for all connections                   |
@@ -5974,7 +5992,7 @@ Control Services
 Services → Control Services, shown in Figure 11.1a, allows you to quickly determine which services are currently running, to start and stop services, and
 to configure services. By default, all services (except for the S.M.A.R.T. service) are off until you start them.
 
-Figure 11.1a: Control Services
+**Figure 11.1a: Control Services**
 
 
 |Figure111a_png|
@@ -6004,7 +6022,7 @@ Starting this service will open the following ports on the FreeNAS® system:
 
 * UDP 5353 and a random UDP port (avahi)
 
-Figure 11.2a shows the configuration options which are described in Table 8.2a.
+Figure 11.2a shows the configuration options which are described in Table 11.2a.
 
 **Figure 11.2a: AFP Configuration**
 
@@ -6032,9 +6050,6 @@ Figure 11.2a shows the configuration options which are described in Table 8.2a.
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
-|                         |                |                                                                                                                 |
-+-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Zero Device Numbers     | checkbox       | only available in Advanced Mode; enable when the device number is not constant across a reboot                  |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Database Path           |string          | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be  |
@@ -6093,11 +6108,11 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 
 
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Setting                          | Value          | Description                                                                                           |
+| **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the hostname of the FreeNAS® system; it    |
-|                                  |                | **must**  be different from the                                                                       |                                                                                                                                                                       
+| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
+|                                  |                | **must**  be different from the                                                                       |
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6111,19 +6126,19 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME clients; default is        |
 |                                  |                | *CP437*                                                                                               |
 |                                  |                |                                                                                                       |
-+------------------------------+----------------+-----------------------------------------------------------------------------------------------------------+
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | UNIX Charset                     | drop-down menu | default is *UTF-8* which supports all characters in all languages                                     |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Log Level                        | drop-down menu | choices are *Minimum*,                                                                                |
-|                                  |                | *Normal*, or                                                                                          |                                                                                                                                                                                  
+|                                  |                | *Normal*, or                                                                                          |
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Use syslog                       | checkbox       | logs most events to syslog instead of the samba log files                                             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Local Master                     | checkbox       | determines whether or not the FreeNAS® system participates in a browser election; should be disabled |
+| Local Master                     | checkbox       | determines whether or not the system participates in a browser election; should be disabled           |
 |                                  |                | when network contains an AD or LDAP server and is not necessary if Vista or Windows 7 machines are    |
 |                                  |                | present                                                                                               |
 |                                  |                |                                                                                                       |
@@ -6131,7 +6146,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Domain logons                    | checkbox       |                                                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Time Server for Domain           | checkbox       | determines whether or not the FreeNAS® system advertises itself as a time server to Windows clients; |
+| Time Server for Domain           | checkbox       | determines whether or not the system advertises itself as a time server to Windows clients;           |
 |                                  |                | should be disabled when network contains an AD or LDAP server                                         |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6149,13 +6164,11 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 |                                  |                |                                                                                                       |
 | Allow Empty Password             | checkbox       | if checked, users can just press enter when prompted for a password; requires that the                |
-|                                  |                | username/password be the same for the FreeNAS® user account and the Windows user account             |
+|                                  |                | username/password be the same as the Windows user account                                             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Auxiliary parameters             | string         | *smb.conf *                                                                                           |
-|                                  |                | options not covered elsewhere in this screen; see                                                     |
-|                                  |                | `the  <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                         |
-|                                  |                | `Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                                  |
+| Auxiliary parameters             | string         | *smb.conf* options not covered elsewhere in this screen; see                                          |
+|                                  |                | `the Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                              |
 |                                  |                | for additional settings                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6176,15 +6189,14 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                | clients                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Zeroconf share discovery         | checkbox       | enable if                                                                                             |
-|                                  |                | Mac clients will be connecting to the CIFS share                                                      |
+| Zeroconf share discovery         | checkbox       | enable if Mac clients will be connecting to the CIFS share                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the Hosts Allow or Hosts Deny fields of a |
 |                                  |                | CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup                |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default of *------* sets automatic     |
+| Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default sets automatic                 |
 |                                  |                | negotiation; refer to Table 11.3b for descriptions                                                    |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6195,7 +6207,9 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                | to execute                                                                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-
+| Obey pam restrictions            | checkbox       |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 **Table 11.3b: Description of SMB Protocol Versions**
 
@@ -6377,7 +6391,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Setting              | Value          | Description                                                                                                        |
+| **Setting**          | **Value**      | **Descripti                                                                                                        |
 |                      |                |                                                                                                                    |
 +======================+================+====================================================================================================================+
 | Provider             | drop-down menu | several providers are supported; if your provider is not listed, leave this field blank and specify the custom     |
@@ -6752,9 +6766,7 @@ network. Specifically, it exports disk devices over an Ethernet network that iSC
 operate over fibre channel networks which require a fibre channel infrastructure such as fibre channel HBAs, fibre channel switches, and discrete cabling.
 iSCSI can be used over an existing Ethernet network, although dedicated networks can be built for iSCSI traffic in an effort to boost performance. iSCSI also
 provides an advantage in an environment that uses Windows shell programs; these programs tend to filter “Network Location” but iSCSI mounts are not
-filtered. FreeNAS® uses
-`istgt <http://www.peach.ne.jp/archives/istgt/>`_
-to provide iSCSI.
+filtered.
 
 Before configuring the iSCSI service, you should be familiar with the following iSCSI terminology:
 
@@ -6775,7 +6787,7 @@ result is an iSCSI connection that emulates a connection to a SCSI hard disk. In
 drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs.
 
 FreeNAS® supports multiple iSCSI drives. When configuring multiple iSCSI LUNs, create a new target for each LUN. Portal groups and initiator groups can be
-reused without any issue. Since istgt multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
+reused without any issue. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
 In order to configure iSCSI:
@@ -6877,10 +6889,6 @@ as far as FreeNAS® is concerned, the data benefits from ZFS features such as bl
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
-In theory, a zvol and a file extent should have identical performance. In practice, a file extent outperforms in reads/writes but this is only noticeable at
-10 GB Ethernet speeds or higher. For high performance, file extents are recommended at this time. Future changes to FreeBSD's zvol code will increase its
-performance.
-
 To add an extent, go to Services → ISCSI → Extents → Add Extent. In the example shown in Figure 11.7c, the device extent is using the *export*
 zvol that was previously created from the */mnt/volume1* volume.
 
@@ -6899,50 +6907,37 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 **Table 11.7b: Extent Configuration Settings**
 
 
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting            | Value          | Description                                                                                                                                                       |
-|                    |                |                                                                                                                                                                   |
-+====================+================+===================================================================================================================================================================+
-| Extent Name        | string         | name of extent; if the                                                                                                                                            |
-|                    |                | *Extent size*                                                                                                                                                     |
-|                    |                | is not 0, it can not be an existing file within the volume/dataset                                                                                                |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extent Type        | drop-down menu | select from                                                                                                                                                       |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | or                                                                                                                                                                |
-|                    |                | *Device*                                                                                                                                                          |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Path to the extent | browse button  | only appears if                                                                                                                                                   |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | is selected; either browse to an existing file and use 0 as the                                                                                                   |
-|                    |                | *Extent size*                                                                                                                                                     |
-|                    |                | ,                                                                                                                                                                 |
-|                    |                | **or**                                                                                                                                                            |
-|                    |                | ** **                                                                                                                                                             |
-|                    |                | browse to the volume or dataset, click the Close button, append the                                                                                               |
-|                    |                | *Extent Name*                                                                                                                                                     |
-|                    |                | to the path, and specify a value in                                                                                                                               |
-|                    |                | *Extent *                                                                                                                                                         |
-|                    |                | *size*                                                                                                                                                            |
-|                    |                |                                                                                                                                                                   |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Device             | drop-down menu | only appears if                                                                                                                                                   |
-|                    |                | *Device*                                                                                                                                                          |
-|                    |                | is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device                                                                         |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extent size        | integer        | only appears if                                                                                                                                                   |
-|                    |                | *File*                                                                                                                                                            |
-|                    |                | is selected; if the size is specified as 0, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to create |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Comment            | string         | optional                                                                                                                                                          |
-|                    |                |                                                                                                                                                                   |
-+--------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Setting            | Value          | Description                                                                                                          |
+|                    |                |                                                                                                                      |
++====================+================+======================================================================================================================+
+| Extent Name        | string         | name of extent; if the *Extent size* is not 0, it can not be an existing file within the volume/dataset              |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent Type        | drop-down menu | select from *File* or                                                                                                |
+|                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use 0 as the                               |
+|                    |                | *Extent size*,                                                                                                       |
+|                    |                | **or** browse to the volume or dataset, click the Close button, append the                                           |
+|                    |                | *Extent Name* to the path, and specify a value in                                                                    |
+|                    |                | *Extent size*                                                                                                        |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent size        | integer        | only appears if *File* is selected; if the size is specified as 0, the file must already exist and the actual file   |
+|                    |                | size will be used; otherwise specifies the size of the file to create                                                |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Comment            | string         | optional                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Enable TPC         | checkbox       |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 Initiators
 ~~~~~~~~~~
@@ -7060,23 +7055,7 @@ Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Services → iSCSI → Target Global Configuration, shown in Figures 11.7g, contains settings that apply to all iSCSI shares. Table 11.7e summarizes the
-settings that can be configured in the Target Global Configuration screen. The integer values in the table are used to tune network performance; most of these
-values are described in
-`RFC 3720 <http://tools.ietf.org/html/rfc3720>`_
-.
-
-LUC (Logical Unit Controller) is an API provided by istgt to control removable media by providing functions to list targets, load or unload a media to a unit,
-change media file, or reset a LUN.
-
-In order to dynamically add or remove **targets** without restarting the iSCSI service, which can disrupt iSCSI initiators, set the following options:
-
-* check the *Enable LUC* box
-
-* leave the *Controller IP address* and
-  *Control Authorized Network* at their default values
-
-* change the *Controller Auth Method*
-  to *None*
+settings that can be configured in the Target Global Configuration screen.
 
 **NOTE:** the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
 existing extent.
@@ -7111,83 +7090,6 @@ existing extent.
 |                                 |                              | *None*                                                                                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Enable multithreaded mode       | checkbox                     |                                                                                           |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| I/O Timeout                     | integer representing seconds | sets the limit on how long an I/O can be outstanding before an error condition is         |
-|                                 |                              | returned; values range from 0-300 with a default of *30*                                  |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| NOPIN Interval                  | integer representing seconds | how often the target sends a NOP-IN packet to keep a discovered session alive; values     |
-|                                 |                              | range from 0-300 with a default of *20*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. Sessions                   | integer                      | limits the number of sessions the target portal will create/accept from initiator         |
-|                                 |                              | portals; values range from 1-65536 with a default of *16*                                 |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. Connections                | integer                      | the number of connections a single initiator can make to a single target; values range    |
-|                                 |                              | from 1-65536 with a default of *8*                                                        |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max. pre-send R2T               | integer                      | values range from 1-255 with a default of *32*                                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| MaxOutstandingR2T               | integer                      | the maximum number of ready to receive packets (R2Ts) the target can have outstanding for |
-|                                 |                              | a single iSCSI command, where larger values should yield performance increases until      |
-|                                 |                              | *MaxOutstandingR2T* exceeds the size of the largest                                       |
-|                                 |                              | *Write I/O* divided by                                                                    |
-|                                 |                              | *MaxBurstLength*; values range from 1-255 with a default of                               | 
-|                                 |                              | *16*                                                                                      |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| First burst length              | integer                      | maximum amount in bytes of unsolicited data an iSCSI initiator may send to the target     |
-|                                 |                              | during the execution of a single SCSI command; values range from 1- 2^32 with a default   |
-|                                 |                              | of *65,536*                                                                               |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max burst length                | integer                      | maximum write size in bytes the target is willing to receive between R2Ts; values range   |
-|                                 |                              | from 1-2^32 with a default of *262,144*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Max receive data segment length | integer                      | in bytes; values range from 1-2^32 with a default of *262,144*                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| DefaultTime2Wait                | integer                      | minimum time in seconds to wait before attempting a logout or an active task reassignment |
-|                                 |                              | after an unexpected connection termination or reset; values range from 1-300 with a       |
-|                                 |                              | default of *2*                                                                            |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| DefaultTime2Retain              | integer                      | maximum time in seconds after Time2Wait before which an active task reassignment is still |
-|                                 |                              | possible after an unexpected connection termination or reset; values range from 1-300     |
-|                                 |                              | with a default of *60*                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Enable LUC                      | checkbox                     | check if you need to dynamically add and remove targets; if checked, the next three       |
-|                                 |                              | fields are activated and required                                                         |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller IP address           | IP address                   | keep the default value of *127.0.0.1*                                                     |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller TCP port             | integer                      | possible values range from 1024-65535 with a default value of *3261*                      |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Authorized netmask   | subnet mask                  | keep the default value of *127.0.0.0/8*                                                   |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Auth Method          | drop-down menu               | choices are *None*,                                                                       |
-|                                 |                              | *Auto*,                                                                                   |
-|                                 |                              | *CHAP*, or                                                                                |
-|                                 |                              | *Mutual CHAP*                                                                             |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Controller Auth Group           | drop-down menu               | required if Controller Auth Method is set to *CHAP* or                                    |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
 If the settings in this screen differ from the settings on the initiator, set them to be the same. When making changes, always match the larger setting.
 
@@ -7206,7 +7108,7 @@ Targets
 ~~~~~~~
 
 Next, create a Target using Services → ISCSI → Targets → Add Target, as shown in Figure 11.7h. A target combines a portal ID, allowed initiator ID,
-and an authentication method. Table 8.7f summarizes the settings that can be configured when creating a Target.
+and an authentication method. Table 11.7f summarizes the settings that can be configured when creating a Target.
 
 **NOTE:** an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
 as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -7221,63 +7123,40 @@ targets (one per client).
 **Table 11.7f: Target Settings**
 
 
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**                 | **Value**      | **Description**                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+=============================+================+==================================================================================================================================================================================+
-| Target Name                 | string         | required value; base name will be appended automatically if it does not start with                                                                                               |
-|                             |                | *iqn*                                                                                                                                                                            |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Target Alias                | string         | optional user-friendly name                                                                                                                                                      |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address                                                                          |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Target Flags                | drop-down menu | choices are                                                                                                                                                                      |
-|                             |                | *read-write*                                                                                                                                                                     |
-|                             |                | or                                                                                                                                                                               |
-|                             |                | *read-only*                                                                                                                                                                      |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                                                                                           |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Initiator Group ID          | drop-down menu | select which existing initiator group has access to the target                                                                                                                   |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Auth Method                 | drop-down menu | choices are                                                                                                                                                                      |
-|                             |                | *None*                                                                                                                                                                           |
-|                             |                | ,                                                                                                                                                                                |
-|                             |                | *Auto*                                                                                                                                                                           |
-|                             |                | ,                                                                                                                                                                                |
-|                             |                | *CHAP*                                                                                                                                                                           |
-|                             |                | , or                                                                                                                                                                             |
-|                             |                | *Mutual CHAP*                                                                                                                                                                    |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Authentication Group number | drop-down menu | *None*                                                                                                                                                                           |
-|                             |                | or integer representing number of existing authorized access                                                                                                                     |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Queue Depth                 | integer        | see                                                                                                                                                                              |
-|                             |                | `this post <http://storagefoo.blogspot.com/2006/04/queue-depths.html>`_                                                                                                          |
-|                             |                | for an explanation of the math involved; values are 0-255 where                                                                                                                  |
-|                             |                | *0*                                                                                                                                                                              |
-|                             |                | is disabled and default is                                                                                                                                                       |
-|                             |                | *32*                                                                                                                                                                             |
-|                             |                |                                                                                                                                                                                  |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Logical Block Size          | integer        | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger filesystems on an operating system limited by block count; default is |
-|                             |                | *512*                                                                                                                                                                            |
-|                             |                |                                                                                                                                                                                  |
-+-----------------------------+----------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**                 | **Value**      | **Description**                                                                                             |
+|                             |                |                                                                                                             |
+|                             |                |                                                                                                             |
++=============================+================+=============================================================================================================+
+| Target Name                 | string         | required value; base name will be appended automatically if it does not start with *iqn*                    |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Target Alias                | string         | optional user-friendly name                                                                                 |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address     |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                      |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Initiator Group ID          | drop-down menu | select which existing initiator group has access to the target                                              |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Auth Method                 | drop-down menu | choices are *None*,                                                                                         |
+|                             |                | *Auto*,                                                                                                     |
+|                             |                | *CHAP*, or                                                                                                  |
+|                             |                | *Mutual CHAP*                                                                                               |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Authentication Group number | drop-down menu | *None*                                                                                                      |
+|                             |                | or integer representing number of existing authorized access                                                |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+| Logical Block Size          | integer        | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
+|                             |                | filesystems on an operating system limited by block count; default is *512*                                 |
+|                             |                |                                                                                                             |
++-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
 
 Target/Extents
@@ -7361,8 +7240,6 @@ If you can see the target but not connect to it, check the discovery authenticat
 
 If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to Accept in the vswitch.
 
-To determine which initiators are connected, type **istgtcontrol info** within Shell.
-
 Growing LUNs
 ~~~~~~~~~~~~
 
@@ -7443,11 +7320,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | Setting                | Value      | Description                                                                                                         |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
-| Number of servers      | integer    | run                                                                                                                 |
-|                        |            | **sysctl -n kern.smp.cpus**                                                                                         |
-|                        |            | from                                                                                                                |
-|                        |            | Shell                                                                                     |
-|                        |            | to determine the number; do not exceed the number listed in the output of that command                              |
+| Number of servers      | integer    | run **sysctl -n kern.smp.cpus** from Shell to determine the number; do not exceed the number listed in the output   |
+|                        |            | of that command                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Serve UDP NFS clients  | checkbox   | check if NFS client needs to use UDP                                                                                |
@@ -7503,10 +7377,8 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 | **Setting**          | **Value** | **Description**                                                     |
 |                      |           |                                                                     |
 |                      |           |                                                                     |
-+----------------------+-----------+---------------------------------------------------------------------+
-| TCP Port             | integer   | port for                                                            |
-|                      |           | **rsyncd**                                                          |
-|                      |           | to listen on, default is                                            |
++======================+===========+=====================================================================+
+| TCP Port             | integer   | port for **rsyncd** to listen on, default is                        |
 |                      |           | *873*                                                               |
 |                      |           |                                                                     |
 |                      |           |                                                                     |
@@ -7547,17 +7419,13 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Path                 | browse button  | volume/dataset to hold received data                                          |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-| Access Mode          | drop-down menu | choices are                                                                   |
-|                      |                | *Read and Write*                                                              |
-|                      |                | ,                                                                             |
-|                      |                | *Read-only*                                                                   |
-|                      |                | , or                                                                          |
+| Access Mode          | drop-down menu | choices are *Read and Write*,                                                 |
+|                      |                | *Read-only*, or                                                               |
 |                      |                | *Write-only*                                                                  |
 |                      |                |                                                                               |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-| Maximum connections  | integer        | *0*                                                                           |
-|                      |                | is unlimited                                                                  |
+| Maximum connections  | integer        | *0* is unlimited                                                              |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
 | User                 | drop-down menu | select user that file transfers to and from that module should take place as  |
@@ -7612,45 +7480,37 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 
 **Table 11.11a: S.M.A.R.T Configuration Options**
 
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**     | **Value**                  | **Description**                                                                                                                                           |
-|                 |                            |                                                                                                                                                           |
-|                 |                            |                                                                                                                                                           |
-+=================+============================+===========================================================================================================================================================+
-| Check interval  | integer                    | in minutes, how often to wake up                                                                                                                          |
-|                 |                            | **smartd**                                                                                                                                                |
-|                 |                            | to check to see if any tests have been configured to run                                                                                                  |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Power mode      | drop-down menu             | the configured test is not performed if the system enters the specified power mode; choices are:                                                          |
-|                 |                            | *Never*                                                                                                                                                   |
-|                 |                            | ,                                                                                                                                                         |
-|                 |                            | *Sleep*                                                                                                                                                   |
-|                 |                            | ,                                                                                                                                                         |
-|                 |                            | *Standby*                                                                                                                                                 |
-|                 |                            | , or                                                                                                                                                      |
-|                 |                            | *Idle*                                                                                                                                                    |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Difference      | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise reports if the temperature of a drive has changed by N degrees Celsius since last report                                   |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Informational   | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise will message with a log level of LOG_INFO if the temperature is higher than specified degrees in Celsius                   |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Critical        | integer in degrees Celsius | default of                                                                                                                                                |
-|                 |                            | *0*                                                                                                                                                       |
-|                 |                            | disables this check, otherwise will message with a log level of LOG_CRIT and send an email if the temperature is higher than specified degrees in Celsius |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Email to report | string                     | email address of person to receive S.M.A.R.T. alert                                                                                                       |
-|                 |                            | ; separate multiple email recipients with a comma and no space                                                                                            |
-|                 |                            |                                                                                                                                                           |
-+-----------------+----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**     | **Value**                  | **Description**                                                                                             |
+|                 |                            |                                                                                                             |
+|                 |                            |                                                                                                             |
++=================+============================+=============================================================================================================+
+| Check interval  | integer                    | in minutes, how often to wake up **smartd** to check to see if any tests have been configured to run        |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Power mode      | drop-down menu             | the configured test is not performed if the system enters the specified power mode; choices are:            |
+|                 |                            | *Never*,                                                                                                    |                                                       
+|                 |                            | *Sleep*,                                                                                                    |                                      
+|                 |                            | *Standby*, or                                                                                               |
+|                 |                            | *Idle*                                                                                                      |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Difference      | integer in degrees Celsius | default of *0* disables this check, otherwise reports if the temperature of a drive has changed by N        |
+|                 |                            | degrees Celsius since last report                                                                           |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Informational   | integer in degrees Celsius | default of *0* disables this check, otherwise will message with a log level of LOG_INFO if the temperature  |
+|                 |                            | is higher than specified degrees in Celsius                                                                 |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Critical        | integer in degrees Celsius | default of *0* disables this check, otherwise will message with a log level of LOG_CRIT and send an email   |
+|                 |                            | if the temperature is higher than specified degrees in Celsius                                              |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Email to report | string                     | email address of person to receive S.M.A.R.T. alert; separate multiple email recipients with a comma and no |
+|                 |                            | space                                                                                                       |
+|                 |                            |                                                                                                             |
++-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
 
 SNMP
@@ -7676,27 +7536,25 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 **Table 11.12a: SNMP Configuration Options**
 
 
-+----------------------+--------+----------------------------------------------------------------+
-| Setting              | Value  | Description                                                    |
-|                      |        |                                                                |
-+======================+========+================================================================+
-| Location             | string | optional description of FreeNAS® system's location             |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Contact              | string | optional email address of FreeNAS® administrator               |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Community            | string | password used on the SNMP network, default is                  |
-|                      |        | *public*                                                       |
-|                      |        | and                                                            |
-|                      |        | **should be changed for security reasons**                     |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
-| Auxiliary Parameters | string | additional                                                     |
-|                      |        | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
-|                      |        | options not covered in this screen, one per line               |
-|                      |        |                                                                |
-+----------------------+--------+----------------------------------------------------------------+
++----------------------+------------+----------------------------------------------------------------+
+| **Setting**          | **Value**  | **Description**                                                |
+|                      |            |                                                                |
++======================+============+================================================================+
+| Location             | string     | optional description of system's location                      |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Contact              | string     | optional email address of administrator                        |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Community            | string     | password used on the SNMP network, default is *public* and     |
+|                      |            | **should be changed for security reasons**                     |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
+| Auxiliary Parameters | string     | additional                                                     |
+|                      |            | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
+|                      |            | options not covered in this screen, one per line               |
+|                      |            |                                                                |
++----------------------+------------+----------------------------------------------------------------+
 
 
 SSH
@@ -7725,59 +7583,49 @@ Advanced.
 **Table 11.13a: SSH Configuration Options**
 
 
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting                       | Value          | Description                                                                                                                                    |
-|                               |                |                                                                                                                                                |
-+===============================+================+================================================================================================================================================+
-| TCP Port                      | integer        | port to open for                                                                                                                               |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | connection requests;                                                                                                                           |
-|                               |                | *22*                                                                                                                                           |
-|                               |                | by default                                                                                                                                     |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default**                                                                  |
-|                               |                | if enabled, password must be set for                                                                                                           |
-|                               |                | *root*                                                                                                                                         |
-|                               |                | user in Account → Users → View Users                                                                                                    |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                                                                     |
-|                               |                | `additional setup <http://the.earth.li/%7Esgtatham/putty/0.55/htmldoc/Chapter8.html>`_                                                         |
-|                               |                | on both the                                                                                                                                    |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | client and server                                                                                                                              |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using                                                                                             |
-|                               |                | SSH                                                                                                                                            |
-|                               |                | 's                                                                                                                                             |
-|                               |                | `port  <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                                                        |
-|                               |                | `forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                                                           |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Compress Connections          | checkbox       | may reduce latency over slow networks                                                                                                          |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in Advanced Mode; allows you to paste a specific host key as the default key is changed with every installation                 |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| SFTP Log Level                | drop-down menu | only available in Advanced Mode; select the                                                                                                    |
-|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                                                                 |
-|                               |                | level of the SFTP server                                                                                                                       |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| SFTP Log Facility             | drop-down menu | only available in Advanced Mode; select the                                                                                                    |
-|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                                                                 |
-|                               |                | facility of the SFTP server                                                                                                                    |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extra Options                 | string         | only available in Advanced Mode;                                                                                                               |
-|                               |                | additional                                                                                                                                     |
-|                               |                | `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_                                                                       |
-|                               |                | options not covered in this screen, one per line; these options are case-sensitive and mis-spellings may prevent the SSH service from starting |
-|                               |                |                                                                                                                                                |
-+-------------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------+
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| **Setting**                   | **Value**      | **Description**                                                                                          |
+|                               |                |                                                                                                          |
++===============================+================+==========================================================================================================+
+| TCP Port                      | integer        | port to open for SSH connection requests; *22* by default                                                |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default** if enabled, password must  |
+|                               |                | be set for *root* user in View Users                                                                     |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                               |
+|                               |                | `additional setup <http://the.earth.li/%7Esgtatham/putty/0.55/htmldoc/Chapter8.html>`_                   |
+|                               |                | on both the SSH client and server                                                                        |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
+|                               |                | `port forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Host Private Key              | string         | only available in Advanced Mode; allows you to paste a specific host key as the default key is changed   |
+|                               |                | with every installation                                                                                  |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| SFTP Log Level                | drop-down menu | only available in Advanced Mode; select the                                                              |
+|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
+|                               |                | level of the SFTP server                                                                                 |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| SFTP Log Facility             | drop-down menu | only available in Advanced Mode; select the                                                              |
+|                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
+|                               |                | facility of the SFTP server                                                                              |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Extra Options                 | string         | only available in Advanced Mode; additional                                                              |
+|                               |                | `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_                                 |
+|                               |                | options not covered in this screen, one per line; these options are case-sensitive and mis-spellings may |
+|                               |                | prevent the SSH service from starting                                                                    |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 
 
 A few sshd_config(5) options that are useful to input in the *Extra Options* field include:
@@ -7900,36 +7748,34 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 **Table 11.14a: TFTP Configuration Options**
 
 
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting         | Value         | Description                                                                                                                                     |
-|                 |               |                                                                                                                                                 |
-+=================+===============+=================================================================================================================================================+
-| Directory       | browse button | browse to the directory to be used for storage; some devices require a specific directory name, refer to the device's documentation for details |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow New Files | checkbox      | enable if network devices need to send files to the FreeNAS® system (e.g. backup their config)                                                  |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Port            | integer       | UDP port to listen for TFTP requests,                                                                                                           |
-|                 |               | *69*                                                                                                                                            |
-|                 |               | by default                                                                                                                                      |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Username        | drop-down     | account used for tftp requests; must have permission to the                                                                                     |
-|                 | menu          | *Directory*                                                                                                                                     |
-|                 |               |                                                                                                                                                 |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Umask           | integer       | umask for newly created files, default is                                                                                                       |
-|                 |               | *022*                                                                                                                                           |
-|                 |               | (everyone can read, nobody can write); some devices require a less strict umask                                                                 |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Extra options   | string        | additional                                                                                                                                      |
-|                 |               | `tftpd(8) <http://www.freebsd.org/cgi/man.cgi?query=tftpd>`_                                                                                    |
-|                 |               | options not shown in this screen, one per line                                                                                                  |
-|                 |               |                                                                                                                                                 |
-+-----------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| **Setting**     | **Value**     | **Description**                                                                                                          |
+|                 |               |                                                                                                                          |
++=================+===============+==========================================================================================================================+
+| Directory       | browse button | browse to the directory to be used for storage; some devices require a specific directory name, refer to the device's    |
+|                 |               | documentation for details                                                                                                |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Allow New Files | checkbox      | enable if network devices need to send files to the system (e.g. backup their config)                                    |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Port            | integer       | UDP port to listen for TFTP requests, *69* by default                                                                    |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Username        | drop-down     | account used for tftp requests; must have permission to the *Directory*                                                  |
+|                 | menu          |                                                                                                                          |
+|                 |               |                                                                                                                          |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Umask           | integer       | umask for newly created files, default is *022* (everyone can read, nobody can write); some devices require a less       |
+|                 |               | strict umask                                                                                                             |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
+| Extra options   | string        | additional                                                                                                               |
+|                 |               | `tftpd(8) <http://www.freebsd.org/cgi/man.cgi?query=tftpd>`_                                                             |
+|                 |               | options not shown in this screen, one per line                                                                           |
+|                 |               |                                                                                                                          |
++-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 
 
 UPS
@@ -7957,9 +7803,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                |                                                                                                       |
 |                           |                |                                                                                                       |
 +===========================+================+=======================================================================================================+
-| UPS Mode                  | drop-down menu | select from                                                                                           |
-|                           |                | *Master*                                                                                              |
-|                           |                | or                                                                                                    |
+| UPS Mode                  | drop-down menu | select from *Master* or                                                                               |
 |                           |                | *Slave*                                                                                               |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -7970,8 +7814,8 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                | `http://www.networkupstools.org/stable-hcl.html <http://www.networkupstools.org/stable-hcl.html>`_    |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Port                      | drop-down      | select the serial or USB port the UPS is plugged into (see                                            |
-|                           | menu           | NOTE below)                                                                                           |
+| Port                      | drop-down      | select the serial or USB port the UPS is plugged into (see  NOTE below)                               |
+|                           | menu           |                                                                                                       |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters      | string         | additional options from                                                                               |
@@ -7981,25 +7825,18 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Description               | string         | optional                                                                                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Shutdown mode             | drop-down menu | choices are                                                                                           |
-|                           |                | *UPS goes on battery*                                                                                 |
-|                           |                | and                                                                                                   |
+| Shutdown mode             | drop-down menu | choices are *UPS goes on battery* and                                                                 |
 |                           |                | *UPS reaches low battery*                                                                             |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters                           |
-|                           |                | *UPS goes on battery*                                                                                 |
-|                           |                | , unless power is restored                                                                            |
+| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters *UPS goes on battery*,    |                                                                                 |
+|                           |                | unless power is restored                                                                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Monitor User              | string         | default is                                                                                            |
-|                           |                | *upsmon*                                                                                              |
+| Monitor User              | string         | default is *upsmon*                                                                                   |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Monitor Password          | string         | default is known value                                                                                |
-|                           |                | *fixmepass*                                                                                           |
-|                           |                | and should be changed;                                                                                |
-|                           |                | can not contain a space or #                                                                          |
+| Monitor Password          | string         | default is known value *fixmepass* and should be changed; can not contain a space or #                |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Extra users               | string         | defines the accounts that have administrative access; see                                             |
@@ -8008,25 +7845,17 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Remote monitor            | checkbox       | if enabled, be aware that the default is to listen on all interfaces and to use the known values user |
-|                           |                | *upsmon*                                                                                              |
-|                           |                | and password                                                                                          |
+|                           |                | *upsmon* and password                                                                                 |
 |                           |                | *fixmepass*                                                                                           |
 |                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Send Email Status Updates | checkbox       | if checked, activates the *To email* field                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Send Email Status Updates | checkbox       | if checked, activates the                                                                             |
-|                           |                | *To email*                                                                                            |
-|                           |                | field                                                                                                 |
+| To email                  | email address  | if *Send Email* box checked, email address of person to receive status updates                        |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| To email                  | email address  | if                                                                                                    |
-|                           |                | *Send Email*                                                                                          |
-|                           |                | box checked, email address of person to receive status updates                                        |
-|                           |                |                                                                                                       |
-+---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Email subject             | string         | if                                                                                                    |
-|                           |                | *Send Email*                                                                                          |
-|                           |                | box checked, subject of email updates                                                                 |
+| Email subject             | string         | if *Send Email* box checked, subject of email updates                                                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -8075,7 +7904,7 @@ Installing Plugins
 A FreeNAS® PBI is a self-contained application installer which has been designed to integrate into the FreeNAS® GUI. A FreeNAS® PBI offers several
 advantages:
 
-* the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs. This list is also available at Available FreeNAS® PBIs.
+* the FreeNAS® GUI provides a browser for viewing the list of available FreeNAS® PBIs.
 
 * the FreeNAS® GUI provides buttons for installing, starting, upgrading, and deleting FreeNAS® PBIs.
 
@@ -8309,26 +8138,22 @@ you install software into a Linux jail, install the 32-bit version of the softwa
 **Table 13a: What Type of Software can be Installed Into a Jail?**
 
 
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| **Type of Jail** | FreeNAS® PBI                                             _ | FreeBSD pkgng package                                                             _ | FreeBSD port                                                        _ |
-|                  |                                                             |                                                                                     |                                                                       |
-+==================+=============================================================+=====================================================================================+=======================================================================+
-| Plugin           | yes                                                         | yes                                                                                 | yes                                                                   |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Port             | no                                                          | no, unless                                                                          | yes                                                                   |
-|                  |                                                             | *vanilla*                                                                           |                                                                       |
-|                  |                                                             | is unchecked during jail creation                                                   |                                                                       |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Standard         | no                                                          | no, unless                                                                          | yes                                                                   |
-|                  |                                                             | *vanilla*                                                                           |                                                                       |
-|                  |                                                             | is unchecked during jail creation                                                   |                                                                       |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| Linux            | no                                                          | no                                                                                  | no                                                                    |
-|                  |                                                             |                                                                                     |                                                                       |
-+------------------+-------------------------------------------------------------+-------------------------------------------------------------------------------------+-----------------------------------------------------------------------+
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| **Type of Jail** | **FreeNAS PBI**     | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
+|                  |                     |                                                           |                     |
++==================+=====================+===========================================================+=====================+
+| Plugin           | yes                 | yes                                                       | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Port             | no                  | no, unless  *vanilla*  is unchecked during jail creation  | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Standard         | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
+| Linux            | no                  | no                                                        | no                  |
+|                  |                     |                                                           |                     |
++------------------+---------------------+-----------------------------------------------------------+---------------------+
 
 
 The ability to create multiple jails and multiple types of jails offers great flexibility and application separation to the administrator. For example, one
@@ -8429,117 +8254,86 @@ To create a jail, click Jails → Add Jails to access the screen shown in Figure
 
 **Table 13.2a: Jail Configuration Options**
 
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**               | **Value**      | **Description**                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+===========================+================+========================================================================================================================================================+
-| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| type                      | drop-down menu | default choices are                                                                                                                                    |
-|                           |                | *pluginjail*                                                                                                                                           |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *portjail*                                                                                                                                             |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *standard*                                                                                                                                             |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *debian*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *gentoo*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *ubuntu*                                                                                                                                               |
-|                           |                | ,                                                                                                                                                      |
-|                           |                | *suse*                                                                                                                                                 |
-|                           |                | , and                                                                                                                                                  |
-|                           |                | *centos*                                                                                                                                               |
-|                           |                | ; on a 64-bit system,                                                                                                                                  |
-|                           |                | options are also available for creating the 32-bit versions of a plugin, port, or standard jail                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in                                                                       |
-|                           |                | Jails Configuration;_                                                                                                                                  |
-|                           |                | if you change the default address, make sure it is reachable within the FreeNAS® system's network and is not in use by any other host on the network  |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 netmask              | drop-down menu | select the subnet mask associated with                                                                                                                 |
-|                           |                | *IPv4 address*                                                                                                                                         |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if                                                                                               |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with                                                                                                                 |
-|                           |                | *IPv4 bridge address*                                                                                                                                  |
-|                           |                | ; will be greyed out for Linux jails or if                                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if                                                          |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free                                                                              |
-|                           |                | address from the range specified in                                                                                                                    |
-|                           |                | Jails Configuration_                                                                                                                                   |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 prefix length        | drop-down menu | select the prefix length associated with                                                                                                               |
-|                           |                | *IPv6 address*                                                                                                                                         |
-|                           |                |                                                                                                                                                        |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if                                                                                               |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with                                                                                                               |
-|                           |                | *IPv6 address*                                                                                                                                         |
-|                           |                | ; will be greyed out for Linux jails or if                                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if                                                          |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | if a static MAC address is needed, input it here; requires                                                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | to be checked                                                                                                                                          |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g.                                                                                               |
-|                           |                | *allow.sysvipc=1,allow.raw_sockets=1*                                                                                                                  |
-|                           |                | )                                                                                                                                                      |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                                                                         |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface; does not apply to Linux jails                |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if                                                             |
-|                           |                | *VIMAGE*                                                                                                                                               |
-|                           |                | is unchecked                                                                                                                                           |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
-| vanilla                   | checkbox       | uncheck this box if you plan to install FreeBSD packages into a                                                                                        |
-|                           |                | *portjail*                                                                                                                                             |
-|                           |                | or                                                                                                                                                     |
-|                           |                | *standard*                                                                                                                                             |
-|                           |                | jail                                                                                                                                                   |
-|                           |                |                                                                                                                                                        |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                              |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++===========================+================+==============================================================================================================+
+| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| type                      | drop-down menu | default choices are *pluginjail*,                                                                            |
+|                           |                | *portjail*,                                                                                                  |
+|                           |                | *standard*,                                                                                                  |
+|                           |                | *debian*,                                                                                                    |                
+|                           |                | *gentoo*,                                                                                                    |
+|                           |                | *ubuntu*,                                                                                                    |
+|                           |                | *suse*, and                                                                                                  |
+|                           |                | *centos*; on a 64-bit system, options are also available for creating the 32-bit versions of a plugin, port, |
+|                           |                | or standard jail                                                                                             |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in *Jails Configuration*; if   |
+|                           |                | you change the default address, make sure it is reachable within the local network and is not                |
+|                           |                | in use by any other host on the network                                                                      |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 netmask              | drop-down menu | select the subnet mask associated with *IPv4 address*                                                        |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with *IPv4 bridge address*; will be greyed out for Linux jails or if       |
+|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free address from the range specified   |
+|                           |                | in *Jails Configuration*_                                                                                    |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 prefix length        | drop-down menu | select the prefix length associated with *IPv6 address*                                                      |
+|                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with *IPv6 address*; will be greyed out for Linux jails or if            |
+|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| MAC                       | string         | if a static MAC address is needed, input it here; requires *VIMAGE* to be checked                            |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g. *allow.sysvipc=1,allow.raw_sockets=1*)              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface;    |
+|                           |                | does not apply to Linux jails                                                                                |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if *VIMAGE* is       |
+|                           |                | unchecked                                                                                                    |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| vanilla                   | checkbox       | uncheck this box if you plan to install FreeBSD packages into a *portjail* or                                |
+|                           |                | *standard* jail                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
 
 **NOTE:** the IPv4 and IPv6 bridge interface is used to bridge the
@@ -8655,7 +8449,7 @@ accessed by expanding the jail's name in the tree view and clicking Edit.
 
 |Figure132c_png|
 
-Most of these settings were previously described in Table 10.2a and can be changed using this screen after jail creation. The following settings differ
+Most of these settings were previously described in Table 13.2a and can be changed using this screen after jail creation. The following settings differ
 between the “Add Jail” and “Edit Jail” screens:
 
 * **Jail Name:** this setting is read-only once the jail has been created.
@@ -8814,44 +8608,30 @@ Table 13.3a summarizes the fields in this screen.
 **Table 13.3a: Jail Template Options**
 
 
-+--------------+----------------+--------------------------------+
-| **Setting**  | **Value**      | **Description**                |
-|              |                |                                |
-|              |                |                                |
-+==============+================+================================+
-| Name         | string         | value will appear in the       |
-|              |                | *Name*                         |
-|              |                | column of View Jail Templates  |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| OS           | drop-down menu | choices are                    |
-|              |                | *FreeBSD*                      |
-|              |                | or                             |
-|              |                | *Linux*                        |
-|              |                |                                |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| Architecture | drop-down menu | choices are                    |
-|              |                | *x86*                          |
-|              |                | or                             |
-|              |                | *x64*                          |
-|              |                | ;                              |
-|              |                | *x86*                          |
-|              |                | is required                    |
-|              |                | if                             |
-|              |                | *Linux*                        |
-|              |                | is selected                    |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
-| URL          | string         | input the full URL to the      |
-|              |                | *.tgz*                         |
-|              |                | file, including the protocol ( |
-|              |                | *ftp://*                       |
-|              |                | or                             |
-|              |                | *http://*                      |
-|              |                | )                              |
-|              |                |                                |
-+--------------+----------------+--------------------------------+
++--------------+----------------+----------------------------------------------------------------+
+| **Setting**  | **Value**      | **Description**                                                |
+|              |                |                                                                |
+|              |                |                                                                |
++==============+================+================================================================+
+| Name         | string         | value will appear in the *Name* column of View Jail Templates  |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| OS           | drop-down menu | choices are  *FreeBSD* or                                      |
+|              |                | *Linux*                                                        |
+|              |                |                                                                |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| Architecture | drop-down menu | choices are *x86* or                                           |
+|              |                | *x64*;                                                         |
+|              |                | *x86* is required if                                           |
+|              |                | *Linux* is selected                                            |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
+| URL          | string         | input the full URL to the *.tgz* file, including the protocol  |
+|              |                | (*ftp://* or                                                   |
+|              |                | *http://*)                                                     |
+|              |                |                                                                |
++--------------+----------------+----------------------------------------------------------------+
 
 
 
@@ -9549,6 +9329,19 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 
 * `NASFeratu: Build Your Own NAS - FreeNAS Hardware Recommendations <https://www.youtube.com/watch?v=e1n3rHlUY3k>`_
 
+* `FreeNAS® 9.2.1: Plex Media Server Plugin (+ Initial Setup) <https://www.youtube.com/watch?v=3DnUWTliaOY>`_
+
+* `FreeNAS® 9.2.1.5 BitTorrent Sync Plugin (Btsync) <https://www.youtube.com/watch?v=9sb_9283BkA>`_
+
+* `FreeNAS 9.2.x with BT SYNC, transmission, Couchpotato, SickBeard and Plex  <https://www.youtube.com/watch?v=Vgh8VAR5iDU>`_
+
+* `Windows to FreeNAS backup <http://www.youtube.com/watch?v=vcmAAy-OVtI>`_
+
+* `Crashplan backup on Apple OS X with FreeNAS <http://www.youtube.com/watch?v=p7CHxFxlEU8>`_
+
+* `FreeNAS® 9.2.1.5: Shares Overview (AFP, NFS, CIFS, Time Machine)  <https://www.youtube.com/watch?v=rOueRnMNZtY>`_
+
+
 **NOTE:** videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
 doubt, refer to the documentation specific to your version of FreeNAS®. 
 
@@ -9814,8 +9607,10 @@ results:
 You can receive a summary of the available switches by typing the following command. As you can see from the number of options, IOzone is comprehensive and it
 may take some time to learn how to use the tests effectively.
 
-Recent versions of FreeNAS® enable compression by default on newly created ZFS volumes. To properly test performance, use data that is not compressible by
-including following additional parameters: *-+w 0 -+y 0 -+C 0*.
+Starting with version 9.2.1, FreeNAS® enables compression on newly created ZFS pools by default. Since IOzone creates test data that is compressible, this
+can skew test results. To configure IOzone to generate incompressible test data, include the options *-+w 1 -+y 1 -+C 1*.
+
+Alternatively, consider temporarily disabling compression on the ZFS pool or dataset when running IOzone benchmarks.
 
 **NOTE:** if you prefer to visualize the collected data, scripts are available to render IOzone's output in
 `Gnuplot <http://www.gnuplot.info/>`_
@@ -10784,59 +10579,47 @@ or *False*.
 **Table 25.2a: Valid JSON Parameters for Users Create Resource**
 
 
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| **JSON Parameter**       | **Type** | **Description**                                                                                                                    |
-|                          |          |                                                                                                                                    |
-|                          |          |                                                                                                                                    |
-+==========================+==========+====================================================================================================================================+
-| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but can not include a space |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_full_name         | string   | may contain spaces and uppercase characters                                                                                        |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_password          | string   | can include a mix of upper and lowercase letters, characters, and                                                                  |
-|                          |          | numbers                                                                                                                            |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_uid               | integer  | by convention, user accounts have an ID greater than 1000 with a maximum allowable value of 65,535                                 |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_group             | integer  | if                                                                                                                                 |
-|                          |          | *bsdusr_creategroup*                                                                                                               |
-|                          |          | is set to                                                                                                                          |
-|                          |          | *False*                                                                                                                            |
-|                          |          | , specify the numeric ID of the group to create                                                                                    |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_creategroup       | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , a primary group with the same numeric ID as                                                                                      |
-|                          |          | *bsdusr_uid*                                                                                                                       |
-|                          |          | will be automatically created                                                                                                      |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_mode              | string   | sets default numeric UNIX permissions of user's home directory                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_shell             | string   | specify full path to a UNIX shell that is installed on the system                                                                  |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_password_disabled | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , user is not allowed to login                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_locked            | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , user is not allowed to login                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
-| bsdusr_sudo              | boolean  | if set to                                                                                                                          |
-|                          |          | *True*                                                                                                                             |
-|                          |          | , sudo is enabled for the user                                                                                                     |
-|                          |          |                                                                                                                                    |
-+--------------------------+----------+------------------------------------------------------------------------------------------------------------------------------------+
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| **JSON Parameter**       | **Type** | **Description**                                                                                                      |
+|                          |          |                                                                                                                      |
+|                          |          |                                                                                                                      |
++==========================+==========+======================================================================================================================+
+| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but can not   |
+|                          |          | include a space                                                                                                      |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_full_name         | string   | may contain spaces and uppercase characters                                                                          |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_password          | string   | can include a mix of upper and lowercase letters, characters, and numbers                                            |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_uid               | integer  | by convention, user accounts have an ID greater than 1000 with a maximum allowable value of 65,535                   |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_group             | integer  | if *bsdusr_creategroup* is set to                                                                                    |
+|                          |          | *False*, specify the numeric ID of the group to create                                                               |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_creategroup       | boolean  | if set to *True*, a primary group with the same numeric ID as                                                        |
+|                          |          | *bsdusr_uid* will be automatically created                                                                           |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_mode              | string   | sets default numeric UNIX permissions of user's home directory                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_shell             | string   | specify full path to a UNIX shell that is installed on the system                                                    |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_password_disabled | boolean  | if set to *True*, user is not allowed to login                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_locked            | boolean  | if set to *True*, user is not allowed to login                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_sudo              | boolean  | if set to *True*, sudo is enabled for the user                                                                       |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 
 
 **NOTE:** when using boolean values, JSON returns raw lowercase values whereas Python uses uppercase values. This means that you should use

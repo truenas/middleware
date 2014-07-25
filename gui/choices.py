@@ -220,17 +220,11 @@ CASEFOLDING_CHOICES = (
         ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
         )
 
-ISCSI_TARGET_TYPE_CHOICES = (
-        ('Disk', _('Disk')),
-        #Those types are not supported by istgt yet
-        #('DVD', _('DVD')),
-        #('Tape', _('Tape')),
-        #('Pass-thru Device', _('Pass')),
-        )
-
-ISCSI_TARGET_FLAGS_CHOICES = (
-        ('rw', _('read-write')),
-        ('ro', _('read-only')),
+TARGET_BLOCKSIZE_CHOICES = (
+        ('512', '512'),
+        ('1024', '1024'),
+        ('2048', '2048'),
+        ('4096', '4096'),
         )
 
 AUTHMETHOD_CHOICES = (
@@ -787,4 +781,16 @@ class SERIAL_CHOICES(object):
 TUNABLE_TYPES = (
     ('loader', _('Loader')),
     ('sysctl', _('Sysctl')),
+)
+
+IDMAP_CHOICES = (
+    ('idmap_ad', _('ad')),
+    ('idmap_autorid', _('autorid')),
+    ('idmap_hash', _('hash')),
+    ('idmap_ldap', _('ldap')),
+    ('idmap_nss', _('nss')),
+    ('idmap_rfc2307', _('rfc2307')),
+    ('idmap_rid', _('rid')),
+    ('idmap_tdb', _('tdb')),
+    ('idmap_tdb2', _('tdb2'))
 )

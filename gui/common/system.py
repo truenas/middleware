@@ -303,8 +303,7 @@ def umount(path):
 
 
 def service_enabled(name):
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
-    h = sqlite3.connect(db)
+    h = sqlite3.connect(FREENAS_DATABASE)
     c = h.cursor()
 
     enabled = False
@@ -322,8 +321,7 @@ def service_enabled(name):
 
 
 def ldap_enabled():
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
-    h = sqlite3.connect(db)
+    h = sqlite3.connect(FREENAS_DATABASE)
     c = h.cursor()
 
     enabled = False
@@ -359,8 +357,7 @@ def ldap_objects():
 
 
 def activedirectory_enabled():
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
-    h = sqlite3.connect(db)
+    h = sqlite3.connect(FREENAS_DATABASE)
     c = h.cursor()
 
     enabled = False

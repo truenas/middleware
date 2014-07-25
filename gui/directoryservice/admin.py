@@ -24,6 +24,55 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.contrib import admin
+import logging
 
-# Register your models here.
+from django.contrib import admin
+from django.utils.translation import ugettext as _
+
+from freenasUI.directoryservice import models
+from freenasUI.freeadmin.options import BaseFreeAdmin
+from freenasUI.freeadmin.site import site
+
+log = logging.getLogger('directoryservice.admin')
+
+
+class ActiveDirectoryFAdmin(BaseFreeAdmin):
+    create_modelform = "ActiveDirectoryForm"
+    edit_modelform = "ActiveDirectoryForm"
+    icon_object = u"ActiveDirectoryIcon"
+    icon_model = u"ActiveDirectoryIcon"
+    icon_add = u"ActiveDirectoryIcon"
+    icon_view = u"ActiveDirectoryIcon"
+
+
+class LDAPFAdmin(BaseFreeAdmin):
+    create_modelform = "LDAPForm"
+    edit_modelform = "LDAPForm"
+    icon_object = u"LDAPIcon"
+    icon_model = u"LDAPIcon"
+    icon_add = u"LDAPIcon"
+    icon_view = u"LDAPIcon"
+
+
+class NISFAdmin(BaseFreeAdmin):
+    create_modelform = "NISForm"
+    edit_modelform = "NISForm"
+    icon_object = u"NISIcon"
+    icon_model = u"NISIcon"
+    icon_add = u"NISIcon"
+    icon_view = u"NISIcon"
+ 
+
+class NT4FAdmin(BaseFreeAdmin):
+    create_modelform = "NT4Form"
+    edit_modelform = "NT4Form"
+    icon_object = u"NT4Icon"
+    icon_model = u"NT4Icon"
+    icon_add = u"NT4Icon"
+    icon_view = u"NT4Icon"
+
+
+site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
+site.register(models.LDAP, LDAPFAdmin)
+site.register(models.NIS, NISFAdmin)
+site.register(models.NT4, NT4FAdmin)

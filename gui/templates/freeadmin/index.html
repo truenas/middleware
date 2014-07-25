@@ -27,6 +27,9 @@ menuSetURLs = function() {
 }
 
 {% if consolemsg %}msgEnabled = true;{% endif %}
+wizardShow = {% if wizard %}true{% else %}false{% endif %};
+wizardUrl = '{% url "system_initialwizard" %}';
+
 </script>
 {% endblock %}
 
