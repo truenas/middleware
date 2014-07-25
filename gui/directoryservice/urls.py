@@ -58,7 +58,7 @@ urlpatterns = patterns(
         name="directoryservice_idmap_tdb"),
     url(r"^idmap_tdb2/(?P<id>\d+)/$", "directoryservice_idmap_tdb2",
         name="directoryservice_idmap_tdb2"),
-    url(r"^idmap_backend/(?P<obj_type>\d+)/(?P<idmap_type>.+)/$",
+    url(r"^idmap_backend/(?P<obj_type>\d+)/(?P<obj_id>\d+)/(?P<idmap_type>.+)/$",
         "directoryservice_idmap_backend",
         name="directoryservice_idmap_backend"),
     url(r"^clearcache/$", "directoryservice_clearcache",

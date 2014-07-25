@@ -57,6 +57,7 @@ def directoryservice_to_enum(ds_type):
 
     return enum
 
+
 def enum_to_directoryservice(enum):
     ds = None
     ds_dict = {
@@ -72,6 +73,7 @@ def enum_to_directoryservice(enum):
         pass
 
     return ds
+
 
 IDMAP_TYPE_NONE = 0
 IDMAP_TYPE_AD = 1
@@ -105,6 +107,7 @@ def idmap_to_enum(idmap_type):
 
     return enum
 
+
 def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
@@ -127,9 +130,25 @@ def enum_to_idmap(enum):
     return idmap
 
 
-class idmap_ad(Model):
-    idmap_backend_name = "ad"
+class idmap_base(Model):
+    idmap_ds_type = models.IntegerField(
+        null=True
+    )
+    idmap_ds_id = models.PositiveIntegerField(
+        null=True
+    )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_base, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_NONE
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        abstract = True
+
+
+class idmap_ad(idmap_base):
     idmap_ad_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -159,6 +178,12 @@ class idmap_ad(Model):
         default='rfc2307'
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_ad, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_AD
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("AD Idmap")
         verbose_name_plural = _("AD Idmap")
@@ -167,9 +192,7 @@ class idmap_ad(Model):
         deletable = False
 
 
-class idmap_autorid(Model):
-    idmap_backend_name = "autorid"
-
+class idmap_autorid(idmap_base):
     idmap_autorid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -206,6 +229,12 @@ class idmap_autorid(Model):
         default=False
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_autorid, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_AUTORID
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("AutoRID Idmap")
         verbose_name_plural = _("AutoRID Idmap")
@@ -214,9 +243,7 @@ class idmap_autorid(Model):
         deletable = False
 
 
-class idmap_hash(Model):
-    idmap_backend_name = "hash"
-
+class idmap_hash(idmap_base):
     idmap_hash_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -235,6 +262,12 @@ class idmap_hash(Model):
         )
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_hash, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_HASH
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("Hash Idmap")
         verbose_name_plural = _("Hash Idmap")
@@ -243,9 +276,7 @@ class idmap_hash(Model):
         deletable = False
 
 
-class idmap_ldap(Model):
-    idmap_backend_name = "ldap"
-
+class idmap_ldap(idmap_base):
     idmap_ldap_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -284,6 +315,12 @@ class idmap_ldap(Model):
             "SID/uid/gid map entries.")
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_ldap, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_LDAP
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("LDAP Idmap")
         verbose_name_plural = _("LDAP Idmap")
@@ -292,9 +329,7 @@ class idmap_ldap(Model):
         deletable = False
 
 
-class idmap_nss(Model):
-    idmap_backend_name = "nss"
-
+class idmap_nss(idmap_base):
     idmap_nss_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -304,6 +339,12 @@ class idmap_nss(Model):
         default=90000000
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_nss, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_NSS
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("NSS Idmap")
         verbose_name_plural = _("NSS Idmap")
@@ -312,9 +353,7 @@ class idmap_nss(Model):
         deletable = False
 
 
-class idmap_rfc2307(Model):
-    idmap_backend_name = "rfc2307"
-
+class idmap_rfc2307(idmap_base):
     idmap_rfc2307_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -409,6 +448,12 @@ class idmap_rfc2307(Model):
         blank=True
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_rfc2307, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_RFC2307
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("RFC2307 Idmap")
         verbose_name_plural = _("RFC2307 Idmap")
@@ -417,9 +462,7 @@ class idmap_rfc2307(Model):
         deletable = False
 
 
-class idmap_rid(Model):
-    idmap_backend_name = "rid"
-
+class idmap_rid(idmap_base):
     idmap_rid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
@@ -429,6 +472,12 @@ class idmap_rid(Model):
         default=90000000
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_rid, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_RID
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("RID Idmap")
         verbose_name_plural = _("RID Idmap")
@@ -437,9 +486,7 @@ class idmap_rid(Model):
         deletable = False
 
 
-class idmap_tdb(Model):
-    idmap_backend_name = "tdb"
-
+class idmap_tdb(idmap_base):
     idmap_tdb_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -449,6 +496,12 @@ class idmap_tdb(Model):
         default=100000000
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_tdb, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_TDB
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("TDB Idmap")
         verbose_name_plural = _("TDB Idmap")
@@ -457,9 +510,7 @@ class idmap_tdb(Model):
         deletable = False
 
 
-class idmap_tdb2(Model):
-    idmap_backend_name = "tdb2"
-
+class idmap_tdb2(idmap_base):
     idmap_tdb2_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
@@ -477,6 +528,12 @@ class idmap_tdb2(Model):
         )
     )
 
+    def __init__(self, *args, **kwargs):
+        super(idmap_tdb2, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_TDB2
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
     class Meta:
         verbose_name = _("TDB2 Idmap")
         verbose_name_plural = _("TDB2 Idmap")
@@ -485,48 +542,18 @@ class idmap_tdb2(Model):
         deletable = False
 
 
-class directoryservice_idmap(Model):
-    dsi_idmap_ad = models.ForeignKey(
-        idmap_ad,
-        null=True
-    )
-    dsi_idmap_autorid = models.ForeignKey(
-        idmap_autorid,
-        null=True
-    )
-    dsi_idmap_hash = models.ForeignKey( 
-        idmap_hash,
-        null=True
-    )
-    dsi_idmap_ldap = models.ForeignKey(
-        idmap_ldap,
-        null=True
-    )
-    dsi_idmap_nss = models.ForeignKey(
-        idmap_nss,
-        null=True
-    )
-    dsi_idmap_rfc2307 = models.ForeignKey(
-        idmap_rfc2307,
-        null=True
-    )
-    dsi_idmap_rid = models.ForeignKey(
-        idmap_rid,
-        null=True
-    )
-    dsi_idmap_tdb = models.ForeignKey(
-        idmap_tdb,
-        null=True
-    )
-    dsi_idmap_tdb2 = models.ForeignKey(
-        idmap_tdb2,
-        null=True
-    )
+class DirectoryServiceBase(Model):
+    class Meta:
+        abstract = True
+
+    def __init__(self, *args, **kwargs):
+        super(DirectoryServiceBase, self).__init__(*args, **kwargs)
+
+        self.ds_type = DS_TYPE_NONE
+        self.ds_name = enum_to_directoryservice(self.ds_type)
 
 
-class NT4(Model):
-    ds_type = DS_TYPE_NT4
-
+class NT4(DirectoryServiceBase):
     nt4_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
@@ -566,10 +593,6 @@ class NT4(Model):
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_RID)
     )
-    nt4_idmap_backend_type = models.ForeignKey(
-        directoryservice_idmap,
-        null=True
-    )
     nt4_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False,
@@ -577,7 +600,9 @@ class NT4(Model):
 
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
-        self.svc = 'nt4'
+
+        self.ds_type = DS_TYPE_NT4
+        self.ds_name = enum_to_directoryservice(self.ds_type)
 
         if not self.nt4_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
@@ -595,9 +620,7 @@ class NT4(Model):
         deletable = False
 
 
-class ActiveDirectory(Model):
-    ds_type = DS_TYPE_ACTIVEDIRECTORY
-
+class ActiveDirectory(DirectoryServiceBase):
     ad_domainname = models.CharField(
         verbose_name=_("Domain Name (DNS/Realm-Name)"),
         max_length=120,
@@ -705,10 +728,6 @@ class ActiveDirectory(Model):
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_AD)
     )
-    ad_idmap_backend_type = models.ForeignKey(
-        directoryservice_idmap,
-        null=True
-    )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False
@@ -716,7 +735,9 @@ class ActiveDirectory(Model):
 
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
-        self.svc = 'activedirectory'
+
+        self.ds_type = DS_TYPE_ACTIVEDIRECTORY
+        self.ds_name = enum_to_directoryservice(self.ds_type)
 
         if not self.ad_netbiosname:  
             from freenasUI.network.models import GlobalConfiguration
@@ -736,9 +757,7 @@ class ActiveDirectory(Model):
         icon_model = "ActiveDirectoryIcon"
 
 
-class NIS(Model):
-    ds_type = DS_TYPE_NIS
-
+class NIS(DirectoryServiceBase):
     nis_domain = models.CharField(
         verbose_name=_("NIS domain"),
         max_length=120,
@@ -767,7 +786,9 @@ class NIS(Model):
 
     def __init__(self, *args, **kwargs):
         super(NIS, self).__init__(*args, **kwargs)
-        self.svc = 'nis'
+
+        self.ds_type = DS_TYPE_NIS
+        self.ds_name = enum_to_directoryservice(self.ds_type)
 
     class Meta:
         verbose_name = _("NIS Domain")
@@ -778,9 +799,7 @@ class NIS(Model):
         icon_model = "NISIcon"
 
 
-class LDAP(Model):
-    ds_type = DS_TYPE_LDAP
-
+class LDAP(DirectoryServiceBase):
     ldap_hostname = models.CharField(
         verbose_name=_("Hostname"),
         max_length=120,
@@ -870,10 +889,6 @@ class LDAP(Model):
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
     )
-    ldap_idmap_backend_type = models.ForeignKey(
-        directoryservice_idmap,
-        null=True
-    )
     ldap_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False
@@ -881,7 +896,9 @@ class LDAP(Model):
 
     def __init__(self, *args, **kwargs):
         super(LDAP, self).__init__(*args, **kwargs)
-        self.svc = 'ldap'
+
+        self.ds_type = DS_TYPE_LDAP
+        self.ds_name = enum_to_directoryservice(self.ds_type)
 
     class Meta:
         verbose_name = _("LDAP")

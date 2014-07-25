@@ -50,54 +50,90 @@ class idmap_ad_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_ad
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_autorid_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_autorid
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_hash_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_hash
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_ldap_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_ldap
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_nss_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_nss
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_rfc2307_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_rfc2307
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_rid_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_rid
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_tdb_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_tdb
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class idmap_tdb2_Form(ModelForm):
     class Meta:
         fields = '__all__'
-        model = models.idmap_tdb2
+        model = models.idmap_tdb
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
 
 
 class NT4Form(ModelForm):
