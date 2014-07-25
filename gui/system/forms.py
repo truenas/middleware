@@ -239,6 +239,7 @@ class InitialWizard(CommonWizard):
                 share_iscsisize = share.get('share_iscsisize')
                 share_user = share.get('share_user')
                 share_usercreate = share.get('share_usercreate')
+                share_userpw = share.get('share_userpw')
                 share_group = share.get('share_group')
                 share_groupcreate = share.get('share_groupcreate')
                 share_mode = share.get('share_mode')
@@ -269,8 +270,17 @@ class InitialWizard(CommonWizard):
                             raise MiddlewareError(
                                 _('User does not exist: %s') % share_user
                             )
+                        if share_userpw:
+                            password = share_userpw
+                            password_disabled = False
+                        else:
+                            password = '!'
+                            password_disabled = True
                         uid, gid, unixhash, smbhash = _n.user_create(
-                            share_user, share_user, '!', password_disabled=True
+                            share_user,
+                            share_user,
+                            password,
+                            password_disabled=password_disabled
                         )
                         bsdUsers.objects.create(
                             bsdusr_username=share_user,
