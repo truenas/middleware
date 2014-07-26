@@ -282,7 +282,8 @@ class PackageDB:
         cur = self.__conn.cursor()
 
         dir_list = []
-        cur.execute("SELECT path FROM files WHERE package = ? AND kind = ?", (pkgName, "dir"))
+        # Sort the list descending so children show up first.
+        cur.execute("SELECT path FROM files WHERE package = ? AND kind = ? ORDER BY path DESC", (pkgName, "dir"))
         rows = cur.fetchall()
         for row in rows:
             path = row[0]

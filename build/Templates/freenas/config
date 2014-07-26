@@ -16,3 +16,21 @@ licenses = [BSD, MIT, GPL]
 post-install = touch /boot/kernel/linker.hints
 	touch /boot/modules/linker.hints
 
+[Files]
+exclude = /usr/share/man
+	/usr/lib/*.a
+	/usr/local/share/doc
+	/usr/local/share/gtk-doc
+	/usr/local/share/gir-1.0
+	/usr/local/info
+	/usr/local/man
+	/usr/local/share/examples
+	/usr/share/groff_font
+	/usr/share/tmac
+	/usr/share/me
+	/var/log
+	/conf/base/var/log/usr/log
+	/conf/base/var/db/fontconfig
+	/var/db/pkg
+	/conf/var/db/pkg
+	*perl*

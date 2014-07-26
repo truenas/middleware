@@ -15,7 +15,7 @@ verbose = False
 # Scan a directory hierarchy, creating a
 # "files" and "directories" set of dictionaries.
 # Regular files get sha256 checksums.
-def ScanTree(root):
+def ScanTree(root, filter_func = None):
     global debug, verbose
     flat_size = 0
     # This is a list of files we've seen, by <st_dev, st_ino> keys.
@@ -25,8 +25,14 @@ def ScanTree(root):
     for start, dirs, files in os.walk(root):
         prefix = start[len(root):] + "/"
         for d in dirs:
+            if filter_func is not None:
+                if filter_func(prefix + d) == True:
+                    continue
             directory_list[prefix + d] = "y"
         for f in files:
+            if filter_func is not None:
+                if filter_func(prefix+f) == True:
+                    continue
             full_path = start + "/" + f
             if verbose or debug > 0: print >> sys.stderr, "looking at %s" % full_path
             st = os.lstat(full_path)
@@ -68,6 +74,40 @@ SCRIPTS = [
 	"post-upgrade",
 	"upgrade"
 ]
+def TemplateExclude(path):
+    """
+    Load a ConfigParser file as a configuration file.
+    Look for a section labeled "Files", and an option
+    named "exclude".  If there, return an array of
+    files to exclude (which may be shell-style globs).
+    """
+    rv = None
+    if os.path.exists(path) == False:
+        return None
+    if os.path.isdir(path):
+        base_dir = path
+        cfg_file = path + "/config"
+    else:
+        base_dir = os.path.dirname(path)
+        cfg_file = path
+
+    cfp = ConfigParser.ConfigParser()
+    try:
+        cfp.read(cfg_file)
+    except:
+        return None
+
+    if cfp.has_option("Files", "exclude"):
+        rv = []
+        opt = cfp.get("Files", "exclude")
+        for f in opt.split():
+            rv.append(f)
+
+    if rv is None or len(rv) == 0:
+        return None
+    else:
+        return rv
+
 def LoadTemplate(path):
     """
     Load a ConfigParser file as a template.
@@ -138,18 +178,21 @@ def main():
 #        "desc" : "FreeNAS Package",
         }
     root = None
+    arg_name = None
+    arg_version = None
+    arg_template = None
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], "dvN:V:R:T:")
         for o, a in opts:
             if o == "-N":
-                manifest["name"] = a
+                arg_name = a
+#                manifest["name"] = a
 	    elif o == "-T":
-		tdict = LoadTemplate(a)
-		if tdict is not None:
-		    for k in tdict.keys():
-			manifest[k] = tdict[k]
+                arg_template = a
             elif o == "-V":
-                manifest["version"] = a
+                arg_version = a
+#                manifest["version"] = a
             elif o == "-R":
                 root = a
             elif o == "-d":
@@ -173,6 +216,57 @@ def main():
     if root is None:
         print >> sys.stderr, "Root directory must be specified"
         usage()
+
+    if arg_template is not None:
+        tdict = LoadTemplate(arg_template)
+        if tdict is not None:
+            for k in tdict.keys():
+                manifest[k] = tdict[k]
+        filter_list = TemplateExclude(arg_template)
+
+    if filter_list is not None:
+        print >> sys.stderr, "Filter list = %s" % filter_list
+
+    def FilterFunc(path):
+        """
+        Return a boolean indicating whether the path in question
+        should be filtered out.  This is a bit tricky, unfortunately,
+        but we'll start out simple.
+        Returns True if it should be filtered, False if not.
+        """
+        import fnmatch
+        if filter_list is not None:
+#            print >> sys.stderr, "FilterFunc(%s)" % path
+            prefix = ""
+            if path.startswith("./"):
+                prefix = "."
+            for elem in filter_list:
+                if elem.startswith("/"):
+                    tmp = prefix + elem
+                else:
+                    tmp = elem
+                # First, check to see if the name simply matches
+                if path == tmp:
+                    print >> sys.stderr, "Excluding %s" % path
+                    return True
+                # Next, check to see if elem is a subset of it
+                if path.startswith(tmp) and \
+                            path[len(tmp)] == "/":
+                    print >> sys.stderr, "Excluding %s as child of %s" % (path, tmp)
+                    return True
+                # Now to start using globbing.
+                # fnmatch is awful, but let's try just that
+                if fnmatch.fnmatch(path, elem):
+                    print >> sys.stderr, "Excluding %s as glob match for %s" % (path, tmp)
+                    return True
+        return False
+
+    # Command-line versions take precedence over the template
+    if arg_name is not None:
+        manifest["name"] = arg_name
+    if arg_version is not None:
+        manifest["version"] = arg_version
+
     if "name" not in manifest:
         print >> sys.stderr, "Package must have a name"
         print >> sys.stderr, manifest
@@ -183,7 +277,7 @@ def main():
 
     if debug > 2: print manifest
 
-    t = ScanTree(root)
+    t = ScanTree(root, FilterFunc)
     manifest["files"] = t["files"]
     manifest["directories"] = t["directories"]
     manifest["flatsize"] = t["flatsize"]
