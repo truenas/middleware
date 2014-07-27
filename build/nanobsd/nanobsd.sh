@@ -172,7 +172,8 @@ if [ -f build/create_package.py ]; then
 	mkdir -p ${NANO_OBJ}/_.packages/Packages
 	set -x
 	python build/create_package.py -R "${NANO_WORLDDIR}" -T build/Templates/freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
-	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL freenas=${VERSION}-${REVISION:-0}
+	python build/create_package.py -R "${NANO_WORLDDIR}" -T build/Templates/freenasUI -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenasUI-${VERSION}-${REVISION:-0}.tgz
+	env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL freenas=${VERSION}-${REVISION:-0} freenasUI=${VERSION}-${REVISION:-0}
 	set +x
 fi
 

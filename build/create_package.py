@@ -74,14 +74,17 @@ SCRIPTS = [
 	"post-upgrade",
 	"upgrade"
 ]
-def TemplateExclude(path):
+def TemplateFiles(path):
     """
     Load a ConfigParser file as a configuration file.
-    Look for a section labeled "Files", and an option
-    named "exclude".  If there, return an array of
-    files to exclude (which may be shell-style globs).
+    Look for a section labeled "Files", "exclude" and
+    "include" otions.  Return both in a dictionary; the
+    value is an array of files to include or exclude.
+    (The files may be paths, or shell-style globs.)
     """
-    rv = None
+    rv = {}
+    includes = []
+    excludes = []
     if os.path.exists(path) == False:
         return None
     if os.path.isdir(path):
@@ -98,15 +101,18 @@ def TemplateExclude(path):
         return None
 
     if cfp.has_option("Files", "exclude"):
-        rv = []
         opt = cfp.get("Files", "exclude")
         for f in opt.split():
-            rv.append(f)
+            excludes.append(f)
 
-    if rv is None or len(rv) == 0:
-        return None
-    else:
-        return rv
+    if cfp.has_option("Files", "include"):
+        opt = cfp.get("Files", "include")
+        for f in opt.split():
+            includes.append(f)
+
+    rv["include"] = includes
+    rv["exclude"] = excludes
+    return rv
 
 def LoadTemplate(path):
     """
@@ -168,14 +174,14 @@ def main():
     global debug, verbose
     # Some valid, but stupid, defaults.
     manifest = {
-#        "www" : "http://www.freenas.org",
-#        "arch" : "freebsd:9:x86:64",
-#        "maintainer" : "something@freenas.org",
-#        "comment" : "FreeNAS Package",
-#        "origin" : "system/os",
-#        "prefix" : "/",
-#        "licenselogic" : "single",
-#        "desc" : "FreeNAS Package",
+        "www" : "http://www.freenas.org",
+        "arch" : "freebsd:9:x86:64",
+        "maintainer" : "something@freenas.org",
+        "comment" : "FreeNAS Package",
+        "origin" : "freenas/os",
+        "prefix" : "/",
+        "licenselogic" : "single",
+        "desc" : "FreeNAS Package",
         }
     root = None
     arg_name = None
@@ -187,12 +193,10 @@ def main():
         for o, a in opts:
             if o == "-N":
                 arg_name = a
-#                manifest["name"] = a
 	    elif o == "-T":
                 arg_template = a
             elif o == "-V":
                 arg_version = a
-#                manifest["version"] = a
             elif o == "-R":
                 root = a
             elif o == "-d":
@@ -217,49 +221,90 @@ def main():
         print >> sys.stderr, "Root directory must be specified"
         usage()
 
+    include_list = None
+    exclude_list = None
     if arg_template is not None:
         tdict = LoadTemplate(arg_template)
         if tdict is not None:
             for k in tdict.keys():
                 manifest[k] = tdict[k]
-        filter_list = TemplateExclude(arg_template)
-
-    if filter_list is not None:
-        print >> sys.stderr, "Filter list = %s" % filter_list
-
+        filters = TemplateFiles(arg_template)
+        if filters is not None:
+            if debug > 1:  print >> sys.stderr, "Filter list = %s" % filters
+            if len(filters["include"]) > 0:
+                include_list = filters["include"]
+            if len(filters["exclude"]) > 0:
+                exclude_list = filters["exclude"]
+            
     def FilterFunc(path):
         """
         Return a boolean indicating whether the path in question
         should be filtered out.  This is a bit tricky, unfortunately,
         but we'll start out simple.
-        Returns True if it should be filtered, False if not.
+        Returns True if it should be filtered out, False if not.
+        There are four cases to worry about:
+        1.  No include_list or exclude_list
+        2.  include_list but no exclude_list
+        3.  exclude_list but no include_list
+        4.  Both include_list and exclude_list
+        For (1), return value is always False (never filter out).
+        For (2), return value is False if it is in the list, True otherwise.
+        For (3), return value is True if it is in the list, False otherwise.
+        For (4), return value is True if it is in the exclude list,
+        False if it is in the include list, False if it is in neither.
         """
-        import fnmatch
-        if filter_list is not None:
-#            print >> sys.stderr, "FilterFunc(%s)" % path
+        # Set the default return value based on include and exclude lists.
+        if include_list is None and exclude_list is None:
+            retval = False
+        elif include_list is not None and exclude_list is None:
+            retval = True
+        elif include_list is None and exclude_list is not None:
+            retval = False
+        else:
+            retval = False
+
+        # Yes, I know, a nested function in a nested function.
+        def matches(path, pattern):
+            import fnmatch
+
             prefix = ""
             if path.startswith("./"):
                 prefix = "."
-            for elem in filter_list:
-                if elem.startswith("/"):
-                    tmp = prefix + elem
-                else:
-                    tmp = elem
-                # First, check to see if the name simply matches
-                if path == tmp:
-                    print >> sys.stderr, "Excluding %s" % path
-                    return True
-                # Next, check to see if elem is a subset of it
-                if path.startswith(tmp) and \
-                            path[len(tmp)] == "/":
-                    print >> sys.stderr, "Excluding %s as child of %s" % (path, tmp)
-                    return True
-                # Now to start using globbing.
-                # fnmatch is awful, but let's try just that
-                if fnmatch.fnmatch(path, elem):
-                    print >> sys.stderr, "Excluding %s as glob match for %s" % (path, tmp)
-                    return True
-        return False
+            if pattern.startswith("/"):
+                tmp = prefix + pattern
+            else:
+                tmp = pattern
+            # First, check to see if the name simply matches
+            if path == tmp:
+                if debug: print >> sys.stderr, "Match: %s" % path
+                return True
+            # Next, check to see if elem is a subset of it
+            if path.startswith(tmp) and \
+               path[len(tmp)] == "/":
+                if debug: print >> sys.stderr, "Match %s as child of %s" % (path, tmp)
+                return True
+            # Now to start using globbing.
+            # fnmatch is awful, but let's try just that
+            # (It's awful because it doesn't handle path boundaries.
+            # Thus, "/usr/*.cfg" matches both "/usr/foo.cfg" and
+            # "/usr/local/etc/django.cfg".)
+            if fnmatch.fnmatch(path, elem):
+                if debug: print >> sys.stderr, "Match: %s as glob match for %s" % (path, tmp)
+                return True
+            return False
+
+        # Include takes precedence over exclude, so we handle
+        # the exclude list first
+        if exclude_list is not None:
+            for elem in exclude_list:
+                if matches(path, elem) == True:
+                    retval = True
+                    break
+        if include_list is not None:
+            for elem in include_list:
+                if matches(path, elem) == True:
+                    retval = False
+        return retval
 
     # Command-line versions take precedence over the template
     if arg_name is not None:
@@ -267,6 +312,7 @@ def main():
     if arg_version is not None:
         manifest["version"] = arg_version
 
+    # Now sanity test
     if "name" not in manifest:
         print >> sys.stderr, "Package must have a name"
         print >> sys.stderr, manifest
@@ -275,8 +321,9 @@ def main():
         print >> sys.stderr, "Package must have a version"
         usage()
 
-    if debug > 2: print manifest
+    if debug > 2: print >> sys.stderr, manifest
 
+    # Now start scanning.
     t = ScanTree(root, FilterFunc)
     manifest["files"] = t["files"]
     manifest["directories"] = t["directories"]
@@ -285,9 +332,11 @@ def main():
                                  indent=4, separators=(',', ': '))
     if debug > 1: print manifest_string
 
+    # I would LOVE to be able to use xz, but python's tarfile does not
+    # (as of when I write this) support it.  Python 3 has it.
     tf = tarfile.open(output, "w:gz", format = tarfile.PAX_FORMAT)
 
-    # Add the manifest string as "+MANIFEST"
+    # Add the manifest string as the file "+MANIFEST"
     mani_file_info = tarfile.TarInfo(name = "+MANIFEST")
     mani_file_info.size = len(manifest_string)
     mani_file_info.mode = 0600

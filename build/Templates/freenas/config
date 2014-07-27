@@ -4,7 +4,7 @@ name = freenas
 comment = "FreeNAS OS"
 desc = "FreeNAS OS (derived from FreeBSD)"
 www = http://www.freenas.org/
-origin = system/os
+origin = freenas/os
 maintainer = dev@ixsystems.com
 prefix = /
 arch = freebsd:9:x86:64
@@ -13,11 +13,12 @@ licenses = [BSD, MIT, GPL]
 
 [Scripts]
 
-post-install = touch /boot/kernel/linker.hints
-	touch /boot/modules/linker.hints
+post-install = /usr/bin/touch /boot/kernel/linker.hints
+	/usr/bin/touch /boot/modules/linker.hints
 
 [Files]
-exclude = /usr/share/man
+exclude = /usr/local/www/freenasUI
+	/usr/share/man
 	/usr/lib/*.a
 	/usr/local/share/doc
 	/usr/local/share/gtk-doc
