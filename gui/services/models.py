@@ -346,6 +346,10 @@ class NFS(Model):
             "reserved ports only."
         ),
     )
+    nfs_srv_v4 = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable NFSv4"),
+    )
     nfs_srv_bindip = models.CharField(
         blank=True,
         max_length=250,
