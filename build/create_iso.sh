@@ -104,9 +104,13 @@ main()
 #	#Usage: build/create_manifest.py [-P package_directory] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...] -o manifest
 #		env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.instufs/cdrom/FreeNAS -o ${NANO_OBJ}/_.instufs/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}
 	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
-		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
-		cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
-		cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.instufs
+#		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
+#		cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
+#		cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.instufs
+	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
+	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
+	    printf "[Defaults]\nsearch = /.mount/FreeNAS\n" > ${NANO_OBJ}/_.isodir/freenas.conf
+	    cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.isodir/FreeNAS-MANIFEST
 	else
 		echo "Hey, where are the install filess?"
 	fi

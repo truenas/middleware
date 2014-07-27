@@ -515,7 +515,8 @@ menu_install()
 	# For the install to work, we need to have /data mounted.
 	test -d /tmp/data/data || mkdir /tmp/data/data
 	mount /dev/${_disk}p3 /tmp/data/data
-	/usr/local/bin/install -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
+#	/usr/local/bin/install -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
+	/usr/local/bin/install -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	rm -f /tmp/data/conf/base/etc/manifest
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
