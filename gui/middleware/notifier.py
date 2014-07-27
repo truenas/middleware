@@ -857,6 +857,13 @@ class notifier:
         self._system("/usr/sbin/service statd quietstart")
         self._system("/usr/sbin/service lockd quietstart")
 
+    def _stop_nfsv4(self):
+        self._system("/usr/sbin/service gssd quietstop")
+        self._system("/usr/sbin/service nfsuserd quietstop")
+
+    def _start_nfsv4(self):
+        self._system("/usr/sbin/service gssd quietstart")
+
     def _force_stop_jail(self):
         self._system("/usr/sbin/service jail forcestop")
 

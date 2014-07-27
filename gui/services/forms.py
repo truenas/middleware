@@ -265,6 +265,7 @@ class NFSForm(ModelForm):
         self.fields['nfs_srv_rpclockd_port'].label = (
             self.fields['nfs_srv_rpclockd_port'].label.lower()
         )
+        self.instance._original_nfs_srv_v4 = self.instance.nfs_srv_v4
 
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
@@ -292,6 +293,13 @@ class NFSForm(ModelForm):
             models.services.objects.get(srv_service='nfs').srv_enable
         ):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
+
+    def done(self, *args, **kwargs):
+        if self.instance._original_nfs_srv_v4 != self.instance.nfs_srv_v4:
+            if self.instance.nfs_srv_v4:
+                 notifier().start("nfsv4")
+            else:
+                 notifier().stop("nfsv4")
 
 
 class FTPForm(ModelForm):
