@@ -1261,9 +1261,11 @@ class InitialWizardVolumeForm(Form):
 
     @classmethod
     def show_condition(cls, wizard):
-        return (
+        has_disks = (
             len(cls._types_avail(cls._get_unused_disks_by_size())) > 0
         )
+        volume_exists = Volume.objects.all().exists()
+        return has_disks or (not has_disks and not volume_exists)
 
     @staticmethod
     def _get_unused_disks():
