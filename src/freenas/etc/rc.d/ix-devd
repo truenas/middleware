@@ -211,6 +211,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     rm ${IMPORTING_FILE}
 
     #mount -uw /
+    /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py nfsv4link > /dev/null
     /etc/rc.d/statd restart
     /usr/sbin/service ix-nfsd quietstart
     /usr/sbin/service mountd restart
