@@ -408,10 +408,14 @@ _gen_conf()
 		touch /etc/zfs/exports
 	fi
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 ]; then
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" -eq 1 ]; then
 		echo "nfsv4_server_enable=\"YES\""
 		echo "nfsuserd_enable=\"YES\""
 		echo "gssd_enable=\"YES\""
+        else
+		echo "nfsv4_server_enable=\"NO\""
+		echo "nfsuserd_enable=\"NO\""
+		echo "gssd_enable=\"NO\""
 	fi
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'

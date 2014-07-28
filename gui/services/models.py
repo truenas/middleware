@@ -350,6 +350,11 @@ class NFS(Model):
         default=False,
         verbose_name=_("Enable NFSv4"),
     )
+    nfs_srv_v4_root = PathField(
+        verbose_name=_("NFSv4 Root Path"),
+        blank=True,
+        default="/",
+    )
     nfs_srv_bindip = models.CharField(
         blank=True,
         max_length=250,
