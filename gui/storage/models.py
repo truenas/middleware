@@ -104,18 +104,6 @@ class Volume(Model):
                 hierarchical=hierarchical,
                 include_root=include_root)
 
-    def get_datasets_with_root(self, hierarchical=False):
-        """
-        Helper method for template call
-        """
-        if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(
-                path=self.vol_name,
-                recursive=True,
-                hierarchical=hierarchical,
-                include_root=True,
-            )
-
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
             return notifier().list_zfs_vols(self.vol_name)
@@ -621,13 +609,9 @@ class MountPoint(Model):
     def is_my_path(self, path):
         if path == self.mp_path:
             return True
-        try:
-            # If the st_dev values match, then it's the same mountpoint.
-            return os.stat(self.mp_path).st_dev == os.stat(path).st_dev
-        except OSError:
-            # Not a real path (most likely). Fallback to a braindead
-            # best-effort path check.
-            return os.path.commonprefix([self.mp_path, path]) == self.mp_path
+        # Using stat.st_dev is not pratical because ZFS datasets are
+        # different filesystem from a OS point of view
+        return os.path.commonprefix([self.mp_path, path]) == self.mp_path
 
     def has_attachments(self):
         """

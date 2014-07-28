@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-06-20 19:39+0000\n"
+"PO-Revision-Date: 2014-07-24 09:13+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1403293193.0\n"
+"X-POOTLE-MTIME: 1406193181.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -294,4 +294,53 @@ msgstr "Общие ресурсы"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+#: freeadmin/static/lib/js/freeadmin.js:1863
+#, fuzzy
+msgid "Initial Wizard"
+msgstr "Инициализировать безопасно"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
+#, fuzzy
+msgid "Share name"
+msgstr "Общие ресурсы"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
+msgid ""
+"This field may only contain alphanumeric and the following characters: \"_\""
+", \"-\", \".\"."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
+msgid "Specify the size using B, K, M, G, T prefixes."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
+msgid "Add"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
+msgid "Delete"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
+msgid "Update"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
+msgid "Ownership"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
+msgid "This user does not exist."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
+msgid "This group does not exist."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
+msgid "Return"
 msgstr ""

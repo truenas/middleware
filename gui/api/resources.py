@@ -679,13 +679,13 @@ class VolumeResourceMixin(NestedMixin):
     def _get_datasets(self, bundle, vol, datasets, uid):
         children = []
         attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
-        for name, dataset in datasets.items():
-            if name.startswith('.'):
+        for path, dataset in datasets.items():
+            if dataset.name.startswith('.'):
                 continue
 
             data = {
                 'id': uid.next(),
-                'name': name,
+                'name': dataset.name,
                 'type': 'dataset',
                 'status': vol.status,
                 'mountpoint': dataset.mountpoint,
@@ -1457,6 +1457,8 @@ class ISCSITargetToExtentResourceMixin(object):
             bundle
         )
         if self.is_webclient(bundle.request):
+            if not bundle.obj.iscsi_lunid:
+                bundle.data['iscsi_lunid'] = 'Auto'
             bundle.data['iscsi_target'] = bundle.obj.iscsi_target
             bundle.data['iscsi_extent'] = bundle.obj.iscsi_extent
         else:

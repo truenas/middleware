@@ -43,7 +43,10 @@ urlpatterns = patterns('freenasUI.system.views',
             ('volume', InitialWizardVolumeForm),
             ('shares', InitialWizardShareFormSet),
             ('confirm', InitialWizardConfirmForm),
-        ]
+        ],
+        condition_dict={
+            'volume': InitialWizardVolumeForm.show_condition,
+        },
     ), name='system_initialwizard'),
     url(r'^wizard/progress/$', 'initialwizard_progress', name="system_initialwizard_progress"),
     url(r'^reboot/$', 'reboot', name="system_reboot"),

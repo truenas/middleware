@@ -288,3 +288,51 @@ msgstr "共有"
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+#: freeadmin/static/lib/js/freeadmin.js:1863
+msgid "Initial Wizard"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
+#, fuzzy
+msgid "Share name"
+msgstr "共有"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
+msgid ""
+"This field may only contain alphanumeric and the following characters: \"_\""
+", \"-\", \".\"."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
+msgid "Specify the size using B, K, M, G, T prefixes."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
+msgid "Add"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
+msgid "Delete"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
+msgid "Update"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
+msgid "Ownership"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
+msgid "This user does not exist."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
+msgid "This group does not exist."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
+msgid "Return"
+msgstr ""

@@ -346,6 +346,10 @@ class NFS(Model):
             "reserved ports only."
         ),
     )
+    nfs_srv_v4 = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable NFSv4"),
+    )
     nfs_srv_bindip = models.CharField(
         blank=True,
         max_length=250,
@@ -726,7 +730,7 @@ class iSCSITarget(Model):
                 "both none and authentication."),
             )
     iscsi_target_logical_blocksize = models.IntegerField(
-            max_length=3,
+            max_length=4,
             choices=choices.TARGET_BLOCKSIZE_CHOICES,
             default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
             verbose_name=_("Logical Block Size"),

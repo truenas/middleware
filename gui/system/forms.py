@@ -189,37 +189,40 @@ class InitialWizard(CommonWizard):
         shares = cleaned_data.get('formset-shares')
 
         form_list = self.get_form_list()
-        volume_form = form_list['volume']
+        volume_form = form_list.get('volume')
 
         with transaction.atomic():
-            volume = Volume(
-                vol_name=volume_name,
-                vol_fstype='ZFS',
-            )
-            volume.save()
-
-            mp = MountPoint(
-                mp_volume=volume,
-                mp_path='/mnt/' + volume_name,
-                mp_options='rw',
-            )
-            mp.save()
-
-            bysize = volume_form._get_unused_disks_by_size()
-
-            if volume_type == 'auto':
-                groups = volume_form._grp_autoselect(bysize)
-            else:
-                groups = volume_form._grp_predefined(bysize, volume_type)
-
             _n = notifier()
-            _n.init(
-                "volume",
-                volume,
-                groups=groups,
-                init_rand=False,
-            )
-            Scrub.objects.create(scrub_volume=volume)
+            if volume_form:
+                volume = Volume(
+                    vol_name=volume_name,
+                    vol_fstype='ZFS',
+                )
+                volume.save()
+
+                MountPoint.objects.create(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options='rw',
+                )
+
+                bysize = volume_form._get_unused_disks_by_size()
+
+                if volume_type == 'auto':
+                    groups = volume_form._grp_autoselect(bysize)
+                else:
+                    groups = volume_form._grp_predefined(bysize, volume_type)
+
+                _n.init(
+                    "volume",
+                    volume,
+                    groups=groups,
+                    init_rand=False,
+                )
+                Scrub.objects.create(scrub_volume=volume)
+            else:
+                volume = Volume.objects.filter(vol_fstype='ZFS')[0]
+                volume_name = volume.vol_name
 
             progress['step'] = 2
             progress['indeterminate'] = False
@@ -239,6 +242,7 @@ class InitialWizard(CommonWizard):
                 share_iscsisize = share.get('share_iscsisize')
                 share_user = share.get('share_user')
                 share_usercreate = share.get('share_usercreate')
+                share_userpw = share.get('share_userpw')
                 share_group = share.get('share_group')
                 share_groupcreate = share.get('share_groupcreate')
                 share_mode = share.get('share_mode')
@@ -269,8 +273,17 @@ class InitialWizard(CommonWizard):
                             raise MiddlewareError(
                                 _('User does not exist: %s') % share_user
                             )
+                        if share_userpw:
+                            password = share_userpw
+                            password_disabled = False
+                        else:
+                            password = '!'
+                            password_disabled = True
                         uid, gid, unixhash, smbhash = _n.user_create(
-                            share_user, share_user, '!', password_disabled=True
+                            share_user,
+                            share_user,
+                            password,
+                            password_disabled=password_disabled
                         )
                         bsdUsers.objects.create(
                             bsdusr_username=share_user,
@@ -1169,6 +1182,10 @@ class InitialWizardShareForm(Form):
     share_usercreate = forms.BooleanField(
         required=False,
     )
+    share_userpw = forms.CharField(
+        required=False,
+        max_length=100,
+    )
     share_groupcreate = forms.BooleanField(
         required=False,
     )
@@ -1242,6 +1259,14 @@ class InitialWizardVolumeForm(Form):
 
         self.types_avail = self._types_avail(self._get_unused_disks_by_size())
 
+    @classmethod
+    def show_condition(cls, wizard):
+        has_disks = (
+            len(cls._types_avail(cls._get_unused_disks_by_size())) > 0
+        )
+        volume_exists = Volume.objects.all().exists()
+        return has_disks or (not has_disks and not volume_exists)
+
     @staticmethod
     def _get_unused_disks():
         _n = notifier()
@@ -1272,9 +1297,10 @@ class InitialWizardVolumeForm(Form):
                 higher = (size, len(_disks))
         return higher
 
-    def _types_avail(self, disks):
+    @classmethod
+    def _types_avail(cls, disks):
         types = []
-        ndisks = self._higher_disks_group(disks)[1]
+        ndisks = cls._higher_disks_group(disks)[1]
         if ndisks >= 4:
             types.extend(['raid10', 'raidz2'])
         if ndisks >= 3:
@@ -1433,6 +1459,17 @@ class InitialWizardVolumeForm(Form):
                 groups = self._grp_predefined(bysize, _type)
             types[_type] = self._groups_to_size(bysize, groups, swapsize)
         return json.dumps(types)
+
+    def clean_volume_name(self):
+        volume_name = self.cleaned_data.get('volume_name')
+        if not volume_name:
+            return volume_name
+        qs = Volume.objects.filter(vol_name=volume_name)
+        if qs.exists():
+            raise forms.ValidationError(
+                _("A pool with this name already exists.")
+            )
+        return volume_name
 
     def clean(self):
         volume_type = self.cleaned_data.get('volume_type')

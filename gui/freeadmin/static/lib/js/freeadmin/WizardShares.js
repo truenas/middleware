@@ -232,9 +232,34 @@ define([
         }
       });
 
+
+      me._ownershipUserPw = new ValidationTextBox({
+        type: "password"
+      }, me.dapOwnershipUserPw);
+
+      me._ownershipUserPw2 = new ValidationTextBox({
+        type: "password",
+        invalidMessage: gettext("Paswords do not match."),
+        validator: function() {
+          var pw1 = me._ownershipUserPw.get("value");
+          var pw2 = me._ownershipUserPw2.get("value");
+          if((pw1 || pw2) && pw1 != pw2) {
+            return false;
+          }
+          return true;
+        }
+      }, me.dapOwnershipUserPw2);
+
       me._ownershipUserCreate = new CheckBox({disabled: true}, me.dapOwnershipUserCreate);
       on(me._ownershipUserCreate, "change", function(value) {
         me._ownershipUser.validate();
+        if(value) {
+          domStyle.set(me.dapOwnershipUserPwRow, "display", "");
+          domStyle.set(me.dapOwnershipUserPw2Row, "display", "");
+        } else {
+          domStyle.set(me.dapOwnershipUserPwRow, "display", "none");
+          domStyle.set(me.dapOwnershipUserPw2Row, "display", "none");
+        }
       });
 
       me._ownershipGroup = new ComboBox({
@@ -301,6 +326,10 @@ define([
           me._ownershipGroup.focus();
           valid = false;
         }
+        if(!me._ownershipUserPw2.isValid()) {
+          me._ownershipUserPw2.focus();
+          valid = false;
+        }
         if(!valid) return;
 
         // Update the values in store if the item has already been saved
@@ -327,6 +356,8 @@ define([
       me._ownershipUser.set('value', me._ownershipSaved['user']);
       me._ownershipGroup.set('value', me._ownershipSaved['group']);
       me._ownershipUserCreate.set('value', me._ownershipSaved['usercreate']);
+      me._ownershipUserPw.set('value', me._ownershipSaved['userpw']);
+      me._ownershipUserPw2.set('value', me._ownershipSaved['userpw']);
       me._ownershipGroupCreate.set('value', me._ownershipSaved['groupcreate']);
       me._ownershipMode.set('value', me._ownershipSaved['mode']);
     },
@@ -336,6 +367,7 @@ define([
       me._ownershipSaved['user'] = me._ownershipUser.get('value');
       me._ownershipSaved['group'] = me._ownershipGroup.get('value');
       me._ownershipSaved['usercreate'] = me._ownershipUserCreate.get('value');
+      me._ownershipSaved['userpw'] = me._ownershipUserPw.get('value');
       me._ownershipSaved['groupcreate'] = me._ownershipGroupCreate.get('value');
       me._ownershipSaved['mode'] = me._ownershipMode.get('value');
     },
@@ -358,6 +390,7 @@ define([
         user: me._ownershipUser.get("value"),
         group: me._ownershipGroup.get("value"),
         usercreate: me._ownershipUserCreate.get("value"),
+        userpw: me._ownershipUserPw.get("value"),
         groupcreate: me._ownershipGroupCreate.get("value"),
         mode: me._ownershipMode.get("value")
       });
@@ -393,6 +426,13 @@ define([
         me._ownershipUserCreate.set("disabled", false);
       } else {
         me._ownershipUserCreate.set("disabled", true);
+      }
+      if(data.userpw) {
+        me._ownershipUserPw.set("value", data.userpw);
+        me._ownershipUserPw2.set("value", data.userpw);
+      } else {
+        me._ownershipUserPw.set("value", "");
+        me._ownershipUserPw2.set("value", "");
       }
       if(data.groupcreate) {
         me._ownershipGroupCreate.set("disabled", false);
@@ -514,6 +554,13 @@ define([
             type: "hidden",
             value: obj.usercreate
           }).placeAt(dumpNode);
+          if(obj.userpw) {
+            new TextBox({
+              name: "shares-" + idx + "-share_userpw",
+              type: "hidden",
+              value: obj.userpw
+            }).placeAt(dumpNode);
+          }
         }
 
         if(obj.groupcreate) {

@@ -53,7 +53,7 @@
           require(["dijit/form/TextBox"], function(TextBox) {
             new TextBox({
               name: "wizard_goto_step",
-              value: "volume",
+              value: "{{ wizard.steps.first|escapejs }}",
               type: "hidden"
             }).placeAt(btn.domNode.parentNode.parentNode);
             var form = getForm(btn);
