@@ -94,23 +94,10 @@ main()
 	# Copy the installation scripts and modules as well
 	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/installer | tar -C ${INSTALLUFSDIR} -xf -
 	set +x
-#	( cd ${NANO_OBJ}/_.w ; tar -cf - ./etc/freenas.conf ./usr/local/lib/freenasOS \
-#			./usr/local/bin/install ./usr/local/bin/update_freenas \
-#			./usr/local/bin/manifest_util ) |
-#		tar -xf - -C ${INSTALLUFSDIR}
 # SEF
 # Build packages here.
 
-#	if [ -f build/create_package.py ]; then
-#	# -R <root> -N <name> -V <version> output_file
-#		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS/Packages
-#		python build/create_package.py -R "${NANO_WORLDDIR}" -N freenas -V ${VERSION} ${NANO_OBJ}/_.instufs/cdrom/FreeNAS/Packages/freenas-${VERSION}.tgz
-#	#Usage: build/create_manifest.py [-P package_directory] [-N <release_notes_file>] [-R release_name] -T <train_name> -S <manifest_version> pkg=version[:upgrade_from[,...]]  [...] -o manifest
-#		env PYTHONPATH="${NANO_WORLDDIR}/usr/local/lib" python build/create_manifest.py -P ${NANO_OBJ}/_.instufs/cdrom/FreeNAS -o ${NANO_OBJ}/_.instufs/FreeNAS-MANIFEST -R FreeNAS -T FreeNAS-EXPERIMENTAL -S 100 freenas=${VERSION}
 	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
-#		mkdir -p ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
-#		cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.instufs/cdrom/FreeNAS
-#		cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.instufs
 	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
 	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
 	    printf "[Defaults]\nsearch = /.mount/FreeNAS\n" > ${NANO_OBJ}/_.isodir/freenas.conf
