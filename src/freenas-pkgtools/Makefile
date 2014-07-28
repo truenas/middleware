@@ -13,8 +13,8 @@ SUBDIR= create_manifest \
 	update
 
 beforeinstall:
-	${INSTALL} -d ${BINDIR}
-	${INSTALL} -d ${LIBDIR}
+	${INSTALL} -d ${DESTDIR}${BINDIR}
+	${INSTALL} -d ${DESTDIR}${LIBDIR}
 
 .include <bsd.subdir.mk>
 
@@ -45,7 +45,7 @@ MVERSION=	${REVISION}
 MVERSION=	1
 .endif
 
-ROOTDIR= ${BINDIR:S/usr\/local\/bin//}
+ROOTDIR= ${DESTDIR}${BINDIR:S/usr\/local\/bin//}
 
 .if !defined(PACKAGE_DIR)
 PACKAGE_DIR=	/tmp/Packages

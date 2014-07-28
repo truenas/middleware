@@ -497,8 +497,9 @@ menu_install()
 	if [ "${upgrade_style}" = "old" ]; then
 		cp -pR /tmp/data_preserved/ /tmp/data
 	fi
-        : > /tmp/$NEED_UPDATE_SENTINEL
-        : > /tmp/$CD_UPGRADE_SENTINEL
+	# If I did things correctly, this isn't needed
+#        : > /tmp/$NEED_UPDATE_SENTINEL
+#        : > /tmp/$CD_UPGRADE_SENTINEL
 
 
 	if [ -c /dev/${_disk_old} ]; then
@@ -583,7 +584,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	mount /dev/${_disk}p2 /tmp/data
 	mkdir /tmp/data/data
 	mount /dev/${_disk}p3 /tmp/data/data
-	/usr/local/bin/installer -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
+	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
 	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
@@ -592,8 +593,6 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	umount /tmp/data/data
 	umount /tmp/data
 	rmdir /tmp/data
-	# Hack, of course
-	read foo
 	set +x
     fi
 

@@ -1,7 +1,6 @@
 .include <bsd.own.mk>
 
-#BINDIR=	${PREFIX}/lib/freenasOS
-#LIBDIR= ${PREFIX}/lib/freenasOS
+LIBDIR=	/usr/local/lib/freenasOS
 
 FILESDIR= ${LIBDIR}
 
@@ -14,7 +13,7 @@ FILES=	Configuration.py \
 	__init__.py
 
 beforeinstall:
-	echo "BINDIR = ${BINDIR}, LIBDIR = ${LIBDIR}"
+	${INSTALL} -d ${DESTDIR}${LIBDIR}
 
 .include <bsd.lib.mk>
 

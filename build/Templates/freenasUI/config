@@ -21,3 +21,5 @@ include = /usr/local/www/freenasUI
 
 post-install = /usr/sbin/service restart django || true
 
+post-upgrade = /usr/bin/touch /data/cd-upgrade
+	     /usr/bin/touch /data/need-update
