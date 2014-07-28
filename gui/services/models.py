@@ -353,7 +353,8 @@ class NFS(Model):
     nfs_srv_v4_root = PathField(
         verbose_name=_("NFSv4 Root Path"),
         blank=True,
-        default="/",
+        default='/',
+        includes=['/'],
     )
     nfs_srv_bindip = models.CharField(
         blank=True,
