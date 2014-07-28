@@ -762,6 +762,37 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         log.debug("FreeNAS_LDAP_Base.get_groups: leave")
         return groups
 
+    def get_domains(self):
+        log.debug("FreeNAS_LDAP_Base.get_domains: enter")
+        isopen = self._isopen
+        self.open()
+
+        domains = []
+        scope = ldap.SCOPE_SUBTREE
+
+        filter = '(objectclass=sambaDomain)'
+        results = self._search(self.basedn, scope, filter, self.attributes)
+        if results:
+            domains = results
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Base.get_domains: leave")
+        return domains
+
+    def get_domain_names(self):
+        log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
+
+        domain_names = []
+        domains = self.get_domains()
+        if domains:
+            for d in domains: 
+                domain_names.append(d[1]['sambaDomainName'][0])
+
+        log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
+        return domain_names
+
 
 class FreeNAS_LDAP(FreeNAS_LDAP_Base):
     def __init__(self, **kwargs):

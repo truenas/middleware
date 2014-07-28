@@ -138,6 +138,10 @@ def directoryservice_nis(request):
     })
 
 
+def directoryservice_kerberos(request):
+    pass
+
+
 def get_directoryservice_status():
     data = {}
 

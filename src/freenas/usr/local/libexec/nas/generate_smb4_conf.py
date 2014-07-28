@@ -29,6 +29,7 @@ from freenasUI.account.models import (
 )
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP,
     FLAGS_DBINIT
 )
 from freenasUI.common.pipesubr import pipeopen
@@ -42,8 +43,28 @@ from freenasUI.common.system import (
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
-    NT4
+    NT4,
+    idmap_ad,
+    idmap_autorid,
+    idmap_hash,
+    idmap_ldap,
+    idmap_nss,
+    idmap_rfc2307,
+    idmap_rid,
+    idmap_tdb,
+    idmap_tdb2,
+    IDMAP_TYPE_NONE,
+    IDMAP_TYPE_AD,
+    IDMAP_TYPE_AUTORID,
+    IDMAP_TYPE_HASH,
+    IDMAP_TYPE_LDAP,
+    IDMAP_TYPE_NSS,
+    IDMAP_TYPE_RFC2307,
+    IDMAP_TYPE_RID,
+    IDMAP_TYPE_TDB,
+    IDMAP_TYPE_TDB2
 )
+from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
 
 from freenasUI.services.models import (
@@ -157,6 +178,214 @@ def confset2(conf, line, var, space=4):
         conf.append(line % var)
 
 
+def configure_idmap_ad(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_ad_range_low,
+        idmap.idmap_ad_range_high
+    ))
+    confset1(smb4_conf, "idmap config %s: schema mode = %s" % (
+        domain,
+        idmap.idmap_ad_schema_mode
+    ))
+
+
+def configure_idmap_autorid(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_autorid_range_low,
+        idmap.idmap_autorid_range_high
+    ))
+    confset1(smb4_conf, "idmap config %s: rangesize = %d" % (
+        domain,
+        idmap.idmap_autorid_rangesize
+    ))
+    confset1(smb4_conf, "idmap config %s: read only = %s" % (
+        domain,
+        "yes" if idmap.idmap_autorid_readonly else "no"
+    ))
+    confset1(smb4_conf, "idmap config %s: ignore builtin = %s" % (
+        domain,
+        "yes" if idmap.idmap_autorid_ignore_builtin else "no"
+    ))
+
+
+def configure_idmap_hash(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_hash_range_low,
+        idmap.idmap_hash_range_high
+    ))
+    confset1(smb4_conf, "idmap_hash: name_map = %s" %
+        idmap.idmap_hash_range_name_map)
+
+
+def configure_idmap_ldap(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_ldap_range_low,
+        idmap.idmap_ldap_range_high
+    ))
+    if idmap.idmap_ldap_ldap_base_dn:
+        confset1(smb4_conf, "idmap config %s: ldap base dn = %s" % (
+            domain,
+            idmap.idmap_ldap_ldap_base_dn
+        ))
+    if idmap.idmap_ldap_ldap_user_dn:
+        confset1(smb4_conf, "idmap config %s: ldap user dn = %s" % (
+            domain,
+            idmap.idmap_ldap_ldap_user_dn
+        ))
+    if idmap.idmap_ldap_ldap_url:
+        confset1(smb4_conf, "idmap config %s: ldap url = %s" % (
+            domain,
+            idmap.idmap_ldap_ldap_url
+        ))
+
+
+def configure_idmap_nss(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_nss_range_low,
+        idmap.idmap_nss_range_high
+    ))
+
+
+def configure_idmap_rfc2307(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_rfc2307_range_low,
+        idmap.idmap_rfc2307_range_high
+    ))
+    confset1(smb4_conf, "idmap config %s: ldap_server = %s" % (
+        domain,
+        idmap.idmap_rfc2307_ldap_server
+    ))
+    confset1(smb4_conf, "idmap config %s: bind_path_user = %s" % (
+        domain,
+        idmap.idmap_rfc2307_bind_path_user
+    ))
+    confset1(smb4_conf, "idmap config %s: bind_path_group = %s" % (
+        domain,
+        idmap.idmap_rfc2307_bind_path_group
+    ))
+    confset1(smb4_conf, "idmap config %s: user_cn = %s" % (
+        domain,
+        "yes" if idmap.idmap_rfc2307_user_cn else "no"
+    ))
+    confset1(smb4_conf, "idmap config %s: cn_realm = %s" % (
+        domain,
+        "yes" if idmap.idmap_rfc2307_cn_realm else "no"
+    ))
+    if idmap.idmap_rfc2307_ldap_domain:
+        confset1(smb4_conf, "idmap config %s: ldap_domain = %s" % (
+            domain,
+            idmap.idmap_rfc2307_ldap_domain
+        ))
+    if idmap.idmap_rfc2307_ldap_url:
+        confset1(smb4_conf, "idmap config %s: ldap_url = %s" % (
+            domain,
+            idmap.idmap_rfc2307_ldap_url
+        ))
+    if idmap.idmap_rfc2307_ldap_user_dn:
+        confset1(smb4_conf, "idmap config %s: ldap_user_dn = %s" % (
+            domain,
+            idmap.idmap_rfc2307_ldap_user_dn
+        ))
+    if idmap.idmap_rfc2307_ldap_realm:
+        confset1(smb4_conf, "idmap config %s: ldap_realm = %s" % (
+            domain,
+            idmap.idmap_rfc2307_ldap_realm
+        ))
+
+
+def configure_idmap_rid(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_rid_range_low,
+        idmap.idmap_rid_range_high
+    ))
+
+
+def configure_idmap_tdb(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_tdb_range_low,
+        idmap.idmap_tdb_range_high
+    ))
+
+ 
+def configure_idmap_tdb2(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_tdb2_range_low,
+        idmap.idmap_tdb2_range_high
+    ))
+    confset2(smb4_conf, "idmap config %s: script = %s" % (
+        domain,
+        idmap.idmap_tdb2_script
+    ))
+
+
+def configure_idmap_backend(smb4_conf, idmap, domain):
+    idmap_functions = {
+        IDMAP_TYPE_AD: configure_idmap_ad,
+        IDMAP_TYPE_AUTORID: configure_idmap_autorid,
+        IDMAP_TYPE_HASH: configure_idmap_hash,
+        IDMAP_TYPE_LDAP: configure_idmap_ldap,
+        IDMAP_TYPE_NSS: configure_idmap_nss,
+        IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
+        IDMAP_TYPE_RID: configure_idmap_rid,
+        IDMAP_TYPE_TDB: configure_idmap_tdb,
+        IDMAP_TYPE_TDB2: configure_idmap_tdb2
+    }
+
+    if not domain:
+        domain = "*"
+
+    try:
+        func = idmap_functions[idmap.idmap_backend_type]
+        func(smb4_conf, idmap, domain)
+    except:
+        pass 
+
+
 def add_nt4_conf(smb4_conf):
     rid_range_start = 20000
     rid_range_end = 20000000
@@ -177,17 +406,16 @@ def add_nt4_conf(smb4_conf):
         f.write("%s\t%s\n" % (dc_ip, nt4.nt4_workgroup.upper()))
         f.close()
 
+    nt4_workgroup = nt4.nt4_workgroup.upper()
+
     confset2(smb4_conf, "netbios name = %s", nt4.nt4_netbiosname.upper())
-    confset2(smb4_conf, "workgroup = %s", nt4.nt4_workgroup.upper())
+    confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
 
     confset1(smb4_conf, "security = domain")
     confset1(smb4_conf, "password server = *")
 
-    confset2(smb4_conf, "idmap config %s: backend = rid",
-        nt4.nt4_workgroup.upper())
-    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-        nt4.nt4_workgroup.upper(), rid_range_start, rid_range_end
-    ))
+    idmap = get_idmap_object(nt4.ds_type, nt4.id, nt4.nt4_idmap_backend)
+    configure_idmap_backend(smb4_conf, idmap, nt4_workgroup)
 
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
@@ -235,6 +463,8 @@ def add_ldap_conf(smb4_conf):
         )
     )
 
+    ldap_workgroup = cifs.cifs_srv_workgroup.upper()
+
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_binddn)
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
     confset2(smb4_conf, "ldap user suffix = %s", ldap.ldap_usersuffix)
@@ -251,7 +481,10 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldapsam:trusted = yes")
 
     confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
-    confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
+    confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
+
+    idmap = get_idmap_object(ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
+    configure_idmap_backend(smb4_conf, idmap, ldap_workgroup)
 
 
 def add_activedirectory_conf(smb4_conf):
@@ -307,16 +540,8 @@ def add_activedirectory_conf(smb4_conf):
     if ad.ad_unix_extensions:
         confset1(smb4_conf, "winbind nss info = rfc2307")
 
-        confset2(smb4_conf, "idmap config %s: backend = ad", ad_workgroup)
-        confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad_workgroup)
-        confset1(smb4_conf, "idmap config %s: range = %d-%d" %(
-            ad_workgroup, ad_range_start, ad_range_end
-        ))
-    else:
-        confset2(smb4_conf, "idmap config %s: backend = rid", ad_workgroup)
-        confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-            ad_workgroup, rid_range_start, rid_range_end
-        ))
+    idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
+    configure_idmap_backend(smb4_conf, idmap, ad_workgroup)
 
     confset2(smb4_conf, "allow trusted domains = %s",
         "yes" if ad.ad_allow_trusted_doms else "no")
