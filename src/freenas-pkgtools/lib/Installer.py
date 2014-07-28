@@ -61,8 +61,10 @@ PKG_MANIFEST_NAME = "+MANIFEST"
 
 # These are the keys for the scripts
 PKG_SCRIPTS = [ "pre-install", "install", "post-install",
-        "pre-deinstall", "deinstall", "post-deinstall",
-        "pre-upgrade", "upgrade", "post-upgrade" ]
+                "pre-deinstall", "deinstall", "post-deinstall",
+                "pre-upgrade", "upgrade", "post-upgrade",
+                "pre-delta", "post-delta"
+            ]
         
 def enum(**enums):
     return type('Enum', (), enums)
@@ -72,7 +74,13 @@ PKG_SCRIPT_TYPES = enum(PKG_SCRIPT_PRE_DEINSTALL = "pre-deinstall",
                         PKG_SCRIPT_POST_DEINSTALL = "post-deinstall",
                         PKG_SCRIPT_PRE_INSTALL = "pre-install",
                         PKG_SCRIPT_INSTALL = "install",
-                        PKG_SCRIPT_POST_INSTALL = "post-install")
+                        PKG_SCRIPT_POST_INSTALL = "post-install",
+                        PKG_SCRIPT_PRE_UPGRADE = "pre-upgrade",
+                        PKG_SCRIPT_UPGRADE = "upgrade",
+                        PKG_SCRIPT_POST_UPGRADE = "post-upgrade",
+                        PKG_SCRIPT_PRE_DELTA = "pre-delta",
+                        PKG_SCRIPT_POST_DELTA = "post-delta",
+                    )
 
 SCRIPT_INSTALL = [ ["pre_install"],
                    ["install", "PRE-INSTALL"],
@@ -134,6 +142,7 @@ it works in the pkgng code.
 # unlink, then try to change flags if there are
 # permission problems.  (Think, schg)
 def RemoveFile(path):
+    global debug
     try:
         os.lchflags(path, 0)
     except os.error as e:
@@ -144,7 +153,7 @@ def RemoveFile(path):
         if e[0] == errno.ENOENT:
             return True
         else:
-            print >> sys.stderr, "RemoveFile(%s):  errno = %d" % (path, e[0])
+            if debug: print >> sys.stderr, "RemoveFile(%s):  errno = %d" % (path, e[0])
             return False
     return True
 
@@ -257,7 +266,7 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
         return
 #    print >> sys.stderr, "scripts = %s" % (scripts.keys())
     if type not in scripts:
-        print >> sys.stderr, "No %s script to run" % type
+        if verbose or debug:  print >> sys.stderr, "No %s script to run" % type
         return
     
     scriptName = "/%d-%s" % (os.getpid(), type)
@@ -459,22 +468,23 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     else:
         return None
 
-def install_path(pkgfile, root):
+def install_path(pkgfile, dest):
     try:
         f = open(pkgfile, "r")
     except Exception as err:
         print >> sys.stderr, "Cannot open package file %s: %s" % (pkgfile, str(err))
         return False
     else:
-        return install_file(f, root)
+        return install_file(f, dest)
             
-def install_file(pkgfile, root):
+def install_file(pkgfile, dest):
     global debug, verbose, dryrun
     prefix = None
-    pkgdb = Configuration.PackageDB(root)
+    # We explicitly want to use the pkgdb from the destination
+    pkgdb = Configuration.PackageDB(dest)
     amroot = (os.geteuid() == 0)
     pkgScripts = None
-    doing_update = False
+    upgrade_aware = False
 
     try:
         t = tarfile.open(fileobj = pkgfile)
@@ -512,7 +522,9 @@ def install_file(pkgfile, root):
     # See above for how scripts are handled.  It's a mess.
     if PKG_SCRIPTS_KEY in mjson:
         pkgScripts = mjson[PKG_SCRIPTS_KEY]
-    
+    else:
+        pkgScripts = {}
+
     # At this point, the tar file is at the first non-+-named files.
     
     pkgName = mjson[PKG_NAME_KEY]
@@ -531,7 +543,7 @@ def install_file(pkgfile, root):
 
         if PKG_REMOVED_FILES_KEY in mjson: pkgDeletedFiles = mjson[PKG_REMOVED_FILES_KEY]
         if PKG_REMOVED_DIRS_KEY in mjson: pkgDeletedDirs = mjson[PKG_REMOVED_DIRS_KEY]
-        print >> sys.stderr, "Deleted files = %s, deleted dirs = %s" % (pkgDeletedFiles, pkgDeletedDirs)
+        if verbose or debug:  print >> sys.stderr, "Deleted files = %s, deleted dirs = %s" % (pkgDeletedFiles, pkgDeletedDirs)
         
     else:
         pkgDeltaVersion = None
@@ -544,7 +556,7 @@ def install_file(pkgfile, root):
         mdirs.update(mjson[PKG_DIRS_KEY])
     
     print "%s-%s" % (pkgName, pkgVersion)
-    if debug > 1:  print >> sys.stderr, "root = %s" % root
+    if debug > 1:  print >> sys.stderr, "installation target = %s" % dest
         
     # Note that none of this is at all atomic.
     # To fix that, I should go to a persistent sqlite connection,
@@ -552,7 +564,25 @@ def install_file(pkgfile, root):
     old_pkg = pkgdb.FindPackage(pkgName)
     # Should DB be updated before or after installation?
     if old_pkg is not None:
-        doing_update = True
+        old_scripts = pkgdb.FindScriptForPackage(pkgName)
+
+        # pkgScripts is never None, but it may be empty
+        if old_scripts is not None:
+            upgrade_aware = ((PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_UPGRADE in old_scripts) or \
+                            (PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE in old_scripts) or \
+                            (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE in old_scripts)) and \
+                ((PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_UPGRADE in pkgScripts) or \
+                 (PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE in pkgScripts) or \
+                 (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE in pkgScripts))
+
+        print "upgrade_aware = %s" % upgrade_aware
+        # First thing we do, if we're upgrade-aware, is to run the
+        # upgrade scripts from the old version.
+        if upgrade_aware:
+            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_UPGRADE, dest, PKG_PREFIX=prefix)
+            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE, dest, PKG_PREFIX=prefix,
+                         SCRIPT_ARG="PRE-UPGRADE")
+
         # If the new version is a delta package, we do things differently
         if pkgDeltaVersion is not None:
             if old_pkg[pkgName] != pkgDeltaVersion:
@@ -563,27 +593,30 @@ def install_file(pkgfile, root):
             # This is done in both the database and the filesystem.
             # If we can't remove a directory due to ENOTEMPTY, we don't care.
             for file in pkgDeletedFiles:
-                print >> sys.stderr, "Deleting file %s" % file
-                full_path = root + "/" + file
+                if verbose or debug:  print >> sys.stderr, "Deleting file %s" % file
+                full_path = dest + "/" + file
                 if RemoveFile(full_path) == False:
-                    print >> sys.stderr, "Could not remove file %s" % file
+                    if debug:  print >> sys.stderr, "Could not remove file %s" % file
                     # Ignor error for now
                 pkgdb.RemoveFileEntry(file)
             # Now we try to delete the directories.
             for dir in pkgDeletedDirs:
-                print >> sys.stderr, "Attempting to remove directory %s" % dir
-                full_path = root + "/" + dir
+                if verbose or debug:  print >> sys.stderr, "Attempting to remove directory %s" % dir
+                full_path = dest + "/" + dir
                 RemoveDirectory(full_path)
                 pkgdb.RemoveFileEntry(dir)
+            # Later on, when the package is upgraded, the scripts in the database are deleted.
+            # So we don't have to do that now.
         else:
-            old_scripts = pkgdb.FindScriptForPackage(pkgName)
-            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_DEINSTALL, root, PKG_PREFIX=prefix)
-            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_DEINSTALL, root, PKG_PREFIX=prefix, SCRIPT_ARG="DEINSTALL")
+            if not upgrade_aware:
+                RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_DEINSTALL, dest, PKG_PREFIX=prefix)
+                RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_DEINSTALL, dest, PKG_PREFIX=prefix,
+                             SCRIPT_ARG="DEINSTALL")
+
             if pkgdb.RemovePackageFiles(pkgName) == False:
                 print >> sys.stderr, "Could not remove files from package %s" % pkgName
                 return False
-            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_DEINSTALL, root, PKG_PREFIX=prefix)
-            RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, root, PKG_PREFIX=prefix, SCRIPT_ARG="POST-DEINSTALL")
+
             if pkgdb.RemovePackageDirectories(pkgName) == False:
                 print >> sys.stderr, "Could not remove directories from package %s" % pkgName
                 return False
@@ -595,6 +628,12 @@ def install_file(pkgfile, root):
                 print >> sys.stderr, "Could not remove package %s from database" % pkgName
                 return False
 
+            if not upgrade_aware:
+                RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_DEINSTALL, dest, PKG_PREFIX=prefix)
+                RunPkgScript(old_scripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, dest, PKG_PREFIX=prefix,
+                             SCRIPT_ARG="POST-DEINSTALL")
+
+
     if pkgDeltaVersion is not None:
         if pkgdb.UpdatePackage(pkgName, pkgDeltaVersion, pkgVersion, pkgScripts) == False:
             print >> sys.stderr, "Could not update package from %s to %s in database" % (pkgDeltaVersion, pkgVersion)
@@ -603,25 +642,13 @@ def install_file(pkgfile, root):
     elif pkgdb.AddPackage(pkgName, pkgVersion, pkgScripts) == False:
         print >> sys.stderr, "Could not add package %s to database" % pkgName
         return False
-                    
-    #
-    # Start running scripts.
-    # Since I can't how the code works for upgrade scripts, I will
-    # have to remove the package contents, and then re-install it.
-    # Scripts pre-deinstall, deinstall, post-deinstall to be run,
-    # and then pre-install, install, and post-install to be run.
-    #old_scripts = None
-    #if doing_update:
-    #old_manifest = old_pkg["manifest"]
-    #print old_manifest
-    #if PKG_SCRIPTS_KEY in old_manifest:
-    #old_scripts = old_manifest[PKG_SCRIPTS_KEY]
-    #if "pre-upgrade" in old_scripts:
-    #RunPkgScript(old_scripts["pre-upgrade"], root, PKG_PREFIX=prefix)
-            
+
     # Is this correct behaviour for delta packages?
-    RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_INSTALL, root, PKG_PREFIX=prefix)
-    RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, root, PKG_PREFIX=prefix, SCRIPT_ARG="PRE-INSTALL")
+    if upgrade_aware == False:
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_INSTALL,
+                     dest, PKG_PREFIX=prefix)
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL,
+                     dest, PKG_PREFIX=prefix, SCRIPT_ARG="PRE-INSTALL")
             
     # Go through the tarfile, looking for entries in the manifest list.
     pkgFiles = []
@@ -646,29 +673,23 @@ def install_file(pkgfile, root):
             if EntryInDictionary(member.name, mdirs, prefix) == False:
                 continue
         if pkgDeltaVersion is not None:
-            print >> sys.stderr, "Extracting %s from delta package" % member.name
-        list = ExtractEntry(t, member, root, prefix, mFileHash)
+            if verbose or debug: print >> sys.stderr, "Extracting %s from delta package" % member.name
+        list = ExtractEntry(t, member, dest, prefix, mFileHash)
         if list is not None:
             pkgFiles.append((pkgName,) + list)
     
 #        print "prefix = %s, member = %s, hash = %s" % (prefix, member.name, mFileHash)
         member = t.next()
     
-#    return True
-#    for file in mfiles.keys() + mdirs.keys():
-#        try:
-#            entry = t.getmember(file)
-#        except (tarfile.TarError, KeyError) as err:
-#            entry = t.getmember(file[1:] if file.startswith("/") else file)
-#        list = ExtractEntry(t, entry, root, prefix, mfiles[file] if file in mfiles else "-")
-#        if list is not None:
-#            pkgFiles.append((pkgName,) + list)
-        
     if len(pkgFiles) > 0:
         pkgdb.AddFilesBulk(pkgFiles)
         
-    RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_INSTALL, root, PKG_PREFIX=prefix)
-    RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, root, PKG_PREFIX=prefix, SCRIPT_ARG="POST-INSTALL")
+    if upgrade_aware:
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE, dest, PKG_PREFIX=prefix)
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE, dest, PKG_PREFIX=prefix, SCRIPT_ARG="POST-UPGRADE")
+    else:
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_INSTALL, dest, PKG_PREFIX=prefix)
+        RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, dest, PKG_PREFIX=prefix, SCRIPT_ARG="POST-INSTALL")
     return True
 
 class Installer(object):
@@ -684,11 +705,21 @@ class Installer(object):
 
         if self._conf is None:
             # Get the system configuration
-            self._conf = Configuration.Configuration(root)
+            self._conf = Configuration.Configuration()
         if self._manifest is None:
             self._manifest = self._conf.SystemManifest()
         if self._manifest is None:
             raise InstallerConfigurationException("No manifest file")
+        return
+
+    def SetDebug(self, level):
+        global debug
+        debug = level
+        return
+
+    def SetVerbose(self, b):
+        global verbose
+        verbose = b
         return
 
     def GetPackages(self, pkgList = None):
@@ -710,7 +741,7 @@ class Installer(object):
     def InstallPackages(self, progressFunc = None):
         for pkg in self._packages:
             for pkgname in pkg:
-                print >> sys.stderr, "Installing package %s" % pkg
+                if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
                 install_file(pkg[pkgname], self._root)
         return
 

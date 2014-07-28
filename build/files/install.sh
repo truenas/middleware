@@ -498,6 +498,7 @@ menu_install()
 		cp -pR /tmp/data_preserved/ /tmp/data
 	fi
 	# If I did things correctly, this isn't needed
+	# But I didn't, so they're still needed.
 #        : > /tmp/$NEED_UPDATE_SENTINEL
 #        : > /tmp/$CD_UPGRADE_SENTINEL
 
@@ -552,6 +553,9 @@ menu_install()
         if is_truenas ; then
             install_worker.sh -D /tmp/data -m / install
         fi
+
+	# Debugging pause.
+	# read foo
 
 	umount /tmp/data/data
         umount /tmp/data

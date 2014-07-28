@@ -173,12 +173,9 @@ class PackageDB:
 
         scripts = cur.fetchall()
         self._closedb()
-        rv = []
+        rv = {}
         for s in scripts:
-            tmp = {}
-            for k in s.keys():
-                tmp[k] = s[k]
-            rv.append(tmp)
+            rv[s["type"]] = s["script"]
 
         return rv
 
