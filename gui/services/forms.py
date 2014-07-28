@@ -282,16 +282,6 @@ class NFSForm(ModelForm):
             bind.append(ip)
         return ','.join(bind)
 
-    def clean_nfs_srv_v4_root(self):
-        path = self.cleaned_data.get('nfs_srv_v4_root')
-        if not path:
-            return path
-        if not os.path.exists(path):
-            raise forms.ValidationError(_('This path does not exist.'))
-        if not os.path.isdir(path):
-            raise forms.ValidationError(_('This path is not a directory.'))
-        return path
-
     def clean(self):
         cleaned_data = self.cleaned_data
         v4 = cleaned_data['nfs_srv_v4']
