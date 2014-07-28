@@ -621,13 +621,9 @@ class MountPoint(Model):
     def is_my_path(self, path):
         if path == self.mp_path:
             return True
-        try:
-            # If the st_dev values match, then it's the same mountpoint.
-            return os.stat(self.mp_path).st_dev == os.stat(path).st_dev
-        except OSError:
-            # Not a real path (most likely). Fallback to a braindead
-            # best-effort path check.
-            return os.path.commonprefix([self.mp_path, path]) == self.mp_path
+        # Using stat.st_dev is not pratical because ZFS datasets are
+        # different filesystem from a OS point of view
+        return os.path.commonprefix([self.mp_path, path]) == self.mp_path
 
     def has_attachments(self):
         """
