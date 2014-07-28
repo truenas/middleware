@@ -87,13 +87,17 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
 
 	# Copy python and sqlite3 to the installation directory
+	set -x
+	echo " * * * * * * * * "
 	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
-		tar -xf - -C ${INSTALLUFSDIR}
+	tar -xf - -C ${INSTALLUFSDIR}
 	# Copy the installation scripts and modules as well
-	( cd ${NANO_OBJ}/_.w ; tar -cf - ./etc/freenas.conf ./usr/local/lib/freenasOS \
-			./usr/local/bin/install ./usr/local/bin/update_freenas \
-			./usr/local/bin/manifest_util ) |
-		tar -xf - -C ${INSTALLUFSDIR}
+	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/installer | tar -C ${INSTALLUFSDIR} -xf -
+	set +x
+#	( cd ${NANO_OBJ}/_.w ; tar -cf - ./etc/freenas.conf ./usr/local/lib/freenasOS \
+#			./usr/local/bin/install ./usr/local/bin/update_freenas \
+#			./usr/local/bin/manifest_util ) |
+#		tar -xf - -C ${INSTALLUFSDIR}
 # SEF
 # Build packages here.
 
