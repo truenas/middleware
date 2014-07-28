@@ -89,15 +89,15 @@ IDMAP_TYPE_TDB2 = 9
 def idmap_to_enum(idmap_type):
     enum = IDMAP_TYPE_NONE 
     idmap_dict = {
-        'idmap_ad': IDMAP_TYPE_AD,
-        'idmap_autorid': IDMAP_TYPE_AUTORID,
-        'idmap_hash': IDMAP_TYPE_HASH,
-        'idmap_ldap': IDMAP_TYPE_LDAP,
-        'idmap_nss': IDMAP_TYPE_NSS,
-        'idmap_rfc2307': IDMAP_TYPE_RFC2307,
-        'idmap_rid': IDMAP_TYPE_RID,
-        'idmap_tdb': IDMAP_TYPE_TDB,
-        'idmap_tdb2': IDMAP_TYPE_TDB2
+        'ad': IDMAP_TYPE_AD,
+        'autorid': IDMAP_TYPE_AUTORID,
+        'hash': IDMAP_TYPE_HASH,
+        'ldap': IDMAP_TYPE_LDAP,
+        'nss': IDMAP_TYPE_NSS,
+        'rfc2307': IDMAP_TYPE_RFC2307,
+        'rid': IDMAP_TYPE_RID,
+        'tdb': IDMAP_TYPE_TDB,
+        'tdb2': IDMAP_TYPE_TDB2
     }
 
     try:
@@ -111,15 +111,15 @@ def idmap_to_enum(idmap_type):
 def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
-        IDMAP_TYPE_AD: 'idmap_ad',
-        IDMAP_TYPE_AUTORID: 'idmap_autorid',
-        IDMAP_TYPE_HASH: 'idmap_hash',
-        IDMAP_TYPE_LDAP: 'idmap_ldap',
-        IDMAP_TYPE_NSS: 'idmap_nss',
-        IDMAP_TYPE_RFC2307: 'idmap_rfc2307',
-        IDMAP_TYPE_RID: 'idmap_rid',
-        IDMAP_TYPE_TDB: 'idmap_tdb',
-        IDMAP_TYPE_TDB2: 'idmap_tdb2'
+        IDMAP_TYPE_AD: 'ad',
+        IDMAP_TYPE_AUTORID: 'autorid',
+        IDMAP_TYPE_HASH: 'hash',
+        IDMAP_TYPE_LDAP: 'ldap',
+        IDMAP_TYPE_NSS: 'nss',
+        IDMAP_TYPE_RFC2307: 'rfc2307',
+        IDMAP_TYPE_RID: 'rid',
+        IDMAP_TYPE_TDB: 'tdb',
+        IDMAP_TYPE_TDB2: 'tdb2'
     }
 
     try:
