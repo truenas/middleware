@@ -542,6 +542,49 @@ class idmap_tdb2(idmap_base):
         deletable = False
 
 
+class KerberosRealm(Model):
+    krb_realm = models.CharField(
+        verbose_name=_("Realm"),
+        max_length=120,
+        help_text=_("Kerberos realm."),
+    )
+    krb_kdc = models.CharField(
+        verbose_name=_("KDC"),
+        max_length=120,
+        help_text=_("KDC for this realm."),
+    )
+    krb_admin_server = models.CharField(
+        verbose_name=_("Admin Server"),
+        max_length=120,
+        help_text=_(
+            "Specifies the admin server for this realm, where all the "
+            "modifications to the database are performed."
+        ),
+    )
+    krb_kpasswd_server = models.CharField(
+        verbose_name=_("Password Server"),
+        max_length=120,
+        help_text=_(
+            "Points to the server where all the password changes are "
+            "performed.  If there is no such entry, the kpasswd port "
+            "on the admin_server host will be tried."
+        ),
+        blank=True
+    )
+
+
+class KerberosKeytab(Model):
+    keytab_principal = models.CharField(
+        verbose_name=_("Principal"),
+        max_length=120,
+        help_text=_("Kerberos principal, eg: primary/instance@REALM")
+    )
+    keytab_file = models.TextField(
+        verbose_name=_("Keytab"),
+        help_text=_("Kerberos keytab file")
+    )
+
+
 class DirectoryServiceBase(Model):
     class Meta:
         abstract = True
@@ -646,11 +689,11 @@ class ActiveDirectory(DirectoryServiceBase):
         verbose_name=_("Use keytab"),
         default=False,
     )
-    ad_keytab = models.TextField(
-        verbose_name=_("Kerberos keytab"),
-        help_text=_("Kerberos keytab file"),
+    ad_kerberos_keytab = models.ForeignKey(
+        KerberosKeytab,
+        verbose_name=_("Kerberos Keytab"),
         blank=True,
-        null=True,
+        null=True
     )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
@@ -699,17 +742,9 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Hostname of the global catalog server to use."),
         blank=True
     )
-    ad_krbname = models.CharField(
-        verbose_name=_("Kerberos Server"),
-        max_length=120,
-        help_text=_("Hostname of the kerberos server to use."),
-        blank=True
-    )
-    ad_kpwdname = models.CharField(
-        verbose_name=_("Kerberos Password Server"),
-        max_length=120,
-        help_text=_("Hostname of the kerberos password server to use."),
-        blank=True
+    ad_kerberos_realm = models.ForeignKey(
+        KerberosRealm,
+        verbose_name=_("Kerberos Realm")
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -867,6 +902,18 @@ class LDAP(DirectoryServiceBase):
         default=False,
         help_text=_("Set this if you want to use the default domain for users and groups.")
     )
+    ldap_kerberos_realm = models.ForeignKey(
+        KerberosRealm,
+        verbose_name=_("Kerberos Realm"),
+        blank=True,
+        null=True
+    )
+    ldap_kerberos_keytab = models.ForeignKey(
+        KerberosKeytab,
+        verbose_name=_("Kerberos Keytab"),
+        blank=True,
+        null=True
+    )
     ldap_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -907,46 +954,3 @@ class LDAP(DirectoryServiceBase):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
-
-
-class KerberosRealm(Model):
-    krb_realm = models.CharField(
-        verbose_name=_("Realm"),
-        max_length=120,
-        help_text=_("Kerberos realm."),
-    )
-    krb_kdc = models.CharField(
-        verbose_name=_("KDC"),
-        max_length=120,
-        help_text=_("KDC for this realm."),
-    )
-    krb_admin_server = models.CharField(
-        verbose_name=_("Admin Server"),
-        max_length=120,
-        help_text=_(
-            "Specifies the admin server for this realm, where all the "
-            "modifications to the database are performed."
-        ),
-    )
-    krb_kpasswd_server = models.CharField(
-        verbose_name=_("Password Server"),
-        max_length=120,
-        help_text=_(
-            "Points to the server where all the password changes are "
-            "performed.  If there is no such entry, the kpasswd port "
-            "on the admin_server host will be tried."
-        ),
-        blank=True
-    )
-
-
-class KerberosKeytab(Model):
-    keytab_principal = models.CharField(
-        verbose_name=_("Principal"),
-        max_length=120,
-        help_text=_("Kerberos principal, eg: primary/instance@REALM")
-    )
-    keytab_file = models.TextField(
-        verbose_name=_("Keytab"),
-        help_text=_("Kerberos keytab file")
-    )

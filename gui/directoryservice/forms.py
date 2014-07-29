@@ -227,15 +227,11 @@ class ActiveDirectoryForm(ModelForm):
         label=_("Certificate"),
         required=False
     )
-    ad_keytab = FileField(
-        label=_("Kerberos keytab"),
-        required=False
-    )
 
     advanced_fields = [
         'ad_netbiosname',
         'ad_use_keytab',
-        'ad_keytab',
+        'ad_kerberos_keytab',
         'ad_ssl',
         'ad_certfile',
         'ad_verbose_logging',
@@ -244,8 +240,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_use_default_domain',
         'ad_dcname',
         'ad_gcname',
-        'ad_krbname',
-        'ad_kpwdname',
+        'ad_kerberos_realm',
         'ad_timeout',
         'ad_dns_timeout',
         'ad_idmap_backend'
@@ -266,7 +261,6 @@ class ActiveDirectoryForm(ModelForm):
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_use_keytab',
-            'ad_keytab',
             'ad_unix_extensions',
             'ad_verbose_logging',
             'ad_bindname',
@@ -295,8 +289,6 @@ class ActiveDirectoryForm(ModelForm):
             return True
         if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
             return True
-        if self.instance._original_ad_keytab != self.instance.ad_keytab:
-            return True
         if self.instance._original_ad_use_keytab != self.instance.ad_use_keytab:
             return True
         return False
@@ -310,24 +302,6 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "ad_mutex_toggle();"
         )
-
-    def clean_ad_keytab(self):
-        filename = "/data/krb5.keytab"
-
-        ad_keytab = self.cleaned_data.get("ad_keytab", None)
-        if ad_keytab and ad_keytab != filename:
-            if hasattr(ad_keytab, 'temporary_file_path'):
-                shutil.move(ad_keytab.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ad_keytab.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ad_keytab = filename
-
-        return filename
 
     def clean_ad_certfile(self):
         filename = "/data/activedirectory_certfile"
@@ -416,6 +390,8 @@ class LDAPForm(ModelForm):
         'ldap_passwordsuffix',
         'ldap_machinesuffix',
         'ldap_use_default_domain',
+        'ldap_kerberos_realm',
+        'ldap_kerberos_keytab',
         'ldap_ssl',
         'ldap_certfile',
         'ldap_idmap_backend'
