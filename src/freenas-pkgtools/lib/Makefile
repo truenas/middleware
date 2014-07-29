@@ -10,6 +10,7 @@ FILES=	Configuration.py \
 	Manifest.py \
 	Package.py \
 	Train.py \
+	Update.py \
 	__init__.py
 
 beforeinstall:
