@@ -4052,8 +4052,8 @@ Settings → Advanced.
 | Sparse volume      | checkbox       | used to provide thin provisioning; if this option is selected, writes will fail when the pool is low on space        |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Block size         | integer        | only available in Advanced Mode; valid size is any power of 2 from 512b to 128kb with a default size of 8kb; can be  |
-|                    |                | set to match the block size of the filesystem which will be formatted onto the iSCSI target                          | 
+| Block size         | drop-down menu | only available in Advanced Mode; can be set to match the block size of the filesystem which will be formatted onto   |
+|                    |                | the iSCSI target                                                                                                     |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
@@ -4939,6 +4939,9 @@ If no users or groups are listed in the output of those commands, these commands
  getent passwd
 
  getent group
+ 
+If the **wbinfo** commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
+taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of *AD timeout* to 60 seconds.
 
 Using a Keytab
 ~~~~~~~~~~~~~~
@@ -4997,12 +5000,15 @@ describes how to configure KDC discovery over DNS and provides some examples of 
 If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using System → Settings → Advanced →
 Rebuild LDAP/AD Cache.
 
-An expired password for the administrator account will cause kinit to fail so ensure that the password is still valid.
+An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
+on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
 
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure it is the same
-name as the one set in the *Hostname* field in Network → Global Configuration and the
+Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure that it is under
+15 characters and that it is the same name as the one set in the *Hostname* field in Network → Global Configuration and the
 *NetBIOS Name* in Services → Directory Services → Active Directory settings. Make sure the hostname of the domain controller is set in the
 *Domain Controller* field of Services → Directory Services → Active Directory.
+
+
 
 LDAP
 ----
@@ -6422,7 +6428,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                | provider in the *Auxiliary parameters* field                                                                       |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| IP Server            | string         |                                                                                                                    |
+| IP Server            | string         | can be used to specify the hostname and port of the IP check server                                                |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Domain name          | string         | fully qualified domain name (e.g. *yourname.dyndns.org*)                                                           |
@@ -6959,7 +6965,8 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 | Comment            | string         | optional                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable TPC         | checkbox       |                                                                                                                      |
+| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows xcopy         |
+|                    |                | operations otherwise blocked by access control                                                                       |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
@@ -7177,8 +7184,8 @@ targets (one per client).
 |                             |                | or integer representing number of existing authorized access                                                |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Logical Block Size          | integer        | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
-|                             |                | filesystems on an operating system limited by block count; default is *512*                                 |
+| Logical Block Size          | drop-down menu | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
+|                             |                | filesystems on an operating system limited by block count                                                   |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
