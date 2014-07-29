@@ -117,12 +117,12 @@ if __name__ == "__main__":
             hash = ChecksumFile(pkgfile)
             pkgfile.seek(0, os.SEEK_END)
             size = pkgfile.tell()
+            pkg.SetSize(size)
             pkgfile.seek(0)
         else:
             print >> sys.stderr, "Can't find file for %s" % name
 
         pkg.SetChecksum(hash)
-        pkg.SetSize(size)
         for U in upgrades:
             upgrade_file_name = pkg.FileName(U)
             print "Delta package name is %s" % upgrade_file_name
