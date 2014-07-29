@@ -235,8 +235,9 @@ Before installing FreeNAS® you should be aware of the following known issues:
 * Disks with certain configurations can get probed by GEOM and become essentially unwritable without manual intervention. For instance, if you use disks that
   previously had a gmirror on them, the system may pick that up and the disks will be unavailable until the existing gmirror is stopped and destroyed.
 
-* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. Running older firmware can cause many woes,
-  including the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays.
+* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. It is recommended to upgrade the firmware before
+  installing FreeNAS® or immediately after upgrading FreeNAS®. Running older firmware can cause many woes, including the failure to probe all of the
+  attached disks, which can lead to degraded or unavailable arrays.
 
 Hardware Recommendations
 ------------------------
@@ -9092,6 +9093,14 @@ the conditions that trigger an alert include:
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
   is included for managing these devices
+
+An alert will also be generated when the LSI HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
+target) firmware, not the IR (integrated RAID) firmware, from the LSI website. Then, specify the name of the firmware image and bios as well as the
+controller to flash::
+
+ sas2flash -f firmwareimagename -v biosname -c controllernumber
+
+When finished, reboot the system. The new firmware version should appear in the system messages and the alert will be cleared.
 
 FreeNAS® Support Resources
 ===========================
