@@ -907,3 +907,45 @@ class LDAP(DirectoryServiceBase):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+
+
+class KerberosRealm(Model):
+    krb_realm = models.CharField(
+        verbose_name=_("Realm"),
+        max_length=120,
+        help_text=_("Kerberos realm."),
+    )
+    krb_kdc = models.CharField(
+        verbose_name=_("KDC"),
+        max_length=120,
+        help_text=_("KDC for this realm."),
+    )
+    krb_admin_server = models.CharField(
+        verbose_name=_("Admin Server"),
+        max_length=120,
+        help_text=_(
+            "Specifies the admin server for this realm, where all the "
+            "modifications to the database are performed."
+        ),
+    )
+    krb_kpasswd_server = models.CharField(
+        verbose_name=_("Password Server"),
+        max_length=120,
+        help_text=_(
+            "Points to the server where all the password changes are "
+            "performed.  If there is no such entry, the kpasswd port "
+            "on the admin_server host will be tried."
+        ),
+    )
+
+
+class KerberosKeytab(Model):
+    keytab_principal = models.CharField(
+        verbose_name=_("Principal"),
+        max_length=120,
+        help_text=_("Kerberos principal.")
+    )
+    keytab_file = models.TextField(
+        verbose_name=_("Keytab"),
+        help_text=_("Kerberos keytab file")
+    )

@@ -2170,3 +2170,17 @@ class VersionResource(DojoResource):
             'name': name,
         }
         return self.create_response(request, data)
+
+
+class KerberosRealmResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosRealmResourceMixin, self).dehydrate(bundle)
+        return bundle
+
+
+class KerberosKeytabResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosKeytabResourceMixin, self).dehydrate(bundle)
+        return bundle
