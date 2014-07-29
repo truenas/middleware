@@ -815,3 +815,7 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+def upgrade(request):
+    return render(request, 'system/upgrade.html')
