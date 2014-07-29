@@ -298,6 +298,10 @@ fi
 : ${WITH_PKGNG:="yes"}
 export WITH_PKGNG
 
+# Enable the none cipher for openssh
+OPENSSH_NONE_CIPHER=yes
+export OPENSSH_NONE_CIPHER
+
 # NB: leave c++ enabled so devd can be built
 CONF_BUILD="
 #WITHOUT_ACPI=true
@@ -331,7 +335,6 @@ WITHOUT_NDIS=true
 WITHOUT_NLS=true
 WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
-WITH_OPENSSH_NONE_CIPHER=true
 WITHOUT_PORTSNAP=true
 WITHOUT_PPP=true
 WITHOUT_PROFILE=true
