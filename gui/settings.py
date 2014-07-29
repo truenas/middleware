@@ -28,6 +28,9 @@
 # Django settings for FreeNAS project.
 
 import os
+import sys
+
+sys.path.append('/usr/local/lib')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
