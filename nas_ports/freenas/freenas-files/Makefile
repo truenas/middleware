@@ -41,14 +41,18 @@ do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball  all
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
+	${MAKE} -C ${WRKSRC}/freenas-pkgtools obj
+	${MAKE} -C ${WRKSRC}/freenas-pkgtools all
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/sbin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/freenas-pkgtools BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin LIBDIR=${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS install
 	#
 	# Adding autotune
 	#
@@ -236,5 +240,15 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}/${PREFIX}/etc/netcli
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}/${PREFIX}/etc/netcli.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/find_alias_for_smtplib.py ${STAGEDIR}/${PREFIX}/etc/find_alias_for_smtplib.py
+	# Installation scripts
+	${INSTALL_DATA} ${WRKSRC}/freenas/etc/freenas.conf ${STAGEDIR}/${PREFIX}/etc/freenas.conf
+
+#.for script in Configuration.py Installer.py Manifest.py Package.py Exceptions.py Train.py __init__.py
+#	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/lib/freenasOS/${script} ${STAGEDIR}/${PREFIX}/usr/local/lib/freenasOS/${script}
+#.endfor
+#.for script in check_packages.py diff_packages.py pkgify.py update_freenas.py install.py update.py manifest_util.py
+#	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/${script} ${STAGEDIR}/${PREFIX}/usr/local/bin/${script:R}
+#.endfor
+
 
 .include <bsd.port.mk>

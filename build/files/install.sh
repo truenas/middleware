@@ -70,7 +70,7 @@ upgrade_version_to_avatar_conf()
     mv $destconf.$$ $destconf
 }
 
-build_config()
+build_config_old()
 {
     # build_config ${_disk} ${_image} ${_config_file}
 
@@ -89,6 +89,29 @@ packageType=tar
 disk0=${_disk}
 partition=image
 image=${_image}
+bootManager=bsd
+commitDiskPart
+EOF
+}
+build_config()
+{
+    # build_config ${_disk} ${_image} ${_config_file}
+
+    local _disk=$1
+    local _image=$2
+    local _config_file=$3
+
+    cat << EOF > "${_config_file}"
+# Added to stop pc-sysinstall from complaining
+installMode=fresh
+installInteractive=no
+installType=FreeBSD
+installMedium=dvd
+packageType=tar
+
+disk0=${_disk}
+partscheme=GPT
+partition=all
 bootManager=bsd
 commitDiskPart
 EOF
@@ -219,23 +242,41 @@ disk_is_freenas()
 {
     local _disk="$1"
     local _rv=1
+    local upgrade_style=""
+    local os_part=""
+    local data_part=""
 
+    # We have two kinds of potential upgrades here.
+    # The old kind, with 4 slices, and the new kind,
+    # with two partitions.
     mkdir -p /tmp/data_old
-    if ! [ -c /dev/${_disk}s4 ] ; then
-        return 1
+    if [ -c /dev/${_disk}s4 ]; then
+	os_part=/dev/${_disk}s1a
+	data_part=/dev/${_disk}s4
+	upgrade_style="old"
+    elif [ -c /dev/${_disk}p3 ]; then
+	os_part=/dev/${_disk}p2
+	data_part=/dev/${_disk}p3
+	upgrade_style="new"
     fi
-    if ! mount /dev/${_disk}s4 /tmp/data_old ; then
-        return 1
+    if [ "${data_part}" = ""]; then
+	return 1
     fi
+    if ! mount "${data_part}" /tmp/data_old ; then
+	return 1
+    fi
+
     ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
     fi
     # XXX side effect, shouldn't be here!
-    cp -pR /tmp/data_old/. /tmp/data_preserved
+    if [ "${upgrade_style}" = "old" ]; then
+	cp -pR /tmp/data_old/. /tmp/data_preserved
+    fi
     umount /tmp/data_old
-    if [ $_rv -eq 0 ]; then
-	mount /dev/${_disk}s1a /tmp/data_old
+    if [ $_rv -eq 0 -a "${upgrade_style}" = "old" ]; then
+	mount ${os_part} /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
         ls /tmp/data_old > /dev/null
@@ -264,7 +305,7 @@ disk_is_freenas()
         umount /tmp/data_old
     fi
     rmdir /tmp/data_old
-
+    return $_rv
 }
 
 menu_install()
@@ -287,6 +328,9 @@ menu_install()
     local _menuheight
     local _msg
     local _dlv
+    local os_part
+    local data_part
+    local upgrade_style
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -347,6 +391,13 @@ menu_install()
             _do_upgrade=1
             _action="upgrade"
         fi
+	if [ -c /dev/${_disk}s4 ]; then
+	    upgrade_style="old"
+	elif [ -c /dev/${_disk}p3 ]; then
+	    upgrade_style="new"
+	else
+	    echo "Unknown upgrade style" 1>&2
+	fi
     elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
 	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
@@ -374,7 +425,14 @@ menu_install()
     then
         /etc/rc.d/dmesg start
         mkdir -p /tmp/data
-        mount /dev/${_disk}s1a /tmp/data
+	if [ "${upgrade_style}" = "old" ]; then
+		mount /dev/${_disk}s1a /tmp/data
+	elif [ "${upgrade_style}" = "new" ]; then
+		mount /dev/${_disk}p2 /tmp/data
+	else
+		echo "Unknown upgrade style" 1>&2
+		false
+	fi
 	# XXX need to find out why
 	ls /tmp/data > /dev/null
         # pre-avatar.conf build. Convert it!
@@ -390,6 +448,10 @@ menu_install()
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
         rmdir /tmp/data
+	if [ -c /dev/${_disk}s4 ]; then
+	    # Destroy the partition for old-style upgrades
+	    gpart destroy -F ${_disk} || true
+	fi
     else
         # Run through some sanity checks on new installs ;).. some of the
         # checks won't make sense, but others might (e.g. hardware sanity
@@ -407,16 +469,38 @@ menu_install()
     export ROOTIMAGE=1
     # Hack #2
     ls $(get_product_path) > /dev/null
-    /rescue/pc-sysinstall -c ${_config_file}
+#    /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -ne 0 ]; then
         # Mount: /data
+	set -x
+	# For new-style upgrades -- we have a ${_disk}p3 --
+	# we don't need to back up the data, just touch the
+	# sentinal files.
         mkdir -p /tmp/data
-        mount /dev/${_disk}s4 /tmp/data
+	if [ ! -c /dev/${_disk}p3 ]; then
+		# For upgrading from old-style partitions, the
+		# partition map was destroyed.  pc-sysinstall starts
+		# the process for us.
+		/rescue/pc-sysinstall -c ${_config_file}
+		gpart add -t freebsd-ufs -s 20M -i 3 ${_disk}	# data, 20mbytes
+		gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
+		# And now create the filesystems
+		# /data first
+		newfs -n /dev/${_disk}p3
+		# Then root
+		newfs -n /dev/${_disk}p2
+	fi
+	# Mount the data partition
+	mount /dev/${_disk}p3 /tmp/data
         ls /tmp/data > /dev/null
 
-        cp -pR /tmp/data_preserved/ /tmp/data
-        : > /tmp/$NEED_UPDATE_SENTINEL
-        : > /tmp/$CD_UPGRADE_SENTINEL
+	if [ "${upgrade_style}" = "old" ]; then
+		cp -pR /tmp/data_preserved/ /tmp/data
+	fi
+	# If I did things correctly, this isn't needed
+	# But I didn't, so they're still needed.
+#        : > /tmp/$NEED_UPDATE_SENTINEL
+#        : > /tmp/$CD_UPGRADE_SENTINEL
 
 
 	if [ -c /dev/${_disk_old} ]; then
@@ -425,9 +509,23 @@ menu_install()
 	fi
 
         umount /tmp/data
-        # Mount: /
-        mount /dev/${_disk}s1a /tmp/data
+        # Mount the root partition
+	mount /dev/${_disk}p2 /tmp/data
         ls /tmp/data > /dev/null
+	# Add the boot loader
+	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
+	# For the install to work, we need to have /data mounted.
+	test -d /tmp/data/data || mkdir /tmp/data/data
+	mount /dev/${_disk}p3 /tmp/data/data
+#	/usr/local/bin/installer -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
+	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
+	# Need to link the manifest file
+	rm -f /tmp/data/conf/base/etc/manifest
+	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
+	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
+	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
+	rm -f /tmp/data/conf/default/etc/fstab
+	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
 	fi
@@ -456,10 +554,50 @@ menu_install()
             install_worker.sh -D /tmp/data -m / install
         fi
 
+	# Debugging pause.
+	# read foo
+
+	umount /tmp/data/data
         umount /tmp/data
         rmdir /tmp/data
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+    else
+	/rescue/pc-sysinstall -c ${_config_file}
+	set -x
+	# For non-upgrade installs, the partition was erased.
+	# A boot partition was created, so we need to add two
+	# more partitions:  data and root
+	gpart add -t freebsd-ufs -s 40M -i 3 ${_disk}	# data, 40mbytes
+	gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
+	# Add the boot loader
+	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
+	# And now create the filesystems
+	# /data first
+	newfs -n /dev/${_disk}p3
+	mkdir -p /tmp/data
+	mount /dev/${_disk}p3 /tmp/data
+	# Copy the databases over
+	cp -R /data/* /tmp/data
+	chown -R www:www /tmp/data
+	umount /tmp/data
+	rmdir /tmp/data
+	# And now root
+	newfs -n /dev/${_disk}p2
+	mkdir -p /tmp/data
+	mount /dev/${_disk}p2 /tmp/data
+	mkdir /tmp/data/data
+	mount /dev/${_disk}p3 /tmp/data/data
+	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
+	# Need to link the manifest file
+	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
+	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
+	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
+	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	umount /tmp/data/data
+	umount /tmp/data
+	rmdir /tmp/data
+	set +x
     fi
 
     if is_truenas ; then

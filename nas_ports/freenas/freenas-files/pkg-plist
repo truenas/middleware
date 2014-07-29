@@ -49,6 +49,7 @@ usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
 usr/local/share/perftests-nas/tests/iozone
 usr/local/www/data/django.fcgi
+etc/freenas.conf
 etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
 etc/ix.rc.d/ix-aliases

@@ -72,7 +72,7 @@ main()
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
-	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
+#	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/usr/local
@@ -85,6 +85,31 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/usr/local/firmware
 	mkdir -p ${INSTALLUFSDIR}/usr/local/install
 	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
+
+	# Copy python and sqlite3 to the installation directory
+	set -x
+	echo " * * * * * * * * "
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
+	tar -xf - -C ${INSTALLUFSDIR}
+	# Copy the installation scripts and modules as well
+	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/installer | tar -C ${INSTALLUFSDIR} -xf -
+	set +x
+# SEF
+# Build packages here.
+
+	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
+	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
+	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
+	    printf "[Defaults]\nsearch = /.mount/FreeNAS\n" > ${NANO_OBJ}/_.isodir/freenas.conf
+	    cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.isodir/FreeNAS-MANIFEST
+	else
+		echo "Hey, where are the install filess?"
+	fi
+	if [ -d ${NANO_OBJ}/_.data ]; then
+		mkdir -p ${NANO_OBJ}/_.instufs/data
+		tar -C ${NANO_OBJ}/_.data -cf - . |
+			tar -C ${NANO_OBJ}/_.instufs/data -xpf -
+	fi
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	if is_truenas ; then
