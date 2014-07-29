@@ -9995,3 +9995,28 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+#, fuzzy
+msgid "Wizard"
+msgstr "发起端"
+
+#: services/forms.py:302
+#, fuzzy
+msgid "This field is required to enable NFSv4."
+msgstr "此栏必填"
+
+#: services/models.py:351
+#, fuzzy
+msgid "Enable NFSv4"
+msgstr "启用FXP"
+
+#: services/models.py:354
+#, fuzzy
+msgid "NFSv4 Root Path"
+msgstr "远程路径"
+
+#: system/forms.py:1468
+#, fuzzy
+msgid "A pool with this name already exists."
+msgstr "指定的卷名已经存在"

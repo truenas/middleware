@@ -9570,3 +9570,23 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+msgid "Wizard"
+msgstr ""
+
+#: services/forms.py:302
+msgid "This field is required to enable NFSv4."
+msgstr ""
+
+#: services/models.py:351
+msgid "Enable NFSv4"
+msgstr ""
+
+#: services/models.py:354
+msgid "NFSv4 Root Path"
+msgstr ""
+
+#: system/forms.py:1468
+msgid "A pool with this name already exists."
+msgstr ""

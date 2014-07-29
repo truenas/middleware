@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-07-24 09:12+0000\n"
+"PO-Revision-Date: 2014-07-26 09:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ne\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1406193174.0\n"
+"X-POOTLE-MTIME: 1406366042.0\n"
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
@@ -311,4 +311,12 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+msgid "Wizard"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
+msgid "Paswords do not match."
 msgstr ""
