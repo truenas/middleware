@@ -222,6 +222,11 @@ def home(request):
     except:
         registration = None
 
+    try:
+        upgrade = models.Upgrade.objects.order_by("-id")[0]
+    except:
+        upgrade = models.Upgrade.objects.create()
+
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
@@ -230,6 +235,7 @@ def home(request):
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
+        'upgrade': upgrade,
     })
 
 
