@@ -140,14 +140,14 @@ class PackageDB:
             return
         self._connectdb()
         cur = self.__conn.cursor()
-        cur.execute("UPDATE packages SET version = ? WHERE name = ?", (newVers, manifest, pkgName))
+        cur.execute("UPDATE packages SET version = ? WHERE name = ?", (newVers, pkgName))
         cur.execute("DELETE FROM scripts WHERE package = ?", (pkgName,))
         if scripts is not None:
             for scriptType in scripts.keys():
                 cur.execute("INSERT INTO scripts(package, type, script) VALUES(?, ?, ?)",
                             (pkgName, scriptType, scripts[scriptType]))
 
-        self.__closedb()
+        self._closedb()
 
     def AddPackage(self, pkgName, vers, scripts):
         curVers = self.FindPackage(pkgName)

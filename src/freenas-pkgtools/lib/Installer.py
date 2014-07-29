@@ -536,7 +536,7 @@ def install_file(pkgfile, dest):
         # This will throw an exception if it's not there,
         # but that's okay -- it needs to be.
         # See diff_packages (should they coordinate?).
-        if pkgDeltaDict[PKG_DELTA_STYLE] != "file":
+        if pkgDeltaDict[PKG_DELTA_STYLE_KEY] != "file":
             raise InstallerUnknownDeltaStyleException
 
         pkgDeltaVersion = pkgDeltaDict[PKG_DELTA_VERSION_KEY]
