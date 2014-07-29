@@ -1081,6 +1081,8 @@ seen in Example 2.6a. In this example, the FreeNAS® system has one network inte
  You may try the following URLs to access the web user interface:
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
+Set the Root Password
+~~~~~~~~~~~~~~~~~~~~~
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
 system. You should be prompted to create a password for the *root* user, as seen in Figure 2.6b.
@@ -1095,6 +1097,12 @@ password. Once the password has been input and confirmed, you should see the adm
 **Figure 2.6c: FreeNAS® Graphical Configuration Menu**
 
 |Figure26c_png|
+
+Initial Configuration Wizard
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Troubleshooting
+~~~~~~~~~~~~~~~
 
 If you are unable to access the IP address from a browser, check the following:
 
@@ -9347,6 +9355,8 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 * `Windows to FreeNAS backup <http://www.youtube.com/watch?v=vcmAAy-OVtI>`_
 
 * `Crashplan backup on Apple OS X with FreeNAS <http://www.youtube.com/watch?v=p7CHxFxlEU8>`_
+
+* `FreeNAS® 9.2.1.5: Volumes & Snapshots Overview <https://www.youtube.com/watch?v=yxnJH-8YvC8>`_
 
 * `FreeNAS® 9.2.1.5: Shares Overview (AFP, NFS, CIFS, Time Machine)  <https://www.youtube.com/watch?v=rOueRnMNZtY>`_
 
