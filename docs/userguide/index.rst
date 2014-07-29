@@ -1512,7 +1512,6 @@ If you click the Add Group button, you will see the screen shown in Figure 4.1b.
 
 **Table 4.1a: Options When Creating a Group**
 
-
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | **Setting**         | **Value** | **Description**                                                                                                          |
 |                     |           |                                                                                                                          |
@@ -1609,7 +1608,6 @@ default” in System → Settings → Advanced. Table 4.2a summarizes the option
 |Figure42b_jpg|
 
 **Table 4.2a: User Account Configuration**
-
 
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Setting**                | **Value**       | **Description**                                                                                                                                       |
@@ -1732,7 +1730,6 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 
 **Table 5.2a: General Configuration Settings**
 
-
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Setting              | Value          | Description                                                                                                                    |
 |                      |                |                                                                                                                                |
@@ -1819,7 +1816,6 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 
 **Table 5.2b: NTP Servers Configuration Options**
 
-
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | **Setting** | **Value** | **Description**                                                                                                       |
 |             |           |                                                                                                                       |
@@ -1855,7 +1851,6 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
 **Table 5.2c: SSL Certificate Configuration Settings**
-
 
 +---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 | **Setting**         | **Value**  | **Description**                                                                                                  |
@@ -1902,7 +1897,6 @@ Table 5.3a.
 |Figure53a_png|
 
 **Table 5.3a: Advanced Configuration Settings**
-
 
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Setting                                 | Value                            | Description                                                                  |
@@ -2008,9 +2002,7 @@ containing important information such as the health of the disks. Alert events a
 |Figure54a_png|
 
 
-
 **Table 5.4a: Email Configuration Settings**
-
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
@@ -2276,7 +2268,6 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 
 **Table 6.1a: Cron Job Options**
 
-
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 | **Setting**       | **Value**                   | **Description**                                                                                         |
 |                   |                             |                                                                                                         |
@@ -2341,7 +2332,6 @@ When scheduling a script, make sure that the script is executable and has been f
 
 **Table 6.2a: Options When Adding an Init/Shutdown Script**
 
-
 +-------------+----------------+-----------------------------------------------------------------------------------+
 | **Setting** | **Value**      | **Description**                                                                   |
 |             |                |                                                                                   |
@@ -2402,7 +2392,6 @@ configured when creating an rsync task.
 |Figure63a_png|
 
 **Table 6.3a: Rsync Configuration Options**
-
 
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | **Setting**                      | **Value**                   | **Description**                                                                           |
@@ -2774,9 +2763,8 @@ the FreeNAS® system in the “Host name database” field.
 
 **Table 7.1a: Global Configuration Settings**
 
-
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| Setting                | Value      | Description                                                                                                          |
+| **Setting**            | **Value**  | **Description**                                                                                                      |
 |                        |            |                                                                                                                      |
 +========================+============+======================================================================================================================+
 | Hostname               | string     | system host name                                                                                                     |
@@ -2841,9 +2829,8 @@ interface or Edit an already configured interface.
 
 **Table 7.2a: Interface Configuration Settings**
 
-
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Setting             | Value          | Description                                                                                                         |
+| **Setting**         | **Value**      | **Description**                                                                                                     |
 |                     |                |                                                                                                                     |
 +=====================+================+=====================================================================================================================+
 | NIC                 | drop-down menu | select the FreeBSD device name; will be a read-only field when editing an interface                                 |
@@ -2914,7 +2901,6 @@ when configuring IPMI.
 |Figure73a_png|
 
 **Table 7.3a: IPMI Options**
-
 
 +----------------------+----------------+-----------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                             |
@@ -3159,7 +3145,6 @@ The available options are summarized in Table 7.6a.
 
 **Table 7.6a: Static Route Options**
 
-
 +---------------------+-----------+-------------------------------------+
 | **Setting**         | **Value** | **Description**                     |
 |                     |           |                                     |
@@ -3201,7 +3186,6 @@ for details.
 Table 7.7a summarizes the configurable fields.
 
 **Table 7.7a: Adding a VLAN**
-
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | **Setting**       | **Value**      | **Description**                                                                                   |
@@ -3368,7 +3352,6 @@ To format your disks with UFS, go to Storage → Volumes → UFS Volume Manager 
 Table 8.1a summarizes the available options.
 
 **Table 8.1a: Options When Creating a UFS Volume**
-
 
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | **Setting**         | **Value** | **Description**                                                                                                          |
@@ -3571,9 +3554,8 @@ Table 8.1c summarizes the configuration options of this screen.
 
 **Table 8.1c: Options When Creating a ZFS Volume**
 
-
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Setting          | Value          | Description                                                                                |
+| **Setting**      | **Value**      | **Description**                                                                            |
 |                  |                |                                                                                            |
 +==================+================+============================================================================================+
 | Volume name      | string         | ZFS volumes must conform to these                                                          |
@@ -3777,7 +3759,6 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 
 **Table 8.1d: Manual Setup Options**
 
-
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | **Setting**   | **Value**        | **Description**                                                                                |
 |               |                  |                                                                                                |
@@ -3865,7 +3846,6 @@ Permissions icon for a specific volume/dataset, you will see the screen shown in
 
 **Table 8.1e: Options When Changing Permissions**
 
-
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | **Setting**                | **Value**        | **Description**                                                                                            |
 |                            |                  |                                                                                                            |
@@ -3929,9 +3909,8 @@ click the Advanced Mode button or configure the system to always display these s
 
 **Table 8.1f: ZFS Dataset Options**
 
-
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Setting                  | Value               | Description                                                                                               |
+| **Setting**              | **Value**           | **Description**                                                                                           |
 |                          |                     |                                                                                                           |
 +==========================+=====================+===========================================================================================================+
 | Dataset Name             | string              | mandatory                                                                                                 |
@@ -4033,7 +4012,6 @@ Settings → Advanced.
 |Figure81r_png|
 
 **Table 8.1g: zvol Configuration Options**
-
 
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | **Setting**        | **Value**      | **Description**                                                                                                      |
@@ -4369,9 +4347,8 @@ dataset that you wish to snapshot.
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
-
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Setting        | Value                      | Description                                                                                                  |
+| **Setting**    | **Value**                  | **Description**                                                                                              |
 |                |                            |                                                                                                              |
 +================+============================+==============================================================================================================+
 | Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be     |
@@ -4564,7 +4541,6 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 
 **Table 8.3a: Adding a Replication Task**
 
-
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | **Setting**               | **Value**      | **Description**                                                                                              |
 |                           |                |                                                                                                              |
@@ -4709,7 +4685,6 @@ settings for the volume named *volume1. * Table 8.4a summarizes the options in t
 
 **Table 8.4a: ZFS Scrub Options**
 
-
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**    | **Value**                   | **Description**                                                                                             |
 |                |                             |                                                                                                             |
@@ -4818,7 +4793,6 @@ display these settings by checking the box “Show advanced fields by default”
 |Figure91a_png|
 
 **Table 9.1a: Active Directory Configuration Options**
-
 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | **Setting**              | **Value**     | **Description**                                                                                                                            |
@@ -5039,7 +5013,6 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 .
 
 **Table 9.2a: LDAP Configuration Options**
-
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                       |
@@ -5279,7 +5252,7 @@ Once you press the OK button when creating the AFP share, a pop-up menu will ask
 **Table 10.1a: AFP Share Configuration Options**
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Setting                      | Value         | Description                                                                                                 |
+| **Setting**                  | **Value**     | **Description**                                                                                             |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
 | Path                         | browse button | browse to the volume/dataset to share; do not nest additional volumes, datasets, or symbolic links beneath  |
@@ -5475,9 +5448,8 @@ Control Services will open and indicate whether or not the NFS service successfu
 
 **Table 10.2a: NFS Share Options**
 
-
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Setting             | Value          | Description                                                                                                        |
+| **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
 | Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
@@ -5753,7 +5725,6 @@ enable this service?” Click Yes and Services → Control Services will open an
 |Figure103a_png|
 
 **Table 10.3a: Options for a CIFS Share**
-
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**                  | **Value**     | **Description**                                                                                             |
@@ -6061,9 +6032,8 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 
 **Table 11.2a: AFP Configuration Options**
 
-
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Setting                 | Value          | Description                                                                                                     |
+| **Setting**             | **Value**      | **Description**                                                                                                 |
 |                         |                |                                                                                                                 |
 +=========================+================+=================================================================================================================+
 | Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing the AFP share                         |
@@ -6135,7 +6105,6 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |Figure113a_png|
 
 **Table 11.3a: CIFS Configuration Options**
-
 
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**                      | **Value**      | **Description**                                                                                       |
@@ -6244,7 +6213,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 **Table 11.3b: Description of SMB Protocol Versions**
 
 +----------------+------------------------------------------------------------+
-| Value          | Description                                                |
+| **Value**      | **Description**                                            |
 |                |                                                            |
 +================+============================================================+
 | CORE           | used by DOS                                                |
@@ -6362,7 +6331,6 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 
 **Table 11.4a: Domain Controller Configuration Options**
 
-
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Setting**            | **Value**      | **Description**                                                                                                                                                                           |
 |                        |                |                                                                                                                                                                                           |
@@ -6419,9 +6387,8 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 **Table 11.5a: DDNS Configuration Options**
 
-
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**      | **Descripti                                                                                                        |
+| **Setting**          | **Value**      | **Description**                                                                                                    |
 |                      |                |                                                                                                                    |
 +======================+================+====================================================================================================================+
 | Provider             | drop-down menu | several providers are supported; if your provider is not listed, leave this field blank and specify the custom     |
@@ -6480,9 +6447,8 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 
 **Table 11.6a: FTP Configuration Options**
 
-
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Setting                                                      | Value          | Description                                                                         |
+| **Setting**                                                  | **Value**      | **Description**                                                                     |
 |                                                              |                |                                                                                     |
 +==============================================================+================+=====================================================================================+
 | Port                                                         | integer        | port the FTP service listens on                                                     |
@@ -6856,35 +6822,28 @@ Table 11.7a summarizes the settings that can be configured when adding an author
 
 **Table 11.7a: Authorized Access Configuration Settings**
 
-
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Setting     | Value   | Description                                                                                                                                                                                   |
-|             |         |                                                                                                                                                                                               |
-+=============+=========+===============================================================================================================================================================================================+
-| Group ID    | integer | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of 1 will inherit the authentication profile associated with Group 1 |
-|             |         |                                                                                                                                                                                               |
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| User        | string  | name of user account that will be created on the FreeNAS® device for CHAP authentication with the user on the remote system; many initiators default to using the initiator name as the user  |
-|             |         |                                                                                                                                                                                               |
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string  | password to be associated with                                                                                                                                                                |
-|             |         | *User*                                                                                                                                                                                        |
-|             |         | ; the iSCSI standard requires that this be at least 12 characters long                                                                                                                        |
-|             |         |                                                                                                                                                                                               |
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Peer User   | string  | only input when configuring mutual CHAP; in most cases it will need to be                                                                                                                     |
-|             |         | the same value as                                                                                                                                                                             |
-|             |         | *User*                                                                                                                                                                                        |
-|             |         |                                                                                                                                                                                               |
-|             |         |                                                                                                                                                                                               |
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string  | the mutual secret password which                                                                                                                                                              |
-|             |         | **must be different than the Secret**                                                                                                                                                         |
-|             |         | ; required if the                                                                                                                                                                             |
-|             |         | *Peer User*                                                                                                                                                                                   |
-|             |         | is set                                                                                                                                                                                        |
-|             |         |                                                                                                                                                                                               |
-+-------------+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value** | **Description**                                                                                                                  |
+|             |           |                                                                                                                                  |
++=============+===========+==================================================================================================================================+
+| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of 1    |
+|             |           | will inherit the authentication profile associated with Group 1                                                                  |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
+|             |           | initiator name as the user                                                                                                       |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Secret      | string    | password to be associated with *User*; the iSCSI standard requires that this be at least 12 characters long                      |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as *User*                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer Secret | string    | the mutual secret password which **must be different than the Secret**; required if the                                          |
+|             |           | *Peer User* is set                                                                                                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 
 
 **NOTE:** CHAP does not work with GlobalSAN initiators on Mac OS X.
@@ -6936,9 +6895,8 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 
 **Table 11.7b: Extent Configuration Settings**
 
-
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Setting            | Value          | Description                                                                                                          |
+| **Setting**        | **Value**      | **Description**                                                                                                      |
 |                    |                |                                                                                                                      |
 +====================+================+======================================================================================================================+
 | Extent Name        | string         | name of extent; if the *Extent size* is not 0, it can not be an existing file within the volume/dataset              |
@@ -6988,28 +6946,22 @@ configuration for **iscontrol**, back it up as it will not survive a reboot of t
 
 Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
-
 **Table 11.7c: Initiator Configuration Settings**
 
-
-+--------------------+--------+----------------------------------------------------------------------------+
-| Setting            | Value  | Description                                                                |
-|                    |        |                                                                            |
-+====================+========+============================================================================+
-| Initiators         | string | use                                                                        |
-|                    |        | *ALL*                                                                      |
-|                    |        | keyword or a list of initiator hostnames separated by commas with no space |
-|                    |        |                                                                            |
-+--------------------+--------+----------------------------------------------------------------------------+
-| Authorized network | string | use                                                                        |
-|                    |        | *ALL*                                                                      |
-|                    |        | keyword or a network address with CIDR mask such as                        |
-|                    |        | *192.168.2.0/24*                                                           |
-|                    |        |                                                                            |
-+--------------------+--------+----------------------------------------------------------------------------+
-| Comment            | string | optional description                                                       |
-|                    |        |                                                                            |
-+--------------------+--------+----------------------------------------------------------------------------+
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| **Setting**        | **Value** | **Description**                                                                      |
+|                    |           |                                                                                      |
++====================+===========+======================================================================================+
+| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas with no space |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
+|                    |           | *192.168.2.0/24*                                                                     |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Comment            | string    | optional description                                                                 |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
 
 
 In the example shown in Figure 11.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
@@ -7039,12 +6991,11 @@ Table 11.7d summarizes the settings that can be configured when adding a portal.
 
 **Table 11.7d: Portal Configuration Settings**
 
-
 +-------------+----------------+-----------------------------------------------------------------------------+
 | **Setting** | **Value**      | **Description**                                                             |
 |             |                |                                                                             |
 |             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
++=============+================+=============================================================================+
 | Comment     | string         | optional description; portals are automatically assigned a numeric group ID |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
@@ -7096,7 +7047,6 @@ existing extent.
 |Figure117g_png|
 
 **Table 11.7e: Target Global Configuration Settings**
-
 
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 | **Setting**                     | **Value**                    | **Description**                                                                           |
@@ -7153,7 +7103,6 @@ targets (one per client).
 
 **Table 11.7f: Target Settings**
 
-
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**                 | **Value**      | **Description**                                                                                             |
 |                             |                |                                                                                                             |
@@ -7204,20 +7153,19 @@ Table 11.7g summarizes the settings that can be configured when associating targ
 
 **Table 11.7g: Target/Extents Configuration Settings**
 
-
-+---------+----------------+--------------------------------------------------------------------------------------------------------+
-| Setting | Value          | Description                                                                                            |
-|         |                |                                                                                                        |
-+---------+----------------+--------------------------------------------------------------------------------------------------------+
-| LUN ID  | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
-|         |                |                                                                                                        |
-+---------+----------------+--------------------------------------------------------------------------------------------------------+
-| Target  | drop-down menu | select the pre-created target                                                                          |
-|         |                |                                                                                                        |
-+---------+----------------+--------------------------------------------------------------------------------------------------------+
-| Extent  | drop-down menu | select the pre-created extent                                                                          |
-|         |                |                                                                                                        |
-+---------+----------------+--------------------------------------------------------------------------------------------------------+
++-------------+----------------+--------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value**      | **Description**                                                                                        |
+|             |                |                                                                                                        |
++=============+================+========================================================================================================+
+| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+|             |                |                                                                                                        |
++-------------+----------------+--------------------------------------------------------------------------------------------------------+
+| Target      | drop-down menu | select the pre-created target                                                                          |
+|             |                |                                                                                                        |
++-------------+----------------+--------------------------------------------------------------------------------------------------------+
+| Extent      | drop-down menu | select the pre-created extent                                                                          |
+|             |                |                                                                                                        |
++-------------+----------------+--------------------------------------------------------------------------------------------------------+
 
 
 It is recommended to always associate extents to targets in a 1:1 manner, even though the GUI will allow multiple extents to be associated with the same
@@ -7346,9 +7294,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Table 11.9a: NFS Configuration Options**
 
-
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Setting                | Value      | Description                                                                                                         |
+| **Setting**            | **Value**  | **Description**                                                                                                     |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
 | Number of servers      | integer    | run **sysctl -n kern.smp.cpus** from Shell to determine the number; do not exceed the number listed in the output   |
@@ -7403,7 +7350,6 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
 **Table 11.10a: Rsync Configuration Options**
 
-
 +----------------------+-----------+---------------------------------------------------------------------+
 | **Setting**          | **Value** | **Description**                                                     |
 |                      |           |                                                                     |
@@ -7434,7 +7380,6 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 |100000000000023D000001C2EB395B61_png|
 
 **Table 11.10b: Rsync Module Configuration Options**
-
 
 +----------------------+----------------+-------------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                               |
@@ -7566,7 +7511,6 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Table 11.12a: SNMP Configuration Options**
 
-
 +----------------------+------------+----------------------------------------------------------------+
 | **Setting**          | **Value**  | **Description**                                                |
 |                      |            |                                                                |
@@ -7612,7 +7556,6 @@ button or configure the system to always display these settings by checking the 
 Advanced.
 
 **Table 11.13a: SSH Configuration Options**
-
 
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | **Setting**                   | **Value**      | **Description**                                                                                          |
@@ -7778,7 +7721,6 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 
 **Table 11.14a: TFTP Configuration Options**
 
-
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 | **Setting**     | **Value**     | **Description**                                                                                                          |
 |                 |               |                                                                                                                          |
@@ -7828,7 +7770,6 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 
 **Table 11.15a: UPS Configuration Options**
 
-
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**               | **Value**      | **Description**                                                                                       |
 |                           |                |                                                                                                       |
@@ -7860,7 +7801,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                | *UPS reaches low battery*                                                                             |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters *UPS goes on battery*,    |                                                                                 |
+| Shutdown timer            | integer        | in seconds; will initiate shutdown after this many seconds after UPS enters *UPS goes on battery*,    |
 |                           |                | unless power is restored                                                                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -8168,7 +8109,6 @@ you install software into a Linux jail, install the 32-bit version of the softwa
 
 **Table 13a: What Type of Software can be Installed Into a Jail?**
 
-
 +------------------+---------------------+-----------------------------------------------------------+---------------------+
 | **Type of Jail** | **FreeNAS PBI**     | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
 |                  |                     |                                                           |                     |
@@ -8228,7 +8168,6 @@ system, they will automatically be installed into their own dataset under the sp
 Table 13.1a summarizes the fields in this configuration screen.
 
 **Table 13.1a: Jail Configuration Options**
-
 
 +----------------------------+---------------+--------------------------------------------------------------------------+
 | **Setting**                | **Value**     | **Description**                                                          |
@@ -8637,7 +8576,6 @@ To add the template, click Jails → Add Jail Templates which will open the scre
 Table 13.3a summarizes the fields in this screen.
 
 **Table 13.3a: Jail Template Options**
-
 
 +--------------+----------------+----------------------------------------------------------------+
 | **Setting**  | **Value**      | **Description**                                                |
@@ -10618,7 +10556,6 @@ the possible boolean values are *True*
 or *False*.
 
 **Table 25.2a: Valid JSON Parameters for Users Create Resource**
-
 
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 | **JSON Parameter**       | **Type** | **Description**                                                                                                      |
