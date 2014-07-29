@@ -490,3 +490,15 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
+
+
+class KerberosRealmForm(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosRealm
+
+
+class KerberosKeytabForm(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosKeytab
