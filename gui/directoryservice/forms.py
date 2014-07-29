@@ -195,11 +195,6 @@ class NT4Form(ModelForm):
             nt4_idmap_backend = None
         return nt4_idmap_backend
 
-    def clean_nt4_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_NT4, idmap_backend) 
-        return idmap_backend
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("nt4_adminpw"):
@@ -351,11 +346,6 @@ class ActiveDirectoryForm(ModelForm):
 
         return filename
 
-    def clean_ad_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("ad_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_ACTIVEDIRECTORY, idmap_backend) 
-        return idmap_backend
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
@@ -461,11 +451,6 @@ class LDAPForm(ModelForm):
             self.instance.ldap_certfile = filename
 
         return filename
-
-    def clean_ldap_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("ldap_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_LDAP, idmap_backend) 
-        return idmap_backend
 
     def clean(self):
         cdata = self.cleaned_data

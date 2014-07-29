@@ -40,6 +40,8 @@ urlpatterns = patterns(
         name="directoryservice_nis"),
     url(r"^nt4/$", "directoryservice_nt4",
         name="directoryservice_nt4"),
+    url(r"^kerberos/$", "directoryservice_kerberos",
+        name="directoryservice_kerberos"),
     url(r"^idmap_ad/(?P<id>\d+)/$", "directoryservice_idmap_ad",
         name="directoryservice_idmap_ad"),
     url(r"^idmap_autorid/(?P<id>\d+)/$", "directoryservice_idmap_autorid",

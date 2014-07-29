@@ -72,55 +72,55 @@ def get_directoryservice_idmap_object(obj_type):
 def get_idmap_object(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
 
-    if idmap_type == "idmap_ad":
+    if idmap_type == "ad":
         idmap = models.idmap_ad.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_autorid":
+    elif idmap_type == "autorid":
         idmap = models.idmap_autorid.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_hash":
+    elif idmap_type == "hash":
         idmap = models.idmap_hash.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_ldap":
+    elif idmap_type == "ldap":
         idmap = models.idmap_ldap.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_nss":
+    elif idmap_type == "nss":
         idmap = models.idmap_nss.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_rfc2307":
+    elif idmap_type == "rfc2307":
         idmap = models.idmap_rfc2307.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_rid":
+    elif idmap_type == "rid":
         idmap = models.idmap_rid.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_tdb":
+    elif idmap_type == "tdb":
         idmap = models.idmap_tdb.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
 
-    elif idmap_type == "idmap_tdb2":
+    elif idmap_type == "tdb2":
         idmap = models.idmap_tdb2.objects.get(
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
@@ -139,39 +139,39 @@ def get_idmap(obj_type, obj_id, idmap_type):
     except:
         idmap = None
 
-    if idmap_type == "idmap_ad":
+    if idmap_type == "ad":
         if not idmap:
             idmap = models.idmap_ad()
 
-    elif idmap_type == "idmap_autorid":
+    elif idmap_type == "autorid":
         if not idmap:
             idmap = models.idmap_autorid()
 
-    elif idmap_type == "idmap_hash":
+    elif idmap_type == "hash":
         if not idmap:
             idmap = models.idmap_hash()
 
-    elif idmap_type == "idmap_ldap":
+    elif idmap_type == "ldap":
         if not idmap:
             idmap = models.idmap_ldap()
 
-    elif idmap_type == "idmap_nss":
+    elif idmap_type == "nss":
         if not idmap:
             idmap = models.idmap_nss()
 
-    elif idmap_type == "idmap_rfc2307":
+    elif idmap_type == "rfc2307":
         if not idmap:
             idmap = models.idmap_rfc2307()
 
-    elif idmap_type == "idmap_rid":
+    elif idmap_type == "rid":
         if not idmap:
             idmap = models.idmap_rid()
 
-    elif idmap_type == "idmap_tdb":
+    elif idmap_type == "tdb":
         if not idmap:
             idmap = models.idmap_tdb()
 
-    elif idmap_type == "idmap_tdb2":
+    elif idmap_type == "tdb2":
         if not idmap:
             idmap = models.idmap_tdb2()
 
