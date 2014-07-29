@@ -52,6 +52,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
+from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
@@ -222,6 +223,11 @@ def home(request):
     except:
         registration = None
 
+    try:
+        upgrade = models.Upgrade.objects.order_by("-id")[0]
+    except:
+        upgrade = models.Upgrade.objects.create()
+
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
@@ -230,6 +236,7 @@ def home(request):
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
+        'upgrade': upgrade,
     })
 
 
@@ -815,3 +822,27 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+
+#FIXME
+output = ''
+def upgrade(request):
+
+    def handler(op, newpkg, oldpkg):
+        global output
+        if op == 'upgrade':
+            output += '%s-%s -> %s-%s\n' % (
+                newpkg.Name(),
+                newpkg.Version(),
+                oldpkg.Name(),
+                oldpkg.Version(),
+            )
+    try:
+        update = CheckForUpdates(handler=handler)
+    except ValueError:
+        update = False
+    return render(request, 'system/upgrade.html', {
+        'update': update,
+        'output': output,
+    })
