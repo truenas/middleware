@@ -944,7 +944,7 @@ class KerberosKeytab(Model):
     keytab_principal = models.CharField(
         verbose_name=_("Principal"),
         max_length=120,
-        help_text=_("Kerberos principal.")
+        help_text=_("Kerberos principal, eg: primary/instance@REALM")
     )
     keytab_file = models.TextField(
         verbose_name=_("Keytab"),
