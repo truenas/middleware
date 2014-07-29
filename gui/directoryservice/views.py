@@ -139,7 +139,7 @@ def directoryservice_nis(request):
 
 
 def directoryservice_kerberos(request):
-    pass
+    return render(request, 'directoryservice/kerberos.html', { });
 
 
 def get_directoryservice_status():
