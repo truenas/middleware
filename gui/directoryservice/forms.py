@@ -26,6 +26,7 @@
 #####################################################################
 import logging
 import os
+import re
 import shutil
 
 from django.forms import FileField
@@ -499,6 +500,30 @@ class KerberosRealmForm(ModelForm):
 
 
 class KerberosKeytabForm(ModelForm):
+    keytab_file = FileField(
+        label=_("Kerberos keytab"),
+        required=True
+    )
+
     class Meta:
         fields = '__all__'
         model = models.KerberosKeytab
+
+    def clean_keytab_file(self):
+        principal = self.cleaned_data.get("keytab_principal")
+        filename = "%s.keytab" % re.sub('[^a-zA-Z0-9]+', '_', principal)
+
+        keytab_file = self.cleaned_data.get("keytab_file", None)
+        if keytab_file and keytab_file != filename:
+            if hasattr(keytab_file, 'temporary_file_path'):
+                shutil.move(keytab_file.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in keytab_file.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.keytab_file = filename
+
+        return filename

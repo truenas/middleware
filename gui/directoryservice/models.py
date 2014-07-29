@@ -936,6 +936,7 @@ class KerberosRealm(Model):
             "performed.  If there is no such entry, the kpasswd port "
             "on the admin_server host will be tried."
         ),
+        blank=True
     )
 
 
