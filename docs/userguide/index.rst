@@ -188,14 +188,16 @@ The following features have been added or changed:
 * The "Domain logons" checkbox has been added to Services → CIFS.
 
 * The "Workgroup Name" field is deprecated and has been removed from Directory Service → Active Directory. The "Encryption Mode", "Certificate", and
-  "Enable" fields have been added to Directory Service → Active Directory.
+  "Enable" fields and the "Idmap backend" drop-down menu have been added to Directory Service → Active Directory.
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox and "Use default domain"
-  field have been added.
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from Directory Service → LDAP and the "Enable" checkbox, "Use default domain"
+  field, and "Idmap backend" drop-down menu have been added.
   
 * The "Enable" checkbox has been added to Directory Service → NIS.
 
-* The "Use default domain" and "Enable" checkboxes have been added to Directory Service → NT4.
+* The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to Directory Service → NT4.
+
+* Directory Service → Kerberos has been added.
 
 * The "Database Path" field has been moved from Sharing → Apple (AFP) Share → Add Apple (AFP) Share to Services → AFP.
 
@@ -2798,7 +2800,8 @@ the FreeNAS® system in the “Host name database” field.
 | Nameserver 3           | IP address | tertiary DNS server                                                                                                  |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| HTTP Proxy             | string     |                                                                                                                      |
+| HTTP Proxy             | string     | enter the proxy information for the network in the format ''http://my.proxy.server:3128'' or                         |
+|                        |            | ''http://user@password:my.proxy.server:3128''                                                                        |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable netwait feature | checkbox   | if enabled, network services will not be started at boot time until the interface is able to ping the addresses      |
@@ -4889,6 +4892,9 @@ display these settings by checking the box “Show advanced fields by default”
 | DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Idmap backend            | drop-down     |                                                                                                                                            |
+|                          | menu          |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Enable                   | checkbox      |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -5073,6 +5079,9 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Idmap backend           | drop-down menu |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -5175,12 +5184,18 @@ After configuring the NT4 service, start it in Services → Control Services →
 | Use default domain     | checkbox  |                                                                     |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
+| Idmap backend          | drop-down |                                                                     |
+|                        | menu      |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
 | Enable                 | checkbox  |                                                                     |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
+
+Kerberos
+--------
 
 Sharing
 =======
