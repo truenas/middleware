@@ -50,22 +50,21 @@ def FindManifest(tf):
 # the package.
 def CompareManifests(m1, m2):
     print "\nm1 = %s\nm2 = %s\n" % (m1, m2)
+    m1_files = {}
+    m2_files = {}
+    m1_dirs = {}
+    m2_dirs = {}
     if kPkgFilesKey in m1_files:
         m1_files = m1[kPkgFilesKey]
-    else:
-        m1_files = {}
+
     if kPkgFilesKey in m2_files:
         m2_files = m2[kPkgFilesKey].copy()
-    else:
-        m2_files = {}
+
     if kPkgDirsKey in m1_dirs:
         m1_dirs = m1[kPkgDirsKey]
-    else:
-        m1_dirs = {}
+
     if kPkgDirsKey in m2_dirs:
         m2_dirs = m2[kPkgDirsKey].copy()
-    else:
-        m2_dirs = {}
 
     retval = {}
     removed_files = []
