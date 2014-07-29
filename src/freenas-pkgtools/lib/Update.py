@@ -25,7 +25,7 @@ def CheckForUpdates(root = None, handler = None):
     cur = conf.SystemManifest()
     m = conf.FindLatestManifest()
     print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
- if m is not None else 0)
+                                                                             if m is not None else 0)
     if m is None:
         raise ValueError("Manifest could not be found!")
     if m.Sequence() <= cur.Sequence():
@@ -57,6 +57,16 @@ def Update(root = None, conf = None, handler = None):
     if new_man is None:
         return
 
+    if len(deleted_packages) == 0 and len(other_packages) == 0:
+        # We have a case where a manifest was updated, but we
+        # don't actually have any changes to the packages.  We
+        # should install the new manifest, and be done -- it
+        # may have new release notes, or other issues.
+        # Right now, I'm not quite sure how to do this.
+        # I should also learn how to log from python.
+        print >> sys.stderr, "Updated manifest but no package differences"
+        return
+
     # Now we have a list of deleted packages, and a list
     # of update/install packages.
     # The task is to delete the first set of packages,
@@ -65,7 +75,7 @@ def Update(root = None, conf = None, handler = None):
     # We want to use the system configuration, unless one has been
     # specified -- we don't want to use the target root's.
     if conf is None:  
-        conf = Configuration.Configuration(root = root)
+        conf = Configuration.Configuration()
 
     for pkg in deleted_packages:
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
