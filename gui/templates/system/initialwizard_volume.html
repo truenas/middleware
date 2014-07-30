@@ -87,6 +87,13 @@
             this.set('label', '{% trans "Please wait..."|escapejs %}');
           </script>
         </button>
+
+        <button id="btn_{% cls_name wizard.form %}_Cancel" class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
+          {% trans "Exit" %}
+          <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            cancelDialog(this);
+          </script>
+        </button>
       </td>
     </tr>
   </table>
