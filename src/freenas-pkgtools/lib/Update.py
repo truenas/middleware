@@ -37,7 +37,7 @@ def CheckForUpdates(root = None, handler = None):
     return True
 
 
-def Update(root = None, conf = None, handler = None):
+def Update(root=None, conf=None, check_handler=None, get_handler=None):
     """
     Perform an update.  Calls CheckForUpdates() first, to see if
     there are any. If there are, then magic happens.
@@ -67,8 +67,8 @@ def Update(root = None, conf = None, handler = None):
             deleted_packages.append(pkg)
         else:
             process_packages.append(pkg)
-        if handler is not None:
-            handler(op, pkg, old)
+        if check_handler is not None:
+            check_handler(op, pkg, old)
 
     new_man = CheckForUpdates(root, UpdateHandler)
     if new_man is None:
@@ -102,7 +102,7 @@ def Update(root = None, conf = None, handler = None):
         conf.PackageDB().RemovePackage(pkg.Name())
 
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
-    installer.GetPackages(process_packages)
+    installer.GetPackages(process_packages, handler=get_handler)
 
     print >> sys.stderr, "Packages = %s" % installer._packages
 

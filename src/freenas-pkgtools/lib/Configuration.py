@@ -42,7 +42,7 @@ def TryOpenFile(path):
     else:
         return f
 
-def TryGetNetworkFile(url, tmp, current_version = "1"):
+def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
     FREENAS_VERSION = "X-FreeNAS-Manifest-Version"
     try:
         req = urllib2.Request(url)
@@ -53,8 +53,26 @@ def TryGetNetworkFile(url, tmp, current_version = "1"):
     except:
         print >> sys.stderr, "Unable to load %s" % url
         return None
+    try:
+        totalsize = int(furl.info().getheader('Content-Length').strip())
+    except:
+        totalsize = None
+    chunk_size = 64 * 1024
     retval = tempfile.TemporaryFile(dir = tmp)
-    retval.write(furl.read())
+    read = 0
+    lastpercent = percent = 0
+    while True:
+        data = furl.read(chunk_size)
+        if not data:
+            break
+        read += len(data)
+        if handler and totalsize:
+            percent = int((float(read) / float(totalsize)) * 100.0)
+            if percent != lastpercent:
+                handler('network', url, progress=percent)
+            lastpercent = percent
+
+        retval.write(data)
     retval.seek(0)
     return retval
 
@@ -478,7 +496,7 @@ class Configuration(object):
     def CreateTemporaryFile(self):
         return tempfile.TemporaryFile(dir = self._temp)
 
-    def SearchForFile(self, path):
+    def SearchForFile(self, path, handler=None):
         # Iterate through the search locations,
         # looking for $loc/$path.
         # If we find the file, we return a file-like
@@ -509,7 +527,12 @@ class Configuration(object):
             elif full_pathname.startswith("file://"):
                 file_ref = TryOpenFile(full_pathname[len("file://"):])
             else:
-                file_ref = TryGetNetworkFile(full_pathname, self._temp, current_version)
+                file_ref = TryGetNetworkFile(
+                    full_pathname,
+                    self._temp,
+                    current_version,
+                    handler=handler,
+                )
             if file_ref is not None:
                 yield file_ref
         return
@@ -534,7 +557,7 @@ class Configuration(object):
 
         return rv
 
-    def FindPackageFile(self, package, upgrade_from = None):
+    def FindPackageFile(self, package, upgrade_from=None, handler=None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
         # object for the package file.
@@ -593,7 +616,10 @@ class Configuration(object):
             if o is not None:
                 # Figure out the name.
                 upgrade_name = package.FileName(curVers)
-                for file in self.SearchForFile("Packages/%s" % upgrade_name):
+                for file in self.SearchForFile(
+                    "Packages/%s" % upgrade_name,
+                    handler=handler,
+                ):
                     if h is not None:
                         hash = ChecksumFile(file)
                         if hash == h:
@@ -602,7 +628,10 @@ class Configuration(object):
                         return file
         # All that, and now we do much of it again with the full version
         new_name = package.FileName()
-        for file in self.SearchForFile("Packages/%s" % new_name):
+        for file in self.SearchForFile(
+            "Packages/%s" % new_name,
+            handler=handler,
+        ):
             if package.Checksum() is not None:
                 hash = ChecksumFile(file)
                 if hash == package.Checksum():
