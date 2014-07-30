@@ -91,5 +91,9 @@ def Update(root = None, conf = None, handler = None):
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
     installer.GetPackages(process_packages)
 
-    print "Packages = %s" % installer._packages
+    print >> sys.stderr, "Packages = %s" % installer._packages
+
+    # Now let's actually install them.
+    installer.InstallPackages()
+
     return
