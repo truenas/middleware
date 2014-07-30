@@ -39,6 +39,7 @@ Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${s
 ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
+NoneEnabled yes
 EOF
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
