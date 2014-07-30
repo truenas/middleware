@@ -64,6 +64,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
+from freenasUI.system.utils import CheckUpdateHandler
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -824,25 +825,14 @@ def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
 
 
-
-#FIXME
-output = ''
 def upgrade(request):
 
-    def handler(op, newpkg, oldpkg):
-        global output
-        if op == 'upgrade':
-            output += '%s-%s -> %s-%s\n' % (
-                newpkg.Name(),
-                newpkg.Version(),
-                oldpkg.Name(),
-                oldpkg.Version(),
-            )
+    handler = CheckUpdateHandler()
     try:
-        update = CheckForUpdates(handler=handler)
+        update = CheckForUpdates(handler=handler.call)
     except ValueError:
         update = False
     return render(request, 'system/upgrade.html', {
         'update': update,
-        'output': output,
+        'handler': handler,
     })
