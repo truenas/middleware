@@ -74,7 +74,7 @@ def main():
         except ValueError:
             print >> sys.stderr, "No manifest found"
             return 1
-        if update:
+        if update is not None:
             print >> sys.stderr, "Newer manifest found"
             return 0
         else:

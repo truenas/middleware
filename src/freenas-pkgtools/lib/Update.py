@@ -29,12 +29,12 @@ def CheckForUpdates(root = None, handler = None):
     if m is None:
         raise ValueError("Manifest could not be found!")
     if m.Sequence() <= cur.Sequence():
-        return False
+        return None
     if handler is not None:
         diffs = Manifest.CompareManifests(cur, m)
         for (pkg, op, old) in diffs:
             handler(op, pkg, old)
-    return True
+    return m
 
 
 def Update(root = None, conf = None, handler = None):
@@ -109,7 +109,7 @@ def Update(root = None, conf = None, handler = None):
     # Now let's actually install them.
     if installer.InstallPackages() is False:
         print >> sys.stderr, "Unable to install packages"
+        return False
     else:
         SaveManifest(new_man)
-
-    return True
+        return True
