@@ -3,36 +3,44 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
 import conn
 
-#vol_name = raw_input('Input volume name:')
-url = conn.url + 'storage/disk/'
-auth = conn.auth
 headers = conn.headers
+auth = conn.auth
+url = conn.url + 'storage/disk/'
 payload = {
-          "disk_togglesmart": "true"
+          "disk_description": "newdescription"
 }
 
-def replication_get():
+
+def get():
+  print 'Getting storage-disk ......'
+  r = requests.get(url, auth = auth)
+  if r.status_code == 200:
+    result = json.loads(r.text)
+    i = 0
+    for i in range(0,len(result)):
+      print '\n'
+      for items in result[i]:
+        print items+':', result[i][items]
+    print 'Get storage-disk --> Succeeded!'
+  else:
+    print 'Get storage-disk --> Failed!'
+  return result[0]['disk_name']
+
+def put():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
-  i = 0
-  for i in range(0,len(result)):
-    print '\n'
-    for items in result[i]:
-      print items+':', result[i][items]
+  if len(result)>0:
+    r = requests.put(url+str(result[0]['id'])+'/', auth = auth, data = json.dumps(payload), headers = headers)
+    if r.status_code == 200:
+      print 'Update storage-disk --> Succeeded!'
+    else:
+      print 'Update storage-disk --> Failed!'
+      print r.text
 
-def replication_put():
-  id = raw_input('Input id:')+'/'
-  r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
-  result = json.loads(r.text)
-  for items in result:
-    print items+':', result[items]
+def post():
+  print 'No POST function for storage-disk!'
 
-while (1):
-  method = raw_input('Input method:')
-  if method == 'get':
-    replication_get()
-  elif method == 'put':
-    replication_put()
+def delete():
+  print 'No DELETE function for storage-disk!'
