@@ -302,6 +302,8 @@ class PackageDB:
         self._closedb()
         return True
 
+    # This removes the contents of the given packages from both the filesystem
+    # and the database.  It leaves the package itself in the database.
     def RemovePackageContents(self, pkgName, failDirectoryRemoval = False):
         if self.FindPackage(pkgName) is None:
             print >> sys.stderr, "Package %s is not in database" % pkgName
@@ -317,6 +319,7 @@ class PackageDB:
         return True
 
     # Note that this just affects the database, it doesn't run any script.
+    # That makes it the opposite of RemovePackageContents().
     def RemovePackage(self, pkgName):
         if self.FindPackage(pkgName) is not None:
             flist = self.FindFilesForPackage(pkgName)

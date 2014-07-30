@@ -43,13 +43,30 @@ def Update(root = None, conf = None, handler = None):
     there are any. If there are, then magic happens.
     """
 
+    def SaveManifest(manifest):
+        # Need to write out the manifest
+        # It needs to to into the specified root; however,
+        # if root is none, we can't then link to the backup.
+        manifest.StorePath(root + Manifest.SYSTEM_MANIFEST_FILE)
+        try:
+            os.link(root + Manifest.SYSTEM_MANIFEST_FILE,
+                    root + Manifest.BACKUP_MANIFEST_FILE)
+        except OSError as e:
+            if e[0] == errno.EXDEV:
+                # Just write it out to the backup location
+                manifest.StorePath(root + Manifest.BACKUP_MANIFEST_FILE)
+            else:
+                raise e
+        except:
+            raise
+
     deleted_packages = []
-    other_packages = []
+    process_packages = []
     def UpdateHandler(op, pkg, old):
         if op == "delete":
             deleted_packages.append(pkg)
         else:
-            other_packages.append((pkg, old))
+            process_packages.append(pkg)
         if handler is not None:
             handler(op, pkg, old)
 
@@ -57,7 +74,7 @@ def Update(root = None, conf = None, handler = None):
     if new_man is None:
         return
 
-    if len(deleted_packages) == 0 and len(other_packages) == 0:
+    if len(deleted_packages) == 0 and len(process_packages) == 0:
         # We have a case where a manifest was updated, but we
         # don't actually have any changes to the packages.  We
         # should install the new manifest, and be done -- it
@@ -79,14 +96,10 @@ def Update(root = None, conf = None, handler = None):
 
     for pkg in deleted_packages:
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
-        #        if conf.PackageDB().RemovePackageContents(pkg) == False:
-        #            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
-        #            sys.exit(1)
-        #        conf.PackageDB().RemovePackage(pkg.Name())
-
-    process_packages = []
-    for (pkg, old) in other_packages:
-        process_packages.append(pkg)
+        if conf.PackageDB().RemovePackageContents(pkg) == False:
+            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
+            raise Exception("Unable to remove contents for package %s" % pkg.Name())
+        conf.PackageDB().RemovePackage(pkg.Name())
 
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
     installer.GetPackages(process_packages)
@@ -94,6 +107,9 @@ def Update(root = None, conf = None, handler = None):
     print >> sys.stderr, "Packages = %s" % installer._packages
 
     # Now let's actually install them.
-    installer.InstallPackages()
+    if installer.InstallPackages() is False:
+        print >> sys.stderr, "Unable to install packages"
+    else:
+        SaveManifest(new_man)
 
-    return
+    return True

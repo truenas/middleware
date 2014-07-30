@@ -158,6 +158,19 @@ def main():
     new_manifest[kPkgFilesKey] = diffs[kPkgFilesKey].copy()
     new_manifest[kPkgDirsKey] = diffs[kPkgDirsKey].copy()
 
+    # If there are no diffs, print a message, and exit without
+    # creating a file.
+    empty = True
+    for key in (kPkgFilesKey, kPkgDirsKey, kPkgRemovedFilesKey, kPkgRemovedDirsKey):
+        if key in new_manifest and len(new_manifest[key]) > 0:
+            empty = False
+            break
+
+    if empty is True:
+        print >> sys.stderr, "No diffs between package version %s and %s; no file created" \
+            % (PackageName(pkg1_manifest), PackageVersion(pkg1_manifest), PackageVersion(pkg1_manifest))
+        return 0
+
 #    print "\nPackage diffs = %s\n" % diffs
     new_manifest_string = json.dumps(new_manifest, sort_keys=True,
                                  indent=4, separators=(',', ': '))
@@ -191,12 +204,14 @@ def main():
                 new_tf.addfile(member, data)
             else:
                 print >> sys.stderr, "Unknown file type"
-                sys.exit(1)
+                return 1
             search_dict.pop(fname)
             if len(search_dict) == 0:
                 break
         member = pkg2_tarfile.next()
     new_tf.close()
+    return 0
+
             
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
