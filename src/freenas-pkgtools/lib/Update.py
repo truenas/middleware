@@ -1,3 +1,5 @@
+import errno
+import os
 import sys
 
 import freenasOS.Manifest as Manifest
@@ -37,7 +39,8 @@ def CheckForUpdates(root = None, handler = None):
     return True
 
 
-def Update(root=None, conf=None, check_handler=None, get_handler=None):
+def Update(root=None, conf=None, check_handler=None, get_handler=None,
+           install_handler=None):
     """
     Perform an update.  Calls CheckForUpdates() first, to see if
     there are any. If there are, then magic happens.
@@ -107,7 +110,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None):
     print >> sys.stderr, "Packages = %s" % installer._packages
 
     # Now let's actually install them.
-    if installer.InstallPackages() is False:
+    if installer.InstallPackages(handler=install_handler) is False:
         print >> sys.stderr, "Unable to install packages"
     else:
         SaveManifest(new_man)

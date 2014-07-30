@@ -742,10 +742,12 @@ class Installer(object):
         # ready for installation
         return True
 
-    def InstallPackages(self, progressFunc = None):
+    def InstallPackages(self, progressFunc=None, handler=None):
         for pkg in self._packages:
             for pkgname in pkg:
                 if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
+                if handler is not None:
+                    handler(pkgname)
                 install_file(pkg[pkgname], self._root)
         return
 
