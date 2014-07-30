@@ -16,7 +16,8 @@ class Migration(SchemaMigration):
             ('upd_location', self.gf('django.db.models.fields.URLField')(default='http://download.freenas.org/FreeNAS/', max_length=200)),
         ))
         db.send_create_signal(u'system', ['Upgrade'])
-        orm['system.Upgrade'].objects.create()
+        if not db.dry_run:
+            orm['system.Upgrade'].objects.create()
 
 
     def backwards(self, orm):
