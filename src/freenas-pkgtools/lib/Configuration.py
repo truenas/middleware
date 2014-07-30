@@ -345,12 +345,16 @@ class Configuration(object):
     _temp = "/tmp"
     _dirty = False
     _nopkgdb = False
+    _system_pool_link = "/var/db/system"
 
     def __init__(self, root = None, file = None, nopkgdb = False):
         if root is not None: self._root = root
         if file is not None: self._config_path = file
         self._nopkgdb = nopkgdb
         self.LoadConfigurationFile(self._config_path)
+        # Set _temp to the system pool, if it exists.
+        if os.path.islink(self._system_pool_link):
+            self._temp = os.readlink(self._system_pool_link)
 
     def SystemManifest(self):
         man = Manifest.Manifest(self)
