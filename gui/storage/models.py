@@ -823,6 +823,14 @@ class ReplRemote(Model):
             "encryption algorithms than the defaults, which make it less "
             "desirable on untrusted networks.")
     )
+    ssh_no_cipher = models.BooleanField(
+	default=False,
+        verbose_name=_("Disable Encryption (SECURE LAN ONLY)"),
+        help_text=_(
+            "Enabling this may substantially increase transfer speed on high "
+            "speed, secure local networks.  It uses NO encryption at all,"
+            " making it totally unsuitable for untrusted networks."),
+    )
 
     class Meta:
         verbose_name = _(u"Remote Replication Host")
