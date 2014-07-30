@@ -966,6 +966,9 @@ class ReplicationResourceMixin(object):
         bundle.data['repl_remote_fast_cipher'] = (
             bundle.obj.repl_remote.ssh_fast_cipher
         )
+        bundle.data['repl_remote_no_cipher'] = (
+            bundle.obj.repl_remote.ssh_no_cipher
+        )
         bundle.data['repl_remote_no'] = (
             bundle.obj.repl_remote.ssh_no
         )
