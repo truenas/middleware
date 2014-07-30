@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-07-17 12:16+0000\n"
+"PO-Revision-Date: 2014-07-28 18:46+0000\n"
 "Last-Translator: Playerthe12 <a7694987@drdrb.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1405599382.0\n"
+"X-POOTLE-MTIME: 1406573172.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -106,7 +106,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Πάντα ανοιχτό"
+msgstr "Πάντα ενεργό"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -123,7 +123,7 @@ msgstr "Επίπεδο 64 - Μέση κατανάλωση ενέργειας μ�
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Επίπεδο 127 - Ενδιάμεση κατανάλωση ενέργειας με την αναμονή"
+msgstr "Επίπεδο 127 - Ενδιάμεση κατανάλωση ενέργειας με αναμονή"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
@@ -169,7 +169,7 @@ msgstr "Απριλίου"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr "Μαίου"
+msgstr "Μαΐου"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
@@ -229,7 +229,7 @@ msgstr "Κυριακή"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr "Ανώνυμος"
+msgstr "Ανώνυμη"
 
 #: choices.py:164
 msgid "Local User"
@@ -396,7 +396,7 @@ msgstr "Μόνο για εγγραφή"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "Για εγγραφή και ανάγνωση"
+msgstr "Ανάγνωση και εγγραφή"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -6858,24 +6858,25 @@ msgstr "Εγγραφή"
 #~ msgstr "Ρυθμίσεις Active Directory"
 
 #: choices.py:166
+#, fuzzy
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "Κρυπτογραφημένη, όχι συνθηματική φράση"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
 #, fuzzy
@@ -6884,15 +6885,15 @@ msgstr "lzjb (συνιστάται)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (μέγιστη συμπίεση)"
 
 #: choices.py:613
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "Λεπτομερές"
 
 #: choices.py:683
 msgid "Daemon"
@@ -6917,11 +6918,11 @@ msgstr ""
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "ctrl+!data"
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "auth+!data"
 
 #: account/forms.py:58
 msgid "Confirm New Password"
@@ -6954,7 +6955,6 @@ msgstr ""
 
 #: jails/admin.py:265
 #: jails/models.py:434
-#, fuzzy
 msgid "URL"
 msgstr "Διεύθυνση(URL)"
 
@@ -6969,7 +6969,7 @@ msgstr ""
 
 #: jails/forms.py:516
 msgid "autostart"
-msgstr ""
+msgstr "αυτόματη εκτέλεση"
 
 #: jails/forms.py:906
 #, fuzzy
@@ -7833,12 +7833,13 @@ msgid "Unencrypted"
 msgstr "Μη κρυπτογραφημένο"
 
 #: choices.py:167
+#, fuzzy
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "Κρυπτογραφημένο, με συνθηματική φράση"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -7854,7 +7855,7 @@ msgstr "lz4 (συνιστάται)"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (τρέχει από μηδενικά)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -7862,22 +7863,21 @@ msgstr ""
 
 #: choices.py:610
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:672
-#, fuzzy
 msgid "Fatal"
 msgstr "Καταστροφικό"
 
 #: choices.py:677
 #, fuzzy
 msgid "Debug2"
-msgstr "Αποσφαλμάτωση"
+msgstr "Debug2"
 
 #: choices.py:678
 #, fuzzy
 msgid "Debug3"
-msgstr "Αποσφαλμάτωση"
+msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
@@ -7900,7 +7900,7 @@ msgstr "Κάρτα διεπαφής δικτύου"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data"
 
 #: account/forms.py:66
 msgid "Passwords do not match"
@@ -7975,7 +7975,7 @@ msgstr "Έναρξη"
 
 #: jails/admin.py:271
 msgid "Instances"
-msgstr ""
+msgstr "Στιγμιότυπα"
 
 #: jails/forms.py:260
 #: jails/utils.py:628
@@ -8851,9 +8851,8 @@ msgid "SMB3_00"
 msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (γρηγορότερο)"
+msgstr "lz4 (γρηγορότερο)"
 
 #: choices.py:569
 msgid "Verify"
@@ -8903,7 +8902,7 @@ msgstr "Τοπικός χρήστης"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:707
 #, fuzzy
@@ -8921,11 +8920,11 @@ msgstr ""
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "auth+data"
 
 #: account/forms.py:53
 msgid "New Password"
@@ -8958,7 +8957,6 @@ msgstr "Δεν μπόρεσα να ανακτήσω το %(url)s: %(error)s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
 msgstr "Αυτόματη εκκίνηση"
 
@@ -8983,7 +8981,6 @@ msgid "vanilla"
 msgstr ""
 
 #: jails/forms.py:486
-#, fuzzy
 msgid "Path does not exist!"
 msgstr "Η διαδρομή δεν υπάρχει!"
 
@@ -9964,7 +9961,6 @@ msgstr "Απέτυχε η επαναφόρτωση του LDAP."
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
 msgstr "Ενεργοποίηση"
 
@@ -10112,7 +10108,7 @@ msgstr ""
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 #, fuzzy
@@ -10121,7 +10117,7 @@ msgstr "Παρασκευή"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
@@ -10168,7 +10164,7 @@ msgstr ""
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
@@ -10257,12 +10253,12 @@ msgstr ""
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP Idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
 #, fuzzy
@@ -10536,3 +10532,28 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+#, fuzzy
+msgid "Wizard"
+msgstr "Eνεργοποιητής"
+
+#: services/forms.py:302
+#, fuzzy
+msgid "This field is required to enable NFSv4."
+msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
+
+#: services/models.py:351
+#, fuzzy
+msgid "Enable NFSv4"
+msgstr "Ενεργοποίηση FXP"
+
+#: services/models.py:354
+#, fuzzy
+msgid "NFSv4 Root Path"
+msgstr "Απομακρυσμένη διαδρομή"
+
+#: system/forms.py:1468
+#, fuzzy
+msgid "A pool with this name already exists."
+msgstr "Ένας Τόμος με αυτό το όνομα υπάρχει ήδη."

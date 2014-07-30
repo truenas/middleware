@@ -29,6 +29,10 @@ import logging
 from django.contrib import admin
 from django.utils.translation import ugettext as _
 
+from freenasUI.api.resources import (
+    KerberosRealmResourceMixin,
+    KerberosKeytabResourceMixin
+)
 from freenasUI.directoryservice import models
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -72,7 +76,31 @@ class NT4FAdmin(BaseFreeAdmin):
     icon_view = u"NT4Icon"
 
 
+class KerberosRealmFAdmin(BaseFreeAdmin):
+    create_modelform = "KerberosRealmForm"
+    edit_modelform = "KerberosRealmForm"
+    icon_object = u"KerberosRealmIcon"
+    icon_model = u"KerberosRealmIcon"
+    icon_add = u"KerberosRealmIcon"
+    icon_view = u"KerberosRealmIcon"
+
+    resource_mixin = KerberosRealmResourceMixin
+
+
+class KerberosKeytabFAdmin(BaseFreeAdmin):
+    create_modelform = "KerberosKeytabForm"
+    edit_modelform = "KerberosKeytabForm"
+    icon_object = u"KerberosKeytabIcon"
+    icon_model = u"KerberosKeytabIcon"
+    icon_add = u"KerberosKeytabIcon"
+    icon_view = u"KerberosKeytabIcon"
+
+    resource_mixin = KerberosKeytabResourceMixin
+
+
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
 site.register(models.NT4, NT4FAdmin)
+site.register(models.KerberosRealm, KerberosRealmFAdmin)
+site.register(models.KerberosKeytab, KerberosKeytabFAdmin)

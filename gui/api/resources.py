@@ -679,13 +679,13 @@ class VolumeResourceMixin(NestedMixin):
     def _get_datasets(self, bundle, vol, datasets, uid):
         children = []
         attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
-        for name, dataset in datasets.items():
-            if name.startswith('.'):
+        for path, dataset in datasets.items():
+            if dataset.name.startswith('.'):
                 continue
 
             data = {
                 'id': uid.next(),
-                'name': name,
+                'name': dataset.name,
                 'type': 'dataset',
                 'status': vol.status,
                 'mountpoint': dataset.mountpoint,
@@ -965,6 +965,9 @@ class ReplicationResourceMixin(object):
         )
         bundle.data['repl_remote_fast_cipher'] = (
             bundle.obj.repl_remote.ssh_fast_cipher
+        )
+        bundle.data['repl_remote_no'] = (
+            bundle.obj.repl_remote.ssh_no
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
@@ -2170,3 +2173,17 @@ class VersionResource(DojoResource):
             'name': name,
         }
         return self.create_response(request, data)
+
+
+class KerberosRealmResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosRealmResourceMixin, self).dehydrate(bundle)
+        return bundle
+
+
+class KerberosKeytabResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosKeytabResourceMixin, self).dehydrate(bundle)
+        return bundle

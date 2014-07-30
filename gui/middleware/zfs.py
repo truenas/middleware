@@ -447,7 +447,7 @@ class ZFSList(SortedDict):
             bisect.insort(self.pools.get(new.pool), new)
         else:
             self.pools[new.pool] = [new]
-        self[new.name] = new
+        self[new.path] = new
 
     def __getitem__(self, item):
         if isinstance(item, slice):
@@ -869,7 +869,8 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         if not line:
             continue
         data = line.split('\t')
-        depth = len(data[0].split('/'))
+        names = data[0].split('/')
+        depth = len(names)
         # root filesystem is not treated as dataset by us
         if depth == 1 and not include_root:
             continue
@@ -884,18 +885,10 @@ def list_datasets(path="", recursive=False, hierarchical=False,
             zfslist.append(dataset)
             continue
 
-        if depth == last_depth + 1:
-            last_dataset.append(dataset)
-        elif depth == 2:
-            zfslist.append(dataset)
-        elif depth > 2 and last_depth >= depth:
-            tmp = last_dataset
-            for i in range(last_depth - depth + 1):
-                tmp = tmp.parent
-            tmp.append(dataset)
+        parentds = zfslist.get('/'.join(names[:-1]))
+        if parentds:
+            parentds.append(dataset)
         else:
-            log.error("Failed to parse zfs list in hierarchical mode")
-        last_dataset = dataset
-        last_depth = depth
+            zfslist.append(dataset)
 
     return zfslist

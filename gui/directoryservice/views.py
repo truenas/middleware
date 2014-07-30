@@ -138,6 +138,14 @@ def directoryservice_nis(request):
     })
 
 
+def directoryservice_kerberos_realm(request):
+    return render(request, 'directoryservice/kerberos_realm.html', { });
+
+
+def directoryservice_kerberos_keytab(request):
+    return render(request, 'directoryservice/kerberos_keytab.html', { });
+
+
 def get_directoryservice_status():
     data = {}
 

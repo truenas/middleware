@@ -4,8 +4,8 @@
 #
 
 # PROVIDE: ix-sssd
-# REQUIRE: DAEMON ix-kinit ix-pam
-# BEFORE: sssd ix-samba
+# REQUIRE: DAEMON
+# BEFORE: sssd
 
 . /etc/rc.freenas
 
