@@ -1,4 +1,19 @@
 {% extends "freeadmin/generic_form.html" %}
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{{ request.path }}',
+    progressbar: {
+      steps: [
+         {"label": gettext("Downloading packages")},
+         {"label": gettext("Installing packages")}
+      ],
+      poolUrl: '{% url "system_upgrade_progress" %}',
+      fileUpload: false
+    }
+});
+{% endblock %}
 {% block form %}
 <tr>
   <td>
