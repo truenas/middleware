@@ -47,14 +47,18 @@ def Update(root = None, conf = None, handler = None):
         # Need to write out the manifest
         # It needs to to into the specified root; however,
         # if root is none, we can't then link to the backup.
-        manifest.StorePath(root + Manifest.SYSTEM_MANIFEST_FILE)
+        if root is None:
+            prefix = ""
+        else:
+            prefix = root
+        manifest.StorePath(prefix + Manifest.SYSTEM_MANIFEST_FILE)
         try:
-            os.link(root + Manifest.SYSTEM_MANIFEST_FILE,
-                    root + Manifest.BACKUP_MANIFEST_FILE)
+            os.link(prefix + Manifest.SYSTEM_MANIFEST_FILE,
+                    prefix + Manifest.BACKUP_MANIFEST_FILE)
         except OSError as e:
             if e[0] == errno.EXDEV:
                 # Just write it out to the backup location
-                manifest.StorePath(root + Manifest.BACKUP_MANIFEST_FILE)
+                manifest.StorePath(prefix + Manifest.BACKUP_MANIFEST_FILE)
             else:
                 raise e
         except:

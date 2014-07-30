@@ -742,8 +742,10 @@ class Installer(object):
         for pkg in self._packages:
             for pkgname in pkg:
                 if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
-                install_file(pkg[pkgname], self._root)
-        return
+                if install_file(pkg[pkgname], self._root) is False:
+                    print >> sys.stderr, "Unable to install package %s" % pkgname
+                    return False
+        return True
 
 
 
