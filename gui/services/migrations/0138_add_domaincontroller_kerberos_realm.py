@@ -1,27 +1,61 @@
 # -*- coding: utf-8 -*-
+import sys
+
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
+from subprocess import Popen, PIPE
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
+    no_dry_run = True
 
-    depends_on = (
-        ('directoryservice', '0010_auto__add_kerberoskeytab__add_kerberosrealm.py'),
-    )
+    def get_dc_hostname(self, orm):
+        res = db.execute("SELECT gc_hostname "
+            "FROM network_globalconfiguration")
+        gc_hostname = res[0][0]
+
+	res = db.execute("SELECT gc_domain "
+            "FROM network_globalconfiguration")
+        gc_domain = res[0][0]
+     
+        hostname = None
+        if gc_hostname and gc_domain:
+            hostname = "%s.%s" % (gc_hostname, gc_domain)
+        elif gc_hostname:
+            hostname = gc_hostname
+        else:
+            p = Popen("/bin/hostname",
+                stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                close_fds=True
+            )
+            out = p.communicate()
+            if p.returncode != 0:
+                raise Exception("/bin/hostname failed...?")
+
+            else:
+                hostname = out[0].strip()
+
+        return hostname
 
     def forwards(self, orm):
-        # Adding field 'DomainController.dc_kerberos_realm'
-        db.add_column(u'services_domaincontroller', 'dc_kerberos_realm',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default='', to=orm['directoryservice.KerberosRealm']),
-                      keep_default=False)
+        try:
+            dc = orm.DomainController.objects.all()[0] 
+            dc_hostname = self.get_dc_hostname(orm)
 
+            kr = orm['directoryservice.KerberosRealm']()
+            kr.krb_realm = dc.dc_realm.upper()
+            kr.krb_kdc = dc_hostname
+            kr.krb_admin_server = dc_hostname
+            kr.krb_kpasswd_server = dc_hostname
+            kr.save()
+           
+        except Exception as e:
+            print >> sys.stderr, "ERROR: %s" % e
 
     def backwards(self, orm):
-        # Deleting field 'DomainController.dc_kerberos_realm'
-        db.delete_column(u'services_domaincontroller', 'dc_kerberos_realm_id')
-
+        "Write your backwards methods here."
 
     models = {
         u'directoryservice.kerberosrealm': {
@@ -337,3 +371,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['services']
+    symmetrical = True
