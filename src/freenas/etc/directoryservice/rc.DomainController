@@ -219,7 +219,7 @@ DC_init()
 
 domaincontroller_enabled()
 {
-	srv_enabled directoryservice
+	srv_enabled domaincontroller
 }
 
 domaincontroller_set()
