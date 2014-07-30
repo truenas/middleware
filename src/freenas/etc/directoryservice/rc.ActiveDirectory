@@ -967,29 +967,40 @@ AD_load_database_values()
 
 	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
 	SELECT
-		ad_domainname,
-		ad_bindname,
-		ad_bindpw,
-		ad_netbiosname,
-		ad_verbose_logging,
-		ad_unix_extensions,
-		ad_allow_trusted_doms,
-		ad_use_default_domain,
-		ad_dcname,
-		ad_gcname,
-		ad_use_keytab,
-		ad_keytab,
-		ad_krbname,
-		ad_kpwdname,
-		ad_timeout,
-		ad_dns_timeout,
-		ad_ssl
+		ad.ad_domainname,
+		ad.ad_bindname,
+		ad.ad_bindpw,
+		ad.ad_netbiosname,
+		ad.ad_verbose_logging,
+		ad.ad_unix_extensions,
+		ad.ad_allow_trusted_doms,
+		ad.ad_use_default_domain,
+		ad.ad_dcname,
+		ad.ad_gcname,
+		ad.ad_use_keytab,
+		kk.keytab_file as ad_keytab,
+		kr.krb_kdc as ad_krbname,
+		kr.krb_kpasswd_server as ad_kpwdname,
+		ad.ad_timeout,
+		ad.ad_dns_timeout,
+		ad.ad_ssl
  
 	FROM
-		directoryservice_activedirectory
+		directoryservice_activedirectory as ad
+
+	INNER JOIN
+		directoryservice_kerberoskeytab as kk
+
+	ON
+		(ad.ad_kerberos_keytab_id = kk.id)
+
+	INNER JOIN
+		directoryservice_kerberosrealm as kr
+	ON
+		(ad.ad_kerberos_realm_id = kr.id)
 
 	ORDER BY
-		-id	
+		-ad.id	
 
 	LIMIT 1;
 __SQL__
