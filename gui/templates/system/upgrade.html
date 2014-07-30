@@ -1,5 +1,29 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<tr>
+  <td>
 {% if update %}
 <pre>{{ handler.output }}</pre>
 {% else %}
-{% trans "No updates available" %}
+    <p>{% trans "No updates available" %}</p>
 {% endif %}
+  </td>
+</tr>
+{% endblock %}
+
+{% block oklabel %}
+{% trans "Upgrade" %}
+{% endblock %}
+
+{% block buttons %}
+{% if update %}
+{{ block.super }}
+{% else %}
+<button id="btn_Upgrade_Close" data-dojo-type="dijit.form.Button"type="button">
+    {% trans "Close" %}
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        cancelDialog(this);
+    </script>
+</button>
+{% endif %}
+{% endblock %}
