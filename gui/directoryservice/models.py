@@ -572,6 +572,9 @@ class KerberosRealm(Model):
         blank=True
     )
 
+    def __unicode__(self):
+        return self.krb_realm 
+
 
 class KerberosKeytab(Model):
     keytab_principal = models.CharField(
@@ -583,6 +586,9 @@ class KerberosKeytab(Model):
         verbose_name=_("Keytab"),
         help_text=_("Kerberos keytab file")
     )
+
+    def __unicode__(self):
+        return self.keytab_principal
 
 
 class DirectoryServiceBase(Model):
