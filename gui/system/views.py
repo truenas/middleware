@@ -829,7 +829,10 @@ def upgrade(request):
 
     if request.method == 'POST':
         handler = UpdateHandler()
-        Update(get_handler=handler.get_handler)
+        Update(
+            get_handler=handler.get_handler,
+            install_handler=handler.install_handler,
+        )
         request.session['allow_reboot'] = True
         return render(request, 'system/done.html')
 

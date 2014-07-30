@@ -29,7 +29,7 @@ import os
 
 from django.utils.translation import ugettext as _
 
-log = logging.getLogger('systen.utils')
+log = logging.getLogger('system.utils')
 
 
 class CheckUpdateHandler(object):
@@ -78,6 +78,11 @@ class UpdateHandler(object):
             self.progress = (progress * self._baseprogress) / 100
             self.details = '%s (%d%%)' % (self._pkgname, progress)
         self.dump()
+
+    def install_handler(self, name):
+        self.step = 2
+        self.indeterminate = True
+        self.details = 'Installing %s' % name
 
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
