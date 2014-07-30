@@ -52,7 +52,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
-from freenasOS.Update import CheckForUpdates
+from freenasOS.Update import CheckForUpdates, Update
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
@@ -826,6 +826,11 @@ def terminal_paste(request):
 
 
 def upgrade(request):
+
+    if request.method == 'POST':
+        Update()
+        request.session['allow_reboot'] = True
+        return render(request, 'system/done.html')
 
     handler = CheckUpdateHandler()
     try:
