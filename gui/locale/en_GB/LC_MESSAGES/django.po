@@ -9908,3 +9908,27 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+#, fuzzy
+msgid "Wizard"
+msgstr "Initiator"
+
+#: services/forms.py:302
+#, fuzzy
+msgid "This field is required to enable NFSv4."
+msgstr "This field is required."
+
+#: services/models.py:351
+#, fuzzy
+msgid "Enable NFSv4"
+msgstr "Enable FXP"
+
+#: services/models.py:354
+msgid "NFSv4 Root Path"
+msgstr ""
+
+#: system/forms.py:1468
+#, fuzzy
+msgid "A pool with this name already exists."
+msgstr "A user with that username already exists."

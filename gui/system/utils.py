@@ -23,7 +23,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+import json
+import os
+
 from django.utils.translation import ugettext as _
+
+log = logging.getLogger('system.utils')
 
 
 class CheckUpdateHandler(object):
@@ -40,3 +46,58 @@ class CheckUpdateHandler(object):
                 oldpkg.Name(),
                 oldpkg.Version(),
             )
+
+
+class UpdateHandler(object):
+
+    DUMPFILE = '/tmp/.upgradeprogress'
+
+    def __init__(self):
+        self.step = 1
+        self.progress = 0
+        self.indeterminate = False
+        self.details = ''
+        self._pkgname = ''
+
+    def get_handler(self, index, pkg, pkgList):
+        log.error("get_handler %r %r %r", index, pkg, pkgList)
+        self.step = 1
+        self._pkgname = '%s-%s' % (
+            pkg.Name(),
+            pkg.Version(),
+        )
+        self.details = 'Downloading %s' % self._pkgname
+        self._baseprogress = int((1.0 / float(len(pkgList))) * 100)
+        self.progress = (index - 1) * self._baseprogress
+        self.dump()
+        return self.get_file_handler
+
+    def get_file_handler(self, method, filename, progress=None):
+        log.error("downloading get file %r %r", filename, progress)
+        if progress is not None and self._pkgname:
+            self.progress = (progress * self._baseprogress) / 100
+            self.details = '%s (%d%%)' % (self._pkgname, progress)
+        self.dump()
+
+    def install_handler(self, name):
+        self.step = 2
+        self.indeterminate = True
+        self.details = 'Installing %s' % name
+
+    def dump(self):
+        with open(self.DUMPFILE, 'wb') as f:
+            data = {
+                'step': self.step,
+                'percent': self.progress,
+                'indeterminate': self.indeterminate,
+            }
+            if self.details:
+                data['details'] = self.details
+            f.write(json.dumps(data))
+
+    def load(self):
+        if not os.path.exists(self.DUMPFILE):
+            return {}
+        with open(self.DUMPFILE, 'rb') as f:
+            data = json.loads(f.read())
+        return data

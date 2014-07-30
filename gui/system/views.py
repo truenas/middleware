@@ -64,7 +64,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
-from freenasUI.system.utils import CheckUpdateHandler
+from freenasUI.system.utils import CheckUpdateHandler, UpdateHandler
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -828,7 +828,11 @@ def terminal_paste(request):
 def upgrade(request):
 
     if request.method == 'POST':
-        Update()
+        handler = UpdateHandler()
+        Update(
+            get_handler=handler.get_handler,
+            install_handler=handler.install_handler,
+        )
         request.session['allow_reboot'] = True
         return render(request, 'system/done.html')
 
@@ -841,3 +845,11 @@ def upgrade(request):
         'update': update,
         'handler': handler,
     })
+
+
+def upgrade_progress(request):
+    handler = UpdateHandler()
+    return HttpResponse(
+        json.dumps(handler.load()),
+        content_type='application/json',
+    )

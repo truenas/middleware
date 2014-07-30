@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-07-24 22:56+0000\n"
+"PO-Revision-Date: 2014-07-26 12:29+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1406242561.0\n"
+"X-POOTLE-MTIME: 1406377776.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -342,3 +342,11 @@ msgstr "Deze groep bestaat niet."
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
 msgstr "Terug"
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+msgid "Wizard"
+msgstr "Wizard"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
+msgid "Paswords do not match."
+msgstr "Wachtwoorden komen niet overeen."

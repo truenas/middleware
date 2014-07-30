@@ -752,7 +752,7 @@ require([
         });
 
         if (id > 0) {
-            edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+            edit_url = "/directoryservice/" + "idmap_" + idmap_backend + "/" + id + "/";
         }
 
         //console.log(edit_url);

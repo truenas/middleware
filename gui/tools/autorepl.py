@@ -138,6 +138,7 @@ for replication in replication_tasks:
     remote_port = replication.repl_remote.ssh_remote_port
     dedicateduser = replication.repl_remote.ssh_remote_dedicateduser
     fast_cipher = replication.repl_remote.ssh_fast_cipher
+    no_cipher = replication.repl_remote.ssh_no_cipher
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
@@ -153,6 +154,10 @@ for replication in replication_tasks:
                   # It will prevent hunging in the status of "Sending".
                   ' -o ConnectTimeout=7'
                  )
+    elif no_cipher:
+        sshcmd = ('/usr/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
+                  ' -o StrictHostKeyChecking=yes'
+                  ' -o ConnectTimeout=7')
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'

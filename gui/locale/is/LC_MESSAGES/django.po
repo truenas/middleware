@@ -9935,3 +9935,26 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+msgid "Wizard"
+msgstr ""
+
+#: services/forms.py:302
+#, fuzzy
+msgid "This field is required to enable NFSv4."
+msgstr "Þú þarft að filla þennan reit."
+
+#: services/models.py:351
+#, fuzzy
+msgid "Enable NFSv4"
+msgstr "Virkja AIO"
+
+#: services/models.py:354
+msgid "NFSv4 Root Path"
+msgstr ""
+
+#: system/forms.py:1468
+#, fuzzy
+msgid "A pool with this name already exists."
+msgstr "Notandi með þetta notandanafn er þegar til."

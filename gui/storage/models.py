@@ -104,18 +104,6 @@ class Volume(Model):
                 hierarchical=hierarchical,
                 include_root=include_root)
 
-    def get_datasets_with_root(self, hierarchical=False):
-        """
-        Helper method for template call
-        """
-        if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(
-                path=self.vol_name,
-                recursive=True,
-                hierarchical=hierarchical,
-                include_root=True,
-            )
-
     def get_zvols(self):
         if self.vol_fstype == 'ZFS':
             return notifier().list_zfs_vols(self.vol_name)
@@ -834,6 +822,14 @@ class ReplRemote(Model):
             "speed/low latency local networks.  It uses less secure "
             "encryption algorithms than the defaults, which make it less "
             "desirable on untrusted networks.")
+    )
+    ssh_no_cipher = models.BooleanField(
+	default=False,
+        verbose_name=_("Disable Encryption (SECURE LAN ONLY)"),
+        help_text=_(
+            "Enabling this may substantially increase transfer speed on high "
+            "speed, secure local networks.  It uses NO encryption at all,"
+            " making it totally unsuitable for untrusted networks."),
     )
 
     class Meta:

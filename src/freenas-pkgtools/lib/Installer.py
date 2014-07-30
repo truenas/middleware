@@ -722,15 +722,19 @@ class Installer(object):
         verbose = b
         return
 
-    def GetPackages(self, pkgList = None):
+    def GetPackages(self, pkgList=None, handler=None):
         # Load the packages in pkgList.  If pkgList is not
         # given, it loads the packages in the manifest.
         # This should change.
         self._packages = []
         if pkgList is None:
             pkgList = self._manifest.Packages()
-        for pkg in pkgList:
-            pkgFile = self._conf.FindPackageFile(pkg)
+        for i, pkg in enumerate(pkgList):
+            if handler is not None:
+                get_file_handler = handler(index=i + 1, pkg=pkg, pkgList=pkgList)
+            else:
+                get_file_handler = None
+            pkgFile = self._conf.FindPackageFile(pkg, handler=get_file_handler)
             if pkgFile is None:
                 raise InstallerPackageNotFoundException("%s-%s" % (pkg.Name(), pkg.Version()))
             self._packages.append({ pkg.Name() : pkgFile})
@@ -738,10 +742,12 @@ class Installer(object):
         # ready for installation
         return True
 
-    def InstallPackages(self, progressFunc = None):
+    def InstallPackages(self, progressFunc=None, handler=None):
         for pkg in self._packages:
             for pkgname in pkg:
                 if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
+                if handler is not None:
+                    handler(pkgname)
                 if install_file(pkg[pkgname], self._root) is False:
                     print >> sys.stderr, "Unable to install package %s" % pkgname
                     return False
