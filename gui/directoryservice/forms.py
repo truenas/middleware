@@ -474,6 +474,12 @@ class KerberosRealmForm(ModelForm):
         fields = '__all__'
         model = models.KerberosRealm
 
+    def clean_krb_realm(self):
+        krb_realm = self.cleaned_data.get("krb_realm", None)
+        if krb_realm:
+            krb_realm = krb_realm.upper()
+        return krb_realm
+
 
 class KerberosKeytabForm(ModelForm):
     keytab_file = FileField(
