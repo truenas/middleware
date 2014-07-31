@@ -483,8 +483,8 @@ class KerberosRealmForm(ModelForm):
 
 class KerberosKeytabForm(ModelForm):
     keytab_file = FileField(
-        label=_("Kerberos keytab"),
-        required=False
+        label=_("Kerberos Keytab"),
+        required=False 
     )
 
     class Meta:

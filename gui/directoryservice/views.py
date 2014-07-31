@@ -138,12 +138,56 @@ def directoryservice_nis(request):
     })
 
 
-def directoryservice_kerberos_realm(request):
-    return render(request, 'directoryservice/kerberos_realm.html', { });
+def directoryservice_kerberosrealm(request, id):
+    kr = models.KerberosRealm.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.KerberosRealmForm(request.POST, instance=kr)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Kerberos Realm successfully updated."
+            )
+    else:
+        form = forms.KerberosRealmForm(instance=kr)
+
+    return render(request, 'directoryservice/kerberos_realm.html', {
+        'form': form,
+        'inline': True
+    });
 
 
-def directoryservice_kerberos_keytab(request):
-    return render(request, 'directoryservice/kerberos_keytab.html', { });
+def directoryservice_kerberoskeytab(request, id=None):
+    kt = None
+    if id != None:
+        kt = models.KerberosKeytab.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.KerberosKeytabForm(request.POST,
+            request.FILES, instance=kt)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Kerberos Keytab successfully updated."
+            )
+
+    else:
+        form = forms.KerberosKeytabForm(instance=kt)
+
+    return render(request, 'directoryservice/kerberos_keytab.html', {
+        'form': form,
+        'inline': True
+    });
+
+
+def directoryservice_kerberoskeytab_edit(request, id):
+    return directoryservice_kerberoskeytab(request, id)
+
+
+def directoryservice_kerberoskeytab_add(request):
+    return directoryservice_kerberoskeytab(request)
 
 
 def get_directoryservice_status():
