@@ -172,7 +172,7 @@ The following features have been added or changed:
   which provides support for multiple directory services.
 
 * The "Rebuild LDAP/AD Cache" button has been removed from :menuselection:`System --> Advanced`. It has been renamed to "Rebuild Directory Service Cache" and
-  now appears in the configuration screen for each type of directory service in :menuselection:`Services --> Directory Services`.
+  now appears in the configuration screen for each type of directory service.
 
 * The "HTTP Proxy" field has been added to :menuselection:`Network --> Global Configuration`.
 
@@ -992,8 +992,7 @@ When you boot into FreeNAS®, the Console Setup, shown in Figure 2.6a, will appe
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
 .. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
-   **/etc/netcli** from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in
-   :menuselection:`System --> Settings --> Advanced`.
+   **/etc/netcli** from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in :menuselection:`System --> Advanced`.
 
 **Figure 2.6a: FreeNAS® Console Setup Menu**
 
@@ -1122,7 +1121,7 @@ Before upgrading the system, perform the following steps:
 
 #.  Locate and confirm the SHA256 hash for the file that you downloaded in the Release Notes for the version that you are upgrading to.
 
-#.  **Backup the FreeNAS® configuration** in :menuselection:`System --> Settings --> General --> Save Config`.
+#.  **Backup the FreeNAS® configuration** in :menuselection:`System --> General --> Save Config`.
 
 #.  If any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key.
 
@@ -1172,7 +1171,7 @@ Upgrading From the GUI
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
-the latest version of the *.txz* file. Then, go to :menuselection:`System --> Settings --> Advanced --> Firmware Update` as shown in Figure 2.7d.
+the latest version of the *.txz* file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.7d.
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
 allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the Apply Update button to see the screen
@@ -1255,7 +1254,7 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 
 #.  Import your volumes in :menuselection:`Storage --> Auto Import Volume`.
 
-#.  Restore the configuration in :menuselection:`System --> Settings --> Upload Config`.
+#.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
 
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~
@@ -1316,7 +1315,7 @@ To set the email address for the *root* account, go to :menuselection:`Account -
 Enable Console Logging
 ----------------------
 
-To view system messages within the graphical administrative interface, go to :menuselection:`System --> Settings --> Advanced`. Check the box "Show console
+To view system messages within the graphical administrative interface, go to :menuselection:`System --> Advanced`. Check the box "Show console
 messages in the footer" and click "Save". The output of **tail -f /var/log/messages** will now be displayed at the bottom of the screen. If you click the
 console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
 
@@ -1430,7 +1429,7 @@ accessed.
 Backup Configuration
 --------------------
 
-Once you have tested your configuration, be sure to back it up. Go to :menuselection:`System --> Settings` and click the "Save Config" button. Your browser
+Once you have tested your configuration, be sure to back it up. Go to :menuselection:`System --> General` and click the "Save Config" button. Your browser
 will provide an option to save a copy of the configuration database.
 
 You should **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
@@ -1453,8 +1452,7 @@ Groups
 The Groups interface allows you to manage UNIX-style groups on the FreeNAS® system.
 
 .. note:: if Active Directory or OpenLDAP is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS® using :menuselection:`Services --> Directory Services --> Active Directory`_or
-   :menuselection:`Services --> Directory Services --> LDAP`.
+   account information into FreeNAS® using :menuselection:`Directory Services --> Active Directory`_or :menuselection:`Directory Services --> LDAP`.
 
 This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
 
@@ -1562,7 +1560,7 @@ system accounts.
 
 To create a user account, click the Add New User button to open the screen shown in Figure 4.2b. Some settings are only available in Advanced Mode. To see
 these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box "Show advanced fields by
-default" in :menuselection:`System --> Settings --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
+default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
 
 **Figure 4.2b: Adding or Editing a User Account**
 
@@ -1932,7 +1930,7 @@ exists on a system with limited RAM, the autotune script will automatically adju
 issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune
 will always slow the system down as it caps the ARC.
 
-The "Enable autotune" checkbox in :menuselection:`System --> Settings --> Advanced` is unchecked by default; check it if you would like the autotuner to run
+The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default; check it if you would like the autotuner to run
 at boot time. If you would like the script to run immediately, reboot the system.
 
 If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Sysctls` (for *sysctl.conf* values) and in
@@ -3840,8 +3838,7 @@ the volume.
 
 Table 8.1f summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Settings --> Advanced`. These attributes can also be changed after dataset creation in
-:menuselection:`Storage --> Volumes --> View Volumes`.
+:menuselection:`System --> Advanced`. These attributes can also be changed after dataset creation in :menuselection:`Storage --> Volumes --> View Volumes`.
 
 **Table 8.1f: ZFS Dataset Options**
 
@@ -3940,7 +3937,7 @@ To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> C
 
 The configuration options are described in Table 8.1g. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Settings --> Advanced`.
+:menuselection:`System --> Advanced`.
 
 **Figure 8.1r: Creating a zvol**
 
@@ -4717,9 +4714,9 @@ systems to:
 
 * be set to either localtime or universal time at the BIOS level
 
-Figure 9.1a shows the screen that appears when you click :menuselection:`Services --> Directory Services --> Active Directory`. Table 9.1a describes the
-configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system
-to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Settings --> Advanced`.
+Figure 9.1a shows the screen that appears when you click :menuselection:`Directory Services --> Active Directory`. Table 9.1a describes the configurable
+options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
+display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 **Figure 9.1a: Configuring Active Directory**
 
@@ -4904,7 +4901,7 @@ connect to the correct realm, check the SRV records on the DNS server.
 describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
 
 If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using
-:menuselection:`System --> Settings --> Advanced --> Rebuild LDAP/AD Cache`.
+:menuselection:`System --> Advanced --> Rebuild LDAP/AD Cache`.
 
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
@@ -5159,7 +5156,7 @@ Time Machine to backup to a dataset on the FreeNAS® system, and for connecting 
 
 If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a. Some settings are only
 available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by
-checking the box "Show advanced fields by default" in :menuselection:`System --> Settings --> Advanced`.
+checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 Table 10.1a summarizes the available options when creating an AFP share. Refer to
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
@@ -5612,8 +5609,7 @@ the Samba client which provides support for CIFS. If your distro did not, instal
 Configuring CIFS shares is a multi-step process that requires you to set permissions, create CIFS share(s), configure the CIFS service in
 :menuselection:`Services --> CIFS`, then enable the CIFS service in :menuselection:`Services --> Control Services`. If your Windows network has a Windows
 server running Active Directory, you will also need to configure the Active Directory service in
-:menuselection:`Services --> Directory Services --> Active Directory`. Depending upon your authentication requirements, you may need to create or import users
-and groups.
+:menuselection:`Directory Services --> Active Directory`. Depending upon your authentication requirements, you may need to create or import users and groups.
 
 This section will demonstrate some common configuration scenarios:
 
@@ -5627,7 +5623,7 @@ This section will demonstrate some common configuration scenarios:
 
 Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`. Some
 settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these
-settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Settings --> Advanced`.
+settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 Table 10.3a summarizes the options when creating a CIFS share.
 
@@ -5904,9 +5900,9 @@ A service is stopped if its icon is a red OFF. A service is running if its icon 
 
 To configure a service, click the wrench icon associated with the service or click the name of the service in the Services section of the tree menu.
 
-If a service does not start, go to :menuselection:`System --> Settings  --> Advanced` and check the box "Show console messages in the footer". Console
-messages will now show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the
-output and to copy messages. Watch these messages for errors when you stop and start the problematic service.
+If a service does not start, go to :menuselection:`System --> Advanced` and check the box "Show console messages in the footer". Console messages will now
+show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
+messages. Watch these messages for errors when you stop and start the problematic service.
 
 If you would like to read the system logs to get more information about a service failure, open Shell and type **more /var/log/messages**.
 
@@ -6333,7 +6329,7 @@ chroot environment, encrypting FTP connections, and troubleshooting tips.
 
 Figure 11.6a shows the configuration screen for :menuselection:`Services --> FTP`. Some settings are only available in "Advanced Mode". To see these settings,
 either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Settings --> Advanced`.
+:menuselection:`System --> Advanced`.
 
 **Figure 11.6a: Configuring FTP**
 
@@ -6640,7 +6636,7 @@ issue the command::
  sockstat -4p 21
 
 If there is nothing listening on port 21, proftpd isn't running. To see the error message that occurs when FreeNAS® tries to start the FTP service, go to
-:menuselection:`System --> Settings --> Advanced`, check the box "Show console messages in the footer" and click "Save". Next, go to
+:menuselection:`System --> Advanced`, check the box "Show console messages in the footer" and click "Save". Next, go to
 :menuselection:`Services --> Control Services` and switch the FTP service off then back on in the GUI. Watch the console messages at the bottom of the browser
 for errors.
 
@@ -7430,7 +7426,7 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Settings --> Advanced`.
+:menuselection:`System --> Advanced`.
 
 **Table 11.13a: SSH Configuration Options**
 
@@ -7707,8 +7703,8 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 
 
 .. note:: for USB devices, the easiest way to determine the correct device name is to check the box :Show console messages" in
-   :menuselection:`System --> Settings --> Advanced`. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where
-   the X's are the numbers that show on the console.
+   :menuselection:`System --> Advanced`. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where the X's are
+   the numbers that show on the console.
 
 `upsc(8) <http://www.networkupstools.org/docs/man/upsc.html>`_
 can be used to get status variables from the UPS daemon such as the current charge and input voltage. It can be run from Shell using the following syntax. The
@@ -8733,7 +8729,7 @@ to provide reporting statistics. The following collectd plugins are enabled in *
 
 Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to /*data/rrd_dir.tar.bz2* and should be
 preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in
-:menuselection:`System --> Settings --> System Dataset`.
+:menuselection:`System --> System Dataset`.
 
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
 also use the << and >> buttons to scroll through the output.
@@ -8880,7 +8876,7 @@ the conditions that trigger an alert include:
 
 * ZFS pool status changes from HEALTHY
 
-* the system is unable to bind to the WebGUI Address set in :menuselection:`System --> Settings --> General`
+* the system is unable to bind to the WebGUI Address set in :menuselection:`System --> General`
 
 * the system can not find an IP address configured on an iSCSI portal
 
@@ -10013,8 +10009,8 @@ freenas-debug
 -------------
 
 The FreeNAS® GUI provides an option to save debugging information to a text file using
-:menuselection:`System --> Settings --> Advanced --> Save Debug`. This debugging information is created by the **freenas-debug** command line utility and a
-copy of the information is saved to */var/tmp/fndebug*.
+:menuselection:`System --> Advanced --> Save Debug`. This debugging information is created by the **freenas-debug** command line utility and a copy of the
+information is saved to */var/tmp/fndebug*.
 
 Using Shell, you can run this command manually to gather the specific debugging information that you need. To see the available options, type::
 
