@@ -300,7 +300,7 @@ class ActiveDirectoryForm(ModelForm):
         self.__original_save()
 
         self.fields["ad_enable"].widget.attrs["onChange"] = (
-            "ad_mutex_toggle();"
+            "activedirectory_mutex_toggle();"
         )
 
     def clean_ad_certfile(self):
