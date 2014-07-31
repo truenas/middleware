@@ -767,7 +767,7 @@ class ActiveDirectory(DirectoryServiceBase):
         choices=choices.IDMAP_CHOICES,
         max_length=120,
         help_text=_("Idmap backend for winbind."),
-        default=enum_to_idmap(IDMAP_TYPE_AD)
+        default=enum_to_idmap(IDMAP_TYPE_RID)
     )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
