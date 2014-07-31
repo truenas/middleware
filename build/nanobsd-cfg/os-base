@@ -43,7 +43,7 @@ fi
 
 . "$NANO_CFG_BASE/os-base-functions.sh"
 
-FlashDevice generic 4g
+FlashDevice generic 2g
 
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common
@@ -87,6 +87,7 @@ fi
 
 if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
 	customize_cmd remove_gcc47
+	customize_cmd remove_gcc
 fi
 
 customize_cmd remove_packages
