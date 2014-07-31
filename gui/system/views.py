@@ -833,6 +833,7 @@ def upgrade(request):
             get_handler=handler.get_handler,
             install_handler=handler.install_handler,
         )
+        handler.exit()
         request.session['allow_reboot'] = True
         return render(request, 'system/done.html')
 

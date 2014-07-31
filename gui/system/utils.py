@@ -109,3 +109,8 @@ class UpdateHandler(object):
         with open(self.DUMPFILE, 'rb') as f:
             data = json.loads(f.read())
         return data
+
+    def exit(self):
+        if os.path.exists(self.DUMPFILE):
+            os.unlink(self.DUMPFILE)
+
