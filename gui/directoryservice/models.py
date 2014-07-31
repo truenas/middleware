@@ -40,6 +40,7 @@ DS_TYPE_ACTIVEDIRECTORY = 1
 DS_TYPE_LDAP = 2
 DS_TYPE_NIS = 3
 DS_TYPE_NT4 = 4
+DS_TYPE_CIFS = 5
 
 def directoryservice_to_enum(ds_type):
     enum = DS_TYPE_NONE
@@ -47,7 +48,8 @@ def directoryservice_to_enum(ds_type):
         'ActiveDirectory': DS_TYPE_ACTIVEDIRECTORY,
         'LDAP': DS_TYPE_LDAP,
         'NIS': DS_TYPE_NIS,
-        'NT4': DS_TYPE_NT4
+        'NT4': DS_TYPE_NT4,
+        'CIFS': DS_TYPE_CIFS,
     }
 
     try:
@@ -64,7 +66,8 @@ def enum_to_directoryservice(enum):
         DS_TYPE_ACTIVEDIRECTORY: 'ActiveDirectory',
         DS_TYPE_LDAP: 'LDAP',
         DS_TYPE_NIS: 'NIS',
-        DS_TYPE_NT4: 'NT4'
+        DS_TYPE_NT4: 'NT4',
+        DS_TYPE_CIFS: 'CIFS'
     }
 
     try: 
@@ -143,6 +146,14 @@ class idmap_base(Model):
 
         self.idmap_backend_type = IDMAP_TYPE_NONE
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+        if 'idmap_ds_type' in kwargs:
+            self.idmap_ds_type = kwargs['idmap_ds_type']
+        if 'idmap_ds_id' in kwargs:
+            self.idmap_ds_id = kwargs['idmap_ds_id']
+
+    def __unicode__(self):
+        return self.idmap_backend_name
 
     class Meta:
         abstract = True
@@ -698,6 +709,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_keytab = models.ForeignKey(
         KerberosKeytab,
         verbose_name=_("Kerberos Keytab"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
@@ -750,7 +762,8 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
-        verbose_name=_("Kerberos Realm")
+        verbose_name=_("Kerberos Realm"),
+        on_delete=models.DO_NOTHING
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -911,12 +924,14 @@ class LDAP(DirectoryServiceBase):
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
     ldap_kerberos_keytab = models.ForeignKey(
         KerberosKeytab,
         verbose_name=_("Kerberos Keytab"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )

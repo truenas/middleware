@@ -80,7 +80,7 @@ _interface_config()
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
-	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` -eq 0 ]; then
+	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
 		IFS="${saved_ifs}"
 		for interface in $(ifconfig -l)
 		do
@@ -408,7 +408,7 @@ _gen_conf()
 		touch /etc/zfs/exports
 	fi
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" -eq 1 ]; then
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
 		echo "nfsv4_server_enable=\"YES\""
 		echo "nfsuserd_enable=\"YES\""
 		echo "gssd_enable=\"YES\""
@@ -426,7 +426,7 @@ _gen_conf()
 
 	echo "collectd_enable=\"YES\""
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_consolescreensaver FROM system_advanced ORDER BY -id LIMIT 1")" -eq 1 ]; then
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_consolescreensaver FROM system_advanced ORDER BY -id LIMIT 1")" = 1 ]; then
 		echo "saver=\"daemon\""
 	fi
 
@@ -444,7 +444,7 @@ _gen_conf()
 	local numservers nfsudp
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers, nfs_srv_udp FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read numservers nfsudp; do
-		if [ ${nfsudp} -eq 0 ]; then
+		if [ ${nfsudp} = 0 ]; then
 			echo "nfs_server_flags=\"-t -n ${numservers} ${nfsips}\""
 		else
 			echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
@@ -453,7 +453,7 @@ _gen_conf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_allow_nonroot, nfs_srv_mountd_port, nfs_srv_rpcstatd_port, nfs_srv_rpclockd_port FROM services_nfs ORDER BY -id LIMIT 1" | \
 	while read -r nonroot mountdport statdport lockdport; do
-		if [ "${nonroot}" -eq 1 ]; then
+		if [ "${nonroot}" = 1 ]; then
 			mountdflags="${mountdflags}n"
 		fi
 		if [ -n "${mountdport}" ]; then
@@ -502,7 +502,7 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do
 		echo -n "ladvd_flags=\"-a"
-		[ ${lldp_intdesc} -eq 1 ] && echo -n " -z"
+		[ ${lldp_intdesc} = 1 ] && echo -n " -z"
 		[ -n "${lldp_country}" ] && echo -n " -c ${lldp_country}"
 		[ -n "${lldp_location}" ] && echo -n " -l \\\"${lldp_location}\\\""
 		echo "\""
