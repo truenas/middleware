@@ -13,8 +13,29 @@ generate_krb5_conf()
 	/usr/local/libexec/nas/generate_krb5_conf.py
 }
 
+generate_krb5_keytab()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		keytab_file
+	FROM
+		directoryservice_kerberoskeytab
+        " | while read keytab_file
+	do
+		ktutil copy "${keytab_file}" /etc/krb5.keytab
+	done
+}
+
+generate_kerberos_files()
+{
+	generate_krb5_conf
+	generate_krb5_keytab
+}
+
 name="ix-kerberos"
-start_cmd='generate_krb5_conf'
+start_cmd='generate_kerberos_files'
 stop_cmd=':'
         
 load_rc_config $name
