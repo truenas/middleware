@@ -60,20 +60,21 @@ class UpdateHandler(object):
         self._pkgname = ''
 
     def get_handler(self, index, pkg, pkgList):
-        log.error("get_handler %r %r %r", index, pkg, pkgList)
         self.step = 1
         self._pkgname = '%s-%s' % (
             pkg.Name(),
             pkg.Version(),
         )
-        self.details = 'Downloading %s' % self._pkgname
+        self.details = '%s %s' % (
+            _('Downloading'),
+            self._pkgname,
+        )
         self._baseprogress = int((1.0 / float(len(pkgList))) * 100)
         self.progress = (index - 1) * self._baseprogress
         self.dump()
         return self.get_file_handler
 
     def get_file_handler(self, method, filename, progress=None):
-        log.error("downloading get file %r %r", filename, progress)
         if progress is not None and self._pkgname:
             self.progress = (progress * self._baseprogress) / 100
             self.details = '%s (%d%%)' % (self._pkgname, progress)
@@ -84,7 +85,8 @@ class UpdateHandler(object):
         self.indeterminate = False
         total =len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)
-        self.details = 'Installing %s (%d/%d)' % (
+        self.details = '%s %s (%d/%d)' % (
+            _('Installing'),
             name,
             index,
             total,
