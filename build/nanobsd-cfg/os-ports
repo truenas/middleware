@@ -322,6 +322,7 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_UNSET+=BIND99 \
        WITH_DEBUG=yes
 
+add_port sysutils/grub2-pcbsd
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
