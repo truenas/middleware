@@ -74,6 +74,10 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 
 The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
+* Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Performance Test" button.
+
+* Menu selections are italicized and separated by arrows. For example: :menuselection:`System --> Information`.
+
 * **bold text:** used to emphasize an important point or to represent a command written at the command line.
 
 * *italic text:* used to represent device names, file name paths, or text that is input into a GUI field.
@@ -707,7 +711,7 @@ Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will 
 it is **at least 4 GB** in size. If you wish to practice RAID configurations, create as many virtual disks as you need. You will be able to create 2 disks on
 the IDE controller. If you need additional disks, click the "Add Controller" button to create another controller to attach disks to.
 
-Next, create the device for the installation media. If you will be installing from an ISO, highlight the word "Empty", then click the CD icon as seen in
+Next, create the device for the installation media. If you will be installing from an ISO, highlight the word "Empty", then click the "CD" icon as seen in
 Figure 2.2j.
 
 **Figure 2.2j: Configuring the ISO Installation Media**
@@ -727,7 +731,7 @@ name of the physical interface from the "Name" drop-down menu. In the example sh
 network and has a device name of *re0*.
 
 Once your configuration is complete, click the "Start" arrow. If you configured the ISO, install FreeNAS® as described in Installing from CDROM. Once
-FreeNAS® is installed, press F12 to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by
+FreeNAS® is installed, press "F12" to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by
 removing the CD/DVD device in "Storage" or by unchecking CD/DVD-ROM in the "Boot Order" section of "System".
 
 If you configured the VMDK, the virtual machine will boot directly into FreeNAS®.
@@ -825,7 +829,7 @@ a 4 GB virtual disk to hold the operating system.
    install will appear to complete successfully on smaller devices, only to fail at boot. If using a USB thumb drive, an 4 GB drive is recommended as many 2
    GB thumb drives have a smaller capacity which will result in a seemingly successful installation that fails to boot.
 
-Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, then tab to OK and press enter. FreeNAS® will issue the 
+Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, then tab to "OK" and press enter. FreeNAS® will issue the 
 warning seen in Figure 2.3c, reminding you not to install onto a storage drive.
 
 Press enter and FreeNAS® will extract the image from the ISO and transfer it to the device. Once the installation is complete, you should see a message
@@ -890,8 +894,9 @@ On OS X
 
 On an OS X system, you can download and install
 `Keka <http://www.kekaosx.com/en/>`_
-to uncompress the image. In FINDER, navigate to the location where you saved the downloaded *.xz* file. Right-click the *.xz* file and select "Open With
-Keka". After a few minutes you will have a large file with the same name, but no *.xz* extension.
+to uncompress the image. In FINDER, navigate to the location where you saved the downloaded *.xz* file. Right-click the
+*.xz* file and select "Open With Keka". After a few minutes you will have a large file with the same name, but no
+*.xz* extension.
 
 Insert the USB thumb drive and go to :menuselection:`Launchpad --> Utilities --> Disk Utility`. Unmount any mounted partitions on the USB thumb drive. Check
 that the USB thumb drive has only one partition, otherwise you will get partition table errors on boot. If needed, use Disk Utility to setup one partition on
@@ -952,11 +957,11 @@ Once both utilities are installed, launch the 7-Zip File Manager and browse to t
 
 |Figure24a_png|
 
-Click the Extract button, browse to the path to extract to, and click OK. The extracted image will end in *.img* and is now ready to be written to a USB
+Click the "Extract" button, browse to the path to extract to, and click "OK". The extracted image will end in *.img* and is now ready to be written to a USB
 device using Win32DiskImager.
 
-Next, launch Win32DiskImager, shown in Figure 2.4b. Use the browse button to browse to the location of the *.img* file. Insert a USB thumb drive and select
-its drive letter from the Device drop-down menu. Click the Write button and the image will be written to the USB thumb drive.
+Next, launch Win32DiskImager, shown in Figure 2.4b. Use the "browse" button to browse to the location of the *.img* file. Insert a USB thumb drive and select
+its drive letter from the Device drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
 
 **Figure 2.4b: Using Win32DiskImager to Write the Image**
 
@@ -1174,14 +1179,14 @@ To perform an upgrade using this method,
 the latest version of the *.txz* file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.7d.
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
-allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the Apply Update button to see the screen
+allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "Apply Update" button to see the screen
 shown in Figure 2.7e.
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
 Browse to the location of the downloaded *.txz* file, then paste its SHA256 sum.
 
-When finished, click the Apply Update button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
+When finished, click the "Apply Update" button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
 
 * the SHA256 hash is confirmed and an error will display if it does not match; if you get this error, double-check that you pasted the correct checksum and
   try pasting again
@@ -1463,10 +1468,10 @@ If you click :menuselection:`Groups --> View Groups`, you will see a screen simi
 |Figure41a_png|
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
-group which was installed with FreeNAS®, and whether or not the group's members are allowed to use **sudo**. If you click a group entry, a Members button
+group which was installed with FreeNAS®, and whether or not the group's members are allowed to use **sudo**. If you click a group entry, a "Members" button
 will appear. Click this button to view and modify that group's membership.
 
-If you click the Add Group button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
+If you click the "Add Group" button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
 
 **Figure 4.1b: Creating a New Group**
 
@@ -1496,15 +1501,18 @@ If you click the Add Group button, you will see the screen shown in Figure 4.1b.
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 
 
-Once the group and users are created, you can assign users as members of a group. Click on View Groups then the Members button for the group you wish to
-assign users to. Highlight the user in the Member users list (which shows all user accounts on the system) and click the >> to move that user to the right
+Once the group and users are created, you can assign users as members of a group. Click on "View Groups" then the "Members" button for the group you wish to
+assign users to. Highlight the user in the "Member users" list (which shows all user accounts on the system) and click the ">>" to move that user to the right
 frame. The user accounts which appear in the right frame will be added as members of that group.
 
-In the example shown in Figure 4.1c, the *data1* group has been created and the *user1* user account has been created with a primary group of *user1*. The
-Members button for the *data1* group has been selected and *user1* has been added as a member of that group.
+In the example shown in Figure 4.1c, the *data1* group has been created and the
+*user1* user account has been created with a primary group of
+*user1*. The "Members" button for the
+*data1* group has been selected and
+*user1* has been added as a member of that group.
 
-To delete a group, click its Delete Group button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
-that the built-in groups do not provide a Delete Group button.
+To delete a group, click its "Delete Group" button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
+that the built-in groups do not provide a "Delete Group" button.
 
 **Figure 4.1c: Assigning a User as a Member of a Group**
 
@@ -1558,8 +1566,8 @@ should not be available for use as a login account. For this reason, the default
 `nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_. For security reasons, and to prevent breakage of system services, you should not modify the
 system accounts.
 
-To create a user account, click the Add New User button to open the screen shown in Figure 4.2b. Some settings are only available in Advanced Mode. To see
-these settings, either click the Advanced Mode button or configure the system to always display these settings by checking the box "Show advanced fields by
+To create a user account, click the "Add New User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
+these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
 default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
 
 **Figure 4.2b: Adding or Editing a User Account**
@@ -1587,7 +1595,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | `a primary group is not the same as a secondary/auxiliary group <http://linuxers.org/article/difference-between-primary-and-secondary-groups-linux>`_ |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Primary Group              | drop-down menu  | must uncheck *Create a new primary group* in order to access this menu; for security reasons, FreeBSD will                                            |
+| Primary Group              | drop-down menu  | must uncheck "Create a new primary group" in order to access this menu; for security reasons, FreeBSD will                                            |
 |                            |                 | not give a user **su** permissions if                                                                                                                 |
 |                            |                 | *wheel* is their primary group; to give a user                                                                                                        |
 |                            |                 | **su** access, add them to the                                                                                                                        |
@@ -1614,7 +1622,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Password                   | string          | mandatory unless check box to disable password logins                                                                                                 |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Password confirmation      | string          | must match *Password*                                                                                                                                 |
+| Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
 |                            |                 |                                                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1624,7 +1632,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Lock user                  | checkbox        | a checked box prevents user from logging in until the account is unlocked (box is unchecked); checking this                                           |
-|                            |                 | box will grey out *Disable password login* which is mutually exclusive                                                                                |
+|                            |                 | box will grey out "Disable password login" which is mutually exclusive                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Permit Sudo                | checkbox        | if checked, members of the group have permission to use **sudo**                                                                                      |
@@ -1649,7 +1657,7 @@ The System section of the administrative GUI contains the following entries:
 
 * **General:** used to general settings such as HTTPS access, the language, and the timezone
 
-* **Advanced:** used to configure advanced settings such as the serial console, swap, console messages, and advanced fields
+* **Advanced:** used to configure advanced settings such as the serial console, swap, console messages, and other advanced fields
 
 * **Email:** used to configure the email address to receive notifications
 
@@ -1891,7 +1899,7 @@ are summarized in Table 5.3a.
 | Show tracebacks in case of fatal errors | checkbox                         | provides a pop-up of diagnostic information when a fatal error occurs        |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Show advanced fields by default         | checkbox                         | several GUI menus provide an Advanced Mode button to access additional       |
+| Show advanced fields by default         | checkbox                         | several GUI menus provide an "Advanced Mode" button to access additional     |
 |                                         |                                  | features; enabling this shows these features by default                      |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
@@ -2455,35 +2463,35 @@ This configuration example will configure rsync module mode between the two foll
 
 On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task` as shown in Figure 6.3b. In this example:
 
-* the Path points to */usr/local/images*, the directory to be copied
+* the "Path" points to */usr/local/images*, the directory to be copied
 
-* the Remote Host points to *192.168.2.6*, the IP address of the rsync server
+* the "Remote Host" points to *192.168.2.6*, the IP address of the rsync server
 
-* the Rsync Mode is *Rsync module*
+* the "Rsync Mode" is *Rsync module*
 
-* the Remote Module Name is *backups*; this will need to be defined on the rsync server
+* the "Remote Module Name" is *backups*; this will need to be defined on the rsync server
 
-* the Direction is *Push*
+* the "Direction" is *Push*
 
 * the rsync is scheduled to occur every 15 minutes
 
-* the User is set to *root* so it has permission to write anywhere
+* the "User" is set to *root* so it has permission to write anywhere
 
-* the Preserve Permissions checkbox is checked so that the original permissions are not overwritten by the *root* user
+* the "Preserve Permissions" checkbox is checked so that the original permissions are not overwritten by the *root* user
 
 On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modules --> Add Rsync Module`, shown in Figure 6.3c. In this example:
 
-* the Module Name is *backups*; this needs to match the setting on the rsync client
+* the "Module Name" is *backups*; this needs to match the setting on the rsync client
 
-* the Path is */mnt/remote*; a directory called
+* the "Path" is */mnt/remote*; a directory called
   *images* will be created to hold the contents of
   */usr/local/images*
 
-* the User is set to *root* so it has permission to write anywhere
+* the "User" is set to *root* so it has permission to write anywhere
 
-* Hosts allow is set to *192.168.2.2*, the IP address of the rsync client
+* "Hosts allow" is set to *192.168.2.2*, the IP address of the rsync client
 
-Descriptions of the configurable options can be found in Rsync Modules.
+Descriptions of the configurable options can be found in the section on Rsync Modules.
 
 To finish the configuration, start the rsync service on *PULL* in :menuselection:`Services --> Control Services`. If the rsync is successful, the contents of
 */mnt/local/images/* will be mirrored to
@@ -2563,9 +2571,10 @@ Next, view and copy the contents of the generated public key::
  DmNfwrRSxLjDvUzfywnjFHlKk/+TQIT1gg1QQaj21PJD9pnDVF0AiJrWyWnR root@freenas.local
 
 
-Go to *PULL* and paste (or append) the copied key into the SSH Public Key field of :menuselection:`Account --> Users --> View Users --> root --> Modify User`,
-or the username of the specified rsync user account. The paste for the above example is shown in Figure 6.3d. When pasting the key, ensure that it is pasted
-as one long line and, if necessary, remove any extra spaces representing line breaks.
+Go to *PULL* and paste (or append) the copied key into the "SSH Public Key" field of
+:menuselection:`Account --> Users --> View Users --> root --> Modify User`, or the username of the specified rsync user account. The paste for the above
+example is shown in Figure 6.3d. When pasting the key, ensure that it is pasted as one long line and, if necessary, remove any extra spaces representing line
+breaks.
 
 **Figure 6.3d: Pasting the User's SSH Public Key**
 
@@ -2588,20 +2597,19 @@ Next, copy the host key of *PULL* using Shell on
 You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
 
-* the Path points to */mnt/local/images*, the directory to be copied
+* the "Path" points to */mnt/local/images*, the directory to be copied
 
-* the Remote Host points to *192.168.2.6*, the IP address of the rsync server
+* the "Remote Host" points to *192.168.2.6*, the IP address of the rsync server
 
-* the Rsync Mode is *Rsync over SSH*
+* the "Rsync Mode" is *Rsync over SSH*
 
 * the rsync is scheduled to occur every 15 minutes
 
-* the User is set to *root* so it has permission to write anywhere; the public key for this user must be generated on
+* the "User" is set to *root* so it has permission to write anywhere; the public key for this user must be generated on
   *PUSH* and copied to
   *PULL*
 
-* the *Preserve Permissions* checkbox is checked so that the original permissions are not overwritten by the
-  *root* user
+* the "Preserve Permissions" checkbox is checked so that the original permissions are not overwritten by the *root* user
 
 Once you save the rsync task, the rsync will automatically occur according to your schedule. In this example, the contents of */mnt/local/images/* will
 automatically appear in */mnt/remote/images/* after 15 minutes. If the content does not appear, use Shell on
@@ -2820,8 +2828,7 @@ When configuring multiple interfaces, they can not be members of the same subnet
 on multiple interfaces.
 
 When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
-fill in both the *IPv4 address* and
-*IPv6 address* fields. Instead, set one of these address fields and create an alias for the other address.
+fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
 
 IPMI
 ----
@@ -2962,7 +2969,7 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 .. note:: if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_.
 
-Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the OK button.
+Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
 Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 7.4b, it will also
 appear in View Link Aggregations.
@@ -2973,7 +2980,7 @@ appear in View Link Aggregations.
 
 Click a link aggregation entry to see the buttons to edit that lagg interface, delete the link aggregation, or edit the lagg's member interfaces.
 
-If you click the Edit button for a lagg, you will see the configuration screen shown in Figure 7.4c. Table 7.4a describes the options in this screen.
+If you click the "Edit" button for a lagg, you will see the configuration screen shown in Figure 7.4c. Table 7.4a describes the options in this screen.
 
 After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
 so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
@@ -3025,7 +3032,7 @@ access into the GUI through the new lagg interface.
 This screen also allows you to configure an alias for the lagg interface. If you wish to set multiple aliases, click the "Add extra Alias" link for each
 alias you wish to configure.
 
-If you click the Edit Members button, click the entry for a member, then click its Edit button, you will see the configuration screen shown in Figure 7.4d.
+If you click the "Edit Members" button, click the entry for a member, then click its "Edit" button, you will see the configuration screen shown in Figure 7.4d.
 The configurable options are summarized in Table 7.4b.
 
 **Figure 7.4d: Editing a Member Interface**
@@ -3055,7 +3062,7 @@ The configurable options are summarized in Table 7.4b.
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 
 
-.. note:: options can be set at either the lagg level (using the Edit button) or the individual parent interface level (using the Edit Members button).
+.. note:: options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
    Typically, changes are made at the lagg level (Figure 5.4c) as each interface member will inherit from the lagg. If you instead configure the interface
    level (Figure 7.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing
    the interface. For instance, the MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
@@ -3104,7 +3111,7 @@ The available options are summarized in Table 7.6a.
 +---------------------+-----------+-------------------------------------+
 
 
-If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its Edit and Delete buttons.
+If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
 
 VLANs
 -----
@@ -3150,8 +3157,8 @@ Table 7.7a summarizes the configurable fields.
 
 The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
 configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to
-:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the NIC drop-down menu and in the Options field, type *up*. This
-will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the Add Interface screen.
+:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type *up*.
+This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add Interface" screen.
 
 Storage
 =======
@@ -3235,14 +3242,14 @@ access the screen shown in Figure 8.1c.
 
 |Figure81c_png|
 
-Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click OK to
+Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
 
 .. note:: the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost
    configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. The
    View Volumes screen is used to manage the keys for encrypted volumes.
 
-Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1b. Click the OK button to finish the volume import.
+Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1b. Click the "OK" button to finish the volume import.
 
 Import Volume
 ~~~~~~~~~~~~~
@@ -3312,7 +3319,7 @@ Table 8.1a summarizes the available options.
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 
 
-The Add Volume button warns that **creating a volume destroys all existing data on selected disk(s).** In other words, creating storage using UFS Volume
+The "Add Volume" button warns that **creating a volume destroys all existing data on selected disk(s).** In other words, creating storage using UFS Volume
 Manager is a destructive action that reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format
 is supported by the auto-import or import actions. If so, perform the supported action instead. If the current storage format is not supported, you will need
 to backup the data to an external media, format the disks, then restore the data to the new volume.
@@ -3327,10 +3334,10 @@ View Disks
 
 |Figure81f_png|
 
-For each device, the current configuration of the options described in Table 8.1b is displayed. Click a disk's entry and then its Edit button to change its
+For each device, the current configuration of the options described in Table 8.1b is displayed. Click a disk's entry and then its "Edit" button to change its
 configuration.
 
-Clicking a disk's entry will also display its Wipe button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
+Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
 option before discarding a disk.
 
 .. note:: should a disk's serial number not be displayed in this screen, use the
@@ -3354,7 +3361,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 #.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
     volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1h, will show the
-    current used space, provide the check box "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
+    current used space, provide the checkbox "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
     volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
     will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported (ZFS volumes only).** This means that
     the data is not destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
@@ -3364,7 +3371,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
     **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state.**
 
 #.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in ZFS Scrubs. This button allows you to manually initiate a scrub. A
-    scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A cancel button is
+    scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A "cancel" button is
     provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
 
 #.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
@@ -3395,7 +3402,7 @@ If you click the entry for a ZFS volume, eight icons will appear at the bottom o
 
 |Figure81i_png|
 
-If you click a disk in Volume Status and click its "Edit Disk" button, you will see the screen shown in Figure 8.1j. Table 8.1b summarizes the
+If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1j. Table 8.1b summarizes the
 configurable options.
 
 **Figure 8.1j: Editing a Disk**
@@ -3443,7 +3450,7 @@ configurable options.
    settings. As of 8.3.1, changes to these settings are applied immediately.
 
 A ZFS dataset only has six icons as the "Scrub Volume", "Volume Status", and "Upgrade" buttons only apply to volumes. In a dataset, the "Detach Volume" button
-is replaced with the "Destroy Dataset" button. If you click the Destroy Dataset button, the browser will turn red to indicate that this is a destructive
+is replaced with the "Destroy Dataset" button. If you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive
 action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
 
 View Multipaths
@@ -3528,7 +3535,7 @@ ZFS Volume Manager will allow you to save save a non-optimal configuration. It w
 configuration. However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration.
 Click the tool tip icon to access a link to this documentation.
 
-The Add Volume button warns that **creating a volume will destroys any existing data on the selected disk(s)**. In other words, creating a new volume
+The "Add Volume" button warns that **creating a volume will destroys any existing data on the selected disk(s)**. In other words, creating a new volume
 reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the auto-import or
 import actions. If so, perform the supported action instead. If the current storage format is not supported, you will need to backup the data to an external
 media, format the disks, then restore the data to the new volume.
@@ -3613,7 +3620,7 @@ FreeNAS® system:
    sensitive data stored on the system.
 
 To create an encrypted volume, check the "Encryption" box shown in Figure 8.1l. Input the volume name, select the disks to add to the volume, and click
-the Add Volume button to make the encrypted volume.
+the "Add Volume" button to make the encrypted volume.
 
 Once the volume is created, **it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Without these,
 it is impossible to re-import the disks at a later time.
@@ -3656,8 +3663,8 @@ existing pool, or the physical removal of disks when moving from an older hardwa
 could re-import your encrypted volume, thus thwarting the reason for encrypting the disks in the first place.
 
 When you click this icon, a red warning is displayed: *Remember to add a new recovery key as this action invalidates the previous recovery key.* Setting a
-passphrase invalidates the existing key. Once you set the passphrase, immediately click the *Add recovery key* button to create a new recovery key. Once the
-passphrase is set, the name of this icon will change to Change Passphrase.
+passphrase invalidates the existing key. Once you set the passphrase, immediately click the "Add recovery key" button to create a new recovery key. Once the
+passphrase is set, the name of this icon will change to "Change Passphrase".
 
 **Download Key:** click this icon to download a backup copy of the GELI encryption key. Since the GELI encryption key is separate from the FreeNAS®
 configuration database,
@@ -3891,8 +3898,8 @@ click the "Advanced Mode" button or configure the system to always display these
 Deduplication
 ^^^^^^^^^^^^^
 
-The *ZFS Deduplication* option warns that enabling dedup may have drastic performance implications and that compression should be used instead. Before
-checking the deduplication box, read the section on deduplication in the ZFS Overview first. This
+The "ZFS Deduplication" option warns that enabling dedup may have drastic performance implications and that compression should be used instead. Before
+checking the "ZFS Deduplication" box, read the section on deduplication in the ZFS Overview section first. This
 `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_
 provides a good description of the value v.s. cost considerations for deduplication.
 
@@ -3984,8 +3991,8 @@ you have located the failed device in the GUI, perform the following steps:
     offlined and you can safely skip this step.
 
 .. note:: if the process of changing the disk's status to OFFLINE fails with a "disk offline failed - no valid replicas" message, you will need to scrub
-   the ZFS volume first using its Scrub Volume button in :menuselection:`Storage --> Volumes --> View Volumes`. Once the scrub completes, try to "Offline" the
-   disk again before proceeding.
+   the ZFS volume first using its "Scrub Volume" button in :menuselection:`Storage --> Volumes --> View Volumes`. Once the scrub completes, try to "Offline"
+   the disk again before proceeding.
 
 #.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE
     disk.
@@ -4307,20 +4314,20 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 
-If the Recursive box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is that
-there is no way to exclude certain datasets from being included in a recursive snapshot.
+If the "Recursive" box is checked, you do not need to create snapshots for every dataset individually as they are included in the snapshot. The downside is
+that there is no way to exclude certain datasets from being included in a recursive snapshot.
 
-Once you click the OK button, a snapshot will be taken and this task will be repeated according to your settings.
+Once you click the "OK" button, a snapshot will be taken and this task will be repeated according to your settings.
 
-After creating a periodic snapshot task, an entry for the snapshot task will be added to View Periodic Snapshot Tasks, as seen in the example in Figure 8.2b.
-Click an entry to access its Modify and Delete buttons.
+After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks", as seen in the example in Figure 8.2b.
+Click an entry to access its "Modify" and "Delete" buttons.
 
 **Figure 8.2b: View Periodic Snapshot Tasks**
 
 |Figure82b_png|
 
-If you click the ZFS Snapshots tab (above the Add Periodic Snapshot button), you can review the listing of available snapshots. An example is shown in Figure
-8.2c.
+If you click the "ZFS Snapshots" tab (above the "Add Periodic Snapshot" button), you can review the listing of available snapshots. An example is shown in
+Figure 8.2c.
 
 .. note:: if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
    but failed, an entry will be added to */var/log/messages*. This log file can be viewed in Shell.
@@ -4353,7 +4360,7 @@ which can be mounted, the clone will appear in the Active Volumes tab, instead o
 While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
 In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
 
-**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click Yes, any files that have
+**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click "Yes", any files that have
 changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
 
 .. note:: rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
@@ -4370,10 +4377,10 @@ This approach will never destroy any on-disk data and has no impact on replicati
 Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
 Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
 
-The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the Define filter icon (near the text
-"No filter applied"). When creating a filter:
+The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the "Define filter" icon (near the
+text "No filter applied"). When creating a filter:
 
-* select the column or leave the default of Any Column.
+* select the column or leave the default of "Any Column".
 
 * select the condition. Possible conditions are: *contains* (default),
   *is, starts with, ends with, does not contain, is not, does not start with, does not end with*, and
@@ -4381,7 +4388,7 @@ The ZFS Snapshots screen allows you to create filters to view snapshots by selec
 
 *   input a value that meets your view criteria.
 
-*   click the Filter button to save your filter and exit the define filter screen. Alternately, click the + button to add another filter.
+*   click the "Filter" button to save your filter and exit the define filter screen. Alternately, click the "+" button to add another filter.
 
 If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the "No filter
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
@@ -4435,9 +4442,9 @@ contents. An example is shown in Figure 8.3a.
 
 |Figure83a_png|
 
-Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the Modify User button for the user account you will be using for replication
-(by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click OK. If a key already exists, append the new text after
-the existing key.
+Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
+replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
+text after the existing key.
 
 On *PULL*, ensure that the SSH service is enabled in :menuselection:`Services --> Control Services`. Start it if it is not already running.
 
@@ -4458,8 +4465,8 @@ for our example:
 
 * the Begin and End times are at their default values, meaning that replication will occur whenever a snapshot is created
 
-* once the Remote hostname is input, click the SSH Key Scan button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
-  automatically be populated to the Remote hostkey box
+* once the Remote hostname is input, click the "SSH Key Scan" button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
+  automatically be populated to the "Remote hostkey" box
 
 Table 8.3a summarizes the available options in the Add Replication Task screen.
 
@@ -4493,8 +4500,8 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of *0* is unlimited                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Begin                     | drop-down menu | the replication can not start before this time; the times selected in the *Begin* and                        |
-|                           |                | *End* fields set the replication window for when replication can occur                                       |
+| Begin                     | drop-down menu | the replication can not start before this time; the times selected in the "Begin" and                        |
+|                           |                | "End" fields set the replication window for when replication can occur                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | End                       | drop-down menu | the replication must start by this time; once started, replication will occur until it is finished (see NOTE |
@@ -4519,7 +4526,7 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Remote hostkey            | string         | use the SSH Key Scan button to retrieve the public key of *PULL*                                             |
+| Remote hostkey            | string         | use the "SSH Key Scan" button to retrieve the public key of *PULL*                                           |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
@@ -4657,7 +4664,7 @@ displays the default settings for the volume named *volume1*. Table 8.4a summari
 
 You should review the default selections and, if necessary, modify them to meet the needs of your environment.
 
-While a delete button is provided,
+While a "delete" button is provided,
 **deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
 too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
 
@@ -4715,7 +4722,7 @@ systems to:
 * be set to either localtime or universal time at the BIOS level
 
 Figure 9.1a shows the screen that appears when you click :menuselection:`Directory Services --> Active Directory`. Table 9.1a describes the configurable
-options. Some settings are only available in Advanced Mode. To see these settings, either click the Advanced Mode button or configure the system to always
+options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always
 display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 **Figure 9.1a: Configuring Active Directory**
@@ -4855,8 +4862,7 @@ not need to be saved into the FreeNAS® configuration database, which is a secur
 
 When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account
 will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password
-into the *Domain Account Name* and
-*Domain Account Password* fields in the screen shown in Figure 9.1a.
+into the "Domain Account Name" and "Domain Account Password" fields in the screen shown in Figure 9.1a.
 
 The keytab itself can be created on a Windows system using these commands::
 
@@ -4879,7 +4885,7 @@ where:
 
 This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
 
-Once the keytab is generated, transfer it to the FreeNAS® system, check the *Use keytab* box and browse to the location of the keytab.
+Once the keytab is generated, transfer it to the FreeNAS® system, check the "Use keytab" box and browse to the location of the keytab.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -4906,10 +4912,10 @@ If the cache becomes out of sync due to an AD server being taken off and back on
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
 
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the name field. Make sure that it is under
-15 characters and that it is the same name as the one set in the *Hostname* field in :menuselection:`Network --> Global Configuration` and the
-*NetBIOS Name* in :menuselection:`Directory Services --> Active Directory` settings. Make sure the hostname of the domain controller is set in the
-*Domain Controller* field of :menuselection:`Directory Services --> Active Directory`.
+Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the "name" field. Make sure that it is
+under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
+"NetBIOS Name" in :menuselection:`Directory Services --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
+Controller" field of :menuselection:`Directory Services --> Active Directory`.
 
 LDAP
 ----
@@ -5162,7 +5168,7 @@ Table 10.1a summarizes the available options when creating an AFP share. Refer t
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
 for a more detailed explanation of the available options.
 
-Once you press the OK button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
+Once you press the "OK" button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the AFP service successfully started.
 
 **Figure 10.1a: Creating an AFP Share**
@@ -5243,21 +5249,21 @@ In this configuration example, the AFP share has been configured for guest acces
 
 #.  An AFP share has been created with the following attributes:
 
-*   Name: *freenas* (this is the name that will appear to Mac OS X clients)
+*   "Name": *freenas* (this is the name that will appear to Mac OS X clients)
 
-*   Path: */mnt/data*
+*   "Path": */mnt/data*
 
-*   Allow List: set to *nobody*
+*   "Allow List": set to *nobody*
 
-*   Read-write Access: set to *nobody*
+*   "Read-write Access": set to *nobody*
 
 #.  :menuselection:`Services --> AFP` has been configured as follows:
 
-*   Server Name: *freenas*
+*   "Server Name": *freenas*
 
-*   Guest Access: checkbox is checked
+*   "Guest Access": checkbox is checked
 
-*   *nobody* is selected in the Guest account drop-down menu
+*   *nobody* is selected in the "Guest account" drop-down menu
 
 Once the AFP service has been started in :menuselection:`Services --> Control Services`, Mac OS X users can connect to the AFP share by clicking
 :menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1b, the user has input *afp://* followed by the IP address of the FreeNAS®
@@ -5275,7 +5281,7 @@ user can now copy files to and from the share.
 
 |10000000000001C60000015C9803C256_png|
 
-To disconnect from the volume, click the eject button in the Shared sidebar.
+To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
 Using Time Machine
 ~~~~~~~~~~~~~~~~~~
@@ -5288,25 +5294,25 @@ to backup to an AFP share on a FreeNAS® system. To configure the AFP share on t
 
 #.  A user account was created as follows:
 
-*   Username: *user1*
+*   "Username": *user1*
 
-*   Home Directory: */mnt/data/backup_user1*
+*   "Home Directory": */mnt/data/backup_user1*
 
-*   the Full Name, E-mail, and Password fields were set where the Username and Password match the values for the user on the Mac OS X system
+*   the "Full Name", "E-mail", and "Password" fields were set where the "Username" and "Password" match the values for the user on the Mac OS X system
 
-#.  An AFP share with a Name of *backup_user1* has been created with the following attributes:
+#.  An AFP share with a "Name" of *backup_user1* has been created with the following attributes:
 
-*   Path: */mnt/data/backup_user1*
+*   "Path": */mnt/data/backup_user1*
 
-*   Allow List: set to *user1*
+*   "Allow List": set to *user1*
 
-*   Read-write Access: set to *user1*
+*   "Read-write Access": set to *user1*
 
-*   Time Machine: checkbox is checked
+*   "Time Machine": checkbox is checked
 
 #.  :menuselection:`Services --> AFP` has been configured as follows:
 
-*   Guest Access: checkbox is unchecked
+*   "Guest Access": checkbox is unchecked
 
 #.  The AFP service has been started in :menuselection:`Services --> Control Services`.
 
@@ -5359,7 +5365,7 @@ options in this screen.
 
 |Figure102a_png|
 
-Once you press the OK button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
+Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
 
 **Table 10.2a: NFS Share Options**
@@ -5368,7 +5374,7 @@ Once you press the OK button when creating the NFS share, a pop-up menu will ask
 | **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
-| Path                | browse button  | browse to the volume/dataset/directory to share; click *Add extra path* to select multiple paths                   |
+| Path                | browse button  | browse to the volume/dataset/directory to share; click "Add extra path" to select multiple paths                   |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected Paths                           |
@@ -5487,13 +5493,13 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
 
 #.  A NFS share has been created with the following attributes:
 
-*   Path: */mnt/data*
+*   "Path": */mnt/data*
 
-*   Authorized Network: *192.168.2.0/24*
+*   "Authorized Network": *192.168.2.0/24*
 
-*   MapAll User and MapAll Group are both set to *nobody*
+*   "MapAll User" and "MapAll Group" are both set to *nobody*
 
-*   the All Directories checkbox has been checked
+*   the "All Directories" checkbox has been checked
 
 From BSD or Linux
 ^^^^^^^^^^^^^^^^^
@@ -5628,7 +5634,7 @@ settings by checking the box "Show advanced fields by default" in :menuselection
 Table 10.3a summarizes the options when creating a CIFS share.
 
 `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
-provides more details for each configurable option. Once you press the OK button when creating the CIFS share, a pop-up menu will ask "Would you like to
+provides more details for each configurable option. Once you press the "OK" button when creating the CIFS share, a pop-up menu will ask "Would you like to
 enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
 started.
 
@@ -5680,7 +5686,7 @@ started.
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Deny                   | string        | only available in Advanced Mode; comma, space, or tab delimited list of denied hostnames or IP addresses;   |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
-|                              |               | *Hosts Allow*; see NOTE below                                                                               |
+|                              |               | "Hosts Allow"; see NOTE below                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters         | string        | only available in Advanced Mode; add additional smb4.conf parameters not covered by other option fields     |
@@ -5691,7 +5697,7 @@ started.
 .. note:: hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in
    :menuselection:`Services --> CIFS`.
 
-If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the Auxiliary Parameters field. The syntax for
+If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
 this line and some examples can be found
 `here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_.
 
@@ -5703,9 +5709,9 @@ The process for configuring a share is as follows:
 #.  **If you are not using Active Directory or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User` with the
 following attributes:
 
-* Username and Password: matches the username and password on the client system
+* "Username" and "Password": matches the username and password on the client system
 
-* Home Directory: browse to the volume to be shared
+* "Home Directory": browse to the volume to be shared
 
 * Repeat this process to create a user account for every user that will need access to the CIFS share
 
@@ -5718,13 +5724,13 @@ following attributes:
 
 * set the "Owner(group)" to the one you created in Step 2
 
-* Mode: check the write checkbox for the "Group" as it is unchecked by default
+* "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
 
 #.  **Create a CIFS share** in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
 
-* Name: input the name of the share
+* "Name": input the name of the share
 
-* Path: browse to the volume to be shared
+* "Path": browse to the volume to be shared
 
 * keep the "Browsable to Network Clients" box checked
 
@@ -5736,7 +5742,7 @@ following attributes:
 
 #.  **Configure the CIFS service in :menuselection:`Services --> CIFS`** as follows:
 
-* Workgroup: if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
+* "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
   Windows workgroup name is *WORKGROUP*
 
 #.  **Start the CIFS service** in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it
@@ -5744,7 +5750,7 @@ following attributes:
 
 #.  **Test the share.**
 
-To test the share from a Windows system, open Explorer and click on Network. For this configuration example, a system named *FREENAS* should appear with a
+To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
 share named *backups*. An example is seen in Figure 10.3b:
 
 **Figure 10.3b: Accessing the CIFS Share from a Windows Computer**
@@ -5761,7 +5767,7 @@ drive..." as seen in Figure 10.3c:
 
 |100002010000031E0000027D2C5F8621_png|
 
-Choose a drive letter from the drop-down menu and click the Finish button as shown in Figure 10.3d:
+Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.3d:
 
 **Figure 10.3d: Selecting the Network Drive Letter**
 
@@ -5898,7 +5904,7 @@ services, and to configure services. By default, all services (except for the S.
 
 A service is stopped if its icon is a red OFF. A service is running if its icon is a blue ON. To start or stop a service, click its ON/OFF icon.
 
-To configure a service, click the wrench icon associated with the service or click the name of the service in the Services section of the tree menu.
+To configure a service, click the wrench icon associated with the service or click the name of the service in the "Services" section of the tree menu.
 
 If a service does not start, go to :menuselection:`System --> Advanced` and check the box "Show console messages in the footer". Console messages will now
 show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
@@ -6165,7 +6171,7 @@ Samba is single threaded, so CPU speed makes a big difference in CIFS performanc
 speeds in excess of Gb LAN while low power CPUs such as Intel Atoms and AMD C-30s\E-350\E-450 will not be able to achieve more than about 30-40MB/sec
 typically. Remember that other loading such as ZFS loading will also require CPU resources and may cause Samba performance to be less than optimal.
 
-Samba's "write cache" parameter has been reported to improve write performance in some configurations and can be added to the Auxiliary Parameters field.
+Samba's "write cache" parameter has been reported to improve write performance in some configurations and can be added to the "Auxiliary Parameters" field.
 Use an integer value which is a multiple of _SC_PAGESIZE (typically 4096) to avoid memory fragmentation. This will increase Samba's memory requirements and
 should not be used on systems with limited RAM.
 
@@ -6285,7 +6291,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                |                                                                                                                    |
 +======================+================+====================================================================================================================+
 | Provider             | drop-down menu | several providers are supported; if your provider is not listed, leave this field blank and specify the custom     |
-|                      |                | provider in the *Auxiliary parameters* field                                                                       |
+|                      |                | provider in the "Auxiliary parameters" field                                                                       |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | IP Server            | string         | can be used to specify the hostname and port of the IP check server                                                |
@@ -6429,7 +6435,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | Enable TLS                                                   | checkbox       | only available in Advanced Mode; enables encrypted connections; if not              |
 |                                                              |                | provided, a certificate will automatically be generated and will appear in the      |
-|                                                              |                | *Certificate and private key* box once you click OK                                 |
+|                                                              |                | "Certificate and private key" box once you click OK                                 |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS policy                                                   | drop-down menu | only available in Advanced Mode; the selected policy defines whether the            |
@@ -6526,20 +6532,20 @@ To configure anonymous FTP:
 
 #.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in :menuselection:`Storage --> Volumes` as follows:
 
-* Owner(user): select the built-in *ftp* user from the drop-down menu
+* "Owner(user)": select the built-in *ftp* user from the drop-down menu
 
-* Owner(group): select the built-in *ftp* group from the drop-down menu
+* "Owner(group)": select the built-in *ftp* group from the drop-down menu
 
-* Mode: review that the permissions are appropriate for the share
+* "Mode": review that the permissions are appropriate for the share
 
 .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
    be accessing FreeNAS® via FTP.
 
 #.  **Configure anonymous FTP** in :menuselection:`Services --> FTP` by setting the following attributes:
 
-* check the box *Allow Anonymous Login*
+* check the box "Allow Anonymous Login"
 
-* Path: browse to the volume/dataset/directory to be shared
+* "Path": browse to the volume/dataset/directory to be shared
 
 #.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -6551,9 +6557,9 @@ In the example shown in Figure 11.6b, a user has input the following information
 
 * IP address of the FreeNAS® server: *192.168.1.113*
 
-* Username: *anonymous*
+* "Username": *anonymous*
 
-* Password: the email address of the user
+* "Password": the email address of the user
 
 **Figure 11.6b: Connecting Using Filezilla**
 
@@ -6577,7 +6583,7 @@ To configure this scenario:
     set an appropriate quota for each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
 
 #.  **If you are not using AD or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User`. For each user, browse to the
-    dataset created for that user in the *Home Directory* field. Repeat this process to create a user account for every user that will need access to the FTP
+    dataset created for that user in the "Home Directory" field. Repeat this process to create a user account for every user that will need access to the FTP
     service, making sure to assign each user their own dataset.
 
 #.  **Set the permissions for each dataset** in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
@@ -6588,17 +6594,15 @@ To configure this scenario:
 
 #.  **Configure FTP** in :menuselection:`Services --> FTP` with the following attributes:
 
-* Path: browse to the parent volume containing the datasets
+* "Path": browse to the parent volume containing the datasets
 
-* make sure the boxes for *Allow Anonymous Login*
-  and *Allow Root Login* are
-  **unchecked**
+* make sure the boxes for "Allow Anonymous Login" and "Allow Root Login" are **unchecked**
 
-* check the box *Allow Local User Login*
+* check the box "Allow Local User Login"
 
-* check the box *Always Chroot*
+* check the box "Always Chroot"
 
-#.  **Start the FTP service** in Control Services. Click the red OFF button next to FTP. After a second or so, it will change to a blue ON, indicating that
+#.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
 
 #.  **Test the connection from a client** using a utility such as Filezilla.
@@ -6621,7 +6625,7 @@ To configure any FTP scenario to use encrypted connections:
     *ftps://IP_address* (for an implicit connection) or
     *ftpes://IP_address*
     (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the certificate of the FreeNAS®
-    system. Click OK to accept the certificate and negotiate an encrypted connection.
+    system. Click "OK" to accept the certificate and negotiate an encrypted connection.
 
 To force encrypted connections, add the following line to Auxiliary Parameters::
 
@@ -6742,7 +6746,7 @@ As authorized accesses are added, they will be listed under View Authorized Acce
 *test3*) and two groups (
 *1* and
 *2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
-entry to display its Edit and Delete buttons.
+entry to display its "Edit" and "Delete" buttons.
 
 **Figure 11.7b: Viewing Authorized Accesses**
 
@@ -6795,7 +6799,7 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use 0 as the                               |
 |                    |                | *Extent size*,                                                                                                       |
-|                    |                | **or** browse to the volume or dataset, click the Close button, append the                                           |
+|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the                                         |
 |                    |                | *Extent Name* to the path, and specify a value in                                                                    |
 |                    |                | *Extent size*                                                                                                        |
 |                    |                |                                                                                                                      |
@@ -6846,7 +6850,7 @@ Table 11.7c summarizes the settings that can be configured when adding an initia
 
 
 In the example shown in Figure 11.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
-from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its Edit and Delete buttons.
+from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
 
 .. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
    these will be deleted as well.
@@ -7092,9 +7096,9 @@ firmware support. The magic is on the booting host side, meaning that there is n
 `iSCSI SAN Configuration Guide <http://www.vmware.com/pdf/vsphere4/r41/vsp_41_iscsi_san_cfg.pdf>`_
 for details.
 
-If you can see the target but not connect to it, check the discovery authentication settings in Target Global Configuration.
+If you can see the target but not connect to it, check the "discovery authentication" settings in "Target Global Configuration".
 
-If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to Accept in the vswitch.
+If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to "Accept" in the vswitch.
 
 Growing LUNs
 ~~~~~~~~~~~~
@@ -7320,11 +7324,10 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 |Figure1111a_png|
 
 .. note::
-   **smartd** will wake up at every
-   *Check Interval* configured in Figure 8.10a. It will check the times you configured in your tests (described in Figure 4.5a) to see if any tests should be
-   run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a check interval value higher than 60 minutes. For
-   example, if you set the check interval for 120 minutes and the smart test to every hour, the test will only be run every 2 hours since the daemon only
-   wakes up every 2 hours.
+   **smartd** will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described in Figure
+   4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a "Check
+   Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart test to every hour, the test will only
+   be run every 2 hours since the daemon only wakes up every 2 hours.
 
 Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 
@@ -7475,7 +7478,7 @@ Mode" button or configure the system to always display these settings by checkin
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 
 
-A few sshd_config(5) options that are useful to input in the *Extra Options* field include:
+A few sshd_config(5) options that are useful to input in the "Extra Options" field include:
 
 * **ClientAliveInterval**: increase this number if ssh connections tend to drop
 
@@ -7485,8 +7488,7 @@ SFTP Chroot
 ~~~~~~~~~~~
 
 By default when you configure SSH, users can use the **ssh** command to login to the FreeNAS® system. A user's home directory will be the volume/dataset
-specified in the *Home Directory* field of their user account on the FreeNAS® system. Users can also use the
-**scp** and
+specified in the "Home Directory" field of their user account on the FreeNAS® system. Users can also use the **scp** and
 **sftp** commands to transfer files between their local computer and their home directory on the FreeNAS® system.
 
 While these commands will default to the user's home directory, users are able to navigate outside of their home directory which can pose a security risk. SSH
@@ -7562,7 +7564,7 @@ If you add any *Extra Options* in the SSH configuration screen, be aware that th
 `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
 are case sensitive. This means that your configuration will fail to do what you intended if you do not match the upper and lowercase letters of the keyword.
 
-If your clients are receiving "reverse DNS" or timeout errors, add an entry for the IP address of the FreeNAS® system in the *Host name database* field
+If your clients are receiving "reverse DNS" or timeout errors, add an entry for the IP address of the FreeNAS® system in the "Host name database" field
 of :menuselection:`Network --> Global Configuration`.
 
 When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have
@@ -7691,18 +7693,18 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                | *fixmepass*                                                                                           |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Send Email Status Updates | checkbox       | if checked, activates the *To email* field                                                            |
+| Send Email Status Updates | checkbox       | if checked, activates the "To email" field                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| To email                  | email address  | if *Send Email* box checked, email address of person to receive status updates                        |
+| To email                  | email address  | if "Send Email" box checked, email address of person to receive status updates                        |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Email subject             | string         | if *Send Email* box checked, subject of email updates                                                 |
+| Email subject             | string         | if "Send Email" box checked, subject of email updates                                                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 
-.. note:: for USB devices, the easiest way to determine the correct device name is to check the box :Show console messages" in
+.. note:: for USB devices, the easiest way to determine the correct device name is to check the box "Show console messages" in
    :menuselection:`System --> Advanced`. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where the X's are
    the numbers that show on the console.
 
@@ -7715,7 +7717,7 @@ man page gives some other usage examples.
 
 `upscmd(8) <http://www.networkupstools.org/docs/man/upscmd.html>`_
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
-this command. These users are created in the *Extra users* field.
+this command. These users are created in the "Extra users" field.
 
 Plugins
 =======
@@ -7754,7 +7756,7 @@ advantages:
 
 * FreeNAS® PBIs can be installed using either the Plugins or the Jails method.
 
-To install a FreeNAS® PBI using the plugins method, click Plugins. As seen in Figure 12.1a, the list of available FreeNAS® PBIs will be displayed.
+To install a FreeNAS® PBI using the plugins method, click "Plugins". As seen in Figure 12.1a, the list of available FreeNAS® PBIs will be displayed.
 
 **Figure 12.1a: Using Plugins to Install a PBI**
 
@@ -7764,7 +7766,7 @@ To install a FreeNAS® PBI using the plugins method, click Plugins. As seen in F
    **ping** an address on the Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in
    :menuselection:`Network --> Global Configuration`.
 
-Highlight the entry of the PBI you would like to install, then click its Install button. In the example shown in Figure 12.1b, the transmission PBI is
+Highlight the entry of the PBI you would like to install, then click its "Install" button. In the example shown in Figure 12.1b, the transmission PBI is
 selected for installation.
 
 **Figure 12.1b: Selecting a PBI to Install**
@@ -7780,18 +7782,18 @@ will then install the PBI and add it to the "Installed" tab as shown in Figure 1
 
 As seen in the example shown in Figure 12.1c, entries for the installed PBI will appear in the following locations:
 
-* the Installed tab of Plugins
+* the "Installed" tab of "Plugins"
 
 * the Plugins section of the tree
 
 * the Jails section of the tree
 
-The entry in the Installed tab of Plugins will display the plugin name and version, the name of the PBI that was installed, the name of the jail that was
+The entry in the "Installed" tab of Plugins will display the plugin name and version, the name of the PBI that was installed, the name of the jail that was
 created, whether the application status is ON or OFF, and a button to delete the application and its associated jail. If a newer version of the application is
 available, a button to update the application will also appear.
 
 The "Service status" of a PBI must be turned to "ON" before the installed application is available. Before starting the service, check to see if it has any
-configuration options by clicking its entry in the Plugins section of the tree. If the application is configurable, this will open a graphical screen that
+configuration options by clicking its entry in the "Plugins" section of the tree. If the application is configurable, this will open a graphical screen that
 contains its available configuration options. The options that are available will vary by PBI. PBIs which are not configurable will instead display a message
 with a hyperlink for accessing the software. That hyperlink will not work until the PBI is started.
 
@@ -7803,10 +7805,10 @@ If the application requires access to the data stored on the FreeNAS® system, c
 add a storage as described in Adding Storage.
 
 If you need to access the shell of the jail containing the application to complete or test your configuration, click the entry for the associated jail in the
-Jails section of the tree. You can then click its shell icon as described in Managing Jails.
+Jails section of the tree. You can then click its "shell" icon as described in Managing Jails.
 
-Once the configuration is complete, click the red OFF button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If it
-fails to start, click the jail's shell icon and type **tail /var/log/messages** to see if any errors were logged.
+Once the configuration is complete, click the red "OFF" button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If
+it fails to start, click the jail's "shell" icon and type **tail /var/log/messages** to see if any errors were logged.
 
 Updating Plugins
 ----------------
@@ -7849,9 +7851,9 @@ it up first, before deleting the PBI.
 
 In the example shown in Figure 12.4a, the CouchPotato PBI has been installed and the user has clicked its "Delete" button. As described in the previous
 sections, this PBI appears in the Plugins portion of the tree, its associated jail, *couchpotato_1* , appears in the Jails portion of the tree, and the PBI
-shows as installed in the Installed tab of Plugins. A pop-up message asks the user if they are sure that they want to delete.
+shows as installed in the "Installed" tab of Plugins. A pop-up message asks the user if they are sure that they want to delete.
 **This is the one and only warning.** If the user clicks "Yes", this PBI will be removed from the Plugins portion of the tree, its associated jail,
-*couchpotato_1*, will be deleted, and the PBI will no longer show as installed in the Installed tab of Plugins.
+*couchpotato_1*, will be deleted, and the PBI will no longer show as installed in the "Installed" tab of Plugins.
 
 **Figure 12.4a: Deleting an Installed PBI**
 
@@ -7942,8 +7944,7 @@ The following types of jails can be created:
     
 #.  **Virtualox jail:**
 
-Table 13a summarizes the type of software which can be installed into each type of jail. Click the name of the type of software for instructions on how to
-install that type of software.
+Table 13a summarizes the type of software which can be installed into each type of jail.
 
 .. note:: the software which can be installed into a Linux jail is limited to the command line package management tool provided by that Linux distribution. If
    you install software into a Linux jail, install the 32-bit version of the software.
@@ -8161,7 +8162,7 @@ same network as the interface it is bound to, and that address will be assigned 
 disable NAT, and configure an IP address within the same network. In both of these cases, you only configure an IP address and do not configure a bridge or a
 gateway address.
 
-After making your selections, click the OK button. The jail will be created and will be added to the tree under Jails. By default, a plugin jail will be
+After making your selections, click the "OK" button. The jail will be created and will be added to the tree under Jails. By default, a plugin jail will be
 created and automatically started, unless you specify otherwise.
 
 The first time you add a type of jail, the GUI will automatically download the necessary components from the Internet. If it is unable to connect to the
@@ -8194,14 +8195,14 @@ inaccessible until it is restarted.
 **Shell:** used to access a root command prompt in order to configure the selected jail from the command line.
 
 **Delete:** deleting the specified jail also deletes any software that was installed in that jail. The GUI will display a warning which requires you to click
-the Yes button, indicating that you are sure that you want to delete the jail, before this operation is performed.
+the "Yes" button, indicating that you are sure that you want to delete the jail, before this operation is performed.
 
 Accessing a Jail Using SSH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you prefer to use **ssh** to access a jail you will need to first start the
 **ssh** service and create a user account for
-**ssh** access. Since this configuration occurs on a jail-by-jail basis, click the "Shell" icon for the jail you wish to configure
+**ssh** access. Since this configuration occurs on a jail-by-jail basis, click the "shell" icon for the jail you wish to configure
 **ssh** access to.
 
 To start the SSH service on a non-Linux jail, look for the following line in that jail's */etc/rc.conf*::
@@ -8249,7 +8250,7 @@ Edit Jail
 ^^^^^^^^^
 
 Figure 13.2c shows the configuration screen that appears when you click the "Edit Jail" button for a highlighted jail's entry. This screen can also be
-accessed by expanding the jail's name in the tree view and clicking Edit.
+accessed by expanding the jail's name in the tree view and clicking "Edit".
 
 **Figure 13.2c: Jail's Edit Settings**
 
@@ -8332,7 +8333,7 @@ has been chosen as the "Source" as it contains the files stored on the FreeNAS®
 *test* as the directory. Since this directory did not already exist, it was created as the "Create directory" box was left as checked. The resulting
 storage was added to the *pluginjail* entry in the tree as
 */usr/local/test*. The user has clicked this
-*/usr/local/test* entry in order to access its edit screen.
+*/usr/local/test* entry in order to access its "Edit" screen.
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -8732,19 +8733,19 @@ preserved across system upgrades and at shutdown. To instead save this data to t
 :menuselection:`System --> System Dataset`.
 
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
-also use the << and >> buttons to scroll through the output.
+also use the "<<" and ">>" buttons to scroll through the output.
 
 Display System Processes
 ========================
 
-If you click Display System Processes, a screen will open showing the output of
+If you click "Display System Processes", a screen will open showing the output of
 `top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 15a.
 
 **Figure 15a: System Processes Running on FreeNAS®**
 
 |10000000000001F70000019B91B24E55_png|
 
-The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
+The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a **kill** command within it.
 
 Shell
@@ -8760,15 +8761,15 @@ The prompt indicates that the current user is *root*, the hostname is
 
 To change the size of the shell, click the *80x25* drop-down menu and select a different size.
 
-To copy text from shell, highlight the text, right-click, and select Copy from the right-click menu. To paste into the shell, click the Paste button, paste
-the text into the box that opens, and click the OK button to complete the paste operation.
+To copy text from shell, highlight the text, right-click, and select "Copy" from the right-click menu. To paste into the shell, click the "Paste" button,
+paste the text into the box that opens, and click the "OK" button to complete the paste operation.
 
 **Figure 16a: Web Shell**
 
 |Figure16a_png|
 
 While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
-Shell in order to modify a configuration, click the x in the window's upper right corner. The next time you enter Shell, you will return to your last session.
+Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last session.
 When you are finished using Shell, type **exit** to leave the session completely.
 
 Shell provides history (use your up arrow to see previously entered commands and press enter to repeat the currently displayed command) and tab completion
@@ -8783,14 +8784,14 @@ that are provided by FreeNAS® are described in Useful Command Line Utilities.
 Log Out
 =======
 
-To log out of the FreeNAS® GUI, simply click the Log Out button in the upper right corner. You will immediately be logged out. An informational message will
-indicate that you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root*
-password.
+To log out of the FreeNAS® GUI, simply click the "Log Out" button in the upper right corner. You will immediately be logged out. An informational message
+will indicate that you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the
+*root* password.
 
 Reboot
 ======
 
-If you click Reboot, you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate that you have selected
+If you click "Reboot", you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the FreeNAS® system.
 
 .. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key using the
@@ -8805,16 +8806,16 @@ If a scrub or resilver is in progress when a reboot is requested, an additional 
 is recommended to "Cancel" the reboot request and to periodically run **zpool status** from Shell until it is verified that the scrub or resilver process is
 complete. Once complete, the reboot request can be re-issued.
 
-Click the Cancel button if you wish to cancel the reboot request. Otherwise, click the Reboot button to reboot the system. Rebooting the system will
+Click the "Cancel" button if you wish to cancel the reboot request. Otherwise, click the "Reboot" button to reboot the system. Rebooting the system will
 disconnect all clients, including the web administration GUI. The URL in your web browser will change to add */system/reboot/* to the end of the IP address.
-Wait a few minutes for the system to boot, then use your browser's back button to return to the FreeNAS® system's IP address. If all went well, you should
+Wait a few minutes for the system to boot, then use your browser's "back" button to return to the FreeNAS® system's IP address. If all went well, you should
 receive the GUI login screen. If the login screen does not appear, you will need physical access to the FreeNAS® system's monitor and keyboard so that you
 can determine what problem is preventing the system from resuming normal operation.
 
 Shutdown
 ========
 
-If you click Shutdown, you will receive the warning message shown in Figure 19a and your browser color will change to red to indicate that you have selected
+If you click "Shutdown", you will receive the warning message shown in Figure 19a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the FreeNAS® system.
 
 .. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key before
@@ -8835,7 +8836,7 @@ in order to turn it back on.
 Help
 ====
 
-The Help button in the upper right corner provides a pop-up menu containing hyperlinks to the various FreeNAS® online resources, including:
+The "Help" button in the upper right corner provides a pop-up menu containing hyperlinks to the various FreeNAS® online resources, including:
 
 * the Community Forum
 
@@ -8852,7 +8853,7 @@ These resources are discussed in more detail in FreeNAS® Support Resources.
 Alert
 =====
 
-FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The Alert button in the far right
+FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
 corner will flash red when there is an outstanding alert. In the example alert shown in Figure 21a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
@@ -10055,9 +10056,7 @@ screen. This line shows information on the current session and is used to enter 
 
 |Figure239a_png|
 
-To create a second window, press *ctrl b* then
-*"*. To close a window, type
-**exit** within the window.
+To create a second window, press "ctrl b" then ". To close a window, type **exit** within the window.
 
 `tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi?query=tmux>`_
 lists all of the key bindings and commands for interacting with **tmux** windows and sessions.
@@ -10127,18 +10126,18 @@ If a similar issue does not already exist, keep the following points in mind as 
 #.  In the Tracker drop-down menu, select *Bug* if you are reporting a bug or
     *Feature* if you are making a feature request.
 
-#.  In the Subject field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
+#.  In the "Subject" field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
 
 #.  In the Description section, describe the problem, how to recreate it, and include the text of any error messages. If you are requesting a feature,
     describe the benefit provided by the feature and, if applicable, provide examples of other products that use that feature or the URL of the homepage for
     the software.
 
-#.  If you would like to include a screenshot or log of your configuration or error, use the Browse button next to the Files field to upload the file.
+#.  If you would like to include a screenshot or log of your configuration or error, use the "Browse" button next to the "Files" field to upload the file.
 
 #.  Leave all of the other fields at their default values as these are used by developers as they take action on the issue.
 
-#.  Press the Preview link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
-    understand your problem or request. Once you are satisfied with your ticket, click the Create Ticket button to submit it.
+#.  Press the "Preview" link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
+    understand your problem or request. Once you are satisfied with your ticket, click the "Create Ticket" button to submit it.
 
 An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
 
@@ -10171,10 +10170,10 @@ that the menus that currently are not translated will appear in English instead 
 If you wish to help localize your language, you should first join the
 `translations mailing list <http://lists.freenas.org/mailman/listinfo/freenas-translations>`_
 and introduce yourself and which language(s) you can assist with. This will allow you to meet other volunteers as well as keep abreast of any notices or
-updates that may effect the translations. You will also need to click on the Register link in order to create a Pootle login account.
+updates that may effect the translations. You will also need to click on the "Register" link in order to create a Pootle login account.
 
 The first time you log into the FreeNAS® Pootle interface, you will be prompted to select your language so that you can access that language's translation
-whenever you login. Alternately, you can click the Home link to see the status of all of the languages. To work on a translation, click the link for the
+whenever you login. Alternately, you can click the "Home" link to see the status of all of the languages. To work on a translation, click the link for the
 language, click the FreeNAS® link for the project, click the link for "LC_MESSAGES", and click the link for "django.po". Every text line available in the GUI
 menu screens has been assigned a string number. If you click the number, an editor will open where you can translate the text. In the example shown in Figure
 24.2b, a user has selected string number 46 in the German translation; the other strings in the screenshot have already been translated:
@@ -10184,7 +10183,7 @@ menu screens has been assigned a string number. If you click the number, an edit
 |100000000000047B00000232CA1DFA0A_png|
 
 
-Simply type in the translated text and click the Submit button to save your change.
+Simply type in the translated text and click the "Submit" button to save your change.
 
 Beta Test
 ---------
