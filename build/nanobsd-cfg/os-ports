@@ -323,6 +323,7 @@ add_port_debug net/samba41 \
        WITH_DEBUG=yes
 
 add_port sysutils/grub2-pcbsd
+add_port sysutils/beadm
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite

@@ -80,9 +80,11 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
 * Commands that are mentioned within text are highlighted in :command:`bold text`. Command examples and command output are contained in green code blocks.
 
+* Volume, dataset, and file names are enclosed in a blue box :file:`/like/this`.
+
 * **bold text:** used to emphasize an important point.
 
-* *italic text:* used to represent device names, file name paths, or text that is input into a GUI field.
+* *italic text:* used to represent device names or text that is input into a GUI field.
 
 .. sectnum::
 
@@ -321,7 +323,8 @@ partition is used when you upgrade. This allows you to safely upgrade to a new i
 USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point) chipsets. If you receive a
 "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this will downclock the USB
 ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a Tunable
-named *xhci_load*, set its value to *YES*, and reboot the system.
+named *xhci_load*, set its value to
+*YES*, and reboot the system.
 
 It is highly recommended that when using a USB stick, that only name brand USB sticks are used as off-brand sticks may not be fully compatible with FreeNAS®.
 
@@ -636,8 +639,8 @@ VirtualBox
 
 `VirtualBox <http://www.virtualbox.org/>`_
 is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD, Linux, Macintosh, and OpenSolaris. It can be
-configured to use a downloaded FreeNAS® *.iso* or *.img.xz* file, and makes a good testing environment for practicing configurations or learning how to use
-the features provided by FreeNAS®.
+configured to use a downloaded FreeNAS® :file:`.iso` or :file:`.img.xz` file, and makes a good testing environment for practicing configurations or learning
+how to use the features provided by FreeNAS®.
 
 To create the virtual machine, start VirtualBox and click the "New" button, seen in Figure 2.2a, to start the new virtual machine wizard.
 
@@ -674,7 +677,7 @@ Select one of the following types:
 
 * **VDI:** select this option if you downloaded the ISO.
 
-* **VMDK:** select this option if you converted the *.img* file to VMDK format using the instructions in Running FreeNAS® from a USB Image.
+* **VMDK:** select this option if you converted the :file:`.img` file to VMDK format using the instructions in Running FreeNAS® from a USB Image.
 
 Once you make a selection, click the "Next" button to see the screen in Figure 2.2f.
 
@@ -721,8 +724,8 @@ Figure 2.2j.
 
 |100000000000033400000234CCE0A6DA_png|
 
-Click "Choose a virtual CD/DVD disk file..." to browse to the location of the *.iso* file. Alternately, if you have burned the
-*.iso* to disk, select the detected "Host Drive".
+Click "Choose a virtual CD/DVD disk file..." to browse to the location of the :file:`.iso` file. Alternately, if you have burned the :file:`.iso` to disk,
+select the detected "Host Drive".
 
 Depending upon the extensions available in your CPU, you may or may not be able to use the ISO. If you receive the error "your CPU does not support long
 mode" when you try to boot the ISO, your CPU either does not have the required extension or AMD-V/VT-x is disabled in the system BIOS.
@@ -746,9 +749,9 @@ If you configured the VMDK, the virtual machine will boot directly into FreeNAS�
 Using the VMDK
 ^^^^^^^^^^^^^^
 
-Once you have a *.vmdk* file, create a new virtual machine while the USB stick is inserted. When you get to Figure 2.2e, select "Use existing hard disk" and
-browse to your *.vmdk* file. Click "Next", then "Create". This will create the virtual machine and bring you to Figure 2.2h. You can then create your storage
-disks and bridged adapter as usual. When finished, start the virtual machine and it will boot directly into FreeNAS®.
+Once you have a :file:`.vmdk` file, create a new virtual machine while the USB stick is inserted. When you get to Figure 2.2e, select "Use existing hard disk"
+and browse to your :file:`.vmdk` file. Click "Next", then "Create". This will create the virtual machine and bring you to Figure 2.2h. You can then create
+your storage disks and bridged adapter as usual. When finished, start the virtual machine and it will boot directly into FreeNAS®.
 
 VMware ESXi
 ~~~~~~~~~~~
@@ -809,7 +812,7 @@ the amount of storage disks needed to meet your requirements.
 Installing from CDROM
 ---------------------
 
-If you prefer to install FreeNAS® using a menu-driven installer, download either the *.iso* file and burn it to a CDROM.
+If you prefer to install FreeNAS® using a menu-driven installer, download either the :file:`.iso` file and burn it to a CDROM.
 
 .. note:: the installer on the CDROM will recognize if a previous version of FreeNAS® is already installed, meaning the CDROM can also be used to upgrade
    FreeNAS®. However, the installer can not perform an upgrade from a FreeNAS® .7 system.
@@ -859,13 +862,13 @@ Burning a USB Stick
 -------------------
 
 If your system does not have a CDROM drive to install from, you can instead write the operating system directly to a compact flash card or USB thumbdrive.
-Download the *img.xz* file, uncompress the file, and write it to a compact flash card or USB thumbdrive that is 2 GB or larger. You then boot into that device
-to load the FreeNAS® operating system. This section demonstrates how to write the image using several different operating systems. The Unetbootin tool is not
-supported at this time.
+Download the :file:`img.xz` file, uncompress the file, and write it to a compact flash card or USB thumbdrive that is 2 GB or larger. You then boot into that
+device to load the FreeNAS® operating system. This section demonstrates how to write the image using several different operating systems. The Unetbootin tool
+is not supported at this time.
 
 .. warning:: The :command:`dd` command demonstrated in this section is very powerful and can destroy any existing data on the specified device. Be
    **very sure** that you know the device name to write to and that you do not typo the device name when using :command:`dd`! If you are uncomfortable writing
-   the image yourself, download the *.iso* file instead and use the instructions in Installing from CDROM.
+   the image yourself, download the :file:`.iso` file instead and use the instructions in Installing from CDROM.
 
 Once you have written the image to the device, make sure the boot order in the BIOS is set to boot from that device and boot the system. It should boot into
 the Console setup menu described in Initial Setup. If it does not, try the suggestions in the Troubleshooting section.
@@ -875,7 +878,7 @@ On FreeBSD or Linux
 
 On a FreeBSD or Linux system, the :command:`xzcat` and :command:`dd` commands can be used to uncompress and write the *.xz* image to an inserted USB thumb
 drive or compact flash device. Example 2.4a demonstrates writing the image to the first USB device (*/dev/da0*) on a FreeBSD system. Substitute the filename
-of your *.xz* file and the device name representing the device to write to on your system.
+of your :file:`.xz` file and the device name representing the device to write to on your system.
 
 **Example 2.4a: Writing the Image to a USB Thumb Drive**
 ::
@@ -896,9 +899,8 @@ On OS X
 
 On an OS X system, you can download and install
 `Keka <http://www.kekaosx.com/en/>`_
-to uncompress the image. In FINDER, navigate to the location where you saved the downloaded *.xz* file. Right-click the
-*.xz* file and select "Open With Keka". After a few minutes you will have a large file with the same name, but no
-*.xz* extension.
+to uncompress the image. In FINDER, navigate to the location where you saved the downloaded :file:`.xz` file. Right-click the :file:`.xz` file and select
+"Open With Keka". After a few minutes you will have a large file with the same name, but no :file:`.xz` extension.
 
 Insert the USB thumb drive and go to :menuselection:`Launchpad --> Utilities --> Disk Utility`. Unmount any mounted partitions on the USB thumb drive. Check
 that the USB thumb drive has only one partition, otherwise you will get partition table errors on boot. If needed, use Disk Utility to setup one partition on
@@ -943,26 +945,27 @@ to the USB drive.
 On Windows
 ~~~~~~~~~~
 
-Windows users will need to download a utility that can uncompress *.xz* files and a utility that can create a USB bootable image from the uncompressed
-*.img* file.
+Windows users will need to download a utility that can uncompress :file:`.xz` files and a utility that can create a USB bootable image from the uncompressed
+:file:`.img` file.
 
 This section will demonstrate how to use
 `7-Zip <http://www.7-zip.org/>`_
 and
 `Win32DiskImager <https://launchpad.net/win32-image-writer>`_
-to burn the image file. When downloading Win32DiskImager, download the latest version that ends in *-binary.zip* and use 7-Zip to unzip its executable.
+to burn the image file. When downloading Win32DiskImager, download the latest version that ends in :file:`-binary.zip` and use 7-Zip to unzip its executable.
 
-Once both utilities are installed, launch the 7-Zip File Manager and browse to the location containing your downloaded *.img.xz* file, as seen in Figure 2.4a.
+Once both utilities are installed, launch the 7-Zip File Manager and browse to the location containing your downloaded :file:`.img.xz` file, as seen in Figure
+2.4a.
 
 **Figure 2.4a: Using 7-Zip to Extract Image File**
 
 |Figure24a_png|
 
-Click the "Extract" button, browse to the path to extract to, and click "OK". The extracted image will end in *.img* and is now ready to be written to a USB
-device using Win32DiskImager.
+Click the "Extract" button, browse to the path to extract to, and click "OK". The extracted image will end in :file:`.img` and is now ready to be written to a
+USB device using Win32DiskImager.
 
-Next, launch Win32DiskImager, shown in Figure 2.4b. Use the "browse" button to browse to the location of the *.img* file. Insert a USB thumb drive and select
-its drive letter from the Device drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
+Next, launch Win32DiskImager, shown in Figure 2.4b. Use the "browse" button to browse to the location of the :file:`.img` file. Insert a USB thumb drive and
+select its drive letter from the Device drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
 
 **Figure 2.4b: Using Win32DiskImager to Write the Image**
 
@@ -1123,7 +1126,7 @@ Initial Preparation
 Before upgrading the system, perform the following steps:
 
 #.  `Download <http://www.freenas.org/download-releases.html>`_
-    the *.iso* or .*txz* file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
+    the :file:`.iso` or :file:`.txz` file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
 
 #.  Locate and confirm the SHA256 hash for the file that you downloaded in the Release Notes for the version that you are upgrading to.
 
@@ -1138,7 +1141,7 @@ Before upgrading the system, perform the following steps:
 Upgrading from CDROM
 ~~~~~~~~~~~~~~~~~~~~
 
-Burn the downloaded *.iso* file to a CDROM.
+Burn the downloaded :file:`.iso` file to a CDROM.
 
 Insert the CDROM into the system and boot from it. Once the media has finished booting into the installation menu, press enter to select the default option of
 "1 Install/Upgrade to hard drive/flash device, etc." As with a fresh install, the installer will present a screen showing all available drives; select
@@ -1146,9 +1149,9 @@ the device FreeNAS® is installed into and press enter.
 
 The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.7a.
 
-.. note:: if you select to perform a *Fresh Install*, you will have to restore the backup of your configuration.
+.. note:: if you select to perform a "Fresh Install", you will have to restore the backup of your configuration.
 
-To perform an upgrade, press enter to accept the default of *Upgrade Install*. Again, the installer will remind you that the operating system should be
+To perform an upgrade, press enter to accept the default of "Upgrade Install". Again, the installer will remind you that the operating system should be
 installed on a thumb drive. Press enter to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in Figure
 2.7b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
@@ -1177,7 +1180,7 @@ Upgrading From the GUI
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
-the latest version of the *.txz* file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.7d.
+the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.7d.
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
 allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "Apply Update" button to see the screen
@@ -1185,7 +1188,7 @@ shown in Figure 2.7e.
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
-Browse to the location of the downloaded *.txz* file, then paste its SHA256 sum.
+Browse to the location of the downloaded :file:`.txz` file, then paste its SHA256 sum.
 
 When finished, click the "Apply Update" button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
 
@@ -1234,7 +1237,7 @@ If this does not fix the problem, go into option "9) Shell" and read the system 
 
  more /var/log/messages
 
-If the database upgrade failed, a file called */data/upgrade-failed* should be created with the details.
+If the database upgrade failed, a file called :file:`/data/upgrade-failed` should be created with the details.
 
 If the problem is not obvious or you are unsure how to fix it, see FreeNAS® Support Resources.
 
@@ -1243,9 +1246,8 @@ installed version of the operating system. This allows you to reboot into the pr
 
 The upgrade process automatically configures the system to boot from the new operating system. If the system remains inaccessible and you wish to revert back
 to the previous installation, type :command:`reboot` from the shell or select "10) Reboot" from the console menu. Watch the boot screens and press the other
-boot option (typically *F2*) from the FreeNAS® console when you see the following options at the very beginning of the boot process. In this example,
-*Boot: F1* refers to the default option (the newly upgraded version), so pressing
-*F2* will boot into the previous version.::
+boot option (typically "F2") from the FreeNAS® console when you see the following options at the very beginning of the boot process. In this example,
+"Boot: F1" refers to the default option (the newly upgraded version), so pressing "F2" will boot into the previous version.::
 
  F1 FreeBSD
  F2 FreeBSD
@@ -1528,8 +1530,9 @@ to assign permissions which will be used by shares, you will need to do **one of
 #.  Create a guest account that all users will use.
 
 #.  Create a user account for every user in the network where the name of each account is the same as a logon name used on a computer. For example, if a
-    Windows system has a login name of *bobsmith*, you should create a user account with the name *bobsmith* on FreeNAS®. If your intent is to assign groups
-    of users different permissions to shares, you will need to also create groups and assign users to the groups.
+    Windows system has a login name of *bobsmith*, you should create a user account with the name
+    *bobsmith* on FreeNAS®. If your intent is to assign groups of users different permissions to shares, you will need to also create groups and assign users
+    to the groups.
 
 #.  If your network uses Active Directory to manage user accounts and permissions, enable the Active Directory_service.
 
@@ -1936,15 +1939,15 @@ will always slow the system down as it caps the ARC.
 The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default; check it if you would like the autotuner to run
 at boot time. If you would like the script to run immediately, reboot the system.
 
-If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Sysctls` (for *sysctl.conf* values) and in
-:menuselection:`System --> Tunables` (for *loader.conf* values). If you do not like the changes, you can modify the values that are displayed in the GUI and
-your changes will override the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by autotune, it
-will be recreated at next boot. This is because autotune only creates values that do not already exist.
+If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Sysctls` (for :file:`sysctl.conf` values)
+and in :menuselection:`System --> Tunables` (for :file:`loader.conf` values). If you do not like the changes, you can modify the values that are displayed in
+the GUI and your changes will override the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by
+autotune, it will be recreated at next boot. This is because autotune only creates values that do not already exist.
 
 If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
 autotune.
 
-If you wish to read the script to see which checks are performed, the script is located in */usr/local/bin/autotune*.
+If you wish to read the script to see which checks are performed, the script is located in :file:`/usr/local/bin/autotune`.
 
 Email
 -----
@@ -2012,8 +2015,7 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |Figure55a_png|
 
 The system dataset can optionally be configured to also store the system log and the Reporting information. If there are lots of log entries or reporting
-information, moving these to the system dataset will prevent */var/*
-from filling up as */var/* has limited space. 
+information, moving these to the system dataset will prevent :file:`/var/` from filling up as :file:`/var/` has limited space. 
 
 Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset.
 
@@ -2448,18 +2450,15 @@ Rsync Module Mode
 
 This configuration example will configure rsync module mode between the two following FreeNAS® systems:
 
-* *192.168.2.2* has existing data in
-  */mnt/local/images*. It will be the rsync client, meaning that an rsync task needs to be defined. It will be referred to as
-  *PUSH.*
+* *192.168.2.2* has existing data in :file:`/mnt/local/images`. It will be the rsync client, meaning that an rsync task needs to be defined. It will be
+  referred to as *PUSH.*
 
-* *192.168.2.6* has an existing volume named
-  */mnt/remote*. It will be the rsync server, meaning that it will receive the contents of
-  */mnt/local/images*. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as
-  *PULL.*
+* *192.168.2.6* has an existing volume named :file:`/mnt/remote`. It will be the rsync server, meaning that it will receive the contents of
+  :file:`/mnt/local/images`. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as *PULL.*
 
 On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task` as shown in Figure 6.3b. In this example:
 
-* the "Path" points to */usr/local/images*, the directory to be copied
+* the "Path" points to :file:`/usr/local/images`, the directory to be copied
 
 * the "Remote Host" points to *192.168.2.6*, the IP address of the rsync server
 
@@ -2479,9 +2478,7 @@ On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modu
 
 * the "Module Name" is *backups*; this needs to match the setting on the rsync client
 
-* the "Path" is */mnt/remote*; a directory called
-  *images* will be created to hold the contents of
-  */usr/local/images*
+* the "Path" is :file:`/mnt/remote`; a directory called :file:`images` will be created to hold the contents of :file:`/usr/local/images`
 
 * the "User" is set to *root* so it has permission to write anywhere
 
@@ -2490,8 +2487,7 @@ On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modu
 Descriptions of the configurable options can be found in the section on Rsync Modules.
 
 To finish the configuration, start the rsync service on *PULL* in :menuselection:`Services --> Control Services`. If the rsync is successful, the contents of
-*/mnt/local/images/* will be mirrored to
-*/mnt/remote/images/*.
+:file:`/mnt/local/images/` will be mirrored to :file:`/mnt/remote/images/`.
 
 **Figure 6.3b: Configuring the Rsync Client**
 
@@ -2516,9 +2512,9 @@ configured before creating the rsync task:
 
 * the SSH service must be running on *PULL*
 
-To create the public/private key pair for the rsync user account, open Shell_on *PUSH*. The / filesystem must first be mounted as read-write. The following
-example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is meant to be
-used for an automated task.::
+To create the public/private key pair for the rsync user account, open Shell_on *PUSH*. The :file:`/` filesystem must first be mounted as read-write. The
+following example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is
+meant to be used for an automated task.::
 
  mount -o rw /
 
@@ -2580,8 +2576,7 @@ While on *PULL*, verify that the SSH service is running in :menuselection:`Servi
 Next, copy the host key of *PULL* using Shell on
 *PUSH*. The following command copies the RSA host key of the
 *PULL* server used in our previous example. Be sure to include the double bracket
-*>>* to prevent overwriting any existing entries in the
-*known_hosts* file.::
+*>>* to prevent overwriting any existing entries in the :file:`known_hosts` file.::
 
  ssh-keyscan -t rsa 192.168.2.6 >> /root/.ssh/known_hosts
 
@@ -2592,7 +2587,7 @@ Next, copy the host key of *PULL* using Shell on
 You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
 
-* the "Path" points to */mnt/local/images*, the directory to be copied
+* the "Path" points to :file:`/mnt/local/images`, the directory to be copied
 
 * the "Remote Host" points to *192.168.2.6*, the IP address of the rsync server
 
@@ -2606,11 +2601,9 @@ follows:
 
 * the "Preserve Permissions" checkbox is checked so that the original permissions are not overwritten by the *root* user
 
-Once you save the rsync task, the rsync will automatically occur according to your schedule. In this example, the contents of */mnt/local/images/* will
-automatically appear in */mnt/remote/images/* after 15 minutes. If the content does not appear, use Shell on
-*PULL* to read
-*/var/log/messages*. If the message indicates a
-*\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
+Once you save the rsync task, the rsync will automatically occur according to your schedule. In this example, the contents of :file:`/mnt/local/images/` will
+automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the content does not appear, use Shell on *PULL* to read :file:`/var/log/messages`.
+If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
 
 S.M.A.R.T. Tests
@@ -2748,7 +2741,7 @@ the FreeNAS® system in the "Host name database" field.
 | Netwait IP list        | string     | if "Enable netwait feature" is checked, list of IP addresses to ping; otherwise, ping the default gateway            |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| Host name database     | string     | used to add one entry per line which will be appended to */etc/hosts*; use the format                                |
+| Host name database     | string     | used to add one entry per line which will be appended to :file:`/etc/hosts`; use the format                          |
 |                        |            | *IP_address space hostname* where multiple hostnames can be used if separated by a space                             |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
@@ -3309,9 +3302,7 @@ Table 8.1a summarizes the available options.
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | Path                | string    | only available when "Specify custom path" is checked; must be full name of volume (e.g.                                  |
-|                     |           | */mnt/var*) and if no path is provided, it will append the                                                               |
-|                     |           | *Volume name* to                                                                                                         |
-|                     |           | */mnt*                                                                                                                   |
+|                     |           | :file:`/mnt/var`) and if no path is provided, it will append the "Volume name" to :file:`/mnt`                           |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 
@@ -3498,8 +3489,7 @@ Table 8.1c summarizes the configuration options of this screen.
 | Volume name      | string         | ZFS volumes must conform to these                                                          |
 |                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_;      |
 |                  |                | it is recommended to choose a name that will stick out in the logs (e.g.**not**            |
-|                  |                | *data* or                                                                                  |
-|                  |                | *freenas*)                                                                                 |
+|                  |                | :file:`data` or :file:`freenas`)                                                           |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Volume to extend | drop-down menu | requires an existing ZFS pool to extend; see the section on Extending a ZFS Volume for     |
@@ -3659,7 +3649,7 @@ data on the volume to become inaccessible. An example would be a failed USB stic
 existing pool, or the physical removal of disks when moving from an older hardware system to a new system. Protect this passphrase as anyone who knows it
 could re-import your encrypted volume, thus thwarting the reason for encrypting the disks in the first place.
 
-When you click this icon, a red warning is displayed: *Remember to add a new recovery key as this action invalidates the previous recovery key.* Setting a
+When you click this icon, a red warning is displayed: **Remember to add a new recovery key as this action invalidates the previous recovery key.** Setting a
 passphrase invalidates the existing key. Once you set the passphrase, immediately click the "Add recovery key" button to create a new recovery key. Once the
 passphrase is set, the name of this icon will change to "Change Passphrase".
 
@@ -3704,7 +3694,7 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
 |               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_;         |
 |               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
-|               |                  | **not data or freenas**)                                                                       |
+|               |                  | **not** :file:`data` or :file:`freenas`)                                                       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | Encryption    | checkbox         | read the section on Encryption before choosing to use encryption                               |
@@ -3739,9 +3729,9 @@ disks to an existing ZFS volume. This drop-down empty will be empty if an existi
 Once an existing volume has been selected from the drop-down menu, drag and drop the desired disk(s) and select the desired volume layout. For example you
 can:
 
-* select an SSD or disk with a volume layout of *Log (ZIL)* to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
+* select an SSD or disk with a volume layout of "Log (ZIL)" to add a log device to the ZFS pool. Selecting 2 SSDs or disks will mirror the log device.
 
-* select an SSD or disk with a volume layout of *Cache (L2ARC)* to add a cache device to the ZFS pool.
+* select an SSD or disk with a volume layout of "Cache (L2ARC)" to add a cache device to the ZFS pool.
 
 * add additional disks to increase the capacity of the ZFS pool. The caveats to doing this are described below.
 
@@ -3817,7 +3807,7 @@ Directory and Windows ACLs when Unix ACLs are used.
 If you change your mind about the type of ACL, you do not have to recreate the volume. That is, existing data is not lost if the type of ACL is changed.
 However, if you change from Windows ACLs to Unix ACLs, the extended permissions provided by Windows ACLs will be removed from the existing files.
 
-When you select Windows ACLs, the *Mode* will become greyed out as it only applies to Unix permissions. The default Windows ACLs are always set to what
+When you select Windows ACLs, the "Mode" will become greyed out as it only applies to Unix permissions. The default Windows ACLs are always set to what
 Windows sets on new files and directories by default. The Windows client should then be used to fine-tune the permissions as required.
 
 Create ZFS Dataset
@@ -3914,9 +3904,9 @@ the block contents are identical. Since hash collisions are extremely rare, veri
 Compression
 ^^^^^^^^^^^
 
-Most media (e.g. *.mp3*, *.mp4*, *.avi*) is already compressed, meaning that you will increase CPU utilization for no gain if you store these files on a
-compressed dataset. However, if you have raw *.wav* rips of CDs or *.vob* rips of DVDs, you will see a performance gain using a compressed dataset. When
-selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
+Most media (e.g. :file:`.mp3`, :file:`.mp4`, :file:`.avi`) is already compressed, meaning that you will increase CPU utilization for no gain if you store
+these files on a compressed dataset. However, if you have raw *.wav* rips of CDs or *.vob* rips of DVDs, you will see a performance gain using a compressed
+dataset. When selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
 
 * **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
 
@@ -3994,13 +3984,12 @@ you have located the failed device in the GUI, perform the following steps:
 
 #.  Once the disk is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
-    Once you click the "Replace Disk" button, the ZFS pool will start to resilver. You can use the **zpool status** command in Shell to monitor the
+    Once you click the "Replace Disk" button, the ZFS pool will start to resilver. You can use the :command:`zpool status` command in Shell to monitor the
     status of the resilvering.
 
 #.  If the replaced disk continues to be listed after resilvering is complete, click its entry and use the "Detach" button to remove the disk from the list.
 
-In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ada2* in the volume named
-*volume1*.
+In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ada2* in the volume named :file:`volume1`.
 
 **Figure 8.1s: Replacing a Failed Disk**
 
@@ -4036,7 +4025,7 @@ Removing a Log or Cache Device
 If you have added any log or cache devices, these devices will also appear in :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status. If you
 click the device, you can either use its "Replace" button to replace the device as described above, or click its "Remove" button to remove the device.
 
-Before performing either of these operations, verify the version of ZFS running on the system by running **zpool upgrade -v|more** from Shell.
+Before performing either of these operations, verify the version of ZFS running on the system by running :command:`zpool upgrade -v|more` from Shell.
 
 If the pool is running ZFSv15, and a non-mirrored log device fails, is replaced, or removed, the pool is unrecoverable and the pool must be recreated and the
 data restored from a backup. For other ZFS versions, removing or replacing the log device will lose any data in the device which had not yet been written.
@@ -4060,7 +4049,7 @@ have been replaced. This process is slow and places the system in a degraded sta
 
 Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not, the pool will not recognize that the disk
 capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. To verify the property, use Shell. This example checks
-the ZFS volume named *Vol1*::
+the ZFS volume named :file:`Vol1`::
 
 
  zpool get all Vol1
@@ -4156,7 +4145,7 @@ identical ZFS volume on another system.
 
 .. note:: this operation only works on mirrored ZFS volumes.
 
-In this example, a ZFS mirror named *test* contains three drives::
+In this example, a ZFS mirror named :file:`test` contains three drives::
 
  zpool status
   pool: test
@@ -4170,12 +4159,10 @@ In this example, a ZFS mirror named *test* contains three drives::
  da0		ONLINE  0    0     0
  da4		ONLINE  0    0     0
 
-The following command splits from the existing three disk mirror *test* a new ZFS volume named
-*migrant* containing one disk,
+The following command splits from the existing three disk mirror :file:`test` a new ZFS volume named :file:`migrant` containing one disk,
 *da4*. Disks
 *da0* and
-*da1* remain in
-*test*.::
+*da1* remain in :file:`test`.::
 
  zpool split test migrant da4
 
@@ -4184,8 +4171,8 @@ the identical pool on the new system::
 
  zpool import migrant
 
-This makes the ZFS volume *migrant* available with a single disk. Be aware that properties come along with the clone, so the new pool will be mounted where
-the old pool was mounted if the mountpoint property was set on the original pool.
+This makes the ZFS volume :file:`migrant` available with a single disk. Be aware that properties come along with the clone, so the new pool will be mounted
+where the old pool was mounted if the mountpoint property was set on the original pool.
 
 Verify the status of the new pool::
 
@@ -4223,7 +4210,7 @@ At this point, it is recommended to add disks to create a full mirror set. This 
 
  zpool attach migrant da4 da3
 
-The *migrant* volume now looks like this::
+The :file:`migrant` volume now looks like this::
 
  zpool status
   pool: migrant
@@ -4325,7 +4312,7 @@ If you click the "ZFS Snapshots" tab (above the "Add Periodic Snapshot" button),
 Figure 8.2c.
 
 .. note:: if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
-   but failed, an entry will be added to */var/log/messages*. This log file can be viewed in Shell.
+   but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in Shell.
 
 **Figure 8.2c: Viewing Available Snapshots**
 
@@ -4349,7 +4336,7 @@ identical.
 The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
 
 **Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
-which can be mounted, the clone will appear in the Active Volumes tab, instead of the Periodic Snapshots tab, and will have the word *clone* in its name.
+which can be mounted, the clone will appear in the "Active Volumes" tab, instead of the "Periodic Snapshots" tab, and will have the word *clone* in its name.
 
 **Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
 While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
@@ -4409,26 +4396,25 @@ Before you can configure a replication task, the following pre-requisites must b
 
 A replication task uses the following keys:
 
-* **/data/ssh/replication.pub:** the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
+* :file:`/data/ssh/replication.pub`: the RSA public key used for authenticating the *PUSH* replication user. This key needs to be copied to the replication
   user account on *PULL*.
 
-* **/etc/ssh/ssh_host_rsa_key.pub:** the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
+* :file:`/etc/ssh/ssh_host_rsa_key.pub`: the RSA host public key of *PULL* used to authenticate the receiving side in order to prevent a man-in-the-middle
   attack. This key needs to be copied to the replication task on *PUSH*.
 
 This section will demonstrate how to configure a replication task between the following two FreeNAS® systems:
 
 * *192.168.2.2* will be referred to as 
-  *PUSH*. This system has a periodic snapshot task for the ZFS dataset
-  */mnt/local/data*.
+  *PUSH*. This system has a periodic snapshot task for the ZFS dataset :file:`/mnt/local/data`.
 
 * *192.168.2.6* will be referred to as
-  *PULL*. This system has an existing ZFS volume named
-  */mnt/remote* which will store the pushed snapshots.
+  *PULL*. This system has an existing ZFS volume named :file:`/mnt/remote` which will store the pushed snapshots.
 
 Configure PULL
 ~~~~~~~~~~~~~~
 
-A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the *PULL* system.
+A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the
+*PULL* system.
 
 To obtain a copy of the replication key: on *PUSH* go to :menuselection:`Storage --> View Replication Tasks`. Click the "View Public Key" button and copy its
 contents. An example is shown in Figure 8.3a.
@@ -4452,7 +4438,7 @@ On *PUSH*, verify that a periodic snapshot task has been created and that at lea
 To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task`. Figure 8.3b shows the required configuration
 for our example:
 
-* the Volume/Dataset is *local/data*
+* the Volume/Dataset is :file:`local/data`
 
 * the Remote ZFS Volume/Dataset is *remote*
 
@@ -4481,7 +4467,7 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Remote ZFS Volume/Dataset | string         | the ZFS volume on *PULL* that will store the snapshots;                                                      |
-|                           |                | */mnt/* is assumed and should not be included in the path                                                    |
+|                           |                | :file:`/mnt/` is assumed and should not be included in the path                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on *PULL*                      |
@@ -4556,12 +4542,9 @@ If you have followed all of the steps above and have *PUSH* snapshots that are n
 
 This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to 
 :menuselection:`Storage --> Replication Tasks --> View Replication Tasks` and click the "View Public Key" button. Make sure that it matches one of the values
-in */~/.ssh/authorized_keys* on
-*PULL*, where ~ represents the home directory of the replication user.
+in :file:`/~/.ssh/authorized_keys` on *PULL*, where :file:`~` represents the home directory of the replication user.
 
-Also check */var/log/auth.log* on
-*PULL* and
-*/var/log/messages* on
+Also check :file:`/var/log/auth.log` on *PULL* and :file:`/var/log/messages` on
 *PUSH* to see if either log gives an indication of the error.
 
 If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In
@@ -4570,12 +4553,10 @@ last one (the one with 3 icons instead of 2), then click the global "Destroy" bu
 
 Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the
 *local/data* dataset of
-*PUSH* is named
-*auto-20110922.1753-2h*, the IP address of
+*PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of
 *PULL* is
 *192.168.2.6*, and the ZFS volume on
-*PULL* is
-*remote*. Note that the
+*PULL* is :file:`remote`. Note that the
 **@** is used to separate the volume/dataset name from the snapshot name.::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
@@ -4606,7 +4587,7 @@ A ZFS scrub only checks used disk space. To check unused disk space, schedule a 
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
 :menuselection:`Storage --> ZFS Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> ZFS Scrubs --> View ZFS Scrubs`. Figure 8.4a
-displays the default settings for the volume named *volume1*. Table 8.4a summarizes the options in this screen.
+displays the default settings for the volume named :file:`volume1`. Table 8.4a summarizes the options in this screen.
 
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
@@ -4843,7 +4824,7 @@ If no users or groups are listed in the output of those commands, these commands
  getent group
  
 If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
-taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of *AD timeout* to 60 seconds.
+taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of "AD timeout" to 60 seconds.
 
 Using a Keytab
 ~~~~~~~~~~~~~~
@@ -4994,7 +4975,7 @@ a day as a cron job.
 After configuring the LDAP service, start it in :menuselection:`Services --> Control Services --> Directory Services`. If the service will not start, refer to
 the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
-for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in */var/log/auth.log.*
+for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in :file:`/var/log/auth.log`.
 
 To verify that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type
 :command:`getent group`.
@@ -5233,15 +5214,14 @@ imported into the the FreeNAS® system.
 
 In this configuration example, the AFP share has been configured for guest access as follows:
 
-#.  A ZFS volume named */mnt/data* has its permissions set to the built-in
-    *nobody* user account and
+#.  A ZFS volume named :file:`/mnt/data` has its permissions set to the built-in *nobody* user account and
     *nobody* group.
 
 #.  An AFP share has been created with the following attributes:
 
 *   "Name": *freenas* (this is the name that will appear to Mac OS X clients)
 
-*   "Path": */mnt/data*
+*   "Path": :file:`/mnt/data`
 
 *   "Allow List": set to *nobody*
 
@@ -5260,8 +5240,8 @@ Once the AFP service has been started in :menuselection:`Services --> Control Se
 system.
 
 Click the "Connect" button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left
-frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 10.1c, */mnt/data* has one folder named images. The
-user can now copy files to and from the share.
+frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 10.1c, :file:`/mnt/data` has one folder named images.
+The user can now copy files to and from the share.
 
 **Figure 10.1b: Connect to Server Dialogue**
 
@@ -5279,20 +5259,19 @@ Using Time Machine
 Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured
 to backup to an AFP share on a FreeNAS® system. To configure the AFP share on the FreeNAS® system:
 
-#.  A ZFS dataset named */mnt/data/backup_user1* with a quota of
-    *60G* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+#.  A ZFS dataset named :file:`/mnt/data/backup_user1` with a quota of *60G* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
 
 #.  A user account was created as follows:
 
 *   "Username": *user1*
 
-*   "Home Directory": */mnt/data/backup_user1*
+*   "Home Directory": :file:`/mnt/data/backup_user1`
 
 *   the "Full Name", "E-mail", and "Password" fields were set where the "Username" and "Password" match the values for the user on the Mac OS X system
 
 #.  An AFP share with a "Name" of *backup_user1* has been created with the following attributes:
 
-*   "Path": */mnt/data/backup_user1*
+*   "Path": :file:`/mnt/data/backup_user1`
 
 *   "Allow List": set to *user1*
 
@@ -5307,9 +5286,9 @@ to backup to an AFP share on a FreeNAS® system. To configure the AFP share on t
 #.  The AFP service has been started in :menuselection:`Services --> Control Services`.
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1d.
-Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on
-"freenas"*. Highlight the entry representing the FreeNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the
-user account's password--in this example, the password for the *user1* account.
+Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
+entry representing the FreeNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the user account's password--in
+this example, the password for the *user1* account.
 
 Time Machine will create a full backup after waiting two minutes. It will then create a one hour incremental backup for the next 24 hours, and then one backup
 each day, each week and each month.
@@ -5378,7 +5357,7 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | addresses or hosts  |                |                                                                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| All directories     | checkbox       | if checked, the client can mount any subdirectory within the *Path*                                                |
+| All directories     | checkbox       | if checked, the client can mount any subdirectory within the "Path"                                                |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Read only           | checkbox       | prohibits writing to the share                                                                                     |
@@ -5421,19 +5400,15 @@ To better understand these restrictions, consider the following scenario where t
 * 2 networks named *10.0.0.0/8* and
   *20.0.0.0/8*
 
-* a ZFS volume named *volume1* with 2 datasets named
-  *dataset1* and
-  *dataset2*
+* a ZFS volume named :file:`volume1` with 2 datasets named :file:`dataset1` and :file:`dataset2`
 
-* *dataset1* has a directory named
-  *directory1*
+* :file:`dataset1` has a directory named :file:`directory1`
 
 Because of restriction #3, you will receive an error if you try to create one NFS share as follows:
 
 * **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
 
-* **Path:** */mnt/volume1/dataset1* and /
-  *mnt/volume1/dataset1/directory1*
+* **Path:** :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
 
 Instead, you should select the Path of */mnt/volume1/dataset1* and check the "All directories" box.
 
@@ -5443,13 +5418,13 @@ First NFS share:
 
 * **Authorized networks:** *10.0.0.0/8*
 
-* **Path:** */mnt/volume1/dataset1 *
+* **Path:** :file:`/mnt/volume1/dataset1`
 
 Second NFS share:
 
 * **Authorized networks:** *20.0.0.0/8 *
 
-* **Path:** */mnt/volume1/dataset1/directory1*
+* **Path:** :file:`/mnt/volume1/dataset1/directory1`
 
 Note that this requires the creation of two shares as it can not be accomplished in one share.
 
@@ -5477,13 +5452,12 @@ Connecting to the Share
 
 In the following examples, an NFS share on a FreeNAS® system with the IP address of *192.168.2.2* has been configured as follows:
 
-#.  A ZFS volume named */mnt/data* has its permissions set to the
-    *nobody* user account and the
+#.  A ZFS volume named :file:`/mnt/data` has its permissions set to the *nobody* user account and the
     *nobody* group.
 
 #.  A NFS share has been created with the following attributes:
 
-*   "Path": */mnt/data*
+*   "Path": :file:`/mnt/data`
 
 *   "Authorized Network": *192.168.2.0/24*
 
@@ -5512,10 +5486,8 @@ The :command:`mount` command uses the following options:
 
 The :command:`mount` command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
 
-Once mounted, this configuration allows users on the client system to copy files to and from */mnt* (the mount point) and all files will be owned by
-*nobody:nobody*. Any changes to
-*/mnt* will be saved to the FreeNAS® system's
-*/mnt/data* volume.
+Once mounted, this configuration allows users on the client system to copy files to and from :file:`/mnt` (the mount point) and all files will be owned by
+*nobody:nobody*. Any changes to :file:`/mnt` will be saved to the FreeNAS® system's :file:`/mnt/data` volume.
 
 Should you wish to make any changes to the NFS share's settings or wish to make the share inaccessible, first unmount the share on the client as the
 superuser::
@@ -5543,8 +5515,8 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 * `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
 
-Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2b, the user has connected to the example
-*/mnt/data* share of the FreeNAS® system at
+Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2b, the user has connected to the
+example :file:`/mnt/data` share of the FreeNAS® system at
 *192.168.2.2*.
 
 .. note:: Nekodrive does not support Explorer drive mapping via NFS. If you need this functionality,
@@ -5563,8 +5535,8 @@ the IP address of the FreeNAS® system and the name of the volume/dataset being 
 *192.168.2.2:/mnt/data*.
 
 Once connected, Finder will automatically open. The IP address of the FreeNAS® system will be displayed in the SHARED section in the left frame and the
-contents of the share will be displayed in the right frame. In the example shown in Figure 10.2d, */mnt/data* has one folder named
-*images*. The user can now copy files to and from the share.
+contents of the share will be displayed in the right frame. In the example shown in Figure 10.2d, :file:`/mnt/data` has one folder named :file:`images`. The
+user can now copy files to and from the share.
 
 **Figure 10.2c: Mounting the NFS Share from Mac OS X**
 
@@ -5657,7 +5629,7 @@ started.
 | Browsable to Network Clients | checkbox      | enables Windows clients to browse the shared directory using Windows Explorer                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Export Recycle Bin           | checkbox      | deleted files are instead moved to a hidden *.recycle* directory in the root folder of the share            |
+| Export Recycle Bin           | checkbox      | deleted files are instead moved to a hidden :file:`.recycle` directory in the root folder of the share      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Show Hidden Files            | checkbox      | if enabled, will display filenames that begin with a dot (Unix hidden files)                                |
@@ -5741,14 +5713,14 @@ following attributes:
 #.  **Test the share.**
 
 To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
-share named *backups*. An example is seen in Figure 10.3b:
+share named :file:`backups`. An example is seen in Figure 10.3b:
 
 **Figure 10.3b: Accessing the CIFS Share from a Windows Computer**
 
 |100002010000031D000002804075756D_png|
 
-If you click on *backups*, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy data to
-and from the CIFS share.
+If you click on :file:`backups`, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy
+data to and from the CIFS share.
 
 To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network
 drive..." as seen in Figure 10.3c:
@@ -5801,9 +5773,8 @@ Before using shadow copies with FreeNAS®, be aware of the following caveats:
 In this configuration example, a Windows 7 computer has two users: *user1* and
 *user2*. To configure FreeNAS® to provide shadow copy support:
 
-#.  For the ZFS volume named */mnt/data*, create two ZFS datasets in :menuselection:`Storage --> Volumes --> /mnt/data --> Create ZFS Dataset`. The first
-    dataset is named */mnt/data/user1*
-    and the second dataset is named */mnt/data/user2*.
+#.  For the ZFS volume named :file:`/mnt/data`, create two ZFS datasets in :menuselection:`Storage --> Volumes --> /mnt/data --> Create ZFS Dataset`. The
+    first dataset is named :file:`/mnt/data/user1` and the second dataset is named :file:`/mnt/data/user2`.
 
 #.  If you are not using Active Directory or LDAP, create two users, *user1* and
     *user2* in :menuselection:`Account --> Users --> Add User`. Each user has the following attributes:
@@ -5812,22 +5783,19 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
 
 * Home Directory: browse to the dataset created for that user
 
-#.  Set the permissions on */mnt/data/user1* so that the Owner(user) and Owner(group) is
-    *user1*. Set the permissions on
-    */mnt/data/user2* so that the Owner(user) and Owner(group) is
-    *user2*. For each dataset's permissions, tighten the Mode so that Other can not read or execute the information on the dataset.
+#.  Set the permissions on :file:`/mnt/data/user1` so that the Owner(user) and Owner(group) is *user1*. Set the permissions on :file:`/mnt/data/user2` so that
+    the "Owner(user)" and "Owner(group)" is *user2*. For each dataset's permissions, tighten the "Mode" so that "Other" can not read or execute the
+    information on the dataset.
 
 #.  Create two periodic snapshot tasks in :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`, one for each dataset. Alternatively,
-    you can create one periodic snapshot task for the entire *data* volume.
-    **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the ZFS Snapshots tab. When creating your
+    you can create one periodic snapshot task for the entire :file:`data` volume. 
+    **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the "ZFS Snapshots" tab. When creating your
     snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
 
 #.  Create two CIFS shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`. The first CIFS share is named *user1* and has a
-    Path of */mnt/data/user1*; the second CIFS share is named
-    *user2* and has a Path of
-    */mnt/data/user2*. When creating the first share, click the "No" button when the pop-up button asks if the CIFS service should be started. When the last
-    share is created, click the "Yes" button when the pop-up button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in
-    :menuselection:`Services --> Control Services.
+    Path of :file:`/mnt/data/user1`; the second CIFS share is named *user2* and has a "Path" of :file:`/mnt/data/user2`. When creating the first share, click
+    the "No" button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the "Yes" button when the pop-up
+    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services.
 
 #.  From a Windows system, login as *user1* and open :menuselection:`Windows Explorer --> Network --> FREENAS`. Two shares should appear, named
     *user1* and
@@ -5950,10 +5918,9 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 
 When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an
-example, create a dataset named *volume1/homedirs* and browse to this dataset when configuring the "Home directories" field of the AFP service. Then, as
-you create each user, first create a child dataset for that user. For example, create a dataset named *volume1/homedirs/user1*. When you create the
-*user1* user, browse to the
-*volume1/homedirs/user1* dataset in the "Home Directory" field of the "Add New User" screen.
+example, create a dataset named :file:`volume1/homedirs` and browse to this dataset when configuring the "Home directories" field of the AFP service. Then, as
+you create each user, first create a child dataset for that user. For example, create a dataset named :file:`volume1/homedirs/user1`. When you create the
+*user1* user, browse to the :file:`volume1/homedirs/user1` dataset in the "Home Directory" field of the "Add New User" screen.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -6180,7 +6147,7 @@ Where possible, avoid using a mix of case in filenames as this may cause confusi
 `Representing and resolving filenames with Samba <http://oreilly.com/openbook/samba/book/ch05_04.html>`_
 explains this in more detail.
 
-If permissions work for Windows users but not for OS X users, try disabling *Unix Extensions* and restarting the CIFS service.
+If permissions work for Windows users but not for OS X users, try disabling "Unix Extensions" and restarting the CIFS service.
 
 If the CIFS service will not start, run this command from Shell to see if there is an error in the configuration::
 
@@ -6441,7 +6408,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS allow dot login                                          | checkbox       | only available in "Advanced Mode"; if checked, the user's home directory is         |
-|                                                              |                | checked for a *.tlslogin* file which contains one or more PEM-encoded               |
+|                                                              |                | checked for a :file:`.tlslogin` file which contains one or more PEM-encoded         |
 |                                                              |                | certificates; if not found, the user will be prompted for password                  |
 |                                                              |                | authentication                                                                      |
 |                                                              |                |                                                                                     |
@@ -6759,8 +6726,7 @@ as far as FreeNAS® is concerned, the data benefits from ZFS features such as bl
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
 To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7c, the device extent is using the
-*export* zvol that was previously created from the
-*/mnt/volume1* volume.
+*export* zvol that was previously created from the :file:`/mnt/volume1` volume.
 
 .. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
    the disk, resulting in data loss. This bug was fixed in 8.3.1.
@@ -7101,7 +7067,7 @@ Open Shell_and identify the zvol to be grown::
  NAME			USED	AVAIL	REFER	MOUNTPOINT
  tank/iscsi_zvol	4G	17.5G	33.9M	-
 
-Then, grow the zvol. This example grows *tank/iscsi_zvol* from 4G to 6G::
+Then, grow the zvol. This example grows :file:`tank/iscsi_zvol` from 4G to 6G::
 
  zfs set volsize=6G tank/iscsi_zvol
 
@@ -7121,7 +7087,7 @@ File Extent Based LUN
 Before growing a file extent based LUN, make sure that all initiators are disconnected. Stop the iSCSI service in Control Services.
 
 Then, go to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` to determine the path of the file extent to grow. Open Shell to grow
-the extent. This example grows */mnt/volume1/data* by 2G::
+the extent. This example grows :file:`/mnt/volume1/data` by 2G::
 
  truncate -s +2g /mnt/volume1/data
 
@@ -7353,8 +7319,7 @@ server using FreeBSD's simple and extensible SNMP daemon. When you start the SNM
 
 * UDP 161 (:command:`bsnmpd` listens here for SNMP requests)
 
-Available MIBS are located in */usr/share/SNMP/mibs* and
-*/usr/local/share/SNMP/mibs*.
+Available MIBS are located in :file:`/usr/share/SNMP/mibs` and :file:`/usr/local/share/SNMP/mibs`.
 
 Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
@@ -7498,8 +7463,7 @@ the following steps.
     root of their own dataset until you do this. Since your intention is to limit them to the contents of their home directory, manually create a home
     directory for each user **within their own dataset** and change the ownership of the directory to the user. Example 11.13a demonstrates the commands used
     to create a home directory called *user1* for the user account
-    *user1* on dataset
-    */mnt/volume1/user1*:
+    *user1* on dataset :file:`/mnt/volume1/user1`:
 
 **Figure 11.13b: Permissions Required by SSH Chroot**
 
@@ -7531,7 +7495,7 @@ the following steps.
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
-If you add any *Extra Options* in the SSH configuration screen, be aware that the keywords listed in
+If you add any "Extra Options" in the SSH configuration screen, be aware that the keywords listed in
 `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
 are case sensitive. This means that your configuration will fail to do what you intended if you do not match the upper and lowercase letters of the keyword.
 
@@ -7544,7 +7508,7 @@ to what the problem is. Type the following command within Shell to read these me
 
  tail -f /var/log/messages
 
-Additional messages regarding authentication errors may be found in */var/log/auth.log*.
+Additional messages regarding authentication errors may be found in :file:`/var/log/auth.log`.
 
 TFTP
 ----
@@ -7798,7 +7762,7 @@ Uploading Plugins
 
 The "Available" tab of Plugins contains an "Upload" button. This button allows you to install PBIs that are not yet available in the official repository.
 These PBIs include FreeNAS® PBIs which are still being tested as well as
-`PC-BSD PBIs <http://pbibuild64.pcbsd.org/index.php?ver=9>`_. These PBIs must be manually downloaded first and should end in a *.pbi* extension. When
+`PC-BSD PBIs <http://pbibuild64.pcbsd.org/index.php?ver=9>`_. These PBIs must be manually downloaded first and should end in a :file:`.pbi` extension. When
 downloading a PBI, make sure that it is 64-bit and that it was developed for 9.x. 8.x and 10.x PBIs will not work on a 9.x FreeNAS® system.
 
 Once you have downloaded the PBI, click the "Upload" button. As seen in the example in Figure 12.3a, this will prompt you to browse to the location of the
@@ -7911,7 +7875,7 @@ The following types of jails can be created:
     , Linux can be installed into a jail and software can be installed using the package management system provided by the installed Linux distro. At this
     time, the Linux distro must be a 32-bit version and any applications installed into the jail must be available as a 32-bit binary.
     
-#.  **Virtualox jail:**
+#.  **Virtualbox jail:**
 
 Table 13a summarizes the type of software which can be installed into each type of jail.
 
@@ -7970,9 +7934,7 @@ Before you can create any jails, you must first configure which volume or datase
 
 While a jail can be installed on a UFS volume, it is recommended to use ZFS and to create a dataset to use for the "Jail Root". As jails are created on a ZFS
 system, they will automatically be installed into their own dataset under the specified path. For example, if you configure a "Jail Root" of
-*/mnt/volume1/dataset1* and create a jail named
-*jail1*, it will be installed into its own dataset named
-*/mnt/volume1/dataset1/jail1.*
+:file:`/mnt/volume1/dataset1` and create a jail named *jail1*, it will be installed into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
 
 Table 13.1a summarizes the fields in this configuration screen.
 
@@ -8171,7 +8133,7 @@ Accessing a Jail Using SSH
 If you prefer to use :command:`ssh` to access a jail you will need to first start the :command:`ssh` service and create a user account for :command:`ssh`
 access. Since this configuration occurs on a jail-by-jail basis, click the "shell" icon for the jail you wish to configure :command:`ssh` access to.
 
-To start the SSH service on a non-Linux jail, look for the following line in that jail's */etc/rc.conf*::
+To start the SSH service on a non-Linux jail, look for the following line in that jail's :file:`/etc/rc.conf`::
 
  sshd_enable="NO"
 
@@ -8267,10 +8229,9 @@ This means that the workflow for adding storage is usually as follows:
 
 #.  Determine the name of the user and group account used by the application. For example, the installation of the transmission application automatically
     creates a user account named *transmission* and a group account named
-    *transmission*. When in doubt, check the files
-    */etc/passwd* (to find the user account) and
-    */etc/group* (to find the group account) inside of the jail. Typically, the user and group names are similar to the application name. Also, the UID and
-    GID are usually the same as the port number used by the service.
+    *transmission*. When in doubt, check the files :file:`/etc/passwd` (to find the user account) and :file:`/etc/group` (to find the group account) inside of
+    the jail. Typically, the user and group names are similar to the application name. Also, the UID and GID are usually the same as the port number used by
+    the service.
 
 #.  On the FreeNAS® system, create a user account and group account to match the name of the user and group used by the application in the jail.
 
@@ -8291,13 +8252,11 @@ If you wish to prevent writes to the storage, check the box "Read-Only".
 By default, the "Create directory" box is checked. This means that the directory will automatically be created for you under the specified "Destination" path
 if the directory does not already exist.
 
-Once a storage has been added, it will be added to the tree under the specified jail. In the example shown in Figure 13.2e, a dataset named *volume1/data*
-has been chosen as the "Source" as it contains the files stored on the FreeNAS® system. When the storage was created, the user browsed to
-*volume1/jails/pluginjail/usr/local* in the "Destination" field, then typed in
-*test* as the directory. Since this directory did not already exist, it was created as the "Create directory" box was left as checked. The resulting
-storage was added to the *pluginjail* entry in the tree as
-*/usr/local/test*. The user has clicked this
-*/usr/local/test* entry in order to access its "Edit" screen.
+Once a storage has been added, it will be added to the tree under the specified jail. In the example shown in Figure 13.2e, a dataset named 
+:file:`volume1/data` has been chosen as the "Source" as it contains the files stored on the FreeNAS® system. When the storage was created, the user browsed
+to :file:`volume1/jails/pluginjail/usr/local` in the "Destination" field, then typed in *test* as the directory. Since this directory did not already exist,
+it was created as the "Create directory" box was left as checked. The resulting storage was added to the *pluginjail* entry in the tree as
+:file:`/usr/local/test`. The user has clicked this :file:`/usr/local/test` entry in order to access its "Edit" screen.
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -8355,8 +8314,8 @@ existing jail or on another system.
    time.
 
 Once your configuration is complete, you need to create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be
-compressed with :command:`gzip` and end in a *.tgz* extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other
-words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
+compressed with :command:`gzip` and end in a :file:`.tgz` extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In
+other words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
 Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
 the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
@@ -8392,8 +8351,8 @@ Table 13.3a summarizes the fields in this screen.
 |              |                | *Linux* is selected                                            |
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
-| URL          | string         | input the full URL to the *.tgz* file, including the protocol  |
-|              |                | (*ftp://* or                                                   |
+| URL          | string         | input the full URL to the :file:`.tgz` file, including the     |
+|              |                | protocol (*ftp://* or                                          |
 |              |                | *http://*)                                                     |
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
@@ -8494,10 +8453,8 @@ To see what was installed with the package::
  /usr/local/share/licenses/audiotag-0.19_1/LICENSE
  /usr/local/share/licenses/audiotag-0.19_1/catalog.mk
 
-In FreeBSD, third-party software is always stored in */usr/local* to differentiate it from the software that came with the operating system. Binaries are
-almost always located in a subdirectory called *bin* or
-*sbin* and configuration files in a subdirectory called
-*etc*.
+In FreeBSD, third-party software is always stored in :file:`/usr/local` to differentiate it from the software that came with the operating system. Binaries
+are almost always located in a subdirectory called :file:`bin` or :file:`sbin` and configuration files in a subdirectory called :file:`etc`.
 
 Compiling Ports
 ~~~~~~~~~~~~~~~
@@ -8526,8 +8483,8 @@ for audiotag.
 
 |10000000000002E1000002757E7365A6_png|
 
-In FreeBSD, a *Makefile* is used to provide the compiling instructions to the :command:`make` command. The
-*Makefile* is in ascii text, fairly easy to understand, and documented in
+In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
+easy to understand, and documented in
 `bsd.port.mk <http://www.freebsd.org/cgi/cvsweb.cgi/ports/Mk/bsd.port.mk?rev=1.708;content-type=text%2Fplain>`_.
 
 If the port has any configurable compile options, they will be listed at FreshPorts in the port's "Configuration Options". This port contains five
@@ -8540,13 +8497,13 @@ Before you can compile a port, the ports collection must be installed within the
 
  portsnap fetch extract
 
-This command will download the ports collection and extract it to the jail's */usr/ports/* directory.
+This command will download the ports collection and extract it to the jail's :file:`/usr/ports/` directory.
 
 .. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using this command::
 
  portsnap fetch update
 
-To compile a port, you will :command:`cd` into a subdirectory of */usr/ports/*. FreshPorts provides the location to :command:`cd` into and the
+To compile a port, you will :command:`cd` into a subdirectory of :file:`/usr/ports/`. FreshPorts provides the location to :command:`cd` into and the
 :command:`make` command to run. This example will compile the audiotag port::
 
  cd /usr/ports/audio/audiotag
@@ -8574,11 +8531,11 @@ Starting Installed Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once the package or port is installed, you will need to configure and start it. If you are familiar with how to configure the software, look for its
-configuration file in */usr/local/etc* or a subdirectory thereof. Many FreeBSD packages contain a sample configuration file to get you started. If you are
-unfamiliar with the software, you will need to spend some time at the software's website to learn which configuration options are available and which
+configuration file in :file:`/usr/local/etc` or a subdirectory thereof. Many FreeBSD packages contain a sample configuration file to get you started. If you
+are unfamiliar with the software, you will need to spend some time at the software's website to learn which configuration options are available and which
 configuration file(s) need to be edited.
 
-Most FreeBSD packages that contain a startable service include a startup script which is automatically installed to */usr/local/etc/rc.d/*. Once your
+Most FreeBSD packages that contain a startable service include a startup script which is automatically installed to :file:`/usr/local/etc/rc.d/`. Once your
 configuration is complete, you can test that the service starts by running the script with the :command:`onestart` option. As an example, if openvpn is
 installed into the jail, these commands will run its startup script and verify that the service started::
 
@@ -8601,14 +8558,13 @@ If you instead receive an error::
 Run :command:`tail /var/log/messages` to see if any error messages hint at the problem. Most startup failures are related to a mis-configuration: either a
 typo or a missing option in a configuration file.
 
-Once you have verified that the service starts and is working as intended, add a line to */etc/rc.conf* to ensure that the service automatically starts
+Once you have verified that the service starts and is working as intended, add a line to :file:`/etc/rc.conf` to ensure that the service automatically starts
 whenever the jail is started. The line to start a service always ends in *enable="YES"* and typically starts with the name of the software. For example, this
 is the entry for the openvpn service::
 
  openvpn_enable="YES"
 
-When in doubt, the startup script will tell you which line to put in */etc/rc.conf*. This is the description in
-*/usr/local/etc/rc.d/openvpn*:
+When in doubt, the startup script will tell you which line to put in :file:`/etc/rc.conf`. This is the description in :file:`/usr/local/etc/rc.d/openvpn`:
 
 ::
 
@@ -8657,7 +8613,7 @@ Reporting displays several graphs, as seen in the example in Figure 14a. Click t
 
 FreeNAS® uses
 `collectd <https://collectd.org/>`_
-to provide reporting statistics. The following collectd plugins are enabled in */conf/base/etc/local/collectd.conf*, and thus provide reporting graphs:
+to provide reporting statistics. The following collectd plugins are enabled in :file:`/conf/base/etc/local/collectd.conf`, and thus provide reporting graphs:
 
 *   `CPU usage <https://collectd.org/wiki/index.php/Plugin:CPU>`_
     : collects the amount of time spent by the CPU in various states such as executing user code, executing system code, and being idle.
@@ -8686,8 +8642,8 @@ to provide reporting statistics. The following collectd plugins are enabled in *
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_
     : keeps track of the system uptime, the average running time, and the maximum reached uptime.
 
-Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to /*data/rrd_dir.tar.bz2* and should be
-preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in
+Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to :file:`/data/rrd_dir.tar.bz2` and
+should be preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in
 :menuselection:`System --> System Dataset`.
 
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
@@ -8713,8 +8669,7 @@ Beginning with version 8.2.0, the FreeNAS® GUI provides a web shell, making it 
 The link to Shell is the third entry from the bottom of the menu tree. In Figure 16a, the link has been clicked and Shell is open.
 
 The prompt indicates that the current user is *root*, the hostname is
-*freenas*, and the current working directory is
-*~*
+*freenas*, and the current working directory is :file:`~`
 (*root*'s home directory).
 
 To change the size of the shell, click the *80x25* drop-down menu and select a different size.
@@ -9340,7 +9295,7 @@ You can receive a summary of the available switches by typing the following comm
 may take some time to learn how to use the tests effectively.
 
 Starting with version 9.2.1, FreeNAS® enables compression on newly created ZFS pools by default. Since IOzone creates test data that is compressible, this
-can skew test results. To configure IOzone to generate incompressible test data, include the options *-+w 1 -+y 1 -+C 1*.
+can skew test results. To configure IOzone to generate incompressible test data, include the options **-+w 1 -+y 1 -+C 1**.
 
 Alternatively, consider temporarily disabling compression on the ZFS pool or dataset when running IOzone benchmarks.
 
@@ -9728,7 +9683,7 @@ unfamiliar with. **Do not change a tunable's value without researching it first.
 do not make one up. Instead, research examples of beneficial values that match your workload.
 
 If you decide to change any of the ZFS tunables, continue to monitor the system to determine the effect of the change. It is recommended that you test your
-changes first at the command line using :command:`sysctl`. For example, to disable pre-fetch (i.e. change disable to *1* or  yes)::
+changes first at the command line using :command:`sysctl`. For example, to disable pre-fetch (i.e. change disable to *1* or yes)::
 
  sysctl vfs.zfs.prefetch_disable=1
  vfs.zfs.prefetch_disable: 0 -> 1
@@ -9824,11 +9779,10 @@ Here is an example of a ZFS write test::
 
  xdd –op write –targets 2 /mnt/tank/BIGFILE1 /mnt/tank/BIGFILE2 -blocksize 512 \ -reqsize 128 -mbytes 2048 –verbose –passes 3
  
-This test will write sequentially from two existing target files, */mnt/tank/BIGFILE1* and
-*/mnt/tank/BIGFILE2*. It starts at the beginning of each file using a fixed request size of 128 blocks with 512 bytes per block until it has read 2048 MB, at
-which time it will end the current pass and proceed to the next pass. It will do this 3 times and display performance information for each pass. The combined
-performance of both devices is calculated and displayed at the end of the run. Once the test is finished, you can test the read performance by changing the
-**-op** to
+This test will write sequentially from two existing target files, :file:`/mnt/tank/BIGFILE1` and :file:`/mnt/tank/BIGFILE2`. It starts at the beginning of
+each file using a fixed request size of 128 blocks with 512 bytes per block until it has read 2048 MB, at which time it will end the current pass and proceed
+to the next pass. It will do this 3 times and display performance information for each pass. The combined performance of both devices is calculated and
+displayed at the end of the run. Once the test is finished, you can test the read performance by changing the **-op** to
 **read**.
 
 You can also test read or write operations on a specified disk. Replace */dev/ada0* with the device name for the disk you wish to test.
@@ -9837,7 +9791,7 @@ You can also test read or write operations on a specified disk. Replace */dev/ad
  xdd –op read –targets 1 /dev/ada0 –reqsize 128 -mbytes 64 –passes 3 –verbose
 
 If you use the same switches often, create a setup file and refer to it with the **-setup** switch. For example, in a writable location (e.g. volume or
-dataset) create a *xdd.setup* file containing this line::
+dataset) create a :file:`xdd.setup` file containing this line::
 
  –reqsize 128 -mbytes 64 –passes 3 –verbose
 
@@ -9940,8 +9894,8 @@ If you add some disks to the array and they are not showing up in the GUI, try r
 
  tw_cli /c0 rescan
 
-Use the drives to create units and export them to the operating system. When finished, run **camcontrol rescan all** and they should now be available in the
-FreeNAS® GUI.
+Use the drives to create units and export them to the operating system. When finished, run :command:`camcontrol rescan all` and they should now be available
+in the FreeNAS® GUI.
 
 This
 `forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`_
@@ -9965,7 +9919,7 @@ freenas-debug
 
 The FreeNAS® GUI provides an option to save debugging information to a text file using
 :menuselection:`System --> Advanced --> Save Debug`. This debugging information is created by the :command:`freenas-debug` command line utility and a copy of
-the information is saved to */var/tmp/fndebug*.
+the information is saved to :file:`/var/tmp/fndebug`.
 
 Using Shell, you can run this command manually to gather the specific debugging information that you need. To see the available options, type::
 
@@ -10219,8 +10173,8 @@ Next, download a local copy of the FreeNAS® source code from github. Run this c
  cd /usr/local
  git clone --depth 1 git://github.com/freenas/freenas.git
 
-This will create a subdirectory called *freenas* which contains the cloned source. Once the system has a local copy, it can be updated as needed by running
-this command within *freenas*::
+This will create a subdirectory called :file:`freenas` which contains the cloned source. Once the system has a local copy, it can be updated as needed by
+running this command within :file:`freenas`::
 
  git pull
 
@@ -10229,8 +10183,8 @@ To build a local copy of the API reference documentation::
  cd freenas/docs/api
  make html
 
-Point a web browser to */usr/local/freenas/docs/api/_build/html/index.html* to view the documentation. As seen in the example in Figure 25.1a, the resources
-are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
+Point a web browser to :file:`/usr/local/freenas/docs/api/_build/html/index.html` to view the documentation. As seen in the example in Figure 25.1a, the
+resources are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
 
 **Figure 25.1a: FreeNAS® API Documentation**
 
@@ -10239,8 +10193,8 @@ are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
 A Simple API Example
 --------------------
 
-The *freenas/examples/api/* directory contains some API usage examples. This section provides a walk-through of the
-*freenas/examples/api/newuser.py* script, shown below, as it provides a simple example that creates a user.
+The :file:`freenas/examples/api/` directory contains some API usage examples. This section provides a walk-through of the
+:file:`freenas/examples/api/newuser.py` script, shown below, as it provides a simple example that creates a user.
 
 In order to create a customized script based on this example, you will need a FreeNAS® system running at least version 9.2.0. If you would like to test the
 scripts directly on the FreeNAS® system, create a user account. When creating this user account, select an existing volume or dataset for the user's "Home
@@ -10248,9 +10202,10 @@ Directory". Once the user is created, start the SSH service using :menuselection
 to the IP address of the FreeNAS® system in order to create and run scripts. Alternately, you can test your scripts on any system that has the software
 mentioned in the previous section installed.
 
-To customize this script, copy the contents of this example into a filename that ends in *.py*. The text that is highlighted in red below should be modified
-in your copy in order to match the needs of the user being created. The text in black should remain as-is. After saving your changes, run the script by typing
-:command:`python scriptname.py`. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the FreeNAS® GUI.
+To customize this script, copy the contents of this example into a filename that ends in :file:`.py`. The text that is highlighted in red below should be
+modified in your copy in order to match the needs of the user being created. The text in black should remain as-is. After saving your changes, run the script
+by typing :command:`python scriptname.py`. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the
+FreeNAS® GUI.
 
 Here is the example script with line numbers. Do **not** include the line numbers in your script. Instead, refer to the line numbers in the explanation below.
 ::
@@ -10289,7 +10244,7 @@ to *http*.
 *False* to
 *True*.
 
-**Lines 8-16:** sets the values for the user being created. The "Users" resource, found in *freenas/docs/api/_build/html/resources/account.html#users*,
+**Lines 8-16:** sets the values for the user being created. The "Users" resource, found in :file:`freenas/docs/api/_build/html/resources/account.html#users`,
 describes this resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a
 FreeBSD user, the values that you input must be valid for a FreeBSD user account. Table 25.2a summarizes the valid values. Since this resource is using JSON,
 the possible boolean values are *True*
@@ -10333,7 +10288,7 @@ or *False*.
 | bsdusr_locked            | boolean  | if set to *True*, user is not allowed to login                                                                       |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
-| bsdusr_sudo              | boolean  | if set to *True*, sudo is enabled for the user                                                                       |
+| bsdusr_sudo              | boolean  | if set to *True*, :command:`sudo` is enabled for the user                                                            |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 
@@ -10347,7 +10302,7 @@ or *False*.
 A More Complex Example
 ----------------------
 
-This section provides a walk-through of a more complex example found in the *freenas/examples/api/startup.py* script. Use the searchbar within the API
+This section provides a walk-through of a more complex example found in the :file:`freenas/examples/api/startup.py` script. Use the searchbar within the API
 documentation to quickly locate the JSON parameters used in this example. This example defines a class and several methods which are used to create a ZFS 
 volume, create a ZFS dataset, share this dataset over CIFS, and enable the CIFS service. The responses from some methods are used as parameters in other
 methods. In addition to the import lines seen in the previous example, this example imports two additional Python modules to provide parsing functions for
@@ -10386,7 +10341,7 @@ A *get_disks* method is defined to get all the disks in the system as a
 *create_pool* method will then use this information to create a ZFS pool named
 *tank* which will be created as a stripe. The
 *volume_name* and
-*layout* JSON parameters are described in the Storage Volume resource of the API documentation.
+*layout* JSON parameters are described in the "Storage Volume" resource of the API documentation.
 ::
 
  def _get_disks(self):
@@ -10402,8 +10357,7 @@ A *get_disks* method is defined to get all the disks in the system as a
 	    ],
  })
 
-The *create_dataset* method is defined which creates a dataset named
-*MyShare*:
+The *create_dataset* method is defined which creates a dataset named :file:`MyShare`:
 ::
 
  def create_dataset(self):
@@ -10411,11 +10365,10 @@ The *create_dataset* method is defined which creates a dataset named
 	    'name': 'MyShare',
 	})
 
-The *create_cifs_share* method is used to share
-*/mnt/tank/MyShare* with guest-only access enabled. The
+The *create_cifs_share* method is used to share :file:`/mnt/tank/MyShare` with guest-only access enabled. The
 *cifs_name*,
 *cifs_path*,
-*cifs_guestonly* JSON parameters, as well as the other allowable parameters, are described in the Sharing CIFS resource of the API documentation.
+*cifs_guestonly* JSON parameters, as well as the other allowable parameters, are described in the "Sharing CIFS" resource of the API documentation.
 ::
 
  def create_cifs_share(self):
