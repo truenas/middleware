@@ -79,10 +79,16 @@ class UpdateHandler(object):
             self.details = '%s (%d%%)' % (self._pkgname, progress)
         self.dump()
 
-    def install_handler(self, name):
+    def install_handler(self, index, name, packages):
         self.step = 2
-        self.indeterminate = True
-        self.details = 'Installing %s' % name
+        self.indeterminate = False
+        total =len(packages)
+        self.progress = int((float(index) / float(total)) * 100.0)
+        self.details = 'Installing %s (%d/%d)' % (
+            name,
+            index,
+            total,
+        )
 
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
