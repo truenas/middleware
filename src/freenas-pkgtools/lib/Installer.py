@@ -747,7 +747,7 @@ class Installer(object):
             for pkgname in pkg:
                 if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
                 if handler is not None:
-                    handler(pkgname)
+                    handler(pkgname, self._packages)
                 if install_file(pkg[pkgname], self._root) is False:
                     print >> sys.stderr, "Unable to install package %s" % pkgname
                     return False
