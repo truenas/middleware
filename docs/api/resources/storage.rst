@@ -177,7 +177,7 @@ Datasets
       }
 
    :resheader Content-Type: content type of the response
-   :statuscode 202: no error
+   :statuscode 201: no error
 
 .. http:get:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/
 
@@ -208,7 +208,7 @@ Datasets
       }]
 
    :resheader Content-Type: content type of the response
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 .. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/(string:dsname)/
 
