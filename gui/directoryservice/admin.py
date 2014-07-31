@@ -27,6 +27,7 @@
 import logging
 
 from django.contrib import admin
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
@@ -97,6 +98,10 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 
     resource_mixin = KerberosKeytabResourceMixin
 
+    def get_datagrid_context(self, request):
+        context = super(KerberosKeytabFAdmin, self).get_datagrid_context(request)
+        context.update({'add_url': reverse('directoryservice_kerberoskeytab_add')})
+        return context
 
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)

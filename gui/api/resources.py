@@ -966,6 +966,9 @@ class ReplicationResourceMixin(object):
         bundle.data['repl_remote_fast_cipher'] = (
             bundle.obj.repl_remote.ssh_fast_cipher
         )
+        bundle.data['repl_remote_no_cipher'] = (
+            bundle.obj.repl_remote.ssh_no_cipher
+        )
         bundle.data['repl_remote_no'] = (
             bundle.obj.repl_remote.ssh_no
         )
@@ -2186,4 +2189,10 @@ class KerberosKeytabResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(KerberosKeytabResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse(
+                'directoryservice_kerberoskeytab_edit',
+                kwargs={'id': bundle.obj.id}
+            )
+
         return bundle
