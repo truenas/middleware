@@ -18,7 +18,9 @@ doSubmit({
 <tr>
   <td>
 {% if update %}
-<pre>{{ handler.output }}</pre>
+{% trans "You're about to upgrade. The following packages will be changed:" %}
+<pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
+{% trans "Are you sure you want to continue?" %}
 {% else %}
     <p>{% trans "No updates available" %}</p>
 {% endif %}
