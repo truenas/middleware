@@ -397,6 +397,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.UpgradeIcon {
+    background-image:url('/static/images/ui/tree/upgrade.png');
+    width:16px;
+    height:16px;
+}
 .ViewAllInterfacesIcon {
     background-image:url('/static/images/ui/tree/view_all_interfaces.png');
     width:16px;
