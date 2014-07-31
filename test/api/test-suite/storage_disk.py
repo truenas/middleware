@@ -44,3 +44,10 @@ def post():
 
 def delete():
   print 'No DELETE function for storage-disk!'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+
+
+def get_name():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  return result[0]['disk_name']

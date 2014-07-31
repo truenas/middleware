@@ -9,7 +9,7 @@ headers = conn.headers
 auth = conn.auth
 url = conn.url + 'system/tunable/'
 payload = {
-          "tun_var": "xhci_load_whatever",
+          "tun_var": "new_tunable_test_suite",
           "tun_comment": "",
           "tun_value": "YES",
           "tun_enabled": True
