@@ -78,7 +78,9 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
 * Menu selections are italicized and separated by arrows. For example: :menuselection:`System --> Information`.
 
-* **bold text:** used to emphasize an important point or to represent a command written at the command line.
+* Commands that are mentioned within text are highlighted in :command:`bold text`. Command examples and command output are contained in green code blocks.
+
+* **bold text:** used to emphasize an important point.
 
 * *italic text:* used to represent device names, file name paths, or text that is input into a GUI field.
 
@@ -207,7 +209,7 @@ The following features have been added or changed:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
-* Kernel iSCSI has replaced **istgt**. This improves support for VMWare VAAI acceleration and Windows 2012 clustering.
+* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and Windows 2012 clustering.
 
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
@@ -332,7 +334,7 @@ Storage Disks and Controllers
 The
 `Disk section <http://www.freebsd.org/releases/9.3R/hardware.html#DISK>`_
 of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6gbps RAID controllers has been added along with the CLI
-utility **tw_cli** for managing 3ware RAID controllers.
+utility :command:`tw_cli` for managing 3ware RAID controllers.
 
 FreeNAS® supports hot pluggable drives. Make sure that AHCI is enabled in the BIOS. Note that hot plugging is **not the same** as a hot spare, which is not
 supported at this time.
@@ -480,7 +482,7 @@ dataset using
 `zfs(8) <http://www.freebsd.org/cgi/man.cgi?query=zfs>`_
 instead.
 
-The **zilstat** utility can be run from Shell to help determine if the system would benefit from a dedicated ZIL device. See
+The :command:`zilstat` utility can be run from Shell to help determine if the system would benefit from a dedicated ZIL device. See
 `this website <http://www.richardelling.com/Home/scripts-and-programs-1/zilstat>`_
 for usage information.
 
@@ -491,16 +493,17 @@ log device fails and only the data in the device which had not been written to t
 replace the lost log device in the :menuselection:`View Volumes --> Volume Status` screen. Note that a dedicated log device can not be shared between ZFS
 pools and that the same device cannot hold both a log and a cache device.
 
+**L2ARC:** (
 `L2ARC <https://blogs.oracle.com/brendan/entry/test>`_
-**:** ZFS uses a RAM cache to reduce read latency. If an SSD is dedicated as a cache device, it is known as an L2ARC and ZFS uses it to store more reads which
-can increase random read performance. However, adding a cache device will not improve a system with too little RAM and will actually decrease performance as
-ZFS uses RAM to track the contents of L2ARC. RAM is always faster than disks, so always add as much RAM as possible before determining if the system would
-benefit from a L2ARC device.
+) ZFS uses a RAM cache to reduce read latency. If an SSD is dedicated as a cache device, it is known
+as an L2ARC and ZFS uses it to store more reads which can increase random read performance. However, adding a cache device will not improve a system with too
+little RAM and will actually decrease performance as ZFS uses RAM to track the contents of L2ARC. RAM is always faster than disks, so always add as much RAM
+as possible before determining if the system would benefit from a L2ARC device.
 
 If you have a lot of applications that do large amounts of random reads, on a dataset small enough to fit into the L2ARC, read performance may be increased by
 adding a dedicated cache device using ZFS Volume Manager. SSD cache devices only help if your working set is larger than system RAM, but small enough that a
 significant percentage of it will fit on the SSD. After adding an L2ARC, monitor its effectiveness using tools such as
-**arcstat**. If you need to increase the size of an existing L2ARC, you can stripe another cache device by
+:command:`arcstat`. If you need to increase the size of an existing L2ARC, you can stripe another cache device by
 adding another device using ZFS Volume Manager_. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are recreated at boot.
 
 Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload and the ratio of
@@ -595,11 +598,11 @@ The download page contains the following types of files. Download one file that 
 Each file has an associated SHA256 hash which should be used to verify the integrity of the downloaded file before writing it to the installation media. The
 command you use to verify the checksum varies by operating system:
 
-* on a BSD system use the command **sha256 name_of_file**
+* on a BSD system use the command :command:`sha256 name_of_file`
 
-* on a Linux system use the command **sha256sum name_of_file**
+* on a Linux system use the command :command:`sha256sum name_of_file`
 
-* on a Mac system use the command **shasum -a 256 name_of_file**
+* on a Mac system use the command :command:`shasum -a 256 name_of_file`
 
 * on a Windows system or Mac system, you can install a utility such as
   `HashCalc <http://www.slavasoft.com/hashcalc/>`_
@@ -860,10 +863,9 @@ Download the *img.xz* file, uncompress the file, and write it to a compact flash
 to load the FreeNAS® operating system. This section demonstrates how to write the image using several different operating systems. The Unetbootin tool is not
 supported at this time.
 
-.. warning:: The **dd** command demonstrated in this section is very powerful and can destroy any existing data on the specified device. Be
-   **very sure** that you know the device name to write to and that you do not typo the device name when using
-   **dd**! If you are uncomfortable writing the image yourself, download the
-   *.iso* file instead and use the instructions in Installing from CDROM.
+.. warning:: The :command:`dd` command demonstrated in this section is very powerful and can destroy any existing data on the specified device. Be
+   **very sure** that you know the device name to write to and that you do not typo the device name when using :command:`dd`! If you are uncomfortable writing
+   the image yourself, download the *.iso* file instead and use the instructions in Installing from CDROM.
 
 Once you have written the image to the device, make sure the boot order in the BIOS is set to boot from that device and boot the system. It should boot into
 the Console setup menu described in Initial Setup. If it does not, try the suggestions in the Troubleshooting section.
@@ -871,9 +873,9 @@ the Console setup menu described in Initial Setup. If it does not, try the sugge
 On FreeBSD or Linux
 ~~~~~~~~~~~~~~~~~~~
 
-On a FreeBSD or Linux system, the **xzcat** and **dd** commands can be used to uncompress and write the *.xz* image to an inserted USB thumb drive or compact
-flash device. Example 2.4a demonstrates writing the image to the first USB device (*/dev/da0*) on a FreeBSD system. Substitute the filename of your *.xz*
-file and the device name representing the device to write to on your system.
+On a FreeBSD or Linux system, the :command:`xzcat` and :command:`dd` commands can be used to uncompress and write the *.xz* image to an inserted USB thumb
+drive or compact flash device. Example 2.4a demonstrates writing the image to the first USB device (*/dev/da0*) on a FreeBSD system. Substitute the filename
+of your *.xz* file and the device name representing the device to write to on your system.
 
 **Example 2.4a: Writing the Image to a USB Thumb Drive**
 ::
@@ -882,7 +884,7 @@ file and the device name representing the device to write to on your system.
  0+244141 records out
  2000000000 bytes transferred in 596.039857 secs (3355480 bytes/sec)
 
-When using the **dd** command:
+When using the :command:`dd` command:
 
 * **of=** refers to the output file; in our case, the device name of the flash card or removable USB drive. You may have to increment the number in the name
   if it is not the first USB device. On Linux, use */dev/sdX,* where *X* refers to the letter of the USB device.
@@ -920,10 +922,10 @@ Next, determine the device name of the inserted USB thumb drive. From TERMINAL, 
 
 This will show you which devices are available to the system. Locate your USB stick and record the path. If you are not sure which path is the correct one for
 the USB stick, remove the device, run the command again, and compare the difference. Once you are sure of the device name, navigate to the Desktop from
-TERMINAL, unmount the USB stick, and use the **dd** command to write the image to the USB stick. In Example 2.4b, the USB thumb drive is */dev/disk1*. 
+TERMINAL, unmount the USB stick, and use the :command:`dd` command to write the image to the USB stick. In Example 2.4b, the USB thumb drive is */dev/disk1*.
 Substitute the name of your uncompressed file and the correct path to your USB thumb drive.
 
-**Example 2.4b: Using dd on an OS X System**
+**Example 2.4b: Using :command:`dd` on an OS X System**
 ::
 
  diskutil unmountDisk /dev/disk1
@@ -931,13 +933,12 @@ Substitute the name of your uncompressed file and the correct path to your USB t
 
  dd if=FreeNAS-9.3-RELEASE-x64.img of=/dev/disk1 bs=64k
 
-.. note:: if you get the error "Resource busy" when you run the
-   **dd** command, go to :menuselection:`Applications --> Utilities --> Disk Utility`, find your USB thumb drive, and click on its partitions to make sure all
-   of them are unmounted. If you get the error "dd: /dev/disk1: Permission denied", run the **dd** command by typing
-   **sudo dd if=FreeNAS-9.3-RELEASE-x64.img of=/dev/disk1 bs=64k**, which will prompt for your password.
+.. note:: if you get the error "Resource busy" when you run the :command:`dd` command, go to :menuselection:`Applications --> Utilities --> Disk Utility`,
+   find your USB thumb drive, and click on its partitions to make sure all of them are unmounted. If you get the error "dd: /dev/disk1: Permission denied",
+   run the :command:`dd` command by typing :command:`sudo dd if=FreeNAS-9.3-RELEASE-x64.img of=/dev/disk1 bs=64k`, which will prompt for your password.
 
-The **dd** command will take some minutes to complete. Wait until you get a prompt back and a message that displays how long it took to write the image to the
-USB drive.
+The :command:`dd` command will take some minutes to complete. Wait until you get a prompt back and a message that displays how long it took to write the image
+to the USB drive.
 
 On Windows
 ~~~~~~~~~~
@@ -997,7 +998,7 @@ When you boot into FreeNAS®, the Console Setup, shown in Figure 2.6a, will appe
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
 .. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
-   **/etc/netcli** from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in :menuselection:`System --> Advanced`.
+   :command:`/etc/netcli` from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in :menuselection:`System --> Advanced`.
 
 **Figure 2.6a: FreeNAS® Console Setup Menu**
 
@@ -1026,7 +1027,7 @@ interface is accessed, it will prompt to set the *root* password.
 need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-import your volume.
 
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type
-**exit.**
+:command:`exit`.
 
 **10) Reboot:** reboots the system.
 
@@ -1088,8 +1089,8 @@ If you are unable to access the IP address from a browser, check the following:
 
 * Are proxy settings enabled in the browser configuration? If so, disable the settings and try connecting again.
 
-* If the page does not load, make sure that you can **ping** the FreeNAS® system's IP address. If the address is in a private IP address range, you will
-  only be able to access the system from within the private network.
+* If the page does not load, make sure that you can :command:`ping` the FreeNAS® system's IP address. If the address is in a private IP address range, you
+  will only be able to access the system from within the private network.
 
 * If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
   display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
@@ -1241,7 +1242,7 @@ FreeNAS® supports two operating systems on the operating system device: the cur
 installed version of the operating system. This allows you to reboot into the previous version should you experience a problem with the upgraded version.
 
 The upgrade process automatically configures the system to boot from the new operating system. If the system remains inaccessible and you wish to revert back
-to the previous installation, type **reboot** from the shell or select "10) Reboot" from the console menu. Watch the boot screens and press the other
+to the previous installation, type :command:`reboot` from the shell or select "10) Reboot" from the console menu. Watch the boot screens and press the other
 boot option (typically *F2*) from the FreeNAS® console when you see the following options at the very beginning of the boot process. In this example,
 *Boot: F1* refers to the default option (the newly upgraded version), so pressing
 *F2* will boot into the previous version.::
@@ -1321,8 +1322,8 @@ Enable Console Logging
 ----------------------
 
 To view system messages within the graphical administrative interface, go to :menuselection:`System --> Advanced`. Check the box "Show console
-messages in the footer" and click "Save". The output of **tail -f /var/log/messages** will now be displayed at the bottom of the screen. If you click the
-console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
+messages in the footer" and click "Save". The output of :command:`tail -f /var/log/messages` will now be displayed at the bottom of the screen. If you click
+the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
 
 You are now ready to start configuring the FreeNAS® system. Typically, the configuration workflow will use the following steps in their listed order.
 
@@ -1468,8 +1469,8 @@ If you click :menuselection:`Groups --> View Groups`, you will see a screen simi
 |Figure41a_png|
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
-group which was installed with FreeNAS®, and whether or not the group's members are allowed to use **sudo**. If you click a group entry, a "Members" button
-will appear. Click this button to view and modify that group's membership.
+group which was installed with FreeNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
+button will appear. Click this button to view and modify that group's membership.
 
 If you click the "Add Group" button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
 
@@ -1492,7 +1493,7 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 | Group Name          | string    | mandatory                                                                                                                |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo         | checkbox  | if checked, members of the group have permission to use **sudo**                                                         |
+| Permit Sudo         | checkbox  | if checked, members of the group have permission to use :command:`sudo`                                                  |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | Allow repeated GIDs | checkbox  | allows multiple groups to share the same group id; this is useful when a GID is already associated with the UNIX         |
@@ -1549,7 +1550,7 @@ shown in Figure 4.2a.
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
-is allowed to use **sudo**. To reorder the list, click the desired column.
+is allowed to use :command:`sudo`. To reorder the list, click the desired column.
 
 If you click a user account, the following buttons will appear for that account:
 
@@ -1596,9 +1597,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Primary Group              | drop-down menu  | must uncheck "Create a new primary group" in order to access this menu; for security reasons, FreeBSD will                                            |
-|                            |                 | not give a user **su** permissions if                                                                                                                 |
-|                            |                 | *wheel* is their primary group; to give a user                                                                                                        |
-|                            |                 | **su** access, add them to the                                                                                                                        |
+|                            |                 | not give a user :command:`su` permissions if *wheel* is their primary group; to give a user :command:`su` access, add them to the                     |
 |                            |                 | *wheel* group in "Auxiliary groups"                                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1635,7 +1634,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | box will grey out "Disable password login" which is mutually exclusive                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo                | checkbox        | if checked, members of the group have permission to use **sudo**                                                                                      |
+| Permit Sudo                | checkbox        | if checked, members of the group have permission to use :command:`sudo`                                                                               |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |   
@@ -2102,9 +2101,9 @@ Any sysctls or loaders that you add will be listed alphabetically in :menuselect
 existing tunable, click its "Edit" button. To remove a tunable, click its "Delete" button.
 
 Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
-Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command
-**sysctl net.inet.tcp.delay_ack=1**. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get an
-error, the setting is now applied. However, for the setting to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
+Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value
+is read-only, an error message will indicate that the setting is read-only. If you do not get an error, the setting is now applied. However, for the setting
+to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
 
 At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
 
@@ -2161,13 +2160,12 @@ or the Esc key to select "3. Escape to loader prompt" when you see the FreeNAS®
 |10000000000002D10000018F743DB34E_png|
 
 The boot loader prompt provides a minimal set of commands described in
-`loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the **unset** command to disable a problematic value, the
-**set** command to modify the problematic value, or the
-**unload** command to prevent the problematic driver from loading.
+`loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the :command:`unset` command to disable a problematic value, the
+:command:`set` command to modify the problematic value, or the :command:`unload` command to prevent the problematic driver from loading.
 
 Example 5.6a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
-*kern.ipc.nmbclusters* MIB and will fail with a "no such file or directory" error message if a current tunable does not exist to set this value. The
-second command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type **boot** to continue the boot process.
+*kern.ipc.nmbclusters* MIB and will fail with a "no such file or directory" error message if a current tunable does not exist to set this value. The second
+command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type :command:`boot` to continue the boot process.
 
 **Example 5.6a: Sample Commands at the Boot Loader Prompt**
 ::
@@ -2278,7 +2276,7 @@ Figure 6.2a shows the screen that opens when you click :menuselection:`System --
 the available options.
 
 When scheduling a command, make sure that the command is in your path or give the full path to the command. One way to test the path is to type
-**which command_name.** If the command is not found, it is not in your path.
+:command:`which command_name`. If the command is not found, it is not in your path.
 
 When scheduling a script, make sure that the script is executable and has been fully tested to ensure that it achieves the desired results.
 
@@ -2414,9 +2412,9 @@ can be configured when creating an rsync task.
 | Compress                         | checkbox                    | recommended on slow connections as reduces size of data to be transmitted                 |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Archive                          | checkbox                    | equivalent to **-rlptgoD** (recursive, copy symlinks as symlinks, preserve permissions,   |
-|                                  |                             | preserve modification times, preserve group, preserve owner (super-user only), and        |
-|                                  |                             | preserve device files (super-user only) and special files)                                |
+| Archive                          | checkbox                    | equivalent to :command:`-rlptgoD` (recursive, copy symlinks as symlinks, preserve         |
+|                                  |                             | permissions, preserve modification times, preserve group, preserve owner (super-user      |
+|                                  |                             | only), and preserve device files (super-user only) and special files)                     |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Delete                           | checkbox                    | delete files in destination directory that don't exist in sending directory               |
@@ -2553,9 +2551,8 @@ used for an automated task.::
 FreeNAS® supports the following types of SSH keys: DSA, and RSA. When creating the key, specify the type you wish to use or, if you are generating the key
 on another operating system, select a type of key the key generation software supports.
 
-.. note:: if a different user account is used for the rsync task, use the
-   **su -** command after mounting the filesystem but before generating the key. For example, if the rsync task is configured to use the
-   *user1* user account, use this command to become that user::
+.. note:: if a different user account is used for the rsync task, use the :command:`su -` command after mounting the filesystem but before generating the key.
+   For example, if the rsync task is configured to use the *user1* user account, use this command to become that user::
 
    su - user1
 
@@ -2671,7 +2668,7 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
 
 
-You can verify which tests will run and when by typing **smartd -q showtests** within Shell.
+You can verify which tests will run and when by typing :command:`smartd -q showtests` within Shell.
 
 Network
 =======
@@ -3219,18 +3216,18 @@ If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No
 
 |Figure81b_png|
 
-Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 6.3b, the FreeNAS® system has an
+Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1b, the FreeNAS® system has an
 existing, unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
-FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to **fsck** the volume.
+FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to :command:`fsck` the volume.
 
-If an existing ZFS pool does not show in the drop-down menu, run **zpool import** from Shell_ to import the pool.
+If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from Shell_ to import the pool.
 
 If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an "in use by another
 machine" error during the import.
 
-If you suspect that your hardware is not being detected, run **camcontrol devlist** from Shell. If the disk does not appear in the output, check to see if the
-controller driver is supported or if it needs to be loaded by creating a Tunable.
+If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from Shell. If the disk does not appear in the output, check to see
+if the controller driver is supported or if it needs to be loaded by creating a Tunable.
 
 Auto Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3266,8 +3263,8 @@ Input a name for the volume, use the drop-down menu to select the disk or partit
 
 Before importing a disk, be aware of the following caveats:
 
-* FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to **fsck** or run a disk check
-  on the filesystem.
+* FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to :command:`fsck` or run a disk
+  check on the filesystem.
 
 * FreeNAS® can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
 
@@ -3283,7 +3280,7 @@ until you can afford better hardware, note that you will have to destroy your ex
 backup.
 
 .. note:: it is not recommended to create a UFS volume larger than 5TB as it will be inefficient to
-   **fsck**, causing long delays at system boot if the system was not shutdown cleanly.
+   :command:`fsck`, causing long delays at system boot if the system was not shutdown cleanly.
 
 To format your disks with UFS, go to :menuselection:`Storage --> Volumes --> UFS Volume Manager (legacy)` which will open the screen shown in Figure 8.1e.
 
@@ -3340,9 +3337,8 @@ configuration.
 Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
 option before discarding a disk.
 
-.. note:: should a disk's serial number not be displayed in this screen, use the
-   **smartctl** command within Shell. For example, to determine the serial number of disk ada0, type
-   **smartctl -a /dev/ada0 | grep Serial**.
+.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within Shell. For example, to determine the
+   serial number of disk ada0, type :command:`smartctl -a /dev/ada0 | grep Serial`.
 
 View Volumes
 ~~~~~~~~~~~
@@ -3910,11 +3906,10 @@ If deduplication is changed to *On*, duplicate data blocks are removed synchrono
 shared among files. If deduplication is changed to *Verify*, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that
 the block contents are identical. Since hash collisions are extremely rare, verify is usually not worth the performance hit.
 
-.. note:: once deduplication is enabled, the only way to disable it is to use the
-   **zfs set dedup=off dataset_name** command from Shell. However, any data that is already stored as deduplicated will not be un-deduplicated as only newly
-   stored data after the property change will not be deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the
-   dataset, set the property to off, then copy the data back in again. Alternately, create a new dataset with the *ZFS Deduplication* left as disabled, copy
-   the data to the new dataset, and destroy the original dataset.
+.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from Shell. However, any
+   data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be deduplicated. The
+   only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data back in again.
+   Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original dataset.
 
 Compression
 ^^^^^^^^^^^
@@ -4094,14 +4089,14 @@ If autoexpansion is not enabled, enable it by specifying the name of the ZFS vol
 
  zpool set autoexpand=on Vol1 
 
-Verify that autoexpand is now enabled by repeating **zpool get all Vol1**.
+Verify that autoexpand is now enabled by repeating :command:`zpool get all Vol1`.
 
 You are now ready to replace one drive with a larger drive using the instructions in Replacing a Failed Drive.
 
 Replace one drive at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are
 replaced and the resilver completes, you should see the added space in the pool.
 
-You can view the status of the resilver process by running **zpool status Vol1**.
+You can view the status of the resilver process by running :command:`zpool status Vol1`.
 
 Enabling ZFS Pool Expansion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4117,8 +4112,8 @@ volume name and GPT ID for each disk in the ZFS pool::
 Online one drive at a time and check the status using the following example. If a drive starts to resilver, you need to wait for the resilver to complete
 before proceeding to online the next drive.
 
-To find the GPT ID information for the drives, use **zpool status [Pool_Name]** which will also show you if any drives are failed or in the process of being
-resilvered::
+To find the GPT ID information for the drives, use :command:`zpool status Pool_Name` which will also show you if any drives are failed or in the process of
+being resilvered::
 
  zpool status Vol1
  pool: Vol1
@@ -4136,7 +4131,8 @@ resilvered::
 
  errors: No known data errors
 
-After onlining all of the disks, type **zpool status** to see if the drives start to resilver. If this happens, wait for the resilvering process to complete.
+After onlining all of the disks, type :command:`zpool status` to see if the drives start to resilver. If this happens, wait for the resilvering process to
+complete.
 
 Next, export and then import the pool::
 
@@ -4150,8 +4146,7 @@ Once the import completes, all of the drive space should be available. Verify th
  NAME	SIZE	ALLOC	FREE	CAP	DEDUP	HEALTH	ALTROOT
  Vol1	9.06T	1.41T	7.24T	31%	1.00x	ONLINE	/mnt
 
-If you cannot see the extra space, you may need to run **zpool online -e <pool> <device>** for every device listed in
-**zpool status**.
+If you cannot see the extra space, you may need to run :command:`zpool online -e pool_name device_name` for every device listed in :command:`zpool status`.
 
 Splitting a Mirrored Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4159,7 +4154,7 @@ Splitting a Mirrored Pool
 ZFSv28 provides the ability to to split a **mirrored** storage pool, which detaches a disk or disks in the original ZFS volume in order to create another
 identical ZFS volume on another system.
 
-.. note:: zpool split only works on mirrored ZFS volumes.
+.. note:: this operation only works on mirrored ZFS volumes.
 
 In this example, a ZFS mirror named *test* contains three drives::
 
@@ -4552,8 +4547,8 @@ Troubleshooting
 
 If you have followed all of the steps above and have *PUSH* snapshots that are not replicating to
 *PULL*, check to see if SSH is working properly. On
-*PUSH*, open Shell and try to
-**ssh** into *PULL*. Replace
+*PUSH*, open Shell and try to :command:`ssh` into
+*PULL*. Replace
 *hostname_or_ip* with the value for
 *PULL*::
 
@@ -4573,8 +4568,7 @@ If the key is correct and replication is still not working, try deleting all sna
 :menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
-Once you have only one snapshot, open Shell on *PUSH* and use the
-**zfs send** command. To continue our example, the ZFS snapshot on the
+Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the
 *local/data* dataset of
 *PUSH* is named
 *auto-20110922.1753-2h*, the IP address of
@@ -4587,11 +4581,9 @@ Once you have only one snapshot, open Shell on *PUSH* and use the
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 .. note:: if this command fails with the error "cannot receive new filesystem stream: destination has snapshots", check the box "initialize remote side
-   for once" in the replication task and try again. If the **zfs send** command still fails, you will need to open Shell on
-   *PULL* and use the
-   **zfs destroy -R volume_name@snapshot_name** command to delete the stuck snapshot. You can then use the
-   **zfs list -t snapshot** on
-   *PULL* to confirm if the snapshot successfully replicated.
+   for once" in the replication task and try again. If the :command:`zfs send` command still fails, you will need to open Shell on
+   *PULL* and use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
+   :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 
 After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
 transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
@@ -4703,13 +4695,12 @@ can import the account information and imported users can be authorized to acces
 Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
 recommended that you upgrade before attempting Active Directory integration.
 
-**Before configuring the Active Directory service**, ensure name resolution is properly configured by
-**ping**
-ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the **ping** fails, check the DNS server and default
-gateway settings in :menuselection:`Network --> Global Configuration` on the FreeNAS® system.
+**Before configuring the Active Directory service**, ensure name resolution is properly configured by :command:`ping`ing the domain name of the Active
+Directory domain controller from Shell on the FreeNAS® system. If the :command:`ping` fails, check the DNS server and default gateway settings in
+:menuselection:`Network --> Global Configuration` on the FreeNAS® system.
 
-Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can **ping** the hostname of the FreeNAS® system from the domain
-controller.
+Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can :command:`ping` the hostname of the FreeNAS® system from the
+domain controller.
 
 Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain
 Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
@@ -4837,7 +4828,7 @@ You can verify which Active Directory users and groups have been imported to the
 (to view groups)
 
 
-In addition, **wbinfo -t** will test the connection and, if successful, will give a message similar to::
+In addition, :command:`wbinfo -t` will test the connection and, if successful, will give a message similar to::
 
  checking the trust secret for domain YOURDOMAIN via RPC calls succeeded
 
@@ -4851,7 +4842,7 @@ If no users or groups are listed in the output of those commands, these commands
 
  getent group
  
-If the **wbinfo** commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
+If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
 taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of *AD timeout* to 60 seconds.
 
 Using a Keytab
@@ -4895,9 +4886,8 @@ If you are running AD in a 2003/2008 mixed domain, see this
 for instructions on how to prevent the secure channel key from becoming corrupt.
 
 Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
-**host -t srv _ldap._tcp.domainname.com**
-command to determine the network's SRV records and, if necessary, change the weight and/or priority of the SRV record to reflect the fastest server. More
-information about SRV records can be found in the Technet article
+:command:`host -t srv _ldap._tcp.domainname.com` command to determine the network's SRV records and, if necessary, change the weight and/or priority of the
+SRV record to reflect the fastest server. More information about SRV records can be found in the Technet article
 `How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
 `Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_.
 
@@ -5006,8 +4996,8 @@ the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
 for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in */var/log/auth.log.*
 
-To verify that the users have been imported, type **getent passwd** from Shell. To verify that the groups have been imported, type
-**getent group**.
+To verify that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type
+:command:`getent group`.
 
 NIS
 ---
@@ -5342,10 +5332,10 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
 Unix (NFS) Shares
 -----------------
 
-FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the **mount** command to
-mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of additional
-software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client
-application.
+FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the :command:`mount`
+command to mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of
+additional software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS
+client application.
 
 .. note:: for performance reasons, iSCSI is preferred to NFS shares when FreeNAS is installed on ESXi. If you are considering creating NFS shares on ESXi,
    read through the performance analysis at
@@ -5504,12 +5494,12 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
 From BSD or Linux
 ^^^^^^^^^^^^^^^^^
 
-To make this share accessible on a BSD or a Linux system, run the following command as the superuser (or with **sudo**) from the client system. Repeat on each
-client that needs access to the NFS share::
+To make this share accessible on a BSD or a Linux system, run the following command as the superuser (or with :command:`sudo`) from the client system. Repeat
+on each client that needs access to the NFS share::
 
  mount -t nfs 192.168.2.2:/mnt/data /mnt
 
-The **mount** command uses the following options:
+The :command:`mount` command uses the following options:
 
 * **-t nfs:** specifies the type of share.
 
@@ -5517,10 +5507,10 @@ The **mount** command uses the following options:
 
 * **/mnt/data:** replace with the name of the NFS share
 
-* **/mnt:** a mount point on the client system. This must be an existing, **empty** directory. The data in the NFS share will be made available to the
-  client in this directory.
+* **/mnt:** a mount point on the client system. This must be an existing,
+  **empty** directory. The data in the NFS share will be made available to the client in this directory.
 
-The **mount** command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
+The :command:`mount` command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
 
 Once mounted, this configuration allows users on the client system to copy files to and from */mnt* (the mount point) and all files will be owned by
 *nobody:nobody*. Any changes to
@@ -5589,11 +5579,11 @@ Troubleshooting
 
 Some NFS clients do not support the NLM (Network Lock Manager) protocol used by NFS. You will know that this is the case if the client receives an error that
 all or part of the file may be locked when a file transfer is attempted. To resolve this error, add the option **-o nolock** when running the
-**mount** command on the client in order to allow write access to the NFS share.
+:command:`mount` command on the client in order to allow write access to the NFS share.
 
 If you receive an error about a "time out giving up" when trying to mount the share from a Linux system, make sure that the portmapper service is running
 on the Linux client and start it if it is not. If portmapper is running and you still receive timeouts, force it to use TCP by including **-o tcp** in your
-**mount** command.
+:command:`mount` command.
 
 If you receive an error "RPC: Program not registered", upgrade to the latest version of FreeNAS® and restart the NFS service after the upgrade in order
 to clear the NFS cache.
@@ -5910,7 +5900,7 @@ If a service does not start, go to :menuselection:`System --> Advanced` and chec
 show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
 messages. Watch these messages for errors when you stop and start the problematic service.
 
-If you would like to read the system logs to get more information about a service failure, open Shell and type **more /var/log/messages**.
+If you would like to read the system logs to get more information about a service failure, open Shell and type :command:`more /var/log/messages`.
 
 AFP
 ---
@@ -6083,7 +6073,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Homes auxiliary parameters       | string         | options specific to the [homes] section of *smb4.conf*; for example,                                  |
-|                                  |                | **hide dot files = yes** hides files beginning with a dot in home directories                         |
+|                                  |                | *hide dot files = yes* hides files beginning with a dot in home directories                           |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows     |
@@ -6093,8 +6083,8 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Zeroconf share discovery         | checkbox       | enable if Mac clients will be connecting to the CIFS share                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the Hosts Allow or Hosts Deny fields of a |
-|                                  |                | CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup                |
+| Hostnames lookups                | checkbox       | allows you to specify hostnames rather than IP addresses in the "Hosts Allow" or "Hosts Deny" fields  |
+|                                  |                | of a CIFS share; uncheck if you only use IP addresses as it saves the time of a host lookup           |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Server minimum protocol          | drop-down menu | the minimum protocol version the server will support where the default sets automatic                 |
@@ -6180,8 +6170,8 @@ If you wish to increase network performance, read the Samba section on
 you experiment to see which are supported by your clients and improve your network's performance.
 
 Windows automatically caches file sharing information. If you make changes to a CIFS share or to the permissions of a volume/dataset being shared by CIFS and
-are no longer able to access the share, try logging out and back into the Windows system. Alternately, users can type **net use /delete *** from the command
-line to clear their SMB sessions.
+are no longer able to access the share, try logging out and back into the Windows system. Alternately, users can type :command:`net use /delete` from the
+command line to clear their SMB sessions.
 
 Windows also automatically caches login information. If you wish users to be prompted to login every time access is required, reduce the cache settings on the
 client computers.
@@ -6200,11 +6190,10 @@ If clients have problems connecting to the CIFS share, go to :menuselection:`Ser
 
 It is recommended to use a dataset for CIFS sharing. When creating the dataset, make sure that the "Share type" is set to Windows.
 
-Do not use **chmod** to attempt to fix the permissions on a CIFS share as it destroys the Windows ACLs. The correct way to manage permissions on a CIFS share
-is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so, right-click
-on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using **chmod**,
-**winacl** can be used to fix them. Type
-**winacl** from Shell for usage instructions. 
+**Do not** use :command:`chmod` to attempt to fix the permissions on a CIFS share as it destroys the Windows ACLs. The correct way to manage permissions on a
+CIFS share is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so,
+right-click on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using :command:`chmod`,
+:command:`winacl` can be used to fix them. Type :command:`winacl` from Shell for usage instructions. 
 
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
@@ -6401,8 +6390,8 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | is a member of group *wheel*                                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Require IDENT Authentication                                 | checkbox       | only available in "Advanced Mode"; will result in timeouts if **identd** is not     |
-|                                                              |                | running on the client                                                               |
+| Require IDENT Authentication                                 | checkbox       | only available in "Advanced Mode"; will result in timeouts if :command:`identd` is  |
+|                                                              |                | not running on the client                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | Perform Reverse DNS Lookups                                  | checkbox       | perform reverse DNS lookups on client IPs; can cause long delays if reverse         |
@@ -6618,7 +6607,7 @@ Encrypting FTP
 To configure any FTP scenario to use encrypted connections:
 
 #.  **Enable TLS** in S:menuselection:`Services --> FTP`. Check the box "Enable TLS". Once you press "OK", a certificate and key will automatically be
-    generated for you and **proftpd** will restart and be configured to use that certificate. If you prefer to use your own certificate, delete the
+    generated for you and :command:`proftpd` will restart and be configured to use that certificate. If you prefer to use your own certificate, delete the
     automatically generated one that appears in the "Certificate and private key" field and paste in your own certificate and key.
 
 #.  **Specify secure FTP when accessing the FreeNAS® system.** For example, in Filezilla input
@@ -6814,8 +6803,8 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 | Comment            | string         | optional                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows **xcopy**     |
-|                    |                | operations otherwise blocked by access control                                                                       |
+| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
+|                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
@@ -7075,14 +7064,12 @@ comes with NetBSD, and
 `iscsid(8) <http://www.openbsd.org/cgi-bin/man.cgi?query=iscsid>`_
 comes with OpenBSD.
 
-Some Linux distros provide the command line utility **iscsiadm** from
+Some Linux distros provide the command line utility :command:`iscsiadm` from
 `Open-iSCSI <http://www.open-iscsi.org/>`_. Use a web search to see if a package exists for your distribution should the command not exist on your Linux
 system.
 
-If you add a LUN while **iscsiadm** is already connected, it will not see the new LUN until you rescan using
-**iscsiadm -m node -R**. Alternately, use
-**iscsiadm -m discovery -t st -p <portal_IP>** to find the new LUN and
-**iscsiadm -m node -T <LUN_Name> -l** to log into the LUN.
+If you add a LUN while :command:`iscsiadm` is already connected, it will not see the new LUN until you rescan using :command:`iscsiadm -m node -R`.
+Alternately, use :command:`iscsiadm -m discovery -t st -p portal_IP` to find the new LUN and :command:`iscsiadm -m node -T LUN_Name -l` to log into the LUN.
 
 Instructions for connecting from a VMware ESXi Server can be found at
 `How to configure FreeNAS 8 for iSCSI and connect to ESX(i) <http://www.vladan.fr/how-to-configure-freenas-8-for-iscsi-and-connect-to-esxi/>`_. Note that the
@@ -7118,7 +7105,7 @@ Then, grow the zvol. This example grows *tank/iscsi_zvol* from 4G to 6G::
 
  zfs set volsize=6G tank/iscsi_zvol
 
- zfs set refreservation=6G tank/iscsi_zvol**
+ zfs set refreservation=6G tank/iscsi_zvol
 
 Verify that the changes have taken effect::
 
@@ -7155,12 +7142,11 @@ start the service.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
-* TCP and UDP 111 (used by **rpcbind**)
+* TCP and UDP 111 (used by :command:`rpcbind`)
 
-* TCP 2049 (used by **nfsd**)
+* TCP 2049 (used by :command:`nfsd`)
 
-Additionally, **mountd** and
-**rpcbind** will each bind to a randomly available UDP port.
+Additionally, :command:`mountd` and :command:`rpcbind` will each bind to a randomly available UDP port.
 
 Figure 11.9a shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
 
@@ -7174,8 +7160,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | **Setting**            | **Value**  | **Description**                                                                                                     |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
-| Number of servers      | integer    | run **sysctl -n kern.smp.cpus** from Shell to determine the number; do not exceed the number listed in the output   |
-|                        |            | of that command                                                                                                     |
+| Number of servers      | integer    | run :command:`sysctl -n kern.smp.cpus` from Shell to determine the number; do not exceed the number listed in the   |
+|                        |            | output of that command                                                                                              |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Serve UDP NFS clients  | checkbox   | check if NFS client needs to use UDP                                                                                |
@@ -7210,7 +7196,7 @@ Rsync
 :menuselection:`Services --> Rsync` is used to configure an rsync server when using rsync module mode. See the section on Configuring Rsync Module Mode
 Between Two FreeNAS® Systems for a configuration example.
 
-This section describes the configurable options for the **rsyncd** service and rsync modules.
+This section describes the configurable options for the :command:`rsyncd` service and rsync modules.
 
 Configure Rsyncd
 ~~~~~~~~~~~~~~~~
@@ -7230,14 +7216,11 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 |                      |           |                                                                     |
 |                      |           |                                                                     |
 +======================+===========+=====================================================================+
-| TCP Port             | integer   | port for **rsyncd** to listen on, default is                        |
-|                      |           | *873*                                                               |
-|                      |           |                                                                     |
+| TCP Port             | integer   | port for :command:`rsyncd` to listen on, default is *873*           |
 |                      |           |                                                                     |
 +----------------------+-----------+---------------------------------------------------------------------+
 | Auxiliary parameters | string    | additional parameters from                                          |
 |                      |           | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_ |
-|                      |           |                                                                     |
 |                      |           |                                                                     |
 +----------------------+-----------+---------------------------------------------------------------------+
 
@@ -7318,11 +7301,10 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 
 |Figure1111a_png|
 
-.. note::
-   **smartd** will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described in Figure
-   4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a "Check
-   Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart test to every hour, the test will only
-   be run every 2 hours since the daemon only wakes up every 2 hours.
+.. note:: :command:`smartd` will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described
+   in Figure 4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a
+   "Check Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart test to every hour, the test
+   will only be run every 2 hours since the daemon only wakes up every 2 hours.
 
 Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 
@@ -7333,7 +7315,7 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 |                 |                            |                                                                                                             |
 |                 |                            |                                                                                                             |
 +=================+============================+=============================================================================================================+
-| Check interval  | integer                    | in minutes, how often to wake up **smartd** to check to see if any tests have been configured to run        |
+| Check interval  | integer                    | in minutes, how often to wake up :command:`smartd` to check to see if any tests have been configured to run |
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 | Power mode      | drop-down menu             | the configured test is not performed if the system enters the specified power mode; choices are:            |
@@ -7369,7 +7351,7 @@ configured as a
 `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_
 server using FreeBSD's simple and extensible SNMP daemon. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
 
-* UDP 161 (**bsnmpd** listens here for SNMP requests)
+* UDP 161 (:command:`bsnmpd` listens here for SNMP requests)
 
 Available MIBS are located in */usr/share/SNMP/mibs* and
 */usr/local/share/SNMP/mibs*.
@@ -7482,21 +7464,21 @@ A few sshd_config(5) options that are useful to input in the "Extra Options" fie
 SFTP Chroot
 ~~~~~~~~~~~
 
-By default when you configure SSH, users can use the **ssh** command to login to the FreeNAS® system. A user's home directory will be the volume/dataset
-specified in the "Home Directory" field of their user account on the FreeNAS® system. Users can also use the **scp** and
-**sftp** commands to transfer files between their local computer and their home directory on the FreeNAS® system.
+By default when you configure SSH, users can use the :command:`ssh` command to login to the FreeNAS® system. A user's home directory will be the
+volume/dataset specified in the "Home Directory" field of their user account on the FreeNAS® system. Users can also use the :command:`scp` and
+:command:`sftp` commands to transfer files between their local computer and their home directory on the FreeNAS® system.
 
 While these commands will default to the user's home directory, users are able to navigate outside of their home directory which can pose a security risk. SSH
 supports using a
 `chroot <http://en.wikipedia.org/wiki/Chroot>`_
-to confine users to only the **sftp** command and to be limited to the contents of their own home directory. To configure this scenario on FreeNAS®, perform
+to confine users to only the :command:`sftp` command and to be limited to the contents of their own home directory. To configure this scenario on FreeNAS®, perform
 the following steps.
 
 .. note:: some utilities such as WinSCP can
    `bypass the chroot <http://winscp.net/eng/docs/faq_breaks_permissions>`_. This section assumes that users are accessing the chroot using the command line
-   **sftp**.
+   :command:`sftp`.
 
-#.  **Create a ZFS dataset for each user requiring sftp access** in :menuselection:`Storage --> Volumes`.
+#.  **Create a ZFS dataset for each user requiring :command:`sftp` access** in :menuselection:`Storage --> Volumes`.
 
 #.  **If you are not using Active Directory or LDAP, create a user account** 
     for each user in :menuselection:`Account --> Users --> Add User`. In the "Home Directory" field, browse to the location of the dataset you created for
@@ -7504,8 +7486,7 @@ the following steps.
 
 #.  **Create a group** named
     *sftp* in :menuselection:`Account --> Groups --> Add Group`. Then, click on the
-    *sftp* group in "View Groups" and add the users who are to be restricted to their home directories when using
-    **sftp**.
+    *sftp* group in "View Groups" and add the users who are to be restricted to their home directories when using :command:`sftp`.
 
 #.  **Set permissions for each dataset** in :menuselection:`Storage --> Volume --> View Volumes`. SSH chroot is
     **very specific** with regards to the required permissions (see the ChrootDirectory keyword in
@@ -7544,13 +7525,8 @@ the following steps.
 #.  **Start the SSH service** in Control Services. Click the red "OFF" button next to SSH. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
 
-#.  **Test the connection** from a client by running
-    **sftp**,
-    **ssh**, and
-    **scp** as the user. The
-    **sftp** command should work but be limited to the user's home directory and the
-    **ssh** and
-    **scp** commands should fail.
+#.  **Test the connection** from a client by running :command:`sftp`, :command:`ssh`, and :command:`scp` as the user. The :command:`sftp` command should work
+    but be limited to the user's home directory and the :command:`ssh` and :command:`scp` commands should fail.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -7757,9 +7733,8 @@ To install a FreeNAS® PBI using the plugins method, click "Plugins". As seen in
 
 |Figure121a_png|
 
-.. note:: if the list of available PBIs is not displayed, open Shell and verify that the FreeNAS® system can
-   **ping** an address on the Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in
-   :menuselection:`Network --> Global Configuration`.
+.. note:: if the list of available PBIs is not displayed, open Shell and verify that the FreeNAS® system can :command:`ping` an address on the Internet. If
+   it cannot, you may have to add a default gateway address and/or DNS server address in :menuselection:`Network --> Global Configuration`.
 
 Highlight the entry of the PBI you would like to install, then click its "Install" button. In the example shown in Figure 12.1b, the transmission PBI is
 selected for installation.
@@ -7803,7 +7778,7 @@ If you need to access the shell of the jail containing the application to comple
 Jails section of the tree. You can then click its "shell" icon as described in Managing Jails.
 
 Once the configuration is complete, click the red "OFF" button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If
-it fails to start, click the jail's "shell" icon and type **tail /var/log/messages** to see if any errors were logged.
+it fails to start, click the jail's "shell" icon and type :command:`tail /var/log/messages` to see if any errors were logged.
 
 Updating Plugins
 ----------------
@@ -7931,8 +7906,7 @@ The following types of jails can be created:
 #.  **Standard jail:** this type of jail is functionally the same as a port jail. A distinction is made for those users who prefer to separate network
     servers, such as DHCP or DNS services, from other installed software.
 
-#.  **Linux jail:** 
-    due to the
+#.  **Linux jail:**  due to the
     `FreeBSD linux binary compatibility layer <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/linuxemu.html>`_
     , Linux can be installed into a jail and software can be installed using the package management system provided by the installed Linux distro. At this
     time, the Linux distro must be a 32-bit version and any applications installed into the jail must be available as a 32-bit binary.
@@ -7953,7 +7927,7 @@ Table 13a summarizes the type of software which can be installed into each type 
 | Plugin           | yes                 | yes                                                       | yes                 |
 |                  |                     |                                                           |                     |
 +------------------+---------------------+-----------------------------------------------------------+---------------------+
-| Port             | no                  | no, unless  *vanilla*  is unchecked during jail creation  | yes                 |
+| Port             | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
 |                  |                     |                                                           |                     |
 +------------------+---------------------+-----------------------------------------------------------+---------------------+
 | Standard         | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
@@ -8030,11 +8004,11 @@ than 2GB in size.
 .. note:: if you plan to add storage to a jail, be aware that path size is limited to 88 characters. Make sure that the length of your volume name plus the
    dataset name plus the jail name does not exceed this limit.
 
-FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the
-IPv4 network must be **ping** able from the FreeNAS® system in order for your jails and any installed software to be accessible. If your network topology
+FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the IPv4
+network must be :command:`ping`able from the FreeNAS® system in order for your jails and any installed software to be accessible. If your network topology
 requires you to change the default value, you will also need to configure a default gateway, and possibly a static route, to the specified network. If you
 change this value, ensure that the subnet mask value is correct as an incorrect mask can make the IP network unreachable. When in doubt, keep the default
-setting for "IPv4 Network". If you are using VMware, make sure that the vswitch is set to promiscuous mode.
+setting for "IPv4 Network". If you are using VMware, make sure that the vswitch is set to "promiscuous mode".
 
 Review the default values of the "IPv4 Network Start Address" and "IPv4 Network End Address" to determine if that range is appropriate for the number of jails
 that you will create. If there is a DHCP server on the network, make sure that this range of addresses is excluded from the scope of the DHCP server. As jails
@@ -8194,10 +8168,8 @@ the "Yes" button, indicating that you are sure that you want to delete the jail,
 Accessing a Jail Using SSH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you prefer to use **ssh** to access a jail you will need to first start the
-**ssh** service and create a user account for
-**ssh** access. Since this configuration occurs on a jail-by-jail basis, click the "shell" icon for the jail you wish to configure
-**ssh** access to.
+If you prefer to use :command:`ssh` to access a jail you will need to first start the :command:`ssh` service and create a user account for :command:`ssh`
+access. Since this configuration occurs on a jail-by-jail basis, click the "shell" icon for the jail you wish to configure :command:`ssh` access to.
 
 To start the SSH service on a non-Linux jail, look for the following line in that jail's */etc/rc.conf*::
 
@@ -8214,20 +8186,18 @@ For a Linux jail, refer to the documentation for that Linux distribution for ins
 you may have to first install a SSH server.
 
 Next, add a user account. If you want the user to have superuser privileges to a non-Linux jail, make sure the user is placed in the *wheel* group when it is
-created. Type **adduser** and follow the prompts. When you get to this prompt, do not press enter but instead type *wheel*::
+created. Type :command:`adduser` and follow the prompts. When you get to this prompt, do not press enter but instead type *wheel*::
 
  Login group is user1. Invite user1 into other groups? []: wheel
 
-Once the user is created, set the *root* password so that the new user will be able to use the
-**su** command to gain superuser privilege. To set the password, type
-**passwd** then input and confirm the desired password.
+Once the user is created, set the *root* password so that the new user will be able to use the :command:`su` command to gain superuser privilege. To set the
+password, type :command:`passwd` then input and confirm the desired password.
 
 For a Linux jail, you will need to create a user account using the software that comes with the Linux distribution. Since Linux does not use the *wheel*
 group, if you wish to give this user superuser privileges, instead install and configure the sudo application.
 
-Finally, test from another system that the user can successfully **ssh** in and become the superuser. In this example, a user named
-*user1* uses
-**ssh** to access the non-Linux jail at 192.168.2.3. The first time the user logs in, they will be asked to verify the fingerprint of the host::
+Finally, test from another system that the user can successfully :command:`ssh` in and become the superuser. In this example, a user named *user1* uses
+:command:`ssh` to access the non-Linux jail at 192.168.2.3. The first time the user logs in, they will be asked to verify the fingerprint of the host::
 
  ssh user1@192.168.2.3
  The authenticity of host '192.168.2.3 (192.168.2.3)' can't be established.
@@ -8385,12 +8355,10 @@ existing jail or on another system.
    time.
 
 Once your configuration is complete, you need to create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be
-compressed with **gzip** and end in a
-*.tgz* extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other words, the resulting tarball needs to be
-saved outside of the operating system being tarballed, such as to an external USB drive or network share. Alternately, you can create a temporary directory
-within the operating system and use the *--exclude* switch to
-**tar** to exclude this directory from the tarball. The exact
-**tar** command to use will vary, depending upon the operating system being used to create the tarball.
+compressed with :command:`gzip` and end in a *.tgz* extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other
+words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
+Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
+the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
 Once you have the *.tgz* file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL in
 order to add the template to the list of available templates.
@@ -8478,16 +8446,15 @@ A lot of software has been ported to FreeBSD (currently over 24,400 applications
 software is to use the searchbar at
 `FreshPorts.org <http://freshports.org/>`_.
 
-Once you have located the name of the package you would like to install, use the **pkg install** command to install it. For example, to install the audiotag
-package, use this command::
+Once you have located the name of the package you would like to install, use the :command:`pkg install` command to install it. For example, to install the
+audiotag package, use this command::
 
  pkg install audiotag
 
 When prompted, type **y** to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
 install.
 
-.. warning:: **do not** use the
-   **pkg_add** command in a FreeNAS® jail as it will cause inconsistencies in your package management database.
+.. warning:: **do not** use the :command:`pkg_add` command in a FreeNAS® jail as it will cause inconsistencies in your package management database.
 
 You can confirm that the installation was successful by querying the package database::
 
@@ -8550,7 +8517,7 @@ Compiling the port yourself has the following dis-advantages:
   the FreeNAS® system, the amount of time can range from a few minutes to a few hours or even to a few days.
 
 .. note:: if the port doesn't provide any compile options, you are better off saving your time and the FreeNAS® system's resources by using the
-   **pkg install** command instead.
+   :command:`pkg install` command instead.
 
 You can determine if the port has any configurable compile options by clicking its FreshPorts listing. Figure 13.5a shows the "Configuration Options"
 for audiotag.
@@ -8559,8 +8526,7 @@ for audiotag.
 
 |10000000000002E1000002757E7365A6_png|
 
-In FreeBSD, a *Makefile* is used to provide the compiling instructions to the
-**make** command. The
+In FreeBSD, a *Makefile* is used to provide the compiling instructions to the :command:`make` command. The
 *Makefile* is in ascii text, fairly easy to understand, and documented in
 `bsd.port.mk <http://www.freebsd.org/cgi/cvsweb.cgi/ports/Mk/bsd.port.mk?rev=1.708;content-type=text%2Fplain>`_.
 
@@ -8570,7 +8536,7 @@ configurable options (DOCS, FLAC, ID3, MP4, and VORBIS) and each option is enabl
 FreeBSD packages are always built using the default options. When you compile the port yourself, those options will be presented to you in a menu, allowing
 you to change their default settings.
 
-Before you can compile a port, the ports collection must be installed within the jail. From within the jail, use the **portsnap** utility::
+Before you can compile a port, the ports collection must be installed within the jail. From within the jail, use the :command:`portsnap` utility::
 
  portsnap fetch extract
 
@@ -8580,10 +8546,8 @@ This command will download the ports collection and extract it to the jail's */u
 
  portsnap fetch update
 
-To compile a port, you will **cd** into a subdirectory of
-*/usr/ports/*. FreshPorts provides the location to
-**cd** into and the
-**make** command to run. This example will compile the audiotag port::
+To compile a port, you will :command:`cd` into a subdirectory of */usr/ports/*. FreshPorts provides the location to :command:`cd` into and the
+:command:`make` command to run. This example will compile the audiotag port::
 
  cd /usr/ports/audio/audiotag
  make install clean
@@ -8598,13 +8562,13 @@ To change an option's setting, use the arrow keys to highlight the option, then 
 over to OK and press enter. The port will begin to compile and install.
 
 .. note:: if you change your mind, the configuration screen will not be displayed again should you stop and restart the build. Type
-   **make config && make install clean** if you need to change your selected options.
+   :command:`make config && make install clean` if you need to change your selected options.
 
 If the port has any dependencies with options, their configuration screens will be displayed and the compile will pause until it receives your input. It is a
 good idea to keep an eye on the compile until it finishes and you are returned to the command prompt.
 
-Once the port is installed, it is registered in the same package database that manages packages. This means that you can use **pkg info** to determine what
-was installed, as described in the previous section.
+Once the port is installed, it is registered in the same package database that manages packages. This means that you can use :command:`pkg info` to determine
+what was installed, as described in the previous section.
 
 Starting Installed Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8615,8 +8579,8 @@ unfamiliar with the software, you will need to spend some time at the software's
 configuration file(s) need to be edited.
 
 Most FreeBSD packages that contain a startable service include a startup script which is automatically installed to */usr/local/etc/rc.d/*. Once your
-configuration is complete, you can test that the service starts by running the script with the **onestart** option. As an example, if openvpn is installed
-into the jail, these commands will run its startup script and verify that the service started::
+configuration is complete, you can test that the service starts by running the script with the :command:`onestart` option. As an example, if openvpn is
+installed into the jail, these commands will run its startup script and verify that the service started::
 
  /usr/local/etc/rc.d/openvpn onestart
  Starting openvpn.
@@ -8634,8 +8598,8 @@ If you instead receive an error::
  Starting openvpn.
  /usr/local/etc/rc.d/openvpn: WARNING: failed to start openvpn
 
-Run **tail /var/log/messages** to see if any error messages hint at the problem. Most startup failures are related to a mis-configuration: either a typo or a
-missing option in a configuration file.
+Run :command:`tail /var/log/messages` to see if any error messages hint at the problem. Most startup failures are related to a mis-configuration: either a
+typo or a missing option in a configuration file.
 
 Once you have verified that the service starts and is working as intended, add a line to */etc/rc.conf* to ensure that the service automatically starts
 whenever the jail is started. The line to start a service always ends in *enable="YES"* and typically starts with the name of the software. For example, this
@@ -8740,7 +8704,7 @@ If you click "Display System Processes", a screen will open showing the output o
 |10000000000001F70000019B91B24E55_png|
 
 The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
-is read-only, meaning that you won't be able to issue a **kill** command within it.
+is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
 
 Shell
 =====
@@ -8764,7 +8728,7 @@ paste the text into the box that opens, and click the "OK" button to complete th
 
 While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
 Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last session.
-When you are finished using Shell, type **exit** to leave the session completely.
+When you are finished using Shell, type :command:`exit` to leave the session completely.
 
 Shell provides history (use your up arrow to see previously entered commands and press enter to repeat the currently displayed command) and tab completion
 (type a few letters and press tab to complete a command name or filename in the current directory).
@@ -8797,8 +8761,8 @@ an option that will negatively impact users of the FreeNAS® system.
 |Figure18a_png|
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
-is recommended to "Cancel" the reboot request and to periodically run **zpool status** from Shell until it is verified that the scrub or resilver process is
-complete. Once complete, the reboot request can be re-issued.
+is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from Shell until it is verified that the scrub or resilver
+process is complete. Once complete, the reboot request can be re-issued.
 
 Click the "Cancel" button if you wish to cancel the reboot request. Otherwise, click the "Reboot" button to reboot the system. Rebooting the system will
 disconnect all clients, including the web administration GUI. The URL in your web browser will change to add */system/reboot/* to the end of the IP address.
@@ -8820,7 +8784,7 @@ an option that will negatively impact users of the FreeNAS® system.
 |Figure19a_png|
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
-is recommended to "Cancel" the shutdown request and to periodically run **zpool status** from Shell_ until it is verified that the scrub or resilver
+is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from Shell_ until it is verified that the scrub or resilver
 process is complete. Once complete, the shutdown request can be re-issued.
 
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
@@ -9133,30 +9097,29 @@ Several command line utilities which are provided with FreeNAS® are demonstrate
 
 The following utilities can be used for benchmarking and performance testing:
 
-* **Iperf**: used for measuring maximum TCP and UDP bandwidth performance
+* :command:`Iperf`: used for measuring maximum TCP and UDP bandwidth performance
 
-* **Netperf**: a tool for measuring network performance
+* :command:`Netperf`: a tool for measuring network performance
 
-* **IOzone**: filesystem benchmark utility used to perform a broad filesystem analysis
+* :command:`IOzone`: filesystem benchmark utility used to perform a broad filesystem analysis
 
-* **arcstat.py**_and
-  **arc_summary.py**: used to gather ZFS ARC statistics
+* :command:`arcstat.py`_and :command:`arc_summary.py`: used to gather ZFS ARC statistics
 
-* **XDD**: a tool for measuring and characterizing disk subsystem I/O
+* :command:`XDD`: a tool for measuring and characterizing disk subsystem I/O
 
 The following utilities are specific to RAID controllers:
 
-* **tw_cli**:_used to monitor and maintain 3ware RAID controllers
+* :command:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
 
-* **MegaCli**:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
+* :command:`MegaCli`:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
-* **freenas-debug**: the backend used to dump FreeNAS® debugging information
+* :command:`freenas-debug`: the backend used to dump FreeNAS® debugging information
 
-* **tmux**: a terminal multiplexer similar to GNU screen
+* :command:`tmux`: a terminal multiplexer similar to GNU screen
 
-* **Dmidecode**: reports information about system hardware as described in the system's BIOS
+* :command:`Dmidecode`: reports information about system hardware as described in the system's BIOS
 
 Iperf
 -----
@@ -9176,12 +9139,11 @@ for the client operating system.
 
 Linux and BSD users will need to install the iperf package using their operating system's package management system.
 
-To start xjperf on Windows: unzip the downloaded file, start Command Prompt in Run as administrator mode, **cd** to the unzipped folder, and run
-**jperf.bat**.
+To start xjperf on Windows: unzip the downloaded file, start Command Prompt in Run as administrator mode, :command:`cd` to the unzipped folder, and run
+:command:`jperf.bat`.
 
-To start xjperf on Mac OS X, Linux, or BSD, unzip the downloaded file, **cd** to the unzipped directory, type
-**chmod u+x jperf.sh**, and run
-**./jperf.sh**.
+To start xjperf on Mac OS X, Linux, or BSD, unzip the downloaded file, :command:`cd` to the unzipped directory, type :command:`chmod u+x jperf.sh`, and run
+:command:`./jperf.sh`.
 
 Once the client is ready, you need to start the Iperf server on FreeNAS®. To see the available server options, open Shell and type::
 
@@ -9260,9 +9222,8 @@ example of the client running on a Windows system while an SFTP transfer is occu
 |10000000000003CA000002BC6A5C3D2E_png|
 
 Depending upon the traffic being tested (e.g. the type of share running on your network), you may need to test UDP instead of TCP. To start the iperf server
-in UDP mode, use **iperf -sDu** as the
-**u** specifies UDP; the startup message should indicate that the server is listening for UDP datagrams. If you are not sure if the traffic that you wish to
-test is UDP or TCP, run this command to determine which services are running on the FreeNAS® system::
+in UDP mode, use :command:`iperf -sDu` as the **u** specifies UDP; the startup message should indicate that the server is listening for UDP datagrams. If you
+are not sure if the traffic that you wish to test is UDP or TCP, run this command to determine which services are running on the FreeNAS® system::
 
  sockstat -4 | more
  USER	COMMAND	PID	FD PROTO	LOCAL ADDRESS	FOREIGN ADDRESS
@@ -9288,7 +9249,7 @@ test is UDP or TCP, run this command to determine which services are running on 
  root	syslogd	1089	6  udp4		127.0.0.1:514	*:*
 
 
-When you are finished testing, either type **killall iperf** or close Shell to terminate the iperf server process.
+When you are finished testing, either type :command:`killall iperf` or close Shell to terminate the iperf server process.
 
 Netperf
 -------
@@ -9296,15 +9257,15 @@ Netperf
 `Netperf <http://www.netperf.org/netperf/>`_
 is a benchmarking utility that can be used to measure the performance of unidirectional throughput and end-to-end latency.
 
-Before you can use the **netperf** command, you must start its server process using this command::
+Before you can use the :command:`netperf` command, you must start its server process using this command::
 
  netserver
  Starting netserver with host 'IN(6)ADDR_ANY' port '12865' and family AF_UNSPEC
 
-The following command will display the available options for performing tests with the **netperf** command. The
+The following command will display the available options for performing tests with the :command:`netperf` command. The
 `Netperf Manual <http://www.netperf.org/svn/netperf2/tags/netperf-2.6.0/doc/netperf.html>`_
 describes each option in more detail and explains how to perform many types of tests. It is the best reference for understanding how each test works and how
-to interpret your results. When you are finished with your tests, type **killall netserver** to stop the server process.
+to interpret your results. When you are finished with your tests, type :command:`killall netserver` to stop the server process.
 ::
 
  netperf -h |more
@@ -9359,8 +9320,8 @@ IOzone
 is a disk and filesystem benchmarking tool. It can be used to test file I/O performance for the following operations: read, write, re-read, re-write, read
 backwards, read strided, fread, fwrite, random read, pread, mmap, aio_read, and aio_write.
 
-FreeNAS® ships with IOzone, meaning that it can be run from Shell. When using IOzone on FreeNAS®, **cd** to a directory in a volume that you have permission
-to write to, otherwise you will get an error about being unable to write the temporary file.
+FreeNAS® ships with IOzone, meaning that it can be run from Shell. When using IOzone on FreeNAS®, :command:`cd` to a directory in a volume that you have
+permission to write to, otherwise you will get an error about being unable to write the temporary file.
 
 Before using IOzone, read through the
 `IOzone documentation PDF <http://www.iozone.org/docs/IOzone_msword_98.pdf>`_
@@ -9509,9 +9470,9 @@ there continues to be lots of misses and high disk I/O on cached reads, there is
 
 The
 `FreeBSD ZFS Tuning Guide <http://wiki.freebsd.org/ZFSTuningGuide>`_
-provides some suggestions for commonly tuned **sysctl** values. It should be noted that performance tuning is more of an art than a science and that any
-changes you make will probably require several iterations of tune and test. Be aware that what needs to be tuned will vary depending upon the type of workload
-and that what works for one person's network may not benefit yours.
+provides some suggestions for commonly tuned :command:`sysctl` values. It should be noted that performance tuning is more of an art than a science and that
+any changes you make will probably require several iterations of tune and test. Be aware that what needs to be tuned will vary depending upon the type of
+workload and that what works for one person's network may not benefit yours.
 
 In particular, the value of pre-fetching depends upon the amount of memory and the type of workload, as seen in these two examples:
 
@@ -9521,9 +9482,9 @@ In particular, the value of pre-fetching depends upon the amount of memory and t
 
 FreeNAS® provides two command line scripts which an be manually run from Shell:
 
-* **arc_summary.py:** provides a summary of the statistics
+* :command:`arc_summary.py`: provides a summary of the statistics
 
-* **arcstat.py:** used to watch the statistics in real time
+* :command:`arcstat.py`: used to watch the statistics in real time
 
 The advantage of these scripts is that they can be used to provide real time (right now) information, whereas the current GUI reporting mechanism is designed
 to only provide graphs charted over time.
@@ -9757,7 +9718,7 @@ This command provides a brief description of the fields in the output::
 		vfs.zfs.trim.txg_delay		32
 
 When reading the tunable values, 0 means no, 1 typically means yes, and any other number represents a value. To receive a brief description of a **sysctl**
-value, use **sysctl -d**. For example::
+value, use :command:`sysctl -d`. For example::
 
  sysctl -d vfs.zfs.zio.use_uma
  vfs.zfs.zio.use_uma: Use uma(9) for ZIO allocations
@@ -9767,7 +9728,7 @@ unfamiliar with. **Do not change a tunable's value without researching it first.
 do not make one up. Instead, research examples of beneficial values that match your workload.
 
 If you decide to change any of the ZFS tunables, continue to monitor the system to determine the effect of the change. It is recommended that you test your
-changes first at the command line using **sysctl**. For example, to disable pre-fetch (i.e. change disable to 1 or yes)::
+changes first at the command line using :command:`sysctl`. For example, to disable pre-fetch (i.e. change disable to *1* or  yes)::
 
  sysctl vfs.zfs.prefetch_disable=1
  vfs.zfs.prefetch_disable: 0 -> 1
@@ -9891,17 +9852,16 @@ To perform a random I/O test on the specified disk::
 This random I/O test will read from the target device at some random location using a fixed request size of 8 blocks until it has read 16 MB. It will do this
 3 times and display performance information for each pass. Since this is a random I/O pattern, the read requests are distributed over a range of 4,000,000
 blocks. This is useful in constraining the area over which the random locations are chosen from. The same seek locations are used for each pass in order to
-generate reproducible results. In fact, upon each invocation of **xdd** using the same parameters, the same random locations are generated each time. This
-allows the user to change the disk or starting offset and observe the effects. The random locations may be changed from pass to pass within an **xdd** run by
-using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to run using the
-**–seek seed** option to specify a different random number generation seed value for each invocation of
-**xdd**.
+generate reproducible results. In fact, upon each invocation of :command:`xdd` using the same parameters, the same random locations are generated each time.
+This allows the user to change the disk or starting offset and observe the effects. The random locations may be changed from pass to pass within an
+:command:`xdd` run by using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to
+run using the **–seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
 
 tw_cli
 ------
 
-FreeNAS® includes the **tw_cli** command line utility for providing controller, logical unit, and drive management for AMCC/3ware ATA RAID Controllers. The
-supported models are listed in the man pages for the
+FreeNAS® includes the :command:`tw_cli` command line utility for providing controller, logical unit, and drive management for AMCC/3ware ATA RAID Controllers.
+The supported models are listed in the man pages for the
 `twe(4) <http://www.freebsd.org/cgi/man.cgi?query=twe>`_
 and
 `twa(4) <http://www.freebsd.org/cgi/man.cgi?query=twa>`_
@@ -9911,8 +9871,8 @@ Before using this command, read its
 `man page <http://www.cyberciti.biz/files/tw_cli.8.html>`_
 as it describes the terminology and provides some usage examples.
 
-If you type **tw_cli** in Shell, the prompt will change, indicating that you have entered interactive mode where you can run all sorts of maintenance commands
-on the controller and its arrays.
+If you type :command:`tw_cli` in Shell, the prompt will change, indicating that you have entered interactive mode where you can run all sorts of maintenance
+commands on the controller and its arrays.
 
 Alternately, you can specify one command to run. For example, to view the disks in the array::
 
@@ -9990,11 +9950,11 @@ contains a handy wrapper script that will notify you of errors.
 MegaCli
 -------
 
-**MegaCli** is the command line interface for the LSI MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
+:command:`MegaCli` is the command line interface for the LSI MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
 `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
 utility which can be used to configure and manage connected storage devices.
 
-The **MegaCli** command is quite complex with several dozen options. While it is fully documented in this 442 page
+The :command:`MegaCli` command is quite complex with several dozen options. While it is fully documented in this 442 page
 `PDF <http://www.lsi.com/downloads/Public/MegaRAID%20Common%20Files/SASUG_51530-00_RevG.pdf>`_
 , the commands demonstrated in the
 `Emergency Cheat Sheet <http://tools.rapidsoft.de/perc/perc-cheat-sheet.html>`_
@@ -10004,8 +9964,8 @@ freenas-debug
 -------------
 
 The FreeNAS® GUI provides an option to save debugging information to a text file using
-:menuselection:`System --> Advanced --> Save Debug`. This debugging information is created by the **freenas-debug** command line utility and a copy of the
-information is saved to */var/tmp/fndebug*.
+:menuselection:`System --> Advanced --> Save Debug`. This debugging information is created by the :command:`freenas-debug` command line utility and a copy of
+the information is saved to */var/tmp/fndebug*.
 
 Using Shell, you can run this command manually to gather the specific debugging information that you need. To see the available options, type::
 
@@ -10043,23 +10003,21 @@ tmux
 is a terminal multiplexer which enables a number of terminals to be created, accessed, and controlled from a single screen. tmux is an alternative to GNU
 screen. Similar to screen, tmux can be detached from a screen and continue running in the background, then later reattached.
 
-To start a session, simply type **tmux**. As seen in Figure 23.9a, a new session with a single window will open with a status line at the bottom of the
+To start a session, simply type :command:`tmux`. As seen in Figure 23.9a, a new session with a single window will open with a status line at the bottom of the
 screen. This line shows information on the current session and is used to enter interactive commands.
 
 **Figure 23.9a: tmux Session**
 
 |Figure239a_png|
 
-To create a second window, press "ctrl b" then ". To close a window, type **exit** within the window.
+To create a second window, press "ctrl b" then ". To close a window, type :command:`exit` within the window.
 
 `tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi?query=tmux>`_
-lists all of the key bindings and commands for interacting with **tmux** windows and sessions.
+lists all of the key bindings and commands for interacting with :command:`tmux` windows and sessions.
 
-If you close Shell while **tmux** is running, it will detach its session. The next time you open Shell, run
-**tmux attach** to return to the previous session. To leave the
-**tmux** session entirely, type
-**exit**; if you have multiple windows running, you will need to
-**exit** out of each first.
+If you close Shell while :command:`tmux` is running, it will detach its session. The next time you open Shell, run :command:`tmux attach` to return to the
+previous session. To leave the :command:`tmux` session entirely, type :command:`exit`; if you have multiple windows running, you will need to
+:command:`exit` out of each first.
 
 Dmidecode
 ---------
@@ -10199,8 +10157,8 @@ in a virtual environment or on a test system. If you are using a virtual environ
 intructions can be found
 `here <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/bsdinstall.html>`_.
 
-After booting into the newly installed FreeBSD system, become the superuser (type **su** and enter the
-*root* user's password) and run the following commands. First, install the software you'll need and refresh your path so it is aware of the new binaries::
+After booting into the newly installed FreeBSD system, become the superuser (type :command:`su` and enter the *root* user's password) and run the following
+commands. First, install the software you'll need and refresh your path so it is aware of the new binaries::
 
  pkg_add -r git-subversion
  pkg_add -r cdrtools
@@ -10286,13 +10244,13 @@ The *freenas/examples/api/* directory contains some API usage examples. This sec
 
 In order to create a customized script based on this example, you will need a FreeNAS® system running at least version 9.2.0. If you would like to test the
 scripts directly on the FreeNAS® system, create a user account. When creating this user account, select an existing volume or dataset for the user's "Home
-Directory". Once the user is created, start the SSH service using :menuselection:`Services --> Control Services`. That user will now be able to **ssh** to the
-IP address of the FreeNAS® system in order to create and run scripts. Alternately, you can test your scripts on any system that has the software mentioned in
-the previous section installed.
+Directory". Once the user is created, start the SSH service using :menuselection:`Services --> Control Services`. That user will now be able to :command:`ssh`
+to the IP address of the FreeNAS® system in order to create and run scripts. Alternately, you can test your scripts on any system that has the software
+mentioned in the previous section installed.
 
 To customize this script, copy the contents of this example into a filename that ends in *.py*. The text that is highlighted in red below should be modified
 in your copy in order to match the needs of the user being created. The text in black should remain as-is. After saving your changes, run the script by typing
-**python scriptname.py**. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the FreeNAS® GUI.
+:command:`python scriptname.py`. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the FreeNAS® GUI.
 
 Here is the example script with line numbers. Do **not** include the line numbers in your script. Instead, refer to the line numbers in the explanation below.
 ::
