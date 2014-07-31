@@ -1587,11 +1587,11 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Username                   | string          | greyed out if user already created; maximum 32 characters to allow for longer AD names though a maximum of                                            |
-|                            |                 | 8 is recommended for interoperability; can include numerals but can not include a space                                                               | 
+|                            |                 | 8 is recommended for interoperability; can include numerals but can not include a space                                                               |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Create a new primary group | checkbox        | by default, a primary group with the same name as the user will be created; uncheck this box to select a                                              |
-|                            |                 | different primary group name; in Unix,                                                                                                     |          |
+|                            |                 | different primary group name; in Unix,                                                                                                                |
 |                            |                 | `a primary group is not the same as a secondary/auxiliary group <http://linuxers.org/article/difference-between-primary-and-secondary-groups-linux>`_ |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1599,14 +1599,14 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | not give a user **su** permissions if                                                                                                                 |
 |                            |                 | *wheel* is their primary group; to give a user                                                                                                        |
 |                            |                 | **su** access, add them to the                                                                                                                        |
-|                            |                 | *wheel* group in the Auxiliary groups section                                                                                                         |
+|                            |                 | *wheel* group in "Auxiliary groups"                                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Create Home Directory In   | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
 |                            |                 | **existing** volume or dataset that the user will be assigned permission to access                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Home Directory Mode        | checkboxes      | only available in Advanced Mode and will be read-only for built-in users; sets default permissions of user's                                          |
+| Home Directory Mode        | checkboxes      | only available in "Advanced Mode" and will be read-only for built-in users; sets default permissions of user's                                        |
 |                            |                 | home directory                                                                                                                                        |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -1619,7 +1619,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | E-mail                     | string          | email address associated with the account                                                                                                             |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Password                   | string          | mandatory unless check box to disable password logins                                                                                                 |
+| Password                   | string          | mandatory unless check box "Disable password login"                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
@@ -1628,7 +1628,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
 |                            |                 | setting, set a password for the user using the "Change Password" button for the user in "View Users";                                                 |
-|                            |                 | checking this box will grey out *Lock user* which is mutually exclusive                                                                               |
+|                            |                 | checking this box will grey out "Lock user" which is mutually exclusive                                                                               |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Lock user                  | checkbox        | a checked box prevents user from logging in until the account is unlocked (box is unchecked); checking this                                           |
@@ -1788,8 +1788,8 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 | Address     | string    | name of NTP server                                                                                                    |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Burst       | checkbox  | recommended when *Max. Poll* is greater than *10*; only use on your own servers i.e. **do not**                       |
-|             |           | use with a public NTP server                                                                                          |
+| Burst       | checkbox  | recommended when "Max. Poll" is greater than *10*; only use on your own servers i.e.                                  |
+|             |           | **do not** use with a public NTP server                                                                               |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | IBurst      | checkbox  | speeds the initial synchronization (seconds instead of minutes)                                                       |
@@ -1799,15 +1799,11 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
-|             |           | *4* or higher than                                                                                                    |
-|             |           | *Max. Poll*                                                                                                           |
-|             |           |                                                                                                                       |
+|             |           | *4* or higher than "Max. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
-|             |           | *17* or lower than                                                                                                    |
-|             |           | *Min. Poll*                                                                                                           |
-|             |           |                                                                                                                       |
+|             |           | *17* or lower than "Min. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 | Force       | checkbox  | forces the addition of the NTP server, even if it is currently unreachable                                            |
@@ -1971,13 +1967,15 @@ that can be configured using the Email tab.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| From email           | string               | the **From** email address to be used when sending email notifications                          |
+| From email           | string               | the **from** email address to be used when sending email notifications                          |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Outgoing mail server | string or IP address | hostname or IP address of SMTP server                                                           |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Port to connect to   | integer              | SMTP port number, typically 25, 465 (secure SMTP), or 587 (submission)                          |
+| Port to connect to   | integer              | SMTP port number, typically *25*,                                                               |
+|                      |                      | *465* (secure SMTP), or                                                                         |
+|                      |                      | *587* (submission)                                                                              |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | TLS/SSL              | drop-down menu       | encryption type; choices are *Plain*,                                                           |
@@ -1998,8 +1996,8 @@ that can be configured using the Email tab.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
-|                      |                      | **To** email address by clicking the "Change E-mail" button for the                             |
-|                      |                      | *root* account in View Users                                                                    |
+|                      |                      | **to** email address by clicking the "Change E-mail" button for the                             |
+|                      |                      | *root* account in "View Users"                                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -2355,8 +2353,8 @@ can be configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 |                                  |                             |                                                                                           |
 +==================================+=============================+===========================================================================================+
-| Path                             | browse button               | browse to the path that you wish to copy; note that a path length                         |
-|                                  |                             | greater than 255 characters will fail                                                     |
+| Path                             | browse button               | browse to the path that you wish to copy; note that a path length greater than 255        |
+|                                  |                             | characters will fail                                                                      |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy                      |
@@ -2372,7 +2370,7 @@ can be configured when creating an rsync task.
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |
 |                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
-|                                  |                             | of rsync server or in the Rsync Modules of another                                        |
+|                                  |                             | of rsync server or in the "Rsync Modules" of another                                      |
 |                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |
 |                                  |                             | pull (e.g. */mnt/volume*)                                                                 |
 |                                  |                             |                                                                                           |
@@ -2742,15 +2740,15 @@ the FreeNAS® system in the "Host name database" field.
 | Nameserver 3           | IP address | tertiary DNS server                                                                                                  |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| HTTP Proxy             | string     | enter the proxy information for the network in the format ''http://my.proxy.server:3128'' or                         |
-|                        |            | ''http://user@password:my.proxy.server:3128''                                                                        |
+| HTTP Proxy             | string     | enter the proxy information for the network in the format *http://my.proxy.server:3128* or                           |
+|                        |            | *http://user@password:my.proxy.server:3128*                                                                          |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable netwait feature | checkbox   | if enabled, network services will not be started at boot time until the interface is able to ping the addresses      |
-|                        |            | listed in *Netwait IP list*                                                                                          |
+|                        |            | listed in "Netwait IP list"                                                                                          |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| Netwait IP list        | string     | if *Enable netwait feature* is checked, list of IP addresses to ping; otherwise, ping the default gateway            |
+| Netwait IP list        | string     | if "Enable netwait feature" is checked, list of IP addresses to ping; otherwise, ping the default gateway            |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Host name database     | string     | used to add one entry per line which will be appended to */etc/hosts*; use the format                                |
@@ -2796,10 +2794,10 @@ add an interface or edit an already configured interface.
 | DHCP                | checkbox       | requires static IPv4 or IPv6 configuration if unchecked; note that only one interface can be configured for DHCP    |
 |                     |                |                                                                                                                     |
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv4 Address        | IP address     | set if *DHCP* unchecked                                                                                             |
+| IPv4 Address        | IP address     | set if "DHCP" unchecked                                                                                             |
 |                     |                |                                                                                                                     |
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv4 Netmask        | drop-down menu | set if *DHCP* unchecked                                                                                             |
+| IPv4 Netmask        | drop-down menu | set if "DHCP" unchecked                                                                                             |
 |                     |                |                                                                                                                     |
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 | Auto configure IPv6 | checkbox       | only one interface can be configured for this option; requires manual configuration if unchecked and wish to use    |
@@ -2813,8 +2811,8 @@ add an interface or edit an already configured interface.
 |                     |                |                                                                                                                     |
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 | Options             | string         | additional parameters from                                                                                          |
-|                     |                | `ifconfig(8) <http://www.freebsd.org/cgi/man.cgi?query=ifconfig>`_                                                  |
-|                     |                | , separate multiple parameters with a space; for example: *mtu 9000* will increase the MTU for interfaces that      |
+|                     |                | `ifconfig(8) <http://www.freebsd.org/cgi/man.cgi?query=ifconfig>`_,                                                 |
+|                     |                | separate multiple parameters with a space; for example: *mtu 9000* will increase the MTU for interfaces that        |
 |                     |                | support jumbo frames                                                                                                |
 |                     |                |                                                                                                                     |
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
@@ -3007,10 +3005,10 @@ access into the GUI through the new lagg interface.
 | DHCP                | checkbox       | check if the lagg device gets its IP address info from DHCP server               |
 |                     |                |                                                                                  |
 +---------------------+----------------+----------------------------------------------------------------------------------+
-| IPv4 Address        | string         | mandatory if DHCP is left unchecked                                              |
+| IPv4 Address        | string         | mandatory if "DHCP" is left unchecked                                            |
 |                     |                |                                                                                  |
 +---------------------+----------------+----------------------------------------------------------------------------------+
-| IPv4 Netmask        | drop-down menu | mandatory if DHCP is left unchecked                                              |
+| IPv4 Netmask        | drop-down menu | mandatory if "DHCP" is left unchecked                                            |
 |                     |                |                                                                                  |
 +---------------------+----------------+----------------------------------------------------------------------------------+
 | Auto configure IPv6 | checkbox       | check only if DHCP server available to provide IPv6 address info                 |
@@ -3050,7 +3048,9 @@ The configurable options are summarized in Table 7.4b.
 |                      |                |                                                                                                |
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 | LAGG Priority Number | integer        | order of selected interface within the lagg; configure a failover to set the master interface  |
-|                      |                | to 0 and the other interfaces to 1, 2, etc.                                                    |
+|                      |                | to *0* and the other interfaces to                                                             |
+|                      |                | *1*,                                                                                           |
+|                      |                | *2*, etc.                                                                                      |
 |                      |                |                                                                                                |
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 | LAGG Physical NIC    | drop-down menu | physical interface of the selected member                                                      |
@@ -3311,7 +3311,7 @@ Table 8.1a summarizes the available options.
 | Specify custom path | checkbox  | optional; useful for creating a */var* for persistent log storage                                                        |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Path                | string    | only available when *Specify custom path* is checked; must be full name of volume (e.g.                                  |
+| Path                | string    | only available when "Specify custom path" is checked; must be full name of volume (e.g.                                  |
 |                     |           | */mnt/var*) and if no path is provided, it will append the                                                               |
 |                     |           | *Volume name* to                                                                                                         |
 |                     |           | */mnt*                                                                                                                   |
@@ -3500,19 +3500,20 @@ Table 8.1c summarizes the configuration options of this screen.
 |                  |                |                                                                                            |
 +==================+================+============================================================================================+
 | Volume name      | string         | ZFS volumes must conform to these                                                          |
-|                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_       |
-|                  |                | ; it is recommended to choose a name that will stick out in the logs (e.g.**not**          |
+|                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_;      |
+|                  |                | it is recommended to choose a name that will stick out in the logs (e.g.**not**            |
 |                  |                | *data* or                                                                                  |
 |                  |                | *freenas*)                                                                                 |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Volume to extend | drop-down menu | requires an existing ZFS pool to extend; see Extending a ZFS Volume for instructions       |
+| Volume to extend | drop-down menu | requires an existing ZFS pool to extend; see the section on Extending a ZFS Volume for     |
+|                  |                | instructions                                                                               |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Encryption       | checkbox       | read the section on Encryption before choosing to use encryption                           |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Available disks  | display        | displays the size of available disks; hover over *show* to list the available device names |
+| Available disks  | display        | displays the size of available disks; hover over "show" to list the available device names |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Volume layout    | drag and drop  | click and drag the icon to select the desired number of disks                              |
@@ -3705,8 +3706,8 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 |               |                  |                                                                                                |
 +===============+==================+================================================================================================+
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
-|               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_          |
-|               |                  | ; it is recommended to choose a name that will stick out in the logs (e.g.                     |
+|               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_;         |
+|               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
 |               |                  | **not data or freenas**)                                                                       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
@@ -3868,16 +3869,16 @@ click the "Advanced Mode" button or configure the system to always display these
 |                          |                     | avoids producing log traffic when reading files and can result in significant performance gains           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in Advanced Mode; default of 0 is off; can specify M (megabyte), G (gigabyte), or T        |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of 0 is off; can specify M (megabyte), G (gigabyte), or T      |
 |                          |                     | (terabyte) as in *20G* for 20 GB, can also include a decimal point (e.g.                                  |
 |                          |                     | *2.8G*)                                                                                                   |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in Advanced Mode; default of *0* is off; can specify M (megabyte), G (gigabyte), or T      |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* is off; can specify M (megabyte), G (gigabyte), or T    |
 | and all children         |                     | (terabyte) as in *20G* for 20 GB                                                                          |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in Advanced Mode; default of *0* is unlimited (besides hardware); can specify M            |
+| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited (besides hardware); can specify M          |
 | dataset                  |                     | (megabyte), G (gigabyte), or T (terabyte) as in *20G* for 20 GB                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
@@ -3888,9 +3889,8 @@ click the "Advanced Mode" button or configure the system to always display these
 | ZFS Deduplication        | drop-down menu      | read the section on Deduplication before making a change to this setting                                  |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Record Size              | drop-down menu      | only available in Advanced Mode; while ZFS automatically adapts the record size dynamically to adapt to   |
-|                          |                     | data, if the data has a fixed size (e.g. a database), setting the *Record Size* may result in better      |
-|                          |                     | performance                                                                                               |
+| Record Size              | drop-down menu      | only available in "Advanced Mode"; while ZFS automatically adapts the record size dynamically to adapt to |
+|                          |                     | data, if the data has a fixed size (e.g. a database), matching that size may result in better performance |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 
@@ -3969,7 +3969,7 @@ Mode" button or configure the system to always display these settings by checkin
 | Sparse volume      | checkbox       | used to provide thin provisioning; if this option is selected, writes will fail when the pool is low on space        |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Block size         | drop-down menu | only available in Advanced Mode; can be set to match the block size of the filesystem which will be formatted onto   |
+| Block size         | drop-down menu | only available in "Advanced Mode"; can be set to match the block size of the filesystem which will be formatted onto |
 |                    |                | the iSCSI target                                                                                                     |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -4290,7 +4290,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
-|                |                            | unchecked, only one snapshot is taken of the specified *Volume/Datset                                        |
+|                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |
@@ -4520,7 +4520,7 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Dedicated User Enabled    | checkbox       | allows a user account other than root to be used for replication                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Dedicated User            | drop-down menu | only available if *Dedicated User Enabled* is checked; select the user account to be used for replication    |
+| Dedicated User            | drop-down menu | only available if "Dedicated User Enabled" is checked; select the user account to be used for replication    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                              |
@@ -4751,7 +4751,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use keytab               | checkbox      | only available in Advanced Mode; if selected, browse to the *Kerberos keytab*                                                              |
+| Use keytab               | checkbox      | only available in "Advanced Mode"; if selected, browse to the "Kerberos keytab"                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Kerberos keytab          | browse button | only available in Advanced Mode; browse to the location of the keytab created using the instructions in Using a                            |
@@ -4765,42 +4765,42 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Certificate              | browse button |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Verbose logging          | checkbox      | only available in Advanced Mode; if checked, logs attempts to join the domain to */var/log/messages*                                       |
+| Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| UNIX extensions          | checkbox      | only available in Advanced Mode; **only** check this box if the AD server has been explicitly configured to map                            |
+| UNIX extensions          | checkbox      | only available in "Advanced Mode"; **only** check this box if the AD server has been explicitly configured to map                          |
 |                          |               | permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get                              |
 |                          |               | mapped to the UID/GUID range configured in Samba                                                                                           |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Trusted Domains    | checkbox      | only available in Advanced Mode; should only be enabled if network has active                                                              |
+| Allow Trusted Domains    | checkbox      | only available in "Advanced Mode"; should only be enabled if network has active                                                            |
 |                          |               | `domain/forest trusts <http://technet.microsoft.com/en-us/library/cc757352%28WS.10%29.aspx>`_                                              |
 |                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic,                              |
 |                          |               | slowing down the ability to filter through user/group information                                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use default domain       | checkbox      | only available in Advanced Mode; when unchecked, the domain name is prepended to the username; if                                          |
-|                          |               | *Allow Trusted Domains* is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
+| Use default domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
+|                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Controller        | string        | only available in Advanced Mode; can be used to specify hostname of domain controller to use                                               |
+| Domain Controller        | string        | only available in "Advanced Mode"; can be used to specify hostname of domain controller to use                                             |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Global Catalog Server    | string        | only available in Advanced Mode; can be used to specify hostname of global catalog server to use                                           |
+| Global Catalog Server    | string        | only available in "Advanced Mode"; can be used to specify hostname of global catalog server to use                                         |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Server          | string        | only available in Advanced Mode; can be used to specify hostname of kerberos server to use                                                 |
+| Kerberos Server          | string        | only available in "Advanced Mode"; can be used to specify hostname of Kerberos server to use                                               |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of kerberos password server to use                                        |
+| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of Kerberos password server to use                                        |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| AD timeout               | integer       | only available in Advanced Mode; in seconds, increase if the AD service does not start after connecting to the                             |
+| AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| DNS timeout              | integer       | only available in Advanced Mode; in seconds, increase if AD DNS queries timeout                                                            |
+| DNS timeout              | integer       | only available in "Advanced Mode"; in seconds, increase if AD DNS queries timeout                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Idmap backend            | drop-down     |                                                                                                                                            |
@@ -4958,7 +4958,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind password           | string         | password for *Root bind DN*                                                                           |
+| Bind password           | string         | password for "Root bind DN"                                                                           |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
@@ -5205,7 +5205,7 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Time Machine                 | checkbox      | due to a limitation in how Mac deals with low-diskspace issues when multiple Mac's share the same volume,   |
-|                              |               | checking *Time Machine* on multiple shares may result in intermittent failed backups                        |
+|                              |               | checking "Time Machine" on multiple shares may result in intermittent failed backups                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Zero Device Numbers          | checkbox      | only available in Advanced Mode; enable when the device number is not constant across a reboot              |
@@ -5377,7 +5377,7 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | Path                | browse button  | browse to the volume/dataset/directory to share; click "Add extra path" to select multiple paths                   |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Comment             | string         | used to set the share name; if left empty, share name will be the list of selected Paths                           |
+| Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Authorized networks | string         | space delimited list of allowed network addresses in the form 1.2.3.0/24 where the number after the slash is a     |
@@ -5674,22 +5674,22 @@ started.
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
-|                              |               | guest user defined in Services ->  CIFS                                                                     |
+|                              |               | guest user defined in the CIFS service                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Only Allow Guest Access      | checkbox      | requires *Allow guest access* to also be checked; forces guest access for all connections                   |
+| Only Allow Guest Access      | checkbox      | requires "Allow guest access" to also be checked; forces guest access for all connections                   |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Hosts Allow                  | string        | only available in Advanced Mode; comma, space, or tab delimited list of allowed hostnames or IP addresses;  |
+| Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
 |                              |               | see NOTE below                                                                                              |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Hosts Deny                   | string        | only available in Advanced Mode; comma, space, or tab delimited list of denied hostnames or IP addresses;   |
+| Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
 |                              |               | "Hosts Allow"; see NOTE below                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters         | string        | only available in Advanced Mode; add additional smb4.conf parameters not covered by other option fields     |
+| Auxiliary Parameters         | string        | only available in "Advanced Mode"; add additional smb4.conf parameters not covered by other option fields   |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -5949,7 +5949,7 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 | Max Connections         | integer        | maximum number of simultaneous connections                                                                      |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Enable home directories | checkbox       | if checked, any user home directories located under *Home directories* will be available over the share         |
+| Enable home directories | checkbox       | if checked, any user home directories located under "Home directories" will be available over the share         |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
@@ -6082,7 +6082,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Home directories                 | browse button  | select volume/dataset where the home directories will be created                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Homes auxiliary parameters       | string         | options specific to the [homes] section of *smb.conf*; for example,                                   |
+| Homes auxiliary parameters       | string         | options specific to the [homes] section of *smb4.conf*; for example,                                  |
 |                                  |                | **hide dot files = yes** hides files beginning with a dot in home directories                         |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6369,28 +6369,28 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | Allow Anonymous Login                                        | checkbox       | enables anonymous FTP logins with access to the directory specified in              |
-|                                                              |                | *Path*                                                                              |
+|                                                              |                | "Path"                                                                              |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | Path                                                         | browse button  | root directory for anonymous FTP connections                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Allow Local User Login                                       | checkbox       | required if *Anonymous Login* is disabled                                           |
+| Allow Local User Login                                       | checkbox       | required if "Anonymous Login" is disabled                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | Display Login                                                | string         | message displayed to local login users after authentication; not displayed          |
 |                                                              |                | to anonymous login users                                                            |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| File Permission                                              | checkboxes     | only available in Advanced Mode; sets default permissions for newly created         |
+| File Permission                                              | checkboxes     | only available in "Advanced Mode"; sets default permissions for newly created       |
 |                                                              |                | files                                                                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Directory Permission                                         | checkboxes     | only available in Advanced Mode; sets default permissions for newly created         |
+| Directory Permission                                         | checkboxes     | only available in "Advanced Mode"; sets default permissions for newly created       |
 |                                                              |                | directories                                                                         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Enable                                                       | checkbox       | only available in Advanced Mode; enables File eXchange Protocol which is            |
+| Enable                                                       | checkbox       | only available in "Advanced Mode"; enables File eXchange Protocol which is          |
 | `FXP <http://en.wikipedia.org/wiki/File_eXchange_Protocol>`_ |                | discouraged as it makes the server vulnerable to FTP bounce attacks                 |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
@@ -6401,7 +6401,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | is a member of group *wheel*                                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Require IDENT Authentication                                 | checkbox       | only available in Advanced Mode; will result in timeouts if identd is not           |
+| Require IDENT Authentication                                 | checkbox       | only available in "Advanced Mode"; will result in timeouts if **identd** is not     |
 |                                                              |                | running on the client                                                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
@@ -6413,101 +6413,101 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | NAT device                                                                          |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Minimum passive port                                         | integer        | only available in Advanced Mode; used by clients in PASV mode, default of *0*       |
+| Minimum passive port                                         | integer        | only available in "Advanced Mode"; used by clients in PASV mode, default of *0*     |
 |                                                              |                | means any port above 1023                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Maximum passive port                                         | integer        | only available in Advanced Mode; used by clients in PASV mode, default of *0*       |
+| Maximum passive port                                         | integer        | only available in "Advanced Mode"; used by clients in PASV mode, default of *0*     |
 |                                                              |                | means any port above 1023                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Local user upload bandwidth                                  | integer        | only available in Advanced Mode; in KB/s, default of *0* means unlimited            |
+| Local user upload bandwidth                                  | integer        | only available in "Advanced Mode"; in KB/s, default of *0* means unlimited          |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Local user download bandwidth                                | integer        | only available in Advanced Mode; in KB/s, default of *0* means unlimited            |
+| Local user download bandwidth                                | integer        | only available in "Advanced Mode"; in KB/s, default of *0* means unlimited          |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Anonymous user upload bandwidth                              | integer        | only available in Advanced Mode; in KB/s, default of *0* means unlimited            |
+| Anonymous user upload bandwidth                              | integer        | only available in "Advanced Mode"; in KB/s, default of *0* means unlimited          |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Anonymous user download bandwidth                            | integer        | only available in Advanced Mode; in KB/s, default of *0*  means unlimited           |
+| Anonymous user download bandwidth                            | integer        | only available in "Advanced Mode"; in KB/s, default of *0*  means unlimited         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Enable TLS                                                   | checkbox       | only available in Advanced Mode; enables encrypted connections; if not              |
+| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections; if not            |
 |                                                              |                | provided, a certificate will automatically be generated and will appear in the      |
-|                                                              |                | "Certificate and private key" box once you click OK                                 |
+|                                                              |                | "Certificate and private key" box once you click "OK"                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS policy                                                   | drop-down menu | only available in Advanced Mode; the selected policy defines whether the            |
+| TLS policy                                                   | drop-down menu | only available in "Advanced Mode"; the selected policy defines whether the          |
 |                                                              |                | control channel, data channel, both channels, or neither channel, of an FTP         |
 |                                                              |                | session must occur over SSL/TLS; the policies are described |                       |
 |                                                              |                | `here <http://www.proftpd.org/docs/directives/linked/config_ref_TLSRequired.html>`_ |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS allow client renegotiations                              | checkbox       | only available in Advanced Mode; checking this box is **not** recommended as        |
+| TLS allow client renegotiations                              | checkbox       | only available in "Advanced Mode"; checking this box is **not** recommended as      |
 |                                                              |                | it breaks several security measures; for this and the rest of the TLS fields,       |
 |                                                              |                | refer to                                                                            |
 |                                                              |                | `mod_tls <http://www.proftpd.org/docs/contrib/mod_tls.html>`_                       |
 |                                                              |                | for more details                                                                    |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS allow dot login                                          | checkbox       | only available in Advanced Mode; if checked, the user's home directory is           |
+| TLS allow dot login                                          | checkbox       | only available in "Advanced Mode"; if checked, the user's home directory is         |
 |                                                              |                | checked for a *.tlslogin* file which contains one or more PEM-encoded               |
 |                                                              |                | certificates; if not found, the user will be prompted for password                  |
 |                                                              |                | authentication                                                                      |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS allow per user                                           | checkbox       | only available in Advanced Mode; if checked, the user's password may be sent        |
+| TLS allow per user                                           | checkbox       | only available in "Advanced Mode"; if checked, the user's password may be sent      |
 |                                                              |                | unencrypted                                                                         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS common name required                                     | checkbox       | only available in Advanced Mode; if checked, the common name in the                 |
+| TLS common name required                                     | checkbox       | only available in "Advanced Mode"; if checked, the common name in the               |
 |                                                              |                | certificate must match the FQDN of the host                                         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS enable diagnostics                                       | checkbox       | only available in Advanced Mode; if checked when troubleshooting a                  |
+| TLS enable diagnostics                                       | checkbox       | only available in "Advanced Mode"; if checked when troubleshooting a                |
 |                                                              |                | connection, will log more verbosely                                                 |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS export certificate data                                  | checkbox       | only available in Advanced Mode; if checked, exports the certificate                |
+| TLS export certificate data                                  | checkbox       | only available in "Advanced Mode"; if checked, exports the certificate              |
                                                                |                | environment variables                                                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS no certificate request                                   | checkbox       | only available in Advanced Mode; try checking this box if the client can not        |
+| TLS no certificate request                                   | checkbox       | only available in "Advanced Mode"; try checking this box if the client can not      |
 |                                                              |                | connect and you suspect that the client software is not properly handling           |
 |                                                              |                | the server's certificate request                                                    |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS no empty fragments                                       | checkbox       | only available in Advanced Mode; checking this box is **not**                       |
+| TLS no empty fragments                                       | checkbox       | only available in "Advanced Mode"; checking this box is **not**                     |
 |                                                              |                | recommended as it bypasses a security mechanism                                     |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS no session reuse required                                | checkbox       | only available in Advanced Mode; checking this box reduces the security of          |
+| TLS no session reuse required                                | checkbox       | only available in "Advanced Mode"; checking this box reduces the security of        |
 |                                                              |                | the connection so only do so if the client does not understand reused SSL           |
 |                                                              |                | sessions                                                                            |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS export standard vars                                     | checkbox       | only available in Advanced Mode; if checked, sets several environment               |
+| TLS export standard vars                                     | checkbox       | only available in "Advanced Mode"; if checked, sets several environment             |
 |                                                              |                | variables                                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS use implicit SSL                                         | checkbox       | only available in Advanced Mode; if checked, will break clients that expect         |
+| TLS use implicit SSL                                         | checkbox       | only available in "Advanced "; if checked, will break clients that expect           |
 |                                                              |                | explicit connections                                                                |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS DNS name required                                        | checkbox       | only available in Advanced Mode; if checked, the client's DNS name must             |
+| TLS DNS name required                                        | checkbox       | only available in "Advanced Mode"; if checked, the client's DNS name must           |
 |                                                              |                | resolve to its IP address and the cert must contain the same DNS name               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS IP address required                                      | checkbox       | only available in Advanced Mode; if checked, the client's certificate must          |
+| TLS IP address required                                      | checkbox       | only available in "Advanced Mode"; if checked, the client's certificate must        |
 |                                                              |                | contain the IP address that matches the IP address of the client                    |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Certificate and private key                                  | string         | only available in Advanced Mode; the SSL certificate and private key to be          |
+| Certificate and private key                                  | string         | only available in "Advanced Mode"; the SSL certificate and private key to be        |
 |                                                              |                | used for TLS FTP connections                                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Auxiliary parameters                                         | string         | only available in Advanced Mode; only available in Advanced Mode; include           |
+| Auxiliary parameters                                         | string         | only available in "Advanced Mode"; only available in Advanced Mode; include         |
 |                                                              |                | `proftpd(8) <http://linux.die.net/man/8/proftpd>`_                                  |
 |                                                              |                | parameters not covered elsewhere in this screen                                     |
 |                                                              |                |                                                                                     |
@@ -6719,22 +6719,22 @@ Table 11.7a summarizes the settings that can be configured when adding an author
 | **Setting** | **Value** | **Description**                                                                                                                  |
 |             |           |                                                                                                                                  |
 +=============+===========+==================================================================================================================================+
-| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of 1    |
-|             |           | will inherit the authentication profile associated with Group 1                                                                  |
+| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of *1*  |
+|             |           | will inherit the authentication profile associated with Group *1*                                                                |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 | User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
 |             |           | initiator name as the user                                                                                                       |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with *User*; the iSCSI standard requires that this be at least 12 characters long                      |
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as *User*                               |
+| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the Secret**; required if the                                          |
-|             |           | *Peer User* is set                                                                                                               |
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
+|             |           | "Peer User" is set                                                                                                               |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 
@@ -6790,31 +6790,31 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 | **Setting**        | **Value**      | **Description**                                                                                                      |
 |                    |                |                                                                                                                      |
 +====================+================+======================================================================================================================+
-| Extent Name        | string         | name of extent; if the *Extent size* is not 0, it can not be an existing file within the volume/dataset              |
+| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent Type        | drop-down menu | select from *File* or                                                                                                |
 |                    |                | *Device*                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use 0 as the                               |
-|                    |                | *Extent size*,                                                                                                       |
-|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the                                         |
-|                    |                | *Extent Name* to the path, and specify a value in                                                                    |
-|                    |                | *Extent size*                                                                                                        |
+| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
+|                    |                | *0* as the "Extent size",                                                                                            |
+|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the "Extent Name" to the path, and specify  |
+|                    |                | a value in "Extent size"                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Extent size        | integer        | only appears if *File* is selected; if the size is specified as 0, the file must already exist and the actual file   |
-|                    |                | size will be used; otherwise specifies the size of the file to create                                                |
+| Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
+|                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows xcopy         |
+| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows **xcopy**     |
 |                    |                | operations otherwise blocked by access control                                                                       |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -6883,14 +6883,10 @@ Table 11.7d summarizes the settings that can be configured when adding a portal.
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
 | IP address  | drop-down menu | select the IP address associated with an interface or the wildcard address  |
-|             |                | of                                                                          |
-|             |                | *0.0.0.0*                                                                   |
-|             |                | (any interface)                                                             |
+|             |                | of *0.0.0.0* (any interface)                                                |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| Port        | integer        | TCP port used to access the iSCSI target; default is                        |
-|             |                | *3260*                                                                      |
-|             |                |                                                                             |
+| Port        | integer        | TCP port used to access the iSCSI target; default is *3260*                 |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
 
@@ -6948,7 +6944,7 @@ summarizes the settings that can be configured in the Target Global Configuratio
 |                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on Discovery Auth Method setting: required if set to *CHAP* or                    |
+| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
 |                                 |                              | *Mutual CHAP*, optional if set to                                                         |
 |                                 |                              | *Auto*, and not needed if set to                                                          |
 |                                 |                              | *None*                                                                                    |
@@ -7012,8 +7008,7 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 |                             |                | *Mutual CHAP*                                                                                               |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Authentication Group number | drop-down menu | *None*                                                                                                      |
-|                             |                | or integer representing number of existing authorized access                                                |
+| Authentication Group number | drop-down menu | *None* or integer representing number of existing authorized access                                         |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Logical Block Size          | drop-down menu | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
@@ -7441,7 +7436,7 @@ Mode" button or configure the system to always display these settings by checkin
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Login as Root with password   | checkbox       | **for security reasons, root logins are discouraged and disabled by default** if enabled, password must  |
-|                               |                | be set for *root* user in View Users                                                                     |
+|                               |                | be set for *root* user in "View Users"                                                                   |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow Password Authentication | checkbox       | if unchecked, key based authentication for all users is required; requires                               |
@@ -7456,21 +7451,21 @@ Mode" button or configure the system to always display these settings by checkin
 | Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in Advanced Mode; allows you to paste a specific host key as the default key is changed   |
+| Host Private Key              | string         | only available in "Advanced Mode"; allows you to paste a specific host key as the default key is changed |
 |                               |                | with every installation                                                                                  |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| SFTP Log Level                | drop-down menu | only available in Advanced Mode; select the                                                              |
+| SFTP Log Level                | drop-down menu | only available in "Advanced Mode"; select the                                                            |
 |                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
 |                               |                | level of the SFTP server                                                                                 |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| SFTP Log Facility             | drop-down menu | only available in Advanced Mode; select the                                                              |
+| SFTP Log Facility             | drop-down menu | only available in "Advanced Mode"; select the                                                            |
 |                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
 |                               |                | facility of the SFTP server                                                                              |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| Extra Options                 | string         | only available in Advanced Mode; additional                                                              |
+| Extra Options                 | string         | only available in "Advanced Mode"; additional                                                            |
 |                               |                | `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_                                 |
 |                               |                | options not covered in this screen, one per line; these options are case-sensitive and mis-spellings may |
 |                               |                | prevent the SSH service from starting                                                                    |
@@ -7608,7 +7603,7 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 | Port            | integer       | UDP port to listen for TFTP requests, *69* by default                                                                    |
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
-| Username        | drop-down     | account used for tftp requests; must have permission to the *Directory*                                                  |
+| Username        | drop-down     | account used for tftp requests; must have permission to the "Directory"                                                  |
 |                 | menu          |                                                                                                                          |
 |                 |               |                                                                                                                          |
 |                 |               |                                                                                                                          |
@@ -8017,13 +8012,13 @@ Table 13.1a summarizes the fields in this configuration screen.
 | Jail Root                  | browse button | mandatory as you cannot add a jail until this is set                     |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network               | string        | see explanation below table; format is IP address of network / CIDR mask |
+| IPv4 Network               | string        | see explanation below table; format is IP address of *network/CIDR mask* |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network Start Address | string        | see explanation below table; format is IP address of host / CIDR mask    |
+| IPv4 Network Start Address | string        | see explanation below table; format is IP address of *host/CIDR mask*    |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network End Address   | string        | see explanation below table; format is IP address of host / CIDR mask    |
+| IPv4 Network End Address   | string        | see explanation below table; format is IP address of *host/CIDR mask*    |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
 
@@ -8078,23 +8073,22 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                | *gentoo*,                                                                                                    |
 |                           |                | *ubuntu*,                                                                                                    |
 |                           |                | *suse*, and                                                                                                  |
-|                           |                | *centos*; on a 64-bit system, options are also available for creating the 32-bit versions of a plugin, port, |
-|                           |                | or standard jail                                                                                             |
+|                           |                | *centos*; options are also available for creating the 32-bit versions of a plugin, port, or standard jail    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in *Jails Configuration*; if   |
-|                           |                | you change the default address, make sure it is reachable within the local network and is not                |
-|                           |                | in use by any other host on the network                                                                      |
+| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in "Jails Configuration"; if   |
+|                           |                | you change the default address, make sure it is reachable within the local network and is not in use by any  |
+|                           |                | other host on the network                                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 netmask              | drop-down menu | select the subnet mask associated with *IPv4 address*                                                        |
+| IPv4 netmask              | drop-down menu | select the subnet mask associated with "IPv4 address"                                                        |
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with *IPv4 bridge address*; will be greyed out for Linux jails or if       |
+| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with "IPv4 bridge address"; will be greyed out for Linux jails or if       |
 |                           |                | *VIMAGE* is unchecked                                                                                        |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
@@ -8103,11 +8097,11 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free address from the range specified   |
-|                           |                | in *Jails Configuration*_                                                                                    |
+|                           |                | in "Jails Configuration"_                                                                                    |
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 prefix length        | drop-down menu | select the prefix length associated with *IPv6 address*                                                      |
+| IPv6 prefix length        | drop-down menu | select the prefix length associated with "IPv6 address"                                                      |
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
@@ -10363,12 +10357,10 @@ or *False*.
 | bsdusr_uid               | integer  | by convention, user accounts have an ID greater than 1000 with a maximum allowable value of 65,535                   |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
-| bsdusr_group             | integer  | if *bsdusr_creategroup* is set to                                                                                    |
-|                          |          | *False*, specify the numeric ID of the group to create                                                               |
+| bsdusr_group             | integer  | if "bsdusr_creategroup" is set to *False*, specify the numeric ID of the group to create                             |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
-| bsdusr_creategroup       | boolean  | if set to *True*, a primary group with the same numeric ID as                                                        |
-|                          |          | *bsdusr_uid* will be automatically created                                                                           |
+| bsdusr_creategroup       | boolean  | if set to *True*, a primary group with the same numeric ID as "bsdusr_uid" will be automatically created             |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 | bsdusr_mode              | string   | sets default numeric UNIX permissions of user's home directory                                                       |
