@@ -65,3 +65,10 @@ class TunableView(TreeNode):
     gname = 'View'
     type = 'opensystem'
     append_to = 'system.Tunable'
+
+
+class Upgrade(TreeNode):
+
+    gname = 'Upgrade'
+    name = _('Upgrade')
+    type = 'opensystem'
