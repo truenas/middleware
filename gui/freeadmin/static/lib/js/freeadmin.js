@@ -981,6 +981,17 @@ require([
                         }
                     } else {
                         field = registry.getEnclosingWidget(dom[0]);
+                        var tr = query(field.domNode).closest("tr");
+                        if(tr.length > 0) {
+                          tr = tr[0];
+                          if(domClass.contains(tr, "advancedField")) {
+                            var advmode = query(".advModeButton", form.domNode)[0];
+                            advmode = registry.getEnclosingWidget(advmode);
+                            if(advmode.mode == 'basic') {
+                              form.advancedToggle(advmode);
+                            }
+                          }
+                        }
                         if(field) {
                             if(!first && field.focus)
                                 first = field;
