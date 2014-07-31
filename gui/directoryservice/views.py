@@ -40,10 +40,25 @@ from freenasUI.services.models import services
 log = logging.getLogger("directoryservice.views")
 
 def directoryservice_home(request):
-    activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
-    ldap = models.LDAP.objects.order_by("-id")[0]
-    nis = models.NIS.objects.order_by("-id")[0]
-    nt4 = models.NT4.objects.order_by("-id")[0]
+    try:
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    except:
+        activedirectory = models.ActiveDirectory()
+
+    try:
+        ldap = models.LDAP.objects.order_by("-id")[0]
+    except:
+        ldap = models.LDAP()
+
+    try:
+        nis = models.NIS.objects.order_by("-id")[0]
+    except:
+        nis = models.NIS()
+
+    try:
+        nt4 = models.NT4.objects.order_by("-id")[0]
+    except:
+        nt4 = models.NT4()
 
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
@@ -55,7 +70,10 @@ def directoryservice_home(request):
 
 
 def directoryservice_activedirectory(request):
-    activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    try:
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    except:
+        activedirectory = models.ActiveDirectory()
 
     if request.method == "POST":
         form = forms.ActiveDirectoryForm(request.POST, instance=activedirectory)
@@ -78,7 +96,10 @@ def directoryservice_activedirectory(request):
 
 
 def directoryservice_ldap(request):
-    ldap = models.LDAP.objects.order_by("-id")[0]
+    try:
+        ldap = models.LDAP.objects.order_by("-id")[0]
+    except:
+        ldap = models.LDAP()
 
     if request.method == "POST":
         form = forms.LDAPForm(request.POST, instance=ldap)
@@ -101,7 +122,10 @@ def directoryservice_ldap(request):
 
 
 def directoryservice_nt4(request):
-    nt4 = models.NT4.objects.order_by("-id")[0]
+    try:
+        nt4 = models.NT4.objects.order_by("-id")[0]
+    except:
+        nt4 = models.NT4()
 
     if request.method == "POST":
         form = forms.NT4Form(request.POST, instance=nt4)
@@ -124,7 +148,10 @@ def directoryservice_nt4(request):
 
 
 def directoryservice_nis(request):
-    nis = models.NT4.objects.order_by("-id")[0]
+    try:
+        nis = models.NT4.objects.order_by("-id")[0]
+    except:
+        nis = models.NT4()
 
     if request.method == "POST":
         form = forms.NISForm(request.POST, instance=nis)
