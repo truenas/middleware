@@ -1,11 +1,11 @@
-import os
-import sys
 import ConfigParser
-import json
 import hashlib
-import urllib2
-import tempfile
+import logging
+import os
 import sqlite3
+import sys
+import tempfile
+import urllib2
 
 import Exceptions
 import Installer
@@ -19,6 +19,9 @@ CONFIG_SEARCH = "Search"
 TRAIN_DESC_KEY = "Descripton"
 TRAIN_SEQ_KEY = "Sequence"
 TRAIN_CHECKED_KEY = "LastChecked"
+
+log = logging.getLogger('freenasOS.Configuration')
+
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
@@ -51,7 +54,7 @@ def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
         req.add_header("User-Agent", FREENAS_VERSION + "=" + current_version)
         furl = urllib2.urlopen(req, timeout=5)
     except:
-        print >> sys.stderr, "Unable to load %s" % url
+        log.warn("Unable to load %s", url)
         return None
     try:
         totalsize = int(furl.info().getheader('Content-Length').strip())
@@ -88,7 +91,7 @@ class PackageDB:
         self.__db_root = root
         self.__db_path = self.__db_root + "/" + PackageDB.DB_NAME
         if os.path.exists(os.path.dirname(self.__db_path)) == False:
-            print >> sys.stderr, "Need to create %s" % os.path.dirname(self.__db_path)
+            log.debug("Need to create %s", os.path.dirname(self.__db_path))
             os.makedirs(os.path.dirname(self.__db_path))
 
         if self._connectdb(returniferror = True, cursor = False) is None:
@@ -117,7 +120,12 @@ class PackageDB:
         try:
             conn = sqlite3.connect(self.__db_path)
         except Exception as err:
-            print >> sys.stderr, "%s:  Cannot connect to database %s: %s" % (sys.argv[0], self.__db_path, str(err))
+            log.error(
+                "%s:  Cannot connect to database %s: %s",
+                sys.argv[0],
+                self.__db_path,
+                str(err),
+            )
             if returniferror: return None
             raise err
 
@@ -142,7 +150,7 @@ class PackageDB:
         rv = cur.fetchone()
         self._closedb()
         if rv is None: return None
-        print >> sys.stderr, "rv = %s" % rv.keys()
+        log.debug("rv = %s", rv.keys())
         m = {}
         return { rv["name"] : rv["version"] }
 
@@ -154,7 +162,11 @@ class PackageDB:
             raise Exception("Package %s is at version %s, not version %s as requested by update" % (cur[pkgName], curVers))
 
         if cur[pkgName] == newVers:
-            print >> sys.stderr, "Package %s version %s not changing, so not updating" % (pkgName, newVers)
+            log.warn(
+                "Package %s version %s not changing, so not updating",
+                pkgName,
+                newVers,
+            )
             return
         self._connectdb()
         cur = self.__conn.cursor()
@@ -263,7 +275,7 @@ class PackageDB:
         # Remove the files in a package.  This removes them from
         # both the filesystem and database.
         if self.FindPackage(pkgName) is None:
-            print >> sys.stderr, "Package %s is not in database" % pkgName
+            log.warn("Package %s is not in database", pkgName)
             return False
 
         self._connectdb()
@@ -290,7 +302,7 @@ class PackageDB:
         # ignore that.
 
         if self.FindPackage(pkgName) is None:
-            print >> sys.stderr, "Package %s is not in database" % pkgName
+            log.warn("Package %s is not in database", pkgName)
             return False
 
         self._connectdb()
@@ -312,7 +324,10 @@ class PackageDB:
 
     def RemovePackageScripts(self, pkgName):
         if self.FindPackage(pkgName) is None:
-            print >> sys.stderr, "Package %s is not in database, cannot remove scripts" % pkgName
+            log.warn(
+                "Package %s is not in database, cannot remove scripts",
+                pkgName,
+            )
             return False
 
         cur = self._connectdb(cursor = True)
@@ -324,7 +339,7 @@ class PackageDB:
     # and the database.  It leaves the package itself in the database.
     def RemovePackageContents(self, pkgName, failDirectoryRemoval = False):
         if self.FindPackage(pkgName) is None:
-            print >> sys.stderr, "Package %s is not in database" % pkgName
+            log.warn("Package %s is not in database", pkgName)
             return False
 
         if self.RemovePackageFiles(pkgName) == False:
@@ -342,11 +357,18 @@ class PackageDB:
         if self.FindPackage(pkgName) is not None:
             flist = self.FindFilesForPackage(pkgName)
             if len(flist) != 0:
-                print >> sys.stderr, "Can't remove package %s, it has %d files still" % (pkgName, len(flist))
+                log.error(
+                    "Can't remove package %s, it has %d files still",
+                    pkgName,
+                    len(flist),
+                )
                 raise Exception("Cannot remove package %s if it still has files" % pkgName)
             dlist = self.FindScriptForPackage(pkgName)
             if dlist is not None and len(dlist) != 0:
-                print >> sys.stderr, "Cannot remove package %s, it still has scripts" % pkgName
+                log.error(
+                    "Cannot remove package %s, it still has scripts",
+                    pkgName,
+                )
                 raise Exception("Cannot remove package %s as it still has scripts" % pkgName)
 
         self._connectdb()
@@ -551,7 +573,7 @@ class Configuration(object):
             temp_mani = self.SystemManifest()
             if temp_mani is None:
                 # I give up
-                raise ConfigurationInvalidException
+                raise Exceptions.ConfigurationInvalidException
             train = temp_mani.Train()
         for file in self.SearchForFile(train + "/LATEST"):
             temp_mani = Manifest.Manifest(self)
