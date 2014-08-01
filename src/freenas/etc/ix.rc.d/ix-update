@@ -72,6 +72,9 @@ db_update()
 		# No need to update, exit script and continue boot
 		exit 0
 	fi
+
+	# We are running very early, make / read-write.
+	mount -uw /
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
 	if [ -f /data/uploaded.db ]; then
