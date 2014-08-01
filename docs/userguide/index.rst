@@ -2134,7 +2134,7 @@ At this time, the GUI does not display the loaders that are pre-set in the insta
  hint.isp.1.role=2
  hint.isp.2.role=2
  hint.isp.3.role=2
- module_path="/boot/modules;/usr/local/modules"
+ module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
 
 **Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
