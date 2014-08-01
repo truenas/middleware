@@ -69,8 +69,9 @@ class UpdateHandler(object):
             _('Downloading'),
             self._pkgname,
         )
-        self._baseprogress = int((1.0 / float(len(pkgList))) * 100)
-        self.progress = (index - 1) * self._baseprogress
+        stepprogress = int((1.0 / float(len(pkgList))) * 100)
+        self._baseprogress = index * stepprogress
+        self.progress = (index - 1) * stepprogress
         self.dump()
         return self.get_file_handler
 
@@ -83,7 +84,7 @@ class UpdateHandler(object):
     def install_handler(self, index, name, packages):
         self.step = 2
         self.indeterminate = False
-        total =len(packages)
+        total = len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)
         self.details = '%s %s (%d/%d)' % (
             _('Installing'),
