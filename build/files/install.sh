@@ -254,9 +254,9 @@ disk_is_freenas()
 	os_part=/dev/${_disk}s1a
 	data_part=/dev/${_disk}s4
 	upgrade_style="old"
-    elif [ -c /dev/${_disk}p3 ]; then
+    elif [ -c /dev/${_disk}p2 ]; then
 	os_part=/dev/${_disk}p2
-	data_part=/dev/${_disk}p3
+	data_part=/dev/${_disk}p2
 	upgrade_style="new"
     fi
     if [ "${data_part}" = ""]; then
@@ -393,7 +393,7 @@ menu_install()
         fi
 	if [ -c /dev/${_disk}s4 ]; then
 	    upgrade_style="old"
-	elif [ -c /dev/${_disk}p3 ]; then
+	elif [ -c /dev/${_disk}p2 ]; then
 	    upgrade_style="new"
 	else
 	    echo "Unknown upgrade style" 1>&2
@@ -472,11 +472,11 @@ menu_install()
 
     if [ ${_do_upgrade} -ne 0 ]; then
 	set -x
-	# For new-style upgrades -- we have a ${_disk}p3 --
+	# For new-style upgrades -- we have a ${_disk}p2 --
 	# we don't need to back up the data, just touch the
 	# sentinal files.
         mkdir -p /tmp/data
-	if [ ! -c /dev/${_disk}p3 ]; then
+	if [ ! -c /dev/${_disk}p2 ]; then
 		# For upgrading from old-style partitions, the
 		# partition map was destroyed.
 		gpart destroy -F ${_disk} || true
@@ -589,8 +589,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	mkdir -p /tmp/data/data
 
 #	# Copy the databases over
-#	cp -R /data/* /tmp/data
-#	chown -R www:www /tmp/data
+	cp -R /data/* /tmp/data
+	chown -R www:www /tmp/data
 #	umount /tmp/data
 #	rmdir /tmp/data
 #	# And now root
