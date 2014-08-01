@@ -49,7 +49,7 @@ def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
         req.add_header(FREENAS_VERSION, current_version)
         # Hack for debugging
         req.add_header("User-Agent", FREENAS_VERSION + "=" + current_version)
-        furl = urllib2.urlopen(req)
+        furl = urllib2.urlopen(req, timeout=5)
     except:
         print >> sys.stderr, "Unable to load %s" % url
         return None
