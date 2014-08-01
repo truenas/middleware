@@ -1,11 +1,10 @@
 #!/usr/local/bin/python -R
 
-import os, sys, getopt
-
-sys.path.append("/usr/local/lib")
-
-import freenasOS.Configuration as Configuration
-from freenasOS.Update import CheckForUpdates, Update
+import getopt
+import logging
+import logging.config
+import os
+import sys
 
 
 def main():
@@ -21,7 +20,7 @@ def main():
     except getopt.GetoptError as err:
         print str(err)
         usage()
-            
+
     root = None
     manifile = None
     verbose = 0
@@ -29,7 +28,7 @@ def main():
     tmpdir = None
     config_file = None
     config = None
-            
+
     for o, a in opts:
         if o == "-v":
             verbose += 1
@@ -47,6 +46,35 @@ def main():
             tmpdir = a
         else:
             assert False, "unhandled option"
+
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'simple': {
+                'format': '[%(name)s:%(lineno)s] %(message)s',
+            },
+        },
+        'handlers': {
+            'std': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'stream': 'ext://sys.stdout',
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['std'],
+                'level': 'DEBUG',
+                    'propagate': True,
+            },
+        },
+    })
+
+    sys.path.append("/usr/local/lib")
+
+    import freenasOS.Configuration as Configuration
+    from freenasOS.Update import CheckForUpdates, Update
 
     if root is not None and os.path.isdir(root) is False:
         print >> sys.stderr, "Specified root (%s) does not exist" % root
