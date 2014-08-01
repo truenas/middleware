@@ -563,6 +563,7 @@ class KerberosRealm(Model):
         verbose_name=_("KDC"),
         max_length=120,
         help_text=_("KDC for this realm."),
+        blank=True
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
@@ -571,6 +572,7 @@ class KerberosRealm(Model):
             "Specifies the admin server for this realm, where all the "
             "modifications to the database are performed."
         ),
+        blank=True
     )
     krb_kpasswd_server = models.CharField(
         verbose_name=_("Password Server"),
@@ -763,7 +765,9 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
-        on_delete=models.DO_NOTHING
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
