@@ -805,6 +805,30 @@ class ActiveDirectory(DirectoryServiceBase):
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
 
+    def save(self):
+        super(ActiveDirectory, self).save()
+
+        if not self.ad_kerberos_realm:
+            from freenasUI.common.freenasldap import (
+                FreeNAS_ActiveDirectory,
+                FLAGS_DBINIT
+            )
+
+            try:
+                fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+                kr = KerberosRealm()
+                kr.krb_realm = self.ad_domainname.upper()
+                kr.krb_kdc = fad.krbname
+                kr.krb_admin_server = kr.krb_kdc
+                kr.krb_kpasswd_server = fad.kpwdname
+                kr.save()
+
+                self.ad_kerberos_realm = kr
+                super(ActiveDirectory, self).save()
+
+            except Exception as e:
+                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e)
 
     class Meta:
         verbose_name = _("Active Directory")
