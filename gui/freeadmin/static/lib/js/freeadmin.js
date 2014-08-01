@@ -1317,13 +1317,40 @@ require([
 
         } else {
 
-            xhr.post(attrs.url, {
+            var promise = xhr.post(attrs.url, {
                 data: newData,
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
-            }).then(handleReq, function(evt) {
-                handleReq(evt.response.data, evt.response, true);
-                });
+            });
+            promise.then(
+                function(data) {
+                  promise.response.then(function(response) {
+                    if(attrs.longRunning && response.status == 202) {
+                      waitForComplete = function() {
+                        var longpromise = xhr.post(attrs.url + '?uuid=' + data, {
+                          headers: {"X-CSRFToken": CSRFToken},
+                          handleAs: 'text'
+                        });
+                        longpromise.then(function(data) {
+                           longpromise.response.then(function(response) {
+                            if(response.status == 202) {
+                              setTimeout(waitForComplete, 2000);
+                            } else {
+                              handleReq(data);
+                            }
+                           });
+                        });
+                      }
+                      setTimeout(waitForComplete, 2000);
+                    } else {
+                      handleReq(data);
+                    }
+                  });
+                },
+                function(evt) {
+                    handleReq(evt.response.data, evt.response, true);
+                }
+            );
 
         }
 
