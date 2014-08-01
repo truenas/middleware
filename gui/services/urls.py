@@ -29,6 +29,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns('freenasUI.services.views',
     url(r'^index/$', 'index', name="services_home"),
+    url(r'^cifs/$', 'services_cifs', name="services_cifs"),
     url(r'^core/$', 'core', name="services_core"),
     url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
     url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
