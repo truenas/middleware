@@ -67,8 +67,6 @@ fi
 
 customize_cmd move_data
 
-customize_cmd add_data_to_fstab
-
 if is_truenas ; then
 	customize_cmd afpd_conf_symlink
 fi

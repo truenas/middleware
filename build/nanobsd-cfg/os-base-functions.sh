@@ -70,16 +70,6 @@ move_data()
 	rm -rf ${db}
 }
 
-add_data_to_fstab ( )
-{
-	(
-	cd ${NANO_WORLDDIR}
-	echo "/dev/${NANO_DRIVE}s4 /data ufs rw,noatime 2 2" >> etc/fstab
-	mkdir -p data
-	)
-	
-}
-
 select_httpd ( )
 {
 	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
