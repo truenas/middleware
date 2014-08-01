@@ -324,7 +324,7 @@ freenas_custom()
 	find ${NANO_WORLDDIR} -type f -name "*~" -delete
 	find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
 	find ${NANO_WORLDDIR} -type f -name "*.service" -delete
-	mkdir ${NANO_WORLDDIR}/data/zfs
+	mkdir -p ${NANO_WORLDDIR}/data/zfs
 	ln -s -f /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s -f /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 

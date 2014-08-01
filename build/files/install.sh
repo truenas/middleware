@@ -345,7 +345,7 @@ menu_install()
 	_satadom=""
 	get_physical_disks_list
 	_disklist="${VAL}"
-    
+
 	_list=""
 	_items=0
 	for _disk in ${_disklist}; do
@@ -354,7 +354,7 @@ menu_install()
 	    _list="${_list} ${_disk} '${_desc}'"
 	    _items=$((${_items} + 1))
 	done
-    
+
 	_tmpfile="/tmp/answer"
 	if [ ${_items} -ge 10 ]; then
 	    _items=10
@@ -372,7 +372,7 @@ menu_install()
 	      --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
 	[ $? -eq 0 ] || exit 1
-    
+
     fi # ! do_sata_dom
 
     _disk=`cat "${_tmpfile}"`
@@ -469,9 +469,8 @@ menu_install()
     export ROOTIMAGE=1
     # Hack #2
     ls $(get_product_path) > /dev/null
-#    /rescue/pc-sysinstall -c ${_config_file}
+
     if [ ${_do_upgrade} -ne 0 ]; then
-        # Mount: /data
 	set -x
 	# For new-style upgrades -- we have a ${_disk}p3 --
 	# we don't need to back up the data, just touch the
@@ -479,51 +478,38 @@ menu_install()
         mkdir -p /tmp/data
 	if [ ! -c /dev/${_disk}p3 ]; then
 		# For upgrading from old-style partitions, the
-		# partition map was destroyed.  pc-sysinstall starts
-		# the process for us.
-		/rescue/pc-sysinstall -c ${_config_file}
-		gpart add -t freebsd-ufs -s 20M -i 3 ${_disk}	# data, 20mbytes
-		gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
-		# And now create the filesystems
-		# /data first
-		newfs -n /dev/${_disk}p3
-		# Then root
-		newfs -n /dev/${_disk}p2
-	fi
-	# Mount the data partition
-	mount /dev/${_disk}p3 /tmp/data
-        ls /tmp/data > /dev/null
+		# partition map was destroyed.
+		gpart destroy -F ${_disk} || true
+		gpart create -s gpt ${_disk}
+		# For grub
+		gpart add -t bios-boot -s 512k ${_disk}
+		gpart add -t freebsd-zfs ${_disk}
 
+		zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
+		zfs create -o canmount=off freenas-boot/ROOT
+		zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+	fi
+
+	mkdir -p /tmp/data
+	# Mount the root file system
+	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
+	mkdir -p /tmp/data/data
+
+	# XXX if we have preserved /data
 	if [ "${upgrade_style}" = "old" ]; then
-		cp -pR /tmp/data_preserved/ /tmp/data
+		cp -pR /tmp/data_preserved/ /tmp/data/data
 	fi
 	# If I did things correctly, this isn't needed
 	# But I didn't, so they're still needed.
 #        : > /tmp/$NEED_UPDATE_SENTINEL
 #        : > /tmp/$CD_UPGRADE_SENTINEL
 
-
-	if [ -c /dev/${_disk_old} ]; then
-		gpart backup ${_disk_old} > /tmp/data/${_disk_old}.part
-		gpart destroy -F ${_disk_old}
-	fi
-
-        umount /tmp/data
-        # Mount the root partition
-	mount /dev/${_disk}p2 /tmp/data
-        ls /tmp/data > /dev/null
-	# Add the boot loader
-	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
 	# For the install to work, we need to have /data mounted.
-	test -d /tmp/data/data || mkdir /tmp/data/data
-	mount /dev/${_disk}p3 /tmp/data/data
-#	/usr/local/bin/installer -C /etc/freenas.conf -M /FreeNAS-MANIFEST /tmp/data
 	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	rm -f /tmp/data/conf/base/etc/manifest
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
-	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
-	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
+#	echo "freenas-boot/ROOT/default / zfs rw,noatime 0 0" > /tmp/data/etc/fstab
 	rm -f /tmp/data/conf/default/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
@@ -549,6 +535,7 @@ menu_install()
 	if [ -f /tmp/loader.conf.local ]; then
 	    cp /tmp/loader.conf.local /tmp/data/boot/
 	fi
+	sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
 
         if is_truenas ; then
             install_worker.sh -D /tmp/data -m / install
@@ -557,9 +544,27 @@ menu_install()
 	# Debugging pause.
 	# read foo
 
-	umount /tmp/data/data
-        umount /tmp/data
-        rmdir /tmp/data
+	# XXX: Fixup
+	tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
+	mount -t devfs devfs /tmp/data/dev
+
+	# Create a temporary /var
+	mount -t tmpfs tmpfs /tmp/data/var
+	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
+
+	# Set default boot filesystem
+	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
+
+	# Install grub
+	chroot /tmp/data/ /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
+	chroot /tmp/data/ /etc/rc.d/ldconfig start
+	chroot /tmp/data/ /usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' /usr/local/sbin/beadm /usr/local/etc/grub.d/10_ktrueos
+	chroot /tmp/data/ /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
+	chroot /tmp/data/ /usr/local/sbin/beadm activate default
+	chroot /tmp/data/ /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
+	chroot /tmp/data/ /bin/mv /usr/local/sbin/beadm.bak /usr/local/sbin/beadm
+	chroot /tmp/data/ /bin/mv /usr/local/etc/grub.d/10_ktrueos.bak /usr/local/etc/grub.d/10_ktrueos
+
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     else
@@ -568,37 +573,60 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	# For non-upgrade installs, the partition was erased.
 	# A boot partition was created, so we need to add two
 	# more partitions:  data and root
-	gpart add -t freebsd-ufs -s 40M -i 3 ${_disk}	# data, 40mbytes
-	gpart add -t freebsd-ufs -i 2 ${_disk}		# The rest of the disk
-	# Add the boot loader
-	gpart bootcode -p /boot/gptboot -i 1 ${_disk}
-	# And now create the filesystems
-	# /data first
-	newfs -n /dev/${_disk}p3
+	gpart destroy -F ${_disk} || true
+	gpart create -s gpt ${_disk}
+	# For grub
+	gpart add -t bios-boot -s 512k ${_disk}
+	gpart add -t freebsd-zfs ${_disk}
+
+	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
+	zfs create -o canmount=off freenas-boot/ROOT
+	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+
 	mkdir -p /tmp/data
-	mount /dev/${_disk}p3 /tmp/data
-	# Copy the databases over
-	cp -R /data/* /tmp/data
-	chown -R www:www /tmp/data
-	umount /tmp/data
-	rmdir /tmp/data
-	# And now root
-	newfs -n /dev/${_disk}p2
-	mkdir -p /tmp/data
-	mount /dev/${_disk}p2 /tmp/data
-	mkdir /tmp/data/data
-	mount /dev/${_disk}p3 /tmp/data/data
+	# Mount the root file system
+	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
+	mkdir -p /tmp/data/data
+
+#	# Copy the databases over
+#	cp -R /data/* /tmp/data
+#	chown -R www:www /tmp/data
+#	umount /tmp/data
+#	rmdir /tmp/data
+#	# And now root
 	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
 	# Need to link the manifest file
 	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
-	echo "/dev/${_disk}p2 / ufs rw 1 1" > /tmp/data/etc/fstab
-	echo "/dev/${_disk}p3 /data ufs rw 2 2" >> /tmp/data/etc/fstab
+	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
+	cp /dev/null /tmp/data/etc/fstab
+	cp /dev/null /tmp/data/conf/base/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
-	umount /tmp/data/data
-	umount /tmp/data
-	rmdir /tmp/data
+
+	mount -t devfs devfs /tmp/data/dev
+
+	# Create a temporary /var
+	mount -t tmpfs tmpfs /tmp/data/var
+	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
+
+	# Set default boot filesystem
+	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
+
+	# Install grub
+	chroot /tmp/data/ /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
+	chroot /tmp/data/ /etc/rc.d/ldconfig start
+	chroot /tmp/data/ /usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' /usr/local/sbin/beadm /usr/local/etc/grub.d/10_ktrueos
+	chroot /tmp/data/ /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
+	chroot /tmp/data/ /usr/local/sbin/beadm activate default
+	chroot /tmp/data/ /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
+	chroot /tmp/data/ /bin/mv /usr/local/sbin/beadm.bak /usr/local/sbin/beadm
+	chroot /tmp/data/ /bin/mv /usr/local/etc/grub.d/10_ktrueos.bak /usr/local/etc/grub.d/10_ktrueos
+
 	set +x
     fi
+
+    umount /tmp/data/dev
+    umount /tmp/data/var
+    umount /tmp/data/
 
     if is_truenas ; then
         # Put a swap partition on newly created installation image
