@@ -589,8 +589,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	mkdir -p /tmp/data/data
 
 #	# Copy the databases over
-	cp -R /data/* /tmp/data
-	chown -R www:www /tmp/data
+	cp -R /data/* /tmp/data/data
+	chown -R www:www /tmp/data/data
 #	umount /tmp/data
 #	rmdir /tmp/data
 #	# And now root
