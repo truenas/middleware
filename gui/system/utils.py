@@ -26,6 +26,7 @@
 import logging
 import json
 import os
+from uuid import uuid4
 
 from django.utils.translation import ugettext as _
 
@@ -52,12 +53,17 @@ class UpdateHandler(object):
 
     DUMPFILE = '/tmp/.upgradeprogress'
 
-    def __init__(self):
+    def __init__(self, uuid=None):
+        if not uuid:
+            self.uuid = uuid4().hex
+        else:
+            self.uuid = uuid
         self.step = 1
         self.progress = 0
         self.indeterminate = False
         self.details = ''
         self._pkgname = ''
+        self.finished = False
 
     def get_handler(self, index, pkg, pkgList):
         self.step = 1
@@ -96,6 +102,7 @@ class UpdateHandler(object):
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
             data = {
+                'uuid': self.uuid,
                 'step': self.step,
                 'percent': self.progress,
                 'indeterminate': self.indeterminate,
