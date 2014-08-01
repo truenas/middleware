@@ -4,6 +4,7 @@ doSubmit({
     form: this,
     event: e,
     url: '{{ request.path }}',
+    longRunning: true,
     progressbar: {
       steps: [
          {"label": gettext("Downloading packages")},

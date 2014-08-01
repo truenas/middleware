@@ -34,6 +34,7 @@ import shutil
 import signal
 import socket
 import subprocess
+import sys
 import sysctl
 import time
 import urllib
@@ -828,14 +829,26 @@ def terminal_paste(request):
 def upgrade(request):
 
     if request.method == 'POST':
-        handler = UpdateHandler()
-        Update(
-            get_handler=handler.get_handler,
-            install_handler=handler.install_handler,
-        )
-        handler.exit()
-        request.session['allow_reboot'] = True
-        return render(request, 'system/done.html')
+        uuid = request.GET.get('uuid')
+        handler = UpdateHandler(uuid=uuid)
+        if not uuid:
+            if os.fork() == 0:
+                handler.dump()
+                return HttpResponse(handler.uuid, status=202)
+            else:
+                Update(
+                    get_handler=handler.get_handler,
+                    install_handler=handler.install_handler,
+                )
+                handler.finished = True
+                handler.dump()
+                sys.exit(0)
+        else:
+            if not handler.finished:
+                return HttpResponse(handler.uuid, status=202)
+            handler.exit()
+            request.session['allow_reboot'] = True
+            return render(request, 'system/done.html')
 
     handler = CheckUpdateHandler()
     try:
