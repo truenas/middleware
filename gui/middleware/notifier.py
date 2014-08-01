@@ -2328,8 +2328,8 @@ class notifier:
         except:
             pass
 
-        if homedir == '/root':
-            self._system("/sbin/mount -uw -o noatime /")
+        #if homedir == '/root':
+        #    self._system("/sbin/mount -uw -o noatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
@@ -2342,8 +2342,8 @@ class notifier:
             fd.write(pubkey)
             fd.close()
             self._system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
-        if homedir == '/root':
-            self._system("/sbin/mount -ur /")
+        #if homedir == '/root':
+        #    self._system("/sbin/mount -ur /")
         os.umask(saved_umask)
 
     def delete_pubkey(self, homedir):
@@ -2351,12 +2351,13 @@ class notifier:
         keypath = '%s/.ssh/authorized_keys' % (homedir, )
         if os.path.exists(keypath):
             try:
-                if homedir == '/root':
-                    self._system("/sbin/mount -uw -o noatime /")
+                #if homedir == '/root':
+                #    self._system("/sbin/mount -uw -o noatime /")
                 os.unlink(keypath)
             finally:
-                if homedir == '/root':
-                    self._system("/sbin/mount -ur /")
+                #if homedir == '/root':
+                #    self._system("/sbin/mount -ur /")
+                pass
 
     def _reload_user(self):
         self._system("/usr/sbin/service ix-passwd quietstart")
