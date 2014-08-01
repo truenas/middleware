@@ -82,6 +82,8 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
 * Volume, dataset, and file names are enclosed in a blue box :file:`/like/this`.
 
+* Keystrokes are formatted in a blue box. For example: press :kbd:`Enter`.
+
 * **bold text:** used to emphasize an important point.
 
 * *italic text:* used to represent device names or text that is input into a GUI field.
@@ -126,8 +128,7 @@ Notable features in FreeNAS® include:
 * periodic ZFS snapshots are visible in Windows as shadow copies
 
 * includes
-  `tmux <http://sourceforge.net/projects/tmux/>`_
-  , a BSD-licensed utility similar to GNU screen
+  `tmux <http://sourceforge.net/projects/tmux/>`_, a BSD-licensed utility similar to GNU screen
 
 What's New in 9.3
 -----------------
@@ -827,7 +828,7 @@ Insert the CDROM into the system and boot from it. Once the media has finished b
 
 |Figure23a_png|
 
-Press enter to select the default option of "1 Install/Upgrade to hard drive/flash device, etc.". The next menu, seen in Figure 2.3b, will list all
+Press :kbd:`Enter` to select the default option of "1 Install/Upgrade to hard drive/flash device, etc.". The next menu, seen in Figure 2.3b, will list all
 available drives, including any inserted USB thumb drives which will begin with *da*. In this example, the user is installing into VirtualBox and has created
 a 4 GB virtual disk to hold the operating system.
 
@@ -835,15 +836,15 @@ a 4 GB virtual disk to hold the operating system.
    install will appear to complete successfully on smaller devices, only to fail at boot. If using a USB thumb drive, an 4 GB drive is recommended as many 2
    GB thumb drives have a smaller capacity which will result in a seemingly successful installation that fails to boot.
 
-Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, then tab to "OK" and press enter. FreeNAS® will issue the 
-warning seen in Figure 2.3c, reminding you not to install onto a storage drive.
+Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, then tab to "OK" and press :kbd:`Enter`. FreeNAS® will issue
+the warning seen in Figure 2.3c, reminding you not to install onto a storage drive.
 
-Press enter and FreeNAS® will extract the image from the ISO and transfer it to the device. Once the installation is complete, you should see a message
-similar to Figure 2.3d.
+Press :kbd:`Enter` and FreeNAS® will extract the image from the ISO and transfer it to the device. Once the installation is complete, you should see a
+message similar to Figure 2.3d.
 
-Press enter to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press enter. Remove the CDROM. If you installed onto a USB
-thumb drive, leave the thumb drive inserted. Make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will
-boot from it. FreeNAS® should now be able to boot into the Console setup menu described in Initial Setup.
+Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. Remove the CDROM. If you installed
+onto a USB thumb drive, leave the thumb drive inserted. Make sure that the device you installed to is listed as the first boot entry in the BIOS so that the
+system will boot from it. FreeNAS® should now be able to boot into the Console setup menu described in the Initial Setup section.
 
 **Figure 2.3b: Selecting Which Drive to Install Into**
 
@@ -876,9 +877,9 @@ the Console setup menu described in Initial Setup. If it does not, try the sugge
 On FreeBSD or Linux
 ~~~~~~~~~~~~~~~~~~~
 
-On a FreeBSD or Linux system, the :command:`xzcat` and :command:`dd` commands can be used to uncompress and write the *.xz* image to an inserted USB thumb
-drive or compact flash device. Example 2.4a demonstrates writing the image to the first USB device (*/dev/da0*) on a FreeBSD system. Substitute the filename
-of your :file:`.xz` file and the device name representing the device to write to on your system.
+On a FreeBSD or Linux system, the :command:`xzcat` and :command:`dd` commands can be used to uncompress and write the :file:`.xz` image to an inserted USB
+thumb drive or compact flash device. Example 2.4a demonstrates writing the image to the first USB device (*/dev/da0*) on a FreeBSD system. Substitute the
+filename of your :file:`.xz` file and the device name representing the device to write to on your system.
 
 **Example 2.4a: Writing the Image to a USB Thumb Drive**
 ::
@@ -1019,8 +1020,8 @@ This menu provides the following options:
 
 **5) Configure Static Routes:** will prompt for the destination network and the gateway IP address. Re-enter this option for each route you need to add.
 
-**6) Configure DNS:** will prompt for the name of the DNS domain then the IP address of the first DNS server. To input multiple DNS servers, press enter to
-input the next one. When finished, press enter twice to leave this option.
+**6) Configure DNS:** will prompt for the name of the DNS domain then the IP address of the first DNS server. To input multiple DNS servers, press
+:kbd:`Enter` to input the next one. When finished, press :kbd:`Enter` twice to leave this option.
 
 **7) Reset WebGUI login credentials:** if you are unable to login to the graphical administrative interface, select this option. The next time the graphical
 interface is accessed, it will prompt to set the *root* password.
@@ -1143,19 +1144,19 @@ Upgrading from CDROM
 
 Burn the downloaded :file:`.iso` file to a CDROM.
 
-Insert the CDROM into the system and boot from it. Once the media has finished booting into the installation menu, press enter to select the default option of
-"1 Install/Upgrade to hard drive/flash device, etc." As with a fresh install, the installer will present a screen showing all available drives; select
-the device FreeNAS® is installed into and press enter.
+Insert the CDROM into the system and boot from it. Once the media has finished booting into the installation menu, press :kbd:`Enter` to select the default
+option of "1 Install/Upgrade to hard drive/flash device, etc." As with a fresh install, the installer will present a screen showing all available drives;
+select the device FreeNAS® is installed into and press :kbd:`Enter`.
 
 The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.7a.
 
 .. note:: if you select to perform a "Fresh Install", you will have to restore the backup of your configuration.
 
-To perform an upgrade, press enter to accept the default of "Upgrade Install". Again, the installer will remind you that the operating system should be
-installed on a thumb drive. Press enter to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in Figure
-2.7b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
+To perform an upgrade, press :kbd:`Enter` to accept the default of "Upgrade Install". Again, the installer will remind you that the operating system should be
+installed on a thumb drive. Press :kbd:`Enter` to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in
+Figure 2.7b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
-Press enter and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.7c.
+Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.7c.
 
 **Figure 2.7a: Upgrading a FreeNAS® Installation**
 
@@ -2134,7 +2135,7 @@ At this time, the GUI does not display the loaders that are pre-set in the insta
  hint.isp.1.role=2
  hint.isp.2.role=2
  hint.isp.3.role=2
- module_path="/boot/modules;/usr/local/modules"
+ module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
 
 **Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
@@ -2154,8 +2155,8 @@ loaders back.
 Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the number 3 key
-or the Esc key to select "3. Escape to loader prompt" when you see the FreeNAS® boot menu shown in Figure 5.6b.
+If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the
+:kbd:`3` key or the :kbd:`Esc` key to select "3. Escape to loader prompt" when you see the FreeNAS® boot menu shown in Figure 5.6b.
 
 **Figure 5.6b: FreeNAS® Boot Menu**
 
@@ -3186,9 +3187,10 @@ Proper storage design is important for any NAS.
 Auto Import Volume
 ~~~~~~~~~~~~~~~~~~
 
-If you click :menuselection:`Storage --> Volumes --> Auto Import Volume`, you can configure FreeNAS® to use an **existing** software UFS or ZFS RAID volume.
-This action is typically performed when an existing FreeNAS® system is re-installed (rather than upgraded). Since the operating system is separate from the
-disks, a new installation does not affect the data on the disks; however, the new operating system needs to be configured to use the existing volume.
+If you click :menuselection:`Storage --> Volumes --> Auto Import Volume`, you can configure FreeNAS® to use an
+**existing** software UFS or ZFS RAID volume. This action is typically performed when an existing FreeNAS® system is re-installed (rather than upgraded).
+Since the operating system is separate from the disks, a new installation does not affect the data on the disks; however, the new operating system needs to be
+configured to use the existing volume.
 
 Supported volumes are UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM RAID3, as well as existing ZFS pools. UFS RAID5 is not supported as it is
 an unmaintained summer of code project which was never integrated into FreeBSD.
@@ -3290,15 +3292,15 @@ Table 8.1a summarizes the available options.
 |                     |           |                                                                                                                          |
 |                     |           |                                                                                                                          |
 +=====================+===========+==========================================================================================================================+
-| Volume name         | string    | mandatory; it is recommended to choose a name that will stick out in the logs (e.g. not *data* or                        |
-|                     |           | *freenas*)                                                                                                               |
+| Volume name         | string    | mandatory; it is recommended to choose a name that will stick out in the logs (e.g. **not** :file:`data` or              |
+|                     |           | :file:`freenas`)                                                                                                         |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Member disks        | selection | use the mouse to select the disk(s) to be used; to select multiple disks, highlight the first disk, then hold the shift  |
-|                     |           | key as you highlight the last disk.                                                                                      |
+| Member disks        | selection | use the mouse to select the disk(s) to be used; to select multiple disks, highlight the first disk, then hold the        |
+|                     |           | :kbd:`Shift` key as you highlight the last disk.                                                                         |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Specify custom path | checkbox  | optional; useful for creating a */var* for persistent log storage                                                        |
+| Specify custom path | checkbox  | optional; useful for creating a :file:`/var` for persistent log storage                                                  |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | Path                | string    | only available when "Specify custom path" is checked; must be full name of volume (e.g.                                  |
@@ -3469,7 +3471,7 @@ ZFS Volume Manager
 If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS
 pool.
 
-If you are new to RAID concepts or would like an overview of the differences between hardware RAID and ZFS RAIDZ*, skim through the section on Hardware
+If you are new to RAID concepts or would like an overview of the differences between hardware RAID and ZFS RAIDZ, skim through the section on Hardware
 Recommendations before using ZFS Volume Manager.
 
 If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you will see a screen similar to the example shown in Figure 8.1l.
@@ -3559,7 +3561,7 @@ Beginning with 8.3.1, FreeNAS® supports
 full disk encryption when creating ZFS volumes. It is important to understand the following when considering whether or not encryption is right for your
 FreeNAS® system:
 
-* This is **not** the encryption method used by Oracle ZFSv30. That version of ZFS has not been open sourced and is the property of Oracle.
+* This is **not** the encryption method used by Oracle's version of ZFS as that version is not open source and is the property of Oracle.
 
 * This is full disk encryption and **not** per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the
   encrypted devices.
@@ -3905,8 +3907,9 @@ Compression
 ^^^^^^^^^^^
 
 Most media (e.g. :file:`.mp3`, :file:`.mp4`, :file:`.avi`) is already compressed, meaning that you will increase CPU utilization for no gain if you store
-these files on a compressed dataset. However, if you have raw *.wav* rips of CDs or *.vob* rips of DVDs, you will see a performance gain using a compressed
-dataset. When selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms are supported:
+these files on a compressed dataset. However, if you have raw :file:`.wav` rips of CDs or :file:`.vob` rips of DVDs, you will see a performance gain using a
+compressed dataset. When selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms
+are supported:
 
 * **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
 
@@ -4440,7 +4443,7 @@ for our example:
 
 * the Volume/Dataset is :file:`local/data`
 
-* the Remote ZFS Volume/Dataset is *remote*
+* the Remote ZFS Volume/Dataset is :file:`remote`
 
 * the Remote hostname is *192.168.2.6*
 
@@ -4582,8 +4585,7 @@ consumer-quality drives, consider a weekly scrubbing schedule. If you have datac
 Depending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for
 evenings or weekends to minimize the impact to users.
 
-A ZFS scrub only checks used disk space. To check unused disk space, schedule a S.M.A.R.T. Test_ *Type* of
-*Long Self-Test* to run once or twice a month.
+A ZFS scrub only checks used disk space. To check unused disk space, schedule a S.M.A.R.T. Test_ "Type" of *Long Self-Test* to run once or twice a month.
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
 :menuselection:`Storage --> ZFS Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> ZFS Scrubs --> View ZFS Scrubs`. Figure 8.4a
@@ -5410,7 +5412,7 @@ Because of restriction #3, you will receive an error if you try to create one NF
 
 * **Path:** :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
 
-Instead, you should select the Path of */mnt/volume1/dataset1* and check the "All directories" box.
+Instead, you should select the Path of :file:`/mnt/volume1/dataset1` and check the "All directories" box.
 
 However, you could restrict that directory to one of the networks by creating two shares as follows.
 
@@ -6021,11 +6023,11 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 |                                  |                |                                                                                                       |
-| Allow Empty Password             | checkbox       | if checked, users can just press enter when prompted for a password; requires that the                |
+| Allow Empty Password             | checkbox       | if checked, users can just press :kbd:`Enter` when prompted for a password; requires that the         |
 |                                  |                | username/password be the same as the Windows user account                                             |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Auxiliary parameters             | string         | *smb.conf* options not covered elsewhere in this screen; see                                          |
+| Auxiliary parameters             | string         | :file:`smb.conf` options not covered elsewhere in this screen; see                                    |
 |                                  |                | `the Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                              |
 |                                  |                | for additional settings                                                                               |
 |                                  |                |                                                                                                       |
@@ -6039,7 +6041,7 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 | Home directories                 | browse button  | select volume/dataset where the home directories will be created                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Homes auxiliary parameters       | string         | options specific to the [homes] section of *smb4.conf*; for example,                                  |
+| Homes auxiliary parameters       | string         | options specific to the [homes] section of :file:`smb4.conf`; for example,                            |
 |                                  |                | *hide dot files = yes* hides files beginning with a dot in home directories                           |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -6726,7 +6728,7 @@ as far as FreeNAS® is concerned, the data benefits from ZFS features such as bl
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
 To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7c, the device extent is using the
-*export* zvol that was previously created from the :file:`/mnt/volume1` volume.
+:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
 
 .. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
    the disk, resulting in data loss. This bug was fixed in 8.3.1.
@@ -6905,19 +6907,6 @@ summarizes the settings that can be configured in the Target Global Configuratio
 |                                 |                              | *None*                                                                                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-
-If the settings in this screen differ from the settings on the initiator, set them to be the same. When making changes, always match the larger setting.
-
-If you are changing integer values to optimize the connection, refer to the iSCSI initiator's documentation. For example, the following modifications are
-recommended if the iSCSI initiator is running on Xenserver:
-
-* Max. pre-send R2T: *255*
-
-* MaxOutstandingR2T: *64*
-
-* First burst length: *262,144*
-
-* Max burst length: *2,097,152*
 
 Targets
 ~~~~~~~
@@ -8021,14 +8010,14 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if "VIMAGE" is unchecked                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with "IPv4 bridge address"; will be greyed out for Linux jails or if       |
-|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                | "VIMAGE" is unchecked                                                                                        |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if "VIMAGE" is    |
 |                           |                | unchecked                                                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
@@ -8045,14 +8034,14 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv6 bridge prefix length | drop-down menu | select the prefix length associated with *IPv6 address*; will be greyed out for Linux jails or if            |
-|                           |                | *VIMAGE* is unchecked                                                                                        |
+|                           |                | "VIMAGE" is unchecked                                                                                        |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if *VIMAGE* is    |
+| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if "VIMAGE" is    |
 |                           |                | unchecked                                                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | if a static MAC address is needed, input it here; requires *VIMAGE* to be checked                            |
+| MAC                       | string         | if a static MAC address is needed, input it here; requires "VIMAGE" to be checked                            |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g. *allow.sysvipc=1,allow.raw_sockets=1*)              |
@@ -8065,7 +8054,7 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                | does not apply to Linux jails                                                                                |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if *VIMAGE* is       |
+| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if "VIMAGE" is       |
 |                           |                | unchecked                                                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
@@ -8098,7 +8087,7 @@ created and automatically started, unless you specify otherwise.
 The first time you add a type of jail, the GUI will automatically download the necessary components from the Internet. If it is unable to connect to the
 Internet, the jail creation will fail. Otherwise, a progress bar will indicate the status of the download and provide an estimated time for the process to
 complete. Once the first jail is created, subsequent jails of that type will be added instantaneously as the downloaded base for creating that type of jail is
-saved to the *Jail Root*.
+saved to the "Jail Root".
 
 Managing Jails
 ~~~~~~~~~~~~~~
@@ -8148,7 +8137,8 @@ For a Linux jail, refer to the documentation for that Linux distribution for ins
 you may have to first install a SSH server.
 
 Next, add a user account. If you want the user to have superuser privileges to a non-Linux jail, make sure the user is placed in the *wheel* group when it is
-created. Type :command:`adduser` and follow the prompts. When you get to this prompt, do not press enter but instead type *wheel*::
+created. Type :command:`adduser` and follow the prompts. When you get to this prompt, **do not** press :kbd:`Enter` but instead type
+*wheel*::
 
  Login group is user1. Invite user1 into other groups? []: wheel
 
@@ -8319,8 +8309,8 @@ other words, the resulting tarball needs to be saved outside of the operating sy
 Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
 the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
-Once you have the *.tgz* file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL in
-order to add the template to the list of available templates.
+Once you have the :file:`.tgz` file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
+in order to add the template to the list of available templates.
 
 To add the template, click :menuselection:`Jails --> Add Jail Templates` which will open the screen seen in Figure 13.3b.
 
@@ -8410,7 +8400,7 @@ audiotag package, use this command::
 
  pkg install audiotag
 
-When prompted, type **y** to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
+When prompted, type *y* to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
 install.
 
 .. warning:: **do not** use the :command:`pkg_add` command in a FreeNAS® jail as it will cause inconsistencies in your package management database.
@@ -8515,8 +8505,8 @@ Since this port has configurable options, the first time this command is run the
 
 |10000000000001DF0000012CAAF5492B_png|
 
-To change an option's setting, use the arrow keys to highlight the option, then press the **spacebar** to toggle the selection. Once you are finished, tab
-over to OK and press enter. The port will begin to compile and install.
+To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:spacebar` to toggle the selection. Once you are finished, tab
+over to OK and press :kbd:`Enter`. The port will begin to compile and install.
 
 .. note:: if you change your mind, the configuration screen will not be displayed again should you stop and restart the build. Type
    :command:`make config && make install clean` if you need to change your selected options.
@@ -8685,8 +8675,8 @@ While you are in Shell, you will not have access to any of the other GUI menus. 
 Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last session.
 When you are finished using Shell, type :command:`exit` to leave the session completely.
 
-Shell provides history (use your up arrow to see previously entered commands and press enter to repeat the currently displayed command) and tab completion
-(type a few letters and press tab to complete a command name or filename in the current directory).
+Shell provides history (use your up arrow to see previously entered commands and press :kbd:`Enter` to repeat the currently displayed command) and tab
+completion (type a few letters and press tab to complete a command name or filename in the current directory).
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 
@@ -9265,8 +9255,8 @@ For those options taking two parms, at least one must be specified; specifying o
 with a leading comma will set just the second parm, a value with a trailing comma will set just the first. To set each parm to unique values, specify both and
 separate them with a comma.
 
-* For these options taking two parms, specifying one value with no comma will only set the first parms and will leave the second at the default value. To set
-  the second value it must be preceded with a comma or be a comma-separated pair. This is to retain previous netperf behaviour.
+For these options taking two parms, specifying one value with no comma will only set the first parms and will leave the second at the default value. To set
+the second value it must be preceded with a comma or be a comma-separated pair. This is to retain previous netperf behaviour.
 
 IOzone
 ------
@@ -9809,7 +9799,7 @@ blocks. This is useful in constraining the area over which the random locations 
 generate reproducible results. In fact, upon each invocation of :command:`xdd` using the same parameters, the same random locations are generated each time.
 This allows the user to change the disk or starting offset and observe the effects. The random locations may be changed from pass to pass within an
 :command:`xdd` run by using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to
-run using the **–seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
+run using the **-seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
 
 tw_cli
 ------
@@ -9964,7 +9954,7 @@ screen. This line shows information on the current session and is used to enter 
 
 |Figure239a_png|
 
-To create a second window, press "ctrl b" then ". To close a window, type :command:`exit` within the window.
+To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window, type :command:`exit` within the window.
 
 `tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi?query=tmux>`_
 lists all of the key bindings and commands for interacting with :command:`tmux` windows and sessions.

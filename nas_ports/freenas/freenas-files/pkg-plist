@@ -39,6 +39,7 @@ usr/local/libexec/freenas-debug/system/system.sh
 usr/local/libexec/freenas-debug/zfs/zfs.sh
 usr/local/libexec/nas/generate_afpd_conf.py
 usr/local/libexec/nas/generate_ctl_conf.py
+usr/local/libexec/nas/generate_krb5_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
 usr/local/libexec/nas/generate_sssd_conf.py

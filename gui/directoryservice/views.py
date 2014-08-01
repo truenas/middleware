@@ -28,10 +28,15 @@ import json
 import logging
 import os
 
+from django.db.models import FieldDoesNotExist
 from django.http import HttpResponse  
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
 from freenasUI.directoryservice import forms, models, utils
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.views import JsonResp
@@ -39,11 +44,37 @@ from freenasUI.services.models import services
 
 log = logging.getLogger("directoryservice.views")
 
+def try_creating_kerberos_realm(activedirectory):
+    try:
+        realm_id = activedirectory.ad_kerberos_realm.id
+        return
+
+    except Exception as e:
+        log.debug("try_creating_kerberos_realm: %s", e)
+
+    try:
+        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+        kr = models.KerberosRealm() 
+        kr.krb_realm = activedirectory.ad_domainname.upper()
+        kr.krb_kdc = fad.krbname
+        kr.krb_admin_server = kr.krb_kdc
+        kr.krb_kpasswd_server = fad.kpwdname
+        kr.save()
+
+        activedirectory.ad_kerberos_realm = kr
+        activedirectory.save()
+
+    except Exception as e:
+        log.debug("try_creating_kerberos_realm: %s", e)
+
 def directoryservice_home(request):
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except:
         activedirectory = models.ActiveDirectory()
+
+    try_creating_kerberos_realm(activedirectory)
 
     try:
         ldap = models.LDAP.objects.order_by("-id")[0]
@@ -74,6 +105,8 @@ def directoryservice_activedirectory(request):
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except:
         activedirectory = models.ActiveDirectory()
+
+    try_creating_kerberos_realm(activedirectory)
 
     if request.method == "POST":
         form = forms.ActiveDirectoryForm(request.POST, instance=activedirectory)

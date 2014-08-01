@@ -1,0 +1,7 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+
+{% block form %}
+{{ block.super }}
+{% load i18n freeadmin %}
+{% admin_form idmap_form %}
+{% endblock %}
