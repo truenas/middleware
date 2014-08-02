@@ -81,7 +81,8 @@ def main():
         sys.exit(1)
 
     if config_file is not None:
-        config = Configuration.Configuration(file = config_file, root = root)
+        # We want the system configuration file
+        config = Configuration.Configuration(file = config_file, root = None)
 
     if len(args) != 1:
         usage()

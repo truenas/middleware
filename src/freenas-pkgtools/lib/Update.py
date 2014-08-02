@@ -55,17 +55,117 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         else:
             prefix = root
         manifest.StorePath(prefix + Manifest.SYSTEM_MANIFEST_FILE)
+        # See if the primary and backup file are the same
+        # If this raises an exception we deserve it
+        primary = os.stat(prefix + Manifest.SYSTEM_MANIFEST_FILE)
         try:
-            os.link(prefix + Manifest.SYSTEM_MANIFEST_FILE,
-                    prefix + Manifest.BACKUP_MANIFEST_FILE)
-        except OSError as e:
-            if e[0] == errno.EXDEV:
-                # Just write it out to the backup location
-                manifest.StorePath(prefix + Manifest.BACKUP_MANIFEST_FILE)
-            else:
-                raise e
+            secondary = os.stat(prefix + Manifest.BACKUP_MANIFEST_FILE)
         except:
-            raise
+            secondary = None
+
+        if secondary is None or \
+           primary.st_dev != secondary.st_dev or \
+            primary.st_ino != secondary.st_ino:
+            try:
+                # This could cause problems if /etc is a tmpfs
+                os.unlink(prefix + Manifest.BACKUP_MANIFEST_FILE)
+            except:
+                pass
+            try:
+                os.link(prefix + Manifest.SYSTEM_MANIFEST_FILE,
+                        prefix + Manifest.BACKUP_MANIFEST_FILE)
+            except OSError as e:
+                if e[0] == errno.EXDEV:
+                    # Just write it out to the backup location
+                    manifest.StorePath(prefix + Manifest.BACKUP_MANIFEST_FILE)
+            except:
+                raise e
+
+    def RunCommand(command, args):
+        # Run the given command.  Uses subprocess module.
+        # Returns True if the command exited with 0, or
+        # False otherwise.
+        import subprocess
+
+        proc_args = [ command ]
+        if args is not None:  proc_args.extend(args)
+        child = subprocess.call(proc_args)
+        if child == 0:
+            return True
+        else:
+            return False
+
+    def CreateClone(name):
+        # Create a boot environment from the current
+        # root, using the given name.  Returns False
+        # if it could not create it
+        beadm = "/usr/local/sbin/beadm"
+        args = ["create", name]
+        try:
+            rv = RunCommand(beadm, args)
+        except:
+            return False
+        return rv
+
+    def MountClone(name):
+        # Mount the given boot environment.  It will
+        # create a random name in /tmp.  Returns the
+        # name of the mountpoint, or None on error.
+        import tempfile
+        try:
+            mount_point = tempfile.mkdtemp()
+        except:
+            return None
+
+        if mount_point is None:
+            return None
+        beadm = "/usr/local/sbin/beadm"
+        args = ["mount", name, mount_point ]
+        try:
+            rv = RunCommand(beadm, args)
+        except:
+            try:
+                os.rmdir(mount_point)
+            except:
+                pass
+            return None
+        return mount_point
+
+    def ActivateClone(name):
+        # Set the clone to be active for the next boot
+        beadm = "/usr/local/sbin/beadm"
+        args = ["activate", name]
+        try:
+            rv = RunCommand(beadm, args)
+        except:
+            return False
+        return True
+
+    def UnmountClone(name):
+        # Unmount the given clone.  After unmounting,
+        # it removes the mount directory.
+        beadm = "/usr/local/sbin/beadm"
+        args = ["unmount", "-f", name]
+
+        try:
+            rv = RunCommand(beadm, args)
+        except:
+            return False
+        try:
+            os.rmdir(mount_point)
+        except:
+            pass
+        return True
+        
+    def DeleteClone(name):
+        # Delete the clone we created.
+        beadm = "/usr/local/sbin/beadm"
+        args = ["destroy", "-F", name]
+        try:
+            rv = RunCommand(beadm, args)
+        except:
+            return False
+        return rv;
 
     deleted_packages = []
     process_packages = []
@@ -101,12 +201,34 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     if conf is None:  
         conf = Configuration.Configuration()
 
+    # If root is None, then we will try to create a clone
+    # environment.  (If the caller wants to install into the
+    # current boot environment, set root = "" or "/".)
+    if root is None:
+        # We clone the existing boot environment to
+        # "FreeNAS-<sequence>"
+        clone_name = "FreeNAS-%d" % new_man.Sequence()
+        if CreateClone(clone_name) is False:
+            print >> sys.stderr, "Unable to create boot-environment %s" % clone_name
+            raise Exception("Unable to create new boot-environment %s" % clone_name)
+
+        mount_point = MountClone(clone_name)
+        if mount_point is None:
+            print >> sys.stderr, "Unable to mount boot-environment %s" % clone_name
+            raise Exception("Unable to mount boot-environment %s" % clone_name)
+        else:
+            root = mount_point
+    else:
+        mount_point = None
+
     for pkg in deleted_packages:
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
-        if conf.PackageDB().RemovePackageContents(pkg) == False:
+        if conf.PackageDB(root).RemovePackageContents(pkg) == False:
             print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
+            UnmountClone(clone_name)
+            DestroyClone(clone_name)
             raise Exception("Unable to remove contents for package %s" % pkg.Name())
-        conf.PackageDB().RemovePackage(pkg.Name())
+        conf.PackageDB(root).RemovePackage(pkg.Name())
 
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
     installer.GetPackages(process_packages, handler=get_handler)
@@ -114,9 +236,30 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     print >> sys.stderr, "Packages = %s" % installer._packages
 
     # Now let's actually install them.
+    # Only change on success
+    rv = False
     if installer.InstallPackages(handler=install_handler) is False:
         print >> sys.stderr, "Unable to install packages"
-        return False
     else:
         SaveManifest(new_man)
-        return True
+        if mount_point is not None:
+            if UnmountClone(clone_name) is False:
+                print >> sys.stderr, "Unable to unmount clone environment %s" % clone_name
+            else:
+                if ActivateClone(clone_name) is False:
+                    print >> sys.stderr, "Could not activate clone environment %s" % clone_name
+                else:
+                    rv = True
+
+    # Clean up
+    # The package files are open-unlinked, so should be removed
+    # automatically under *nix.  That just leaves the clone, which
+    # we should unmount, and destroy if necessary.
+    # Unmounting attempts to delete the mount point that was created.
+    if rv is False:
+        if DeleteClone(clone_name) is False:
+            print >> sys.stderr, "Unable to delete boot environment %s" % clone_name
+    
+    return rv
+
+    
