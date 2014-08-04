@@ -8,3 +8,8 @@ o  Increase performance of Directory Copy from CIFS
 o  Add support for the None Cipher in SSH.  This can be used to improve
    replication performance at the expense of sending your data over the
    wire in cleartext.  (Think private 10Gbe interlink)
+
+o  Resolve issue with vlan interface locking that could cause a kernel
+   panic when creating a number of VLAN interfaces.
+
+o  Add support for compressing replication jobs with lz4
