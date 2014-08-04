@@ -832,17 +832,24 @@ def upgrade(request):
         uuid = request.GET.get('uuid')
         handler = UpdateHandler(uuid=uuid)
         if not uuid:
-            if os.fork() == 0:
-                handler.dump()
+            #FIXME: ugly
+            pid = os.fork()
+            if pid != 0:
                 return HttpResponse(handler.uuid, status=202)
             else:
-                Update(
-                    get_handler=handler.get_handler,
-                    install_handler=handler.install_handler,
-                )
+                handler.pid = os.getpid()
+                handler.dump()
+                try:
+                    Update(
+                        get_handler=handler.get_handler,
+                        install_handler=handler.install_handler,
+                    )
+                except Exception, e:
+                    #FIXME: error handling
+                    pass
                 handler.finished = True
                 handler.dump()
-                sys.exit(0)
+                #os.kill(handler.pid, 15)
         else:
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)

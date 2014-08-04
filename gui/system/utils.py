@@ -54,16 +54,23 @@ class UpdateHandler(object):
     DUMPFILE = '/tmp/.upgradeprogress'
 
     def __init__(self, uuid=None):
-        if not uuid:
-            self.uuid = uuid4().hex
+        if uuid:
+            try:
+                self.load()
+                if self.uuid != uuid:
+                    raise
+            except:
+                raise ValueError("UUID not found")
         else:
-            self.uuid = uuid
-        self.step = 1
-        self.progress = 0
-        self.indeterminate = False
-        self.details = ''
+            self.uuid = uuid4().hex
+            self.details = ''
+            self.indeterminate = False
+            self.pid = None
+            self.progress = 0
+            self.step = 1
+            self.finished = False
         self._pkgname = ''
-        self.finished = False
+        self._baseprogress = 0
 
     def get_handler(self, index, pkg, pkgList):
         self.step = 1
@@ -88,6 +95,8 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
+        raise
+        self.indeterminate = data['indeterminate']
         self.step = 2
         self.indeterminate = False
         total = len(packages)
@@ -102,10 +111,12 @@ class UpdateHandler(object):
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
             data = {
-                'uuid': self.uuid,
-                'step': self.step,
-                'percent': self.progress,
+                'finished': self.finished,
                 'indeterminate': self.indeterminate,
+                'pid': self.pid,
+                'percent': self.progress,
+                'step': self.step,
+                'uuid': self.uuid,
             }
             if self.details:
                 data['details'] = self.details
@@ -113,9 +124,16 @@ class UpdateHandler(object):
 
     def load(self):
         if not os.path.exists(self.DUMPFILE):
-            return {}
+            return None
         with open(self.DUMPFILE, 'rb') as f:
             data = json.loads(f.read())
+        self.details = data.get('details', '')
+        self.finished = data['finished']
+        self.indeterminate = data['indeterminate']
+        self.progress = data['percent']
+        self.pid = data['pid']
+        self.step = data['step']
+        self.uuid = data['uuid']
         return data
 
     def exit(self):
