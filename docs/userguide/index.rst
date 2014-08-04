@@ -10180,6 +10180,9 @@ resources are laid out in an order that is similar to the tree menu of the FreeN
 A Simple API Example
 --------------------
 
+.. highlight:: python
+   :linenothreshold: 4
+
 The :file:`freenas/examples/api/` directory contains some API usage examples. This section provides a walk-through of the
 :file:`freenas/examples/api/newuser.py` script, shown below, as it provides a simple example that creates a user.
 
@@ -10194,27 +10197,28 @@ modified in your copy in order to match the needs of the user being created. The
 by typing :command:`python scriptname.py`. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the
 FreeNAS® GUI.
 
-Here is the example script with line numbers. Do **not** include the line numbers in your script. Instead, refer to the line numbers in the explanation below.
+Here is the example script with an explanation of the line numbers below it.
 ::
- 1 import json
- 2 import requests
- 3 r = requests.post(
- 4   'https://freenas.mydomain/api/v1.0/account/users/',
- 5   auth=('root', 'freenas'),
- 6   headers={'Content-Type': 'application/json'},
- 7   verify=False,
- 8   data=json.dumps({
- 9 	'bsdusr_uid': '1100',
- 10 	'bsdusr_username': 'myuser',
- 11 	'bsdusr_mode': '755',
- 12 	'bsdusr_creategroup': 'True',
- 13 	'bsdusr_password': '12345',
- 14 	'bsdusr_shell': '/usr/local/bin/bash',
- 15 	'bsdusr_full_name': 'Full Name',
- 16 	'bsdusr_email': 'name@provider.com',
- 17   })
- 18 )
- 19 print r.text
+
+ import json
+ import requests
+ r = requests.post(
+   'https://freenas.mydomain/api/v1.0/account/users/',
+   auth=('root', 'freenas'),
+   headers={'Content-Type': 'application/json'},
+   verify=False,
+   data=json.dumps({
+ 	'bsdusr_uid': '1100',
+  	'bsdusr_username': 'myuser',
+  	'bsdusr_mode': '755',
+  	'bsdusr_creategroup': 'True',
+  	'bsdusr_password': '12345',
+  	'bsdusr_shell': '/usr/local/bin/bash',
+  	'bsdusr_full_name': 'Full Name',
+  	'bsdusr_email': 'name@provider.com',
+    })
+  )
+  print r.text
 
 Where:
 
