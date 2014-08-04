@@ -212,7 +212,7 @@ The following features have been added or changed:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
-* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and Windows 2012 clustering.
+* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration, adds support for Microsoft ODX acceleration and Windows 2012 clustering.
 
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
