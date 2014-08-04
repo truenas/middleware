@@ -18,6 +18,8 @@ XX, 2014
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
 
+.. sectnum::
+
 This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
@@ -87,8 +89,6 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 * **bold text:** used to emphasize an important point.
 
 * *italic text:* used to represent device names or text that is input into a GUI field.
-
-.. sectnum::
 
 Introduction
 ============
@@ -3521,9 +3521,9 @@ the GUI will turn red if the selected configuration is not recommended.
 .. note:: for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended,
    it is possible to create a volume in this situation by using the "Manual setup" button and following the instructions in Manual Volume Creation.
 
-ZFS Volume Manager will allow you to save save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal
-configuration. However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration.
-Click the tool tip icon to access a link to this documentation.
+ZFS Volume Manager will allow you to save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal configuration.
+However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. Click the tool tip
+icon to access a link to this documentation.
 
 The "Add Volume" button warns that **creating a volume will destroys any existing data on the selected disk(s)**. In other words, creating a new volume
 reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the auto-import or
