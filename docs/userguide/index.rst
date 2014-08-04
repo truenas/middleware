@@ -3719,7 +3719,7 @@ Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, shown in Figure 8.1o, can be used to add additional
-disks to an existing ZFS volume. This drop-down empty will be empty if an existing ZFS volume does not exist.
+disks to an existing ZFS volume. This drop-down empty will be empty if no ZFS volume exists.
 
 **Figure 8.1o: Volume to Extend Field**
 
