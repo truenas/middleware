@@ -1,62 +1,10 @@
-Release Notes for FreeNAS 9.2.1.6-RELEASE
+Release Notes for FreeNAS 9.2.1.7-RELEASE
 
-o  Samba updated to 4.1.9, ldb to version 1.1.17, and tdb to version 1.3.0
+o  Samba updated to 4.1.11
+   This addresses http://www.samba.org/samba/security/CVE-2014-3560
 
-o  Netatalk updated to 3.1.2
+o  Increase performance of Directory Copy from CIFS
 
-o  Added extra safety belts and sane ACL behavior for CIFS sharing.
-
-	Now when a ZFS dataset is created with the type set to Windows, or a
-	Windows share is created on an existing dataset with "Apply Default
-	Permissions" checked (a new GUI option in the CIFS sharing dialog),
-	FreeNAS will make sure that the ACLs / ownerships are set properly
-	for Windows and it will also make sure that the behavior of chmod(2)
-	is set in ZFS such that it does not also destroy the Inherit, Delete
-	or Delete Child ACLs whenever it's used.
-
-o  No longer useful Inherit Owner, Inherit Permissions and Inherit ACLs GUI options
-removed.  They can still be set in Auxiliary parameters if truly desired.
-
-o  Delete potentially harmful kmem size tunables created (in former times) by
-the autotuner.  Also updated autotuner to set tunables and sysctls according
-to current best practices.
-
-o Jails now auto-start properly when importing a volume containing jails.
-
-o The System Dataset now has its own Settings UI that allows you to control
-the placement of various sub-datasets under it.
-
-o The System Dataset will now migrate if you change the pool assignment,
-preserving your data and also moving it off the previous pool.
-
-o Several bugs which broke ZFS snapshot replication when snapshots expired
-before replication could complete successfully, or if the connection between
-the replication peers failed, have been fixed.
-
-o A new Virtualbox jail template has been added.  Supporting Virtualbox in a
-jail is as easy as creating an instance of this template.
-
-o A .usb image is now being distributed that can be imaged to a USB key.  This
-will boot into the installer which can ease installation on systems without
-an optical drive.  This image will also work if burned to a CD.
-
-o Pool import time for healthy pools has been improved by a factor of 3x in
-many cases.
-
-o FreeNAS now includes the mpr driver, which is the officially sanctioned
-LSI 12 Gbps SAS HBA driver.  Users who were using a tunable to load mps3
-(the beta LSI driver) can safely delete that tunable as that driver has
-been removed from the build and replaced by the official driver.
-
-o FreeNAS includes an experimental in kernel iSCSI target, which can be
-enabled via the services -> iSCSI settings screen.  Changing between the
-userland iSCSI target and the new kernel iSCSI target requires a reboot.
-Additionally while one should be able to migrate between targets at will this
-has not been well tested and VMWare at least notices the change.  The new
-target is designed to be backed by zvols.  While it works with files not
-all features are enabled and performance may suffer.  The new target also
-enables FC target mode with a few additional tweaks.
-
-This is, again, an experimental feature largely aimed at Windows 2012
-installations as an alternative to the stable, but feature-frozen, istgt
-(user-mode iSCSI) implementation.
+o  Add support for the None Cipher in SSH.  This can be used to improve
+   replication performance at the expense of sending your data over the
+   wire in cleartext.  (Think private 10Gbe interlink)
