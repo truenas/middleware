@@ -198,9 +198,7 @@ class FreeAdminSite(object):
     @never_cache
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
-        from freenasUI.middleware.notifier import notifier
-        from freenasUI.system.models import Advanced
-        from freenasUI.storage.models import Volume
+        from freenasUI.system.models import Advanced, Settings
 
         view = appPool.hook_app_index('freeadmin', request)
         view = filter(None, view)
@@ -217,12 +215,13 @@ class FreeAdminSite(object):
         except:
             hostname = None
 
-        if (
-            Volume.objects.all().count() == 0 and
-            len(notifier().get_disks()) > 0
-        ):
-            wizard = True
-        else:
+        try:
+            settings = Settings.objects.all().order_by('-id')[0]
+            wizard = not settings.stg_wizardshown
+            if settings.stg_wizardshown is False:
+                settings.stg_wizardshown = True
+                settings.save()
+        except:
             wizard = False
 
         sw_version = get_sw_version()

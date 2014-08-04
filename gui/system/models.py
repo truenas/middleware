@@ -105,6 +105,10 @@ class Settings(Model):
             max_length=120,
             verbose_name=_("Syslog server")
             )
+    stg_wizardshown = models.BooleanField(
+        editable=False,
+        default=False,
+    )
 
     class Meta:
         verbose_name = _("Settings")
