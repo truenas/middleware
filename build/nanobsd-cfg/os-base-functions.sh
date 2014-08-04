@@ -591,3 +591,12 @@ install_ports()
 
 	
 }
+
+add_webdav_user ( )
+{
+  # Adding a 'webdav' group
+  pw addgroup webdav
+  # Adding a user 'webdav' belonging to the group 'webdav'
+  pw adduser webdav -g webdav -d /nonexistent -s /usr/sbin/nologin -c "The user for webdav auth"
+
+}
