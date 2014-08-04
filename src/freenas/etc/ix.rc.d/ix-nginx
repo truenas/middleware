@@ -145,7 +145,10 @@ http {
     #gzip  on;
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
-
+    
+    # Adding a auxiliary nginx conf file for webdav settings
+    include nginx-webdav.conf;
+    
     server {
         server_name  localhost;
 __EOF__
