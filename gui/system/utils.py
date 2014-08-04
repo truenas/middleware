@@ -42,10 +42,10 @@ class CheckUpdateHandler(object):
         if op == 'upgrade':
             self.output += '%s: %s-%s -> %s-%s\n' % (
                 _('Upgrade'),
-                newpkg.Name(),
-                newpkg.Version(),
                 oldpkg.Name(),
                 oldpkg.Version(),
+                newpkg.Name(),
+                newpkg.Version(),
             )
 
 
