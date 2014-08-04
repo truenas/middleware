@@ -95,7 +95,6 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
-        raise
         self.indeterminate = data['indeterminate']
         self.step = 2
         self.indeterminate = False
