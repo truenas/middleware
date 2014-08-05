@@ -14,8 +14,8 @@ def CheckForUpdates(root = None, handler = None):
     Returns the new manifest if there is an update,
     and None otherwise.
     (It determines if there is an update if the latest-found
-    manifeset's sequence number is larger than the current
-    sequence number.)
+    manifest contains differences from the current system
+    manifest.)
     The optional argument handler is a function that
     will be called for each difference in the new manifest
     (if there is one); it will be called with three
@@ -30,13 +30,13 @@ def CheckForUpdates(root = None, handler = None):
                                                                              if m is not None else 0)
     if m is None:
         raise ValueError("Manifest could not be found!")
-    if m.Sequence() <= cur.Sequence():
-        return None
-    if handler is not None:
-        diffs = Manifest.CompareManifests(cur, m)
-        for (pkg, op, old) in diffs:
+    diffs = Manifest.CompareManifests(cur, m)
+    update = False
+    for (pkg, op,old) in diffs:
+        update = True
+        if handler is not None:
             handler(op, pkg, old)
-    return m
+    return m if update else None
 
 
 def Update(root=None, conf=None, check_handler=None, get_handler=None,
