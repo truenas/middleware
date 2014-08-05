@@ -171,6 +171,18 @@ class MultiSelectField(models.Field):
             ])
             setattr(cls, 'get_%s_display' % self.name, func)
 
+    def get_choices_selected(self, arr_choices=''):
+        if not arr_choices:
+            return False
+        list = []
+        for choice_selected in arr_choices:
+            list.append(choice_selected[0])
+        return list
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
+
 
 class Network4Field(models.CharField):
 
