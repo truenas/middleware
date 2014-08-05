@@ -36,7 +36,7 @@ Fields
  - network Global Configuration resource: gc_httpproxy
  - service CIFS resource: cifs_srv_domain_logons
  - service Dynamic DNS resource: ddns_ipserver
- - storage Replication resource: repl_compression
+ - storage Replication resource: repl_compression, repl_remote_cipher
  - system Settings resource: stg_guihttpsredirect
  - system Tunable resource: tun_type
  - directory service ActiveDirectory resource: ad_certfile, ad_enable, ad_keytab, ad_ssl, ad_use_keytab
@@ -58,6 +58,7 @@ Backwardly incompatible changes
 
  - Active Directory resource: ad_workgroup
  - Settings resource: stg_directoryservice
+ - Replication resource: repl_remote_fast_cipher
 
 * Fields renamed
 
