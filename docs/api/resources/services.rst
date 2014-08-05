@@ -842,6 +842,7 @@ List resource
                 "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
+                "nfs_srv_v4": false,
                 "id": 1
         }
 
@@ -883,12 +884,14 @@ Update resource
                 "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
+                "nfs_srv_v4": false,
                 "id": 1
         }
 
    :json string nfs_srv_servers: how many servers to create
    :json boolean nfs_srv_allow_nonroot: allow non-root mount requests to be served.
    :json boolean nfs_srv_udp: serve UDP requests
+   :json boolean nfs_srv_v4: enable NFS v4
    :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
    :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
    :json integer nfs_srv_rpcstatd_port: forces the rpc.statd daemon to bind to the specified port

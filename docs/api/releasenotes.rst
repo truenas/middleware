@@ -36,6 +36,7 @@ Fields
  - network Global Configuration resource: gc_httpproxy
  - service CIFS resource: cifs_srv_domain_logons
  - service Dynamic DNS resource: ddns_ipserver
+ - service NFS resource: nfs_srv_v4
  - storage Replication resource: repl_compression, repl_remote_cipher
  - system Settings resource: stg_guihttpsredirect
  - system Tunable resource: tun_type
