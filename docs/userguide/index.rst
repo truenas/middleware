@@ -135,7 +135,9 @@ What's New in 9.3
 
 FreeNAS® 9.3 fixes this list of bugs.
 
-It is based on the stable version of FreeBSD 9.3 which adds these features, supports this hardware, and incorporates all of the
+It is based on the stable version of FreeBSD 9.3 which adds 
+`these features <https://www.freebsd.org/releases/9.3R/relnotes.html>`_, supports
+`this hardware <https://www.freebsd.org/releases/9.3R/hardware.html>`_, and incorporates all of the
 `security releases <http://www.freebsd.org/security/advisories.html>`_
 issued since FreeBSD 9.3 RELEASE.
 
@@ -148,15 +150,15 @@ issued since FreeBSD 9.3 RELEASE.
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
 
-* Support for Link Layer Discovery Protocol (`LLDP`_) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
-  Ethernet LAN.
+* Support for Link Layer Discovery Protocol (`LLDP`_) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
+  an Ethernet LAN.
 
 The GUI has been reorganized as follows:
 
 * :menuselection:`System --> System Information` is now :menuselection:`System --> Information`.
 
 * :menuselection:`System --> Settings` has been divided into :menuselection:`System --> General`, :menuselection:`System --> Advanced`,
-  :menuselection:`System --> Email` and :menuselection:`System --> System Dataset`.
+  :menuselection:`System --> Email`, and :menuselection:`System --> System Dataset`.
 
 * :menuselection:`System --> Sysctls` and :menuselection:`System --> Tunables` have been merged into :menuselection:`System --> Tunables`. The "Type" field
   has been added to :menuselection:`System --> Tunables` so you can specify whether a "Loader" or a "Sysctl" is being created.
@@ -165,9 +167,9 @@ The GUI has been reorganized as follows:
 
 * :menuselection:`System --> Settings --> SSL` has been moved to :menuselection:`System --> General --> Set SSL Certificate`.
   
-* A new Tasks menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
+* A new `Tasks`_ menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
 
-* A ZFS Snapshots menu has been added to Storage.
+* A `ZFS Snapshots`_ menu has been added to Storage.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -234,9 +236,8 @@ Known Issues
 
 Before installing FreeNAS® you should be aware of the following known issues:
 
-* **UPGRADES FROM FreeNAS® 0.7x ARE UNSUPPORTED.**
-  The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you will have to manually recreate your configuration.
-  However, you should be able to import_supported FreeNAS® 0.7x volumes.
+* **UPGRADES FROM FreeNAS® 0.7x ARE NOT SUPPORTED.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
+  will have to manually recreate your configuration. However, you should be able to import_supported FreeNAS® 0.7x volumes.
 
 * **The ZFS upgrade procedure is non-reversible.** Do not upgrade your ZFS version unless you are absolutely sure that you will never want to go back to the
   previous version. There is no reversing a ZFS pool upgrade, and there is no way for a system with an older version of ZFS to access pools that have been
@@ -255,8 +256,10 @@ Before installing FreeNAS® you should be aware of the following known issues:
 Hardware Recommendations
 ------------------------
 
-Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the amd64 section of the `FreeBSD Hardware Compatibility List
-<http://www.freebsd.org/releases/9.3R/hardware.html>`__.
+Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
+<http://www.freebsd.org/releases/9.3R/hardware.html>`__. Supported processors are listed in section
+`2.1 amd64 <https://www.freebsd.org/releases/9.3R/hardware.html#proc>`_. Beginning with version 9.3, FreeNAS® is only available for 64-bit (also known as
+amd64) processors.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
 You can also skim through the
@@ -265,35 +268,29 @@ regarding the hardware best suited to meet your requirements. This
 `forum post <http://forums.freenas.org/threads/so-you-want-some-hardware-suggestions.12276/>`_
 provides some specific recommendations if you are planning on purchasing hardware.
 
-Architecture
-~~~~~~~~~~~~
-
-Beginning with version 9.3, FreeNAS® is only available for 64-bit architectures.
-
 RAM
 ~~~
 
-The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. If your RAM is limited, consider using UFS until you can
-afford better hardware. FreeNAS® with ZFS requires a minimum of 8 GB of RAM in order to provide good stability regardless of the number of users or size of
-the pool. The more RAM, the better the performance, and the
+The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. The recommended minimum is 8 GB of RAM. The more RAM, the
+better the performance, and the
 `FreeNAS® Forums <http://forums.freenas.org/>`_
-provide anecdotal evidence from users on how much performance is gained by adding more RAM. For systems with large disk capacity (greater than 8 TB), a
-general rule of thumb is 1 GB of RAM for every 1 TB of storage. This
+provide anecdotal evidence from users on how much performance is gained by adding more RAM. For systems with a disk capacity greater than 8 TB, a general rule
+of thumb is 1 GB of RAM for every 1 TB of storage. This
 `post <http://hardforum.com/showpost.php?s=8d31305e57c1dd2853eb817124ff18d9&p=1036865233&postcount=3>`_
 describes how RAM is used by ZFS.
 
 If you plan to use your server for home use, you can often soften the rule of thumb of 1 GB of RAM for every 1 TB of storage, though 8 GB of RAM is still the
-minimum. If performance is inadequate you should consider adding more RAM as a first remedy. The sweet spot for most users in home/small business is 16GB of
-RAM.
+recommended minimum. If performance is inadequate, consider adding more RAM as a first remedy. The sweet spot for most home or small business users is 16 GB
+of RAM. While it is possible to use ZFS on systems with less than 8 GB of RAM, performance will be substantially reduced. The ZFS filesystem will
+automatically disable pre-fetching (caching) on systems where it is not able to use at least 4 GB of memory for its cache and data structures.
 
-It is possible to use ZFS on systems with less than 8 GB of RAM. However, FreeNAS® as distributed is configured to be suitable for systems meeting the sizing
-recommendations above. If you wish to use ZFS on a smaller memory system, some tuning will be necessary, and performance will be (likely substantially)
-reduced. ZFS will automatically disable pre-fetching (caching) on systems where it is not able to use at least 4 GB of memory just for ZFS cache and data
-structures. This
-`post <http://forums.freenas.org/showthread.php?3606-How-I-did-ZFS-through-FreeNAS-on-a-32bit-proc-with-low-memory>`_
-describes many of the relevant tunables.
+.. note:: if your RAM is limited, you can consider using the UFS filesystem until you can afford better hardware. However, many of the compelling features of
+   FreeNAS® are not available with UFS.
 
-If your system supports it and your budget allows for it, install ECC RAM.
+If your system supports it and your budget allows for it, install ECC RAM. While more expensive, ECC RAM is highly recommended as it prevents in-flight
+corruption of data before the error-correcting properties of ZFS come into play, thus providing consistency for the checksumming and parity calculations
+performed by ZFS. If you consider your data to be important, use ECC RAM. This 
+`Case Study <http://research.cs.wisc.edu/adsl/Publications/zfs-corruption-fast10.pdf>`_ describes the risks associated with memory corruption.
 
 If you plan to use ZFS deduplication, a general rule of thumb is 5 GB RAM per TB of storage to be deduplicated.
 
@@ -301,42 +298,27 @@ If you use Active Directory with FreeNAS®, add an additional 2 GB of RAM for wi
 
 If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
-If you only plan to use UFS, you may be able to get by with as little as 2GB of RAM.
-
 If you don't have at least 8GB of RAM with ZFS or 2GB of RAM with UFS, you should consider getting more powerful hardware before using FreeNAS® to store your
-data. Otherwise, data loss may result. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
+data. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
 bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
 IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
-
-.. note:: adding an L2ARC is not a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized
-   ARC you will not be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability.
-
-.. warning:: to ensure consistency for the checksumming and parity calculations performed by ZFS, ECC RAM is highly recommended. Using non-ECC RAM can cause
-   unrecoverable damage to a zpool resulting in a loss of all data in the pool.
 
 Compact or USB Flash
 ~~~~~~~~~~~~~~~~~~~~
 
 The FreeNAS® operating system is a running image. This means that it should not be installed onto a hard drive, but rather to a USB or compact flash device
-that is at least 2 GB in size. If you don't have compact flash, you can instead use a USB thumb drive that is dedicated to the running image and which stays
-inserted in the USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the
-drive. In other words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
+that is at least 2 GB in size. If you don't have compact flash, use a USB thumb drive that is dedicated to the running image and which stays inserted in the
+USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the drive. In other
+words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
 
-.. note:: many devices that are labeled as 2GB are not really 2GB size.  For this reason, it is recommended to use media that is 4GB or larger.
-
-The FreeNAS® installation will partition the operating system drive into two partitions. One partition holds the current operating system and the other
-partition is used when you upgrade. This allows you to safely upgrade to a new image or to revert to an older image should you encounter problems.
+.. note:: many USB thumb drives that are labeled as 2GB are not really 2GB in size.  For this reason, it is recommended to use media that is 4GB or larger and
+   to use a name brand USB stick.
 
 USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point) chipsets. If you receive a
 "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this will downclock the USB
-ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a Tunable
+ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a `Tunables`_
 named *xhci_load*, set its value to
 *YES*, and reboot the system.
-
-It is highly recommended that when using a USB stick, that only name brand USB sticks are used as off-brand sticks may not be fully compatible with FreeNAS®.
-
-.. note:: SD card to USB converters are not recommended as these have caused problems for many users. When using a CF adapter, avoid the no-name brands to
-ensure compatibility, reliability, and performance.
 
 Storage Disks and Controllers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,10 +328,10 @@ The
 of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6gbps RAID controllers has been added along with the CLI
 utility :command:`tw_cli` for managing 3ware RAID controllers.
 
-FreeNAS® supports hot pluggable drives. Make sure that AHCI is enabled in the BIOS. Note that hot plugging is **not the same** as a hot spare, which is not
-supported at this time.
+FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS. Note that hot plugging is **not the same** as a hot
+spare, which is not supported at this time.
 
-If you need reliable disk alerting, immediate reporting of a failed drive, and or swapping, use a fully manageable hardware RAID controller such as a LSI
+If you need reliable disk alerting and immediate reporting of a failed drive, use a fully manageable hardware RAID controller such as a LSI
 MegaRAID controller or a 3Ware twa-compatible controller. The current FreeBSD ZFS implementation will not notice that a drive is gone until you reboot or put
 the volume on high load. More information about LSI cards and FreeNAS® can be found in this
 `forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`_.
@@ -360,20 +342,20 @@ Suggestions for testing disks before adding them to a RAID array can be found in
 `This article <http://technutz.com/purpose-built-nas-hard-drives/>`_
 provides a good overview of hard drives which are well suited for a NAS.
 
-If you have some money to spend and wish to optimize your disk subsystem, consider your read/write needs, your budget, and your RAID requirements.
+If you have some money to spend and wish to optimize your disk subsystem, consider your read/write needs, your budget, and your RAID requirements:
 
-If you have steady, non-contiguous writes, use disks with low seek times. Examples are 10K or 15K SAS drives which cost about $1/GB. An example configuration
-would be six 600 GB 15K SAS drives in a RAID 10 which would yield 1.8 TB of usable space or eight 600 GB 15K SAS drives in a RAID 10 which would yield 2.4 TB
-of usable space.
+* If you have steady, non-contiguous writes, use disks with low seek times. Examples are 10K or 15K SAS drives which cost about $1/GB. An example
+  configuration would be six 600 GB 15K SAS drives in a RAID 10 which would yield 1.8 TB of usable space or eight 600 GB 15K SAS drives in a RAID 10 which
+  would yield 2.4 TB of usable space.
 
-7200 RPM SATA disks are designed for single-user sequential I/O and are not a good choice for multi-user writes.
+* 7200 RPM SATA disks are designed for single-user sequential I/O and are not a good choice for multi-user writes.
 
 If you have the budget and high performance is a key requirement, consider a
 `Fusion-I/O card <http://www.fusionio.com/products/>`_
-which is optimized for massive random access. These cards are expensive and are suited for high end systems that demand performance. A Fusion-I/O can be
+which is optimized for massive random access. These cards are expensive and are suited for high-end systems that demand performance. A Fusion-I/O card can be
 formatted with a filesystem and used as direct storage; when used this way, it does not have the write issues typically associated with a flash device. A
-Fusion-I/O can also be used as a cache device when your ZFS dataset size is bigger than your RAM. Due to the increased throughput, systems running these cards
-typically use multiple 10 GigE network interfaces.
+Fusion-I/O card can also be used as a cache device when your ZFS dataset size is bigger than your RAM. Due to the increased throughput, systems running these
+cards typically use multiple 10 GigE network interfaces.
 
 If you will be using ZFS,
 `Disk Space Requirements for ZFS Storage Pools <http://download.oracle.com/docs/cd/E19253-01/819-5461/6n7ht6r12/index.html>`_
@@ -387,7 +369,7 @@ If you are new to ZFS and are purchasing hardware, read through
 first.
 
 ZFS uses dynamic block sizing, meaning that it is capable of striping different sized disks. However, if you care about performance, use disks of the same
-size. Further, when creating a RAIDZ, only the size of the smallest disk will be used on each disk.
+size. Further, when creating a RAIDZ*, only the size of the smallest disk will be used on each disk.
 
 Network Interfaces
 ~~~~~~~~~~~~~~~~~~
@@ -395,13 +377,12 @@ Network Interfaces
 The
 `Ethernet section <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_
 of the FreeBSD Hardware Notes indicates which interfaces are supported by each driver. While many interfaces are supported, FreeNAS® users have seen the best
-performance from Intel and Chelsio interfaces, so consider these brands if you are purchasing a new interface. Realteks will perform poorly under CPU load as
+performance from Intel and Chelsio interfaces, so consider these brands if you are purchasing a new NIC. Realteks will perform poorly under CPU load as
 interfaces with these chipsets do not provide their own processors.
 
-At a minimum you will want to use a GigE interface. While GigE interfaces and switches are affordable for home use, it should be noted that modern disks can
-easily saturate 110 MB/s. If you require a higher network throughput, you can bond multiple GigE cards together using the LACP type of
-Link Aggregation. However, any switches will need to support LACP which means you will need a more expensive managed switch rather than a home user grade
-switch.
+At a minimum, a GigE interface is recommended. While GigE interfaces and switches are affordable for home use, modern disks can easily saturate 110 MB/s. If
+you require higher network throughput, you can bond multiple GigE cards together using the LACP type of `Link Aggregations`_. However, the switch will need to
+support LACP which means you will need a more expensive managed switch.
 
 If network performance is a requirement and you have some money to spend, use 10 GigE interfaces and a managed switch. If you are purchasing a managed switch,
 consider one that supports LACP and jumbo frames as both can be used to increase network throughput.
@@ -421,13 +402,10 @@ the following command. In this example, the capabilities line indicates that WOL
  options=42098<VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,WOL_MAGIC,VLAN_HWTSO>
  capabilities=5399b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,TSO4,WOL_UCAST,WOL_MCAST, WOL_MAGIC,VLAN_HWFILTER,VLAN_H WTSO>
 
-If you find that WOL support is indicated but not working for a particular interface, submit a bug report.
+If you find that WOL support is indicated but not working for a particular interface, `Report a Bug`_.
 
-ZFS Overview
-~~~~~~~~~~~~
-
-While ZFS isn't hardware, an overview is included in this section as the decision to use ZFS may impact on your hardware choices and whether or not to use
-hardware RAID.
+ZFS Primer
+----------
 
 If you are new to ZFS, the
 `Wikipedia entry on ZFS <http://en.wikipedia.org/wiki/Zfs>`_
@@ -518,6 +496,9 @@ adding another device using ZFS Volume Manager_. The GUI will always stripe L2AR
 
 Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload and the ratio of
 dataset size to cache size. Note that a dedicated L2ARC device can not be shared between ZFS pools.
+
+.. note:: adding an L2ARC is not a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized
+   ARC you will not be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability.
 
 **Scrub:** similar to ECC memory scrubbing, all data is read to detect latent errors while they're still correctable. A scrub traverses the entire storage
 pool to read every data block, validates it against its 256-bit checksum, and repairs it if necessary.
