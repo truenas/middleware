@@ -237,7 +237,9 @@ List resource
                 "nfs_recyclebin": false,
                 "nfs_auxsmbconf": "",
                 "nfs_comment": "",
-                "nfs_path": "/mnt/tank/MyShare",
+                "nfs_paths": [
+                        "/mnt/tank"
+                ],
                 "nfs_ro": false,
                 "nfs_inheritowner": false,
                 "nfs_guestonly": true,
