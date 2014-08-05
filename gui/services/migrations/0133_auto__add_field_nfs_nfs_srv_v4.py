@@ -13,6 +13,10 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
+        # Workaround south boolean bug
+        if not db.dry_run:
+            orm['services.NFS'].objects.all().update(nfs_srv_v4=False)
+
 
     def backwards(self, orm):
         # Deleting field 'NFS.nfs_srv_v4'

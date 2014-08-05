@@ -2034,24 +2034,10 @@ class ReplicationForm(ModelForm):
         label=_("Dedicated User"),
         required=False,
     )
-    repl_remote_fast_cipher = forms.BooleanField(
-        label=_("Enable High Speed Ciphers"),
-        initial=False,
-        required=False,
-        help_text=_(
-            "Enabling this may increase transfer speed on high "
-            "speed/low latency local networks.  It uses less secure encryption"
-            " algorithms than the defaults, which makes it less desirable on "
-            "untrusted networks."),
-    )
-    repl_remote_no_cipher = forms.BooleanField(
-        label=_("Disable Encryption (SECURE LAN ONLY)"),
-        initial=False,
-        required=False,
-        help_text=_(
-            "Enabling this may substantially increase transfer speed on high "
-            "speed, secure local networks.  It uses NO ENCRYPTION AT ALL,"
-            " making it totally unsuitable for untrusted networks."),
+    repl_remote_cipher = forms.ChoiceField(
+        label=_("Encryption Cipher"),
+        initial='standard',
+        choices=choices.REPL_CIPHER,
     )
     repl_remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
@@ -2115,10 +2101,8 @@ class ReplicationForm(ModelForm):
                 repl.repl_remote.ssh_remote_dedicateduser_enabled)
             self.fields['repl_remote_dedicateduser'].initial = (
                 repl.repl_remote.ssh_remote_dedicateduser)
-            self.fields['repl_remote_fast_cipher'].initial = (
-                repl.repl_remote.ssh_fast_cipher)
-            self.fields['repl_remote_no_cipher'].initial = (
-                repl.repl_remote.ssh_no_cipher)
+            self.fields['repl_remote_cipher'].initial = (
+                repl.repl_remote.ssh_cipher)
             self.fields['repl_remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
             self.fields['repl_remote_hostkey'].required = False
@@ -2156,8 +2140,7 @@ class ReplicationForm(ModelForm):
         r.ssh_remote_dedicateduser = self.cleaned_data.get(
             "repl_remote_dedicateduser")
         r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
-        r.ssh_fast_cipher = self.cleaned_data.get("repl_remote_fast_cipher")
-        r.ssh_no_cipher = self.cleaned_data.get("repl_remote_no_cipher")
+        r.ssh_cipher = self.cleaned_data.get("repl_remote_cipher")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r

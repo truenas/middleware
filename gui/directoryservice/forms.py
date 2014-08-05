@@ -470,6 +470,12 @@ class LDAPForm(ModelForm):
 
 
 class KerberosRealmForm(ModelForm):
+    advanced_fields = [
+        'krb_kdc',
+        'krb_admin_server',
+        'krb_kpasswd_server'
+    ]
+
     class Meta:
         fields = '__all__'
         model = models.KerberosRealm

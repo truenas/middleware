@@ -31,10 +31,11 @@ import re
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
-from freenasUI.sharing import models
-from freenasUI.middleware.notifier import notifier
+from freenasUI.account.forms import FilteredSelectMultiple
 from freenasUI.common.forms import ModelForm
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
+from freenasUI.sharing import models
 from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (
     IPNetwork, AddressValueError, NetmaskValueError
@@ -174,6 +175,9 @@ class NFS_ShareForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.NFS_Share
+        widgets = {
+            'nfs_security': FilteredSelectMultiple(sorter=True),
+        }
 
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']

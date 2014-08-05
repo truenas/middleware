@@ -814,22 +814,11 @@ class ReplRemote(Model):
         max_length=2048,
         verbose_name=_("Remote hostkey"),
     )
-    ssh_fast_cipher = models.BooleanField(
-        default=False,
-        verbose_name=_("High Speed Encryption Ciphers"),
-        help_text=_(
-            "Enabling this may increase transfer speed on high "
-            "speed/low latency local networks.  It uses less secure "
-            "encryption algorithms than the defaults, which make it less "
-            "desirable on untrusted networks.")
-    )
-    ssh_no_cipher = models.BooleanField(
-	default=False,
-        verbose_name=_("Disable Encryption (SECURE LAN ONLY)"),
-        help_text=_(
-            "Enabling this may substantially increase transfer speed on high "
-            "speed, secure local networks.  It uses NO encryption at all,"
-            " making it totally unsuitable for untrusted networks."),
+    ssh_cipher = models.CharField(
+        max_length=20,
+        verbose_name=_('Encryption Cipher'),
+        choices=choices.REPL_CIPHER,
+        default='standard',
     )
 
     class Meta:

@@ -3,53 +3,77 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
 import conn
+import storage_volume
 
-#vol_name = raw_input('Input volume name:')
+storage_volume.post()
 url = conn.url + 'storage/task/'
 auth = conn.auth
 headers = conn.headers
 payload = {
-          "task_filesystem": "tank0",
+          "task_filesystem": "new_volume_test_suite",
           "task_recursive": "false",
           "task_ret_unit": "week",
           "task_interval": 30
 }
 
-def task_get():
+def get():
+  print 'Getting storage-task ......'
+  r = requests.get(url, auth = auth)
+  if r.status_code == 200:
+    result = json.loads(r.text)
+    i = 0
+    for i in range(0,len(result)):
+      print '\n'
+      for items in result[i]:
+        print items+':', result[i][items]
+    print 'Get storage-task --> Succeeded!'
+  else:
+    print 'Get storage-task --> Failed!'
+
+def post():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   i = 0
-  for i in range(0,len(result)):
-    for items in result[i]:
-      print items+':', result[i][items]
-
-def task_post():
+  if len(result)>0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
+  if r.status_code == 201:
+    result = json.loads(r.text)
+    print 'Create storage-task --> Succeeded!'
+    return str(result['id'])+'/'
+  else:
+    print 'Create storage-task --> Failed!'
+    return 'fail'
+
+def put():
+  r = requests.get(url, auth = auth)
   result = json.loads(r.text)
-  for items in result:
-    print items+':', result[items]
+  if len(result)>0:
+    id = str(result[0]['id'])+'/'
+    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+  else:                                                                   
+    id = post()
+    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+  if r.status_code == 200:
+    print 'Update storage-task --> Succeeded!'
+  else:
+    print 'Update storage-task --> Failed!'
 
-def task_put():
-  id = raw_input('Input id:')+'/'
-  r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+def delete():
+  r = requests.get(url, auth = auth)
   result = json.loads(r.text)
-  for items in result:
-    print items+':', result[items]
-
-def task_delete():
-  id = raw_input('Input id:')+'/'
-  r = requests.delete(url+id, auth = auth)
-  print r.status_code
-
-while (1):
-  method = raw_input('Input method:')
-  if method == 'get':
-    task_get()
-  elif method == 'post':
-    task_post()
-  elif method == 'delete':
-    task_delete()
-  elif method == 'put':
-    task_put()
+  if len(result)>0:
+    for i in range(0,len(result)):
+      r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+      if r.status_code == 204:
+        print 'Delete storage-task --> Succeeded!'
+      else:
+        print 'Delete storage-task --> Failed!'
+  else:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete storage-task --> Succeeded!'
+    else:
+      print 'Delete storage-task --> Failed!'

@@ -18,6 +18,8 @@ XX, 2014
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
 
+.. sectnum::
+
 This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
@@ -88,8 +90,6 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
 * *italic text:* used to represent device names or text that is input into a GUI field.
 
-.. sectnum::
-
 Introduction
 ============
 
@@ -139,7 +139,17 @@ It is based on the stable version of FreeBSD 9.3 which adds these features, supp
 `security releases <http://www.freebsd.org/security/advisories.html>`_
 issued since FreeBSD 9.3 RELEASE.
 
-FreeNAS® is now 64-bit only. 
+* FreeNAS® is now 64-bit only.
+
+* A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
+  and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
+  later time by selecting `Wizard`_ from the graphical tree menu.
+
+* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
+  2012 clustering.
+
+* Support for Link Layer Discovery Protocol (`LLDP`_) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
+  Ethernet LAN.
 
 The GUI has been reorganized as follows:
 
@@ -167,7 +177,7 @@ The GUI has been reorganized as follows:
 
 * Log Out has been moved from the upper right corner to the tree menu.
 
-The following features have been added or changed:
+The following fields have been added or deleted:
 
 * The "WebGUI -> HTTPS Port" field has been added to :menuselection:`System --> General`.
 
@@ -193,16 +203,17 @@ The following features have been added or changed:
 * The "Domain logons" checkbox has been added to :menuselection:`Services --> CIFS`.
 
 * The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Encryption Mode",
-  "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`.
+  "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`. The
+  "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos Realm" drop-down menu.
 
 * The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP` and the "Enable" checkbox, "Use
-  default domain" field, and "Idmap backend" drop-down menu have been added.
+  default domain" field and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
 
 * The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
 
 * The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
 
-* :menuselection:`Directory Service --> Kerberos` has been added.
+* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added.
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
@@ -212,16 +223,11 @@ The following features have been added or changed:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
-* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and Windows 2012 clustering.
-
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
 * :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to three configuration options used by kernel iSCSI.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
-
-* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
-  Ethernet LAN.
 
 Known Issues
 ------------
@@ -3521,9 +3527,9 @@ the GUI will turn red if the selected configuration is not recommended.
 .. note:: for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended,
    it is possible to create a volume in this situation by using the "Manual setup" button and following the instructions in Manual Volume Creation.
 
-ZFS Volume Manager will allow you to save save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal
-configuration. However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration.
-Click the tool tip icon to access a link to this documentation.
+ZFS Volume Manager will allow you to save a non-optimal configuration. It will still work, but will perform less efficiently than an optimal configuration.
+However, the GUI will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. Click the tool tip
+icon to access a link to this documentation.
 
 The "Add Volume" button warns that **creating a volume will destroys any existing data on the selected disk(s)**. In other words, creating a new volume
 reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format is supported by the auto-import or
@@ -3719,7 +3725,7 @@ Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, shown in Figure 8.1o, can be used to add additional
-disks to an existing ZFS volume. This drop-down empty will be empty if an existing ZFS volume does not exist.
+disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
 
 **Figure 8.1o: Volume to Extend Field**
 
@@ -4753,7 +4759,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | slowing down the ability to filter through user/group information                                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use default domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
+| Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
 |                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
@@ -4764,11 +4770,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Global Catalog Server    | string        | only available in "Advanced Mode"; can be used to specify hostname of global catalog server to use                                         |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Server          | string        | only available in "Advanced Mode"; can be used to specify hostname of Kerberos server to use                                               |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of Kerberos password server to use                                        |
-|                          |               |                                                                                                                                            |
+| Kerberos Realm           | drop-down     | only available in "Advanced Mode";                                                                                                         |
+|                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
@@ -4953,6 +4956,12 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Use default domain      | checkbox       |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Kerberos Realm          | drop-down menu |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Kerberos Keytab         | drop-down menu |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------|----------------|-------------------------------------------------------------------------------------------------------|
 | Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
 |                         |                | *SSL*, or                                                                                             |
 |                         |                | *TLS*                                                                                                 |
@@ -5075,8 +5084,11 @@ After configuring the NT4 service, start it in :menuselection:`Services --> Cont
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
 
-Kerberos
---------
+Kerberos Realms
+---------------
+
+Kerberos Keytabs
+----------------
 
 Sharing
 =======
@@ -8651,6 +8663,9 @@ If you click "Display System Processes", a screen will open showing the output o
 The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
 
+Wizard
+======
+
 Shell
 =====
 
@@ -10180,6 +10195,9 @@ resources are laid out in an order that is similar to the tree menu of the FreeN
 A Simple API Example
 --------------------
 
+.. highlight:: python
+   :linenothreshold: 4
+
 The :file:`freenas/examples/api/` directory contains some API usage examples. This section provides a walk-through of the
 :file:`freenas/examples/api/newuser.py` script, shown below, as it provides a simple example that creates a user.
 
@@ -10194,27 +10212,28 @@ modified in your copy in order to match the needs of the user being created. The
 by typing :command:`python scriptname.py`. If all goes well, the new user account will appear in :menuselection:`Account --> Users --> View Users` in the
 FreeNAS® GUI.
 
-Here is the example script with line numbers. Do **not** include the line numbers in your script. Instead, refer to the line numbers in the explanation below.
+Here is the example script with an explanation of the line numbers below it.
 ::
- 1 import json
- 2 import requests
- 3 r = requests.post(
- 4   'https://freenas.mydomain/api/v1.0/account/users/',
- 5   auth=('root', 'freenas'),
- 6   headers={'Content-Type': 'application/json'},
- 7   verify=False,
- 8   data=json.dumps({
- 9 	'bsdusr_uid': '1100',
- 10 	'bsdusr_username': 'myuser',
- 11 	'bsdusr_mode': '755',
- 12 	'bsdusr_creategroup': 'True',
- 13 	'bsdusr_password': '12345',
- 14 	'bsdusr_shell': '/usr/local/bin/bash',
- 15 	'bsdusr_full_name': 'Full Name',
- 16 	'bsdusr_email': 'name@provider.com',
- 17   })
- 18 )
- 19 print r.text
+
+ import json
+ import requests
+ r = requests.post(
+   'https://freenas.mydomain/api/v1.0/account/users/',
+   auth=('root', 'freenas'),
+   headers={'Content-Type': 'application/json'},
+   verify=False,
+   data=json.dumps({
+ 	'bsdusr_uid': '1100',
+  	'bsdusr_username': 'myuser',
+  	'bsdusr_mode': '755',
+  	'bsdusr_creategroup': 'True',
+  	'bsdusr_password': '12345',
+  	'bsdusr_shell': '/usr/local/bin/bash',
+  	'bsdusr_full_name': 'Full Name',
+  	'bsdusr_email': 'name@provider.com',
+    })
+  )
+  print r.text
 
 Where:
 

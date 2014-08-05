@@ -59,10 +59,14 @@ def delete():
   if len(result)>0:
     for i in range(0,len(result)):
       r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+      if r.status_code == 204:
+        print 'Delete storage-volume --> Succeeded!'
+      else:
+        print 'Delete storage-volume --> Failed!'
   else:
     id = post()
     r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete storage-volume --> Succeeded!'
-  else:
-    print 'Delete storage-volume --> Failed!'
+    if r.status_code == 204:
+      print 'Delete storage-volume --> Succeeded!'
+    else:
+      print 'Delete storage-volume --> Failed!'

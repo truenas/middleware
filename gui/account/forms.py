@@ -173,7 +173,8 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
 
 class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 
-    def __init__(self, attrs=None, choices=()):
+    def __init__(self, attrs=None, choices=(), sorter=False):
+        self._sorter = sorter
         super(FilteredSelectMultiple, self).__init__(attrs, choices)
 
     def render(self, name, value, attrs=None, choices=()):
@@ -181,17 +182,24 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
         if value is None:
             value = []
         selected = []
+        unselected = []
         for choice in list(self.choices):
-            if choice[0] in value:
-                selected.append(choice)
-                self.choices.remove(choice)
+            if choice[0] not in value:
+                unselected.append(choice)
+
+        for v in value:
+            for choice in list(self.choices):
+                if v == choice[0]:
+                    selected.append(choice)
+                    break
+
 
         output = [
             '<div class="selector">',
             '<div class="select-available">%s<br/>' % (__('Available'), ),
         ]
-        _from = super(FilteredSelectMultiple, self).render(
-            'select_from', value, {'id': 'select_from'}, ()
+        _from = forms.widgets.SelectMultiple().render(
+            'selecAt_from', value, {'id': 'select_from'}, unselected
         )
         _from = _from.split('</select>')
         output.append(u''.join(_from[:-1]))
@@ -239,7 +247,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
                 c.value = i.value;
                 s2.domNode.appendChild(c);
                 i.parentNode.removeChild(i);
-            }); ">
+            });if(s.doChange) s.doChange(); ">
                 &lt;&lt;
             </a>
             <br />
@@ -254,7 +262,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
                 c.value = i.value;
                 s2.domNode.appendChild(c);
                 i.parentNode.removeChild(i);
-            }); ">
+            });if(s2.doChange) s2.doChange(); ">
                 &gt;&gt;
             </a>
             </div>
@@ -268,6 +276,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
             __('Selected'),
         ))
 
+
         _from = forms.widgets.SelectMultiple().render(
             name, value, attrs, selected
         )
@@ -276,16 +285,95 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
         output.append("""
         <script type="dojo/connect" event="onDblClick" item="e">
         var s = this.getSelected()[0];
-        var sel = dijit.byId("%s");
+        var sel = dijit.byId("%(fromid)s");
         var c = dojo.doc.createElement('option');
         c.innerHTML = s.text;
         c.value = s.value;
         sel.domNode.appendChild(c);
         s.parentNode.removeChild(s);
+        </script>""" % {'fromid': 'select_from'})
+
+        if self._sorter:
+            output.append("""
+        <script type="dojo/event" data-dojo-event="onChange" item="e">
+            this.doChange();
         </script>
-        """ % ('select_from', ))
+        <script type="dojo/method" data-dojo-event="doChange">
+          var select = this;
+          require(["dijit/registry"], function(registry) {
+            var up = registry.byId('%(id)s_Up');
+            var down = registry.byId('%(id)s_Down');
+            if(select.get('value').length > 0) {
+                up.set('disabled', false);
+                down.set('disabled', false);
+            } else {
+                up.set('disabled', true);
+                down.set('disabled', true);
+            }
+          });
+        </script>
+        """ % {
+                'id': attrs['id']
+            })
         output.append('</select>')
-        output.append('</div></div>')
+        output.append('</div>')
+
+        if self._sorter:
+            output.append('''
+<div class="select-buttons">
+<button id="%(id)s_Up" data-dojo-type="dijit/form/Button">
+Up
+<script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+  require(["dojo/query", "dijit/registry"], function(query, registry) {
+    var select = registry.byId("%(id)s");
+    select.getSelected().forEach(function(i) {
+       var prev = i.previousSibling;
+       while(prev) {
+         if(prev.localName != 'option') {
+            prev = prev.previousSibling;
+         } else {
+            break;
+         }
+       }
+       if(prev) {
+         var parent = i.parentNode;
+         i.parentNode.removeChild(i);
+         parent.insertBefore(i, prev);
+       }
+    });
+  });
+</script>
+</button>
+<br />
+<button id="%(id)s_Down" data-dojo-type="dijit/form/Button">
+Down
+<script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+  require(["dojo/query", "dijit/registry"], function(query, registry) {
+    var select = registry.byId("%(id)s");
+    select.getSelected().forEach(function(i) {
+       var nexts = i.nextSibling;
+       while(nexts) {
+         if(nexts.localName != 'option') {
+            nexts = nexts.nextSibling;
+         } else {
+            break;
+         }
+       }
+       if(nexts) {
+         var parent = i.parentNode;
+         i.parentNode.removeChild(i);
+         parent.insertBefore(i, nexts.nextSibling);
+       }
+    });
+  });
+</script>
+</button>
+</div>
+        ''' % {
+                'id': attrs['id'],
+            })
+
+        output.append('</div>')
         return mark_safe(u''.join(output))
 
 

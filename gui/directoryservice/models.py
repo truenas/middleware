@@ -563,6 +563,7 @@ class KerberosRealm(Model):
         verbose_name=_("KDC"),
         max_length=120,
         help_text=_("KDC for this realm."),
+        blank=True
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
@@ -571,6 +572,7 @@ class KerberosRealm(Model):
             "Specifies the admin server for this realm, where all the "
             "modifications to the database are performed."
         ),
+        blank=True
     )
     krb_kpasswd_server = models.CharField(
         verbose_name=_("Password Server"),
@@ -763,7 +765,9 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
-        on_delete=models.DO_NOTHING
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -801,6 +805,30 @@ class ActiveDirectory(DirectoryServiceBase):
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
 
+    def save(self):
+        super(ActiveDirectory, self).save()
+
+        if not self.ad_kerberos_realm:
+            from freenasUI.common.freenasldap import (
+                FreeNAS_ActiveDirectory,
+                FLAGS_DBINIT
+            )
+
+            try:
+                fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+                kr = KerberosRealm()
+                kr.krb_realm = self.ad_domainname.upper()
+                kr.krb_kdc = fad.krbname
+                kr.krb_admin_server = kr.krb_kdc
+                kr.krb_kpasswd_server = fad.kpwdname
+                kr.save()
+
+                self.ad_kerberos_realm = kr
+                super(ActiveDirectory, self).save()
+
+            except Exception as e:
+                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e)
 
     class Meta:
         verbose_name = _("Active Directory")
