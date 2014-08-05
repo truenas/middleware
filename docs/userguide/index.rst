@@ -332,8 +332,7 @@ FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHC
 spare, which is not supported at this time.
 
 If you need reliable disk alerting and immediate reporting of a failed drive, use a fully manageable hardware RAID controller such as a LSI
-MegaRAID controller or a 3Ware twa-compatible controller. The current FreeBSD ZFS implementation will not notice that a drive is gone until you reboot or put
-the volume on high load. More information about LSI cards and FreeNAS® can be found in this
+MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
 `forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`_.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
@@ -407,6 +406,33 @@ If you find that WOL support is indicated but not working for a particular inter
 ZFS Primer
 ----------
 
+Here are some of the benefits provided by ZFS:
+
+* ZFS is a transactional, Copy-On-Write (COW) filesystem. For each write request, a copy is made of the specified block and all changes are made to the copy.
+  Once the write is complete, all pointers are changed to point to the new block.
+  
+* ZFS uses checksums to validate data during every read and write. If a disk block becomes corrupted on a pool that is mirrored or uses RAIDZ*, ZFS will
+  identify the error and fix the corrupted data with the correct data. In addition, a scheduled scrub will walk through the pool's metadata to read each block
+  and to validate its checksum and correct it if it has become corrupted.
+  
+* ZFS compression happens in real-time when the block is first written to disk, and only if the written data will benefit from compression. When a compressed
+  block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to any applications
+  accessing the compressed data.
+  
+* ZFS snapshots...
+  
+* During replication, ZFS does not do a byte-for-byte copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the
+  receiving end does not need to be identical and can use a different ZFS RAID level, volume size, compression or deduplication settings, etc.
+  
+* ZFS boot environments...
+  
+
+While ZFS provides many benefits, there are some caveats to be aware of:
+
+* At 90% capacity, ZFS switches from performance- to space-based optimization, which has massive performance implications. For maximum write performance and
+  to prevent problems with drive replacement, add more capacity before a pool reaches 80%. If you are using iSCSI, it is recommended to not let the pool go
+  over 50% capacity to prevent fragmentation issues.
+
 If you are new to ZFS, the
 `Wikipedia entry on ZFS <http://en.wikipedia.org/wiki/Zfs>`_
 provides an excellent starting point to learn about its features. These resources are also useful to bookmark and refer to as needed:
@@ -423,13 +449,13 @@ provides an excellent starting point to learn about its features. These resource
 
 The following is a glossary of terms used by ZFS:
 
-**Pool:** a collection of devices that provides physical storage and data replication managed by ZFS. This pooled storage model eliminates the concept of
-volumes and the associated problems of partitions, provisioning, wasted bandwidth and stranded storage. In FreeNAS®, ZFS Volume Manager is used to create ZFS
-pools.
+**Pool:** a collection of storage devices, such as hard drives, managed by ZFS. This pooled storage model eliminates the concept of traditional Unix volumes
+and the associated problems of partitions, provisioning, wasted bandwidth, and stranded storage. While multiple disks are required in order to provide
+redundancy and data correction, ZFS will still provide benefits to a system with one disk, such as snapshots and data corruption detection. In FreeNAS® 9.3,
+`ZFS Volume Manager`_or `Wizard`_can be used to create ZFS pools.
 
 **Dataset:** once a pool is created, it can be divided into datasets. A dataset is similar to a folder in that it supports permissions. A dataset is also
-similar to a filesystem in that you can set properties such as quotas
-and compression.
+similar to a filesystem in that you can set properties such as quotas and compression.
 
 **Zvol:** ZFS storage pools can provide volumes for applications that need raw-device semantics such as swap devices or iSCSI device extents. In other words,
 a zvol is a virtual block device in a ZFS storage pool.
@@ -488,11 +514,14 @@ as an L2ARC and ZFS uses it to store more reads which can increase random read p
 little RAM and will actually decrease performance as ZFS uses RAM to track the contents of L2ARC. RAM is always faster than disks, so always add as much RAM
 as possible before determining if the system would benefit from a L2ARC device.
 
-If you have a lot of applications that do large amounts of random reads, on a dataset small enough to fit into the L2ARC, read performance may be increased by
-adding a dedicated cache device using ZFS Volume Manager. SSD cache devices only help if your working set is larger than system RAM, but small enough that a
-significant percentage of it will fit on the SSD. After adding an L2ARC, monitor its effectiveness using tools such as
-:command:`arcstat`. If you need to increase the size of an existing L2ARC, you can stripe another cache device by
-adding another device using ZFS Volume Manager_. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are recreated at boot.
+If you have a lot of applications that do large amounts of **random** reads, on a dataset small enough to fit into the L2ARC, read performance may be
+increased by adding a dedicated cache device using `ZFS Volume Manager`_. SSD cache devices only help if your active data is larger than system RAM, but small
+enough that a significant percentage of it will fit on the SSD. As a general rule of thumb, an L2ARC should not be added to a system with less than 64 GB of
+RAM and the size of an L2ARC should not exceed 5x the amount of RAM. In some cases, it may be more efficient to have two separate pools: one on SSDs for
+active data and another on hard drives for rarely used content.
+
+After adding an L2ARC, monitor its effectiveness using tools such as :command:`arcstat`. If you need to increase the size of an existing L2ARC, you can stripe
+another cache device using `ZFS Volume Manager`_. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are recreated at boot.
 
 Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload and the ratio of
 dataset size to cache size. Note that a dedicated L2ARC device can not be shared between ZFS pools.
