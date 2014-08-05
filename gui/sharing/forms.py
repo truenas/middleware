@@ -175,6 +175,9 @@ class NFS_ShareForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.NFS_Share
+        widgets = {
+            'nfs_security': FilteredSelectMultiple(sorter=True),
+        }
 
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
