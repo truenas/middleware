@@ -143,6 +143,7 @@ add_port devel/py-asn1
 add_port devel/py-asn1-modules
 add_port security/openssl
 add_port security/py-htpasswd
+add_port www/htdigest
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_DAV \
 		OPTIONS_FILE_SET+=HTTP_DAV_EXT \
