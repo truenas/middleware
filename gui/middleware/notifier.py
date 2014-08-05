@@ -384,6 +384,19 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
+    def gen_dav_config(self,webdav_enable):
+	[c,conn] = self.__open_db(ret_conn=True)
+	
+	# Now, Generating the webdav config file which will be added to
+	# nginx as a secondary conf file.
+	
+	conn.close()
+	# We have to perform a graceful reload on nginx for any of the 
+	# above changes to take place
+	self._system("/usr/local/sbin/nginx -s reload")
+    
+    def dav_passwd_change(self,passwd):
+	log.debug("Changing WebDAV password to %s", passwd)
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
