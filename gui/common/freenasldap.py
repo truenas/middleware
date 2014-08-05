@@ -85,7 +85,7 @@ class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
 
 class FreeNAS_LDAP_Directory(object):
     @staticmethod
-    def validate_credentials(hostname, port=389, binddn=None, bindpw=None):
+    def validate_credentials(hostname, port=389, binddn=None, bindpw=None, errors=[]):
         ret = None
         f = FreeNAS_LDAP(host=hostname, port=port,
             binddn=binddn, bindpw=bindpw)
@@ -93,10 +93,11 @@ class FreeNAS_LDAP_Directory(object):
         try:
             f.open()
             ret = True
-        except ldap.INVALID_CREDENTIALS:
-            ret = False
+
         except Exception as e:
-            ret = True
+            for error in e:
+                errors.append(error['desc'])
+            ret = False
 
         return ret
 
@@ -986,7 +987,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         return kpws
 
     @staticmethod
-    def validate_credentials(domain, site=None, binddn=None, bindpw=None):
+    def validate_credentials(domain, site=None, binddn=None, bindpw=None, errors=[]):
         ret = None
         best_host = None 
 
@@ -1004,10 +1005,11 @@ class FreeNAS_ActiveDirectory_Base(object):
             try:
                 f.open()
                 ret = True
-            except ldap.INVALID_CREDENTIALS:
-                ret = False
+
             except Exception as e:
-                ret = True
+                for error in e:
+                    errors.append(error['desc'])
+                ret = False
 
         return ret
 
