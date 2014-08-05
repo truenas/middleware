@@ -231,7 +231,6 @@ List resource
         {
                 "nfs_inheritperms": false,
                 "nfs_hostsallow": "",
-                "nfs_name": "My Test Share",
                 "nfs_guestok": false,
                 "nfs_showhiddenfiles": false,
                 "nfs_hostsdeny": "",
