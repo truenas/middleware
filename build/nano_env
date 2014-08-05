@@ -255,7 +255,7 @@ export PORTS_DISTFILES_CACHE
 
 # See bsd.port.mk
 # This is our local package cache.
-MASTER_SITE_BACKUP="${PORTS_DISTFILES_CACHE}/\${DIST_SUBDIR}/ http://download.freenas.org/distfiles/\${DIST_SUBDIR}/ http://ftp.FreeBSD.org/pub/FreeBSD/ports/distfiles/\${DIST_SUBDIR}/"
+MASTER_SITE_BACKUP="${PORTS_DISTFILES_CACHE}/\${DIST_SUBDIR}/ http://download.freenas.org/distfiles/\${DIST_SUBDIR}/ http://distcache.FreeBSD.org/ports-distfiles/\${DIST_SUBDIR}/"
 
 : ${MASTER_SITE_FREEBSD:=yes}
 export MASTER_SITE_FREEBSD
