@@ -26,7 +26,6 @@ def get():
     print 'Get storage-disk --> Succeeded!'
   else:
     print 'Get storage-disk --> Failed!'
-  return result[0]['disk_name']
 
 def put():
   r = requests.get(url, auth = auth)

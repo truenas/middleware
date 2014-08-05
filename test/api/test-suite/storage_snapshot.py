@@ -3,41 +3,65 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
 import conn
+import storage_volume
 
+storage_volume.post()
 url = conn.url+'storage/snapshot/'
 auth = conn.auth
 headers = conn.headers
 payload = {
-          "dataset": "tank0",
-          "name": "test0"
+          "dataset": "new_volume_test_suite",
+          "name": "new_snapshot_test_suite"
 }
 
-def snapshot_get():
+def get():
+  print 'Getting storage-snapshot ......'
+  r = requests.get(url, auth = auth)
+  if r.status_code == 200:
+    result = json.loads(r.text)
+    i = 0
+    for i in range(0,len(result)):
+      print '\n'
+      for items in result[i]:
+        print items+':', result[i][items]
+    print 'Get storage-snapshot --> Succeeded!'
+  else:
+    print 'Get storage-snapshot --> Failed!'
+
+def post():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   i = 0
-  for i in range(0,len(result)):
-    for items in result[i]:
-      print items+':', result[i][items]
-
-def snapshot_post():
+  if len(result)>0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
+  if r.status_code == 201:
+    result = json.loads(r.text)
+    print 'Create storage-snapshot --> Succeeded!'
+    return str(result['id'])+'/'
+  else:
+    print 'Create storage-snapshot --> Failed!'
+    return 'fail'
+
+def put():
+  print 'No PUT function for storage-snapshot!'
+
+def delete():
+  r = requests.get(url, auth = auth)
   result = json.loads(r.text)
-  for items in result:
-    print items+'/', result[items]
+  if len(result)>0:
+    for i in range(0,len(result)):
+      r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+      if r.status_code == 204:
+        print 'Delete storage-snapshot --> Succeeded!'
+      else:
+        print 'Delete storage-snapshot --> Failed!'
+  else:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete storage-snapshot --> Succeeded!'
+    else:
+      print 'Delete storage-snapshot --> Failed!'
 
-def snapshot_delete():
-  id = raw_input('Input id:')+'/'
-  r = requests.delete(url+id, auth = auth)
-  print r.status_code
-
-while (1):
-  method = raw_input('Input method:')
-  if method == 'get':
-    snapshot_get()
-  elif method == 'post':
-    snapshot_post()
-  elif method == 'delete':
-    snapshot_delete()

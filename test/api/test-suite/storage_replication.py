@@ -3,53 +3,81 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
 import conn
+import storage_snapshot
 
-#vol_name = raw_input('Input volume name:')
+storage_snapshot.post()
 url = conn.url + 'storage/replication/'
 auth = conn.auth
 headers = conn.headers
 payload = {
-          "repl_filesystem": "tank0",
-          "repl_zfs": "tank0",
-          "repl_remote_hostname": "testhost",
-          "repl_remote_hostkey": "AAAA"
+          "repl_filesystem": "new_volume_test_suite",
+          "repl_zfs": "new_volume_test_suite",
+          "repl_remote_hostkey":"testhostkey",
+          "repl_remote_hostname":""
 }
 
-def replication_get():
+def get():
+  print 'Getting storage-replication ......'
+  r = requests.get(url, auth = auth)
+  if r.status_code == 200:
+    result = json.loads(r.text)
+    i = 0
+    for i in range(0,len(result)):
+      print '\n'
+      for items in result[i]:
+        print items+':', result[i][items]
+    print 'Get storage-replication --> Succeeded!'
+  else:
+    print 'Get storage-replication --> Failed!'
+
+def post():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   i = 0
-  for i in range(0,len(result)):
-    for items in result[i]:
-      print items+':', result[i][items]
-
-def replication_post():
+  if len(result)>0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
-  result = json.loads(r.text)
-  for items in result:
-    print items+':', result[items]
-
-def replication_put():
-  id = raw_input('Input id:')+'/'
-  r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
-  result = json.loads(r.text)
-  for items in result:
-    print items+':', result[items]
-
-def replication_delete():
-  id = raw_input('Input id:')+'/'
-  r = requests.delete(url+id, auth = auth)
+  print r.text
   print r.status_code
+  if r.status_code == 201:
+    result = json.loads(r.text)
+    print 'Create storage-replication --> Succeeded!'
+    return str(result['id'])+'/'
+  else:
+    print 'Create storage-replication --> Failed!'
+    return 'fail'
 
-while (1):
-  method = raw_input('Input method:')
-  if method == 'get':
-    replication_get()
-  elif method == 'post':
-    replication_post()
-  elif method == 'delete':
-    replication_delete()
-  elif method == 'put':
-    replication_put()
+def put():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  print len(result)
+  if len(result)>0:
+    id = str(result[0]['id'])+'/'
+    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+  else:                                                                   
+    id = post()
+    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+  if r.status_code == 200:
+    print 'Update storage-replication --> Succeeded!'
+  else:
+    print 'Update storage-replication --> Failed!'
+
+def delete():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  if len(result)>0:
+    for i in range(0,len(result)):
+      r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+      if r.status_code == 204:
+        print 'Delete storage-replication --> Succeeded!'
+      else:
+        print 'Delete storage-replication --> Failed!'
+  else:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete storage-replication --> Succeeded!'
+    else:
+      print 'Delete storage-replication --> Failed!'
+
