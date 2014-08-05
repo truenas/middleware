@@ -963,14 +963,8 @@ class ReplicationResourceMixin(object):
         bundle.data['repl_remote_dedicateduser'] = (
             bundle.obj.repl_remote.ssh_remote_dedicateduser
         )
-        bundle.data['repl_remote_fast_cipher'] = (
-            bundle.obj.repl_remote.ssh_fast_cipher
-        )
-        bundle.data['repl_remote_no_cipher'] = (
-            bundle.obj.repl_remote.ssh_no_cipher
-        )
-        bundle.data['repl_remote_no'] = (
-            bundle.obj.repl_remote.ssh_no
+        bundle.data['repl_remote_cipher'] = (
+            bundle.obj.repl_remote.ssh_cipher
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
