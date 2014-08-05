@@ -139,7 +139,17 @@ It is based on the stable version of FreeBSD 9.3 which adds these features, supp
 `security releases <http://www.freebsd.org/security/advisories.html>`_
 issued since FreeBSD 9.3 RELEASE.
 
-FreeNAS® is now 64-bit only. 
+* FreeNAS® is now 64-bit only.
+
+* A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
+  and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
+  later time by selecting `Wizard`_ from the graphical tree menu.
+
+* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
+  2012 clustering.
+
+* Support for Link Layer Discovery Protocol (`LLDP`_) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
+  Ethernet LAN.
 
 The GUI has been reorganized as follows:
 
@@ -167,7 +177,7 @@ The GUI has been reorganized as follows:
 
 * Log Out has been moved from the upper right corner to the tree menu.
 
-The following features have been added or changed:
+The following fields have been added or deleted:
 
 * The "WebGUI -> HTTPS Port" field has been added to :menuselection:`System --> General`.
 
@@ -193,16 +203,17 @@ The following features have been added or changed:
 * The "Domain logons" checkbox has been added to :menuselection:`Services --> CIFS`.
 
 * The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Encryption Mode",
-  "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`.
+  "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`. The
+  "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos Realm" drop-down menu.
 
 * The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP` and the "Enable" checkbox, "Use
-  default domain" field, and "Idmap backend" drop-down menu have been added.
+  default domain" field and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
 
 * The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
 
 * The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
 
-* :menuselection:`Directory Service --> Kerberos` has been added.
+* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added.
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
@@ -212,16 +223,11 @@ The following features have been added or changed:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
-* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration, adds support for Microsoft ODX acceleration and Windows 2012 clustering.
-
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
 * :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to three configuration options used by kernel iSCSI.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
-
-* Support for Link Layer Discovery Protocol (LLDP) has been added. It allows network devices to advertise their identity, capabilities, and neighbors on an
-  Ethernet LAN.
 
 Known Issues
 ------------
@@ -4753,7 +4759,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | slowing down the ability to filter through user/group information                                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use default domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
+| Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
 |                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
@@ -4764,11 +4770,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Global Catalog Server    | string        | only available in "Advanced Mode"; can be used to specify hostname of global catalog server to use                                         |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Server          | string        | only available in "Advanced Mode"; can be used to specify hostname of Kerberos server to use                                               |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Password Server | string        | only available in Advanced Mode; can be used to specify hostname of Kerberos password server to use                                        |
-|                          |               |                                                                                                                                            |
+| Kerberos Realm           | drop-down     | only available in "Advanced Mode";                                                                                                         |
+|                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
@@ -4953,6 +4956,12 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Use default domain      | checkbox       |                                                                                                       |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Kerberos Realm          | drop-down menu |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Kerberos Keytab         | drop-down menu |                                                                                                       |
+|                         |                |                                                                                                       |
++-------------------------|----------------|-------------------------------------------------------------------------------------------------------|
 | Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
 |                         |                | *SSL*, or                                                                                             |
 |                         |                | *TLS*                                                                                                 |
@@ -5075,8 +5084,11 @@ After configuring the NT4 service, start it in :menuselection:`Services --> Cont
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
 
-Kerberos
---------
+Kerberos Realms
+---------------
+
+Kerberos Keytabs
+----------------
 
 Sharing
 =======
@@ -8650,6 +8662,9 @@ If you click "Display System Processes", a screen will open showing the output o
 
 The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
+
+Wizard
+======
 
 Shell
 =====
