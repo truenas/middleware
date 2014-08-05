@@ -1673,3 +1673,24 @@ class DomainController(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"DomainControllerIcon"
+
+class WebDAV(Model):
+    webdav_tcpport = models.PositiveIntegerField(
+	verbose_name=_("TCP Port"),
+	default=8080,
+	validators=[MinValueValidator(1),MaxValueValidator(65535)],
+	help_text=_("This is the port at which WebDAV will run on. Please do not use any of default services ports (like 22 for SSH) unless you know what your doing. The default value for this port is 8080"),
+	)
+    webdav_password = models.CharField(
+            max_length=120,
+            verbose_name=_("Webdav Password (HTTP Digest Authentication)"),
+            default="davtest",
+            help_text=_("The Default Password is: davtest"),
+        )
+    
+    class Meta:
+	verbose_name = _(u"WebDAV")
+	verbose_name_plural = _(u"WebDAV")
+
+    class FreeAdmin:
+	deletable = False

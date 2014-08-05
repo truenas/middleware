@@ -79,7 +79,14 @@ class servicesForm(ModelForm):
             obj.srv_enable = True
             obj.save()
             started = True
-
+        
+        elif obj.srv_service == "webdav":
+	    if obj.srv_enable:
+		started=True
+	    else:
+		started=False
+	    _notifier.gen_dav_config(started)
+        
         else:
             """
             Using rc.d restart verb and depend on rc_var service_enable
@@ -1526,3 +1533,55 @@ class DomainControllerForm(ModelForm):
 
         if self.__dc_passwd_changed():
             Samba4().set_administrator_password()
+
+class WebDAVForm(ModelForm):
+  webdav_password2 = forms.CharField(
+        max_length=120,
+        label=_("Confirm WebDAV Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=True,
+    )
+  class Meta:
+    fields = "__all__"
+    model = models.WebDAV
+    widgets = {
+      'webdav_tcpport' : forms.widgets.TextInput(),
+      'webdav_password' : forms.widgets.PasswordInput(render_value=True), 
+      }
+    
+  def __original_save(self):
+      name = 'webdav_password'
+      setattr(self.instance, "_original_%s" % name,getattr(self.instance, name))
+	  
+  def __webdav_password_changed(self):
+      if self.instance._original_webdav_password != self.instance.webdav_password:
+	return True
+      return False
+  
+  def __init__(self, *args, **kwargs):
+      super(WebDAVForm, self).__init__(*args, **kwargs)
+      if self.instance.webdav_password:
+	self.fields['webdav_password'].required = True
+      if self._api is True:
+	  del self.fields['webdav_password2']
+
+      self.__original_save()
+      
+  def clean_webdav_password2(self):
+      password1 = self.cleaned_data.get("webdav_password")
+      password2 = self.cleaned_data.get("webdav_password2")
+      if password1 != password2:
+	  raise forms.ValidationError(_("The two password fields didn't match."))
+      return password2
+      
+  def clean(self):
+      cdata = self.cleaned_data
+      if not cdata.get("webdav_password"):
+	  cdata['webdav_password'] = self.instance.webdav_password
+      return cdata
+  
+  def save(self):
+    super(WebDAVForm,self).save()
+    
+    if self.__webdav_password_changed():
+	notifier().dav_passwd_change(self.instance.webdav_password)
