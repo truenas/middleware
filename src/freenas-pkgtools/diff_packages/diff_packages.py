@@ -202,8 +202,11 @@ def main():
             # A regular file.  Copy
                 data = pkg2_tarfile.extractfile(member)
                 new_tf.addfile(member, data)
+            elif member.isdir():
+            # A directory.  Just enter it
+                new_tf.addfile(member)
             else:
-                print >> sys.stderr, "Unknown file type"
+                print >> sys.stderr, "Unknown file type for member %s" % member.name
                 return 1
             search_dict.pop(fname)
             if len(search_dict) == 0:
