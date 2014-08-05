@@ -32,7 +32,7 @@ from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext as __
 
 from dojango import forms
 from dojango.forms import widgets
@@ -52,6 +52,7 @@ import ipaddr
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 
 log = logging.getLogger('freeadmin.forms')
+
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
@@ -252,6 +253,217 @@ class MACField(forms.CharField):
             ))
         value = super(MACField, self).clean(value)
         return value
+
+
+class SelectMultipleWidget(forms.widgets.SelectMultiple):
+
+    def __init__(self, attrs=None, choices=(), sorter=False):
+        self._sorter = sorter
+        super(SelectMultipleWidget, self).__init__(attrs, choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+
+        if value is None:
+            value = []
+        selected = []
+        unselected = []
+        for choice in list(self.choices):
+            if choice[0] not in value:
+                unselected.append(choice)
+
+        for v in value:
+            for choice in list(self.choices):
+                if v == choice[0]:
+                    selected.append(choice)
+                    break
+
+        output = [
+            '<div class="selector">',
+            '<div class="select-available">%s<br/>' % (__('Available'), ),
+        ]
+        _from = forms.widgets.SelectMultiple().render(
+            'selecAt_from', value, {'id': 'select_from'}, unselected
+        )
+        _from = _from.split('</select>')
+        output.append(u''.join(_from[:-1]))
+        output.append("""
+        <script type="dojo/method">
+            var turn = this;
+            while(1) {
+                turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+                if(turn.isInstanceOf(dijit.form.Form)) break;
+            }
+            old = turn.onSubmit;
+            turn.onSubmit = function(e) {
+                dojo.query("select", turn.domNode).forEach(function(s) {
+                    for (var i = 0; i < s.length; i++) {
+                        s.options[i].selected = 'selected';
+                    }
+                });
+                old.call(turn, e);
+                };
+        </script>
+        <script type="dojo/connect" event="onDblClick" item="e">
+        var s = this.getSelected()[0];
+        var sel = dijit.byId("%s");
+        var c = dojo.doc.createElement('option');
+        c.innerHTML = s.text;
+        c.value = s.value;
+        sel.domNode.appendChild(c);
+        s.parentNode.removeChild(s);
+        </script>
+        """ % (attrs['id'], ))
+        output.append('</select>')
+        output.append('</div>')
+
+        output.append('''
+            <div class="select-options">
+            <br />
+            <br />
+            <br />
+            <a href="#" aria-label="%s" onClick="
+            var s=dijit.byId('%s');
+            var s2=dijit.byId('select_from');
+            s.getSelected().forEach(function(i){
+                var c = dojo.doc.createElement('option');
+                c.innerHTML = i.text;
+                c.value = i.value;
+                s2.domNode.appendChild(c);
+                i.parentNode.removeChild(i);
+            });if(s.doChange) s.doChange(); ">
+                &lt;&lt;
+            </a>
+            <br />
+            <br />
+            <br />
+            <a href="#" aria-label="%s" onClick="
+            var s2=dijit.byId('%s');
+            var s=dijit.byId('select_from');
+            s.getSelected().forEach(function(i){
+                var c = dojo.doc.createElement('option');
+                c.innerHTML = i.text;
+                c.value = i.value;
+                s2.domNode.appendChild(c);
+                i.parentNode.removeChild(i);
+            });if(s2.doChange) s2.doChange(); ">
+                &gt;&gt;
+            </a>
+            </div>
+            <div class="select-selected">
+            %s<br/>
+        ''' % (
+            __('Remove from group'),
+            attrs['id'],
+            __('Add to group'),
+            attrs['id'],
+            __('Selected'),
+        ))
+
+        _from = forms.widgets.SelectMultiple().render(
+            name, value, attrs, selected
+        )
+        _from = _from.split('</select>')
+        output.append(u''.join(_from[:-1]))
+        output.append("""
+        <script type="dojo/connect" event="onDblClick" item="e">
+        var s = this.getSelected()[0];
+        var sel = dijit.byId("%(fromid)s");
+        var c = dojo.doc.createElement('option');
+        c.innerHTML = s.text;
+        c.value = s.value;
+        sel.domNode.appendChild(c);
+        s.parentNode.removeChild(s);
+        </script>""" % {'fromid': 'select_from'})
+
+        if self._sorter:
+            output.append("""
+        <script type="dojo/event" data-dojo-event="onChange" item="e">
+            this.doChange();
+        </script>
+        <script type="dojo/method" data-dojo-event="doChange">
+          var select = this;
+          require(["dijit/registry"], function(registry) {
+            var up = registry.byId('%(id)s_Up');
+            var down = registry.byId('%(id)s_Down');
+            if(select.get('value').length > 0) {
+                up.set('disabled', false);
+                down.set('disabled', false);
+            } else {
+                up.set('disabled', true);
+                down.set('disabled', true);
+            }
+          });
+        </script>
+        """ % {
+                'id': attrs['id']
+            })
+        output.append('</select>')
+        output.append('</div>')
+
+        if self._sorter:
+            output.append('''
+<div class="select-buttons">
+<button id="%(id)s_Up" data-dojo-type="dijit/form/Button">
+Up
+<script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+  require(["dojo/query", "dijit/registry"], function(query, registry) {
+    var select = registry.byId("%(id)s");
+    select.getSelected().forEach(function(i) {
+       var prev = i.previousSibling;
+       while(prev) {
+         if(prev.localName != 'option') {
+            prev = prev.previousSibling;
+         } else {
+            break;
+         }
+       }
+       if(prev) {
+         var parent = i.parentNode;
+         i.parentNode.removeChild(i);
+         parent.insertBefore(i, prev);
+       }
+    });
+  });
+</script>
+</button>
+<br />
+<button id="%(id)s_Down" data-dojo-type="dijit/form/Button">
+Down
+<script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+  require(["dojo/query", "dijit/registry"], function(query, registry) {
+    var select = registry.byId("%(id)s");
+    select.getSelected().forEach(function(i) {
+       var nexts = i.nextSibling;
+       while(nexts) {
+         if(nexts.localName != 'option') {
+            nexts = nexts.nextSibling;
+         } else {
+            break;
+         }
+       }
+       if(nexts) {
+         var parent = i.parentNode;
+         i.parentNode.removeChild(i);
+         parent.insertBefore(i, nexts.nextSibling);
+       }
+    });
+  });
+</script>
+</button>
+</div>
+        ''' % {
+                'id': attrs['id'],
+            })
+
+        output.append('</div>')
+        return mark_safe(u''.join(output))
+
+
+class SelectMultipleField(forms.fields.MultipleChoiceField):
+    widget = SelectMultipleWidget
+
+    def __init__(self, *args, **kwargs):
+        super(SelectMultipleField, self).__init__(*args, **kwargs)
 
 
 class Network4Field(forms.CharField):

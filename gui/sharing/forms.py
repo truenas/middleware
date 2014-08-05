@@ -31,8 +31,8 @@ import re
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
-from freenasUI.account.forms import FilteredSelectMultiple
 from freenasUI.common.forms import ModelForm
+from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
 from freenasUI.sharing import models
@@ -176,7 +176,7 @@ class NFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.NFS_Share
         widgets = {
-            'nfs_security': FilteredSelectMultiple(sorter=True),
+            'nfs_security': SelectMultipleWidget(sorter=True),
         }
 
     def clean_nfs_network(self):
