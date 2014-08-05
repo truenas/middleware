@@ -817,11 +817,7 @@ class ReplRemote(Model):
     ssh_cipher = models.CharField(
         max_length=20,
         verbose_name=_('Encryption Cipher'),
-        choices=(
-            ('standard', _('Standard')),
-            ('fast', _('Fast')),
-            ('disabled', _('Disabled')),
-        ),
+        choices=choices.REPL_CIPHER,
         default='standard',
     )
 
