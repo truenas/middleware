@@ -12,8 +12,7 @@ Written by users of the FreeNAS® network-attached storage operating system.
 
 Version 9.3
 
-Published
-XX, 2014
+Published XX, 2014
 
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
@@ -59,6 +58,8 @@ LinkedIn® is a registered trademark of LinkedIn Corporation.
 Linux® is a registered trademark of Linus Torvalds.
 
 Marvell® is a registered trademark of Marvell or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
 
 Twitter is a trademark of Twitter, Inc. in the United States and other countries.
 
@@ -406,25 +407,45 @@ If you find that WOL support is indicated but not working for a particular inter
 ZFS Primer
 ----------
 
-Here are some of the benefits provided by ZFS:
+ZFS is an advanced, modern filesystem that was specifically designed to provide features not available in traditional UNIX filesystems. It was originally
+developed at Sun with the intent to open source the filesystem so that it could be ported to other operating systems. After the Oracle acquisition of Sun,
+some of the original ZFS engineers founded
+`OpenZFS <http://open-zfs.org>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
+version numbers, OpenZFS uses feature flags. Feature flags are used to tag features with unique names in order to provide portability between OpenZFS
+implementations running on different platforms, as long as all of the feature flags used by a ZFS pool are supported by both platforms.
 
-* ZFS is a transactional, Copy-On-Write (COW) filesystem. For each write request, a copy is made of the specified block and all changes are made to the copy.
-  Once the write is complete, all pointers are changed to point to the new block.
+FreeNAS® uses OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and any ZFS bug fixes. Since many of the features
+provided by ZFS are particularly suited to the storage of data, format your disk(s) with ZFS in order to get the most out of your FreeNAS® system.
+
+Here is an overview of the features provided by ZFS:
+
+**ZFS is a transactional,Copy-On-Write filesystem**
+`(COW) <https://en.wikipedia.org/wiki/ZFS#Copy-on-write_transactional_model>`_ filesystem. For each write request, a copy is made of the associated disk
+block(s) and all changes are made to the copy rather than to the original block(s). Once the write is complete, all block pointers are changed to point to the
+new copy. As a 128-bit filesystem, its maximum filesystem or file size is 16 exabytes.
   
-* ZFS uses checksums to validate data during every read and write. If a disk block becomes corrupted on a pool that is mirrored or uses RAIDZ*, ZFS will
-  identify the error and fix the corrupted data with the correct data. In addition, a scheduled scrub will walk through the pool's metadata to read each block
-  and to validate its checksum and correct it if it has become corrupted.
+**ZFS was designed to be a self-healing filesystem**. As ZFS writes data, it creates a checksum for each disk block it writes. As ZFS reads data, it validates
+the checksum for each disk block it reads. If ZFS identifies a disk block checksum error on a pool that is mirrored or uses RAIDZ*, ZFS will fix the corrupted
+data with the correct data. Since some disk blocks are rarely read, regular scrubs should be scheduled so that ZFS can read all of the disk blocks in order to
+validate their checksums and correct any corrupted blocks. While multiple disks are required in order to provide redundancy and data correction, ZFS will
+still provide  data corruption detectionto a system with one disk.
   
-* ZFS compression happens in real-time when the block is first written to disk, and only if the written data will benefit from compression. When a compressed
-  block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to any applications
-  accessing the compressed data.
+Unlike traditional UNIX filesystems, **you do not need define a partition size at filesystem creation time**. Instead, you feed disk(s) to a ZFS pool and
+create filesystems as needed. In FreeNAS® 9.3, `ZFS Volume Manager`_or `Wizard`_can be used to create ZFS pools. Once a pool is created, it can be divided
+into datasets or zvols as needed. A dataset is similar to a folder in that it supports permissions. A dataset is also similar to a filesystem in that you can
+set properties such as quotas and compression. A zvol is a virtual block device which can be used for applications that need raw-device semantics such as
+iSCSI device extents.
   
-* ZFS snapshots...
+**ZFS supports real-time data compression**. Compression happens when a block is written to disk, but only if the written data will benefit from compression.
+When a compressed block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to
+any applications accessing the compressed data.
   
-* During replication, ZFS does not do a byte-for-byte copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the
-  receiving end does not need to be identical and can use a different ZFS RAID level, volume size, compression or deduplication settings, etc.
+**ZFS provides instantaneous snapshots** which can be used to provide a point-in-time copy of data at the point in time the snapshot was created.
   
-* ZFS boot environments...
+During replication, ZFS does not do a byte-for-byte copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the
+receiving end does not need to be identical and can use a different ZFS RAID level, volume size, compression or deduplication settings, etc.
+  
+ZFS boot environments...
   
 
 While ZFS provides many benefits, there are some caveats to be aware of:
@@ -447,18 +468,6 @@ provides an excellent starting point to learn about its features. These resource
 
 * `A Crash Course on ZFS <http://www.bsdnow.tv/tutorials/zfs>`_
 
-The following is a glossary of terms used by ZFS:
-
-**Pool:** a collection of storage devices, such as hard drives, managed by ZFS. This pooled storage model eliminates the concept of traditional Unix volumes
-and the associated problems of partitions, provisioning, wasted bandwidth, and stranded storage. While multiple disks are required in order to provide
-redundancy and data correction, ZFS will still provide benefits to a system with one disk, such as snapshots and data corruption detection. In FreeNAS® 9.3,
-`ZFS Volume Manager`_or `Wizard`_can be used to create ZFS pools.
-
-**Dataset:** once a pool is created, it can be divided into datasets. A dataset is similar to a folder in that it supports permissions. A dataset is also
-similar to a filesystem in that you can set properties such as quotas and compression.
-
-**Zvol:** ZFS storage pools can provide volumes for applications that need raw-device semantics such as swap devices or iSCSI device extents. In other words,
-a zvol is a virtual block device in a ZFS storage pool.
 
 **Snapshot:** a read-only point-in-time copy of a filesystem. Snapshots can be created quickly and, if little data changes, new snapshots take up very little
 space. For example, a snapshot where no files have changed takes 0 MB of storage, but if you change a 10 GB file it will keep a copy of both the old and the
