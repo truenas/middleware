@@ -177,7 +177,7 @@ Datasets
       }
 
    :resheader Content-Type: content type of the response
-   :statuscode 202: no error
+   :statuscode 201: no error
 
 .. http:get:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/
 
@@ -208,7 +208,7 @@ Datasets
       }]
 
    :resheader Content-Type: content type of the response
-   :statuscode 202: no error
+   :statuscode 200: no error
 
 .. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/(string:dsname)/
 
@@ -884,7 +884,7 @@ List resource
                 "repl_remote_dedicateduser_enabled": false,
                 "repl_begin": "00:00:00",
                 "repl_filesystem": "tank",
-                "repl_remote_fast_cipher": false,
+                "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
                 "repl_resetonce": false,
@@ -941,7 +941,7 @@ Create resource
                 "repl_remote_dedicateduser_enabled": false,
                 "repl_begin": "00:00:00",
                 "repl_filesystem": "tank",
-                "repl_remote_fast_cipher": false,
+                "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
                 "repl_resetonce": false,
@@ -958,8 +958,8 @@ Create resource
    :json string repl_lastsnapshot: last snapshot sent to remote side
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
-   :json string repl_remote_hostkey: remote ssh publick key
-   :json boolean repl_remote_fast_cipher: use fast cipher
+   :json string repl_remote_hostkey: remote ssh public key
+   :json boolean repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
@@ -1009,7 +1009,7 @@ Update resource
                 "repl_remote_dedicateduser_enabled": false,
                 "repl_begin": "00:00:00",
                 "repl_filesystem": "tank",
-                "repl_remote_fast_cipher": false,
+                "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": false,
                 "repl_resetonce": false,
@@ -1026,8 +1026,8 @@ Update resource
    :json string repl_lastsnapshot: last snapshot sent to remote side
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
-   :json string repl_remote_hostkey: remote ssh publick key
-   :json boolean repl_remote_fast_cipher: use fast cipher
+   :json string repl_remote_hostkey: remote ssh public key
+   :json boolean repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side

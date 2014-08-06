@@ -26,6 +26,7 @@
 #####################################################################
 import logging
 import os
+import re
 import shutil
 
 from django.forms import FileField
@@ -195,11 +196,6 @@ class NT4Form(ModelForm):
             nt4_idmap_backend = None
         return nt4_idmap_backend
 
-    def clean_nt4_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("nt4_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_NT4, idmap_backend) 
-        return idmap_backend
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("nt4_adminpw"):
@@ -231,15 +227,11 @@ class ActiveDirectoryForm(ModelForm):
         label=_("Certificate"),
         required=False
     )
-    ad_keytab = FileField(
-        label=_("Kerberos keytab"),
-        required=False
-    )
 
     advanced_fields = [
         'ad_netbiosname',
         'ad_use_keytab',
-        'ad_keytab',
+        'ad_kerberos_keytab',
         'ad_ssl',
         'ad_certfile',
         'ad_verbose_logging',
@@ -248,8 +240,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_use_default_domain',
         'ad_dcname',
         'ad_gcname',
-        'ad_krbname',
-        'ad_kpwdname',
+        'ad_kerberos_realm',
         'ad_timeout',
         'ad_dns_timeout',
         'ad_idmap_backend'
@@ -270,7 +261,6 @@ class ActiveDirectoryForm(ModelForm):
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_use_keytab',
-            'ad_keytab',
             'ad_unix_extensions',
             'ad_verbose_logging',
             'ad_bindname',
@@ -299,8 +289,6 @@ class ActiveDirectoryForm(ModelForm):
             return True
         if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
             return True
-        if self.instance._original_ad_keytab != self.instance.ad_keytab:
-            return True
         if self.instance._original_ad_use_keytab != self.instance.ad_use_keytab:
             return True
         return False
@@ -312,26 +300,8 @@ class ActiveDirectoryForm(ModelForm):
         self.__original_save()
 
         self.fields["ad_enable"].widget.attrs["onChange"] = (
-            "ad_mutex_toggle();"
+            "activedirectory_mutex_toggle();"
         )
-
-    def clean_ad_keytab(self):
-        filename = "/data/krb5.keytab"
-
-        ad_keytab = self.cleaned_data.get("ad_keytab", None)
-        if ad_keytab and ad_keytab != filename:
-            if hasattr(ad_keytab, 'temporary_file_path'):
-                shutil.move(ad_keytab.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ad_keytab.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ad_keytab = filename
-
-        return filename
 
     def clean_ad_certfile(self):
         filename = "/data/activedirectory_certfile"
@@ -351,11 +321,6 @@ class ActiveDirectoryForm(ModelForm):
 
         return filename
 
-    def clean_ad_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("ad_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_ACTIVEDIRECTORY, idmap_backend) 
-        return idmap_backend
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
@@ -366,13 +331,14 @@ class ActiveDirectoryForm(ModelForm):
             bindpw = cdata.get("ad_bindpw")
             domain = cdata.get("ad_domainname")
             binddn = "%s@%s" % (bindname, domain)
+            errors = []
 
             ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw
+                domain, binddn=binddn, bindpw=bindpw, errors=errors
             )
             if ret == False:
                 raise forms.ValidationError(
-                    _("Incorrect password.")
+                    _("%s." % errors[0])
                 )
 
         return cdata
@@ -425,6 +391,8 @@ class LDAPForm(ModelForm):
         'ldap_passwordsuffix',
         'ldap_machinesuffix',
         'ldap_use_default_domain',
+        'ldap_kerberos_realm',
+        'ldap_kerberos_keytab',
         'ldap_ssl',
         'ldap_certfile',
         'ldap_idmap_backend'
@@ -462,11 +430,6 @@ class LDAPForm(ModelForm):
 
         return filename
 
-    def clean_ldap_idmap_backend(self):
-        idmap_backend = self.cleaned_data.get("ldap_idmap_backend")
-        utils.get_idmap(models.DS_TYPE_LDAP, idmap_backend) 
-        return idmap_backend
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ldap_bindpw"):
@@ -475,15 +438,17 @@ class LDAPForm(ModelForm):
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         hostname = cdata.get("ldap_hostname")
+        errors = []
 
         ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw
+            hostname, binddn=binddn, bindpw=bindpw, errors=errors
         )
         if ret == False:
             raise forms.ValidationError(
-                _("Incorrect password.")
+                _("%s." % errors[0])
             )
 
+        log.debug("XXXX: ret = %s", ret)
         return cdata
 
     def save(self):
@@ -505,3 +470,56 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
+
+
+class KerberosRealmForm(ModelForm):
+    advanced_fields = [
+        'krb_kdc',
+        'krb_admin_server',
+        'krb_kpasswd_server'
+    ]
+
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosRealm
+
+    def clean_krb_realm(self):
+        krb_realm = self.cleaned_data.get("krb_realm", None)
+        if krb_realm:
+            krb_realm = krb_realm.upper()
+        return krb_realm
+
+
+class KerberosKeytabForm(ModelForm):
+    keytab_file = FileField(
+        label=_("Kerberos Keytab"),
+        required=False 
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosKeytab
+
+    def clean_keytab_file(self):
+        keytab_file = self.cleaned_data.get("keytab_file", None)
+        if not keytab_file:
+            raise forms.ValidationError(
+                _("A keytab is required.")
+            )
+
+        principal = self.cleaned_data.get("keytab_principal")
+        filename = "/data/%s.keytab" % re.sub('[^a-zA-Z0-9]+', '_', principal)
+
+        if keytab_file and keytab_file != filename:
+            if hasattr(keytab_file, 'temporary_file_path'):
+                shutil.move(keytab_file.temporary_file_path(), filename)
+            else:
+                with open(filename, 'wb+') as f:
+                    for c in keytab_file.chunks():
+                        f.write(c)
+                    f.close()
+
+            os.chmod(filename, 0400)
+            self.instance.keytab_file = filename
+
+        return filename

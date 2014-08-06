@@ -367,6 +367,33 @@ require([
       destination.tree.reload();
     }
 
+    remoteCipherConfirm = function(value) {
+      cipher = this;
+      if(value == 'disabled') {
+        var dialog = new Dialog({
+          title: gettext("Warning!"),
+          id: "editconfirmscary_dialog",
+          content: domConstruct.create("p", {innerHTML: gettext("This option DISABLES ENCRYPTION for replication tasks and should ONLY be used on a secure LAN!") + "<br />" + gettext("Are you sure you want to do this?")}, null)
+        });
+        dialog.okButton = new Button({label: "Yes"});
+        dialog.cancelButton = new Button({label: "No"});
+        dialog.addChild(dialog.okButton);
+        dialog.addChild(dialog.cancelButton);
+        dialog.okButton.on('click', function(e){
+          cipher.set('oldvalue', value);
+          dialog.destroy();
+        });
+        dialog.cancelButton.on('click', function(e){
+          cipher.set('value', cipher.get('oldvalue'), false);
+          dialog.destroy();
+        });
+        dialog.startup();
+        dialog.show();
+      } else {
+        this.set('oldvalue', value);
+      }
+    }
+
     togglePluginService = function(from, name, id) {
 
         var td = from.parentNode;
@@ -752,7 +779,7 @@ require([
         });
 
         if (id > 0) {
-            edit_url = "/directoryservice/" + idmap_backend + "/" + id + "/";
+            edit_url = "/directoryservice/" + "idmap_" + idmap_backend + "/" + id + "/";
         }
 
         //console.log(edit_url);
@@ -981,6 +1008,17 @@ require([
                         }
                     } else {
                         field = registry.getEnclosingWidget(dom[0]);
+                        var tr = query(field.domNode).closest("tr");
+                        if(tr.length > 0) {
+                          tr = tr[0];
+                          if(domClass.contains(tr, "advancedField")) {
+                            var advmode = query(".advModeButton", form.domNode)[0];
+                            advmode = registry.getEnclosingWidget(advmode);
+                            if(advmode.mode == 'basic') {
+                              form.advancedToggle(advmode);
+                            }
+                          }
+                        }
                         if(field) {
                             if(!first && field.focus)
                                 first = field;

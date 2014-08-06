@@ -243,7 +243,8 @@ add_port benchmarks/iozone
 add_port benchmarks/iperf
 add_port benchmarks/netperf
 add_port benchmarks/xdd
-add_port security/sudo
+add_port security/sudo OPTIONS_FILE_SET+=LDAP \
+	OPTIONS_FILE_SET+=SSSD
 add_port sysutils/ipmitool
 add_port www/py-django-json-rpc
 add_port devel/py-mimeparse
@@ -322,6 +323,8 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_UNSET+=BIND99 \
        WITH_DEBUG=yes
 
+add_port sysutils/grub2-pcbsd
+add_port sysutils/beadm-devel
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite

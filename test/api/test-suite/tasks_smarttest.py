@@ -4,12 +4,14 @@ import requests
 import json
 import sys
 import conn
+import storage_disk
 
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/smarttest/'
+disk_name = storage_disk.get_name()
 payload = {
-          "smarttest_disks": [1, 4],
+          "smarttest_disks": [disk_name],
           "smarttest_type": "L",
           "smarttest_hour": "*",
           "smarttest_daymonth": "*",

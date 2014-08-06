@@ -22,6 +22,7 @@ from django.db.models import Q
 
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP,
     FLAGS_DBINIT
 )
 from freenasUI.common.system import (
@@ -33,7 +34,10 @@ from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP
 )
-from freenasUI.services.models import services
+from freenasUI.services.models import (
+    CIFS,
+    services
+)
 from freenasUI.system.models import Settings
 
 SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
@@ -443,9 +447,11 @@ def sssd_setup():
 
 def add_ldap(sc):
     ldap = LDAP.objects.all()[0]
-    parts = ldap.ldap_hostname.split('.')
+    cifs = CIFS.objects.all()[0]
 
-    ldap_cookie = parts[0].upper()
+    ldap_workgroup = cifs.cifs_srv_workgroup.upper()
+
+    ldap_cookie = ldap_workgroup
     ldap_domain = 'domain/%s' % ldap_cookie
 
     ldap_section = None

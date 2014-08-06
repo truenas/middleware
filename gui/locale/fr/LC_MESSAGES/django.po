@@ -10479,3 +10479,28 @@ msgstr ""
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
 msgstr ""
+
+#: freeadmin/navtree.py:256
+#, fuzzy
+msgid "Wizard"
+msgstr "Initialiser prudemment"
+
+#: services/forms.py:302
+#, fuzzy
+msgid "This field is required to enable NFSv4."
+msgstr "Ce champ est requis."
+
+#: services/models.py:351
+#, fuzzy
+msgid "Enable NFSv4"
+msgstr "Activer le FXP"
+
+#: services/models.py:354
+#, fuzzy
+msgid "NFSv4 Root Path"
+msgstr "Chemin distant"
+
+#: system/forms.py:1468
+#, fuzzy
+msgid "A pool with this name already exists."
+msgstr "Un volume avec ce nom existe déjà."

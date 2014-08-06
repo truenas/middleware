@@ -161,6 +161,56 @@ remove_gcc47()
 	done
 }
 
+# This is a hack.
+# I don't know if it's necessary to save the files, a la
+# remove_gcc47.
+# grub added a dependency for gcc, which resulted in gcc46.
+remove_gcc()
+{
+	local files_to_save="
+/usr/local/lib/gcc47/libstdc++.so.6
+/usr/local/lib/gcc47/libstdc++.so
+/usr/local/lib/gcc47/libstdc++.a
+/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
+/usr/local/lib/gcc47/libmudflap.so.0
+/usr/local/lib/gcc47/libmudflap.so
+/usr/local/lib/gcc47/libmudflapth.so.0
+/usr/local/lib/gcc47/libmudflapth.so
+/usr/local/lib/gcc47/libssp.so.0
+/usr/local/lib/gcc47/libssp.so
+/usr/local/lib/gcc47/libgcc_s.so.1
+/usr/local/lib/gcc47/libgcc_s.so
+/usr/local/lib/gcc47/libquadmath.so.0
+/usr/local/lib/gcc47/libquadmath.so
+/usr/local/lib/gcc47/libquadmath.a
+/usr/local/lib/gcc47/libgomp.spec
+/usr/local/lib/gcc47/libgomp.so.1
+/usr/local/lib/gcc47/libgomp.so
+/usr/local/lib/gcc47/libitm.spec
+/usr/local/lib/gcc47/libitm.so.1
+/usr/local/lib/gcc47/libitm.so
+/usr/local/libdata/ldconfig/gcc47
+	"
+
+	echo "Backing up gcc47 libraries"
+	for f in $files_to_save
+	do
+		CR "mv $f $f.bak"
+	done
+	echo "Removing gcc" 
+	if [ -n "$WITH_PKGNG" ]; then
+		CR "pkg delete -y -f gcc\* || true"
+	else
+		CR "pkg_delete -f gcc\* || true"
+	fi
+
+	echo "Restoring gcc47 libraries"
+	for f in $files_to_save
+	do
+		CR "mv $f.bak $f"
+	done
+}
+
 remove_packages()
 {
 	# Workaround to remove packages from a fat image

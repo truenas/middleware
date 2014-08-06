@@ -17,7 +17,6 @@ notifier()
 system_start()
 {
 	notifier system_dataset_create > /dev/null
-	notifier nfsv4link > /dev/null
 }
 
 name="ix-system"

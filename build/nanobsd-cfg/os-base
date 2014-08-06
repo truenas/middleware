@@ -87,6 +87,7 @@ fi
 
 if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
 	customize_cmd remove_gcc47
+	customize_cmd remove_gcc
 fi
 
 customize_cmd remove_packages

@@ -963,8 +963,8 @@ class ReplicationResourceMixin(object):
         bundle.data['repl_remote_dedicateduser'] = (
             bundle.obj.repl_remote.ssh_remote_dedicateduser
         )
-        bundle.data['repl_remote_fast_cipher'] = (
-            bundle.obj.repl_remote.ssh_fast_cipher
+        bundle.data['repl_remote_cipher'] = (
+            bundle.obj.repl_remote.ssh_cipher
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
@@ -2170,3 +2170,23 @@ class VersionResource(DojoResource):
             'name': name,
         }
         return self.create_response(request, data)
+
+
+class KerberosRealmResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosRealmResourceMixin, self).dehydrate(bundle)
+        return bundle
+
+
+class KerberosKeytabResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosKeytabResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse(
+                'directoryservice_kerberoskeytab_edit',
+                kwargs={'id': bundle.obj.id}
+            )
+
+        return bundle

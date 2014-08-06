@@ -28,10 +28,15 @@ import json
 import logging
 import os
 
+from django.db.models import FieldDoesNotExist
 from django.http import HttpResponse  
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
 from freenasUI.directoryservice import forms, models, utils
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.views import JsonResp
@@ -39,11 +44,27 @@ from freenasUI.services.models import services
 
 log = logging.getLogger("directoryservice.views")
 
+
 def directoryservice_home(request):
-    activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
-    ldap = models.LDAP.objects.order_by("-id")[0]
-    nis = models.NIS.objects.order_by("-id")[0]
-    nt4 = models.NT4.objects.order_by("-id")[0]
+    try:
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    except:
+        activedirectory = models.ActiveDirectory()
+
+    try:
+        ldap = models.LDAP.objects.order_by("-id")[0]
+    except:
+        ldap = models.LDAP()
+
+    try:
+        nis = models.NIS.objects.order_by("-id")[0]
+    except:
+        nis = models.NIS()
+
+    try:
+        nt4 = models.NT4.objects.order_by("-id")[0]
+    except:
+        nt4 = models.NT4()
 
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
@@ -55,7 +76,10 @@ def directoryservice_home(request):
 
 
 def directoryservice_activedirectory(request):
-    activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    try:
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+    except:
+        activedirectory = models.ActiveDirectory()
 
     if request.method == "POST":
         form = forms.ActiveDirectoryForm(request.POST, instance=activedirectory)
@@ -65,6 +89,8 @@ def directoryservice_activedirectory(request):
                 request,
                 message="Active Directory successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.ActiveDirectoryForm(instance=activedirectory)
 
@@ -76,7 +102,10 @@ def directoryservice_activedirectory(request):
 
 
 def directoryservice_ldap(request):
-    ldap = models.LDAP.objects.order_by("-id")[0]
+    try:
+        ldap = models.LDAP.objects.order_by("-id")[0]
+    except:
+        ldap = models.LDAP()
 
     if request.method == "POST":
         form = forms.LDAPForm(request.POST, instance=ldap)
@@ -86,6 +115,8 @@ def directoryservice_ldap(request):
                 request,
                 message="LDAP successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.LDAPForm(instance=ldap)
 
@@ -97,7 +128,10 @@ def directoryservice_ldap(request):
 
 
 def directoryservice_nt4(request):
-    nt4 = models.NT4.objects.order_by("-id")[0]
+    try:
+        nt4 = models.NT4.objects.order_by("-id")[0]
+    except:
+        nt4 = models.NT4()
 
     if request.method == "POST":
         form = forms.NT4Form(request.POST, instance=nt4)
@@ -107,6 +141,8 @@ def directoryservice_nt4(request):
                 request,
                 message="NT4 successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.NT4Form(instance=nt4)
 
@@ -118,7 +154,10 @@ def directoryservice_nt4(request):
 
 
 def directoryservice_nis(request):
-    nis = models.NT4.objects.order_by("-id")[0]
+    try:
+        nis = models.NT4.objects.order_by("-id")[0]
+    except:
+        nis = models.NT4()
 
     if request.method == "POST":
         form = forms.NISForm(request.POST, instance=nis)
@@ -128,6 +167,8 @@ def directoryservice_nis(request):
                 request,
                 message="NIS successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.NISForm(instance=nis)
 
@@ -136,6 +177,62 @@ def directoryservice_nis(request):
         'form': form,
         'inline': True
     })
+
+
+def directoryservice_kerberosrealm(request, id):
+    kr = models.KerberosRealm.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.KerberosRealmForm(request.POST, instance=kr)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Kerberos Realm successfully updated."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.KerberosRealmForm(instance=kr)
+
+    return render(request, 'directoryservice/kerberos_realm.html', {
+        'form': form,
+        'inline': True
+    });
+
+
+def directoryservice_kerberoskeytab(request, id=None):
+    kt = None
+    if id != None:
+        kt = models.KerberosKeytab.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.KerberosKeytabForm(request.POST,
+            request.FILES, instance=kt)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Kerberos Keytab successfully updated."
+            )
+        else:
+            return JsonResp(request, form=form)
+
+    else:
+        form = forms.KerberosKeytabForm(instance=kt)
+
+    return render(request, 'directoryservice/kerberos_keytab.html', {
+        'form': form,
+        'inline': True
+    });
+
+
+def directoryservice_kerberoskeytab_edit(request, id):
+    return directoryservice_kerberoskeytab(request, id)
+
+
+def directoryservice_kerberoskeytab_add(request):
+    return directoryservice_kerberoskeytab(request)
 
 
 def get_directoryservice_status():
@@ -173,6 +270,8 @@ def directoryservice_idmap_ad(request, id):
                 request,
                 message="Idmap ad successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_ad_Form(instance=idmap_ad)
 
@@ -192,6 +291,8 @@ def directoryservice_idmap_autorid(request, id):
                 request,
                 message="Idmap autorid successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_autorid_Form(instance=idmap_autorid)
 
@@ -211,6 +312,8 @@ def directoryservice_idmap_hash(request, id):
                 request,
                 message="Idmap hash successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_hash_Form(instance=idmap_hash)
 
@@ -230,6 +333,8 @@ def directoryservice_idmap_ldap(request, id):
                 request,
                 message="Idmap ldap successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_ldap_Form(instance=idmap_ldap)
 
@@ -249,6 +354,8 @@ def directoryservice_idmap_nss(request, id):
                 request,
                 message="Idmap nss successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_nss_Form(instance=idmap_nss)
 
@@ -268,6 +375,8 @@ def directoryservice_idmap_rfc2307(request, id):
                 request,
                 message="Idmap rfc2307 successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_rfc2307_Form(instance=idmap_rfc2307)
 
@@ -287,6 +396,8 @@ def directoryservice_idmap_rid(request, id):
                 request,
                 message="Idmap rid successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_rid_Form(instance=idmap_rid)
 
@@ -306,6 +417,8 @@ def directoryservice_idmap_tdb(request, id):
                 request,
                 message="Idmap tdb successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_tdb_Form(instance=idmap_tdb)
 
@@ -325,6 +438,8 @@ def directoryservice_idmap_tdb2(request, id):
                 request,
                 message="Idmap tdb2 successfully edited."
             )
+        else:
+            return JsonResp(request, form=form)
     else:
         form = forms.idmap_tdb2_Form(instance=idmap_tdb2)
 

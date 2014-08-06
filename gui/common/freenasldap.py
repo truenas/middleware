@@ -85,7 +85,7 @@ class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
 
 class FreeNAS_LDAP_Directory(object):
     @staticmethod
-    def validate_credentials(hostname, port=389, binddn=None, bindpw=None):
+    def validate_credentials(hostname, port=389, binddn=None, bindpw=None, errors=[]):
         ret = None
         f = FreeNAS_LDAP(host=hostname, port=port,
             binddn=binddn, bindpw=bindpw)
@@ -93,10 +93,11 @@ class FreeNAS_LDAP_Directory(object):
         try:
             f.open()
             ret = True
-        except ldap.INVALID_CREDENTIALS:
-            ret = False
+
         except Exception as e:
-            ret = True
+            for error in e:
+                errors.append(error['desc'])
+            ret = False
 
         return ret
 
@@ -762,6 +763,37 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         log.debug("FreeNAS_LDAP_Base.get_groups: leave")
         return groups
 
+    def get_domains(self):
+        log.debug("FreeNAS_LDAP_Base.get_domains: enter")
+        isopen = self._isopen
+        self.open()
+
+        domains = []
+        scope = ldap.SCOPE_SUBTREE
+
+        filter = '(objectclass=sambaDomain)'
+        results = self._search(self.basedn, scope, filter, self.attributes)
+        if results:
+            domains = results
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Base.get_domains: leave")
+        return domains
+
+    def get_domain_names(self):
+        log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
+
+        domain_names = []
+        domains = self.get_domains()
+        if domains:
+            for d in domains: 
+                domain_names.append(d[1]['sambaDomainName'][0])
+
+        log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
+        return domain_names
+
 
 class FreeNAS_LDAP(FreeNAS_LDAP_Base):
     def __init__(self, **kwargs):
@@ -955,7 +987,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         return kpws
 
     @staticmethod
-    def validate_credentials(domain, site=None, binddn=None, bindpw=None):
+    def validate_credentials(domain, site=None, binddn=None, bindpw=None, errors=[]):
         ret = None
         best_host = None 
 
@@ -973,10 +1005,11 @@ class FreeNAS_ActiveDirectory_Base(object):
             try:
                 f.open()
                 ret = True
-            except ldap.INVALID_CREDENTIALS:
-                ret = False
+
             except Exception as e:
-                ret = True
+                for error in e:
+                    errors.append(error['desc'])
+                ret = False
 
         return ret
 

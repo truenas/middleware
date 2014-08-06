@@ -30,13 +30,16 @@ import sys
 
 from string import join
 
-WWW_PATH = "/usr/local/www"
-FREENASUI_PATH = os.path.join(WWW_PATH, "freenasUI")
-
-sys.path.append(WWW_PATH)
-sys.path.append(FREENASUI_PATH)
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
+
+# Make sure to load all modules
+from django.db.models.loading import cache
+cache.get_apps()
 
 from freenasUI.common.system import (
     activedirectory_enabled,

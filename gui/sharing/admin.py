@@ -87,7 +87,8 @@ class NFSShareFAdmin(BaseFreeAdmin):
         'nfs_maproot_user',
         'nfs_maproot_group',
         'nfs_mapall_user',
-        'nfs_mapall_group'
+        'nfs_mapall_group',
+        'nfs_security',
     )
     fields = (
         'nfs_paths',

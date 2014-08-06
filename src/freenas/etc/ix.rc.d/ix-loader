@@ -99,7 +99,10 @@ loader_debugkernel()
 
 	if [ "${debugkernel_enable}" != "0" ]; then
 		echo 'kernel="kernel-debug"'
-		echo 'module_path="/boot/kernel-debug;/boot/modules"'
+		echo 'module_path="/boot/kernel-debug;/boot/modules;/usr/local/modules"'
+	else
+		echo 'kernel="kernel"'
+		echo 'module_path="/boot/kernel;/boot/modules;/usr/local/modules"'
 	fi
 }
 

@@ -11,7 +11,8 @@ ICON = u'ServicesIcon'
 BLACKLIST = [
     'services',
     'iSCSITargetPortalIP',
-    'RPCToken'
+    'RPCToken',
+    'CIFS'
 ]
 ORDER = 40
 
@@ -23,6 +24,15 @@ class EnDisServices(TreeNode):
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1
+
+
+class CIFSView(TreeNode):
+
+    gname = 'services.CIFS'
+    name = _(u'CIFS')
+    type = u'object'
+    view = u'services_cifs'
+    icon = u'CIFSIcon'
 
 
 class ISCSITargetAuthorizedInitiatorView(TreeNode):

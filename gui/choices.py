@@ -733,6 +733,12 @@ JAIL_TEMPLATE_ARCH_CHOICES = (
     ('x86', 'x86')
 )
 
+REPL_CIPHER = (
+    ('standard', _('Standard')),
+    ('fast', _('Fast')),
+    ('disabled', _('Disabled')),
+)
+
 SAMBA4_ROLE_CHOICES = (
 #    ('auto', 'auto'),
 #    ('classic', 'classic primary domain controller'),
@@ -784,13 +790,13 @@ TUNABLE_TYPES = (
 )
 
 IDMAP_CHOICES = (
-    ('idmap_ad', _('ad')),
-    ('idmap_autorid', _('autorid')),
-    ('idmap_hash', _('hash')),
-    ('idmap_ldap', _('ldap')),
-    ('idmap_nss', _('nss')),
-    ('idmap_rfc2307', _('rfc2307')),
-    ('idmap_rid', _('rid')),
-    ('idmap_tdb', _('tdb')),
-    ('idmap_tdb2', _('tdb2'))
+    ('ad', _('ad')),
+    ('autorid', _('autorid')),
+    ('hash', _('hash')),
+    ('ldap', _('ldap')),
+    ('nss', _('nss')),
+    ('rfc2307', _('rfc2307')),
+    ('rid', _('rid')),
+    ('tdb', _('tdb')),
+    ('tdb2', _('tdb2'))
 )

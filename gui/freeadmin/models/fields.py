@@ -24,13 +24,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import re
 
 from django.db import models
+from django.utils.text import capfirst
 
 from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
+log = logging.getLogger('freeadmin.models.fields')
 
 
 class UserField(models.CharField):
@@ -110,6 +113,75 @@ class MACField(models.Field):
         if value:
             return re.sub(r'(?P<du>[0-9A-F]{2})(?!$)', '\g<du>:', value)
         return value
+
+
+class MultiSelectField(models.Field):
+    __metaclass__ = models.SubfieldBase
+
+    def get_internal_type(self):
+        return "CharField"
+
+    def get_choices_default(self):
+        return self.get_choices(include_blank=False)
+
+    def _get_FIELD_display(self, field):
+        value = getattr(self, field.attname)
+        choicedict = dict(field.choices)
+
+    def formfield(self, **kwargs):
+        from freenasUI.freeadmin.forms import SelectMultipleField
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'choices': self.get_choices(include_blank=False),
+        }
+        if self.has_default():
+            defaults['initial'] = self.get_default()
+        defaults.update(kwargs)
+        return SelectMultipleField(**defaults)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if isinstance(value, basestring):
+            return value
+        elif isinstance(value, list):
+            return ','.join(value)
+
+    def to_python(self, value):
+        if isinstance(value, list):
+            return value
+        return value.split(',')
+
+    def validate(self, value, model_instance):
+        if isinstance(value, list):
+            valid_choices = [k for k, v in self.choices]
+            for choice in value:
+                if choice not in valid_choices:
+                    raise ValidationError(
+                        self.error_messages['invalid_choice'] % choice)
+
+    def contribute_to_class(self, cls, name):
+        super(MultiSelectField, self).contribute_to_class(cls, name)
+        if self.choices:
+            func = lambda self, fieldname=name, choicedict=dict(
+                self.choices
+            ): ','.join([
+                choicedict.get(value, value)
+                for value in getattr(self, fieldname)
+            ])
+            setattr(cls, 'get_%s_display' % self.name, func)
+
+    def get_choices_selected(self, arr_choices=''):
+        if not arr_choices:
+            return False
+        list = []
+        for choice_selected in arr_choices:
+            list.append(choice_selected[0])
+        return list
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
 
 
 class Network4Field(models.CharField):

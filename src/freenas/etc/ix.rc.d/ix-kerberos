@@ -8,114 +8,30 @@
 
 . /etc/rc.freenas
 
-: ${PATH_KRB5_TEMPLATE:="/etc/ix/templates/kerberos/krb5.conf"}
-: ${PATH_KRB5_CONFIG:="/etc/krb5.conf"}
-
 generate_krb5_conf()
 {
-	local domainname="${1}"
-	local krbhost="${2}"
-	local krbport="${3}"
-	local krbsvc="${4}"
-	local kpwdhost="${5}"
-	local kpwdport="${6}"
-	local template="${PATH_KRB5_TEMPLATE}"
+	/usr/local/libexec/nas/generate_krb5_conf.py
+}
 
-	logger -t ix-kerberos "generate_krb5_conf: krbhost=${krbhost}, " \
-		"kpwdhost=${kpwdhost}, domainname=${domainname}"
+generate_krb5_keytab()
+{
+	local IFS="|"
 
-	awk -v realm="${domainname}" \
-		-v krbhost="${krbhost}" \
-		-v krbport="${krbport}" \
-		-v krbsvc="${krbsvc}" \
-		-v kpwdhost="${kpwdhost}" \
-		-v kpwdport="${kpwdport}" \
-	'
-	BEGIN {
-		kdc = tolower(krbhost);
-		if (krbsvc) {
-			kdc = sprintf("%s/%s", tolower(krbsvc), kdc);
-		}
-		if (krbport) {
-			kdc = sprintf("%s:%d", kdc, krbport);
-		}
-		admin_server = tolower(krbhost);
-		if (krbport) {
-			admin_server = sprintf("%s:%d", admin_server, krbport);
-		}
-		kpwd = tolower(kpwdhost);
-		if (kpwdport) {
-			kpwd = sprintf("%s:%d", kpwd, kpwdport);
-		}
-
-		vars["@@UPPER_REALM@@"]  = toupper(realm);	
-		vars["@@LOWER_REALM@@"]  = tolower(realm);	
-		vars["@@ADMIN_SERVER@@"]  = admin_server;	
-		vars["@@KPASSWD_SERVER@@"] = kpwd;
-		vars["@@DOMAIN@@"]  = tolower(realm);
-		vars["@@KDC@@"]  = kdc;	
-	}
-	{
-		if (/@@.+@@/) {
-			for (var in vars) {
-				gsub(var, vars[var]);
-			}
-		}
-
-		print $0;
-	}
-	' < "${template}" > "${PATH_KRB5_CONFIG}"
-
-	for line in $(verify_krb5_conf 2>&1) 
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		keytab_file
+	FROM
+		directoryservice_kerberoskeytab
+        " | while read keytab_file
 	do
-		logger -t ix-kerberos "generate_krb5_conf: ${line}"
+		ktutil copy "${keytab_file}" /etc/krb5.keytab
 	done
-
-	return 0
-}
-
-generate_activedirectory_krb5_conf()
-{
-	AD_init
-
-	local krbhost="$(AD_get ad_krbhost)"
-	local krbport="$(AD_get ad_krbport)"
-	local krbsvc="$(AD_get ad_krbsvc)"
-	local kpwdhost="$(AD_get ad_kpwdhost)"
-	local kpwdport="$(AD_get ad_kpwdport)"
-	local domainname="$(AD_get ad_domainname)"
-
-	generate_krb5_conf "${domainname}" "${krbhost}" "${krbport}" \
-		"${krbsvc}" "${krbhost}" "${krbport}"
-
-	return 0
-}
-
-generate_domaincontroller_krb5_conf()
-{
-	DC_init
-
-	local krbhost="$(DC_get dc_hostname)"
-	local krbport=
-	local krbsvc=
-	local kpwdhost="$(DC_get dc_hostname)"
-	local kpwdport=
-	local domainname="$(DC_get dc_realm | tr A-Z a-z)"
-
-	generate_krb5_conf "${domainname}" "${krbhost}" "${krbport}" \
-		"${krbsvc}" "${krbhost}" "${krbport}"
 }
 
 generate_kerberos_files()
 {
-	if dirsrv_enabled activedirectory
-	then
-		generate_activedirectory_krb5_conf
-
-	elif dirsrv_enabled domaincontroller
-	then
-		generate_domaincontroller_krb5_conf
-	fi
+	generate_krb5_conf
+	generate_krb5_keytab
 }
 
 name="ix-kerberos"

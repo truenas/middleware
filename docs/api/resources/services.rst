@@ -226,6 +226,7 @@ List resource
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
                 "cifs_srv_homedir_browseable_enable": false,
@@ -289,6 +290,7 @@ Update resource
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
                 "cifs_srv_homedir_browseable_enable": false,
@@ -331,6 +333,7 @@ Update resource
    :json string cifs_srv_homedir: home directories path
    :json string cifs_srv_homedir_aux: homes auxiliary parameters
    :json boolean cifs_srv_unixext: unix extensions
+   :json boolean cifs_srv_obey_pam_restrictions: obey pam restrictions
    :json boolean cifs_srv_domain_logons: domains logons
    :json boolean cifs_srv_aio_enable: enable aio
    :json integer cifs_srv_aio_rs: minimum aio read size
@@ -842,6 +845,7 @@ List resource
                 "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
+                "nfs_srv_v4": false,
                 "id": 1
         }
 
@@ -883,12 +887,14 @@ Update resource
                 "nfs_srv_udp": false,
                 "nfs_srv_rpcstatd_port": null,
                 "nfs_srv_rpclockd_port": null,
+                "nfs_srv_v4": false,
                 "id": 1
         }
 
    :json string nfs_srv_servers: how many servers to create
    :json boolean nfs_srv_allow_nonroot: allow non-root mount requests to be served.
    :json boolean nfs_srv_udp: serve UDP requests
+   :json boolean nfs_srv_v4: enable NFS v4
    :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
    :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
    :json integer nfs_srv_rpcstatd_port: forces the rpc.statd daemon to bind to the specified port

@@ -347,3 +347,12 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1772
+#, fuzzy
+msgid "Wizard"
+msgstr "Inițializare în siguranță"
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
+msgid "Paswords do not match."
+msgstr ""

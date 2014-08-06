@@ -532,6 +532,16 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.KerberosRealmIcon {
+    background-image:url('/static/images/ui/tree/kerberos_realm.png');
+    width:16px;
+    height:16px;
+}
+.KerberosKeytabIcon {
+    background-image:url('/static/images/ui/tree/kerberos_keytab.png');
+    width:16px;
+    height:16px;
+}
 .UPSIcon {
     background-image:url('/static/images/ui/tree/ups.png');
     width:16px;

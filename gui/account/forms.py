@@ -1,4 +1,4 @@
-#+
+#s __
 # Copyright 2010-2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -30,14 +30,14 @@ import re
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext as __, ugettext_lazy as _
-from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
 from django.http import QueryDict
 
 from dojango import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
 
@@ -171,131 +171,6 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         return ret
 
 
-class FilteredSelectMultiple(forms.widgets.SelectMultiple):
-
-    def __init__(self, attrs=None, choices=()):
-        super(FilteredSelectMultiple, self).__init__(attrs, choices)
-
-    def render(self, name, value, attrs=None, choices=()):
-
-        if value is None:
-            value = []
-        selected = []
-        for choice in list(self.choices):
-            if choice[0] in value:
-                selected.append(choice)
-                self.choices.remove(choice)
-
-        output = [
-            '<div class="selector">',
-            '<div class="select-available">%s<br/>' % (__('Available'), ),
-        ]
-        _from = super(FilteredSelectMultiple, self).render(
-            'select_from', value, {'id': 'select_from'}, ()
-        )
-        _from = _from.split('</select>')
-        output.append(u''.join(_from[:-1]))
-        output.append("""
-        <script type="dojo/method">
-            var turn = this;
-            while(1) {
-                turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
-                if(turn.isInstanceOf(dijit.form.Form)) break;
-            }
-            old = turn.onSubmit;
-            turn.onSubmit = function(e) {
-                dojo.query("select", turn.domNode).forEach(function(s) {
-                    for (var i = 0; i < s.length; i++) {
-                        s.options[i].selected = 'selected';
-                    }
-                });
-                old.call(turn, e);
-                };
-        </script>
-        <script type="dojo/connect" event="onDblClick" item="e">
-        var s = this.getSelected()[0];
-        var sel = dijit.byId("%s");
-        var c = dojo.doc.createElement('option');
-        c.innerHTML = s.text;
-        c.value = s.value;
-        sel.domNode.appendChild(c);
-        s.parentNode.removeChild(s);
-        </script>
-        """ % (attrs['id'], ))
-        output.append('</select>')
-        output.append('</div>')
-
-        output.append('''
-            <div class="select-options">
-            <br />
-            <br />
-            <br />
-            <a href="#" aria-label="%s" onClick="
-            var s=dijit.byId('%s');
-            var s2=dijit.byId('select_from');
-            s.getSelected().forEach(function(i){
-                var c = dojo.doc.createElement('option');
-                c.innerHTML = i.text;
-                c.value = i.value;
-                s2.domNode.appendChild(c);
-                i.parentNode.removeChild(i);
-            }); ">
-                &lt;&lt;
-            </a>
-            <br />
-            <br />
-            <br />
-            <a href="#" aria-label="%s" onClick="
-            var s2=dijit.byId('%s');
-            var s=dijit.byId('select_from');
-            s.getSelected().forEach(function(i){
-                var c = dojo.doc.createElement('option');
-                c.innerHTML = i.text;
-                c.value = i.value;
-                s2.domNode.appendChild(c);
-                i.parentNode.removeChild(i);
-            }); ">
-                &gt;&gt;
-            </a>
-            </div>
-            <div class="select-selected">
-            %s<br/>
-        ''' % (
-            __('Remove from group'),
-            attrs['id'],
-            __('Add to group'),
-            attrs['id'],
-            __('Selected'),
-        ))
-
-        _from = forms.widgets.SelectMultiple().render(
-            name, value, attrs, selected
-        )
-        _from = _from.split('</select>')
-        output.append(u''.join(_from[:-1]))
-        output.append("""
-        <script type="dojo/connect" event="onDblClick" item="e">
-        var s = this.getSelected()[0];
-        var sel = dijit.byId("%s");
-        var c = dojo.doc.createElement('option');
-        c.innerHTML = s.text;
-        c.value = s.value;
-        sel.domNode.appendChild(c);
-        s.parentNode.removeChild(s);
-        </script>
-        """ % ('select_from', ))
-        output.append('</select>')
-        output.append('</div></div>')
-        return mark_safe(u''.join(output))
-
-
-class FilteredSelectField(forms.fields.MultipleChoiceField):
-    widget = FilteredSelectMultiple
-
-    def __init__(self, *args, **kwargs):
-        super(FilteredSelectField, self).__init__(*args, **kwargs)
-
-
 class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
     bsdusr_username = forms.CharField(
@@ -331,7 +206,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         label=_('Home Directory Mode'),
         initial='755',
         required=False)
-    bsdusr_to_group = FilteredSelectField(
+    bsdusr_to_group = SelectMultipleField(
         label=_('Auxiliary groups'),
         choices=(),
         required=False)
@@ -860,7 +735,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
 
 
 class bsdGroupToUserForm(Form):
-    bsdgroup_to_user = FilteredSelectField(
+    bsdgroup_to_user = SelectMultipleField(
         label=_('Member users'),
         choices=(),
         required=False,
@@ -896,7 +771,7 @@ class bsdGroupToUserForm(Form):
 
 
 class bsdUserToGroupForm(Form):
-    bsduser_to_group = FilteredSelectField(
+    bsduser_to_group = SelectMultipleField(
         label=_('Auxiliary groups'),
         choices=(),
         required=False,

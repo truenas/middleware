@@ -37,6 +37,10 @@ from django.core.validators import (
 )
 
 from freenasUI import choices
+from freenasUI.directoryservice.models import (
+    KerberosRealm,
+    idmap_tdb
+)
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField
 )
@@ -1655,6 +1659,11 @@ class DomainController(Model):
             max_length=120,
             verbose_name=_("Administrator Password"),
             help_text=_("Administrator Password"),
+            )
+    dc_kerberos_realm = models.ForeignKey(
+            KerberosRealm,
+            verbose_name=_("Kerberos Realm"),
+            on_delete=models.DO_NOTHING
             )
 
     def __init__(self, *args, **kwargs):

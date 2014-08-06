@@ -30,6 +30,7 @@ import re
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
@@ -52,6 +53,7 @@ import ipaddr
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 
 log = logging.getLogger('freeadmin.forms')
+
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
@@ -252,6 +254,53 @@ class MACField(forms.CharField):
             ))
         value = super(MACField, self).clean(value)
         return value
+
+
+class SelectMultipleWidget(forms.widgets.SelectMultiple):
+
+    def __init__(self, attrs=None, choices=(), sorter=False):
+        self._sorter = sorter
+        super(SelectMultipleWidget, self).__init__(attrs, choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+
+        if value is None:
+            value = []
+        selected = []
+        unselected = []
+        for choice in list(self.choices):
+            if choice[0] not in value:
+                unselected.append(choice)
+
+        for v in value:
+            for choice in list(self.choices):
+                if v == choice[0]:
+                    selected.append(choice)
+                    break
+
+        select_available = forms.widgets.SelectMultiple().render(
+            'selecAt_from', value, {'id': 'select_from'}, unselected
+        )
+        select_available = ''.join(select_available.split('</select>')[:-1])
+        select_selected = forms.widgets.SelectMultiple().render(
+            name, value, attrs, selected
+        )
+        select_selected = ''.join(select_selected.split('</select>')[:-1])
+        output = render_to_string('freeadmin/selectmultiple.html', {
+            'attrs': attrs,
+            'select_available': select_available,
+            'select_selected': select_selected,
+            'fromid': 'select_from',
+            'sorter': self._sorter,
+        })
+        return output
+
+
+class SelectMultipleField(forms.fields.MultipleChoiceField):
+    widget = SelectMultipleWidget
+
+    def __init__(self, *args, **kwargs):
+        super(SelectMultipleField, self).__init__(*args, **kwargs)
 
 
 class Network4Field(forms.CharField):
