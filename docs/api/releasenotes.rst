@@ -37,6 +37,7 @@ Fields
  - service CIFS resource: cifs_srv_domain_logons
  - service Dynamic DNS resource: ddns_ipserver
  - service NFS resource: nfs_srv_v4
+ - service iSCSI extent resource: iscsi_target_extent_insecure_tpc
  - storage Replication resource: repl_compression, repl_remote_cipher
  - system Settings resource: stg_guihttpsredirect
  - system Tunable resource: tun_type

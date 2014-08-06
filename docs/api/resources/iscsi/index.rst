@@ -117,6 +117,8 @@ List resource
                 "iscsi_target_extent_type": "File",
                 "iscsi_target_extent_name": "extent",
                 "iscsi_target_extent_filesize": "10MB",
+                "iscsi_target_extent_insecure_tpc": true,
+                "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
         }
@@ -162,6 +164,8 @@ Create resource
                 "iscsi_target_extent_type": "File",
                 "iscsi_target_extent_name": "extent",
                 "iscsi_target_extent_filesize": "10MB",
+                "iscsi_target_extent_insecure_tpc": true,
+                "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
         }
@@ -170,6 +174,7 @@ Create resource
    :json string iscsi_target_extent_type: File, Device, ZFS Volume
    :json string iscsi_target_extent_path: path to the extent
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
+   :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
    :json string iscsi_target_extent_comment: user description
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
@@ -207,6 +212,8 @@ Update resource
                 "iscsi_target_extent_type": "File",
                 "iscsi_target_extent_name": "extent",
                 "iscsi_target_extent_filesize": "20MB",
+                "iscsi_target_extent_insecure_tpc": true,
+                "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
         }
@@ -215,6 +222,7 @@ Update resource
    :json string iscsi_target_extent_type: File, Device, ZFS Volume
    :json string iscsi_target_extent_path: path to the extent
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
+   :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
    :json string iscsi_target_extent_comment: user description
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
