@@ -98,6 +98,4 @@ customize_cmd create_var_home_symlink
 
 customize_cmd add_netcli_to_etc_shells
 
-customize_cmd add_webdav_user
-
 late_customize_cmd freenas_custom
