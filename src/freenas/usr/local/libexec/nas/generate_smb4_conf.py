@@ -1029,8 +1029,6 @@ def smb4_map_groups():
     cmd = "/usr/local/bin/net groupmap add type=local unixgroup='%s' ntgroup='%s'"
 
     groupmap = smb4_get_groupmap()
-    print groupmap
-
     groups = get_groups()
     for g in groups:
         if not smb4_group_mapped(groupmap, g):
