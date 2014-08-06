@@ -1025,13 +1025,26 @@ def smb4_group_mapped(groupmap, group):
     return False
 
 
+# Windows no likey
+def smb4_groupname_is_username(group):
+    cmd = "/usr/bin/getent passwd '%s'" % group
+
+    p = pipeopen(cmd)
+    p.communicate()
+    if p.returncode == 0:
+        return True
+
+    return False
+
+
 def smb4_map_groups():
     cmd = "/usr/local/bin/net groupmap add type=local unixgroup='%s' ntgroup='%s'"
 
     groupmap = smb4_get_groupmap()
     groups = get_groups()
     for g in groups:
-        if not smb4_group_mapped(groupmap, g):
+        if not smb4_group_mapped(groupmap, g) and \
+            not smb4_groupname_is_username(g):
             pipeopen(cmd % (g, g)).communicate()
 
 
