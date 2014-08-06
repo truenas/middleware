@@ -191,10 +191,22 @@ class InitialWizard(CommonWizard):
 
         form_list = self.get_form_list()
         volume_form = form_list.get('volume')
+        volume_import = form_list.get('import')
 
         with transaction.atomic():
             _n = notifier()
-            if volume_form:
+            if volume_form or volume_import:
+
+                if volume_import:
+                    volume_name, guid = cleaned_data.get(
+                        'volume_disks'
+                    ).split('|')
+                    if not _n.zfs_import(volume_name, guid):
+                        raise MiddlewareError(_(
+                            'The volume "%s" failed to import, '
+                            'for futher details check pool status'
+                        ) % volume_name)
+
                 volume = Volume(
                     vol_name=volume_name,
                     vol_fstype='ZFS',
@@ -206,21 +218,22 @@ class InitialWizard(CommonWizard):
                     mp_path='/mnt/' + volume_name,
                     mp_options='rw',
                 )
-
-                bysize = volume_form._get_unused_disks_by_size()
-
-                if volume_type == 'auto':
-                    groups = volume_form._grp_autoselect(bysize)
-                else:
-                    groups = volume_form._grp_predefined(bysize, volume_type)
-
-                _n.init(
-                    "volume",
-                    volume,
-                    groups=groups,
-                    init_rand=False,
-                )
                 Scrub.objects.create(scrub_volume=volume)
+
+                if volume_form:
+                    bysize = volume_form._get_unused_disks_by_size()
+
+                    if volume_type == 'auto':
+                        groups = volume_form._grp_autoselect(bysize)
+                    else:
+                        groups = volume_form._grp_predefined(bysize, volume_type)
+
+                    _n.init(
+                        "volume",
+                        volume,
+                        groups=groups,
+                        init_rand=False,
+                    )
             else:
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
                 volume_name = volume.vol_name
