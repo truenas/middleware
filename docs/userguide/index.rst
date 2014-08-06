@@ -419,40 +419,112 @@ provided by ZFS are particularly suited to the storage of data, format your disk
 
 Here is an overview of the features provided by ZFS:
 
-**ZFS is a transactional,Copy-On-Write filesystem**
+**ZFS is a transactional, Copy-On-Write filesystem**
 `(COW) <https://en.wikipedia.org/wiki/ZFS#Copy-on-write_transactional_model>`_ filesystem. For each write request, a copy is made of the associated disk
 block(s) and all changes are made to the copy rather than to the original block(s). Once the write is complete, all block pointers are changed to point to the
 new copy. As a 128-bit filesystem, its maximum filesystem or file size is 16 exabytes.
   
 **ZFS was designed to be a self-healing filesystem**. As ZFS writes data, it creates a checksum for each disk block it writes. As ZFS reads data, it validates
 the checksum for each disk block it reads. If ZFS identifies a disk block checksum error on a pool that is mirrored or uses RAIDZ*, ZFS will fix the corrupted
-data with the correct data. Since some disk blocks are rarely read, regular scrubs should be scheduled so that ZFS can read all of the disk blocks in order to
+data with the correct data. Since some disk blocks are rarely read, regular scrubs should be scheduled so that ZFS can read all of the data blocks in order to
 validate their checksums and correct any corrupted blocks. While multiple disks are required in order to provide redundancy and data correction, ZFS will
-still provide  data corruption detectionto a system with one disk.
+still provide  data corruption detectionto a system with one disk. FreeNAS® automatically schedules a monthly scrub for each ZFS pool and the results of the
+scrub will be displayed in `View Volumes`_.
   
-Unlike traditional UNIX filesystems, **you do not need define a partition size at filesystem creation time**. Instead, you feed disk(s) to a ZFS pool and
-create filesystems as needed. In FreeNAS® 9.3, `ZFS Volume Manager`_or `Wizard`_can be used to create ZFS pools. Once a pool is created, it can be divided
-into datasets or zvols as needed. A dataset is similar to a folder in that it supports permissions. A dataset is also similar to a filesystem in that you can
-set properties such as quotas and compression. A zvol is a virtual block device which can be used for applications that need raw-device semantics such as
-iSCSI device extents.
+Unlike traditional UNIX filesystems, **you do not need to define a partition size at filesystem creation time**. Instead, you feed a certain number of disk(s)
+at a time (known as a vdev) to a ZFS pool and create filesystems from the pool as needed. In FreeNAS® 9.3, `ZFS Volume Manager`_or `Wizard`_can be used to
+create ZFS pools. Once a pool is created, it can be divided into datasets or zvols as needed. A dataset is similar to a folder in that it supports
+permissions. A dataset is also similar to a filesystem in that you can set properties such as quotas and compression. A zvol is a virtual block device which
+can be used for applications that need raw-device semantics such as iSCSI device extents.
   
 **ZFS supports real-time data compression**. Compression happens when a block is written to disk, but only if the written data will benefit from compression.
 When a compressed block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to
 any applications accessing the compressed data.
   
-**ZFS provides instantaneous snapshots** which can be used to provide a point-in-time copy of data at the point in time the snapshot was created.
+**ZFS provides low-cost, instantaneous snapshots** of the specified pool, dataset, or zvol. Due to COW, the initial size of a snapshot is 0 bytes and the size
+of the snapshot increases over time as changes to the files in the snapshot are written to disk. Snapshots can be used to provide a copy of data at the point
+in time the snapshot was created. Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy of a file or a
+deleted file. For this reason, many administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store
+them on another system. Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site
+snapshot can restore the system up to the last snapshot interval (e.g. within 15 minutes of the data loss). Snapshots are stored locally but can also be
+replicated to a remote ZFS pool. During replication, ZFS does not do a byte-for-byte copy but instead converts a snapshot into a stream of data. This design
+means that the ZFS pool on the receiving end does not need to be identical and can use a different ZFS RAID level, volume size, compression settings, etc.
   
-During replication, ZFS does not do a byte-for-byte copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the
-receiving end does not need to be identical and can use a different ZFS RAID level, volume size, compression or deduplication settings, etc.
-  
-ZFS boot environments...
-  
+**ZFS boot environments provide a method for recovering from a failed upgrade**.
+
+**ZFS provides a write cache** known as a
+`ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for synchronous writes until they are
+written asynchronously to the ZFS pool. If the system has many synchronous writes, such as from a database server, performance can be increased by adding a
+dedicated log device (slog) using `ZFS Volume Manager`_. If the system has few synchronous writes, a slog will not speed up writes to the pool. A more
+detailed explanation can be found in this
+`forum post <http://forums.freenas.org/threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_. A dedicated log device will have no affect on CIFS,
+AFP, or iSCSI as these protocols rarely use synchronous writes. A dedicated log device can increase write performance over NFS, especially for ESXi. When
+creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of capacitors that can handle writing the contents of the
+SSD's RAM to the SSD. If you don't have access to such an SSD, try disabling synchronous writes on the NFS dataset using
+`zfs(8) <http://www.freebsd.org/cgi/man.cgi?query=zfs>`_
+instead. The :command:`zilstat` utility can be run from Shell to help determine if the system would benefit from a dedicated ZIL device. See
+`this website <http://www.richardelling.com/Home/scripts-and-programs-1/zilstat>`_
+for usage information. If you decide to create a dedicated log device to speed up NFS writes, the SSD can be half the size of system RAM as anything larger
+than that is unused capacity. The log device does not need to be mirrored on a pool running ZFSv28 or feature flags as the system will revert to using the ZIL
+if the log device fails and only the data in the device which had not been written to the pool will be lost (typically the last few seconds of writes). You
+can replace the lost log device in the :menuselection:`View Volumes --> Volume Status` screen. Note that a dedicated log device can not be shared between ZFS
+pools and that the same device cannot hold both a log and a cache device.
+
+**ZFS provides a read cache** in RAM, known as the ARC, to reduce read latency. If an SSD is dedicated as a cache device, it is known as an
+`L2ARC <https://blogs.oracle.com/brendan/entry/test>`_ and ZFS uses it to store more reads which can increase random read performance. However, adding an
+L2ARC is **not** a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized ARC, you will not
+be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability. RAM is always faster than
+disks, so always add as much RAM as possible before determining if the system would benefit from a L2ARC device. If you have a lot of applications that do
+large amounts of **random** reads, on a dataset small enough to fit into the L2ARC, read performance may be increased by adding a dedicated cache device using
+`ZFS Volume Manager`_. SSD cache devices only help if your active data is larger than system RAM, but small enough that a significant percentage of it will
+fit on the SSD. As a general rule of thumb, an L2ARC should not be added to a system with less than 64 GB of RAM and the size of an L2ARC should not exceed 5x
+the amount of RAM. In some cases, it may be more efficient to have two separate pools: one on SSDs for active data and another on hard drives for rarely used
+content. After adding an L2ARC, monitor its effectiveness using tools such as :command:`arcstat`. If you need to increase the size of an existing L2ARC, you
+can stripe another cache device using `ZFS Volume Manager`_. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are recreated at boot.
+Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload and the ratio of
+dataset size to cache size. Note that a dedicated L2ARC device can not be shared between ZFS pools.
+
+**ZFS was designed to provide redundancy while addressing some of the inherent limitations of hardware RAID** such as the 
+`write-hole <http://blogs.oracle.com/bonwick/entry/raid_z>`_ and corrupt data written over time before the hardware controller provides an alert. ZFS provides
+three levels of redundancy, known as a RAIDZ, where the number after the RAIDZ indicates how many disks per vdev can be lost without losing data. ZFS also
+supports mirrors, with no restrictions on the number of disks in the mirror. ZFS was designed for commodity disks so no RAID controller is needed. While ZFS
+can also be used with a RAID controller, it is recommended that the controller be put into JBOD mode so that ZFS has full knowledge of the disks. When
+determining the type of ZFS redundancy to use, consider whether your goal is to maximize disk space or performance:
+
+* RAIDZ1 maximizes disk space and generally performs well when data is written and read in large chunks (128K or more).
+
+* RAIDZ2 offers better data availability and significantly better mean time to data loss (MTTDL) than RAIDZ1.
+
+* A mirror consumes more disk space but generally performs better with small random reads. For better performance, a mirror is strongly favored over any 
+  RAIDZ, particularly for large, uncacheable, random read loads.
+
+* Array sizes beyond 12 disks are not recommended. The recommended number of disks per vdev is between 3 and 9. If you have more disks, use multiple vdevs.
+
+The following resources can also help you determine the RAID configuration best suited to your storage needs:
+
+* `What is the Best RAIDZ Configuration <http://forums.freenas.org/showthread.php?312-what-is-the-best-raidz-configuration-and-how-to-set-it-up>`_
+
+* `Getting the Most out of ZFS Pools <http://forums.freenas.org/showthread.php?16-Getting-the-most-out-of-ZFS-pools%21>`_
+
+* `A Closer Look at ZFS, Vdevs and Performance <http://constantin.glez.de/blog/2010/06/closer-look-zfs-vdevs-and-performance>`_
+
+.. warning:: NO RAID SOLUTION PROVIDES A REPLACEMENT FOR A RELIABLE BACKUP STRATEGY. BAD STUFF CAN STILL HAPPEN AND YOU WILL BE GLAD THAT YOU BACKED UP YOUR
+   DATA WHEN IT DOES. See `Periodic Snapshot Tasks`_ and `Replication Tasks`_ if you would like to use replicated ZFS snapshots as part of your backup
+   strategy.
 
 While ZFS provides many benefits, there are some caveats to be aware of:
 
 * At 90% capacity, ZFS switches from performance- to space-based optimization, which has massive performance implications. For maximum write performance and
   to prevent problems with drive replacement, add more capacity before a pool reaches 80%. If you are using iSCSI, it is recommended to not let the pool go
   over 50% capacity to prevent fragmentation issues.
+  
+* When considering the number of disks to user per vdev, consider the size of the disks and the amount of time required for resilvering, which is the process
+  of rebuilding the array. The larger the size of the array, the longer the resilvering time. When replacing a disk in a RAIDZ*, it is possible that another
+  disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
+  in the pool will be lost. This is why RAIDZ1 is not recommended for drives over 1 TB in size.
+  
+* It is recommended to use drives of equal sizes. While ZFS can create a pool using disks of differing sizes, the capacity will be limited by the size of the
+  smallest disk.
 
 If you are new to ZFS, the
 `Wikipedia entry on ZFS <http://en.wikipedia.org/wiki/Zfs>`_
@@ -467,124 +539,6 @@ provides an excellent starting point to learn about its features. These resource
 * `Slideshow explaining VDev, zpool, ZIL and L2ARC and other newbie mistakes! <http://forums.freenas.org/threads/slideshow-explaining-vdev-zpool-zil-and-l2arc-for-noobs.7775/>`_
 
 * `A Crash Course on ZFS <http://www.bsdnow.tv/tutorials/zfs>`_
-
-
-**Snapshot:** a read-only point-in-time copy of a filesystem. Snapshots can be created quickly and, if little data changes, new snapshots take up very little
-space. For example, a snapshot where no files have changed takes 0 MB of storage, but if you change a 10 GB file it will keep a copy of both the old and the
-new 10 GB version. Snapshots provide a clever way of keeping a history of files, should you need to recover an older copy or even a deleted file. For this
-reason, many administrators take snapshots often (e.g. every 15 minutes), store them for a period of time (e.g. for a month), and store them on another
-system. Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site snapshot can
-restore the system up to the last snapshot interval (e.g. within 15 minutes of the data loss). Snapshots can be cloned or rolled back, but the files on the
-snapshot cannot be accessed independently.
-
-**Clone:** a writable copy of a snapshot which can only be created on the same ZFS volume. Clones provide an extremely space-efficient way to store many
-copies of mostly-shared data such as workspaces, software installations, and diskless clients. Clones do not inherit the properties of the parent dataset,
-but rather inherit the properties based on where the clone is created in the ZFS pool. Because a clone initially shares all its disk space with the original
-snapshot, its used property is initially zero. As changes are made to the clone, it uses more space.
-
-**Deduplication:** the process of eliminating duplicate copies of data in order to save space. Once deduplicaton occurs, it can improve ZFS performance as
-less data is written and stored. However, the process of deduplicating the data is RAM intensive and a general rule of thumb is 5 GB RAM per TB of storage to
-be deduplicated.
-**In most cases, enabling compression will provide comparable performance.** In FreeNAS®, deduplication can be enabled at the dataset level and there is no
-way to undedup data once it is deduplicated: switching deduplication off has **NO AFFECT** on existing data. The more data you write to a deduplicated
-dataset, the more RAM it requires, and there is no upper bound on this. When the system starts storing the DDTs (dedup tables) on disk because they no longer
-fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per TB of deduped data, and if the system doesn't
-have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool. **Think carefully before enabling dedup!**
-
-**ZIL:** (
-`ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_
-) is effectively a filesystem journal that manages writes. The ZIL is a temporary storage area for sync writes until they are written asynchronously to the
-ZFS pool. If the system has many sync writes, such as from a database server, performance can be increased by adding a dedicated log device (slog) using
-ZFS Volume Manager. If the system has few sync writes, a slog will not speed up writes to the pool. A more detailed explanation can be found in this
-`forum post <http://forums.freenas.org/threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_.
-
-A dedicated log device will have no affect on CIFS, AFP, or iSCSI as these protocols rarely use sync writes. A dedicated log device can increase write
-performance over NFS, especially for ESXi. When creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of
-capacitors that can handle writing the contents of the SSD's RAM to the SSD. If you don't have access to such an SSD, try disabling sync writes on the NFS
-dataset using
-`zfs(8) <http://www.freebsd.org/cgi/man.cgi?query=zfs>`_
-instead.
-
-The :command:`zilstat` utility can be run from Shell to help determine if the system would benefit from a dedicated ZIL device. See
-`this website <http://www.richardelling.com/Home/scripts-and-programs-1/zilstat>`_
-for usage information.
-
-If you decide to create a dedicated log device to speed up NFS writes, the SSD can be half the size of system RAM as anything larger than that is unused
-capacity. The log device **should be mirrored on a ZFSv15 pool because if one of the log devices fails, the pool is unrecoverable** and the pool must be
-recreated and the data restored from a backup. The log device does not need to be mirrored on a ZFSv28 pool as the system will revert to using the ZIL if the
-log device fails and only the data in the device which had not been written to the pool will be lost (typically the last few seconds of writes). You can
-replace the lost log device in the :menuselection:`View Volumes --> Volume Status` screen. Note that a dedicated log device can not be shared between ZFS
-pools and that the same device cannot hold both a log and a cache device.
-
-**L2ARC:** (
-`L2ARC <https://blogs.oracle.com/brendan/entry/test>`_
-) ZFS uses a RAM cache to reduce read latency. If an SSD is dedicated as a cache device, it is known
-as an L2ARC and ZFS uses it to store more reads which can increase random read performance. However, adding a cache device will not improve a system with too
-little RAM and will actually decrease performance as ZFS uses RAM to track the contents of L2ARC. RAM is always faster than disks, so always add as much RAM
-as possible before determining if the system would benefit from a L2ARC device.
-
-If you have a lot of applications that do large amounts of **random** reads, on a dataset small enough to fit into the L2ARC, read performance may be
-increased by adding a dedicated cache device using `ZFS Volume Manager`_. SSD cache devices only help if your active data is larger than system RAM, but small
-enough that a significant percentage of it will fit on the SSD. As a general rule of thumb, an L2ARC should not be added to a system with less than 64 GB of
-RAM and the size of an L2ARC should not exceed 5x the amount of RAM. In some cases, it may be more efficient to have two separate pools: one on SSDs for
-active data and another on hard drives for rarely used content.
-
-After adding an L2ARC, monitor its effectiveness using tools such as :command:`arcstat`. If you need to increase the size of an existing L2ARC, you can stripe
-another cache device using `ZFS Volume Manager`_. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are recreated at boot.
-
-Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload and the ratio of
-dataset size to cache size. Note that a dedicated L2ARC device can not be shared between ZFS pools.
-
-.. note:: adding an L2ARC is not a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized
-   ARC you will not be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability.
-
-**Scrub:** similar to ECC memory scrubbing, all data is read to detect latent errors while they're still correctable. A scrub traverses the entire storage
-pool to read every data block, validates it against its 256-bit checksum, and repairs it if necessary.
-
-**RAIDZ1:** ZFS software solution that is equivalent to RAID5. Its advantage over RAID 5 is that it avoids the
-`write-hole <http://blogs.oracle.com/bonwick/entry/raid_z>`_
-and does not require any special hardware, meaning it can be used on commodity disks. If your FreeNAS® system will be used for steady writes, RAIDZ is a
-poor choice due to the slow write speed.
-
-**RAIDZ2:** double-parity ZFS software solution that is similar to RAID-6. Its advantage over RAID 5 is that it also avoids the write-hole and does not
-require any special hardware, meaning it can be used on commodity disks. RAIDZ2 allows you to lose one drive without any degradation as it basically becomes
-a RAIDZ1 until you replace the failed drive and resilver. At this time, RAIDZ2 on FreeBSD is slower than RAIDZ1.
-
-**RAIDZ3:** triple-parity ZFS software solution. RAIDZ3 offers three parity drives and can operate in degraded mode if up to three drives fail with no
-restrictions on which drives can fail.
-
-.. note:: instead of mixing ZFS RAID with hardware RAID, it is recommended that you place your hardware RAID controller in JBOD mode and let ZFS handle the
-   RAID. According to
-   `Wikipedia <http://en.wikipedia.org/wiki/ZFS#Data_Integrity>`_
-   : "ZFS can not fully protect the user's data when using a hardware RAID controller, as it is not able to perform the automatic self-healing unless it
-   controls the redundancy of the disks and data. ZFS prefers direct, exclusive access to the disks, with nothing in between that interferes. If the user
-   insists on using hardware-level RAID, the controller should be configured as JBOD mode (i.e. turn off RAID-functionality) for ZFS to be able to guarantee
-   data integrity. Note that hardware RAID configured as JBOD may still detach disks that do not respond in time; and as such may require
-   TLER/CCTL/ERC-enabled disks to prevent drive dropouts. These limitations do not apply when using a non-RAID controller, which is the preferred method of
-   supplying disks to ZFS."
-
-When determining the type of RAIDZ to use, consider whether your goal is to maximum disk space or maximum performance:
-
-* RAIDZ1 maximizes disk space and generally performs well when data is written and read in large chunks (128K or more).
-
-* RAIDZ2 offers better data availability and significantly better mean time to data loss (MTTDL) than RAIDZ1.
-
-* A mirror consumes more disk space but generally performs better with small random reads.
-
-For better performance, a mirror is strongly favored over any RAIDZ, particularly for large, uncacheable, random read loads.
-
-Array sizes beyond 12 disks are not recommended. The recommended number of disks per group is between 3 and 9. If you have more disks, use multiple groups.
-
-The following resources can also help you determine the RAID configuration best suited to your storage needs:
-
-* `What is the Best RAIDZ Configuration <http://forums.freenas.org/showthread.php?312-what-is-the-best-raidz-configuration-and-how-to-set-it-up>`_
-
-* `Getting the Most out of ZFS Pools <http://forums.freenas.org/showthread.php?16-Getting-the-most-out-of-ZFS-pools%21>`_
-
-* `A Closer Look at ZFS, Vdevs and Performance <http://constantin.glez.de/blog/2010/06/closer-look-zfs-vdevs-and-performance>`_
-
-.. note:: NO RAID SOLUTION PROVIDES A REPLACEMENT FOR A RELIABLE BACKUP STRATEGY. BAD STUFF CAN STILL HAPPEN AND YOU WILL BE GLAD THAT YOU BACKED UP YOUR DATA
-   WHEN IT DOES. See Periodic Snapshot Tasks and Replication Tasks if you would like to use ZFS snapshots and rsync as part of your backup strategy.
 
 Installing and Upgrading FreeNAS®
 ==================================
@@ -3911,8 +3865,15 @@ click the "Advanced Mode" button or configure the system to always display these
 Deduplication
 ^^^^^^^^^^^^^
 
-The "ZFS Deduplication" option warns that enabling dedup may have drastic performance implications and that compression should be used instead. Before
-checking the "ZFS Deduplication" box, read the section on deduplication in the `ZFS Overview`_ first. This
+Deduplication is the process of eliminating duplicate copies of data in order to save space. Once deduplicaton occurs, it can improve ZFS performance as
+less data is written and stored. However, the process of deduplicating the data is RAM intensive and a general rule of thumb is 5 GB RAM per TB of storage to
+be deduplicated. **In most cases, compression will provide comparable performance.** 
+
+In FreeNAS®, deduplication can be enabled at the dataset level and there is no
+way to undedup data once it is deduplicated: switching deduplication off has **NO AFFECT** on existing data. The more data you write to a deduplicated
+dataset, the more RAM it requires, and there is no upper bound on this. When the system starts storing the DDTs (dedup tables) on disk because they no longer
+fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per TB of deduped data, and if the system doesn't
+have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool. **Think carefully before enabling dedup!** This
 `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_
 provides a good description of the value v.s. cost considerations for deduplication.
 
