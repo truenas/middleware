@@ -2091,6 +2091,10 @@ class ReplicationForm(ModelForm):
             'toggleGeneric("id_repl_remote_dedicateduser_enabled", '
             '["id_repl_remote_dedicateduser"], true);')
 
+        self.fields['repl_remote_cipher'].widget.attrs['onChange'] = (
+            'remoteCipherConfirm'
+        )
+
         if repl and repl.id:
             self.fields['repl_remote_hostname'].initial = (
                 repl.repl_remote.ssh_remote_hostname)
@@ -2109,11 +2113,16 @@ class ReplicationForm(ModelForm):
             if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
                 self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
-
         else:
             if not self.data.get("repl_remote_dedicateduser_enabled", False):
                 self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
+
+        self.fields['repl_remote_cipher'].widget.attrs['data-dojo-props'] = (
+            mark_safe("'oldvalue': '%s'" % (
+                self.fields['repl_remote_cipher'].initial,
+            ))
+        )
 
     def clean_repl_remote_port(self):
         port = self.cleaned_data.get('repl_remote_port')
