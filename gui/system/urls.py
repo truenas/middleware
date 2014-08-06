@@ -34,17 +34,20 @@ from freenasUI.system.forms import (
     InitialWizardConfirmForm,
     InitialWizardShareFormSet,
     InitialWizardVolumeForm,
+    InitialWizardVolumeImportForm
 )
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
     url(r'^wizard/$', InitialWizard.as_view(
         [
+            ('import', InitialWizardVolumeImportForm),
             ('volume', InitialWizardVolumeForm),
             ('shares', InitialWizardShareFormSet),
             ('confirm', InitialWizardConfirmForm),
         ],
         condition_dict={
+            'import': InitialWizardVolumeImportForm.show_condition,
             'volume': InitialWizardVolumeForm.show_condition,
         },
     ), name='system_initialwizard'),

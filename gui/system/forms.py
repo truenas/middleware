@@ -70,6 +70,7 @@ from freenasUI.sharing.models import (
     NFS_Share,
     NFS_Share_Path,
 )
+from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import MountPoint, Volume, Scrub
 from freenasUI.system import models
 
@@ -1261,6 +1262,9 @@ class InitialWizardVolumeForm(Form):
 
     @classmethod
     def show_condition(cls, wizard):
+        imported = wizard.get_cleaned_data_for_step('import')
+        if imported:
+            return False
         has_disks = (
             len(cls._types_avail(cls._get_unused_disks_by_size())) > 0
         )
@@ -1478,6 +1482,13 @@ class InitialWizardVolumeForm(Form):
                 _('No available disks have been found.'),
             ])
         return self.cleaned_data
+
+
+class InitialWizardVolumeImportForm(VolumeAutoImportForm):
+
+    @classmethod
+    def show_condition(cls, wizard):
+        return len(cls._populate_disk_choices()) > 0
 
 
 class InitialWizardConfirmForm(Form):

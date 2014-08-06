@@ -1191,7 +1191,8 @@ class VolumeAutoImportForm(Form):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
 
-    def _populate_disk_choices(self):
+    @staticmethod
+    def _populate_disk_choices():
 
         diskchoices = dict()
         used_disks = []
