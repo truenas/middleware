@@ -65,7 +65,7 @@ samba_groupmap()
 		return
 	fi
 
-	/usr/local/bin/net groupmap add \
+	/usr/local/bin/net groupmap add type="local" \
 		unixgroup="${group}" ntgroup="${group}" >/dev/null 2>&1
 }
 
