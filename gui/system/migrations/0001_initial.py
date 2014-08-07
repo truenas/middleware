@@ -16,9 +16,9 @@ class Migration(DataMigration):
             ('stg_guiprotocol', self.gf('django.db.models.fields.CharField')(default='http', max_length=120)),
             ('stg_language', self.gf('django.db.models.fields.CharField')(default='english', max_length=120)),
             ('stg_timezone', self.gf('django.db.models.fields.CharField')(default='america-los_angeles', max_length=120)),
-            ('stg_ntpserver1', self.gf('django.db.models.fields.CharField')(default='0.freebsd.pool.ntp.org iburst maxpoll 9', max_length=120)),
-            ('stg_ntpserver2', self.gf('django.db.models.fields.CharField')(default='1.freebsd.pool.ntp.org iburst maxpoll 9', max_length=120, blank=True)),
-            ('stg_ntpserver3', self.gf('django.db.models.fields.CharField')(default='2.freebsd.pool.ntp.org iburst maxpoll 9', max_length=120, blank=True)),
+            ('stg_ntpserver1', self.gf('django.db.models.fields.CharField')(default='0.freebsd.pool.ntp.org iburst maxpoll 10', max_length=120)),
+            ('stg_ntpserver2', self.gf('django.db.models.fields.CharField')(default='1.freebsd.pool.ntp.org iburst maxpoll 10', max_length=120, blank=True)),
+            ('stg_ntpserver3', self.gf('django.db.models.fields.CharField')(default='2.freebsd.pool.ntp.org iburst maxpoll 10', max_length=120, blank=True)),
         ))
         db.send_create_signal('system', ['Settings'])
 
@@ -137,9 +137,9 @@ class Migration(DataMigration):
         stg.stg_guiprotocol='http'
         stg.stg_language='en'
         stg.stg_timezone='America/Los_Angeles'
-        stg.stg_ntpserver1='0.freebsd.pool.ntp.org iburst maxpoll 9'
-        stg.stg_ntpserver2='1.freebsd.pool.ntp.org iburst maxpoll 9'
-        stg.stg_ntpserver3='2.freebsd.pool.ntp.org iburst maxpoll 9'
+        stg.stg_ntpserver1='0.freebsd.pool.ntp.org iburst maxpoll 10'
+        stg.stg_ntpserver2='1.freebsd.pool.ntp.org iburst maxpoll 10'
+        stg.stg_ntpserver3='2.freebsd.pool.ntp.org iburst maxpoll 10'
         stg.save()
 
         adv = orm.Advanced()

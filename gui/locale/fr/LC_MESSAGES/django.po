@@ -10504,3 +10504,140 @@ msgstr "Chemin distant"
 #, fuzzy
 msgid "A pool with this name already exists."
 msgstr "Un volume avec ce nom existe déjà."
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr ""
+
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+#, fuzzy
+msgid "Kerberos Keytab"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: directoryservice/forms.py:498
+#, fuzzy
+msgid "A keytab is required."
+msgstr "Un fichier est requis"
+
+#: directoryservice/models.py:549
+#, fuzzy
+msgid "Kerberos realm."
+msgstr "Fichier Keytab pour Kerberos"
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr ""
+
+#: directoryservice/models.py:554
+#, fuzzy
+msgid "KDC for this realm."
+msgstr "Quota pour ce volume"
+
+#: directoryservice/models.py:557
+#, fuzzy
+msgid "Admin Server"
+msgstr "Administrateur"
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+
+#: directoryservice/models.py:565
+#, fuzzy
+msgid "Password Server"
+msgstr "Serveur de mots de passe Kerberos"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr ""
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr ""
+
+#: directoryservice/models.py:586
+#, fuzzy
+msgid "Keytab"
+msgstr "Utiliser la touche de tabulation"
+
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+#, fuzzy
+msgid "Kerberos Realm"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s mis(e) à jour avec succès."
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr ""
+
+#: storage/forms.py:2052
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Activer cela peut accroitre la vitesse de transfert sur des réseaux haute "
+"vitesse/faible latence. Cela utilise des algorithmes moins sécurisés que par "
+"défaut, ce qui le rend moins judicieux sur des réseaux sans approbation."
+
+#: storage/models.py:819
+#, fuzzy
+msgid "Encryption Cipher"
+msgstr "Type de chiffrement"
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr ""
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr ""
+
+#: storage/models.py:830
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO encryption at all, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Activer cela peut accroitre la vitesse de transfert sur des réseaux haute "
+"vitesse/faible latence. Cela utilise des algorithmes moins sécurisés que par "
+"défaut, ce qui le rend moins judicieux sur des réseaux sans approbation."
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos Realms"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: templates/directoryservice/index.html:18
+#, fuzzy
+msgid "Kerberos Keytabs"
+msgstr "Fichier Keytab pour Kerberos"
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr ""

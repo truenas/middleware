@@ -10265,3 +10265,141 @@ msgstr "Cale remote"
 #, fuzzy
 msgid "A pool with this name already exists."
 msgstr "Un volum cu acest nume există deja."
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr ""
+
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+#, fuzzy
+msgid "Kerberos Keytab"
+msgstr "Fişier chei Kerberos"
+
+#: directoryservice/forms.py:498
+#, fuzzy
+msgid "A keytab is required."
+msgstr "Este nevoie de un fișier"
+
+#: directoryservice/models.py:549
+#, fuzzy
+msgid "Kerberos realm."
+msgstr "Server Kerberos"
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr ""
+
+#: directoryservice/models.py:554
+#, fuzzy
+msgid "KDC for this realm."
+msgstr "Cotă alocată acestui volum"
+
+#: directoryservice/models.py:557
+#, fuzzy
+msgid "Admin Server"
+msgstr "Utilizator Admin"
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+
+#: directoryservice/models.py:565
+#, fuzzy
+msgid "Password Server"
+msgstr "Serverul de parole kerberos"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr ""
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr ""
+
+#: directoryservice/models.py:586
+msgid "Keytab"
+msgstr ""
+
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+#, fuzzy
+msgid "Kerberos Realm"
+msgstr "Fişier chei Kerberos"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s actualizat cu succes."
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr ""
+
+#: storage/forms.py:2052
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Activarea opțiunii poate crește viteza de transfer în cazul rețelelor locale "
+"de viteză înaltă/latență mică. Sistemul va utiliza un algoritm de criptare "
+"cu un grad mai scăzut de siguranță decît de obicei, caz mai puțin recomandat "
+"pentru rețelele nesigure."
+
+#: storage/models.py:819
+#, fuzzy
+msgid "Encryption Cipher"
+msgstr "Tip criptare"
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr ""
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr ""
+
+#: storage/models.py:830
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO encryption at all, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Activarea opțiunii poate crește viteza de transfer în cazul rețelelor locale "
+"de viteză înaltă/latență mică. Sistemul va utiliza un algoritm de criptare "
+"cu un grad mai scăzut de siguranță decît de obicei, caz mai puțin recomandat "
+"pentru rețelele nesigure."
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos"
+msgstr "Server Kerberos"
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos Realms"
+msgstr "Fişier chei Kerberos"
+
+#: templates/directoryservice/index.html:18
+#, fuzzy
+msgid "Kerberos Keytabs"
+msgstr "Fişier chei Kerberos"
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr ""
