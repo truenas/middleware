@@ -1,4 +1,4 @@
-|INSERT COVER IMAGE HERE|
+|93cover.jpg|
 
 .. centered:: FreeNAS® is © 2011-2014 iXsystems
 
@@ -10389,6 +10389,10 @@ Finally, the *service_start* method issues a command to enable the CIFS service.
 
  })
 
+.. |93cover.jpg| image:: images/93cover.jpg
+    :width: 8.5in
+    :height: 11in
+ 
 .. |100000000000026600000151FC5B0A5B_png| image:: images/100000000000026600000151FC5B0A5B.png
     :width: 6.3953in
     :height: 3.5098in
