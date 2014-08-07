@@ -412,33 +412,33 @@ developed at Sun with the intent to open source the filesystem so that it could 
 some of the original ZFS engineers founded
 `OpenZFS <http://open-zfs.org>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
 version numbers, OpenZFS uses feature flags. Feature flags are used to tag features with unique names in order to provide portability between OpenZFS
-implementations running on different platforms, as long as all of the feature flags used by a ZFS pool are supported by both platforms.
+implementations running on different platforms, as long as all of the feature flags enabled on the ZFS pool are supported by both platforms.
 
-FreeNAS® uses OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and any ZFS bug fixes. Since many of the features
+FreeNAS® uses OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and OpenZFS bug fixes. Since many of the features
 provided by ZFS are particularly suited to the storage of data, format your disk(s) with ZFS in order to get the most out of your FreeNAS® system.
 
 Here is an overview of the features provided by ZFS:
 
-**ZFS is a transactional, Copy-On-Write filesystem**
+**ZFS is a transactional, Copy-On-Write**
 `(COW) <https://en.wikipedia.org/wiki/ZFS#Copy-on-write_transactional_model>`_ filesystem. For each write request, a copy is made of the associated disk
 block(s) and all changes are made to the copy rather than to the original block(s). Once the write is complete, all block pointers are changed to point to the
-new copy. This means that ZFS always writes to free space and most writes will be sequential. As a transactional filesytem, if ZFS has direct access to disks,
-it will bundle multiple read and write requests into transactions; most filesystems can not do this as they only have access to disk blocks. A transaction
-either completes or fails, meaning there will never be a
+new copy. This means that ZFS always writes to free space and most writes will be sequential. When ZFS has direct access to disks, it will bundle multiple
+read and write requests into transactions; most filesystems can not do this as they only have access to disk blocks. A transaction either completes or fails,
+meaning there will never be a
 `write-hole <http://blogs.oracle.com/bonwick/entry/raid_z>`_  and a filesystem checker utility is not necessary. Because of the transactional design, as
-additional storage capacity is added, it becomes immediately available for writes; to rebalance the data, copy it to re-write the existing data across all
-available disks. As a 128-bit filesystem, the maximum filesystem or file size is 16 exabytes.
+additional storage capacity is added it becomes immediately available for writes; to rebalance the data, one can copy it to re-write the existing data across
+all available disks. As a 128-bit filesystem, the maximum filesystem or file size is 16 exabytes.
   
 **ZFS was designed to be a self-healing filesystem**. As ZFS writes data, it creates a checksum for each disk block it writes. As ZFS reads data, it validates
 the checksum for each disk block it reads. If ZFS identifies a disk block checksum error on a pool that is mirrored or uses RAIDZ*, ZFS will fix the corrupted
 data with the correct data. Since some disk blocks are rarely read, regular scrubs should be scheduled so that ZFS can read all of the data blocks in order to
 validate their checksums and correct any corrupted blocks. While multiple disks are required in order to provide redundancy and data correction, ZFS will
-still provide  data corruption detectionto a system with one disk. FreeNAS® automatically schedules a monthly scrub for each ZFS pool and the results of the
+still provide  data corruption detection to a system with one disk. FreeNAS® automatically schedules a monthly scrub for each ZFS pool and the results of the
 scrub will be displayed in `View Volumes`_. Reading the scrub results can provide an early indication of possible disk failure.
   
-Unlike traditional UNIX filesystems, **you do not need to define a partition size at filesystem creation time**. Instead, you feed a certain number of disk(s)
+Unlike traditional UNIX filesystems, **you do not need to define partition sizes at filesystem creation time**. Instead, you feed a certain number of disk(s)
 at a time (known as a vdev) to a ZFS pool and create filesystems from the pool as needed. As more capacity is needed, identical vdevs can be striped into the
-pool. In FreeNAS® , `ZFS Volume Manager`_ can be used to create or extend ZFS pools. Once a pool is created, it can be divided into dynamically-sized
+pool. In FreeNAS®, `ZFS Volume Manager`_ can be used to create or extend ZFS pools. Once a pool is created, it can be divided into dynamically-sized
 datasets or fixed-size zvols as needed. Datasets can be used to optimize storage for the type of data being stored as permissions and properties such as
 quotas and compression can be set on a per-dataset level. A zvol is essentially a raw, virtual block device which can be used for applications that need
 raw-device semantics such as iSCSI device extents.
@@ -457,7 +457,7 @@ minutes), store them for a period of time (e.g. for a month), and store them on 
 back to a specific time or, if there is a catastrophic loss, an off-site snapshot can restore the system up to the last snapshot interval (e.g. within 15
 minutes of the data loss). Snapshots are stored locally but can also be replicated to a remote ZFS pool. During replication, ZFS does not do a byte-for-byte
 copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the receiving end does not need to be identical and can use
-a different ZFS RAID level, volume size, compression settings, etc.
+a different RAIDZ level, volume size, compression settings, etc.
   
 **ZFS boot environments provide a method for recovering from a failed upgrade**. Beginning with FreeNAS® version 9.3, a snapshot of the dataset the operating
 system resides on is automatically taken before an upgrade or a system configuration change. This saved boot environment is automatically added to the GRUB
@@ -480,8 +480,9 @@ if the log device fails and only the data in the device which had not been writt
 can replace the lost log device in the :menuselection:`View Volumes --> Volume Status` screen. Note that a dedicated log device can not be shared between ZFS
 pools and that the same device cannot hold both a log and a cache device.
 
-**ZFS provides a read cache** in RAM, known as the ARC, to reduce read latency. FreeNAS® adds ARC stats to top(1) and includes the command:`arc_summary.py`_
-and command:`arcstat.py`_ tools for monitoring the efficiency of the ARC. If an SSD is dedicated as a cache device, it is known as an
+**ZFS provides a read cache** in RAM, known as the ARC, to reduce read latency. FreeNAS® adds ARC stats to 
+`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_ and includes the :command:`arc_summary.py`
+and :command:`arcstat.py` tools for monitoring the efficiency of the ARC. If an SSD is dedicated as a cache device, it is known as an
 `L2ARC <https://blogs.oracle.com/brendan/entry/test>`_ and ZFS uses it to store more reads which can increase random read performance. However, adding an
 L2ARC is **not** a substitute for insufficient RAM as L2ARC needs RAM in order to function.  If you do not have enough RAM for a good sized ARC, you will not
 be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability. RAM is always faster than
@@ -499,7 +500,7 @@ dataset size to cache size. Note that a dedicated L2ARC device can not be shared
 over time before the hardware controller provides an alert. ZFS provides three levels of redundancy, known as RAIDZ*, where the number after the RAIDZ
 indicates how many disks per vdev can be lost without losing data. ZFS also supports mirrors, with no restrictions on the number of disks in the mirror. ZFS
 was designed for commodity disks so no RAID controller is needed. While ZFS can also be used with a RAID controller, it is recommended that the controller be
-put into JBOD mode so that ZFS has full knowledge of the disks. When determining the type of ZFS redundancy to use, consider whether your goal is to maximize
+put into JBOD mode so that ZFS has full control of the disks. When determining the type of ZFS redundancy to use, consider whether your goal is to maximize
 disk space or performance:
 
 * RAIDZ1 maximizes disk space and generally performs well when data is written and read in large chunks (128K or more).
@@ -534,14 +535,14 @@ While ZFS provides many benefits, there are some caveats to be aware of:
 * When considering the number of disks to user per vdev, consider the size of the disks and the amount of time required for resilvering, which is the process
   of rebuilding the array. The larger the size of the array, the longer the resilvering time. When replacing a disk in a RAIDZ*, it is possible that another
   disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
-  in the pool will be lost. This is why RAIDZ1 is not recommended for drives over 1 TB in size.
+  in the pool will be lost. For this reason, RAIDZ1 is not recommended for drives over 1 TB in size.
   
 * It is recommended to use drives of equal sizes. While ZFS can create a pool using disks of differing sizes, the capacity will be limited by the size of the
   smallest disk.
 
 If you are new to ZFS, the
 `Wikipedia entry on ZFS <http://en.wikipedia.org/wiki/Zfs>`_
-provides an excellent starting point to learn about its features. These resources are also useful to bookmark and refer to as needed:
+provides an excellent starting point to learn more about its features. These resources are also useful to bookmark and refer to as needed:
 
 * `FreeBSD ZFS Tuning Guide <http://wiki.freebsd.org/ZFSTuningGuide>`_
 
