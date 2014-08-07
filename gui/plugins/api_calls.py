@@ -290,6 +290,29 @@ def __fs_get_file(request, path=None):
     return content
 
 
+@jsonrpc_method("fs.linprocfs")
+def __fs_mount_filesystem(request, plugin_id, dst):
+    jail_path = __get_plugins_jail_path(plugin_id)
+    if not jail_path:
+        data = {"error": True,
+            "message": "source or destination not specified"}
+        return data
+
+    if not dst:
+        data = {"error": True,
+            "message": "destination not specified"}
+        return data
+
+    full_dst = "%s/%s" % (jail_path, dst)
+    p = __popen("/sbin/mount -t linprocfs linprocfs %s" % (full_dst))
+    stdout, stderr = p.communicate()
+
+    return {
+        'error': False if p.returncode == 0 else True,
+        'message': stderr,
+        }
+
+
 #
 #    OS methods
 #
