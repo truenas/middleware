@@ -2117,7 +2117,7 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
 At this time, the GUI does not display the loaders that are pre-set in the installation image. 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
- loader_logo="freenas-logo"
+ loader_logo="freenas"
  loader_menu_title="Welcome to FreeNAS"
  loader_brand="freenas-brand"
  loader_version=" "
