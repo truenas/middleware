@@ -27,6 +27,7 @@ mkdir -p ${NANO_OBJ}/_.w/usr/ports/packages
 mount -t nullfs ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS} ${NANO_OBJ}/_.w/usr/ports/packages  || exit 1
 
 set -e
+set -x
 
 if [ -n "$WITH_PKGNG" ]; then
 	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos
@@ -52,6 +53,7 @@ else
                                        --ports ${PORTSLIST}
 
 fi
+set +x
 
 echo "PACKAGES AFTER install===================================BEGIN LIST============="
 if [ -n "$WITH_PKGNG" ]; then

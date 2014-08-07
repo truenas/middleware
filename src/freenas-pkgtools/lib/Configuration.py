@@ -22,6 +22,8 @@ TRAIN_CHECKED_KEY = "LastChecked"
 
 log = logging.getLogger('freenasOS.Configuration')
 
+# Change this for release
+SEARCH_LOCATIONS = [ "/cdrom", "http://10.2.4.88/~sef/FreeNAS/" ]
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
@@ -380,12 +382,11 @@ class PackageDB:
 class Configuration(object):
     _root = ""
     _config_path = "/etc/freenas.conf"
-    _search = None
     _trains = None
     _temp = "/tmp"
-    _dirty = False
     _nopkgdb = False
     _system_pool_link = "/var/db/system"
+    _package_dir = None
 
     def __init__(self, root = None, file = None, nopkgdb = False):
         if root is not None: self._root = root
@@ -407,10 +408,9 @@ class Configuration(object):
     def StoreConfigurationFile(self, path):
         # I'm not really sure this'll work in reality;
         # it may need to be handled through the database.
+        raise Exception("This is obsolete")
         cfp = ConfigParser.SafeConfigParser()
         cfp.add_section(CONFIG_DEFAULT)
-        if self._search is not None:
-            cfp.set(CONFIG_DEFAULT, "search", " ".join(self._search))
         if self._trains is not None:
             for train in self._trains:
                 cfp.add_section(train.Name())
@@ -428,7 +428,6 @@ class Configuration(object):
         return PackageDB(self._root)
 
     def LoadConfigurationFile(self, path):
-        self._search = None
         self._trains = None
         cfp = None
         try:
@@ -443,18 +442,8 @@ class Configuration(object):
 
         for section in cfp.sections():
             if section == CONFIG_DEFAULT:
-                # Default, used to set search paths
-                if cfp.has_option(section, "search"):
-                    sp = cfp.get(section, "search")
-                    spa = sp.split()
-                    # Handle backslash for line continuation
-                    for L in spa:
-                        if L == "\\":
-                            continue
-                        self.AddSearchLocation(L)
-                # Also see if it has a temp location defined
-                if cfp.has_option(section, "Temp Directory"):
-                    self._temp = cfp.get(section, "Temp Directory")
+                # Nothing to do for now.  Maybe later
+                pass
             else:
                 # This is a train name
                 try:
@@ -466,34 +455,31 @@ class Configuration(object):
                     # Ignore errors (for now at least)
                     pass
 
-        self.MarkDirty()
         return
 
-    def MarkDirty(self):
-        self._dirty = True
+    def SetPackageDir(self, loc):
+        self._package_dir = loc
         return
 
     def AddSearchLocation(self, loc, insert = False):
+        raise Exception("Deprecated method")
         if self._search is None:  self._search = []
         if insert is True:
             self._search.insert(0, loc)
         else:
             self._search.append(loc)
-        self.MarkDirty()
         return
 
     def SetSearchLocations(self, list):
+        raise Exception("Deprecated method")
         self._search = list
-        self.MarkDirty()
         return
     
     def SearchLocations(self):
-        if self._search is None: return []
-        return self._search
+        return SEARCH_LOCATIONS
 
     def AddTrain(self, train):
         self._trains.append(train)
-        self.MarkDirty()
         return
 
     def ListTrains(self):
@@ -509,7 +495,6 @@ class Configuration(object):
 
     def SetTrains(self, list):
         self._trains = list
-        self.MarkDirty()
         return
 
     def TemporaryDirectory(self):
@@ -533,7 +518,12 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        for location in self.SearchLocations():
+        # Minor hack to minimize some code duplication
+        first_search = []
+        if path.startswith("Packages/") and self._package_dir is not None:
+            first_search = [self._package_dir]
+
+        for location in first_search + self.SearchLocations():
             # A location will either be a path (beginning
             # with a "/", a file url (beginning with
             # "file://"), or a network URL.

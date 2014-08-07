@@ -31,6 +31,7 @@ def usage():
     sys.exit(1)
 
 if __name__ == "__main__":
+    package_dir = None
     searchdirs = []
     notesfile = None
     releasename = None
@@ -48,7 +49,7 @@ if __name__ == "__main__":
                 
     for o, a in opts:
         if o == "-P":
-            searchdirs.append(a)
+            package_dir = a
         elif o == '-C':
             config_file = a
         elif o == "-N":
@@ -93,8 +94,15 @@ if __name__ == "__main__":
         mani.SetNotes(notes)
             
 
-    for loc in reversed(searchdirs):
-        conf.AddSearchLocation(loc, insert = True)
+    # Small hack to make the package_dir option
+    # make sense.
+    if package_dir is not None:
+        if package_dir.endswith("Packages"):
+            package_dir = package_dir[:-len("Packages")]
+        elif package_dir.endswith("Packages/"):
+            package_dir = package_dir[:-len("Packages/")]
+
+        conf.SetPackageDir(package_dir)
         
     for P in pkgs:
         # Need to parse the name, which is pkg=version[:upgrade,upgrade,upgrade]
