@@ -92,7 +92,7 @@ main()
 	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
 	tar -xf - -C ${INSTALLUFSDIR}
 	# Copy the installation scripts and modules as well
-	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/installer | tar -C ${INSTALLUFSDIR} -xf -
+	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/freenas-install | tar -C ${INSTALLUFSDIR} -xf -
 	set +x
 # SEF
 # Build packages here.
@@ -100,7 +100,6 @@ main()
 	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
 	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
 	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
-	    printf "[Defaults]\nsearch = /.mount/FreeNAS\n" > ${NANO_OBJ}/_.isodir/freenas.conf
 	    cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.isodir/FreeNAS-MANIFEST
 	else
 		echo "Hey, where are the install filess?"

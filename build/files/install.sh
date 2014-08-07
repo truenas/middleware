@@ -504,12 +504,9 @@ menu_install()
 #        : > /tmp/$NEED_UPDATE_SENTINEL
 #        : > /tmp/$CD_UPGRADE_SENTINEL
 
-	# For the install to work, we need to have /data mounted.
-	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
-	# Need to link the manifest file
-	rm -f /tmp/data/conf/base/etc/manifest
-	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
-#	echo "freenas-boot/ROOT/default / zfs rw,noatime 0 0" > /tmp/data/etc/fstab
+	# Tell it to look in /.mount (with an implied /Packages) for the packages.
+	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
+
 	rm -f /tmp/data/conf/default/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
@@ -594,12 +591,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 #	umount /tmp/data
 #	rmdir /tmp/data
 #	# And now root
-	/usr/local/bin/installer -C /.mount/freenas.conf -M /.mount/FreeNAS-MANIFEST /tmp/data
-	# Need to link the manifest file
-	ln /tmp/data/etc/manifest /tmp/data/conf/base/etc/manifest
+	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-	cp /dev/null /tmp/data/etc/fstab
-	cp /dev/null /tmp/data/conf/base/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev

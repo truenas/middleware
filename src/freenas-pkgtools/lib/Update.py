@@ -1,11 +1,14 @@
 import errno
 import os
 import sys
+import logging
 
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 
+
+log = logging.getLogger('freenasOS.Update')
 
 def CheckForUpdates(root = None, handler = None):
     """
@@ -26,6 +29,8 @@ def CheckForUpdates(root = None, handler = None):
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
     m = conf.FindLatestManifest()
+    log.debug("Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
+                                                                             if m is not None else 0))
     print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
                                                                              if m is not None else 0)
     if m is None:
@@ -45,41 +50,6 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     Perform an update.  Calls CheckForUpdates() first, to see if
     there are any. If there are, then magic happens.
     """
-
-    def SaveManifest(manifest):
-        # Need to write out the manifest
-        # It needs to to into the specified root; however,
-        # if root is none, we can't then link to the backup.
-        if root is None:
-            prefix = ""
-        else:
-            prefix = root
-        manifest.StorePath(prefix + Manifest.SYSTEM_MANIFEST_FILE)
-        # See if the primary and backup file are the same
-        # If this raises an exception we deserve it
-        primary = os.stat(prefix + Manifest.SYSTEM_MANIFEST_FILE)
-        try:
-            secondary = os.stat(prefix + Manifest.BACKUP_MANIFEST_FILE)
-        except:
-            secondary = None
-
-        if secondary is None or \
-           primary.st_dev != secondary.st_dev or \
-            primary.st_ino != secondary.st_ino:
-            try:
-                # This could cause problems if /etc is a tmpfs
-                os.unlink(prefix + Manifest.BACKUP_MANIFEST_FILE)
-            except:
-                pass
-            try:
-                os.link(prefix + Manifest.SYSTEM_MANIFEST_FILE,
-                        prefix + Manifest.BACKUP_MANIFEST_FILE)
-            except OSError as e:
-                if e[0] == errno.EXDEV:
-                    # Just write it out to the backup location
-                    manifest.StorePath(prefix + Manifest.BACKUP_MANIFEST_FILE)
-            except:
-                raise e
 
     def RunCommand(command, args):
         # Run the given command.  Uses subprocess module.
@@ -188,6 +158,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         # may have new release notes, or other issues.
         # Right now, I'm not quite sure how to do this.
         # I should also learn how to log from python.
+        log.debug("Updated manifest but no package differences")
         print >> sys.stderr, "Updated manifest but no package differences"
         return
 
@@ -209,6 +180,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         # "FreeNAS-<sequence>"
         clone_name = "FreeNAS-%d" % new_man.Sequence()
         if CreateClone(clone_name) is False:
+            log.error("Unable to create boot-environment %s" % clone_name)
             print >> sys.stderr, "Unable to create boot-environment %s" % clone_name
             raise Exception("Unable to create new boot-environment %s" % clone_name)
 
@@ -233,20 +205,24 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     installer = Installer.Installer(manifest = new_man, root = root, config = conf)
     installer.GetPackages(process_packages, handler=get_handler)
 
+    log.debug("Packages = %s" % installer._packages)
     print >> sys.stderr, "Packages = %s" % installer._packages
 
     # Now let's actually install them.
     # Only change on success
     rv = False
     if installer.InstallPackages(handler=install_handler) is False:
+        log.error("Unable to install packages")
         print >> sys.stderr, "Unable to install packages"
     else:
-        SaveManifest(new_man)
+        new_man.Save(root)
         if mount_point is not None:
             if UnmountClone(clone_name) is False:
+                log.error("Unable to mount clone enivironment %s" % clone_name)
                 print >> sys.stderr, "Unable to unmount clone environment %s" % clone_name
             else:
                 if ActivateClone(clone_name) is False:
+                    log.error("Could not activate clone environment %s" % clone_name)
                     print >> sys.stderr, "Could not activate clone environment %s" % clone_name
                 else:
                     rv = True
@@ -258,6 +234,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     # Unmounting attempts to delete the mount point that was created.
     if rv is False:
         if DeleteClone(clone_name) is False:
+            log.error("Unable to delete boot environment %s in failure case" % clone_name)
             print >> sys.stderr, "Unable to delete boot environment %s" % clone_name
     
     return rv

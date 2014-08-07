@@ -15,21 +15,22 @@ def PrintProgress(pct, name):
     print >> sys.stderr, "Got %s (%.2f%%)" % (name, pct)
 
 def usage():
-    print >> sys.stderr, "Usage: %s -M manifest [-C config] root" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s -M manifest [-P package_dir] root" % sys.argv[0]
+    print >> sys.stderr, "\tNote:  package dir is parent of Packages directory"
     sys.exit(1)
 
 if __name__ == "__main__":
     mani_file = None
-    config_file = None
+    package_dir = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "M:C:")
+        opts, args = getopt.getopt(sys.argv[1:], "M:P:")
     except getopt.GetoptError as err:
         print >> sys.stderr, str(err)
         usage()
 
     for (o, a) in opts:
         if o == "-M": mani_file = a
-        elif o == "-C": conf_file = a
+        elif o == "-P": package_dir = a
         else: usage()
 
     if len(args) != 1:
@@ -37,8 +38,15 @@ if __name__ == "__main__":
 
     root = args[0]
 
-    config = Configuration.Configuration(file = conf_file)
-    print "config search locations = %s" % config.SearchLocations()
+    config = Configuration.Configuration()
+    if package_dir is not None:
+        if package_dir.endswith("Packages"):
+            package_dir = package_dir[:-len("Packages")]
+        elif package_dir.endswith("Packages/"):
+            package_dir = package_dir[:-len("Packages/")]
+
+        config.SetPackageDir(package_dir)
+
     if mani_file is None:
         manifest = config.SystemManifest()
     else:
@@ -52,4 +60,5 @@ if __name__ == "__main__":
         print >> sys.stderr, "Huh, could not install and yet it returned"
 
     installer.InstallPackages(PrintProgress)
-    manifest.StorePath(root + "/etc/manifest")
+    manifest.Save(root)
+    sys.exit(0)

@@ -6,11 +6,11 @@ SUBDIR= create_manifest \
 	create_manifest \
 	create_package \
 	diff_packages \
-	installer \
+	freenas-install \
 	lib \
 	manifest_util \
 	pkgify \
-	update
+	freenas-update
 
 beforeinstall:
 	${INSTALL} -d ${DESTDIR}${BINDIR}

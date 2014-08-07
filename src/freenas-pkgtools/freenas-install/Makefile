@@ -2,6 +2,6 @@
 
 MK_MAN= no
 
-SCRIPTS=	installer.py
+SCRIPTS=	freenas-install.py
 
 .include <bsd.prog.mk>

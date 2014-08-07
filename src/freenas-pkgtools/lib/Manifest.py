@@ -73,8 +73,6 @@ class Manifest(object):
     _packages = None
     _signature = None
     _version = None
-    _dirty = False
-    
 
     def __init__(self, configuration = None):
         if configuration is None:
@@ -94,11 +92,6 @@ class Manifest(object):
     def String(self):
         retval = MakeString(self.dict())
         return retval
-
-    def MarkDirty(self, b):
-        self._dirty = b
-        if b is True: self._signature = None
-        return
 
     def LoadFile(self, file):
         # Load a manifest from a file-like object.
@@ -133,7 +126,6 @@ class Manifest(object):
             else:
                 raise ManifestInvalidException
         self.Validate()
-        self.MarkDirty(True)
         return
 
     def LoadPath(self, path):
@@ -145,8 +137,46 @@ class Manifest(object):
     def StorePath(self, path):
         with open(path, "w") as f:
             f.write(self.String())
-        self.MarkDirty(False)
         return
+
+    def Save(self, root):
+        # Need to write out the manifest
+        # It needs to to into the specified root; however,
+        # if root is none, we can't then link to the backup.
+        # 
+        if root is None:
+            root = self._root
+
+        if root is None:
+            prefix = ""
+        else:
+            prefix = root
+        self.StorePath(prefix + SYSTEM_MANIFEST_FILE)
+        # See if the primary and backup file are the same
+        # If this raises an exception we deserve it
+        primary = os.stat(prefix + SYSTEM_MANIFEST_FILE)
+        try:
+            secondary = os.stat(prefix + BACKUP_MANIFEST_FILE)
+        except:
+            secondary = None
+
+        if secondary is None or \
+           primary.st_dev != secondary.st_dev or \
+            primary.st_ino != secondary.st_ino:
+            try:
+                # This could cause problems if /etc is a tmpfs
+                os.unlink(prefix + BACKUP_MANIFEST_FILE)
+            except:
+                pass
+            try:
+                os.link(prefix + SYSTEM_MANIFEST_FILE,
+                        prefix + BACKUP_MANIFEST_FILE)
+            except OSError as e:
+                if e[0] == errno.EXDEV:
+                    # Just write it out to the backup location
+                    self.StorePath(prefix + BACKUP_MANIFEST_FILE)
+            except:
+                raise e
 
     def Validate(self):
         # A manifest needs to have a sequence number, train,
@@ -175,7 +205,6 @@ class Manifest(object):
 
     def SetSequence(self, seq):
         self._sequence = int(seq)
-        self.MarkDirty(True)
         return
 
     def Notes(self):
@@ -183,7 +212,6 @@ class Manifest(object):
 
     def SetNotes(self, notes):
         self._notes = notes
-        self.MarkDirty(True)
         return
 
     def Train(self):
@@ -192,7 +220,6 @@ class Manifest(object):
 
     def SetTrain(self, train):
         self._train = train
-        self.MarkDirty(True)
         return
 
     def Packages(self):
@@ -201,13 +228,11 @@ class Manifest(object):
     def AddPackage(self, pkg):
         if self._packages is None: self._packages = []
         self._packages.append(pkg)
-        self.MarkDirty(True)
         return
 
     def AddPackages(self, list):
         if self._packages is None: self._packages = []
         self._packages.append(list)
-        self.MarkDirty(True)
         return
 
     def VerifySignature(self):
@@ -232,5 +257,4 @@ class Manifest(object):
 
     def SetVersion(self, version):
         self._version = version
-        self.MarkDirty(True)
         return
