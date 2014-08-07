@@ -226,6 +226,7 @@ List resource
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
                 "cifs_srv_homedir_browseable_enable": false,
@@ -289,6 +290,7 @@ Update resource
                 "cifs_srv_min_protocol": "",
                 "cifs_srv_syslog": false,
                 "cifs_srv_unixext": true,
+                "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
                 "cifs_srv_homedir": null,
                 "cifs_srv_homedir_browseable_enable": false,
@@ -331,6 +333,7 @@ Update resource
    :json string cifs_srv_homedir: home directories path
    :json string cifs_srv_homedir_aux: homes auxiliary parameters
    :json boolean cifs_srv_unixext: unix extensions
+   :json boolean cifs_srv_obey_pam_restrictions: obey pam restrictions
    :json boolean cifs_srv_domain_logons: domains logons
    :json boolean cifs_srv_aio_enable: enable aio
    :json integer cifs_srv_aio_rs: minimum aio read size

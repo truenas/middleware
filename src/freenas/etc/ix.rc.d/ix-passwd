@@ -59,13 +59,23 @@ group_membership()
 samba_groupmap()
 {
 	local group="${1}"
+	local net="/usr/local/bin/net"
 
-	net groupmap list ntgroup="${group}" >/dev/null 2>&1
+	#
+	# Don't map groups with a name the same as the username,
+	# it really pisses windows off.
+	#
+	/usr/bin/getent passwd "${group}" >/dev/null 2>&1
 	if [ "$?" = "0" ] ; then
 		return
 	fi
 
-	/usr/local/bin/net groupmap add \
+	${net} groupmap list ntgroup="${group}" >/dev/null 2>&1
+	if [ "$?" = "0" ] ; then
+		return
+	fi
+
+	${net} groupmap add type="local" \
 		unixgroup="${group}" ntgroup="${group}" >/dev/null 2>&1
 }
 

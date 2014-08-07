@@ -997,12 +997,55 @@ def smb4_import_groups():
             s.group_addmembers(g, groups[g])
 
 
-def smb4_map_groups():
-    cmd = "/usr/local/bin/net groupmap add unixgroup='%s' ntgroup='%s'"
+def smb4_get_groupmap():
+    groupmap = []
+    cmd = "/usr/local/bin/net groupmap list"
 
+    p = pipeopen(cmd)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+
+    out = out[0]
+    lines = out.splitlines()
+    for line in lines:
+        m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+        if m:
+            groupmap.append(m.groupdict())
+
+    return groupmap
+    
+
+def smb4_group_mapped(groupmap, group):
+    for gm in groupmap:
+        unixgroup = gm['unixgroup']
+        if group == unixgroup:
+            return True
+
+    return False
+
+
+# Windows no likey
+def smb4_groupname_is_username(group):
+    cmd = "/usr/bin/getent passwd '%s'" % group
+
+    p = pipeopen(cmd)
+    p.communicate()
+    if p.returncode == 0:
+        return True
+
+    return False
+
+
+def smb4_map_groups():
+    cmd = "/usr/local/bin/net groupmap add type=local unixgroup='%s' ntgroup='%s'"
+
+    groupmap = smb4_get_groupmap()
     groups = get_groups()
     for g in groups:
-        pipeopen(cmd % (g, g)).communicate()
+        if not smb4_group_mapped(groupmap, g) and \
+            not smb4_groupname_is_username(g):
+            pipeopen(cmd % (g, g)).communicate()
 
 
 def main():

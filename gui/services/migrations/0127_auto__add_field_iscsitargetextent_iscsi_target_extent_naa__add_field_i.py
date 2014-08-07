@@ -18,6 +18,12 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=True),
                       keep_default=False)
 
+        # Workaround south boolean field with sqlite
+        if not db.dry_run:
+            orm['services.iSCSITargetExtent'].objects.all().filter(
+                iscsi_target_extent_insecure_tpc=True
+            )
+
 
     def backwards(self, orm):
         # Deleting field 'iSCSITargetExtent.iscsi_target_extent_naa'

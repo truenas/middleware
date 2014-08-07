@@ -331,13 +331,14 @@ class ActiveDirectoryForm(ModelForm):
             bindpw = cdata.get("ad_bindpw")
             domain = cdata.get("ad_domainname")
             binddn = "%s@%s" % (bindname, domain)
+            errors = []
 
             ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw
+                domain, binddn=binddn, bindpw=bindpw, errors=errors
             )
             if ret == False:
                 raise forms.ValidationError(
-                    _("Incorrect password.")
+                    _("%s." % errors[0])
                 )
 
         return cdata
@@ -437,15 +438,17 @@ class LDAPForm(ModelForm):
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         hostname = cdata.get("ldap_hostname")
+        errors = []
 
         ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw
+            hostname, binddn=binddn, bindpw=bindpw, errors=errors
         )
         if ret == False:
             raise forms.ValidationError(
-                _("Incorrect password.")
+                _("%s." % errors[0])
             )
 
+        log.debug("XXXX: ret = %s", ret)
         return cdata
 
     def save(self):

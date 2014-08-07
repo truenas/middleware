@@ -129,7 +129,7 @@ class MultiSelectField(models.Field):
         choicedict = dict(field.choices)
 
     def formfield(self, **kwargs):
-        from freenasUI.account.forms import FilteredSelectField
+        from freenasUI.freeadmin.forms import SelectMultipleField
         defaults = {
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
@@ -139,7 +139,7 @@ class MultiSelectField(models.Field):
         if self.has_default():
             defaults['initial'] = self.get_default()
         defaults.update(kwargs)
-        return FilteredSelectField(**defaults)
+        return SelectMultipleField(**defaults)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         if isinstance(value, basestring):
