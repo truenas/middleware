@@ -709,9 +709,12 @@ class iSCSITarget(Model):
             verbose_name=_("Portal Group ID"),
             )
     iscsi_target_initiatorgroup = models.ForeignKey(
-            iSCSITargetAuthorizedInitiator,
-            verbose_name=_("Initiator Group ID"),
-            )
+        iSCSITargetAuthorizedInitiator,
+        verbose_name=_("Initiator Group ID"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        )
     iscsi_target_authtype = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
