@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Replication.repl_compression'
         db.add_column(u'storage_replication', 'repl_compression',
-                      self.gf('django.db.models.fields.CharField')(default='lz4', max_length=5),
+                      self.gf('django.db.models.fields.CharField')(default='off', max_length=5),
                       keep_default=False)
 
 
