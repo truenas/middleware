@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-08-06 09:59+0000\n"
+"PO-Revision-Date: 2014-08-07 10:48+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1407319140.0\n"
+"X-POOTLE-MTIME: 1407408497.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10434,3 +10434,7 @@ msgstr "Kerberos-keytabs"
 #: templates/system/initialwizard_volume.html:92
 msgid "Exit"
 msgstr "Afsluiten"
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr "Overslaan"
