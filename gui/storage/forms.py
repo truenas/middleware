@@ -1855,7 +1855,11 @@ class CloneSnapshotForm(Form):
                 zvol,
                 snapname)
         else:
-            self.fields['cs_name'].initial = '%s/clone-%s' % (
+            if '/' in dataset:
+                dataset = '%s-' % dataset
+            else:
+                dataset= '%s/' % dataset
+            self.fields['cs_name'].initial = '%s%s-clone' % (
                 dataset,
                 snapname)
 
