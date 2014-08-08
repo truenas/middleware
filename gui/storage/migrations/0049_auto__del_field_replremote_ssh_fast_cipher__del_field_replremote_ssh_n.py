@@ -66,7 +66,7 @@ class Migration(SchemaMigration):
             'Meta': {'ordering': "['repl_filesystem']", 'object_name': 'Replication'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'repl_begin': ('django.db.models.fields.TimeField', [], {'default': 'datetime.time(0, 0)'}),
-            'repl_compression': ('django.db.models.fields.CharField', [], {'default': "'off'", 'max_length': '5'}),
+            'repl_compression': ('django.db.models.fields.CharField', [], {'default': "'lz4'", 'max_length': '5'}),
             'repl_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'repl_end': ('django.db.models.fields.TimeField', [], {'default': 'datetime.time(23, 59)'}),
             'repl_filesystem': ('django.db.models.fields.CharField', [], {'max_length': '150', 'blank': 'True'}),
