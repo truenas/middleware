@@ -532,7 +532,7 @@ While ZFS provides many benefits, there are some caveats to be aware of:
   to prevent problems with drive replacement, add more capacity before a pool reaches 80%. If you are using iSCSI, it is recommended to not let the pool go
   over 50% capacity to prevent fragmentation issues.
   
-* When considering the number of disks to user per vdev, consider the size of the disks and the amount of time required for resilvering, which is the process
+* When considering the number of disks to use per vdev, consider the size of the disks and the amount of time required for resilvering, which is the process
   of rebuilding the array. The larger the size of the array, the longer the resilvering time. When replacing a disk in a RAIDZ*, it is possible that another
   disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
   in the pool will be lost. For this reason, RAIDZ1 is not recommended for drives over 1 TB in size.

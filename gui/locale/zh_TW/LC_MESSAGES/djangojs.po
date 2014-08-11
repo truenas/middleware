@@ -332,3 +332,17 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:374
+msgid "Warning!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:376
+msgid ""
+"This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
+"used on a secure LAN!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:376
+msgid "Are you sure you want to do this?"
+msgstr ""

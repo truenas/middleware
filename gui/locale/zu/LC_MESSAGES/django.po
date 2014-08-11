@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-08-06 09:14+0000\n"
+"PO-Revision-Date: 2014-08-07 09:12+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1407316471.0\n"
+"X-POOTLE-MTIME: 1407402772.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9606,4 +9606,8 @@ msgstr ""
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
 msgid "Exit"
+msgstr ""
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
 msgstr ""

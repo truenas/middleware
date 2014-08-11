@@ -4152,7 +4152,10 @@ class notifier:
 
     def zpool_version(self, name):
         p1 = self._pipeopen("zpool get -H -o value version %s" % name)
-        res = p1.communicate()[0].strip('\n')
+        res, err = p1.communicate()
+        if p1.returncode != 0:
+            raise ValueError(err)
+        res = res[0].strip('\n')
         try:
             return int(res)
         except:
