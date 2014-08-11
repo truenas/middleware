@@ -1,4 +1,5 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python2
+from collections import defaultdict
 
 import os
 import sys
@@ -32,43 +33,34 @@ def main():
 
     gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
 
-    # Generate the auth section
-    # Work around SQLite not supporting DISTINCT ON
-    masteropen = False
-    val = None
-    isopen = False
-    AUTH = None
-    for id in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
-        if not val:
-            val = id.iscsi_target_auth_tag
-            isopen = True
-        else:
-            if val == id.iscsi_target_auth_tag:
-                pass
-            else:
-                val = id.iscsi_target_auth_tag
-                isopen = True
-                AUTH = None
-                cf_contents.append("}\n\n")
-        if isopen:
-            cf_contents.append("auth-group ag%d {\n" % id.iscsi_target_auth_tag)
-            masteropen = True
-            isopen = False
+    # We support multiple authentications for a single group
+    auths = defaultdict(list)
+    for auth in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
+        auths[auth.iscsi_target_auth_tag].append(auth)
+
+    for auth_tag, auth_list in auths.items():
+        cf_contents.append("auth-group ag%d {\n" % auth_tag)
         # It is an error to mix CHAP and Mutual CHAP in the same auth group
         # But not in istgt, so we need to catch this and do something.
         # For now just skip over doing something that would cause ctld to bomb
-        if id.iscsi_target_auth_peeruser and AUTH != "CHAP":
-            AUTH = "Mutual"
-            cf_contents.append("\tchap-mutual %s %s %s %s\n" % (id.iscsi_target_auth_user,
-                                                                id.iscsi_target_auth_secret,
-                                                                id.iscsi_target_auth_peeruser,
-                                                                id.iscsi_target_auth_peersecret))
-        elif AUTH != "Mutual":
-            AUTH = "CHAP"
-            cf_contents.append("\tchap %s %s\n" % (id.iscsi_target_auth_user,
-                                                   id.iscsi_target_auth_secret))
-    if masteropen:
+        auth_type = None
+        for auth in auth_list:
+            if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
+                auth_type = "Mutual"
+                cf_contents.append("\tchap-mutual %s %s %s %s\n" % (
+                    auth.iscsi_target_auth_user,
+                    auth.iscsi_target_auth_secret,
+                    auth.iscsi_target_auth_peeruser,
+                    auth.iscsi_target_auth_peersecret,
+                ))
+            elif auth_type != "Mutual":
+                auth_type = "CHAP"
+                cf_contents.append("\tchap %s %s\n" % (
+                    auth.iscsi_target_auth_user,
+                    auth.iscsi_target_auth_secret,
+                ))
         cf_contents.append("}\n\n")
+
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
