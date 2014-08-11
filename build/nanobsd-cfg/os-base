@@ -79,6 +79,8 @@ customize_cmd configure_mnt_md
 
 customize_cmd shrink_md_fbsize
 
+customize_cmd clean_etc
+
 if [ "${DEBUG}" = 1 ]; then
 	customize_cmd unmute_console_logging
 fi

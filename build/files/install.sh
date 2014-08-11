@@ -507,9 +507,9 @@ menu_install()
 	# Tell it to look in /.mount (with an implied /Packages) for the packages.
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
-	rm -f /tmp/data/conf/default/etc/fstab
+	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
 	cp /dev/null /tmp/data/etc/fstab
-	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
 	fi
@@ -595,7 +595,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
 	cp /dev/null /tmp/data/etc/fstab
-	ln /tmp/data/etc/fstab /tmp/data/conf/default/etc/fstab || echo "Cannot link fstab"
+	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev
 
