@@ -16,6 +16,37 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 
+def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
+    cf_contents.append("auth-group ag%s {\n" % auth_tag)
+    # It is an error to mix CHAP and Mutual CHAP in the same auth group
+    # But not in istgt, so we need to catch this and do something.
+    # For now just skip over doing something that would cause ctld to bomb
+    auth_type = None
+    for auth in auth_list:
+        if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
+            auth_type = "Mutual"
+            cf_contents.append("\tchap-mutual %s %s %s %s\n" % (
+                auth.iscsi_target_auth_user,
+                auth.iscsi_target_auth_secret,
+                auth.iscsi_target_auth_peeruser,
+                auth.iscsi_target_auth_peersecret,
+            ))
+        elif auth_type != "Mutual":
+            auth_type = "CHAP"
+            cf_contents.append("\tchap %s %s\n" % (
+                auth.iscsi_target_auth_user,
+                auth.iscsi_target_auth_secret,
+            ))
+
+    if initiator:
+        if initiator.iscsi_target_initiator_initiators:
+            for name in initiator.iscsi_target_initiator_initiators.strip('\n').split('\n'):
+                cf_contents.append("\tinitiator-name %s\n" % name)
+        if initiator.iscsi_target_initiator_auth_network:
+            for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split('\n'):
+                cf_contents.append("\tinitiator-portal %s\n" % name)
+    cf_contents.append("}\n\n")
+
 def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
@@ -38,28 +69,26 @@ def main():
     for auth in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
         auths[auth.iscsi_target_auth_tag].append(auth)
 
+    auth_ini_created = []
     for auth_tag, auth_list in auths.items():
-        cf_contents.append("auth-group ag%d {\n" % auth_tag)
-        # It is an error to mix CHAP and Mutual CHAP in the same auth group
-        # But not in istgt, so we need to catch this and do something.
-        # For now just skip over doing something that would cause ctld to bomb
-        auth_type = None
-        for auth in auth_list:
-            if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
-                auth_type = "Mutual"
-                cf_contents.append("\tchap-mutual %s %s %s %s\n" % (
-                    auth.iscsi_target_auth_user,
-                    auth.iscsi_target_auth_secret,
-                    auth.iscsi_target_auth_peeruser,
-                    auth.iscsi_target_auth_peersecret,
-                ))
-            elif auth_type != "Mutual":
-                auth_type = "CHAP"
-                cf_contents.append("\tchap %s %s\n" % (
-                    auth.iscsi_target_auth_user,
-                    auth.iscsi_target_auth_secret,
-                ))
-        cf_contents.append("}\n\n")
+        auth_group_config(cf_contents, auth_tag, auth_list)
+        # We need a new auth group for targets that do define iscsi_target_initiatorgroup
+        # because initiator cannot me mixed with auth-group
+        print auth_tag
+        for target in iSCSITarget.objects.filter(
+            iscsi_target_authgroup=auth_tag
+        ).exclude(iscsi_target_initiatorgroup=None):
+            print "target", target
+            auth_ini = "%s_%s" % (auth_tag, target.iscsi_target_initiatorgroup.id)
+            if auth_ini in auth_ini_created:
+                continue
+            auth_ini_created.append(auth_ini)
+            auth_group_config(
+                cf_contents,
+                auth_ini,
+                auth_list,
+                initiator=target.iscsi_target_initiatorgroup,
+            )
 
 
     # Generate the portal-group section
@@ -86,7 +115,13 @@ def main():
         if target.iscsi_target_authtype == "None" or target.iscsi_target_authtype == "Auto":
             cf_contents.append("\tauth-group no-authentication\n")
         else:
-            cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
+            if target.iscsi_target_initiatorgroup:
+                cf_contents.append("\tauth-group ag%s_%s\n" % (
+                    target.iscsi_target_authgroup,
+                    target.iscsi_target_initiatorgroup.id,
+                ))
+            else:
+                cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
         cf_contents.append("\tportal-group pg%d\n" % (
             target.iscsi_target_portalgroup.iscsi_target_portal_tag,
         ))
