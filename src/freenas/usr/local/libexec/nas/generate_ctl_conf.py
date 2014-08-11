@@ -41,9 +41,13 @@ def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
     if initiator:
         if initiator.iscsi_target_initiator_initiators:
             for name in initiator.iscsi_target_initiator_initiators.strip('\n').split('\n'):
+                if name == 'ALL':
+                    continue
                 cf_contents.append("\tinitiator-name %s\n" % name)
         if initiator.iscsi_target_initiator_auth_network:
             for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split('\n'):
+                if name == 'ALL':
+                    continue
                 cf_contents.append("\tinitiator-portal %s\n" % name)
     cf_contents.append("}\n\n")
 
@@ -74,11 +78,9 @@ def main():
         auth_group_config(cf_contents, auth_tag, auth_list)
         # We need a new auth group for targets that do define iscsi_target_initiatorgroup
         # because initiator cannot me mixed with auth-group
-        print auth_tag
         for target in iSCSITarget.objects.filter(
             iscsi_target_authgroup=auth_tag
         ).exclude(iscsi_target_initiatorgroup=None):
-            print "target", target
             auth_ini = "%s_%s" % (auth_tag, target.iscsi_target_initiatorgroup.id)
             if auth_ini in auth_ini_created:
                 continue
