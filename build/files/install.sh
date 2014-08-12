@@ -513,7 +513,6 @@ menu_install()
 
 	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
 	echo "/dev/${_disk}p2	/boot/grub	ufs	rw	1	1" > /tmp/data/etc/fstab
-#	cp /dev/null /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
@@ -603,7 +602,6 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 #	# And now root
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-#	cp /dev/null /tmp/data/etc/fstab
 	echo "/dev/${_disk}p2 /boot/grub ufs rw 1 1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
