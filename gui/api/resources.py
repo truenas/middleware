@@ -202,10 +202,10 @@ class DiskResourceMixin(object):
 class PermissionResource(DojoResource):
 
     class Meta:
-        allowed_methods = ['post']
+        allowed_methods = ['put']
         resource_name = 'storage/permission'
 
-    def post_list(self, request, **kwargs):
+    def put_list(self, request, **kwargs):
         deserialized = self.deserialize(
             request,
             request.body,
@@ -220,7 +220,7 @@ class PermissionResource(DojoResource):
             form.commit(path=deserialized.get('mp_path'))
         return HttpResponse(
             'Mount Point permissions successfully updated.',
-            status=202,
+            status=201,
         )
 
 
