@@ -512,7 +512,7 @@ menu_install()
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
 	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "/dev/${_disk}p2	/boot/grub	ufs	rw	1	1" > /tmp/data/etc/fstab
+	echo "/dev/ufs/grub	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
@@ -591,7 +591,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	# Mount the root file system
 	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
 	mkdir -p /tmp/data/boot/grub
-	mount -t ufs -o noatime /dev/${_disk}p2 /tmp/data/boot/grub
+	mount -t ufs -o noatime /dev/ufs/grub /tmp/data/boot/grub
 	mkdir -p /tmp/data/data
 
 #	# Copy the databases over
@@ -602,7 +602,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 #	# And now root
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "/dev/${_disk}p2 /boot/grub ufs rw 1 1" > /tmp/data/etc/fstab
+	echo "/dev/ufs/grub	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev
