@@ -69,7 +69,11 @@ from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
-    ReKeyForm, UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
+    MountPointAccessForm,
+    ReKeyForm,
+    UnlockPassphraseForm,
+    VolumeManagerForm,
+    ZFSDiskReplacementForm,
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
@@ -193,6 +197,31 @@ class DiskResourceMixin(object):
         if 'disk_subsystem' in bundle.data:
             del bundle.data['disk_subsystem']
         return bundle
+
+
+class PermissionResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'storage/permission'
+
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = MountPointAccessForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.commit(path=deserialized.get('mp_path'))
+        return HttpResponse(
+            'Mount Point permissions successfully updated.',
+            status=202,
+        )
 
 
 class Uid(object):
@@ -1049,7 +1078,6 @@ class NFSShareResourceMixin(object):
                 nfs_paths.append(item.path)
             bundle.data['nfs_paths'] = nfs_paths
         else:
-            initial = 0
             nfs_paths = bundle.data.get('nfs_paths', [])
             for i, item in enumerate(nfs_paths):
                 bundle.data['path_set-%d-path' % i] = item
