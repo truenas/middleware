@@ -50,3 +50,8 @@ def get_name():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   return result[0]['disk_name']
+
+def get_id():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  return result[0]['id']

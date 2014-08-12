@@ -5,8 +5,10 @@ import json
 import sys
 import conn
 import storage_volume
+import extra_functions
 
-storage_volume.post()
+if extra_functions.volume_check() == False:
+  storage_volume.post()
 url = conn.url+'storage/volume/new_volume_test_suite/datasets/'
 auth = conn.auth
 headers = conn.headers

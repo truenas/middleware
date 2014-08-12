@@ -6,12 +6,12 @@ import sys
 import conn
 import storage_disk
 
+disk_id = storage_disk.get_id()
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/smarttest/'
-disk_name = storage_disk.get_name()
 payload = {
-          "smarttest_disks": [disk_name],
+          "smarttest_disks": [disk_id],
           "smarttest_type": "L",
           "smarttest_hour": "*",
           "smarttest_daymonth": "*",
@@ -27,14 +27,18 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
       for items in result[i]:
         print items+':', result[i][items]
+      print '\n'
     print 'Get tasks-smarttest --> Succeeded!'
   else:
     print 'Get tasks-smarttest --> Failed!'
 
 def post():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  if len(result) > 0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
@@ -42,6 +46,7 @@ def post():
     return str(result['id'])+'/'
   else:                                                                      
     print 'Create tasks-smarttest --> Failed!'
+    return ''    
 
 def put():
   id = post()
@@ -52,10 +57,19 @@ def put():
     print 'Update tasks-smarttest --> Failed!'
 
 def delete():
-  id = post()
-  r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete tasks-smarttest --> Succeeded!'
-  else:
-    print 'Delete tasks-smarttest --> Failed!'
-
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  i = 0
+  for i in range(0,len(result)):
+    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-smarttest --> Succeeded!'
+    else:
+      print 'Delete tasks-smarttest --> Failed!'
+  if len(result) == 0:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-smarttest --> Succeeded!'
+    else:
+      print 'Delete tasks-smarttest --> Failed!'

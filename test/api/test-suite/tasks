@@ -1,0 +1,41 @@
+import sys
+import tasks_cronjob
+import tasks_initshutdown
+import tasks_rsync
+import tasks_smarttest
+
+print '******WARNING******'
+warn = raw_input('This operation will destory everything including Cronjob, Initshutdown, Rsync and Smarttest in Tasks(yes/no):')
+oper_flag = 1
+while(oper_flag <= 3):
+  if oper_flag == 3:
+    print 'Please re-run Task test suite!'
+    sys.exit(0)
+  if warn == 'no' or warn == 'n':
+    sys.exit(0)
+  elif warn == 'yes' or warn == 'y':
+    break
+  elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
+    warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
+    oper_flag = oper_flag + 1
+    continue
+
+print '\n***Running Tasks-Crongjob ......'
+tasks_cronjob.run()
+tasks_cronjob.put()
+print '\n'
+
+print '***Running Tasks_Initshutdown ......'
+tasks_initshutdown.put()
+tasks_initshutdown.delete()
+print '\n'
+
+print '***Running Tasks-Rsync ......'
+tasks_rsync.run() 
+tasks_rsync.put() 
+print '\n'
+
+print '***Running Tasks-Smarttest ......'
+tasks_smarttest.put()
+tasks_smarttest.delete()
+print '\n'
