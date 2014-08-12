@@ -483,9 +483,11 @@ menu_install()
 		gpart create -s gpt ${_disk}
 		# For grub
 		gpart add -t bios-boot -s 512k ${_disk}
-		gpart add -t freebsd-zfs ${_disk}
+		gpart add -t freebsd-ufs -s 32m ${_disk}
+		gpart add -t freebsd-zfs -a 4k ${_disk}
 
-		zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
+		newfs -L "grub" /dev/${_disk}p2
+		zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
 		zfs create -o canmount=off freenas-boot/ROOT
 		zfs create -o mountpoint=legacy freenas-boot/ROOT/default
 	fi
@@ -493,6 +495,8 @@ menu_install()
 	mkdir -p /tmp/data
 	# Mount the root file system
 	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
+	mkdir -p /tmp/data/boot/grub
+	mount -t ufs -o noatime /dev/${_disk}p2 /tmp/data/boot/grub
 	mkdir -p /tmp/data/data
 
 	# XXX if we have preserved /data
@@ -508,7 +512,8 @@ menu_install()
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
 	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-	cp /dev/null /tmp/data/etc/fstab
+	echo "/dev/${_disk}p2	/boot/grub	ufs	rw	1	1" > /tmp/data/etc/fstab
+#	cp /dev/null /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
@@ -575,15 +580,19 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	gpart create -s gpt ${_disk}
 	# For grub
 	gpart add -t bios-boot -s 512k ${_disk}
-	gpart add -t freebsd-zfs ${_disk}
+	gpart add -t freebsd-ufs -s 32m ${_disk}
+	gpart add -t freebsd-zfs -a 4k ${_disk}
 
-	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
+	newfs -L "grub" /dev/${_disk}p2
+	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
 
 	mkdir -p /tmp/data
 	# Mount the root file system
 	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
+	mkdir -p /tmp/data/boot/grub
+	mount -t ufs -o noatime /dev/${_disk}p2 /tmp/data/boot/grub
 	mkdir -p /tmp/data/data
 
 #	# Copy the databases over
@@ -594,7 +603,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 #	# And now root
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-	cp /dev/null /tmp/data/etc/fstab
+#	cp /dev/null /tmp/data/etc/fstab
+	echo "/dev/${_disk}p2 /boot/grub ufs rw 1 1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev
@@ -619,6 +629,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	set +x
     fi
 
+    umount /tmp/data/boot/grub
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/
