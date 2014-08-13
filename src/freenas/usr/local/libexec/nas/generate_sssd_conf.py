@@ -438,6 +438,7 @@ def sssd_mkdir(dir):
 def sssd_setup():
     sssd_mkdir("/var/log/sssd")
     sssd_mkdir("/var/db/sss")
+    sssd_mkdir("/var/db/sss_mc")
     sssd_mkdir("/var/run/sss/private")
 
     if os.path.exists(SSSD_CONFIGFILE):
@@ -449,9 +450,11 @@ def add_ldap(sc):
     ldap = LDAP.objects.all()[0]
     cifs = CIFS.objects.all()[0]
 
-    ldap_workgroup = cifs.cifs_srv_workgroup.upper()
+    ldap_hostname = ldap.ldap_hostname.upper()
+    parts = ldap_hostname.split('.')
+    ldap_hostname = parts[0]
 
-    ldap_cookie = ldap_workgroup
+    ldap_cookie = ldap_hostname
     ldap_domain = 'domain/%s' % ldap_cookie
 
     ldap_section = None
@@ -514,12 +517,12 @@ def add_ldap(sc):
     ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
     ldap_section.ldap_default_authtok = ldap.ldap_bindpw
-    
+
     if ldap.ldap_ssl == 'on':
-        ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
+        ldap_section.ldap_tls_cacert = ldap.ldap_certfile
     elif ldap.ldap_ssl == 'start_tls':
         ldap_section.tls_reqcert = 'demand'
-        ldap_section.ldap_tls_cacert = ldap.ldap_tls_cacertfile
+        ldap_section.ldap_tls_cacert = ldap.ldap_certfile
         ldap_section.ldap_id_use_start_tls = 'true'
 
     sc[ldap_domain] = ldap_section

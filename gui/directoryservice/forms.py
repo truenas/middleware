@@ -430,7 +430,7 @@ class LDAPForm(ModelForm):
 
         return filename
 
-    def clean(self):
+    def clean_bindpw(self):
         cdata = self.cleaned_data
         if not cdata.get("ldap_bindpw"):
             cdata["ldap_bindpw"] = self.instance.ldap_bindpw
@@ -447,9 +447,6 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError(
                 _("%s." % errors[0])
             )
-
-        log.debug("XXXX: ret = %s", ret)
-        return cdata
 
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")
