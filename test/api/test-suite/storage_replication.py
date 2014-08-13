@@ -5,10 +5,16 @@ import json
 import sys
 import conn
 import storage_volume
+import storage_task
 import extra_functions
+import os
 
+os.system('rm *.pyc')
 if extra_functions.volume_check() == False:
   storage_volume.post()
+if extra_functions.task_check() == False:
+  storage_task.post()
+
 url = conn.url + 'storage/replication/'
 auth = conn.auth
 headers = conn.headers

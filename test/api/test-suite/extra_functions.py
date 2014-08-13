@@ -19,3 +19,23 @@ def volume_check():
     return True
   else:
     return False
+
+def task_check():
+  task_list = []
+  task_filesystem = 'new_volume_test_suite'
+  r = requests.get(url+'storage/task/', auth = auth)
+  result = json.loads(r.text)
+  i = 0
+  if len(result)>0:
+    for i in range(0,len(result)):
+      task_list.append(result[i]['task_filesystem'])
+  if task_filesystem in task_list:
+    return True
+  else:
+    return False
+
+
+def volume_exist_check():
+  r = requests.get(url+'storage/volume/', auth = auth)
+  result = json.loads(r.text)
+  return result

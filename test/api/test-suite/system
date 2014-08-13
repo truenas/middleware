@@ -37,36 +37,36 @@ print '***Running System-Alert ......'
 system_alert.get()
 print ''
 
-print '***Running Tasks_Email ......'
+print '***Running System-Email ......'
 system_email.get()
 system_email.put()
 print ''
 
-print '***Running Tasks_NTPServer ......'
+print '***Running System-NTPServer ......'
 system_ntpserver.put()
 system_ntpserver.delete()
 print ''
 
-print '***Running Tasks_Settings ......'
+print '***Running System-Settings ......'
 system_settings.put()
 print ''
 
-print '***Running Tasks_SSL ......'
+print '***Running System-SSL ......'
 system_ssl.put()
 print ''
 
-print '***Running Tasks_Tunable ......'
+print '***Running System-Tunable ......'
 system_tunable.put()
 system_tunable.delete()
 print ''
 
-print '***Running Tasks_Version ......'
+print '***Running System-Version ......'
 system_version.get()
 print ''
 
-print '***Running Tasks_Reboot/Tasks_Shutdown ......'
+print '***Running System-Reboot/System-Shutdown ......'
 system_reboot.post()
 print ''
 
-#print '***Running Tasks_Shutdown ......'
+#print '***Running System-Shutdown ......'
 #print ''

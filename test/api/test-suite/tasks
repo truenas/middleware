@@ -28,7 +28,7 @@ tasks_cronjob.run()
 tasks_cronjob.put()
 print ''
 
-print '***Running Tasks_Initshutdown ......'
+print '***Running Tasks-Initshutdown ......'
 tasks_initshutdown.put()
 tasks_initshutdown.delete()
 print ''
