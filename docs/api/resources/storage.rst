@@ -921,7 +921,8 @@ Create resource
                 "repl_filesystem": "tank",
                 "repl_zfs": "tank",
                 "repl_remote_hostname": "testhost",
-                "repl_remote_hostkey": "AAAA"
+                "repl_remote_hostkey": "AAAA",
+                "repl_remote_cipher": "standard"
         }
 
    **Example response**:
