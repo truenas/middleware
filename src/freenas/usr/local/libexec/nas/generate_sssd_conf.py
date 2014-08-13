@@ -514,6 +514,16 @@ def add_ldap(sc):
             "?subtree?(objectclass=posixGroup)"
         )
 
+    if ldap.ldap_sudosuffix:
+        if not sc['sudo']:
+            sc['sudo'] = SSSDSectionSUDO()
+        sc['sssd'].add_service('sudo')
+        ldap_section.sudo_provider = 'ldap' 
+        ldap_section.ldap_sudo_search_base = "%s,%s" % (
+            ldap.ldap_sudosuffix,
+            ldap.ldap_basedn
+        )
+
     ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
     ldap_section.ldap_default_authtok = ldap.ldap_bindpw
