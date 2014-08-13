@@ -1157,6 +1157,30 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("collectd")
 
 
+class InitialWizardDSForm(Form):
+
+    ds_type = forms.ChoiceField(
+        label=_('Directory Service'),
+        choices=(
+            ('ad', _('Active Directory')),
+            #('ldap', _('LDAP')),
+            #('nis', _('NIS')),
+            #('nt4', _('NT4')),
+        ),
+        initial='ad',
+    )
+    ds_ad_domainname = forms.CharField(
+        label=_('Domain Name (DNS/Realm-Name)'),
+    )
+    ds_ad_accname = forms.CharField(
+        label=_('Domain Account Name'),
+    )
+    ds_ad_accpw = forms.CharField(
+        label=_('Domain Account Name'),
+        widget=forms.widgets.PasswordInput(),
+    )
+
+
 class InitialWizardShareForm(Form):
 
     share_name = forms.CharField(
