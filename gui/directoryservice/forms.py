@@ -206,11 +206,11 @@ class NT4Form(ModelForm):
         enable = self.cleaned_data.get("nt4_enable")
         started = notifier().started("nt4")
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("nt4")
-            if started == False:
+            if started is False:
                 started = notifier().start("nt4")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(NT4Form, self).save()
                 raise ServiceFailed("nt4",
@@ -326,7 +326,7 @@ class ActiveDirectoryForm(ModelForm):
         if not cdata.get("ad_bindpw"):
             cdata['ad_bindpw'] = self.instance.ad_bindpw
 
-        if self.instance.ad_use_keytab == False:
+        if self.instance.ad_use_keytab is False:
             bindname = cdata.get("ad_bindname")
             bindpw = cdata.get("ad_bindpw")
             domain = cdata.get("ad_domainname")
@@ -336,10 +336,8 @@ class ActiveDirectoryForm(ModelForm):
             ret = FreeNAS_ActiveDirectory.validate_credentials(
                 domain, binddn=binddn, bindpw=bindpw, errors=errors
             )
-            if ret == False:
-                raise forms.ValidationError(
-                    _("%s." % errors[0])
-                )
+            if ret is False:
+                raise forms.ValidationError("%s." % errors[0])
 
         return cdata
 
@@ -352,11 +350,11 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).save()
 
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("activedirectory")
-            if started == False:
+            if started is False:
                 started = notifier().start("activedirectory")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
                 raise ServiceFailed("activedirectory",
@@ -443,10 +441,8 @@ class LDAPForm(ModelForm):
         ret = FreeNAS_LDAP.validate_credentials(
             hostname, binddn=binddn, bindpw=bindpw, errors=errors
         )
-        if ret == False:
-            raise forms.ValidationError(
-                _("%s." % errors[0])
-            )
+        if ret is False:
+            raise forms.ValidationError("%s." % errors[0])
 
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")
@@ -455,11 +451,11 @@ class LDAPForm(ModelForm):
         super(LDAPForm, self).save()
 
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("ldap")
-            if started == False:
+            if started is False:
                 started = notifier().start("ldap")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(LDAPForm, self).save()
                 raise ServiceFailed("ldap",
