@@ -44,6 +44,7 @@ from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
+from django.utils.html import escapejs
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
@@ -1163,7 +1164,7 @@ class InitialWizardDSForm(Form):
         label=_('Directory Service'),
         choices=(
             ('ad', _('Active Directory')),
-            #('ldap', _('LDAP')),
+            ('ldap', _('LDAP')),
             #('nis', _('NIS')),
             #('nt4', _('NT4')),
         ),
@@ -1171,14 +1172,52 @@ class InitialWizardDSForm(Form):
     )
     ds_ad_domainname = forms.CharField(
         label=_('Domain Name (DNS/Realm-Name)'),
+        required=False,
     )
     ds_ad_accname = forms.CharField(
         label=_('Domain Account Name'),
+        required=False,
     )
     ds_ad_accpw = forms.CharField(
         label=_('Domain Account Name'),
+        required=False,
         widget=forms.widgets.PasswordInput(),
     )
+    ds_ldap_hostname = forms.CharField(
+        label=_('Hostname'),
+        required=False,
+    )
+    ds_ldap_basedn = forms.CharField(
+        label=('Base DN'),
+        required=False,
+    )
+    ds_ldap_binddn = forms.CharField(
+        label=('Base DN'),
+        required=False,
+    )
+    ds_ldap_bindpw = forms.CharField(
+        label=('Base DN'),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardDSForm, self).__init__(*args, **kwargs)
+
+        pertype = defaultdict(list)
+        for fname in self.fields.keys():
+            if fname.startswith('ds_ad_'):
+                pertype['ad'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_ldap_'):
+                pertype['ldap'].append('id_ds-%s' % fname)
+
+        self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
+            'id_ds-ds_type',
+            escapejs(json.dumps(pertype)),
+        )
+        self.fields['ds_type'].widget.attrs['onChange'] = (
+            self.jsChange
+        )
 
 
 class InitialWizardShareForm(Form):
