@@ -53,6 +53,10 @@ from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP
+)
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1174,11 +1178,11 @@ class InitialWizardDSForm(Form):
         label=_('Domain Name (DNS/Realm-Name)'),
         required=False,
     )
-    ds_ad_accname = forms.CharField(
+    ds_ad_bindname = forms.CharField(
         label=_('Domain Account Name'),
         required=False,
     )
-    ds_ad_accpw = forms.CharField(
+    ds_ad_bindpw = forms.CharField(
         label=_('Domain Account Name'),
         required=False,
         widget=forms.widgets.PasswordInput(),
@@ -1218,6 +1222,28 @@ class InitialWizardDSForm(Form):
         self.fields['ds_type'].widget.attrs['onChange'] = (
             self.jsChange
         )
+
+    def clean(self):
+        cdata = self.cleaned_data
+
+        if cdata.get('ds_type') == 'ad':
+            bindname = cdata.get("ds_ad_bindname")
+            bindpw = cdata.get("ds_ad_bindpw")
+            domain = cdata.get("ds_ad_domainname")
+            binddn = "%s@%s" % (bindname, domain)
+            errors = []
+
+            try:
+                ret = FreeNAS_ActiveDirectory.validate_credentials(
+                    domain, binddn=binddn, bindpw=bindpw, errors=errors
+                )
+            except Exception, e:
+                raise forms.ValidationError("%s." % e)
+
+            if ret is False:
+                raise forms.ValidationError("%s." % errors[0])
+
+        return cdata
 
 
 class InitialWizardShareForm(Form):
