@@ -6,7 +6,9 @@ import sys
 import conn
 import storage_volume
 import extra_functions
+import os
 
+os.system('rm *.pyc')
 if extra_functions.volume_check() == False:
   storage_volume.post()
 url = conn.url+'storage/volume/new_volume_test_suite/datasets/'
@@ -28,10 +30,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage_datasets --> Succeeded!'
+    print '\nGet storage_datasets --> Succeeded!'
   else:
     print 'Get storage_datasets --> Failed!'
 

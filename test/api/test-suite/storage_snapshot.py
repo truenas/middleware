@@ -5,8 +5,12 @@ import json
 import sys
 import conn
 import storage_volume
+import extra_functions
+import os
 
-storage_volume.post()
+os.system('rm *.pyc')
+if extra_functions.volume_check() == False:
+  storage_volume.post()
 url = conn.url+'storage/snapshot/'
 auth = conn.auth
 headers = conn.headers
@@ -22,10 +26,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage-snapshot --> Succeeded!'
+    print '\nGet storage-snapshot --> Succeeded!'
   else:
     print 'Get storage-snapshot --> Failed!'
 

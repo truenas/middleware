@@ -5,7 +5,9 @@ import json
 import sys
 import conn
 import storage_disk
+import os
 
+#os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'storage/volume/'
@@ -28,10 +30,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage-volume --> Succeeded!'
+    print '\nGet storage-volume --> Succeeded!'
   else:
     print 'Get storage-volume --> Failed!'
   return r

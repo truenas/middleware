@@ -3,10 +3,10 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
 import conn
+import os
 
-#vol_name = raw_input('Input volume name:')
+os.system('rm *.pyc')
 url = conn.url + 'storage/scrub/'
 auth = conn.auth
 headers = conn.headers

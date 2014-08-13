@@ -3,10 +3,13 @@
 import requests
 import json
 import sys
+import os
 import conn
+import extra_functions
 import storage_volume
 
-storage_volume.post()
+if extra_functions.volume_check() == False:
+  storage_volume.post()
 url = conn.url + 'storage/task/'
 auth = conn.auth
 headers = conn.headers
@@ -24,10 +27,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage-task --> Succeeded!'
+    print '\nGet storage-task --> Succeeded!'
   else:
     print 'Get storage-task --> Failed!'
 
@@ -50,11 +53,9 @@ def put():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   if len(result)>0:
-    id = str(result[0]['id'])+'/'
-    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
-  else:                                                                   
-    id = post()
-    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+    delete()
+  id = post()
+  r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 200:
     print 'Update storage-task --> Succeeded!'
   else:
