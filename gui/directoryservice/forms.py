@@ -388,6 +388,7 @@ class LDAPForm(ModelForm):
         'ldap_groupsuffix',
         'ldap_passwordsuffix',
         'ldap_machinesuffix',
+        'ldap_sudosuffix',
         'ldap_use_default_domain',
         'ldap_kerberos_realm',
         'ldap_kerberos_keytab',
