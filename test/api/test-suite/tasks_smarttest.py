@@ -3,9 +3,11 @@
 import requests
 import json
 import sys
+import os
 import conn
 import storage_disk
 
+os.system('rm *.pyc')
 disk_id = storage_disk.get_id()
 headers = conn.headers
 auth = conn.auth

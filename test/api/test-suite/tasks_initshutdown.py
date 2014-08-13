@@ -3,10 +3,12 @@
 import requests
 import json
 import sys
+import os
 import conn
 import extra_functions
 import storage_volume
 
+os.system('rm *.pyc')
 if extra_functions.volume_check() == False:
   storage_volume.post()
 
@@ -26,10 +28,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-      print '\n'
-    print 'Get tasks-initshutdown --> Succeeded!'
+    print '\nGet tasks-initshutdown --> Succeeded!'
   else:
     print 'Get tasks-initshutdown --> Failed!'
 

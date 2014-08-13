@@ -1,0 +1,72 @@
+import sys
+import os
+import system_advanced
+import system_alert
+import system_email
+import system_ntpserver
+import system_reboot
+import system_settings
+import system_shutdown
+import system_ssl
+import system_tunable
+import system_version
+
+os.system('rm *.pyc')
+
+print '******WARNING******'
+warn = raw_input('This operation will destory everything including Advanced, NTPServer, and Settings etc... in System and your System will REBOOT(yes/no):')
+oper_flag = 1
+while(oper_flag <= 3):
+  if oper_flag == 3:
+    print 'Please re-run System test suite!'
+    sys.exit(0)
+  if warn == 'no' or warn == 'n':
+    sys.exit(0)
+  elif warn == 'yes' or warn == 'y':
+    break
+  elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
+    warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
+    oper_flag = oper_flag + 1
+    continue
+
+print '\n***Running System-Advanced ......'
+system_advanced.put()
+print ''
+
+print '***Running System-Alert ......'
+system_alert.get()
+print ''
+
+print '***Running Tasks_Email ......'
+system_email.get()
+system_email.put()
+print ''
+
+print '***Running Tasks_NTPServer ......'
+system_ntpserver.put()
+system_ntpserver.delete()
+print ''
+
+print '***Running Tasks_Settings ......'
+system_settings.put()
+print ''
+
+print '***Running Tasks_SSL ......'
+system_ssl.put()
+print ''
+
+print '***Running Tasks_Tunable ......'
+system_tunable.put()
+system_tunable.delete()
+print ''
+
+print '***Running Tasks_Version ......'
+system_version.get()
+print ''
+
+print '***Running Tasks_Reboot/Tasks_Shutdown ......'
+system_reboot.post()
+print ''
+
+#print '***Running Tasks_Shutdown ......'
+#print ''

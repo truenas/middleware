@@ -3,10 +3,12 @@
 import requests
 import json
 import sys
+import os
 import conn
 import extra_functions
 import storage_volume
 
+os.system('rm *.pyc')
 if extra_functions.volume_check() == False:
   storage_volume.post()
 headers = conn.headers

@@ -4,7 +4,9 @@ import requests
 import json
 import sys
 import conn
+import os
 
+os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/cronjob/'
@@ -26,10 +28,10 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get tasks-cronjob --> Succeeded!'
+    print '\nGet tasks-cronjob --> Succeeded!'
   else:
     print 'Get tasks-cronjob --> Failed!'
 

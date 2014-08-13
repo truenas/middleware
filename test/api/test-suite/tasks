@@ -1,8 +1,11 @@
 import sys
+import os
 import tasks_cronjob
 import tasks_initshutdown
 import tasks_rsync
 import tasks_smarttest
+
+os.system('rm *.pyc')
 
 print '******WARNING******'
 warn = raw_input('This operation will destory everything including Cronjob, Initshutdown, Rsync and Smarttest in Tasks(yes/no):')
@@ -23,19 +26,19 @@ while(oper_flag <= 3):
 print '\n***Running Tasks-Crongjob ......'
 tasks_cronjob.run()
 tasks_cronjob.put()
-print '\n'
+print ''
 
 print '***Running Tasks_Initshutdown ......'
 tasks_initshutdown.put()
 tasks_initshutdown.delete()
-print '\n'
+print ''
 
 print '***Running Tasks-Rsync ......'
 tasks_rsync.run() 
 tasks_rsync.put() 
-print '\n'
+print ''
 
 print '***Running Tasks-Smarttest ......'
 tasks_smarttest.put()
 tasks_smarttest.delete()
-print '\n'
+print ''
