@@ -66,12 +66,24 @@ def directoryservice_home(request):
     except:
         nt4 = models.NT4()
 
+    try:
+        kerberoskeytab = models.KerberosKeytab.objects.order_by("-id")[0] 
+    except:
+        kerberoskeytab = models.KerberosKeytab()
+
+    try:
+        kerberosrealm = models.KerberosRealm.objects.order_by("-id")[0] 
+    except:
+        kerberosrealm = models.KerberosRealm()
+
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
         'activedirectory': activedirectory,
         'ldap': ldap, 
         'nis': nis, 
-        'nt4': nt4
+        'nt4': nt4,
+        'kerberoskeytab': kerberoskeytab,
+        'kerberosrealm':  kerberosrealm
     })
 
 
