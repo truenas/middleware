@@ -361,3 +361,21 @@ class NFS_SharePathForm(ModelForm):
                 path,
             ))
         return path
+
+class WebDAV_ShareForm(ModelForm):
+ 
+    class Meta:
+	fields = '__all__'
+	model = models.WebDAV_Share
+	
+    def save(self):
+	ret = super(WebDAV_ShareForm,self).save()
+	notifier().gen_dav_config()
+	return ret
+
+    def done(self,request,events):
+	if not services.objects.get(srv_service='webdav').srv_enable:
+	    events.append('ask_service("webdav")')
+	else:
+	    events.append('restartHttpd()')
+	super(WebDAV_ShareForm, self).done(request,events)

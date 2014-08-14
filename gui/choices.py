@@ -39,6 +39,11 @@ from django.utils.translation import ugettext_lazy as _
 
 log = logging.getLogger('choices')
 
+HTAUTH_CHOICES = (
+	('basic', _('Basic Authentication')),
+	('digest', _('Digest Authentication')),
+	)
+
 SMTPAUTH_CHOICES = (
         ('plain', _('Plain')),
         ('ssl', _('SSL')),

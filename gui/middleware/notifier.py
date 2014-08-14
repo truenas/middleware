@@ -384,19 +384,114 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
-    def gen_dav_config(self,webdav_enable):
+   
+    def gen_dav_config(self,*args):
+      
 	[c,conn] = self.__open_db(ret_conn=True)
+	if args:
+	    dav_enabled = args[0]
+	else:
+	  c.execute("select srv_enable from services_services where srv_service='webdav';")
+	  dav_enabled = c.fetchone()
+	  dav_enabled = dav_enabled[0]
 	
-	# Now, Generating the webdav config file which will be added to
-	# nginx as a secondary conf file.
+	c.execute("select webdav_htauth from services_webdav;")
+	dav_auth_type=c.fetchone()
+	dav_auth_type=dav_auth_type[0]
+	# Check to see there is a http  auth password file if not then create one
+	oscmd="/usr/local/www/webdavht%s" % dav_auth_type
+	if os.path.isfile(oscmd):
+	  pass
+	else:
+	  dav_passwd=c.execute("select webdav_password from services_webdav;").fetchone()
+	  dav_passwd=dav_passwd[0]
+	  self.dav_passwd_change(dav_passwd,dav_auth_type)
 	
+	# Now, Generating the webdav config file which will be added to nginx as a secondary conf file.
+	if dav_enabled:
+	  c.execute("select webdav_tcpport from services_webdav;")
+	  dav_tcpport=c.fetchone()
+	  dav_tcpport=dav_tcpport[0]
+	  c.execute("select webdav_tcpportssl from services_webdav;")
+	  dav_tcpportssl=c.fetchone()
+	  dav_tcpportssl=dav_tcpportssl[0]
+	  c.execute("select webdav_protocol from services_webdav;")
+	  dav_protocol=c.fetchone()
+	  dav_protocol=dav_protocol[0]
+	  c.execute("select * from sharing_webdav_share")
+	  dav_data=c.fetchall()
+	  dav_share_names=[]
+	  dav_share_paths=[]
+	  dav_read_only=[]
+	  dav_perm=[]
+	  auth_text="auth_%s 'webdav'" % dav_auth_type
+	  auth_text_file="auth_%s_user_file /usr/local/www/webdavht%s" % (dav_auth_type,dav_auth_type)
+	  dav_config_pretext = """server {
+	    
+	    create_full_put_path on;
+	    %s;
+	    %s;
+	    dav_access all:rw;
+	    dav_methods PUT DELETE MKCOL COPY MOVE;
+	    dav_ext_methods PROPFIND OPTIONS;
+	    autoindex on;
+	    location ~ /\.htaccess {
+	      deny all;
+	    }
+	    """ %(auth_text,auth_text_file)
+
+	  for i in dav_data:
+	    dav_share_names.append(str(i[1]))
+	    dav_share_paths.append(str(i[3]))
+	    dav_read_only.append(i[4])
+	    dav_perm.append(i[5])
+       
+	  with open('/etc/local/nginx/nginx-webdav.conf','w') as f:
+	    f.write(dav_config_pretext)
+	    if dav_protocol in ['http','httphttps']:
+	      f.write("\tlisten "+str(dav_tcpport)+";\n")
+	    if dav_protocol in ['https','httphttps']:
+	      ssl_text="""
+	      server_name localhost;
+	      listen            0.0.0.0:%s default_server ssl spdy;
+	      listen            [::]:%s default_server ssl spdy;
+	      ssl_certificate        /etc/ssl/freenas/nginx/nginx.crt;
+	      ssl_certificate_key    /etc/ssl/freenas/nginx/nginx.key;
+	      ssl_dhparam /data/dhparam.pem;
+	      ssl_session_timeout    120m;
+	      ssl_session_cache    shared:ssl:16m;
+	      ssl_prefer_server_ciphers on;
+	      ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+RC4:EDH+aRSA:EECDH:RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS;
+	      add_header Strict-Transport-Security max-age=31536000; 
+	      """ % (dav_tcpportssl,dav_tcpportssl)
+	      f.write(ssl_text)
+	    total_entries=len(dav_data)
+ 
+	    for i in range (0,total_entries):
+	      f.write("\tlocation /"+dav_share_names[i]+" {\n\t\t\talias "+dav_share_paths[i]+";\n")
+	      
+	      if dav_read_only[i] == 1:
+		f.write("\t\t\tlimit_except GET PROPFIND OPTIONS{\n\t\t\t\tdeny all;\n\t\t\t}\n")
+	      f.write("\t\t}\n")
+	      
+	      if dav_perm[i]:
+		self._pipeopen("chown -R :www %s" % dav_share_paths[i])
+	      
+	    f.write("}")
+ 
+	else:
+	  with open('/etc/local/nginx/nginx-webdav.conf','w') as f:
+	    f.write("") # Basically write a blank file if webdav service is turned off
+     
 	conn.close()
-	# We have to perform a graceful reload on nginx for any of the 
-	# above changes to take place
-	self._system("/usr/local/sbin/nginx -s reload")
     
-    def dav_passwd_change(self,passwd):
-	log.debug("Changing WebDAV password to %s", passwd)
+    def dav_passwd_change(self,passwd,auth_type):
+	if auth_type == 'basic':
+	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /usr/local/www/webdavhtbasic webdav %s" % passwd
+	else:
+	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /usr/local/www/webdavhtdigest""" % passwd
+	self._pipeopen(cmd)
+	self._pipeopen("chown www:www /usr/local/www/webdavht%s" % (auth_type,))
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")

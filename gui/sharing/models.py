@@ -316,3 +316,48 @@ class NFS_Share_Path(Model):
         verbose_name = _("Path")
         verbose_name_plural = _("Paths")
         ordering = ["path"]
+
+class WebDAV_Share(Model):
+    webdav_name = models.CharField(
+	    max_length=120,
+	    verbose_name=_("Share Path Name"),
+	    help_text=_('This will be used to access your WebDAV share. For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name'),
+    )
+    
+    webdav_comment = models.CharField(
+            max_length=120,
+            verbose_name=_("Comment"),
+            blank=True,
+    )
+    
+    webdav_path = PathField(
+	    verbose_name=_("Path")
+    )
+    
+    webdav_ro = models.BooleanField(
+        verbose_name=_('Read Only'),
+        help_text=_('Export the share read only. Writes are not permitted.'),
+        default=False,
+    )
+    
+    webdav_perm = models.BooleanField(
+	verbose_name=_('Change Group Ownership'),
+	help_text=_("Changes the group of the shared folder"
+	  " to 'www' recursively (including all subdirectories)"
+	  "<br />If you disable this, then, you will need to manually" 
+	  " add the www group to the share."),
+	default=True,
+    )
+	  
+
+    def __unicode__(self):
+      return unicode(self.webdav_name)
+
+    def delete(self, *args, **kwargs):
+        super(WebDAV_Share, self).delete(*args, **kwargs)
+        notifier().gen_dav_config()
+
+    class Meta:
+        verbose_name = _("WebDAV Share")
+        verbose_name_plural = _("WebDAV Shares")
+        ordering = ["webdav_name"]
