@@ -57,6 +57,12 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
 )
+from freenasUI.directoryservice.forms import (
+    ActiveDirectoryForm,
+)
+from freenasUI.directoryservice.models import (
+    ActiveDirectory,
+)
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -197,6 +203,7 @@ class InitialWizard(CommonWizard):
         form_list = self.get_form_list()
         volume_form = form_list.get('volume')
         volume_import = form_list.get('import')
+        ds_form = form_list.get('ds')
 
         with transaction.atomic():
             _n = notifier()
@@ -420,6 +427,31 @@ class InitialWizard(CommonWizard):
                 )
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
+
+        if ds_form:
+            if cleaned_data.get('ds_type') == 'ad':
+                try:
+                    ad = ActiveDirectory.objects.all().order_by('-id')[0]
+                except:
+                    ad = ActiveDirectory.objects.create()
+                addata = ad.__dict__
+                addata.update({
+                    'ad_domainname': cleaned_data.get('ds_ad_domainname'),
+                    'ad_bindname': cleaned_data.get('ds_ad_bindname'),
+                    'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
+                    'ad_enable': True,
+                })
+                adform = ActiveDirectoryForm(
+                    data=addata,
+                    instance=ad,
+                )
+                if adform.is_valid():
+                    adform.save()
+                else:
+                    log.warn(
+                        'Active Directory data failed to validate: %r',
+                        adform._errors,
+                    )
 
         progress['step'] = 3
         progress['indeterminate'] = False
