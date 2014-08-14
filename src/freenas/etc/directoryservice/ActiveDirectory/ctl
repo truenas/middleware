@@ -117,7 +117,6 @@ adctl_start()
 		fi
 	fi
 
-	adctl_cmd ${service} ix-samba quietstart
 	cifs_start
 
 	if ! adctl_cmd ${service} ix-activedirectory quietstart
@@ -179,21 +178,20 @@ adctl_stop()
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		activedirectory_set 0
-		adctl_cmd ${service} ix-samba start
+		adctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		activedirectory_set 0
-		adctl_cmd ${service} ix-samba start
+		adctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		activedirectory_set 0
 		srv_set cifs 1
-		adctl_cmd ${service} ix-samba start
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
@@ -201,7 +199,6 @@ adctl_stop()
 		adctl_cmd ${service} samba_server forcestop
 		activedirectory_set 0
 		srv_set cifs 1
-		adctl_cmd ${service} ix-samba start
 		cifs_start
 	fi
 
