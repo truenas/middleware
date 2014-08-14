@@ -135,8 +135,7 @@ def json_users(request, exclude=None):
             )
             idx = 1
             # FIXME: code duplication withe the block above
-            for user in users:
-                log.error("user %r", user)
+            for user in users._get_uncached_usernames():
                 if idx > 50:
                     break
                 if (
