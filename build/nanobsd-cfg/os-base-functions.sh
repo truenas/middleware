@@ -430,7 +430,7 @@ last_orders() {
 		fi
 	    ) > "${vmdk_image_log}" 2>&1
 	fi
-	    
+
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"
 

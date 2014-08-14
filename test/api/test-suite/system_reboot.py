@@ -14,7 +14,7 @@ def post():
   if r.status_code == 202:
     print 'System rebooting ......'
   else:
-    pring 'System reboot --> Failed'
+    print 'System reboot --> Failed'
 
 def put():
   print 'No PUT function for system-reboot!'

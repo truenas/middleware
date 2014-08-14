@@ -71,7 +71,6 @@ nt4ctl_start()
 
 	nt4ctl_cmd ${service} ix-nsswitch quietstart
 	nt4ctl_cmd ${service} ix-pam quietstart
-	nt4ctl_cmd ${service} ix-samba quietstart
 	cifs_start
 
 	if ! nt4ctl_cmd ${service} ix-nt4 quietstart
@@ -118,21 +117,20 @@ nt4ctl_stop()
 		nt4ctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		nt4_set 0
-		nt4ctl_cmd ${service} ix-samba start
+		nt4ctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		nt4_set 0
-		nt4ctl_cmd ${service} ix-samba start
+		nt4ctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		nt4ctl_cmd ${service} samba_server forcestop
 		nt4_set 0
 		srv_set cifs 1
-		nt4ctl_cmd ${service} ix-samba start
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
@@ -140,7 +138,6 @@ nt4ctl_stop()
 		nt4ctl_cmd ${service} samba_server forcestop
 		nt4_set 0
 		srv_set cifs 1
-		nt4ctl_cmd ${service} ix-samba start
 		cifs_start
 	fi
 

@@ -18,9 +18,9 @@ post-install()
 		mkdir -p /data
 	fi
         cd ${dstCR}
-	python manage.py syncdb --noinput --migrate --traceback
-        python manage.py collectstatic --noinput
-        python tools/compilemsgs.py
+	%%PYTHON_CMD%% manage.py syncdb --noinput --migrate --traceback
+	%%PYTHON_CMD%% manage.py collectstatic --noinput
+	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data
 	cp freenas-v1.db factory-v1.db
 	chown -R www:www /data

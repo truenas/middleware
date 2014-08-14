@@ -558,6 +558,7 @@ class KerberosRealm(Model):
         verbose_name=_("Realm"),
         max_length=120,
         help_text=_("Kerberos realm."),
+        unique=True
     )
     krb_kdc = models.CharField(
         verbose_name=_("KDC"),
@@ -942,6 +943,14 @@ class LDAP(DirectoryServiceBase):
         help_text=_("This parameter specifies the suffix that is used for "
             "machines when these are added to the LDAP directory, e.g. "
             "ou=Computers"),
+        blank=True
+    )
+    ldap_sudosuffix = models.CharField(
+        verbose_name=_("SUDO Suffix"),
+        max_length=120,
+        help_text=_("This parameter specifies the suffix that is used for "
+            "the SUDO configuration in the LDAP directory, e.g. "
+            "ou=SUDOers"),
         blank=True
     )
     ldap_use_default_domain = models.BooleanField(

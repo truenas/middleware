@@ -10348,3 +10348,7 @@ msgstr "Сервер Kerberos"
 #: templates/system/initialwizard_volume.html:92
 msgid "Exit"
 msgstr ""
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr ""
