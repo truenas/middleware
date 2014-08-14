@@ -1666,7 +1666,9 @@ class DomainController(Model):
     dc_kerberos_realm = models.ForeignKey(
             KerberosRealm,
             verbose_name=_("Kerberos Realm"),
-            on_delete=models.DO_NOTHING
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
             )
 
     def __init__(self, *args, **kwargs):
