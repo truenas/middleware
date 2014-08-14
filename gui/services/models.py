@@ -1675,19 +1675,48 @@ class DomainController(Model):
         icon_model = u"DomainControllerIcon"
 
 class WebDAV(Model):
+    webdav_protocol = models.CharField(
+            max_length=120,
+            choices=choices.PROTOCOL_CHOICES,
+            default="http",
+            verbose_name=_("Protocol")
+        )
+    
     webdav_tcpport = models.PositiveIntegerField(
-	verbose_name=_("TCP Port"),
-	default=8080,
-	validators=[MinValueValidator(1),MaxValueValidator(65535)],
-	help_text=_("This is the port at which WebDAV will run on. Please do not use any of default services ports (like 22 for SSH) unless you know what your doing. The default value for this port is 8080"),
+	    verbose_name=_("HTTP Port"),
+	    default=8080,
+	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
+	    help_text=_("This is the port at which WebDAV will run on."
+			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."
+			"<br />The default value for this port is 8080"),
 	)
+    
+    webdav_tcpportssl =  models.PositiveIntegerField(
+	    verbose_name=_("HTTPS Port"),
+	    default=8081,
+	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
+	    help_text=_("This is the port at which Secure WebDAV will run on."
+			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."
+			"<br />The default value for this port is 8081"),
+	)
+    
     webdav_password = models.CharField(
             max_length=120,
-            verbose_name=_("Webdav Password (HTTP Digest Authentication)"),
+            verbose_name=_("Webdav Password"),
             default="davtest",
             help_text=_("The Default Password is: davtest"),
         )
     
+    webdav_htauth = models.CharField(
+            max_length=120,
+            verbose_name=_("HTTP Authentication"),
+            choices=choices.HTAUTH_CHOICES,
+            default='digest',
+            help_text=_("Type of HTTP Authentication for WebDAV"
+			"<br />Basic Auth: Password is sent over the network as plaintext (Avoid if HTTPS is disabled)"
+			"<br />Digest Auth: Hash of the password is sent over the network (more secure but breaks compatibility with certain webdav clients e.g. cadaver)")
+        )
+
     class Meta:
 	verbose_name = _(u"WebDAV")
 	verbose_name_plural = _(u"WebDAV")

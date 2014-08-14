@@ -11,8 +11,11 @@ class Migration(SchemaMigration):
         # Adding model 'WebDAV'
         db.create_table(u'services_webdav', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('webdav_protocol', self.gf('django.db.models.fields.CharField')(default='http', max_length=120)),
             ('webdav_tcpport', self.gf('django.db.models.fields.PositiveIntegerField')(default=8080)),
+            ('webdav_tcpportssl', self.gf('django.db.models.fields.PositiveIntegerField')(default=8081)),
             ('webdav_password', self.gf('django.db.models.fields.CharField')(default='davtest', max_length=120)),
+            ('webdav_htauth', self.gf('django.db.models.fields.CharField')(default='digest', max_length=120)),
         ))
         db.send_create_signal(u'services', ['WebDAV'])
 
@@ -336,8 +339,11 @@ class Migration(SchemaMigration):
         u'services.webdav': {
             'Meta': {'object_name': 'WebDAV'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'webdav_htauth': ('django.db.models.fields.CharField', [], {'default': "'digest'", 'max_length': '120'}),
             'webdav_password': ('django.db.models.fields.CharField', [], {'default': "'davtest'", 'max_length': '120'}),
-            'webdav_tcpport': ('django.db.models.fields.PositiveIntegerField', [], {'default': '8080'})
+            'webdav_protocol': ('django.db.models.fields.CharField', [], {'default': "'http'", 'max_length': '120'}),
+            'webdav_tcpport': ('django.db.models.fields.PositiveIntegerField', [], {'default': '8080'}),
+            'webdav_tcpportssl': ('django.db.models.fields.PositiveIntegerField', [], {'default': '8081'})
         }
     }
 
