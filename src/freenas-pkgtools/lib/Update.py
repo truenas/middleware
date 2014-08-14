@@ -50,6 +50,8 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     Perform an update.  Calls CheckForUpdates() first, to see if
     there are any. If there are, then magic happens.
     """
+    grub_dir = "/boot/grub"
+    grub_cfg = "/boot/grub/grub.cfg"
 
     def RunCommand(command, args):
         # Run the given command.  Uses subprocess module.
@@ -99,6 +101,20 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
             except:
                 pass
             return None
+        # If all that worked... we now need
+        # to get /boot/grub into the clone's mount
+        # point, as a nullfs mount.
+        # Let's see if we need to do that
+        if os.path.exists(mount_point + grub_cfg) is False:
+            # Okay, it needs to be ounted
+            cmd = "/sbin/mount"
+            args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
+            try:
+                rv = RunCommand(cmd, args)
+            except:
+                UnmountClone(name, None)
+                return False
+
         return mount_point
 
     def ActivateClone(name):
@@ -111,9 +127,21 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
             return False
         return True
 
-    def UnmountClone(name):
+    def UnmountClone(name, mount_point):
         # Unmount the given clone.  After unmounting,
         # it removes the mount directory.
+        # First thing we need to do is try to unmount
+        # the nullfs-mounted grub directory
+        # If this fails, we ignore it for now
+        if mount_point is not None:
+            cmd = "umount"
+            args = [mount_point + grub_dir]
+            try:
+                RunCommand(cmd, args)
+            except:
+                pass
+
+        # Now we ask beadm to unmount it.
         beadm = "/usr/local/sbin/beadm"
         args = ["unmount", "-f", name]
 
@@ -197,7 +225,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
         if conf.PackageDB(root).RemovePackageContents(pkg) == False:
             print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
-            UnmountClone(clone_name)
+            UnmountClone(clone_name, mount_point)
             DestroyClone(clone_name)
             raise Exception("Unable to remove contents for package %s" % pkg.Name())
         conf.PackageDB(root).RemovePackage(pkg.Name())
@@ -217,7 +245,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     else:
         new_man.Save(root)
         if mount_point is not None:
-            if UnmountClone(clone_name) is False:
+            if UnmountClone(clone_name, mount_point) is False:
                 log.error("Unable to mount clone enivironment %s" % clone_name)
                 print >> sys.stderr, "Unable to unmount clone environment %s" % clone_name
             else:
