@@ -944,20 +944,24 @@ class notifier:
         self._system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcereload")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _restart_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service samba_server quietrestart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server quietstart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _stop_cifs(self):
         self._system("/usr/sbin/service samba_server forcestop")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
         self._system("/usr/sbin/service ix-bsnmpd quietstart")
