@@ -19,8 +19,10 @@ Published XX, 2014
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
 
-.. sectnum::
-
+.. |93cover.jpg| image:: images/93cover.jpg
+    :width: 8.5in
+    :height: 11in
+    
 This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,

@@ -1,6 +1,8 @@
-. toctree::
+.. toctree::
+   :numbered:
+   :hidden:
 
-   Introduction <freenas_introduction>
+   Introduction <freenas_intro>
    Installing and Upgrading FreeNAS® <freenas_install>
    Configuration Quick Start <freenas_quick>
    Account <freenas_account>
@@ -27,12 +29,7 @@
    Contributing to FreeNAS® <freenas_contribute>
    Using the FreeNAS® API <freenas_api>
 
-
-.. |93cover.jpg| image:: images/93cover.jpg
-    :width: 8.5in
-    :height: 11in
-
-
+   
 .. |1000000000000374000002AEF63058C7_jpg| image:: images/1000000000000374000002AEF63058C7.jpg
     :width: 6.9252in
     :height: 5.3736in
