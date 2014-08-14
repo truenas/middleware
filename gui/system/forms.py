@@ -1183,7 +1183,7 @@ class InitialWizardDSForm(Form):
         required=False,
     )
     ds_ad_bindpw = forms.CharField(
-        label=_('Domain Account Name'),
+        label=_('Domain Account Password'),
         required=False,
         widget=forms.widgets.PasswordInput(),
     )
@@ -1200,7 +1200,7 @@ class InitialWizardDSForm(Form):
         required=False,
     )
     ds_ldap_bindpw = forms.CharField(
-        label=('Base DN'),
+        label=('Base Password'),
         required=False,
         widget=forms.widgets.PasswordInput(),
     )
@@ -1227,10 +1227,10 @@ class InitialWizardDSForm(Form):
         cdata = self.cleaned_data
 
         if cdata.get('ds_type') == 'ad':
-            bindname = cdata.get("ds_ad_bindname")
-            bindpw = cdata.get("ds_ad_bindpw")
-            domain = cdata.get("ds_ad_domainname")
-            binddn = "%s@%s" % (bindname, domain)
+            bindname = cdata.get('ds_ad_bindname')
+            bindpw = cdata.get('ds_ad_bindpw')
+            domain = cdata.get('ds_ad_domainname')
+            binddn = '%s@%s' % (bindname, domain)
             errors = []
 
             try:
@@ -1244,6 +1244,12 @@ class InitialWizardDSForm(Form):
                 raise forms.ValidationError("%s." % errors[0])
 
         return cdata
+
+    def done(self, request=None, **kwargs):
+        dsdata = self.cleaned_data
+        # Save Directory Service (DS) in the session so we can retrieve DS
+        # users and groups for the Ownership screen
+        request.session['wizard_ds'] = dsdata
 
 
 class InitialWizardShareForm(Form):
