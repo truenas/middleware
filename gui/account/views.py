@@ -37,6 +37,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from freenasUI.account import forms, models
 from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
+    FreeNAS_ActiveDirectory_Groups,
     FreeNAS_ActiveDirectory_Users,
 )
 from freenasUI.common.freenascache import (
@@ -178,6 +179,30 @@ def json_groups(request):
                 'label': grp.gr_name,
             })
             idx += 1
+
+    # Show groups for the directory service provided in the wizard
+    wizard_ds = request.session.get('wizard_ds')
+    if request.GET.get('wizard') == '1' and wizard_ds:
+        if wizard_ds.get('ds_type') == 'ad':
+            groups = FreeNAS_ActiveDirectory_Groups(
+                domainname=wizard_ds.get('ds_ad_domainname'),
+                bindname=wizard_ds.get('ds_ad_bindname'),
+                bindpw=wizard_ds.get('ds_ad_bindpw'),
+                flags=FLAGS_DBINIT,
+            )
+            idx = 1
+            # FIXME: code duplication withe the block above
+            for group in groups._get_uncached_groupnames():
+                if idx > 50:
+                    break
+                if query is None or group.startswith(query):
+                    json_group['items'].append({
+                        'id': group,
+                        'name': group,
+                        'label': group,
+                    })
+                    idx += 1
+
     return HttpResponse(
         json.dumps(json_group, indent=3),
         content_type='application/json',

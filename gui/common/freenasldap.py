@@ -2043,6 +2043,40 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             for group in self.__groups[d['nETBIOSName']]:
                 yield group
 
+    def _get_uncached_groupnames(self):
+
+        groupnames = []
+        for d in self.__domains:
+            n = d['nETBIOSName']
+
+            dcs = self.get_domain_controllers(d['dnsRoot'])
+            if not dcs:
+                raise FreeNAS_ActiveDirectory_Exception(
+                    "Unable to find domain controllers for %s" % d['dnsRoot'])
+            (self.host, self.port) = self.get_best_host(dcs)
+
+            self.basedn = d['nCName']
+            self.attributes = ['sAMAccountName']
+            self.pagesize = FREENAS_LDAP_PAGESIZE
+
+            ad_groups = self.get_groups()
+
+            for g in ad_groups:
+                CN = str(g[0])
+
+                if self.use_default_domain:
+                    sAMAccountName = g[1]['sAMAccountName'][0]
+                else:
+                    sAMAccountName = "{}{}{}".format(
+                        n,
+                        FREENAS_AD_SEPARATOR,
+                        g[1]['sAMAccountName'][0]
+                    )
+
+                groupnames.append(sAMAccountName)
+
+        return groupnames
+
     def __get_groups(self):
         log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: enter")
 
