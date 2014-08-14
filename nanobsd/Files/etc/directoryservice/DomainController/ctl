@@ -139,21 +139,20 @@ dcctl_stop()
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		srv_set directoryservice 0
-		dcctl_cmd ${service} ix-samba start
+		dcctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		srv_set directoryservice 0
-		dcctl_cmd ${service} ix-samba start
+		dcctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set directoryservice 0
 		srv_set cifs 1
-		dcctl_cmd ${service} ix-samba start
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
@@ -161,7 +160,6 @@ dcctl_stop()
 		dcctl_cmd ${service} samba_server forcestop
 		srv_set directoryservice 0
 		srv_set cifs 1
-		dcctl_cmd ${service} ix-samba start
 		cifs_start
 	fi
 
