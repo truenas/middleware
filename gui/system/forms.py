@@ -1227,21 +1227,38 @@ class InitialWizardDSForm(Form):
         cdata = self.cleaned_data
 
         if cdata.get('ds_type') == 'ad':
+            domain = cdata.get('ds_ad_domainname')
             bindname = cdata.get('ds_ad_bindname')
             bindpw = cdata.get('ds_ad_bindpw')
-            domain = cdata.get('ds_ad_domainname')
             binddn = '%s@%s' % (bindname, domain)
             errors = []
 
-            try:
-                ret = FreeNAS_ActiveDirectory.validate_credentials(
-                    domain, binddn=binddn, bindpw=bindpw, errors=errors
-                )
-            except Exception, e:
-                raise forms.ValidationError("%s." % e)
+            if not (domain or bindname or bindpw):
+                if not domain:
+                    self._errors['ds_ad_domainname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
 
-            if ret is False:
-                raise forms.ValidationError("%s." % errors[0])
+                if not bindname:
+                    self._errors['ds_ad_bindname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindpw:
+                    self._errors['ds_ad_bindpw'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            else:
+
+                try:
+                    ret = FreeNAS_ActiveDirectory.validate_credentials(
+                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    )
+                except Exception, e:
+                    raise forms.ValidationError("%s." % e)
+
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
 
         return cdata
 
