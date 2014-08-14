@@ -423,21 +423,23 @@ last_orders() {
 		)
 	fi
 
-	pprint 2 "Creating VMDK"
-	log_file "${vmdk_image_log}"
-
-	(
-	set -x
-	if [ -f /usr/local/bin/VBoxManage ]; then
-		VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
-		chmod 644 "${vmdk_image}"
-		time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "${vmdk_image}"
-		sha256_signature=`sha256 ${vmdk_image_compressed}`
-		echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
-	else
-		echo "VBoxManage not found"
+	if false; then
+	    pprint 2 "Creating VMDK"
+	    log_file "${vmdk_image_log}"
+	    
+	    (
+		set -x
+		if [ -f /usr/local/bin/VBoxManage ]; then
+		    VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
+		    chmod 644 "${vmdk_image}"
+		    time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "${vmdk_image}"
+		    sha256_signature=`sha256 ${vmdk_image_compressed}`
+		    echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
+		else
+		    echo "VBoxManage not found"
+		fi
+	    ) > "${vmdk_image_log}" 2>&1
 	fi
-	) > "${vmdk_image_log}" 2>&1
 
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"

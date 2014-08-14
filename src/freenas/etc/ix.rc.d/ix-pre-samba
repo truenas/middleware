@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-pre-samba
+# REQUIRE: FILESYSTEMS mountlate
+# REQUIRE: ix-pam
+# BEFORE: samba_server
+
+. /etc/rc.freenas
+
+set_sambaSID()
+{
+	local sambaSID
+
+	if [ -s "${SAMBA_SIDFILE}" ]
+	then
+		sambaSID="$(cat "${SAMBA_SIDFILE}")"
+
+		export LOGNAME=anonymous
+		/usr/local/bin/net setlocalsid "${sambaSID}"
+	fi
+}
+
+generate_smb_config()
+{
+	/usr/local/libexec/nas/generate_smb4_conf.py
+}
+
+samba_pre_init()
+{
+	generate_smb_config
+	set_sambaSID
+}
+
+name="ix-pre-samba"
+start_cmd='samba_pre_init'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

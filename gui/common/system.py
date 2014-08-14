@@ -337,6 +337,23 @@ def ldap_enabled():
     return enabled
 
 
+def ldap_sudo_configured():
+    h = sqlite3.connect(FREENAS_DATABASE)
+    c = h.cursor()
+
+    enabled = False
+    sql = "select ldap_sudosuffix from directoryservice_ldap"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0]:
+        enabled = True
+
+    c.close()
+    h.close()
+
+    return enabled
+
+
 def ldap_objects():
     h = sqlite3.connect(FREENAS_DATABASE)
     h.row_factory = sqlite3.Row

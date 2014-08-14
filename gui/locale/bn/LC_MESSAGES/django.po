@@ -9551,3 +9551,110 @@ msgstr ""
 #: system/forms.py:1468
 msgid "A pool with this name already exists."
 msgstr ""
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr ""
+
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+msgid "Kerberos Keytab"
+msgstr ""
+
+#: directoryservice/forms.py:498
+msgid "A keytab is required."
+msgstr ""
+
+#: directoryservice/models.py:549
+msgid "Kerberos realm."
+msgstr ""
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr ""
+
+#: directoryservice/models.py:554
+msgid "KDC for this realm."
+msgstr ""
+
+#: directoryservice/models.py:557
+msgid "Admin Server"
+msgstr ""
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+
+#: directoryservice/models.py:565
+#, fuzzy
+msgid "Password Server"
+msgstr "পাসওয়ার্ড"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr ""
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr ""
+
+#: directoryservice/models.py:586
+msgid "Keytab"
+msgstr ""
+
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+msgid "Kerberos Realm"
+msgstr ""
+
+#: services/views.py:269
+msgid "CIFS successfully updated."
+msgstr ""
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr ""
+
+#: storage/models.py:819
+msgid "Encryption Cipher"
+msgstr ""
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr ""
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr ""
+
+#: templates/directoryservice/index.html:15
+msgid "Kerberos Realms"
+msgstr ""
+
+#: templates/directoryservice/index.html:18
+msgid "Kerberos Keytabs"
+msgstr ""
+
+#: templates/freeadmin/selectmultiple.html:68
+msgid "Selected"
+msgstr ""
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr ""
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr ""

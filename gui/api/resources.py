@@ -69,7 +69,11 @@ from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
-    ReKeyForm, UnlockPassphraseForm, VolumeManagerForm, ZFSDiskReplacementForm
+    MountPointAccessForm,
+    ReKeyForm,
+    UnlockPassphraseForm,
+    VolumeManagerForm,
+    ZFSDiskReplacementForm,
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
@@ -193,6 +197,31 @@ class DiskResourceMixin(object):
         if 'disk_subsystem' in bundle.data:
             del bundle.data['disk_subsystem']
         return bundle
+
+
+class PermissionResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['put']
+        resource_name = 'storage/permission'
+
+    def put_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = MountPointAccessForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.commit(path=deserialized.get('mp_path'))
+        return HttpResponse(
+            'Mount Point permissions successfully updated.',
+            status=201,
+        )
 
 
 class Uid(object):
@@ -963,14 +992,8 @@ class ReplicationResourceMixin(object):
         bundle.data['repl_remote_dedicateduser'] = (
             bundle.obj.repl_remote.ssh_remote_dedicateduser
         )
-        bundle.data['repl_remote_fast_cipher'] = (
-            bundle.obj.repl_remote.ssh_fast_cipher
-        )
-        bundle.data['repl_remote_no_cipher'] = (
-            bundle.obj.repl_remote.ssh_no_cipher
-        )
-        bundle.data['repl_remote_no'] = (
-            bundle.obj.repl_remote.ssh_no
+        bundle.data['repl_remote_cipher'] = (
+            bundle.obj.repl_remote.ssh_cipher
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
@@ -1055,7 +1078,6 @@ class NFSShareResourceMixin(object):
                 nfs_paths.append(item.path)
             bundle.data['nfs_paths'] = nfs_paths
         else:
-            initial = 0
             nfs_paths = bundle.data.get('nfs_paths', [])
             for i, item in enumerate(nfs_paths):
                 bundle.data['path_set-%d-path' % i] = item

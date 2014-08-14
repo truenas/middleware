@@ -256,7 +256,7 @@ class NavTree(object):
             name=_('Wizard'),
             icon='WizardIcon',
             action='wizard',
-            order=987,
+            order=980,
         )
         tree_roots.register(nav)
 

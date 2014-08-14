@@ -39,6 +39,7 @@ usr/local/libexec/freenas-debug/system/system.sh
 usr/local/libexec/freenas-debug/zfs/zfs.sh
 usr/local/libexec/nas/generate_afpd_conf.py
 usr/local/libexec/nas/generate_ctl_conf.py
+usr/local/libexec/nas/generate_krb5_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
 usr/local/libexec/nas/generate_sssd_conf.py
@@ -83,7 +84,8 @@ etc/ix.rc.d/ix-postinit
 etc/ix.rc.d/ix-preinit
 etc/ix.rc.d/ix-proftpd
 etc/ix.rc.d/ix-rsyncd
-etc/ix.rc.d/ix-samba
+etc/ix.rc.d/ix-pre-samba
+etc/ix.rc.d/ix-post-samba
 etc/ix.rc.d/ix-savehostid
 etc/ix.rc.d/ix-sercons
 etc/ix.rc.d/ix-shutdown

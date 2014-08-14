@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-kinit
 # REQUIRE: kerberos
-# REQUIRE: ix-samba
+# REQUIRE: ix-pre-samba
 # REQUIRE: ntpd
 
 . /etc/rc.freenas

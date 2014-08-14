@@ -738,6 +738,12 @@ JAIL_TEMPLATE_ARCH_CHOICES = (
     ('x86', 'x86')
 )
 
+REPL_CIPHER = (
+    ('standard', _('Standard')),
+    ('fast', _('Fast')),
+    ('disabled', _('Disabled')),
+)
+
 SAMBA4_ROLE_CHOICES = (
 #    ('auto', 'auto'),
 #    ('classic', 'classic primary domain controller'),

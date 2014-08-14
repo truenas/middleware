@@ -62,7 +62,8 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RFC2307,
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
-    IDMAP_TYPE_TDB2
+    IDMAP_TYPE_TDB2,
+    DS_TYPE_CIFS
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
@@ -382,6 +383,7 @@ def configure_idmap_backend(smb4_conf, idmap, domain):
     try:
         func = idmap_functions[idmap.idmap_backend_type]
         func(smb4_conf, idmap, domain)
+
     except:
         pass 
 
@@ -573,16 +575,6 @@ def add_domaincontroller_conf(smb4_conf):
     #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
 
 
-def add_default_idmap(smb4_conf):
-    tdb_range_start = 90000000
-    tdb_range_end = 100000000
-
-    confset1(smb4_conf, "idmap config *:backend = tdb")
-    confset1(smb4_conf, "idmap config *:range = %d-%d" % (
-        tdb_range_start, tdb_range_end
-    ))
-
-
 def generate_smb4_tdb(smb4_tdb):
     try:
         users = bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$',
@@ -661,7 +653,8 @@ def generate_smb4_conf(smb4_conf, role):
         confset2(smb4_conf, "local master = %s",
             "yes" if cifs.cifs_srv_localmaster else False)
 
-    add_default_idmap(smb4_conf)
+    idmap = get_idmap_object(DS_TYPE_CIFS, cifs.id, 'tdb')
+    configure_idmap_backend(smb4_conf, idmap, None)
 
     if role == 'auto':
         confset1(smb4_conf, "server role = auto")
@@ -1004,12 +997,55 @@ def smb4_import_groups():
             s.group_addmembers(g, groups[g])
 
 
-def smb4_map_groups():
-    cmd = "/usr/local/bin/net groupmap add unixgroup='%s' ntgroup='%s'"
+def smb4_get_groupmap():
+    groupmap = []
+    cmd = "/usr/local/bin/net groupmap list"
 
+    p = pipeopen(cmd)
+    out = p.communicate()
+    if p.returncode != 0:
+        return None
+
+    out = out[0]
+    lines = out.splitlines()
+    for line in lines:
+        m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+        if m:
+            groupmap.append(m.groupdict())
+
+    return groupmap
+    
+
+def smb4_group_mapped(groupmap, group):
+    for gm in groupmap:
+        unixgroup = gm['unixgroup']
+        if group == unixgroup:
+            return True
+
+    return False
+
+
+# Windows no likey
+def smb4_groupname_is_username(group):
+    cmd = "/usr/bin/getent passwd '%s'" % group
+
+    p = pipeopen(cmd)
+    p.communicate()
+    if p.returncode == 0:
+        return True
+
+    return False
+
+
+def smb4_map_groups():
+    cmd = "/usr/local/bin/net groupmap add type=local unixgroup='%s' ntgroup='%s'"
+
+    groupmap = smb4_get_groupmap()
     groups = get_groups()
     for g in groups:
-        pipeopen(cmd % (g, g)).communicate()
+        if not smb4_group_mapped(groupmap, g) and \
+            not smb4_groupname_is_username(g):
+            pipeopen(cmd % (g, g)).communicate()
 
 
 def main():

@@ -4,7 +4,9 @@ import requests
 import json
 import sys
 import conn
+import os
 
+os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'storage/disk/'
@@ -20,13 +22,12 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage-disk --> Succeeded!'
+    print '\nGet storage-disk --> Succeeded!'
   else:
     print 'Get storage-disk --> Failed!'
-  return result[0]['disk_name']
 
 def put():
   r = requests.get(url, auth = auth)
@@ -44,3 +45,15 @@ def post():
 
 def delete():
   print 'No DELETE function for storage-disk!'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+
+
+def get_name():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  return result[0]['disk_name']
+
+def get_id():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  return result[0]['id']

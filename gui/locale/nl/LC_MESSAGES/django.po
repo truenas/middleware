@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-07-28 18:17+0000\n"
+"PO-Revision-Date: 2014-08-07 10:48+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1406571432.0\n"
+"X-POOTLE-MTIME: 1407408497.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10300,3 +10300,141 @@ msgstr "Pad naar NFSv4-hoofdmap"
 #: system/forms.py:1468
 msgid "A pool with this name already exists."
 msgstr "Er bestaat al een pool met deze naam."
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr "%s."
+
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+msgid "Kerberos Keytab"
+msgstr "Kerberos-keytab"
+
+#: directoryservice/forms.py:498
+msgid "A keytab is required."
+msgstr "Er is een keytab vereist."
+
+#: directoryservice/models.py:549
+msgid "Kerberos realm."
+msgstr "Kerberos-realm."
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr "KDC"
+
+#: directoryservice/models.py:554
+msgid "KDC for this realm."
+msgstr "KDC voor deze realm."
+
+#: directoryservice/models.py:557
+msgid "Admin Server"
+msgstr "Beheerdersserver"
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+"Specificeert de beheerdersserver voor deze realm, waar alle modificaties aan "
+"de database worden uitgevoerd."
+
+#: directoryservice/models.py:565
+msgid "Password Server"
+msgstr "Wachtwoordserver"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+"Wijst naar de server waar alle wachtwoordwijzigingen worden uitgevoerd. Als "
+"een dergelijke vermelding niet bestaat, wordt de kpasswd-poort op de host "
+"admin_server geprobeerd."
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr "Principal"
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr "Kerberos-principal, bv. primary/instance@REALM"
+
+#: directoryservice/models.py:586
+msgid "Keytab"
+msgstr "Keytab"
+
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+msgid "Kerberos Realm"
+msgstr "Kerberos-realm"
+
+#: services/views.py:269
+msgid "CIFS successfully updated."
+msgstr "CIFS met succes bijgewerkt."
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr "Beveiliging"
+
+#: storage/forms.py:2048
+#: storage/models.py:828
+msgid "Disable Encryption (SECURE LAN ONLY)"
+msgstr "Versleuteling uitschakelen (ALLEEN BEVEILIGD LAN)"
+
+#: storage/forms.py:2052
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Inschakelen hiervan kan de overdrachtssnelheid op beveiligde lokale "
+"netwerken met hoge snelheid aanzienlijk verhogen. Het gebruikt HELEMAAL GEEN "
+"VERSLEUTELING, wat het totaal ongeschikt maakt voor niet-vertrouwde "
+"netwerken."
+
+#: storage/models.py:819
+msgid "Encryption Cipher"
+msgstr "Versleutelingscodering"
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr "Standaard"
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr "Snel"
+
+#: storage/models.py:830
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO encryption at all, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Inschakelen hiervan kan de overdrachtssnelheid op beveiligde lokale "
+"netwerken met hoge snelheid aanzienlijk verhogen. Het gebruikt helemaal GEEN "
+"versleuteling, wat het totaal ongeschikt maakt voor niet-vertrouwde "
+"netwerken."
+
+#: templates/directoryservice/index.html:15
+msgid "Kerberos"
+msgstr "Kerberos"
+
+#: templates/directoryservice/index.html:15
+msgid "Kerberos Realms"
+msgstr "Kerberos-realms"
+
+#: templates/directoryservice/index.html:18
+msgid "Kerberos Keytabs"
+msgstr "Kerberos-keytabs"
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr "Afsluiten"
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr "Overslaan"

@@ -293,18 +293,6 @@ class NFSForm(ModelForm):
             bind.append(ip)
         return ','.join(bind)
 
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        v4 = cleaned_data['nfs_srv_v4']
-        v4_root = cleaned_data['nfs_srv_v4_root']
-        if v4 and not v4_root:
-            self._errors['nfs_srv_v4'] = self.error_class()
-            self._errors['nfs_srv_v4'] += self.error_class([
-                    _("This field is required to enable NFSv4."),
-            ])
-            cleaned_data.pop('nfs_srv_v4', None)
-        return cleaned_data
-
     def save(self):
         obj = super(NFSForm, self).save(commit=False)
         obj.nfs_srv_bindip = self.cleaned_data.get('nfs_srv_bindip')

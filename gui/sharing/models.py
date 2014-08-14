@@ -29,6 +29,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
+from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
 
 
@@ -285,6 +286,17 @@ class NFS_Share(Model):
             help_text=_("The specified group's permission are used by all "
                 "clients")
             )
+    nfs_security = MultiSelectField(
+        verbose_name=_('Security'),
+        max_length=200,
+        blank=True,
+        choices=(
+            ('sys', 'sys'),
+            ('krb5', 'krb5'),
+            ('krb5i', 'krb5i'),
+            ('krb5p', 'krb5p'),
+        ),
+    )
 
     def __unicode__(self):
         if self.nfs_comment:

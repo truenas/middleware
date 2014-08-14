@@ -206,11 +206,11 @@ class NT4Form(ModelForm):
         enable = self.cleaned_data.get("nt4_enable")
         started = notifier().started("nt4")
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("nt4")
-            if started == False:
+            if started is False:
                 started = notifier().start("nt4")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(NT4Form, self).save()
                 raise ServiceFailed("nt4",
@@ -326,19 +326,18 @@ class ActiveDirectoryForm(ModelForm):
         if not cdata.get("ad_bindpw"):
             cdata['ad_bindpw'] = self.instance.ad_bindpw
 
-        if self.instance.ad_use_keytab == False:
+        if self.instance.ad_use_keytab is False:
             bindname = cdata.get("ad_bindname")
             bindpw = cdata.get("ad_bindpw")
             domain = cdata.get("ad_domainname")
             binddn = "%s@%s" % (bindname, domain)
+            errors = []
 
             ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw
+                domain, binddn=binddn, bindpw=bindpw, errors=errors
             )
-            if ret == False:
-                raise forms.ValidationError(
-                    _("Incorrect password.")
-                )
+            if ret is False:
+                raise forms.ValidationError("%s." % errors[0])
 
         return cdata
 
@@ -351,11 +350,11 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).save()
 
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("activedirectory")
-            if started == False:
+            if started is False:
                 started = notifier().start("activedirectory")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
                 raise ServiceFailed("activedirectory",
@@ -389,6 +388,7 @@ class LDAPForm(ModelForm):
         'ldap_groupsuffix',
         'ldap_passwordsuffix',
         'ldap_machinesuffix',
+        'ldap_sudosuffix',
         'ldap_use_default_domain',
         'ldap_kerberos_realm',
         'ldap_kerberos_keytab',
@@ -429,7 +429,7 @@ class LDAPForm(ModelForm):
 
         return filename
 
-    def clean(self):
+    def clean_bindpw(self):
         cdata = self.cleaned_data
         if not cdata.get("ldap_bindpw"):
             cdata["ldap_bindpw"] = self.instance.ldap_bindpw
@@ -437,16 +437,13 @@ class LDAPForm(ModelForm):
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         hostname = cdata.get("ldap_hostname")
+        errors = []
 
         ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw
+            hostname, binddn=binddn, bindpw=bindpw, errors=errors
         )
-        if ret == False:
-            raise forms.ValidationError(
-                _("Incorrect password.")
-            )
-
-        return cdata
+        if ret is False:
+            raise forms.ValidationError("%s." % errors[0])
 
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")
@@ -455,11 +452,11 @@ class LDAPForm(ModelForm):
         super(LDAPForm, self).save()
 
         if enable:
-            if started == True:
+            if started is True:
                 started = notifier().restart("ldap")
-            if started == False:
+            if started is False:
                 started = notifier().start("ldap")
-            if started == False:
+            if started is False:
                 self.instance.ad_enable = False
                 super(LDAPForm, self).save()
                 raise ServiceFailed("ldap",
@@ -470,6 +467,12 @@ class LDAPForm(ModelForm):
 
 
 class KerberosRealmForm(ModelForm):
+    advanced_fields = [
+        'krb_kdc',
+        'krb_admin_server',
+        'krb_kpasswd_server'
+    ]
+
     class Meta:
         fields = '__all__'
         model = models.KerberosRealm

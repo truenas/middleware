@@ -137,15 +137,14 @@ for replication in replication_tasks:
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
     dedicateduser = replication.repl_remote.ssh_remote_dedicateduser
-    fast_cipher = replication.repl_remote.ssh_fast_cipher
-    no_cipher = replication.repl_remote.ssh_no_cipher
+    cipher = replication.repl_remote.ssh_cipher
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
     resetonce = replication.repl_resetonce
     compression = replication.repl_compression.__str__()
 
-    if fast_cipher:
+    if cipher == 'fast':
         sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
                   'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
                   ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
@@ -154,7 +153,7 @@ for replication in replication_tasks:
                   # It will prevent hunging in the status of "Sending".
                   ' -o ConnectTimeout=7'
                  )
-    elif no_cipher:
+    elif cipher == 'disabled':
         sshcmd = ('/usr/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
                   ' -o ConnectTimeout=7')

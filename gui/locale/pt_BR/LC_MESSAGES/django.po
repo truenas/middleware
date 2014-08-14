@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-06-21 15:50+0000\n"
-"Last-Translator: AngeloBio <adriano.angelo@gmail.com>\n"
+"PO-Revision-Date: 2014-08-06 11:56+0000\n"
+"Last-Translator: kaduleite <kaduleite@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1403365831.0\n"
+"X-POOTLE-MTIME: 1407326163.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9750,7 +9750,6 @@ msgstr "O serviço AFP falhou em recarregar."
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
 msgstr "Habilitado"
 
@@ -9971,6 +9970,7 @@ msgid "Range Size"
 msgstr "Tamanho do Registro"
 
 #: directoryservice/models.py:184
+#, fuzzy
 msgid ""
 "Defines the number of uids/gids available per domain range. The minimum "
 "needed value is 2000. SIDs with RIDs larger than this value will be mapped "
@@ -9979,6 +9979,12 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Define o número de uids/gids disponíveis por faixa de domínio. O valor "
+"mínimo necessário é 2000. SIDs com RIDs maiores que este valor serão "
+"mapeadas em faixas extensas dependendo do número de faixas disponíveis. Se o "
+"backend autorid rodar fora das faixas disponíveis, requerimentos do "
+"mapeamento para novos domínios (ou novas faixas de extensão para domínios "
+"conhecidos) são ignorados e o mapa correspondente é descartado."
 
 #: directoryservice/models.py:197
 msgid ""
@@ -10349,3 +10355,144 @@ msgstr "Caminho Remoto"
 #, fuzzy
 msgid "A pool with this name already exists."
 msgstr "Já existe um volume com esse nome."
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr ""
+
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+#, fuzzy
+msgid "Kerberos Keytab"
+msgstr "Arquivo Kerberos Keytab"
+
+#: directoryservice/forms.py:498
+#, fuzzy
+msgid "A keytab is required."
+msgstr "Um arquivo é necessário"
+
+#: directoryservice/models.py:549
+#, fuzzy
+msgid "Kerberos realm."
+msgstr "Servidor Kerberos"
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr ""
+
+#: directoryservice/models.py:554
+#, fuzzy
+msgid "KDC for this realm."
+msgstr "Cota para este volume"
+
+#: directoryservice/models.py:557
+#, fuzzy
+msgid "Admin Server"
+msgstr "Usuário administrador"
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+
+#: directoryservice/models.py:565
+#, fuzzy
+msgid "Password Server"
+msgstr "Servidor de Senhas Kerberos"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr ""
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr ""
+
+#: directoryservice/models.py:586
+#, fuzzy
+msgid "Keytab"
+msgstr "Use keytab"
+
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+#, fuzzy
+msgid "Kerberos Realm"
+msgstr "Arquivo Kerberos Keytab"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s atualizado com sucesso."
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr ""
+
+#: storage/forms.py:2052
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Habilitando isto pode aumentar a velocidade de transferência em redes locais "
+"de alta velocidade/baixa latência. Utiliza algoritmos de encriptação menos "
+"seguros que os padrões, o que o faz menos desejável em redes não-confiáveis."
+
+#: storage/models.py:819
+#, fuzzy
+msgid "Encryption Cipher"
+msgstr "Tipo de Encriptação"
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr ""
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr ""
+
+#: storage/models.py:830
+#, fuzzy
+msgid ""
+"Enabling this may substantially increase transfer speed on high speed, "
+"secure local networks.  It uses NO encryption at all, making it totally "
+"unsuitable for untrusted networks."
+msgstr ""
+"Habilitando isto pode aumentar a velocidade de transferência em redes locais "
+"de alta velocidade/baixa latência. Utiliza algoritmos de encriptação menos "
+"seguros que os padrões, o que o faz menos desejável em redes não-confiáveis."
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos"
+msgstr "Servidor Kerberos"
+
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos Realms"
+msgstr "Arquivo Kerberos Keytab"
+
+#: templates/directoryservice/index.html:18
+#, fuzzy
+msgid "Kerberos Keytabs"
+msgstr "Arquivo Kerberos Keytab"
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr ""
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr ""

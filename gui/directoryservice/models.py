@@ -40,6 +40,7 @@ DS_TYPE_ACTIVEDIRECTORY = 1
 DS_TYPE_LDAP = 2
 DS_TYPE_NIS = 3
 DS_TYPE_NT4 = 4
+DS_TYPE_CIFS = 5
 
 def directoryservice_to_enum(ds_type):
     enum = DS_TYPE_NONE
@@ -47,7 +48,8 @@ def directoryservice_to_enum(ds_type):
         'ActiveDirectory': DS_TYPE_ACTIVEDIRECTORY,
         'LDAP': DS_TYPE_LDAP,
         'NIS': DS_TYPE_NIS,
-        'NT4': DS_TYPE_NT4
+        'NT4': DS_TYPE_NT4,
+        'CIFS': DS_TYPE_CIFS,
     }
 
     try:
@@ -64,7 +66,8 @@ def enum_to_directoryservice(enum):
         DS_TYPE_ACTIVEDIRECTORY: 'ActiveDirectory',
         DS_TYPE_LDAP: 'LDAP',
         DS_TYPE_NIS: 'NIS',
-        DS_TYPE_NT4: 'NT4'
+        DS_TYPE_NT4: 'NT4',
+        DS_TYPE_CIFS: 'CIFS'
     }
 
     try: 
@@ -143,6 +146,14 @@ class idmap_base(Model):
 
         self.idmap_backend_type = IDMAP_TYPE_NONE
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+        if 'idmap_ds_type' in kwargs:
+            self.idmap_ds_type = kwargs['idmap_ds_type']
+        if 'idmap_ds_id' in kwargs:
+            self.idmap_ds_id = kwargs['idmap_ds_id']
+
+    def __unicode__(self):
+        return self.idmap_backend_name
 
     class Meta:
         abstract = True
@@ -547,11 +558,13 @@ class KerberosRealm(Model):
         verbose_name=_("Realm"),
         max_length=120,
         help_text=_("Kerberos realm."),
+        unique=True
     )
     krb_kdc = models.CharField(
         verbose_name=_("KDC"),
         max_length=120,
         help_text=_("KDC for this realm."),
+        blank=True
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
@@ -560,6 +573,7 @@ class KerberosRealm(Model):
             "Specifies the admin server for this realm, where all the "
             "modifications to the database are performed."
         ),
+        blank=True
     )
     krb_kpasswd_server = models.CharField(
         verbose_name=_("Password Server"),
@@ -698,6 +712,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_keytab = models.ForeignKey(
         KerberosKeytab,
         verbose_name=_("Kerberos Keytab"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
@@ -750,7 +765,10 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
-        verbose_name=_("Kerberos Realm")
+        verbose_name=_("Kerberos Realm"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
@@ -788,6 +806,30 @@ class ActiveDirectory(DirectoryServiceBase):
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
 
+    def save(self):
+        super(ActiveDirectory, self).save()
+
+        if not self.ad_kerberos_realm:
+            from freenasUI.common.freenasldap import (
+                FreeNAS_ActiveDirectory,
+                FLAGS_DBINIT
+            )
+
+            try:
+                fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+                kr = KerberosRealm()
+                kr.krb_realm = self.ad_domainname.upper()
+                kr.krb_kdc = fad.krbname
+                kr.krb_admin_server = kr.krb_kdc
+                kr.krb_kpasswd_server = fad.kpwdname
+                kr.save()
+
+                self.ad_kerberos_realm = kr
+                super(ActiveDirectory, self).save()
+
+            except Exception as e:
+                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e)
 
     class Meta:
         verbose_name = _("Active Directory")
@@ -903,6 +945,14 @@ class LDAP(DirectoryServiceBase):
             "ou=Computers"),
         blank=True
     )
+    ldap_sudosuffix = models.CharField(
+        verbose_name=_("SUDO Suffix"),
+        max_length=120,
+        help_text=_("This parameter specifies the suffix that is used for "
+            "the SUDO configuration in the LDAP directory, e.g. "
+            "ou=SUDOers"),
+        blank=True
+    )
     ldap_use_default_domain = models.BooleanField(
         verbose_name=_("Use default domain"),
         default=False,
@@ -911,12 +961,14 @@ class LDAP(DirectoryServiceBase):
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
     ldap_kerberos_keytab = models.ForeignKey(
         KerberosKeytab,
         verbose_name=_("Kerberos Keytab"),
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )

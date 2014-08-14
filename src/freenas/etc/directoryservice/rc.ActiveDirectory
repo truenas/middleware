@@ -988,13 +988,13 @@ AD_load_database_values()
 	FROM
 		directoryservice_activedirectory as ad
 
-	INNER JOIN
+	LEFT OUTER JOIN
 		directoryservice_kerberoskeytab as kk
 
 	ON
 		(ad.ad_kerberos_keytab_id = kk.id)
 
-	INNER JOIN
+	LEFT OUTER JOIN
 		directoryservice_kerberosrealm as kr
 	ON
 		(ad.ad_kerberos_realm_id = kr.id)

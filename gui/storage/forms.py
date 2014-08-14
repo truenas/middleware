@@ -1191,7 +1191,8 @@ class VolumeAutoImportForm(Form):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
 
-    def _populate_disk_choices(self):
+    @staticmethod
+    def _populate_disk_choices():
 
         diskchoices = dict()
         used_disks = []
@@ -1854,7 +1855,11 @@ class CloneSnapshotForm(Form):
                 zvol,
                 snapname)
         else:
-            self.fields['cs_name'].initial = '%s/clone-%s' % (
+            if '/' in dataset:
+                dataset = '%s-' % dataset
+            else:
+                dataset= '%s/' % dataset
+            self.fields['cs_name'].initial = '%s%s-clone' % (
                 dataset,
                 snapname)
 
@@ -2034,24 +2039,10 @@ class ReplicationForm(ModelForm):
         label=_("Dedicated User"),
         required=False,
     )
-    repl_remote_fast_cipher = forms.BooleanField(
-        label=_("Enable High Speed Ciphers"),
-        initial=False,
-        required=False,
-        help_text=_(
-            "Enabling this may increase transfer speed on high "
-            "speed/low latency local networks.  It uses less secure encryption"
-            " algorithms than the defaults, which makes it less desirable on "
-            "untrusted networks."),
-    )
-    repl_remote_no_cipher = forms.BooleanField(
-        label=_("Disable Encryption (SECURE LAN ONLY)"),
-        initial=False,
-        required=False,
-        help_text=_(
-            "Enabling this may substantially increase transfer speed on high "
-            "speed, secure local networks.  It uses NO ENCRYPTION AT ALL,"
-            " making it totally unsuitable for untrusted networks."),
+    repl_remote_cipher = forms.ChoiceField(
+        label=_("Encryption Cipher"),
+        initial='standard',
+        choices=choices.REPL_CIPHER,
     )
     repl_remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
@@ -2105,6 +2096,10 @@ class ReplicationForm(ModelForm):
             'toggleGeneric("id_repl_remote_dedicateduser_enabled", '
             '["id_repl_remote_dedicateduser"], true);')
 
+        self.fields['repl_remote_cipher'].widget.attrs['onChange'] = (
+            'remoteCipherConfirm'
+        )
+
         if repl and repl.id:
             self.fields['repl_remote_hostname'].initial = (
                 repl.repl_remote.ssh_remote_hostname)
@@ -2115,21 +2110,24 @@ class ReplicationForm(ModelForm):
                 repl.repl_remote.ssh_remote_dedicateduser_enabled)
             self.fields['repl_remote_dedicateduser'].initial = (
                 repl.repl_remote.ssh_remote_dedicateduser)
-            self.fields['repl_remote_fast_cipher'].initial = (
-                repl.repl_remote.ssh_fast_cipher)
-            self.fields['repl_remote_no_cipher'].initial = (
-                repl.repl_remote.ssh_no_cipher)
+            self.fields['repl_remote_cipher'].initial = (
+                repl.repl_remote.ssh_cipher)
             self.fields['repl_remote_hostkey'].initial = (
                 repl.repl_remote.ssh_remote_hostkey)
             self.fields['repl_remote_hostkey'].required = False
             if not repl.repl_remote.ssh_remote_dedicateduser_enabled:
                 self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
-
         else:
             if not self.data.get("repl_remote_dedicateduser_enabled", False):
                 self.fields['repl_remote_dedicateduser'].widget.attrs[
                     'disabled'] = 'disabled'
+
+        self.fields['repl_remote_cipher'].widget.attrs['data-dojo-props'] = (
+            mark_safe("'oldvalue': '%s'" % (
+                self.fields['repl_remote_cipher'].initial,
+            ))
+        )
 
     def clean_repl_remote_port(self):
         port = self.cleaned_data.get('repl_remote_port')
@@ -2156,8 +2154,7 @@ class ReplicationForm(ModelForm):
         r.ssh_remote_dedicateduser = self.cleaned_data.get(
             "repl_remote_dedicateduser")
         r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
-        r.ssh_fast_cipher = self.cleaned_data.get("repl_remote_fast_cipher")
-        r.ssh_no_cipher = self.cleaned_data.get("repl_remote_no_cipher")
+        r.ssh_cipher = self.cleaned_data.get("repl_remote_cipher")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r
@@ -2419,7 +2416,7 @@ class UnlockPassphraseForm(Form):
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
-        initial=['cifs', 'afp', 'nfs', 'iscsitarget', 'jails'],
+        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs'],
         required=False,
     )
 
@@ -2429,6 +2426,7 @@ class UnlockPassphraseForm(Form):
         choices = [
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
+            ('ftp', _('FTP')),
             ('iscsitarget', _('iSCSI')),
             ('nfs', _('NFS')),
         ]

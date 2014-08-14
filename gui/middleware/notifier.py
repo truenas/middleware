@@ -1052,20 +1052,24 @@ class notifier:
         self._system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcereload")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _restart_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service samba_server quietrestart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server quietstart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _stop_cifs(self):
         self._system("/usr/sbin/service samba_server forcestop")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
         self._system("/usr/sbin/service ix-bsnmpd quietstart")
@@ -3353,6 +3357,30 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
+    def graid_all(self):
+        """
+        Get all available graid instances
+
+        Returns:
+            A list of dicts describing the graid
+        """
+
+        graids = []
+        doc = self._geom_confxml()
+        for geom in doc.xpath("//class[name = 'RAID']/geom"):
+            consumers = []
+            gname = geom.xpath("./name")[0].text
+            for ref in geom.xpath("./consumer/provider/@ref"):
+                for name in doc.xpath(
+                    "//provider[@id = '%s']/name" % ref
+                ):
+                    consumers.append(name.text)
+            graids.append({
+                'name': gname,
+                'consumers': consumers,
+            })
+        return graids
+
     def get_disks(self):
         """
         Grab usable disks and pertinent info about them
@@ -3376,6 +3404,11 @@ class notifier:
                 if dev in disks:
                     disks.remove(dev)
             disks.append(mp.devname)
+
+        for graid in self.graid_all():
+            for dev in graid.get("consumers"):
+                if dev in disks:
+                    disks.remove(dev)
 
         for disk in disks:
             info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
@@ -4260,7 +4293,10 @@ class notifier:
 
     def zpool_version(self, name):
         p1 = self._pipeopen("zpool get -H -o value version %s" % name)
-        res = p1.communicate()[0].strip('\n')
+        res, err = p1.communicate()
+        if p1.returncode != 0:
+            raise ValueError(err)
+        res = res[0].strip('\n')
         try:
             return int(res)
         except:
@@ -5203,6 +5239,7 @@ class notifier:
         if os.path.lexists(SYSTEMPATH):
             os.unlink(SYSTEMPATH)
         os.symlink('/mnt/%s' % basename, SYSTEMPATH)
+        self.nfsv4link()
 
         return systemdataset
 
@@ -5221,40 +5258,41 @@ class notifier:
 
     def nfsv4link(self):
         SYSTEMPATH = self.system_dataset_path()
-        restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if (
-            hasattr(self, 'failover_status') and
-            self.failover_status() == 'BACKUP'
-        ):
-            pass
-        else:
-            for item in restartfiles:
-                if os.path.exists(item):
-                    if os.path.isfile(item) and not os.path.islink(item):
-                        # It's an honest to goodness file, this shouldn't ever happen...but
-                        if not os.path.isfile(os.path.join(SYSTEMPATH, os.path.basename(item))):
-                            # there's no file in the system dataset, so copy over what we have
-                            # being careful to nuke anything that is there that happens to
-                            # have the same name.
-                            if os.path.exists(os.path.join(SYSTEMPATH, os.path.basename(item))):
-                                shutil.rmtree(os.path.join(SYSTEMPATH, os.path.basename(item)))
-                            shutil.copy(item, os.path.join(SYSTEMPATH, os.path.basename(item)))
-                        # Nuke the original file and create a symlink to it
-                        # We don't need to worry about creating the file on the system dataset
-                        # because it's either been copied over, or was already there.
-                        os.unlink(item)
-                        os.symlink(os.path.join(SYSTEMPATH, os.path.basename(item)), item)
-                    elif os.path.isdir(item):
-                        # Pathological case that should never happen
-                        shutil.rmtree(item)
-                        self._createlink(SYSTEMPATH, item)
-                    else:
-                        if not os.path.exists(os.readlink(item)):
-                            # Dead symlink or some other nastiness.
+        if SYSTEMPATH:
+            restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
+            if (
+                hasattr(self, 'failover_status') and
+                self.failover_status() == 'BACKUP'
+            ):
+                pass
+            else:
+                for item in restartfiles:
+                    if os.path.exists(item):
+                        if os.path.isfile(item) and not os.path.islink(item):
+                            # It's an honest to goodness file, this shouldn't ever happen...but
+                            if not os.path.isfile(os.path.join(SYSTEMPATH, os.path.basename(item))):
+                                # there's no file in the system dataset, so copy over what we have
+                                # being careful to nuke anything that is there that happens to
+                                # have the same name.
+                                if os.path.exists(os.path.join(SYSTEMPATH, os.path.basename(item))):
+                                    shutil.rmtree(os.path.join(SYSTEMPATH, os.path.basename(item)))
+                                shutil.copy(item, os.path.join(SYSTEMPATH, os.path.basename(item)))
+                            # Nuke the original file and create a symlink to it
+                            # We don't need to worry about creating the file on the system dataset
+                            # because it's either been copied over, or was already there.
+                            os.unlink(item)
+                            os.symlink(os.path.join(SYSTEMPATH, os.path.basename(item)), item)
+                        elif os.path.isdir(item):
+                            # Pathological case that should never happen
                             shutil.rmtree(item)
                             self._createlink(SYSTEMPATH, item)
-                else:
-                    self._createlink(SYSTEMPATH, item)
+                        else:
+                            if not os.path.exists(os.readlink(item)):
+                                # Dead symlink or some other nastiness.
+                                shutil.rmtree(item)
+                                self._createlink(SYSTEMPATH, item)
+                    else:
+                        self._createlink(SYSTEMPATH, item)
 
     def system_dataset_migrate(self, _from, _to):
 

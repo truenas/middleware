@@ -5,11 +5,13 @@ import json
 import sys
 import conn
 import storage_disk
+import os
 
+#os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'storage/volume/'
-disk_name = storage_disk.get()
+disk_name = storage_disk.get_name()
 payload = {
           "volume_name": "new_volume_test_suite",
           "layout": [
@@ -28,14 +30,20 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get storage-volume --> Succeeded!'
+    print '\nGet storage-volume --> Succeeded!'
   else:
     print 'Get storage-volume --> Failed!'
+  return r
 
 def post():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  i = 0
+  if len(result)>0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
@@ -45,27 +53,22 @@ def post():
     print 'Create storage-volume --> Failed!'
 
 def put():
-  r = requests.get(url, auth = auth)
-  result = json.loads(r.text)
-  if len(result)>0:
-    r = requests.put(url+'1/', auth = auth, data = json.dumps(payload), headers = headers)
-  else:                                                                   
-    id = post()
-    r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
-  if r.status_code == 200:
-    print 'Update storage-volume --> Succeeded!'
-  else:
-    print 'Update storage-volume --> Failed!'
+  print 'No PUT function for storage-volume!'
 
 def delete():
   r = requests.get(url, auth = auth)
   result = json.loads(r.text)
   if len(result)>0:
-    r = requests.delete(url+'1/', auth = auth)
+    for i in range(0,len(result)):
+      r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+      if r.status_code == 204:
+        print 'Delete storage-volume --> Succeeded!'
+      else:
+        print 'Delete storage-volume --> Failed!'
   else:
     id = post()
     r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete storage-volume --> Succeeded!'
-  else:
-    print 'Delete storage-volume --> Failed!'
+    if r.status_code == 204:
+      print 'Delete storage-volume --> Succeeded!'
+    else:
+      print 'Delete storage-volume --> Failed!'

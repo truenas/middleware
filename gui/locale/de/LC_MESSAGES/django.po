@@ -10756,3 +10756,128 @@ msgstr "Entferntes Verzeichnis"
 #, fuzzy
 msgid "A pool with this name already exists."
 msgstr "Es existiert bereits ein Volume mit diesem Namen."
+
+#: directoryservice/forms.py:341
+#: directoryservice/forms.py:448
+msgid "%s."
+msgstr ""
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: directoryservice/forms.py:486
+#: directoryservice/models.py:700
+#: directoryservice/models.py:919
+#, fuzzy
+msgid "Kerberos Keytab"
+msgstr "Kerberos Keytab Datei"
+
+#: directoryservice/forms.py:498
+#, fuzzy
+msgid "A keytab is required."
+msgstr "Dieses Feld wird benötigt"
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: directoryservice/models.py:549
+#, fuzzy
+msgid "Kerberos realm."
+msgstr "Kerberos Keytab Datei"
+
+#: directoryservice/models.py:552
+msgid "KDC"
+msgstr ""
+
+# im deutschen Oracle ZFS Handbuch werden die Begriffe nicht übersetzt
+#: directoryservice/models.py:554
+#, fuzzy
+msgid "KDC for this realm."
+msgstr "Quota für dieses Volume"
+
+#: directoryservice/models.py:557
+#, fuzzy
+msgid "Admin Server"
+msgstr "Administrativer Benutzer"
+
+#: directoryservice/models.py:560
+msgid ""
+"Specifies the admin server for this realm, where all the modifications to "
+"the database are performed."
+msgstr ""
+
+#: directoryservice/models.py:565
+#, fuzzy
+msgid "Password Server"
+msgstr "Passwort"
+
+#: directoryservice/models.py:568
+msgid ""
+"Points to the server where all the password changes are performed.  If there "
+"is no such entry, the kpasswd port on the admin_server host will be tried."
+msgstr ""
+
+#: directoryservice/models.py:581
+msgid "Principal"
+msgstr ""
+
+#: directoryservice/models.py:583
+msgid "Kerberos principal, eg: primary/instance@REALM"
+msgstr ""
+
+#: directoryservice/models.py:586
+msgid "Keytab"
+msgstr ""
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: directoryservice/models.py:753
+#: directoryservice/models.py:913
+#: services/models.py:1662
+#, fuzzy
+msgid "Kerberos Realm"
+msgstr "Kerberos Keytab Datei"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s erfolgreich aktualisiert."
+
+#: sharing/models.py:290
+msgid "Security"
+msgstr ""
+
+#: storage/models.py:819
+#, fuzzy
+msgid "Encryption Cipher"
+msgstr "Verschlüsselungsmodus"
+
+#: storage/models.py:821
+msgid "Standard"
+msgstr ""
+
+#: storage/models.py:822
+msgid "Fast"
+msgstr ""
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos"
+msgstr "Kerberos Keytab Datei"
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: templates/directoryservice/index.html:15
+#, fuzzy
+msgid "Kerberos Realms"
+msgstr "Kerberos Keytab Datei"
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: templates/directoryservice/index.html:18
+#, fuzzy
+msgid "Kerberos Keytabs"
+msgstr "Kerberos Keytab Datei"
+
+#: templates/system/initialwizard_shares.html:51
+#: templates/system/initialwizard_volume.html:92
+msgid "Exit"
+msgstr ""
+
+#: templates/system/initialwizard_import.html:31
+msgid "Skip"
+msgstr ""

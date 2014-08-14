@@ -53,8 +53,9 @@ BLACKLIST = [
     'idmap_rid',
     'idmap_tdb',
     'idmap_tdb2',
-    'directoryservice_idmap'
-
+    'directoryservice_idmap',
+    'KerberosKeytab',
+    'KerberosRealm'
 ]
 ORDER = 25
 
@@ -66,6 +67,7 @@ class ActiveDirectoryView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'ActiveDirectoryIcon'
     append_to = 'directoryservice'
+    order = 0
 
 
 class NT4View(TreeNode):
@@ -76,6 +78,7 @@ class NT4View(TreeNode):
     type = 'opendirectoryservice'
     icon = u'NT4Icon'
     append_to = 'directoryservice'
+    order = 1
 
 
 class NISView(TreeNode):
@@ -86,6 +89,7 @@ class NISView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'NISIcon'
     append_to = 'directoryservice'
+    order = 2
 
 
 class LDAPView(TreeNode):
@@ -96,3 +100,26 @@ class LDAPView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'LDAPIcon'
     append_to = 'directoryservice'
+    order = 3
+
+
+class KerberosRealmView(TreeNode):
+
+    gname = 'KerberosRealm'
+    name = _('Kerberos Realms')
+    app_name = 'kerberosrealm'
+    type = 'opendirectoryservice'
+    icon = u'KerberosRealmIcon'
+    append_to = 'directoryservice'
+    order = 4
+
+
+class KerberosKeytabView(TreeNode):
+
+    gname = 'KerberosKeytab'
+    name = _('Kerberos Keytabs')
+    app_name = 'kerberoskeytab'
+    type = 'opendirectoryservice'
+    icon = u'KerberosKeytabIcon'
+    append_to = 'directoryservice'
+    order = 5

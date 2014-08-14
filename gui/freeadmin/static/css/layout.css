@@ -128,7 +128,7 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
     width: 400px;
 }
 .select-available {
-    width:45%;
+    width:38%;
     float:left;
 }
 .select-available select {
@@ -136,13 +136,18 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
 }
 .select-options {
     text-align:center;
-    width:5%;
+    width:7%;
     position:relative;
     top:-26px;
     float:left;
 }
 .select-selected {
-    width:45%;
+    width:38%;
+    float:left;
+}
+.select-buttons {
+    padding-top: 10px;
+    width:16%;
     float:left;
 }
 .select-selected select {

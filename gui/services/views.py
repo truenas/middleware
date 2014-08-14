@@ -31,10 +31,19 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
+from freenasUI.directoryservice.forms import idmap_tdb_Form
+from freenasUI.directoryservice.models import (
+    idmap_tdb,
+    DS_TYPE_CIFS
+)
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.views import JsonResp
 from freenasUI.services import models
-from freenasUI.services.forms import servicesForm
+from freenasUI.services.forms import (
+    servicesForm,
+    CIFSForm
+)
 
 log = logging.getLogger("services.views")
 
@@ -235,4 +244,48 @@ def servicesToggleView(request, formname):
 def enable(request, svc):
     return render(request, "services/enable.html", {
         'svc': svc,
+    })
+
+def services_cifs(request):
+    try:
+        cifs = models.CIFS.objects.all()[0]
+    except:
+        cifs = models.CIFS()
+
+    try:
+        it = idmap_tdb.objects.get(
+            idmap_ds_type=DS_TYPE_CIFS,
+            idmap_ds_id=cifs.id
+        )
+
+    except Exception as e:
+        it = idmap_tdb()
+
+    if request.method == "POST":
+        form = CIFSForm(request.POST, instance=cifs)
+        if form.is_valid():
+            form.save()
+        else:
+            return JsonResp(request, form=form)
+
+        idmap_form = idmap_tdb_Form(request.POST, instance=it)
+        if idmap_form.is_valid():
+            idmap_form.save()
+            return JsonResp(
+                request,
+                message=_("CIFS successfully updated.")
+            )
+        else:
+            return JsonResp(request, form=idmap_form)
+
+    else:
+        form = CIFSForm(instance=cifs)
+        idmap_form = idmap_tdb_Form(instance=it)
+
+    idmap_form.fields['idmap_tdb_range_low'].label = "Idmap Range Low"
+    idmap_form.fields['idmap_tdb_range_high'].label = "Idmap Range High"
+
+    return render(request, 'services/cifs.html', {
+        'form': form,
+        'idmap_form': idmap_form
     })

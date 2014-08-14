@@ -44,6 +44,7 @@ from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
+from django.utils.html import escapejs
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
@@ -52,6 +53,16 @@ from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP
+)
+from freenasUI.directoryservice.forms import (
+    ActiveDirectoryForm,
+)
+from freenasUI.directoryservice.models import (
+    ActiveDirectory,
+)
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -70,6 +81,7 @@ from freenasUI.sharing.models import (
     NFS_Share,
     NFS_Share_Path,
 )
+from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import MountPoint, Volume, Scrub
 from freenasUI.system import models
 
@@ -190,10 +202,23 @@ class InitialWizard(CommonWizard):
 
         form_list = self.get_form_list()
         volume_form = form_list.get('volume')
+        volume_import = form_list.get('import')
+        ds_form = form_list.get('ds')
 
         with transaction.atomic():
             _n = notifier()
-            if volume_form:
+            if volume_form or volume_import:
+
+                if volume_import:
+                    volume_name, guid = cleaned_data.get(
+                        'volume_disks'
+                    ).split('|')
+                    if not _n.zfs_import(volume_name, guid):
+                        raise MiddlewareError(_(
+                            'The volume "%s" failed to import, '
+                            'for futher details check pool status'
+                        ) % volume_name)
+
                 volume = Volume(
                     vol_name=volume_name,
                     vol_fstype='ZFS',
@@ -205,21 +230,22 @@ class InitialWizard(CommonWizard):
                     mp_path='/mnt/' + volume_name,
                     mp_options='rw',
                 )
-
-                bysize = volume_form._get_unused_disks_by_size()
-
-                if volume_type == 'auto':
-                    groups = volume_form._grp_autoselect(bysize)
-                else:
-                    groups = volume_form._grp_predefined(bysize, volume_type)
-
-                _n.init(
-                    "volume",
-                    volume,
-                    groups=groups,
-                    init_rand=False,
-                )
                 Scrub.objects.create(scrub_volume=volume)
+
+                if volume_form:
+                    bysize = volume_form._get_unused_disks_by_size()
+
+                    if volume_type == 'auto':
+                        groups = volume_form._grp_autoselect(bysize)
+                    else:
+                        groups = volume_form._grp_predefined(bysize, volume_type)
+
+                    _n.init(
+                        "volume",
+                        volume,
+                        groups=groups,
+                        init_rand=False,
+                    )
             else:
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
                 volume_name = volume.vol_name
@@ -401,6 +427,31 @@ class InitialWizard(CommonWizard):
                 )
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
+
+        if ds_form:
+            if cleaned_data.get('ds_type') == 'ad':
+                try:
+                    ad = ActiveDirectory.objects.all().order_by('-id')[0]
+                except:
+                    ad = ActiveDirectory.objects.create()
+                addata = ad.__dict__
+                addata.update({
+                    'ad_domainname': cleaned_data.get('ds_ad_domainname'),
+                    'ad_bindname': cleaned_data.get('ds_ad_bindname'),
+                    'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
+                    'ad_enable': True,
+                })
+                adform = ActiveDirectoryForm(
+                    data=addata,
+                    instance=ad,
+                )
+                if adform.is_valid():
+                    adform.save()
+                else:
+                    log.warn(
+                        'Active Directory data failed to validate: %r',
+                        adform._errors,
+                    )
 
         progress['step'] = 3
         progress['indeterminate'] = False
@@ -1143,6 +1194,113 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("collectd")
 
 
+class InitialWizardDSForm(Form):
+
+    ds_type = forms.ChoiceField(
+        label=_('Directory Service'),
+        choices=(
+            ('ad', _('Active Directory')),
+            ('ldap', _('LDAP')),
+            #('nis', _('NIS')),
+            #('nt4', _('NT4')),
+        ),
+        initial='ad',
+    )
+    ds_ad_domainname = forms.CharField(
+        label=_('Domain Name (DNS/Realm-Name)'),
+        required=False,
+    )
+    ds_ad_bindname = forms.CharField(
+        label=_('Domain Account Name'),
+        required=False,
+    )
+    ds_ad_bindpw = forms.CharField(
+        label=_('Domain Account Password'),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+    ds_ldap_hostname = forms.CharField(
+        label=_('Hostname'),
+        required=False,
+    )
+    ds_ldap_basedn = forms.CharField(
+        label=('Base DN'),
+        required=False,
+    )
+    ds_ldap_binddn = forms.CharField(
+        label=('Base DN'),
+        required=False,
+    )
+    ds_ldap_bindpw = forms.CharField(
+        label=('Base Password'),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardDSForm, self).__init__(*args, **kwargs)
+
+        pertype = defaultdict(list)
+        for fname in self.fields.keys():
+            if fname.startswith('ds_ad_'):
+                pertype['ad'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_ldap_'):
+                pertype['ldap'].append('id_ds-%s' % fname)
+
+        self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
+            'id_ds-ds_type',
+            escapejs(json.dumps(pertype)),
+        )
+        self.fields['ds_type'].widget.attrs['onChange'] = (
+            self.jsChange
+        )
+
+    def clean(self):
+        cdata = self.cleaned_data
+
+        if cdata.get('ds_type') == 'ad':
+            domain = cdata.get('ds_ad_domainname')
+            bindname = cdata.get('ds_ad_bindname')
+            bindpw = cdata.get('ds_ad_bindpw')
+            binddn = '%s@%s' % (bindname, domain)
+            errors = []
+
+            if not (domain or bindname or bindpw):
+                if not domain:
+                    self._errors['ds_ad_domainname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindname:
+                    self._errors['ds_ad_bindname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindpw:
+                    self._errors['ds_ad_bindpw'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            else:
+
+                try:
+                    ret = FreeNAS_ActiveDirectory.validate_credentials(
+                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    )
+                except Exception, e:
+                    raise forms.ValidationError("%s." % e)
+
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+
+        return cdata
+
+    def done(self, request=None, **kwargs):
+        dsdata = self.cleaned_data
+        # Save Directory Service (DS) in the session so we can retrieve DS
+        # users and groups for the Ownership screen
+        request.session['wizard_ds'] = dsdata
+
+
 class InitialWizardShareForm(Form):
 
     share_name = forms.CharField(
@@ -1261,6 +1419,9 @@ class InitialWizardVolumeForm(Form):
 
     @classmethod
     def show_condition(cls, wizard):
+        imported = wizard.get_cleaned_data_for_step('import')
+        if imported:
+            return False
         has_disks = (
             len(cls._types_avail(cls._get_unused_disks_by_size())) > 0
         )
@@ -1478,6 +1639,15 @@ class InitialWizardVolumeForm(Form):
                 _('No available disks have been found.'),
             ])
         return self.cleaned_data
+
+
+class InitialWizardVolumeImportForm(VolumeAutoImportForm):
+
+    @classmethod
+    def show_condition(cls, wizard):
+        if Volume.objects.all().exists():
+            return False
+        return len(cls._populate_disk_choices()) > 0
 
 
 class InitialWizardConfirmForm(Form):

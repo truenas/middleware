@@ -37,7 +37,10 @@ from django.core.validators import (
 )
 
 from freenasUI import choices
-from freenasUI.directoryservice.models import KerberosRealm
+from freenasUI.directoryservice.models import (
+    KerberosRealm,
+    idmap_tdb
+)
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField
 )
@@ -706,9 +709,12 @@ class iSCSITarget(Model):
             verbose_name=_("Portal Group ID"),
             )
     iscsi_target_initiatorgroup = models.ForeignKey(
-            iSCSITargetAuthorizedInitiator,
-            verbose_name=_("Initiator Group ID"),
-            )
+        iSCSITargetAuthorizedInitiator,
+        verbose_name=_("Initiator Group ID"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        )
     iscsi_target_authtype = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
@@ -1659,7 +1665,10 @@ class DomainController(Model):
             )
     dc_kerberos_realm = models.ForeignKey(
             KerberosRealm,
-            verbose_name=_("Kerberos Realm")
+            verbose_name=_("Kerberos Realm"),
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
             )
 
     def __init__(self, *args, **kwargs):
