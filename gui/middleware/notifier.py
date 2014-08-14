@@ -3249,6 +3249,30 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
+    def graid_all(self):
+        """
+        Get all available graid instances
+
+        Returns:
+            A list of dicts describing the graid
+        """
+
+        graids = []
+        doc = self._geom_confxml()
+        for geom in doc.xpath("//class[name = 'RAID']/geom"):
+            consumers = []
+            gname = geom.xpath("./name")[0].text
+            for ref in geom.xpath("./consumer/provider/@ref"):
+                for name in doc.xpath(
+                    "//provider[@id = '%s']/name" % ref
+                ):
+                    consumers.append(name.text)
+            graids.append({
+                'name': gname,
+                'consumers': consumers,
+            })
+        return graids
+
     def get_disks(self):
         """
         Grab usable disks and pertinent info about them
@@ -3272,6 +3296,11 @@ class notifier:
                 if dev in disks:
                     disks.remove(dev)
             disks.append(mp.devname)
+
+        for graid in self.graid_all():
+            for dev in graid.get("consumers"):
+                if dev in disks:
+                    disks.remove(dev)
 
         for disk in disks:
             info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
