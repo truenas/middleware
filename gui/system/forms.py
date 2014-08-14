@@ -1590,6 +1590,8 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
 
     @classmethod
     def show_condition(cls, wizard):
+        if not Volume.objects.all().exists():
+            return False
         return len(cls._populate_disk_choices()) > 0
 
 
