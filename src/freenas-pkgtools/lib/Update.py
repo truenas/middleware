@@ -222,6 +222,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         mount_point = None
 
     for pkg in deleted_packages:
+        log.debug("Want to delete package %s" % pkg.Name())
         print >> sys.stderr, "Want to delete package %s" % pkg.Name()
         if conf.PackageDB(root).RemovePackageContents(pkg) == False:
             print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
