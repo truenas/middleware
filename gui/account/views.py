@@ -125,7 +125,7 @@ def json_users(request, exclude=None):
 
     # Show users for the directory service provided in the wizard
     wizard_ds = request.session.get('wizard_ds')
-    if wizard_ds:
+    if request.GET.get('wizard') == '1' and wizard_ds:
         if wizard_ds.get('ds_type') == 'ad':
             users = FreeNAS_ActiveDirectory_Users(
                 domainname=wizard_ds.get('ds_ad_domainname'),
