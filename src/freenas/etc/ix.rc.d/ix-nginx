@@ -432,6 +432,7 @@ ix_nginx_start()
 	fi
 
 	generate_plugins_conf
+	generate_webdav_conf
 	generate_fastcgi_params
 
 	generate_nginx_conf "${proto}" "${addr}" "${addr6}" "${port}" "${httpsport}" "${httpsredirect}"
