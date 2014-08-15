@@ -1,10 +1,13 @@
 import os, sys
 import json
 import hashlib
+import logging
 
 import Configuration
 import Exceptions
 import Package
+
+log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/etc/manifest"
 BACKUP_MANIFEST_FILE = "/conf/base/etc/manifest"

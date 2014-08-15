@@ -6,6 +6,7 @@ import stat
 import json
 import tarfile
 import hashlib
+import logging
 
 import getopt
 
@@ -17,6 +18,8 @@ import Configuration
 
 debug = 0
 verbose = False
+
+log = logging.getLogger('freenasOS.Installer')
 
 class InstallerConfigurationException(Exception):
     pass
@@ -153,7 +156,7 @@ def RemoveFile(path):
         if e[0] == errno.ENOENT:
             return True
         else:
-            if debug: print >> sys.stderr, "RemoveFile(%s):  errno = %d" % (path, e[0])
+            if debug: log.debug("RemoveFile(%s):  errno = %d" % (path, e[0]))
             return False
     return True
 
@@ -252,10 +255,10 @@ def GetTarMeta(ti):
         flags = 0
         if "SCHILY.fflags" in ti.pax_headers:
             for k in ti.pax_headers["SCHILY.fflags"].split(","):
-                if debug > 1: print >> sys.stderr, "flag %s" % k
+                if debug > 1: log.debug("flag %s" % k)
                 if k in ext_keys:
                     flags |= ext_keys[k]
-            if debug > 1: print >> sys.stderr, "flags was %s, value = %o" % (ti.pax_headers["SCHILY.fflags"], flags)
+            if debug > 1: log.debug("flags was %s, value = %o" % (ti.pax_headers["SCHILY.fflags"], flags))
         rv[TAR_FLAGS_KEY] = flags
     return rv
 
@@ -264,9 +267,8 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
     # This makes my head hurt
     if scripts is None:
         return
-#    print >> sys.stderr, "scripts = %s" % (scripts.keys())
     if type not in scripts:
-        if verbose or debug:  print >> sys.stderr, "No %s script to run" % type
+        if verbose or debug:  log.debug("No %s script to run" % type)
         return
     
     scriptName = "/%d-%s" % (os.getpid(), type)
@@ -280,8 +282,9 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
     print "script (chroot to %s):  %s\n-----------" % ("/" if root is None else root, args)
     print "%s\n--------------" % scripts[type]
     if os.geteuid() != 0 and root is not None:
-        print >> sys.stderr, "Installation root is set, and process is not root.  Cannot run script %s" % type
-        #return
+        log.error("Installation root is set, and process is not root.  Cannot run script %s" % type)
+        if debug < 4:
+            return
     else:
         pid = os.fork()
         if pid == 0:
@@ -295,11 +298,11 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
             # Parent
             (tpid, status) = os.wait()
             if tpid != pid:
-                print >> sys.stderr, "What?  I waited for process %d and I got %d instead!" % (pid, tpid)
+                log.error("What?  I waited for process %d and I got %d instead!" % (pid, tpid))
             if status != 0:
-                print >> sys.stderr, "Sub procss exited with status %#x" % status
+                log.error("Sub procss exited with status %#x" % status)
         else:
-            print >> sys.stderr, "Huh?  Got -1 from os.fork and no exception?"
+            log.error("Huh?  Got -1 from os.fork and no exception?")
 
     os.unlink("%s%s" % ("/tmp" if root is None else root, scriptName))
         
@@ -331,19 +334,13 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         fileName = "%s%s%s" % (prefix, "" if prefix.endswith("/") or entry.name.startswith("/") else "/", fileName)
     full_path = "%s%s%s" % (root, "" if root.endswith("/") or fileName.startswith("/") else "/", fileName)
             
-#    print >> sys.stderr, "ExtractEntry:  full_path = %s, root = %s, prefix = %s, mFileHash = %s" % (
-#        full_path, root,
-#        prefix if prefix is not None else "<none>",
-#        mFileHash if mFileHash is not None else "-")
-#    return
-
     # After that, we've got a full_path, and so we get the directory it's in,
     # and the name of the file.
     dirname = os.path.dirname(full_path)
     fname = os.path.basename(full_path)
     # Debugging stuff
-    if debug > 0 or verbose: print "%s:  will be extracted as %s" % (entry.name, full_path)
-    if debug > 2: print >> sys.stderr, "entry = %s" % (entry)
+    if debug > 0 or verbose: log.debug("%s:  will be extracted as %s" % (entry.name, full_path))
+    if debug > 2: log.debug("entry = %s" % (entry))
         
     # Get the metainformation from the TarInfo entry.  This is complicated
     # because of how flags are done.  Note that we don't bother with time
@@ -372,7 +369,7 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         # PKGNG sets hash to "-" if it's not computed.
         if mFileHash != "-":
             if hash != mFileHash:
-                print >> sys.stderr, "%s hash does not match manifest" % entry.name
+                log.error("%s hash does not match manifest" % entry.name)
         type = "file"
         # First we try to create teh file.
         # If that doesn't work, we try to create a
@@ -421,21 +418,20 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
             else:
                 hash = hashlib.sha256(entry.linkname).hexdigest()
             if hash != mFileHash:
-                print >> sys.stderr, "%s hash does not match manifest" % entry.name
+                log.error("%s hash does not match manifest" % entry.name)
         # Try to remove the symlink first.
         # Then create the new one.
         try:
             os.unlink(full_path)
         except os.error as e:
             if e[0] != errno.ENOENT:
-                print >> sys.stderr, "Couldn't unlink %s: %s" % (full_path, e[0])
+                log.error("Couldn't unlink %s: %s" % (full_path, e[0]))
                 raise e
         os.symlink(entry.linkname, full_path)
         SetPosix(full_path, meta)
         type = "slink"
         hash = ""
     elif entry.islnk():
-#        print >> sys.stderr, "%s is a hard link to %s" % (entry.name, entry.linkname)
         source_file = root + "/" + entry.linkname
         try:
             st = os.lstat(source_file)
@@ -450,7 +446,7 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
                 os.lchflags(source_file, st.st_flags)
         
         except os.error as e:
-            print >> sys.stderr, "Could not link %s to %s: %s" % (source_file, full_path, str(e))
+            log.error("Could not link %s to %s: %s" % (source_file, full_path, str(e)))
             sys.exit(1)
         # Except on mac os, hard links are always files.
         type = "file"
@@ -472,7 +468,7 @@ def install_path(pkgfile, dest):
     try:
         f = open(pkgfile, "r")
     except Exception as err:
-        print >> sys.stderr, "Cannot open package file %s: %s" % (pkgfile, str(err))
+        log.error("Cannot open package file %s: %s" % (pkgfile, str(err)))
         return False
     else:
         return install_file(f, dest)
@@ -489,7 +485,7 @@ def install_file(pkgfile, dest):
     try:
         t = tarfile.open(fileobj = pkgfile)
     except Exception as err:
-        print >> sys.stderr, "Could not open package file %s: %s" % (pkgfile.name, str(err))
+        log.error("Could not open package file %s: %s" % (pkgfile.name, str(err)))
         return False
 
     member = None
@@ -506,18 +502,18 @@ def install_file(pkgfile, dest):
     # All packages must have a +MANIFEST file.
     # (We don't support +COMPACT_MANIFEST, at least not yet)
     if mjson is None:
-        print >> sys.stderr, "Could not find manifest in package file %s" % pkgfile.name
+        log.error("Could not find manifest in package file %s" % pkgfile.name)
         return False
     
     # Check the architecture
     if PKG_ARCH_KEY in mjson:
         if not (mjson[PKG_ARCH_KEY] in pkg_valid_archs):
-            print >> sys.stderr, "Architecture %s is not valid" % mjson[PKG_ARCH_KEY]
+            log.error("Architecture %s is not valid" % mjson[PKG_ARCH_KEY])
             return False
 
     if PKG_PREFIX_KEY in mjson:
         prefix = mjson[PKG_PREFIX_KEY]
-        if verbose or debug: print >> sys.stderr, "prefix = %s" % prefix
+        if verbose or debug: log.debug("prefix = %s" % prefix)
     
     # See above for how scripts are handled.  It's a mess.
     if PKG_SCRIPTS_KEY in mjson:
@@ -543,7 +539,7 @@ def install_file(pkgfile, dest):
 
         if PKG_REMOVED_FILES_KEY in mjson: pkgDeletedFiles = mjson[PKG_REMOVED_FILES_KEY]
         if PKG_REMOVED_DIRS_KEY in mjson: pkgDeletedDirs = mjson[PKG_REMOVED_DIRS_KEY]
-        if verbose or debug:  print >> sys.stderr, "Deleted files = %s, deleted dirs = %s" % (pkgDeletedFiles, pkgDeletedDirs)
+        if verbose or debug:  log.debug("Deleted files = %s, deleted dirs = %s" % (pkgDeletedFiles, pkgDeletedDirs))
         
     else:
         pkgDeltaVersion = None
@@ -556,7 +552,7 @@ def install_file(pkgfile, dest):
         mdirs.update(mjson[PKG_DIRS_KEY])
     
     print "%s-%s" % (pkgName, pkgVersion)
-    if debug > 1:  print >> sys.stderr, "installation target = %s" % dest
+    if debug > 1:  log.debug("installation target = %s" % dest)
         
     # Note that none of this is at all atomic.
     # To fix that, I should go to a persistent sqlite connection,
@@ -586,22 +582,22 @@ def install_file(pkgfile, dest):
         # If the new version is a delta package, we do things differently
         if pkgDeltaVersion is not None:
             if old_pkg[pkgName] != pkgDeltaVersion:
-                print >> sys.stderr, "Delta package %s->%s cannot upgrade current version %s" % (
-                    pkgDeltaVersion, pkgVersion, old_pkg[pkgName])
+                log.error("Delta package %s->%s cannot upgrade current version %s" % (
+                    pkgDeltaVersion, pkgVersion, old_pkg[pkgName]))
                 return False
             # Next step for a delta package is to remove any removed files and directories.
             # This is done in both the database and the filesystem.
             # If we can't remove a directory due to ENOTEMPTY, we don't care.
             for file in pkgDeletedFiles:
-                if verbose or debug:  print >> sys.stderr, "Deleting file %s" % file
+                if verbose or debug:  log.debug("Deleting file %s" % file)
                 full_path = dest + "/" + file
                 if RemoveFile(full_path) == False:
-                    if debug:  print >> sys.stderr, "Could not remove file %s" % file
+                    if debug:  log.debug("Could not remove file %s" % file)
                     # Ignor error for now
                 pkgdb.RemoveFileEntry(file)
             # Now we try to delete the directories.
             for dir in pkgDeletedDirs:
-                if verbose or debug:  print >> sys.stderr, "Attempting to remove directory %s" % dir
+                if verbose or debug:  log.debug("Attempting to remove directory %s" % dir)
                 full_path = dest + "/" + dir
                 RemoveDirectory(full_path)
                 pkgdb.RemoveFileEntry(dir)
@@ -614,18 +610,18 @@ def install_file(pkgfile, dest):
                              SCRIPT_ARG="DEINSTALL")
 
             if pkgdb.RemovePackageFiles(pkgName) == False:
-                print >> sys.stderr, "Could not remove files from package %s" % pkgName
+                log.error("Could not remove files from package %s" % pkgName)
                 return False
 
             if pkgdb.RemovePackageDirectories(pkgName) == False:
-                print >> sys.stderr, "Could not remove directories from package %s" % pkgName
+                log.error("Could not remove directories from package %s" % pkgName)
                 return False
             if pkgdb.RemovePackageScripts(pkgName) == False:
-                print >> sys.stderr, "Could not remove scripts for package %s" % pkgName
+                log.error("Could not remove scripts for package %s" % pkgName)
                 return False
 
             if pkgdb.RemovePackage(pkgName) == False:
-                print >> sys.stderr, "Could not remove package %s from database" % pkgName
+                log.error("Could not remove package %s from database" % pkgName)
                 return False
 
             if not upgrade_aware:
@@ -636,11 +632,11 @@ def install_file(pkgfile, dest):
 
     if pkgDeltaVersion is not None:
         if pkgdb.UpdatePackage(pkgName, pkgDeltaVersion, pkgVersion, pkgScripts) == False:
-            print >> sys.stderr, "Could not update package from %s to %s in database" % (pkgDeltaVersion, pkgVersion)
+            log.error("Could not update package from %s to %s in database" % (pkgDeltaVersion, pkgVersion))
             return False
-        print "Updated package %s from %s to %s in database" % (pkgName, pkgDeltaVersion, pkgVersion)
+        log.debug("Updated package %s from %s to %s in database" % (pkgName, pkgDeltaVersion, pkgVersion))
     elif pkgdb.AddPackage(pkgName, pkgVersion, pkgScripts) == False:
-        print >> sys.stderr, "Could not add package %s to database" % pkgName
+        log.debug("Could not add package %s to database" % pkgName)
         return False
 
     # Is this correct behaviour for delta packages?
@@ -673,7 +669,7 @@ def install_file(pkgfile, dest):
             if EntryInDictionary(member.name, mdirs, prefix) == False:
                 continue
         if pkgDeltaVersion is not None:
-            if verbose or debug: print >> sys.stderr, "Extracting %s from delta package" % member.name
+            if verbose or debug: log.debug("Extracting %s from delta package" % member.name)
         list = ExtractEntry(t, member, dest, prefix, mFileHash)
         if list is not None:
             pkgFiles.append((pkgName,) + list)
@@ -745,11 +741,11 @@ class Installer(object):
     def InstallPackages(self, progressFunc=None, handler=None):
         for i, pkg in enumerate(self._packages):
             for pkgname in pkg:
-                if verbose or debug:  print >> sys.stderr, "Installing package %s" % pkg
+                if verbose or debug:  log.debug("Installing package %s" % pkg)
                 if handler is not None:
                     handler(index=i + 1, name=pkgname, packages=self._packages)
                 if install_file(pkg[pkgname], self._root) is False:
-                    print >> sys.stderr, "Unable to install package %s" % pkgname
+                    log.error("Unable to install package %s" % pkgname)
                     return False
         return True
 

@@ -261,7 +261,6 @@ class PackageDB:
         else:
             stmt = "INSERT INTO files(package, kind, path, checksum, uid, gid, flags, mode) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
             args = (pkgName, type, path, checksum, uid, gid, flags, mode)
-#        print >> sys.stderr, "stmt = %s" % stmt
         cur.execute(stmt, args)
         self._closedb()
 
@@ -659,8 +658,6 @@ class Configuration(object):
 
         return rv
 
-    def CreateInstallClone(self, name):
-        raise Exception("Not implemented")
 
 if __name__ == "__main__":
     conf = Configuration()

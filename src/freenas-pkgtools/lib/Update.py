@@ -31,8 +31,6 @@ def CheckForUpdates(root = None, handler = None):
     m = conf.FindLatestManifest()
     log.debug("Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
                                                                              if m is not None else 0))
-    print >> sys.stderr, "Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
-                                                                             if m is not None else 0)
     if m is None:
         raise ValueError("Manifest could not be found!")
     diffs = Manifest.CompareManifests(cur, m)
@@ -105,7 +103,8 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         # to get /boot/grub into the clone's mount
         # point, as a nullfs mount.
         # Let's see if we need to do that
-        if os.path.exists(mount_point + grub_cfg) is False:
+        if os.path.exists(grub_cfg) is True and \
+           os.path.exists(mount_point + grub_cfg) is False:
             # Okay, it needs to be ounted
             cmd = "/sbin/mount"
             args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
@@ -187,7 +186,6 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         # Right now, I'm not quite sure how to do this.
         # I should also learn how to log from python.
         log.debug("Updated manifest but no package differences")
-        print >> sys.stderr, "Updated manifest but no package differences"
         return
 
     # Now we have a list of deleted packages, and a list
@@ -209,12 +207,11 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         clone_name = "FreeNAS-%d" % new_man.Sequence()
         if CreateClone(clone_name) is False:
             log.error("Unable to create boot-environment %s" % clone_name)
-            print >> sys.stderr, "Unable to create boot-environment %s" % clone_name
             raise Exception("Unable to create new boot-environment %s" % clone_name)
 
         mount_point = MountClone(clone_name)
         if mount_point is None:
-            print >> sys.stderr, "Unable to mount boot-environment %s" % clone_name
+            log.error("Unable to mount boot-environment %s" % clone_name)
             raise Exception("Unable to mount boot-environment %s" % clone_name)
         else:
             root = mount_point
@@ -223,9 +220,8 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
 
     for pkg in deleted_packages:
         log.debug("Want to delete package %s" % pkg.Name())
-        print >> sys.stderr, "Want to delete package %s" % pkg.Name()
         if conf.PackageDB(root).RemovePackageContents(pkg) == False:
-            print >> sys.stderr, "Unable to remove contents package %s" % pkg.Name()
+            log.error("Unable to remove contents package %s" % pkg.Name())
             UnmountClone(clone_name, mount_point)
             DestroyClone(clone_name)
             raise Exception("Unable to remove contents for package %s" % pkg.Name())
@@ -235,24 +231,20 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     installer.GetPackages(process_packages, handler=get_handler)
 
     log.debug("Packages = %s" % installer._packages)
-    print >> sys.stderr, "Packages = %s" % installer._packages
 
     # Now let's actually install them.
     # Only change on success
     rv = False
     if installer.InstallPackages(handler=install_handler) is False:
         log.error("Unable to install packages")
-        print >> sys.stderr, "Unable to install packages"
     else:
         new_man.Save(root)
         if mount_point is not None:
             if UnmountClone(clone_name, mount_point) is False:
                 log.error("Unable to mount clone enivironment %s" % clone_name)
-                print >> sys.stderr, "Unable to unmount clone environment %s" % clone_name
             else:
                 if ActivateClone(clone_name) is False:
                     log.error("Could not activate clone environment %s" % clone_name)
-                    print >> sys.stderr, "Could not activate clone environment %s" % clone_name
                 else:
                     rv = True
 
@@ -264,7 +256,6 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     if rv is False:
         if DeleteClone(clone_name) is False:
             log.error("Unable to delete boot environment %s in failure case" % clone_name)
-            print >> sys.stderr, "Unable to delete boot environment %s" % clone_name
     
     return rv
 
