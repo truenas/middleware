@@ -101,7 +101,8 @@ add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UN
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
 add_port lang/python
-add_port devel/py-setuptools
+# conflicting version of python (the below is installed as dependency of another port albeit as a different version)
+#add_port devel/py-setuptools
 add_port dns/py-bonjour
 add_port dns/py-dnspython
 add_port devel/tevent
@@ -145,9 +146,9 @@ add_port security/openssl
 add_port security/py-htpasswd
 add_port www/htdigest
 add_port www/pydio
-add_port lang/php55 \
+add_port lang/php5 \
 		OPTIONS_FILE_SET+=FPM
-add_port lang/php55-extensions \
+add_port lang/php5-extensions \
 		OPTIONS_FILE_SET+=CURL \
 		OPTIONS_FILE_SET+=GD \
 		OPTIONS_FILE_SET+=IMAP \
