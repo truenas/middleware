@@ -87,4 +87,9 @@ class Migration(SchemaMigration):
             'webdav_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'webdav_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'webdav_path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
-            'webdav_perm': ('django.db.models.fi
+            'webdav_perm': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'webdav_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+        }
+    }
+
+    complete_apps = ['sharing']
