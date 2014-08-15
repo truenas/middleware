@@ -921,7 +921,8 @@ Create resource
                 "repl_filesystem": "tank",
                 "repl_zfs": "tank",
                 "repl_remote_hostname": "testhost",
-                "repl_remote_hostkey": "AAAA"
+                "repl_remote_hostkey": "AAAA",
+                "repl_remote_cipher": "standard"
         }
 
    **Example response**:
@@ -1357,3 +1358,130 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
+
+
+Permission
+----------
+
+The Permission resource allows one to set mountpoints permissions.
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/storage/permission/
+
+   Update a mountpoint with the given permission.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/permission/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "mp_path": "/mnt/tank",
+                "mp_acl": "unix",
+                "mp_mode": "755",
+                "mp_user": "root",
+                "mp_group": "wheel",
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Mount Point permissions successfully updated.
+
+   :json string mp_path: mount point path to update
+   :json string mp_acl: type of acl (windows/unix)
+   :json string mp_mode: octal mode number for user, group and other
+   :json string mp_user: username
+   :json string mp_group: group
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/storage/task/(int:id)/
+
+   Update Task `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/storage/task/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "task_interval": 30
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "task_ret_count": 2,
+                "task_repeat_unit": "weekly",
+                "task_enabled": true,
+                "task_recursive": false,
+                "task_end": "18:00:00",
+                "task_interval": 30,
+                "task_byweekday": "1,2,3,4,5",
+                "task_begin": "09:00:00",
+                "task_filesystem": "tank",
+                "id": 1,
+                "task_ret_unit": "week"
+        }
+
+   :json string task_repeat_unit: daily, weekly
+   :json string task_begin: do not snapshot before
+   :json string task_end: do not snapshot after
+   :json string task_filesystem: name of the ZFS filesystem
+   :json string task_ret_unit: hour, day, week, month, year
+   :json string task_byweekday: days of week to snapshot, [1..7]
+   :json integer task_interval: how much time has been passed between two snapshot attempts [5, 10, 15, 30, 60, 120, 180, 240, 360, 720, 1440, 10080]
+   :json integer task_ret_count: snapshot lifetime value
+   :json boolean task_enabled: enabled task
+   :json boolean task_recursive: snapshot all children datasets recursively
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/storage/task/(int:id)/
+
+   Delete Task `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/task/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error

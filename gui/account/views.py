@@ -35,7 +35,11 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
 from freenasUI.account import forms, models
-from freenasUI.common.freenasldap import FLAGS_DBINIT
+from freenasUI.common.freenasldap import (
+    FLAGS_DBINIT,
+    FreeNAS_ActiveDirectory_Groups,
+    FreeNAS_ActiveDirectory_Users,
+)
 from freenasUI.common.freenascache import (
     FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
     FLAGS_CACHE_WRITE_GROUP
@@ -119,6 +123,33 @@ def json_users(request, exclude=None):
                 'label': user.pw_name,
             })
             idx += 1
+
+    # Show users for the directory service provided in the wizard
+    wizard_ds = request.session.get('wizard_ds')
+    if request.GET.get('wizard') == '1' and wizard_ds:
+        if wizard_ds.get('ds_type') == 'ad':
+            users = FreeNAS_ActiveDirectory_Users(
+                domainname=wizard_ds.get('ds_ad_domainname'),
+                bindname=wizard_ds.get('ds_ad_bindname'),
+                bindpw=wizard_ds.get('ds_ad_bindpw'),
+                flags=FLAGS_DBINIT,
+            )
+            idx = 1
+            # FIXME: code duplication withe the block above
+            for user in users._get_uncached_usernames():
+                if idx > 50:
+                    break
+                if (
+                    (query is None or user.startswith(query)) and
+                    user not in exclude
+                ):
+                    json_user['items'].append({
+                        'id': user,
+                        'name': user,
+                        'label': user,
+                    })
+                    idx += 1
+
     return HttpResponse(
         json.dumps(json_user, indent=3),
         content_type='application/json',
@@ -148,6 +179,30 @@ def json_groups(request):
                 'label': grp.gr_name,
             })
             idx += 1
+
+    # Show groups for the directory service provided in the wizard
+    wizard_ds = request.session.get('wizard_ds')
+    if request.GET.get('wizard') == '1' and wizard_ds:
+        if wizard_ds.get('ds_type') == 'ad':
+            groups = FreeNAS_ActiveDirectory_Groups(
+                domainname=wizard_ds.get('ds_ad_domainname'),
+                bindname=wizard_ds.get('ds_ad_bindname'),
+                bindpw=wizard_ds.get('ds_ad_bindpw'),
+                flags=FLAGS_DBINIT,
+            )
+            idx = 1
+            # FIXME: code duplication withe the block above
+            for group in groups._get_uncached_groupnames():
+                if idx > 50:
+                    break
+                if query is None or group.startswith(query):
+                    json_group['items'].append({
+                        'id': group,
+                        'name': group,
+                        'label': group,
+                    })
+                    idx += 1
+
     return HttpResponse(
         json.dumps(json_group, indent=3),
         content_type='application/json',

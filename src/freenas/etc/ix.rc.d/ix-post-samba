@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-post-samba
+# REQUIRE: samba_server
+
+. /etc/rc.freenas
+
+save_sambaSID()
+{
+	if [ ! -s "${SAMBA_SIDFILE}" ]
+	then
+		export LOGNAME=anonymous
+		/usr/local/bin/net getlocalsid | \
+			cut -f2 -d: | awk '{ print $1 }' > "${SAMBA_SIDFILE}"
+	fi
+}
+
+samba_post_init()
+{
+	save_sambaSID
+}
+
+name="ix-post-samba"
+start_cmd='samba_post_init'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

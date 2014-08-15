@@ -28,7 +28,7 @@ this.submitForm(this, e);
     </tr>
     {% endif %}
     <tr>
-        <td>{% trans "Are you sure you want to delete?" %}</td>
+        <td>{% blocktrans with verbose_name=verbose_name object=object %}Are you sure you want to delete {{ verbose_name }} {{ object }}?{% endblocktrans %}</td>
     </tr>
     {% endblock %}
     <tr>

@@ -3,53 +3,74 @@
 import requests
 import json
 import sys
+import os
 import conn
+import extra_functions
+import storage_volume
+
+os.system('rm *.pyc')
+if extra_functions.volume_check() == False:
+  storage_volume.post()
 
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/initshutdown/'
 payload = {
           "ini_type": "command",
-          "ini_command": "rm /mnt/tank/temp*",
+          "ini_command": "rm /mnt/new_volume_test_suite/temp*",
           "ini_when": "postinit"
 }
 
 def get():
-  print 'Getting tasks-initshudown ......'
+  print 'Getting tasks-initshutdown ......'
   r = requests.get(url, auth = auth)
   if r.status_code == 200:
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get tasks-initshudown --> Succeeded!'
+    print '\nGet tasks-initshutdown --> Succeeded!'
   else:
-    print 'Get tasks-initshudown --> Failed!'
+    print 'Get tasks-initshutdown --> Failed!'
 
 def post():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  if len(result) > 0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
-    print 'Create tasks-initshudown --> Succeeded!'
+    print 'Create tasks-initshutdown --> Succeeded!'
     return str(result['id'])+'/'
   else:
-    print 'Create tasks-initshudown --> Failed!'
+    print 'Create tasks-initshutdown --> Failed!'
+    return ''
 
 def put():
   id = post()
   r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 200:
-    print 'Update tasks-initshudown --> Succeeded!'
+    print 'Update tasks-initshutdown --> Succeeded!'
   else:
-    print 'Update tasks-initshudown --> Failed!'
+    print 'Update tasks-initshutdown --> Failed!'
 
 def delete():
-  id = post()
-  r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete tasks-initshudown --> Succeeded!'
-  else:
-    print 'Delete tasks-initshudown --> Failed!'
-
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  i = 0
+  for i in range(0,len(result)):
+    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-initshutdown --> Succeeded!'
+    else:
+      print 'Delete tasks-initshutdown --> Failed!'
+  if len(result) == 0:
+    id = post() 
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-initshutdown --> Succeeded!'
+    else:
+      print 'Delete tasks-initshutdown --> Failed!'

@@ -3,9 +3,14 @@
 import requests
 import json
 import sys
-sys.path.append('../conn/')
+import os
 import conn
+import extra_functions
+import storage_volume
 
+os.system('rm *.pyc')
+if extra_functions.volume_check() == False:
+  storage_volume.post()
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/rsync/'
@@ -14,10 +19,9 @@ payload = {
           "rsync_minute": "*/20",
           "rsync_enabled": "true",
           "rsync_daymonth": "*",
-          "rsync_path": "/mnt/tank0",
+          "rsync_path": "/mnt/new_volume_test_suite",
           "rsync_delete": "false",
           "rsync_hour": "*",
-          "id": 1,
           "rsync_extra": "",
           "rsync_archive": "true",
           "rsync_compress": "true",
@@ -44,14 +48,18 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
       for items in result[i]:
         print items+':', result[i][items]
+      print '\n'
     print 'Get tasks-rsync --> Succeeded!'
   else:
     print 'Get tasks-rsync --> Failed!'
 
 def post():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  if len(result) > 0:
+    delete() 
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
@@ -59,6 +67,7 @@ def post():
     return str(result['id'])+'/'
   else:
     print 'Create tasks-rsync --> Failed!'
+    return ''
 
 def put():
   id = post()
@@ -69,12 +78,22 @@ def put():
     print 'Update tasks-rsync --> Failed!'
 
 def delete():
-  id = post()
-  r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete tasks-rsync --> Succeeded!'
-  else:
-    print 'Delete tasks-rsync --> Failed!'
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)  
+  i = 0
+  for i in range(0,len(result)):
+    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-rsync --> Succeeded!'
+    else:
+      print 'Delete tasks-rsync --> Failed!'
+  if len(result) == 0:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-rsync --> Succeeded!'
+    else:
+      print 'Delete tasks-rsync --> Failed!'
 
 def run():
   id = post()

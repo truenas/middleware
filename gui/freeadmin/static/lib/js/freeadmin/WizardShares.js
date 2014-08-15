@@ -192,12 +192,12 @@ define([
       });
 
       me._storeUsers = new ItemFileReadStore({
-        url: "/account/bsduser/json/"
+        url: "/account/bsduser/json/?wizard=1"
       });
       me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
-        url: "/account/bsdgroup/json/"
+        url: "/account/bsdgroup/json/?wizard=1"
       });
       me._storeGroups.fetch();
 

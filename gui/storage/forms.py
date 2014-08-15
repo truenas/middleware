@@ -1855,7 +1855,11 @@ class CloneSnapshotForm(Form):
                 zvol,
                 snapname)
         else:
-            self.fields['cs_name'].initial = '%s/clone-%s' % (
+            if '/' in dataset:
+                dataset = '%s-' % dataset
+            else:
+                dataset= '%s/' % dataset
+            self.fields['cs_name'].initial = '%s%s-clone' % (
                 dataset,
                 snapname)
 
@@ -2412,7 +2416,7 @@ class UnlockPassphraseForm(Form):
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
-        initial=['cifs', 'afp', 'nfs', 'iscsitarget', 'jails'],
+        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs'],
         required=False,
     )
 
@@ -2422,6 +2426,7 @@ class UnlockPassphraseForm(Form):
         choices = [
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
+            ('ftp', _('FTP')),
             ('iscsitarget', _('iSCSI')),
             ('nfs', _('NFS')),
         ]

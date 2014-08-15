@@ -819,6 +819,30 @@ require([
       }
     }
 
+    genericSelectFields = function(selectid, map) {
+      /*
+       * Show and hide fields base on the value of a single widget.
+       */
+
+      var map = JSON.parse(map);
+      var select = registry.byId(selectid);
+      var value = select.get('value');
+      for(var key in map) {
+        var display;
+        if(key == value) {
+          display = 'table-row';
+        } else {
+          display = 'none';
+        }
+
+        for(var i in map[key]) {
+          var field = registry.byId(map[key][i]);
+          domStyle.set(field.domNode.parentNode.parentNode, 'display', display);
+        }
+      }
+
+    }
+
     rsyncModeToggle = function() {
 
         var select = registry.byId("id_rsync_mode");

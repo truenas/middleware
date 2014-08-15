@@ -21,6 +21,7 @@ from freenasUI.common.system import (
     activedirectory_has_unix_extensions,
     domaincontroller_enabled,
     ldap_enabled,
+    ldap_sudo_configured,
     nis_enabled,
     nt4_enabled
 )
@@ -34,7 +35,8 @@ def main():
         'shells': ['files'],
         'services': ['files'],
         'protocols': ['files'],
-        'rpc': ['files']
+        'rpc': ['files'],
+        'sudoers': ['files']
     }
 
     verb = "start"
@@ -56,6 +58,8 @@ def main():
         if ldap_enabled():
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
+            if ldap_sudo_configured():
+                nsswitch_conf['sudoers'].append('sss')
 
         if nis_enabled():
             nsswitch_conf['passwd'].append('nis')
