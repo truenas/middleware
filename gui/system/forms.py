@@ -1292,6 +1292,39 @@ class InitialWizardDSForm(Form):
                 if ret is False:
                     raise forms.ValidationError("%s." % errors[0])
 
+        elif cdata.get('ds_type') == 'ldap':
+            hostname = cdata.get('ds_ldap_hostname')
+            binddn = cdata.get('ds_ldap_binddn')
+            bindpw = cdata.get('ds_ldap_bindpw')
+            errors = []
+
+            if not (hostname or binddn or bindpw):
+                if not hostname:
+                    self._errors['ds_ldap_hostname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not binddn:
+                    self._errors['ds_ldap_binddn'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindpw:
+                    self._errors['ds_ldap_bindpw'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            else:
+
+                try:
+                    ret = FreeNAS_LDAP.validate_credentials(
+                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    )
+                except Exception, e:
+                    raise forms.ValidationError("%s." % e)
+
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+
         return cdata
 
     def done(self, request=None, **kwargs):
