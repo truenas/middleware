@@ -162,7 +162,7 @@ add_port www/py-pywebdav
 add_port databases/mysql56-server
 add_port databases/mysql56-client
 add_port databases/py-MySQLdb56
-add_port www/apache24 WITH_SSL_PORT=yes \
+add_port www/apache24 \
 		OPTIONS_FILE_SET+=DAV_LOCK \
 		OPTIONS_FILE_SET+=SUEXEC
 add_port www/nginx WITH_OPENSSL_PORT=yes \
