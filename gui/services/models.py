@@ -1675,6 +1675,27 @@ class DomainController(Model):
         super(DomainController, self).__init__(*args, **kwargs)
         self.svc = 'domaincontroller'
 
+    def save(self):
+        super(DomainController, self).save()
+
+        if not self.dc_kerberos_realm:
+            try:
+                from freenasUI.common.system import get_dc_hostname 
+
+                dc_hostname = get_dc_hostname()
+                kr = KerberosRealm() 
+                kr.krb_realm = self.dc_realm.upper()
+                kr.krb_kdc = dc_hostname
+                kr.krb_admin_server = dc_hostname
+                kr.krb_kpasswd_server = dc_hostname
+                kr.save()
+
+                self.dc_kerberos_realm = kr
+                super(DomainController, self).save()
+
+            except Exception as e:
+                log.debug("DomainController: Unable to create kerberos realm: %s", e)
+
     class Meta:
         verbose_name = _(u"Domain Controller")
         verbose_name_plural = _(u"Domain Controller")

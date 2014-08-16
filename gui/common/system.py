@@ -624,3 +624,28 @@ def backup_database():
             number,
         )
         shutil.copy('/data/freenas-v1.db', newfile)
+
+def get_dc_hostname():
+    from freenasUI.network.models import GlobalConfiguration
+    from freenasUI.common.pipesubr import pipeopen
+
+    gc_hostname = gc_domain = hostname = None
+    try:
+        gc = GlobalConfiguration.objects.all()[0]
+        gc_hostname = gc.gc_hostname
+        gc_domain = gc.gc_domain
+
+    except:
+        pass
+
+    if gc_hostname and gc_domain:
+        hostname = "%s.%s" % (gc_hostname, gc_domain)
+    elif gc_hostname: 
+        hostname = gc_hostname
+    else:
+        p = pipeopen("/bin/hostname", allowfork=True)
+        out = p.communicate()
+        if p.returncode == 0:
+            hostname = out[0].strip()
+
+    return hostname
