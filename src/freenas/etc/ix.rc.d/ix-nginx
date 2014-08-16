@@ -12,15 +12,10 @@
 
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
-NGINGX_WEBDAV_CONF="${HTTPDDIR}/nginx-webdav.conf"
-
 
 generate_webdav_conf ()
 {
-	#Just make an empty file called nginx-webdav.conf
-	#will decide later to better improve this
-	#for now just touch that file so that netcli does not crash
-	touch NGINGX_WEBDAV_CONF
+        /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py gen_dav_config
 }
 
 generate_plugins_conf()
