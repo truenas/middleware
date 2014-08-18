@@ -71,6 +71,7 @@ class NISFAdmin(BaseFreeAdmin):
 
 class NT4FAdmin(BaseFreeAdmin):
     create_modelform = "NT4Form"
+    deletable = False
     edit_modelform = "NT4Form"
     icon_object = u"NT4Icon"
     icon_model = u"NT4Icon"
