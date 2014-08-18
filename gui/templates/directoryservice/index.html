@@ -6,7 +6,7 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "LDAP" %}',refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.LDAP" %},selected: true{% endif %}, href: '{% url "directoryservice_ldap" %}?inline=true'" tab="directoryservice.LDAP" class="objrefresh data_directoryservice_LDAP" onLoad="{ ldap_mutex_toggle(); directoryservice_idmap_onload('id_ldap_idmap_backend', '{{ ldap.ds_type }}', {{ ldap.id }}); }" id="tab_LDAP">
     </div>
 
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "NIS" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.NIS" %},selected: true{% endif %}, href: '{% url "directoryservice_nis" %}?inline=true'" tab="directoryservice.NIS" class="objrefresh data_directoryservice_NIS" onLoad="nis_mutex_toggle();" id="tab_NIS">
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "NIS" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.NIS" %},selected: true{% endif %}, href: '{{ nis.get_edit_url }}?inline=true'" tab="directoryservice.NIS" class="objrefresh data_directoryservice_NIS" onLoad="nis_mutex_toggle();" id="tab_NIS">
     </div>
 
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "NT4" %}', refreshOnShow:true, doLayout:false {% if focus_form == "directoryservice.NT4" %},selected: true{% endif %}, href: '{% url "directoryservice_nt4" %}?inline=true'" tab="directoryservice.NT4" class="objrefresh data_directoryservice_NT4" onLoad="{ nt4_mutex_toggle(); directoryservice_idmap_onload('id_nt4_idmap_backend', '{{ nt4.ds_type }}', {{ nt4.id }}); }" id="tab_NT4">

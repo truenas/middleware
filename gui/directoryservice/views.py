@@ -165,32 +165,6 @@ def directoryservice_nt4(request):
     })
 
 
-def directoryservice_nis(request):
-    try:
-        nis = models.NIS.objects.order_by("-id")[0]
-    except:
-        nis = models.NIS()
-
-    if request.method == "POST":
-        form = forms.NISForm(request.POST, instance=nis)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="NIS successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.NISForm(instance=nis)
-
-    return render(request, 'directoryservice/nis.html', {
-        'nis': nis,
-        'form': form,
-        'inline': True
-    })
-
-
 def directoryservice_kerberosrealm(request, id):
     kr = models.KerberosRealm.objects.get(pk=id)
 

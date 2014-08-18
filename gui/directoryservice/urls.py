@@ -36,8 +36,6 @@ urlpatterns = patterns(
         name="directoryservice_activedirectory"),
     url(r"^ldap/$", "directoryservice_ldap",
         name="directoryservice_ldap"),
-    url(r"^nis/$", "directoryservice_nis",
-        name="directoryservice_nis"),
     url(r"^nt4/$", "directoryservice_nt4",
         name="directoryservice_nt4"),
     url(r"^kerberos_realm/(?P<id>\d+)/$", "directoryservice_kerberosrealm",
