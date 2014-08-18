@@ -1228,7 +1228,7 @@ class InitialWizardDSForm(Form):
         required=False,
     )
     ds_ldap_binddn = forms.CharField(
-        label=('Base DN'),
+        label=('Bind DN'),
         required=False,
     )
     ds_ldap_bindpw = forms.CharField(
@@ -1317,7 +1317,7 @@ class InitialWizardDSForm(Form):
 
                 try:
                     ret = FreeNAS_LDAP.validate_credentials(
-                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                        hostname, binddn=binddn, bindpw=bindpw, errors=errors
                     )
                 except Exception, e:
                     raise forms.ValidationError("%s." % e)
