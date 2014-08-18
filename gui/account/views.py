@@ -39,6 +39,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
     FreeNAS_ActiveDirectory_Groups,
     FreeNAS_ActiveDirectory_Users,
+    FreeNAS_LDAP_Users,
 )
 from freenasUI.common.freenascache import (
     FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
@@ -134,6 +135,18 @@ def json_users(request, exclude=None):
                 bindpw=wizard_ds.get('ds_ad_bindpw'),
                 flags=FLAGS_DBINIT,
             )
+        elif wizard_ds.get('ds_type') == 'ldap':
+            users = FreeNAS_LDAP_Users(
+                host=wizard_ds.get('ds_ldap_hostname'),
+                basedn=wizard_ds.get('ds_ldap_basedn'),
+                binddn=wizard_ds.get('ds_ldap_binddn'),
+                bindpw=wizard_ds.get('ds_ldap_bindpw'),
+                flags=FLAGS_DBINIT,
+            )
+        else:
+            users = None
+
+        if users is not None:
             idx = 1
             # FIXME: code duplication withe the block above
             for user in users._get_uncached_usernames():

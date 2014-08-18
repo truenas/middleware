@@ -1598,6 +1598,30 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
         for user in self.__users:
             yield user
 
+    def _get_uncached_usernames(self):
+
+        usernames = []
+        self.attributes = ['uid']
+        self.pagesize = FREENAS_LDAP_PAGESIZE
+
+        ldap_users = self.get_users()
+
+        parts = self.host.split('.')
+        host = parts[0].upper()
+        for u in ldap_users:
+            CN = str(u[0])
+            u = u[1]
+            if self.use_default_domain:
+                uid = u['uid'][0]
+            else:
+                uid = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    u['uid'][0]
+                )
+            usernames.append(uid)
+        return usernames
+
     def __get_users(self):
         log.debug("FreeNAS_LDAP_Users.__get_users: enter")
 
