@@ -538,3 +538,51 @@ class SystemDataset(Model):
     @property
     def usedataset(self):
         return self.sys_syslog_usedataset
+
+
+class Backup(Model):
+    bak_finished = models.BooleanField(
+        default=False,
+        verbose_name=_("Finished")
+    )
+
+    bak_failed = models.BooleanField(
+        default=False,
+        verbose_name=_("Failed")
+    )
+
+    bak_acknowledged = models.BooleanField(
+        default=False,
+        verbose_name=_("Acknowledged")
+    )
+
+    bak_worker_pid = models.IntegerField(
+        verbose_name=_("Backup worker PID")
+    )
+
+    bak_started_at = models.DateTimeField(
+        verbose_name=_("Started at")
+    )
+
+    bak_finished_at = models.DateTimeField(
+        verbose_name=_("Finished at"),
+        null=True
+    )
+
+    bak_destination = models.CharField(
+        max_length=1024,
+        blank=True,
+        verbose_name=_("Destination")
+    )
+
+    bak_status = models.CharField(
+        max_length=1024,
+        blank=True,
+        verbose_name=_("Status")
+    )
+
+    class FreeAdmin:
+        deletable = False
+
+    class Meta:
+        verbose_name = _("System Backup")
