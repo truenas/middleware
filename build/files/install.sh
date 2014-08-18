@@ -561,11 +561,13 @@ menu_install()
 	chroot /tmp/data/ /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
 	chroot /tmp/data/ /etc/rc.d/ldconfig start
 	chroot /tmp/data/ /usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' /usr/local/sbin/beadm /usr/local/etc/grub.d/10_ktrueos
+	mkdir /tmp/bakup
+	mv /tmp/data/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
 	chroot /tmp/data/ /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
 	chroot /tmp/data/ /usr/local/sbin/beadm activate default
 	chroot /tmp/data/ /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 	chroot /tmp/data/ /bin/mv /usr/local/sbin/beadm.bak /usr/local/sbin/beadm
-	chroot /tmp/data/ /bin/mv /usr/local/etc/grub.d/10_ktrueos.bak /usr/local/etc/grub.d/10_ktrueos
+	mv /tmp/bakup/10_ktrueos.bak /tmp/data/usr/local/etc/grub.d/10_ktrueos
 
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74

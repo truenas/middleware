@@ -89,7 +89,7 @@ main()
 	# Copy python and sqlite3 to the installation directory
 	set -x
 	echo " * * * * * * * * "
-	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/*python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
 	tar -xf - -C ${INSTALLUFSDIR}
 	# Copy the installation scripts and modules as well
 	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/freenas-install | tar -C ${INSTALLUFSDIR} -xf -
