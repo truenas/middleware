@@ -257,6 +257,7 @@ add_port devel/py-daemon
 add_port devel/py-polib
 add_port devel/py-ujson
 add_port devel/py-simplejson
+add_port security/py-paramiko
 add_port www/wgetpaste
 add_port devel/py-greenlet
 add_port net/py-eventlet
