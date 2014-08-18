@@ -167,9 +167,9 @@ def directoryservice_nt4(request):
 
 def directoryservice_nis(request):
     try:
-        nis = models.NT4.objects.order_by("-id")[0]
+        nis = models.NIS.objects.order_by("-id")[0]
     except:
-        nis = models.NT4()
+        nis = models.NIS()
 
     if request.method == "POST":
         form = forms.NISForm(request.POST, instance=nis)
