@@ -39,6 +39,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
     FreeNAS_ActiveDirectory_Groups,
     FreeNAS_ActiveDirectory_Users,
+    FreeNAS_LDAP_Groups,
     FreeNAS_LDAP_Users,
 )
 from freenasUI.common.freenascache import (
@@ -203,6 +204,18 @@ def json_groups(request):
                 bindpw=wizard_ds.get('ds_ad_bindpw'),
                 flags=FLAGS_DBINIT,
             )
+        elif wizard_ds.get('ds_type') == 'ldap':
+            groups = FreeNAS_LDAP_Groups(
+                host=wizard_ds.get('ds_ldap_hostname'),
+                basedn=wizard_ds.get('ds_ldap_basedn'),
+                binddn=wizard_ds.get('ds_ldap_binddn'),
+                bindpw=wizard_ds.get('ds_ldap_bindpw'),
+                flags=FLAGS_DBINIT,
+            )
+        else:
+            groups = None
+
+        if groups is not None:
             idx = 1
             # FIXME: code duplication withe the block above
             for group in groups._get_uncached_groupnames():

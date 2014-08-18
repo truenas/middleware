@@ -1938,6 +1938,29 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
         for group in self.__groups:
             yield group
 
+    def _get_uncached_groupnames(self):
+
+        groupnames = []
+        self.attributes = ['cn']
+
+        ldap_groups = self.get_groups()
+
+        parts = self.host.split('.')
+        host = parts[0].upper()
+        for g in ldap_groups:
+            CN = str(g[0])
+            g = g[1]
+            if self.use_default_domain:
+                cn = g['cn'][0]
+            else:
+                cn = "{}{}{}".format(
+                    host,
+                    FREENAS_AD_SEPARATOR,
+                    g['cn'][0]
+                )
+            groupnames.append(cn)
+        return groupnames
+
     def __get_groups(self):
         log.debug("FreeNAS_LDAP_Groups.__get_groups: enter")
 
