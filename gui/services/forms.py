@@ -124,6 +124,7 @@ class CIFSForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = [ 'cifs_SID' ]
         model = models.CIFS
 
     def __check_octet(self, v):
