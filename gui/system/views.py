@@ -49,6 +49,7 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
@@ -697,6 +698,108 @@ def debug(request):
 
         return response
 
+
+def backup(request):
+    # Check if any backup is currently running
+    backups = models.Backup.objects.all().order_by('-bak_started_at');
+
+    if len(backups) < 1 or backups[0].bak_acknowledged:
+        # No backup is pending, can schedule next one
+
+        if request.method == 'POST':
+            backup_form = forms.BackupForm(request.POST)
+            if backup_form.is_valid():
+                args = {
+                    'cmd': 'START',
+                    'hostport': backup_form.cleaned_data['backup_hostname'],
+                    'username': backup_form.cleaned_data['backup_username'],
+                    'password': backup_form.cleaned_data['backup_password'],
+                    'directory': backup_form.cleaned_data['backup_directory'],
+                    'with-data': backup_form.cleaned_data['backup_data']
+                }
+
+                notifier().start('backup')
+                response = notifier().call_backupd(args)
+
+                if response['status'] != 'OK':
+                    return JsonResp(request, error=True, message='Could not communicate with backup daemon')
+
+                return render(request, 'system/backup_progress.html')
+
+        backup_form = forms.BackupForm()
+        return render(request, 'system/backup.html', {
+            'form': backup_form
+        })
+    elif backups[0].bak_finished or backups[0].bak_failed:
+        if request.method == 'POST':
+            backups[0].bak_acknowledged = True
+            backups[0].save()
+            return JsonResp(request, message='Backup completed successfully')
+
+        return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
+    else:
+        return render(request, 'system/backup_progress.html')
+
+def backup_progress(request):
+    # Check if any backup is currently running
+    backups = models.Backup.objects.all().order_by('-bak_started_at')
+    backup = backups[0]
+
+    if backups[0].bak_finished:
+        data = {'status': 'finished', 'message': backups[0].bak_status}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    if backups[0].bak_failed:
+        data = {'status': 'error', 'message': backups[0].bak_status}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    # Check if backup process is alive
+    try:
+        os.kill(backups[0].bak_worker_pid, 0)
+    except OSError:
+        # Mark backup as failed at this point
+        backups[0].bak_failed = True
+        backups[0].bak_status = 'Backup process died'
+        backups[0].save()
+        data = {'status': 'error', 'message': backups[0].bak_status}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    args = {'cmd': 'PROGRESS'}
+
+    response = notifier().call_backupd(args)
+    if response['status'] != 'OK':
+        data = {'status': 'error', 'message': 'Could not communicate with backup daemon'}
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    data = {
+        'status': 'running',
+        'percent': response['percentage'],
+        'message': response['message']
+    }
+
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+def backup_abort(request):
+    # Check if any backup is currently running
+    backups = models.Backup.objects.all().order_by('-bak_started_at');
+
+    if len(backups) < 1 or backup[0].bak_finished:
+        pass
+
+    args = {
+        'cmd': 'ABORT',
+    }
+
+    response = notifier().call_backupd(args)
+    if response['status'] != 'OK':
+        return JsonResp(request, error=True, message='Could not communicate with backup daemon')
+
+    return JsonResp(request,
+        message='',
+        done=response['done'],
+        total=response['estimated'],
+        percentage=response['percentage']
+    )
 
 class UnixTransport(xmlrpclib.Transport):
     def make_connection(self, addr):
