@@ -59,9 +59,11 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
+    LDAPForm,
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
+    LDAP,
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -451,6 +453,30 @@ class InitialWizard(CommonWizard):
                     log.warn(
                         'Active Directory data failed to validate: %r',
                         adform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'ldap':
+                try:
+                    ldap = LDAP.objects.all().order_by('-id')[0]
+                except:
+                    ldap = LDAP.objects.create()
+                ldapdata = ldap.__dict__
+                ldapdata.update({
+                    'ldap_hostname': cleaned_data.get('ds_ldap_hostname'),
+                    'ldap_basedn': cleaned_data.get('ds_ldap_basedn'),
+                    'ldap_binddn': cleaned_data.get('ds_ldap_binddn'),
+                    'ldap_bindpw': cleaned_data.get('ds_ldap_bindpw'),
+                    'ldap_enable': True,
+                })
+                ldapform = LDAPForm(
+                    data=ldapdata,
+                    instance=ldap,
+                )
+                if ldapform.is_valid():
+                    ldapform.save()
+                else:
+                    log.warn(
+                        'LDAP data failed to validate: %r',
+                        ldapform._errors,
                     )
 
         progress['step'] = 3
