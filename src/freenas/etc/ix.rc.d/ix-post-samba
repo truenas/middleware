@@ -10,11 +10,31 @@
 
 save_sambaSID()
 {
-	if [ ! -s "${SAMBA_SIDFILE}" ]
+	local sambaSID
+
+	sambaSID="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_SID
+	FROM
+		services_cifs
+	ORDER BY
+		-id
+	LIMIT 
+		1
+	")"
+
+	if [ -z "${sambaSID}" ]
 	then
 		export LOGNAME=anonymous
-		/usr/local/bin/net getlocalsid | \
-			cut -f2 -d: | awk '{ print $1 }' > "${SAMBA_SIDFILE}"
+		sambaSID="$(/usr/local/bin/net getlocalsid | \
+			cut -f2 -d: | awk '{ print $1 }')"
+
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			services_cifs
+		SET
+			cifs_SID = '${sambaSID}'
+		"
 	fi
 }
 

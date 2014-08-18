@@ -166,7 +166,7 @@ class CIFSForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = [ 'cifs_srv_bindip' ]
+        exclude = [ 'cifs_SID', 'cifs_srv_bindip' ]
         model = models.CIFS
 
     def __check_octet(self, v):

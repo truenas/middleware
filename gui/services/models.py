@@ -257,6 +257,11 @@ class CIFS(Model):
            blank=True,
            null=True
            )
+    cifs_SID = models.CharField(
+           max_length=120,
+           blank=True,
+           null=True,
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")
