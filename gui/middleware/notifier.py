@@ -40,6 +40,7 @@ import ctypes
 import errno
 import glob
 import grp
+import json
 import logging
 from lxml import etree
 import os
@@ -50,6 +51,7 @@ import re
 import select
 import shutil
 import signal
+import socket
 import sqlite3
 import stat
 from subprocess import Popen, PIPE
@@ -66,6 +68,7 @@ NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
 SYSTEMPATH = '/var/db/system'
+BACKUP_SOCK = '/var/run/backupd.sock'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -254,6 +257,7 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
+            'backup': (None, '/var/run/backup.pid')
         }
 
     def _started_notify(self, verb, what):
@@ -387,6 +391,9 @@ class notifier:
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+
+    def _start_backup(self):
+        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
 
     def _restart_webshell(self):
         try:
@@ -5191,6 +5198,37 @@ class notifier:
 
         self.nfsv4link()
 
+    def call_backupd(self, args):
+        ntries = 5
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+        # Try for a while in case daemon is just starting
+        while ntries > 0:
+            try:
+                sock.connect(BACKUP_SOCK)
+                break
+            except socket.error:
+                ntries -= 1
+                time.sleep(1)
+
+        if ntries == 0:
+            return {'status': 'ERROR'}
+
+        sock.settimeout(5)
+        f = sock.makefile(bufsize=0)
+
+        try:
+            f.write(json.dumps(args) + '\n')
+            resp_json = f.readline()
+            response = json.loads(resp_json)
+        except IOError:
+            response = {'status': 'ERROR'}
+        except ValueError:
+            response = {'status': 'ERROR'}
+
+        f.close()
+        sock.close()
+        return response
 
 def usage():
     usage_str = """usage: %s action command
