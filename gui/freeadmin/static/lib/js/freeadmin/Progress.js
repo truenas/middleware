@@ -37,10 +37,12 @@ define([
     _subProgress: "",
     _iter: 0,
     name : "",
+    backupProgress: false,
     fileUpload: false,
     mode: "advanced",
     poolUrl: "",
     steps: "",
+    message: "",
     postCreate : function() {
 
       var me = this;
@@ -65,6 +67,10 @@ define([
         domStyle.set(this.dapETA, "display", "none");
       }
 
+      if(this.backupProgress) {
+        this.update("");
+      }
+
       this.inherited(arguments);
 
     },
@@ -80,7 +86,8 @@ define([
       var me = this;
       if(uuid) this.uuid = uuid;
       if(!this.dapMainLabel) return;
-      this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.steps[this._curStep-1].label);
+      if(!this.backupProgress) this.message = this.steps[this._curStep-1];
+      this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.message.label);
       if(this.fileUpload && this._curStep == 1) {
         xhr.get('/progress', {
           headers: {"X-Progress-ID": me.uuid}
@@ -117,6 +124,44 @@ define([
           }
         });
         me._iter += 1;
+
+      } else if (this.backupProgress) {
+        xhr.get(me.poolUrl, {
+          handleAs: "json"
+        }).then(function(data) {
+          if(data.step) {
+            me._curStep = data.step;
+          }
+          if(data.numSteps) {
+            me._numSteps = data._numSteps;
+          }
+          if(data.message) {
+            me._message = data.message;
+          }
+          if(data.status == 'error' || data.status == 'finished') {
+            me.onFinished()
+          }
+          if(data.percent) {
+            if(data.percent == 100) {
+              me._subProgress.update({'indeterminate': true});
+              me._masterProgress(data.percent);
+              if(me._curStep == me._numSteps)
+                return;
+            } else {
+              me._masterProgress.update({
+                maximum: 100,
+                progress: data.percent,
+                indeterminate: false
+              });
+              me._masterProgress(data.percent);
+            }
+          } else {
+            me._masterProgress.update({'indeterminate': true});
+          }
+          setTimeout(function() {
+            me.update();
+          }, 1000);
+        });
       } else {
         xhr.get(me.poolUrl, {
           headers: {"X-Progress-ID": me.uuid},
@@ -152,6 +197,8 @@ define([
     destroy: function() {
       //this.timer.stop();
       this.inherited(arguments);
+    },
+    onFinished: function() {
     }
   });
   return Progress;
