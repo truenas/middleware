@@ -375,6 +375,25 @@ class NISForm(ModelForm):
             "nis_mutex_toggle();"
         )
 
+    def save(self):
+        enable = self.cleaned_data.get("nis_enable")
+
+        started = notifier().started("nis")
+        super(NISForm, self).save()
+
+        if enable:
+            if started is True:
+                started = notifier().restart("nis")
+            if started is False:
+                started = notifier().start("nis")
+            if started is False:
+                self.instance.ad_enable = False
+                super(NISForm, self).save()
+                raise ServiceFailed("nis", _("NIS failed to reload."))
+        else:
+            if started == True:
+                started = notifier().stop("nis")
+
 
 class LDAPForm(ModelForm):
     ldap_certfile = FileField(
