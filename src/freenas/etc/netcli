@@ -469,6 +469,11 @@ def reset_factory_defaults():
         notifier().config_restore()
         os.system("/sbin/shutdown -r now")
 
+def create_backup():
+    return os.system(os.path.join(FREENAS_PATH, "tools/backup.py") + " -i");
+
+def restore_from_backup():
+    return os.system(os.path.join(FREENAS_PATH, "tools/backup.py") + " -ri")
 
 def configure_lagg_interface():
 
@@ -1042,6 +1047,8 @@ def main_menu():
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset WebGUI login credentials"), reset_gui_login ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
+        [ _("Create backup"), create_backup ],
+        [ _("Restore from a backup"), restore_from_backup ],
         [ _("Shell"), shell ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
