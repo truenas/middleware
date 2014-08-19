@@ -65,6 +65,7 @@ from freenasUI.directoryservice.forms import (
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
+    NIS,
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -465,6 +466,30 @@ class InitialWizard(CommonWizard):
                     log.warn(
                         'LDAP data failed to validate: %r',
                         ldapform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'nis':
+                try:
+                    nis = NIS.objects.all().order_by('-id')[0]
+                except:
+                    nis = NIS.objects.create()
+                nisdata = ldap.__dict__
+                nisdata.update({
+                    'nis_domain': cleaned_data.get('ds_nis_domain'),
+                    'nis_servers': cleaned_data.get('ds_nis_servers'),
+                    'nis_secure_mode': cleaned_data.get('ds_nis_secure_mode'),
+                    'nis_manycast': cleaned_data.get('ds_nis_manycast'),
+                    'nis_enable': True,
+                })
+                nisform = NISForm(
+                    data=nisdata,
+                    instance=nis,
+                )
+                if nisform.is_valid():
+                    nisform.save()
+                else:
+                    log.warn(
+                        'NIS data failed to validate: %r',
+                        nisform._errors,
                     )
 
         # Change permission after joining directory service
