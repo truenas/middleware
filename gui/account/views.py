@@ -170,7 +170,10 @@ def json_users(request, exclude=None):
                     user not in exclude
                 ):
                     json_user['items'].append({
-                        'id': user,
+                        'id': '%s_%s' % (
+                            wizard_ds.get('ds_type'),
+                            group,
+                        ),
                         'name': user,
                         'label': user,
                     })
@@ -245,7 +248,10 @@ def json_groups(request):
                     break
                 if query is None or group.startswith(query):
                     json_group['items'].append({
-                        'id': group,
+                        'id': '%s_%s' % (
+                            wizard_ds.get('ds_type'),
+                            group,
+                        ),
                         'name': group,
                         'label': group,
                     })
