@@ -228,7 +228,6 @@ ask_upgrade()
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
 Upgrading the installation will preserve your existing configuration.
-A fresh install will overwrite the current configuration.
 
 Do you wish to perform an upgrade or a fresh installation on ${_disk}?
 EOD
@@ -236,6 +235,49 @@ EOD
     rm -f "${_tmpfile}"
     dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
     return $?
+}
+
+mount_disk() {
+	local _disk
+	local _mnt
+
+	if [ $# -ne 2 ]; then
+		return 1
+	fi
+
+	_disk="$1"
+	_mnt="$2"
+	mkdir -p "${_mnt}"
+	mount -t zfs -o noatime freenas-boot/ROOT/default ${_mnt}
+	mkdir -p ${_mnt}/boot/grub
+	mount -t ufs -o noatime /dev/${_disk}p2 ${_mnt}/boot/grub
+	mkdir -p ${_mnt}/data
+	return 0
+}
+	
+partition_disk() {
+	local _disk
+
+	if [ $# -ne 1 ]; then
+	    false
+	else
+	    _disk=$1
+	fi
+
+	gpart destroy -F ${_disk} || true
+	gpart create -s gpt ${_disk}
+	# For grub
+	gpart add -t bios-boot -s 512k ${_disk}
+	gpart add -t freebsd-ufs -s 32m ${_disk}
+	# The rest of the disk
+	gpart add -t freebsd-zfs -a 4k ${_disk}
+
+	newfs -L "grub" /dev/${_disk}p2
+	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
+	zfs create -o canmount=off freenas-boot/ROOT
+	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+
+	return 0
 }
 
 disk_is_freenas()
@@ -249,19 +291,33 @@ disk_is_freenas()
     # We have two kinds of potential upgrades here.
     # The old kind, with 4 slices, and the new kind,
     # with two partitions.
+
     mkdir -p /tmp/data_old
     if [ -c /dev/${_disk}s4 ]; then
 	os_part=/dev/${_disk}s1a
 	data_part=/dev/${_disk}s4
 	upgrade_style="old"
     elif [ -c /dev/${_disk}p2 ]; then
-	os_part=/dev/${_disk}p2
+	os_part=/dev/${_disk}p3
 	data_part=/dev/${_disk}p2
 	upgrade_style="new"
-    fi
-    if [ "${data_part}" = ""]; then
+    else
 	return 1
     fi
+
+    if [ "${upgrade_style}" = "new" ]; then
+	# We're going to be very lazy, and just
+	# use zdb to see if there is a freenas-boot
+	# pool on it
+	if zdb -l ${os_part} | grep "name: 'freenas-boot'" > /dev/null ; then
+	    return 0
+	fi
+	# If it's partitioned this way, and isn't freenas-boot, then
+	# it's not freenas.
+	return 1
+    fi
+
+    # Everything below here is for old style upgrade.
     if ! mount "${data_part}" /tmp/data_old ; then
 	return 1
     fi
@@ -271,11 +327,9 @@ disk_is_freenas()
         _rv=0
     fi
     # XXX side effect, shouldn't be here!
-    if [ "${upgrade_style}" = "old" ]; then
-	cp -pR /tmp/data_old/. /tmp/data_preserved
-    fi
+    cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
-    if [ $_rv -eq 0 -a "${upgrade_style}" = "old" ]; then
+    if [ $_rv -eq 0 ]; then
 	mount ${os_part} /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
@@ -334,6 +388,7 @@ menu_install()
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
+    local readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
@@ -414,6 +469,7 @@ menu_install()
     # Start critical section.
     trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
     set -e
+    set -x
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
@@ -428,7 +484,8 @@ menu_install()
 	if [ "${upgrade_style}" = "old" ]; then
 		mount /dev/${_disk}s1a /tmp/data
 	elif [ "${upgrade_style}" = "new" ]; then
-		mount /dev/${_disk}p2 /tmp/data
+		zpool import -f -N ${POOL}
+		mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
 	else
 		echo "Unknown upgrade style" 1>&2
 		false
@@ -471,43 +528,18 @@ menu_install()
     ls $(get_product_path) > /dev/null
 
     if [ ${_do_upgrade} -ne 0 ]; then
-	set -x
 	# For new-style upgrades -- we have a ${_disk}p2 --
 	# we don't need to back up the data, just touch the
 	# sentinal files.
-        mkdir -p /tmp/data
-	if [ ! -c /dev/${_disk}p2 ]; then
-		# For upgrading from old-style partitions, the
-		# partition map was destroyed.
-		gpart destroy -F ${_disk} || true
-		gpart create -s gpt ${_disk}
-		# For grub
-		gpart add -t bios-boot -s 512k ${_disk}
-		gpart add -t freebsd-ufs -s 32m ${_disk}
-		gpart add -t freebsd-zfs -a 4k ${_disk}
-
-		newfs -L "grub" /dev/${_disk}p2
-		zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
-		zfs create -o canmount=off freenas-boot/ROOT
-		zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+	if [ "${upgrade_style}" = "old" ]; then
+		partition_disk ${_disk}
 	fi
-
-	mkdir -p /tmp/data
-	# Mount the root file system
-	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
-	mkdir -p /tmp/data/boot/grub
-	mount -t ufs -o noatime /dev/${_disk}p2 /tmp/data/boot/grub
-	mkdir -p /tmp/data/data
+	mount_disk ${_disk} /tmp/data
 
 	# XXX if we have preserved /data
 	if [ "${upgrade_style}" = "old" ]; then
 		cp -pR /tmp/data_preserved/ /tmp/data/data
 	fi
-	# If I did things correctly, this isn't needed
-	# But I didn't, so they're still needed.
-#        : > /tmp/$NEED_UPDATE_SENTINEL
-#        : > /tmp/$CD_UPGRADE_SENTINEL
-
 	# Tell it to look in /.mount (with an implied /Packages) for the packages.
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
@@ -573,35 +605,13 @@ menu_install()
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     else
 #	/rescue/pc-sysinstall -c ${_config_file}
-	set -x
-	# For non-upgrade installs, the partition was erased.
-	# A boot partition was created, so we need to add two
-	# more partitions:  data and root
-	gpart destroy -F ${_disk} || true
-	gpart create -s gpt ${_disk}
-	# For grub
-	gpart add -t bios-boot -s 512k ${_disk}
-	gpart add -t freebsd-ufs -s 32m ${_disk}
-	gpart add -t freebsd-zfs -a 4k ${_disk}
 
-	newfs -L "grub" /dev/${_disk}p2
-	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
-	zfs create -o canmount=off freenas-boot/ROOT
-	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+	partition_disk ${_disk}
+	mount_disk ${_disk} /tmp/data
 
-	mkdir -p /tmp/data
-	# Mount the root file system
-	mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
-	mkdir -p /tmp/data/boot/grub
-	mount -t ufs -o noatime /dev/${_disk}p2 /tmp/data/boot/grub
-	mkdir -p /tmp/data/data
-
-#	# Copy the databases over
+#	# Copy the initial databases over
 	cp -R /data/* /tmp/data/data
 	chown -R www:www /tmp/data/data
-#	umount /tmp/data
-#	rmdir /tmp/data
-#	# And now root
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
 	echo "/dev/${_disk}p2	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
@@ -635,6 +645,9 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     umount /tmp/data/
 
     if is_truenas ; then
+	# This is not going to work at all right now.
+	# We'd need to create a partition earlier.
+	false
         # Put a swap partition on newly created installation image
         if [ -e /dev/${_disk}s3 ]; then
             gpart delete -i 3 ${_disk}
