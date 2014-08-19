@@ -163,9 +163,8 @@ add_port www/py-pywebdav
 add_port databases/mysql56-server
 add_port databases/mysql56-client
 add_port databases/py-MySQLdb56
-add_port www/apache24 WITH_MPM=itk \
-		OPTIONS_FILE_SET+=DAV_LOCK \
-		OPTIONS_FILE_SET+=SUEXEC
+add_port www/apache24
+add_port www/mod_mpm_itk
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_GZIP_STATIC \
 		OPTIONS_FILE_SET+=HTTP_PERL \
