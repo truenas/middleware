@@ -285,44 +285,40 @@ class InitialWizard(CommonWizard):
 
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
-                        if not share_groupcreate:
-                            raise MiddlewareError(
-                                _('Group does not exist: %s') % share_group
+                        if share_groupcreate:
+                            gid = _n.group_create(share_group)
+                            group = bsdGroups.objects.create(
+                                bsdgrp_gid=gid,
+                                bsdgrp_group=share_group,
                             )
-                        gid = _n.group_create(share_group)
-                        group = bsdGroups.objects.create(
-                            bsdgrp_gid=gid,
-                            bsdgrp_group=share_group,
-                        )
+                        else:
+                            group = bsdGroups.objects.all()[0]
                     else:
                         group = qs[0]
 
                     qs = bsdUsers.objects.filter(bsdusr_username=share_user)
                     if not qs.exists():
-                        if not share_usercreate:
-                            raise MiddlewareError(
-                                _('User does not exist: %s') % share_user
+                        if share_usercreate:
+                            if share_userpw:
+                                password = share_userpw
+                                password_disabled = False
+                            else:
+                                password = '!'
+                                password_disabled = True
+                            uid, gid, unixhash, smbhash = _n.user_create(
+                                share_user,
+                                share_user,
+                                password,
+                                password_disabled=password_disabled
                             )
-                        if share_userpw:
-                            password = share_userpw
-                            password_disabled = False
-                        else:
-                            password = '!'
-                            password_disabled = True
-                        uid, gid, unixhash, smbhash = _n.user_create(
-                            share_user,
-                            share_user,
-                            password,
-                            password_disabled=password_disabled
-                        )
-                        bsdUsers.objects.create(
-                            bsdusr_username=share_user,
-                            bsdusr_full_name=share_user,
-                            bsdusr_uid=uid,
-                            bsdusr_group=group,
-                            bsdusr_unixhash=unixhash,
-                            bsdusr_smbhash=smbhash,
-                        )
+                            bsdUsers.objects.create(
+                                bsdusr_username=share_user,
+                                bsdusr_full_name=share_user,
+                                bsdusr_uid=uid,
+                                bsdusr_group=group,
+                                bsdusr_unixhash=unixhash,
+                                bsdusr_smbhash=smbhash,
+                            )
 
                 else:
                     errno, errmsg = _n.create_zfs_vol(
@@ -472,7 +468,7 @@ class InitialWizard(CommonWizard):
                     nis = NIS.objects.all().order_by('-id')[0]
                 except:
                     nis = NIS.objects.create()
-                nisdata = ldap.__dict__
+                nisdata = nis.__dict__
                 nisdata.update({
                     'nis_domain': cleaned_data.get('ds_nis_domain'),
                     'nis_servers': cleaned_data.get('ds_nis_servers'),
