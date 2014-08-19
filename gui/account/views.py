@@ -172,7 +172,7 @@ def json_users(request, exclude=None):
                     json_user['items'].append({
                         'id': '%s_%s' % (
                             wizard_ds.get('ds_type'),
-                            group,
+                            user,
                         ),
                         'name': user,
                         'label': user,
