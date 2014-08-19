@@ -211,7 +211,7 @@ define([
         validator: function(value, constraints) {
           var found;
           value = value.replace("\\", "\\\\");
-          me._storeUsers.fetch({query: {id: value}, onComplete: function(results) {
+          me._storeUsers.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
             found = true;
             } else {
@@ -273,7 +273,7 @@ define([
         validator: function(value, constraints) {
           var found;
           value = value.replace("\\", "\\\\");
-          me._storeGroups.fetch({query: {id: value}, onComplete: function(results) {
+          me._storeGroups.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
             found = true;
             } else {
