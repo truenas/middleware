@@ -237,6 +237,33 @@ EOD
     return $?
 }
 
+install_grub() {
+	local _disk
+	local _mnt
+
+	if [ $# -ne 2 ]; then
+		return 1
+	fi
+	_mnt="$1"
+	_disk="$2"
+
+	# Install grub
+	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
+	chroot ${_mnt} /etc/rc.d/ldconfig start
+	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/usr/local/etc/grub.d/10_ktrueos
+	# Having 10_ktruos.bak in place causes grub-mkconfig to
+	# create two boot menu items.  So let's move it out of place
+	mkdir /tmp/bakup
+	mv ${_mnt}/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
+	chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
+	chroot ${_mnt} /usr/local/sbin/beadm activate default
+	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
+	# And now move the backup files back in place
+	mv ${_mnt}/usr/local/sbin/beadm.bak ${_mnt}/usr/local/sbin/beadm
+	mv /tmp/bakup/10_ktrueos.bak ${_mnt}/usr/local/etc/grub.d/10_ktrueos
+	return 0
+}
+
 mount_disk() {
 	local _disk
 	local _mnt
@@ -250,7 +277,7 @@ mount_disk() {
 	mkdir -p "${_mnt}"
 	mount -t zfs -o noatime freenas-boot/ROOT/default ${_mnt}
 	mkdir -p ${_mnt}/boot/grub
-	mount -t ufs -o noatime /dev/${_disk}p2 ${_mnt}/boot/grub
+	mount -t zfs -o noatime freenas-boot/grub ${_mnt}/boot/grub
 	mkdir -p ${_mnt}/data
 	return 0
 }
@@ -268,14 +295,13 @@ partition_disk() {
 	gpart create -s gpt ${_disk}
 	# For grub
 	gpart add -t bios-boot -s 512k ${_disk}
-	gpart add -t freebsd-ufs -s 32m ${_disk}
 	# The rest of the disk
 	gpart add -t freebsd-zfs -a 4k ${_disk}
 
-	newfs -L "grub" /dev/${_disk}p2
-	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p3
+	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+	zfs create -o mountpoint=legacy freenas-boot/grub
 
 	return 0
 }
@@ -298,8 +324,7 @@ disk_is_freenas()
 	data_part=/dev/${_disk}s4
 	upgrade_style="old"
     elif [ -c /dev/${_disk}p2 ]; then
-	os_part=/dev/${_disk}p3
-	data_part=/dev/${_disk}p2
+	os_part=/dev/${_disk}p2
 	upgrade_style="new"
     else
 	return 1
@@ -544,7 +569,7 @@ menu_install()
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
 	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "/dev/${_disk}p2	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
+	echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 	if [ -f /tmp/hostid ]; then
             cp -p /tmp/hostid /tmp/data/conf/base/etc
@@ -589,17 +614,7 @@ menu_install()
 	# Set default boot filesystem
 	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
 
-	# Install grub
-	chroot /tmp/data/ /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
-	chroot /tmp/data/ /etc/rc.d/ldconfig start
-	chroot /tmp/data/ /usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' /usr/local/sbin/beadm /usr/local/etc/grub.d/10_ktrueos
-	mkdir /tmp/bakup
-	mv /tmp/data/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
-	chroot /tmp/data/ /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
-	chroot /tmp/data/ /usr/local/sbin/beadm activate default
-	chroot /tmp/data/ /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
-	chroot /tmp/data/ /bin/mv /usr/local/sbin/beadm.bak /usr/local/sbin/beadm
-	mv /tmp/bakup/10_ktrueos.bak /tmp/data/usr/local/etc/grub.d/10_ktrueos
+	install_grub /tmp/data ${_disk}
 
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
@@ -614,7 +629,8 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	chown -R www:www /tmp/data/data
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "/dev/${_disk}p2	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
+	echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
+#	echo "/dev/${_disk}p2	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev
@@ -626,15 +642,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	# Set default boot filesystem
 	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
 
-	# Install grub
-	chroot /tmp/data/ /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
-	chroot /tmp/data/ /etc/rc.d/ldconfig start
-	chroot /tmp/data/ /usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' /usr/local/sbin/beadm /usr/local/etc/grub.d/10_ktrueos
-	chroot /tmp/data/ /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
-	chroot /tmp/data/ /usr/local/sbin/beadm activate default
-	chroot /tmp/data/ /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
-	chroot /tmp/data/ /bin/mv /usr/local/sbin/beadm.bak /usr/local/sbin/beadm
-	chroot /tmp/data/ /bin/mv /usr/local/etc/grub.d/10_ktrueos.bak /usr/local/etc/grub.d/10_ktrueos
+	install_grub /tmp/data ${_disk}
 
 	set +x
     fi
