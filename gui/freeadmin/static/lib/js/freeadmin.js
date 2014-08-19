@@ -796,12 +796,12 @@ require([
     directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
         var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
 
-        var table = dojo.query("#" + eid)[0];
+        var table = query("#" + eid)[0];
         var td = table.parentNode;
         var node = domConstruct.create("a", {
             "href": "#",
-            "title": "Edit",
-            "innerHTML": "Edit",
+            "title": gettext("Edit"),
+            "innerHTML": gettext("Edit"),
             "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
         });
 
