@@ -60,6 +60,7 @@ from freenasUI.common.freenasldap import (
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
     LDAPForm,
+    NISForm,
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
@@ -1243,7 +1244,7 @@ class InitialWizardDSForm(Form):
         choices=(
             ('ad', _('Active Directory')),
             ('ldap', _('LDAP')),
-            #('nis', _('NIS')),
+            ('nis', _('NIS')),
             #('nt4', _('NT4')),
         ),
         initial='ad',
@@ -1282,12 +1283,19 @@ class InitialWizardDSForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardDSForm, self).__init__(*args, **kwargs)
 
+        for fname, field in NISForm.base_fields.items():
+            if fname.find('enable') == -1:
+                self.fields['ds_%s' % fname] = field
+                field.required = False
+
         pertype = defaultdict(list)
         for fname in self.fields.keys():
             if fname.startswith('ds_ad_'):
                 pertype['ad'].append('id_ds-%s' % fname)
             elif fname.startswith('ds_ldap_'):
                 pertype['ldap'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_nis_'):
+                pertype['nis'].append('id_ds-%s' % fname)
 
         self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
             'id_ds-ds_type',
