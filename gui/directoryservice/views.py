@@ -87,58 +87,6 @@ def directoryservice_home(request):
     })
 
 
-def directoryservice_activedirectory(request):
-    try:
-        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
-    except:
-        activedirectory = models.ActiveDirectory()
-
-    if request.method == "POST":
-        form = forms.ActiveDirectoryForm(request.POST, instance=activedirectory)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="Active Directory successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.ActiveDirectoryForm(instance=activedirectory)
-
-    return render(request, 'directoryservice/activedirectory.html', {
-        'activedirectory': activedirectory,
-        'form': form,
-        'inline': True
-    })
-
-
-def directoryservice_ldap(request):
-    try:
-        ldap = models.LDAP.objects.order_by("-id")[0]
-    except:
-        ldap = models.LDAP()
-
-    if request.method == "POST":
-        form = forms.LDAPForm(request.POST, instance=ldap)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="LDAP successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.LDAPForm(instance=ldap)
-
-    return render(request, 'directoryservice/ldap.html', {
-        'ldap': ldap,
-        'form': form,
-        'inline': True
-    })
-
-
 def directoryservice_kerberosrealm(request, id):
     kr = models.KerberosRealm.objects.get(pk=id)
 

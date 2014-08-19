@@ -43,6 +43,7 @@ log = logging.getLogger('directoryservice.admin')
 
 class ActiveDirectoryFAdmin(BaseFreeAdmin):
     create_modelform = "ActiveDirectoryForm"
+    deletable = False
     edit_modelform = "ActiveDirectoryForm"
     icon_object = u"ActiveDirectoryIcon"
     icon_model = u"ActiveDirectoryIcon"
@@ -52,6 +53,7 @@ class ActiveDirectoryFAdmin(BaseFreeAdmin):
 
 class LDAPFAdmin(BaseFreeAdmin):
     create_modelform = "LDAPForm"
+    deletable = False
     edit_modelform = "LDAPForm"
     icon_object = u"LDAPIcon"
     icon_model = u"LDAPIcon"
