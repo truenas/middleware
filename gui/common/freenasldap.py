@@ -1686,6 +1686,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
         super(FreeNAS_ActiveDirectory_Users, self).__init__(**kwargs)
 
         self.__users = {}
+        self.__usernames = []
         self.__ucache = {}
         self.__ducache = {}
 
@@ -1750,41 +1751,12 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 yield user
 
     def _get_uncached_usernames(self):
-
-        usernames = []
-        for d in self.__domains:
-            n = d['nETBIOSName']
-
-            dcs = self.get_domain_controllers(d['dnsRoot'])
-            if not dcs:
-                raise FreeNAS_ActiveDirectory_Exception(
-                    "Unable to find domain controllers for %s" % d['dnsRoot'])
-            (self.host, self.port) = self.get_best_host(dcs)
-
-            self.basedn = d['nCName']
-            self.attributes = ['sAMAccountName']
-            self.pagesize = FREENAS_LDAP_PAGESIZE
-
-            ad_users = self.get_users()
-
-            for u in ad_users:
-                CN = str(u[0])
-
-                u = u[1]
-                if self.use_default_domain:
-                    sAMAccountName = u['sAMAccountName'][0]
-                else:
-                    sAMAccountName = "{}{}{}".format(
-                        n,
-                        FREENAS_AD_SEPARATOR,
-                        u['sAMAccountName'][0]
-                    )
-                usernames.append(sAMAccountName)
-
-        return usernames
+        return self.__usernames
 
     def __get_users(self):
         log.debug("FreeNAS_ActiveDirectory_Users.__get_users: enter")
+
+        self.__usernames = []
 
         if (self.flags & FLAGS_CACHE_READ_USER):
             dcount = len(self.__domains)
@@ -1843,6 +1815,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                         u['sAMAccountName'][0]
                     )
 
+                self.__usernames.append(sAMAccountName)
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
