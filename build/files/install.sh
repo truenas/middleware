@@ -616,6 +616,9 @@ menu_install()
 
 	install_grub /tmp/data ${_disk}
 
+	: > /tmp/data/${CD_UPGRADE_SENTINAL}
+	: > /tmp/data/${NEED_UPDATE_SENTINEL}
+
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     else
