@@ -198,8 +198,9 @@ class InitialWizard(CommonWizard):
 
     def done(self, form_list, **kwargs):
 
+        curstep = 0
         progress = {
-            'step': 1,
+            'step': curstep,
             'indeterminate': True,
             'percent': 0,
         }
@@ -220,6 +221,12 @@ class InitialWizard(CommonWizard):
         with transaction.atomic():
             _n = notifier()
             if volume_form or volume_import:
+
+                curstep += 1
+                progress['step'] = curstep
+
+                with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                    f.write(pickle.dumps(progress))
 
                 if volume_import:
                     volume_name, guid = cleaned_data.get(
@@ -262,7 +269,8 @@ class InitialWizard(CommonWizard):
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
                 volume_name = volume.vol_name
 
-            progress['step'] = 2
+            curstep += 1
+            progress['step'] = curstep
             progress['indeterminate'] = False
             progress['percent'] = 0
             with open(WIZARD_PROGRESSFILE, 'wb') as f:
@@ -424,6 +432,14 @@ class InitialWizard(CommonWizard):
                     f.write(pickle.dumps(progress))
 
         if ds_form:
+
+            curstep += 1
+            progress['step'] = curstep
+            progress['indeterminate'] = True
+
+            with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                f.write(pickle.dumps(progress))
+
             if cleaned_data.get('ds_type') == 'ad':
                 try:
                     ad = ActiveDirectory.objects.all().order_by('-id')[0]
@@ -549,7 +565,8 @@ class InitialWizard(CommonWizard):
                 acl=share_acl,
             )
 
-        progress['step'] = 3
+        curstep += 1
+        progress['step'] = curstep
         progress['indeterminate'] = False
         progress['percent'] = 1
         with open(WIZARD_PROGRESSFILE, 'wb') as f:

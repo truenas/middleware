@@ -16,11 +16,11 @@
           {% if "volume" in form_list %}
             {label: gettext("Setting up volume")},
           {% endif %}
-          {% if "shares" in form_list %}
-            {label: gettext("Creating shares")},
-          {% endif %}
           {% if "ds" in form_list %}
             {label: gettext("Joining directory service")},
+          {% endif %}
+          {% if "shares" in form_list %}
+            {label: gettext("Creating shares")},
           {% endif %}
             {label: gettext("Restarting services")}
           ],
