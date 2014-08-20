@@ -616,7 +616,7 @@ menu_install()
 
 	install_grub /tmp/data ${_disk}
 
-	: > /tmp/data/${CD_UPGRADE_SENTINAL}
+	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 
 	dialog --msgbox "The installer has preserved your database file.
