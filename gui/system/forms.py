@@ -1444,6 +1444,24 @@ class InitialWizardDSForm(Form):
                         _('This field is required.'),
                     ])
 
+        elif cdata.get('ds_type') == 'nt4':
+            for fname, fields in self.fields.items():
+                if not fname.startswith('ds_nt4_'):
+                    continue
+                value = cdata.get(fname)
+                if not value and NT4Form.base_fields[
+                    fname.replace('ds_', '')
+                ].required:
+                    self._errors[fname] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            password1 = cdata.get('ds_nt4_adminpw')
+            password2 = cdata.get('ds_nt4_adminpw2')
+            if password1 != password2:
+                self._errors['ds_nt4_adminpw2'] = self.error_class([
+                    _('The two password fields didn\'t match.')
+                ])
+
         return cdata
 
     def done(self, request=None, **kwargs):
