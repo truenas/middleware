@@ -1,8 +1,7 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block form %}
-Backup in progress...
 <div data-dojo-type="freeadmin/Progress" style="width: 300px" data-dojo-id="backupProgress" data-dojo-props="
-simple: true,
+mode: 'backup',
 poolUrl: '{% url 'system_backup_progress' %}',
 backupProgress: true
 ">
@@ -11,4 +10,12 @@ backupProgress: true
     </script>
 </div>
 {% endblock %}
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{% url 'system_backup_abort' %}'
+});
+{% endblock %}
 {% block oklabel %}Abort{% endblock %}
+{% block cancellabel %}Run in background{% endblock %}

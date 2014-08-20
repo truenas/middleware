@@ -26,6 +26,7 @@
 #####################################################################
 
 import cPickle as pickle
+import datetime
 import json
 import logging
 import os
@@ -701,7 +702,7 @@ def debug(request):
 
 def backup(request):
     # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at');
+    backups = models.Backup.objects.all().order_by('-bak_started_at')
 
     if len(backups) < 1 or backups[0].bak_acknowledged:
         # No backup is pending, can schedule next one
@@ -709,13 +710,20 @@ def backup(request):
         if request.method == 'POST':
             backup_form = forms.BackupForm(request.POST)
             if backup_form.is_valid():
+                backup = models.Backup()
+                backup.bak_started_at = datetime.datetime.now()
+                backup.save()
+                transaction.commit()
+
                 args = {
                     'cmd': 'START',
                     'hostport': backup_form.cleaned_data['backup_hostname'],
                     'username': backup_form.cleaned_data['backup_username'],
                     'password': backup_form.cleaned_data['backup_password'],
                     'directory': backup_form.cleaned_data['backup_directory'],
-                    'with-data': backup_form.cleaned_data['backup_data']
+                    'with-data': backup_form.cleaned_data['backup_data'],
+                    'compression': backup_form.cleaned_data['backup_compression'],
+                    'backup-id': backup.id
                 }
 
                 notifier().start('backup')
@@ -734,7 +742,7 @@ def backup(request):
         if request.method == 'POST':
             backups[0].bak_acknowledged = True
             backups[0].save()
-            return JsonResp(request, message='Backup completed successfully')
+            return JsonResp(request, message='Backup dismissed')
 
         return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
     else:
@@ -742,31 +750,17 @@ def backup(request):
 
 def backup_progress(request):
     # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at')
-    backup = backups[0]
+    backup = models.Backup.objects.all().order_by('-bak_started_at').first()
 
-    if backups[0].bak_finished:
-        data = {'status': 'finished', 'message': backups[0].bak_status}
+    if backup.bak_finished:
+        data = {'status': 'finished', 'message': backup.bak_status}
         return HttpResponse(json.dumps(data), content_type='application/json')
 
-    if backups[0].bak_failed:
-        data = {'status': 'error', 'message': backups[0].bak_status}
+    if backup.bak_failed:
+        data = {'status': 'error', 'message': backup.bak_status}
         return HttpResponse(json.dumps(data), content_type='application/json')
 
-    # Check if backup process is alive
-    try:
-        os.kill(backups[0].bak_worker_pid, 0)
-    except OSError:
-        # Mark backup as failed at this point
-        backups[0].bak_failed = True
-        backups[0].bak_status = 'Backup process died'
-        backups[0].save()
-        data = {'status': 'error', 'message': backups[0].bak_status}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    args = {'cmd': 'PROGRESS'}
-
-    response = notifier().call_backupd(args)
+    response = notifier().call_backupd({'cmd': 'PROGRESS'})
     if response['status'] != 'OK':
         data = {'status': 'error', 'message': 'Could not communicate with backup daemon'}
         return HttpResponse(json.dumps(data), content_type='application/json')
@@ -781,25 +775,18 @@ def backup_progress(request):
 
 def backup_abort(request):
     # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at');
+    backups = models.Backup.objects.all().order_by('-bak_started_at')
 
-    if len(backups) < 1 or backup[0].bak_finished:
+    if len(backups) < 1 or backups[0].bak_finished:
         pass
 
-    args = {
-        'cmd': 'ABORT',
-    }
+    if request.method == 'POST':
+        # User wants to abort a backup
+        response = notifier().call_backupd({'cmd': 'ABORT'})
+        if response['status'] != 'OK':
+            return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
 
-    response = notifier().call_backupd(args)
-    if response['status'] != 'OK':
-        return JsonResp(request, error=True, message='Could not communicate with backup daemon')
-
-    return JsonResp(request,
-        message='',
-        done=response['done'],
-        total=response['estimated'],
-        percentage=response['percentage']
-    )
+        return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
 
 class UnixTransport(xmlrpclib.Transport):
     def make_connection(self, addr):
