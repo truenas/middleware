@@ -1717,8 +1717,7 @@ class WebDAV(Model):
 	    default=8080,
 	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
 	    help_text=_("This is the port at which WebDAV will run on."
-			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."
-			"<br />The default value for this port is 8080"),
+			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."),
 	)
     
     webdav_tcpportssl =  models.PositiveIntegerField(
@@ -1726,8 +1725,7 @@ class WebDAV(Model):
 	    default=8081,
 	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
 	    help_text=_("This is the port at which Secure WebDAV will run on."
-			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."
-			"<br />The default value for this port is 8081"),
+			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."),
 	)
     
     webdav_password = models.CharField(
@@ -1744,7 +1742,7 @@ class WebDAV(Model):
             default='digest',
             help_text=_("Type of HTTP Authentication for WebDAV"
 			"<br />Basic Auth: Password is sent over the network as plaintext (Avoid if HTTPS is disabled)"
-			"<br />Digest Auth: Hash of the password is sent over the network (more secure but breaks compatibility with certain webdav clients e.g. cadaver)")
+			"<br />Digest Auth: Hash of the password is sent over the network (more secure)")
         )
 
     class Meta:
