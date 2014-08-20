@@ -5212,6 +5212,12 @@ class notifier:
                 time.sleep(1)
 
         if ntries == 0:
+            # Mark backup as failed at this point
+            from freenasUI.system.models import Backup
+            backup = Backup.objects.all().order_by('-bak_started_at').first()
+            backup.bak_failed = True
+            backup.bak_status = 'Backup process died'
+            backup.save()
             return {'status': 'ERROR'}
 
         sock.settimeout(5)
