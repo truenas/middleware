@@ -23,15 +23,6 @@ class Advanced(TreeNode):
     type = 'opensystem'
     order = -90
 
-class Backup(TreeNode):
-
-    gname = 'Backup'
-    name = _(u'Backup')
-    icon = u'SettingsIcon'
-    type = 'dialog'
-    view = 'system_backup'
-    order = -90
-
 class Email(TreeNode):
 
     gname = 'Email'
