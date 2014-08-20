@@ -190,6 +190,12 @@ class InitialWizard(CommonWizard):
             'system/wizard.html',
         ]
 
+    def get_context_data(self, form, **kwargs):
+        context = super(InitialWizard, self).get_context_data(form, **kwargs)
+        if self.steps.last:
+            context['form_list'] = self.get_form_list().keys()
+        return context
+
     def done(self, form_list, **kwargs):
 
         progress = {
