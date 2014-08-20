@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/local/bin/python2
 from collections import defaultdict
 
 import os
