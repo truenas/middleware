@@ -144,7 +144,6 @@ add_port devel/py-asn1
 add_port devel/py-asn1-modules
 add_port security/openssl
 add_port security/py-htpasswd
-add_port www/htdigest
 add_port www/pydio
 add_port lang/php5 \
 		OPTIONS_FILE_SET+=FPM
@@ -159,7 +158,6 @@ add_port lang/php5-extensions \
 		OPTIONS_FILE_SET+=PDO_MySQL \
 		OPTIONS_FILE_SET+=ZIP \
 		OPTIONS_FILE_SET+=ZLIB
-add_port www/py-pywebdav
 add_port databases/mysql56-server
 add_port databases/mysql56-client
 add_port databases/py-MySQLdb56
@@ -168,8 +166,6 @@ add_port www/mod_mpm_itk
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_GZIP_STATIC \
 		OPTIONS_FILE_SET+=HTTP_PERL \
-		OPTIONS_FILE_SET+=HTTP_DAV \
-		OPTIONS_FILE_SET+=HTTP_DAV_EXT \
 		OPTIONS_FILE_SET+=HTTP_AUTH_DIGEST \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
