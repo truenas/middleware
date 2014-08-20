@@ -333,7 +333,8 @@ class WebDAV_Share(Model):
     webdav_name = models.CharField(
 	    max_length=120,
 	    verbose_name=_("Share Path Name"),
-	    help_text=_('This will be used to access your WebDAV share. For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name'),
+	    help_text=_("This will be used to access your WebDAV share."
+	      "<br /> For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name"),
     )
     
     webdav_comment = models.CharField(
@@ -367,7 +368,7 @@ class WebDAV_Share(Model):
 
     def delete(self, *args, **kwargs):
         super(WebDAV_Share, self).delete(*args, **kwargs)
-        notifier().gen_dav_config()
+        notifier().reload("webdav")
 
     class Meta:
         verbose_name = _("WebDAV Share")

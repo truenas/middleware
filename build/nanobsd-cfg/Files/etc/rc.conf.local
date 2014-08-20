@@ -387,6 +387,8 @@ _gen_conf()
 	_bool_svcconfig smartd_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
+	_bool_svcconfig apache24_enable webdav
+
 
 	_bool_svcconfig samba_server_enable cifs
 	if ! dirsrv_enabled domaincontroller ; then

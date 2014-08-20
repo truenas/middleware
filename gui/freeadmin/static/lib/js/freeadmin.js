@@ -864,6 +864,20 @@ require([
 
     }
 
+    webdavprotocolToggle = function() {
+	
+	var select = registry.byId("id_webdav_protocol");
+	var port = registry.byId("id_webdav_tcpportssl");
+	var trpo = port.domNode.parentNode.parentNode;
+	var protos = ["https","httphttps"];
+	if(protos.indexOf(select.get('value')) > -1) {
+	    domStyle.set(trpo,"display","");
+	} else {
+	    domStyle.set(trpo,"display","none");
+	}
+      
+    }
+
     upsModeToggle = function() {
 
         var select = registry.byId("id_ups_mode");

@@ -374,12 +374,10 @@ class WebDAV_ShareForm(ModelForm):
 	
     def save(self):
 	ret = super(WebDAV_ShareForm,self).save()
-	notifier().gen_dav_config()
+	notifier().reload("webdav")
 	return ret
 
     def done(self,request,events):
 	if not services.objects.get(srv_service='webdav').srv_enable:
 	    events.append('ask_service("webdav")')
-	else:
-	    events.append('restartHttpd()')
 	super(WebDAV_ShareForm, self).done(request,events)

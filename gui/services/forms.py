@@ -80,13 +80,6 @@ class servicesForm(ModelForm):
             obj.save()
             started = True
         
-        elif obj.srv_service == "webdav":
-	    if obj.srv_enable:
-		started=True
-	    else:
-		started=False
-	    _notifier.gen_dav_config(started)
-        
         else:
             """
             Using rc.d restart verb and depend on rc_var service_enable
@@ -119,8 +112,6 @@ class servicesForm(ModelForm):
         return obj
 
     def done(self, request=None, events=None, **kwargs):
-	if events is not None and self.instance.srv_service == 'webdav':
-		events.append('restartHttpd()')
 	return super(servicesForm, self).done(request=request, events=events, **kwargs)
 
 class CIFSForm(ModelForm):
@@ -1528,20 +1519,20 @@ class DomainControllerForm(ModelForm):
 
 class WebDAVForm(ModelForm):
   webdav_password2 = forms.CharField(
-        max_length=120,
-        label=_("Confirm WebDAV Password"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
+      max_length=120,
+      label=_("Confirm WebDAV Password"),
+      widget=forms.widgets.PasswordInput(),
+      required=False,
     )
   class Meta:
-    #fields = "__all__"
-    fields = ('webdav_protocol', 'webdav_tcpport','webdav_tcpportssl','webdav_htauth','webdav_password')
-    model = models.WebDAV
-    widgets = {
-      'webdav_tcpport' : forms.widgets.TextInput(),
-      'webdav_tcpportssl' : forms.widgets.TextInput(),
-      'webdav_password' : forms.widgets.PasswordInput(render_value=False), 
-      }
+      #fields = "__all__"
+      fields = ('webdav_protocol', 'webdav_tcpport','webdav_tcpportssl','webdav_htauth','webdav_password')
+      model = models.WebDAV
+      widgets = {
+	'webdav_tcpport' : forms.widgets.TextInput(),
+	'webdav_tcpportssl' : forms.widgets.TextInput(),
+	'webdav_password' : forms.widgets.PasswordInput(render_value=False), 
+	}
     
   def __original_save(self):
       for name in ('webdav_password', 'webdav_tcpport','webdav_tcpportssl','webdav_protocol','webdav_htauth'):
@@ -1573,9 +1564,9 @@ class WebDAVForm(ModelForm):
 	self.fields['webdav_password'].required = False
       if self._api is True:
 	  del self.fields['webdav_password2']
-      # Still figuring this out
-      #if self.instance.webdav_protocol == 'http':
-	  #self.fields['webdav_tcpportssl'].widget = forms.widgets.HiddenInput()
+      self.fields['webdav_protocol'].widget.attrs['onChange'] = (
+            "webdavprotocolToggle();"
+        )
       self.__original_save()
       
   def clean_webdav_password2(self):
@@ -1605,20 +1596,20 @@ class WebDAVForm(ModelForm):
       if self.__webdav_password_changed():
 	  notifier().dav_passwd_change(self.instance.webdav_password,self.instance.webdav_htauth)
       
-      if ( self.__webdav_protocol_changed() and self.instance._original_webdav_protocol == 'http' ):
-	  notifier().start_ssl("nginx")
+      #if ( self.__webdav_protocol_changed() and self.instance._original_webdav_protocol == 'http' ):
+	  # will wait for the ssl cert manager to fo this
       
       if self.__original_changed():
-	  notifier().gen_dav_config()
+	  started = notifier().reload("webdav")
+	  if ( started is False
+	      and
+	      models.services.objects.get(srv_service='webdav').srv_enable
+	     ):
+	      raise ServiceFailed( "webdav", _("The WebDAV service failed to reload.") )
+
+
 
   def done(self, request=None, events=None, **kwargs):
-      if (
-	self.__original_changed()
-	and 
-	models.services.objects.get(srv_service='webdav').srv_enable == 1
-	):
-	      events.append('restartHttpd()')
-
       return super(WebDAVForm, self).done(
 	  request=request, events=events, **kwargs
       )

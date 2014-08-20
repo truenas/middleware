@@ -254,6 +254,7 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
+            'webdav': ('httpd','/var/run/httpd.pid'),
         }
 
     def _started_notify(self, verb, what):
@@ -398,9 +399,11 @@ class notifier:
 	c.execute("select webdav_htauth from services_webdav;")
 	dav_auth_type=c.fetchone()
 	dav_auth_type=dav_auth_type[0]
+	
 	# Check to see there is a http  auth password file if not then create one
-	oscmd="/usr/local/www/webdavht%s" % dav_auth_type
+	oscmd="/usr/local/www/apache24/webdavht%s" % dav_auth_type
 	if os.path.isfile(oscmd):
+	  log.debug("the password file : %s is found!" % oscmd)
 	  pass
 	else:
 	  dav_passwd=c.execute("select webdav_password from services_webdav;").fetchone()
@@ -424,74 +427,104 @@ class notifier:
 	  dav_share_paths=[]
 	  dav_read_only=[]
 	  dav_perm=[]
-	  auth_text="auth_%s 'webdav'" % dav_auth_type
-	  auth_text_file="auth_%s_user_file /usr/local/www/webdavht%s" % (dav_auth_type,dav_auth_type)
-	  dav_config_pretext = """server {
+	  dav_auth_text=""
+	  if dav_auth_type == 'digest':
+	      dav_auth_text="AuthDigestProvider file"
+	  
+	  dav_config_pretext = """
+	  <VirtualHost *:%s>
+	    DavLockDB "/usr/local/www/apache24/var/DavLock"
+	    AssignUserId webdav webdav
 	    
-	    create_full_put_path on;
-	    %s;
-	    %s;
-	    dav_access all:rw;
-	    dav_methods PUT DELETE MKCOL COPY MOVE;
-	    dav_ext_methods PROPFIND OPTIONS;
-	    autoindex on;
-	    location ~ /\.htaccess {
-	      deny all;
-	    }
-	    """ %(auth_text,auth_text_file)
-
+	    <Directory />
+	      AuthType %s
+	      AuthName webdav
+	      AuthUserFile "/usr/local/www/apache24/webdavht%s"
+	      %s
+	      Require valid-user
+	      
+	      Dav On
+	      AllowOverride None
+	      Order allow,deny
+	      Allow from all
+	      Options Indexes FollowSymLinks
+	    </Directory>
+	    """ %(dav_tcpport,dav_auth_type,dav_auth_type,dav_auth_text)
+	  
+	  dav_config_posttext = """
+	    
+	    # The following directives disable redirects on non-GET requests for
+	    # a directory that does not include the trailing slash.  This fixes a 
+	    # problem with several clients that do not appropriately handle 
+	    # redirects for folders with DAV methods.
+	    BrowserMatch "Microsoft Data Access Internet Publishing Provider" redirect-carefully
+	    BrowserMatch "MS FrontPage" redirect-carefully
+	    BrowserMatch "^WebDrive" redirect-carefully
+	    BrowserMatch "^WebDAVFS/1.[01234]" redirect-carefully
+	    BrowserMatch "^gnome-vfs/1.0" redirect-carefully
+	    BrowserMatch "^XML Spy" redirect-carefully
+	    BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
+	    BrowserMatch " Konqueror/4" redirect-carefully
+	  </VirtualHost>""" 
+	   
 	  for i in dav_data:
 	    dav_share_names.append(str(i[1]))
 	    dav_share_paths.append(str(i[3]))
 	    dav_read_only.append(i[4])
 	    dav_perm.append(i[5])
        
-	  with open('/etc/local/nginx/nginx-webdav.conf','w') as f:
-	    f.write(dav_config_pretext)
+	  with open('/etc/local/apache24/Includes/webdav.conf','w') as f:
 	    if dav_protocol in ['http','httphttps']:
-	      f.write("\tlisten "+str(dav_tcpport)+";\n")
-	    if dav_protocol in ['https','httphttps']:
-	      ssl_text="""
-	      server_name localhost;
-	      listen            0.0.0.0:%s default_server ssl spdy;
-	      listen            [::]:%s default_server ssl spdy;
-	      ssl_certificate        /etc/ssl/freenas/nginx/nginx.crt;
-	      ssl_certificate_key    /etc/ssl/freenas/nginx/nginx.key;
-	      ssl_dhparam /data/dhparam.pem;
-	      ssl_session_timeout    120m;
-	      ssl_session_cache    shared:ssl:16m;
-	      ssl_prefer_server_ciphers on;
-	      ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+RC4:EDH+aRSA:EECDH:RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS;
-	      add_header Strict-Transport-Security max-age=31536000; 
-	      """ % (dav_tcpportssl,dav_tcpportssl)
-	      f.write(ssl_text)
+	      f.write("Listen "+str(dav_tcpport)+"\n")
+	    
+	    #if dav_protocol in ['https','httphttps']:
+	      # do after ssl cert manager is taken care of
+	    
+	    f.write(dav_config_pretext)
 	    total_entries=len(dav_data)
  
 	    for i in range (0,total_entries):
-	      f.write("\tlocation /"+dav_share_names[i]+" {\n\t\t\talias "+dav_share_paths[i]+";\n")
-	      
-	      if dav_read_only[i] == 1:
-		f.write("\t\t\tlimit_except GET PROPFIND OPTIONS{\n\t\t\t\tdeny all;\n\t\t\t}\n")
-	      f.write("\t\t}\n")
+	      temp_path=""" "%s" """ % dav_share_paths[i]
+	      f.write(" Alias /"+dav_share_names[i]+temp_path+"\n")
+	      f.write(" <Directory "+temp_path+" >\n")
+	      #if dav_read_only[i] == 1:
+		# will take care of this soon
+	      f.write(" </Directory>\n")
 	      
 	      if dav_perm[i]:
-		self._pipeopen("chown -R :www %s" % dav_share_paths[i])
-	      
-	    f.write("}")
+		self._pipeopen("chown -R webdav:webdav %s" % dav_share_paths[i])
+	    f.write(dav_config_posttext)
  
 	else:
-	  with open('/etc/local/nginx/nginx-webdav.conf','w') as f:
+	  with open('/etc/local/apache24/Includes/webdav.conf','w') as f:
 	    f.write("") # Basically write a blank file if webdav service is turned off
      
 	conn.close()
     
     def dav_passwd_change(self,passwd,auth_type):
 	if auth_type == 'basic':
-	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /usr/local/www/webdavhtbasic webdav %s" % passwd
+	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /usr/local/www/apache24/webdavhtbasic webdav %s" % passwd
 	else:
-	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /usr/local/www/webdavhtdigest""" % passwd
+	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /usr/local/www/apache24/webdavhtdigest""" % passwd
 	self._pipeopen(cmd)
-	self._pipeopen("chown www:www /usr/local/www/webdavht%s" % (auth_type,))
+	self._pipeopen("chown webdav:webdav /usr/local/www/apache24/webdavht%s" % (auth_type,))
+
+    def _start_webdav(self):
+	self.gen_dav_config()
+	self._system("/usr/sbin/service apache24 start")
+    
+    def _stop_webdav(self):
+	self.gen_dav_config()
+	self._system("/usr/sbin/service apache24 stop")
+
+    def _restart_webdav(self):
+	self.gen_dav_config()
+	self._system("/usr/sbin/service apache24 forcestop")
+	self._system("/usr/sbin/service apache24 restart")
+
+    def _reload_webdav(self):
+	self.gen_dav_config()
+	self._system("/usr/sbin/service apache24 reload")
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
