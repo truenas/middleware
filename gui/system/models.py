@@ -557,7 +557,8 @@ class Backup(Model):
     )
 
     bak_worker_pid = models.IntegerField(
-        verbose_name=_("Backup worker PID")
+        verbose_name=_("Backup worker PID"),
+        null=True
     )
 
     bak_started_at = models.DateTimeField(
