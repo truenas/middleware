@@ -29,6 +29,7 @@
 import argparse
 import datetime
 import fcntl
+import gzip
 import logging
 import logging.config
 import os
@@ -47,7 +48,6 @@ import threading
 import time
 import json
 from paramiko import ssh_exception, sftp_client, transport
-from lxml import etree
 
 import daemon
 
@@ -63,7 +63,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.storage.models import Volume, Disk
+from freenasUI.storage.models import Volume, Disk, MountPoint
 from freenasUI.system.models import Backup
 from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier
@@ -106,6 +106,7 @@ class BackupContext:
         self.remote_directory = None
         self.use_key = False
         self.backup_data = False
+        self.compressed = False
         self.status_msg = None
         self.estimated_size = 0
         self.done_size = 0
@@ -148,16 +149,20 @@ class CommandHandler(SocketServer.StreamRequestHandler):
         """
         Start a backup using credentials and destination path passed in args.
         """
-        self.context.hostport = args.pop("hostport")
-        self.context.username = args.pop("username")
-        self.context.password = args.pop("password", None)
+        self.context.hostport = args.pop('hostport')
+        self.context.username = args.pop('username')
+        self.context.password = args.pop('password', None)
         self.context.remote_directory = args.pop("directory")
         self.context.backup_data = args.pop('with-data')
+        self.context.compressed = args.pop('compression')
 
-        self.context.backup_thread = BackupWorker(self.context)
+        bid = args.pop('backup-id')
+        backup = Backup.objects.get(id=bid)
+
+        self.context.backup_thread = BackupWorker(self.context, backup)
         self.context.backup_thread.start()
         
-        self.respond(status="OK", msg="Backup started")
+        self.respond(status='OK', msg='Backup started')
         
     def cmd_progress(self, args):
         """
@@ -184,12 +189,14 @@ class CommandHandler(SocketServer.StreamRequestHandler):
             self.respond(status="ERROR", msg="No backup is currently pending")
             return
 
+        self.context.backup_thread.stop = True
    
 class BackupWorker(threading.Thread):
-    def __init__(self, context):
+    def __init__(self, context, backup):
         super(BackupWorker, self).__init__()
         self.context = context
-        self.backup = None
+        self.backup = backup
+        self.stop = False
 
     def create_manifest(self):
         try:
@@ -201,7 +208,8 @@ class BackupWorker(threading.Thread):
         manifest = {
             'build': build,
             'created-at': time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
-            'with-data': self.context.backup_data
+            'with-data': self.context.backup_data,
+            'compression': self.context.compressed
         }
 
         return json.dumps(manifest, indent=4) + '\n'
@@ -222,46 +230,49 @@ class BackupWorker(threading.Thread):
         nf = notifier.notifier()
 
         for v in Volume.objects.all():
-            pool = nf.zpool_parse(v.vol_name)
-            vol = {
-                "guid": v.vol_guid,
-                "encryptkey": v.vol_encryptkey,
-                "fstype": v.vol_fstype,
-                "with-data": self.context.backup_data and v.vol_fstype == 'ZFS',
-                "data-vdevs": [],
-                "cache-vdevs": [],
-                "spares-vdevs": [],
-                "logs-vdevs": []
-            }
-
-            for catname in ('data', 'cache', 'spares', 'logs'):
-                category = getattr(pool, catname)
-                if category is None:
-                    continue
-
-                for i in category:
-                    vol['{}-vdevs'.format(catname)].append({
-                        'name': i.name,
-                        'type': i.type,
-                        'disks': [self.describe_disk(d.disk) for d in i]
-                    })
-
             if v.vol_fstype == 'ZFS':
+                pool = nf.zpool_parse(v.vol_name)
+                vol = {
+                    "guid": v.vol_guid,
+                    "encryptkey": v.vol_encryptkey,
+                    "fstype": v.vol_fstype,
+                    "with-data": self.context.backup_data and v.vol_fstype == 'ZFS',
+                    "data-vdevs": [],
+                    "cache-vdevs": [],
+                    "spares-vdevs": [],
+                    "logs-vdevs": []
+                }
+
+                for catname in ('data', 'cache', 'spares', 'logs'):
+                    category = getattr(pool, catname)
+                    if category is None:
+                        continue
+
+                    for i in category:
+                        vol['{}-vdevs'.format(catname)].append({
+                            'name': i.name,
+                            'type': i.type,
+                            'disks': [self.describe_disk(d.disk) for d in i]
+                        })
+
+
                 vol['datasets'] = []
                 for dname, dset in v.get_datasets(include_root=True).items():
+                    opts = nf.zfs_get_options(dname)
                     vol['datasets'].append({
                         'name': dname,
-                        'compression': dset['compression']
+                        'compression': opts['compression']
                     })
 
                 vol['zvols'] = []
                 for zname, zvol in v.get_zvols().items():
                      vol['zvols'].append({
                         'name': zname,
+                        'size': zvol['volsize'],
                         'compression': zvol['compression']
                     })
 
-            volumes[v.vol_name] = vol
+                volumes[v.vol_name] = vol
 
         return json.dumps(volumes, indent=4) + '\n'
 
@@ -272,6 +283,9 @@ class BackupWorker(threading.Thread):
         self.backup.bak_status = reason
         self.backup.save()
         os.unlink(self.temp_db)
+
+        if self.context.shutdown is not None:
+            self.context.shutdown()
 
     def run(self):
         self.context.active = True
@@ -290,7 +304,6 @@ class BackupWorker(threading.Thread):
         log.debug('Database estimated size: %dKB', self.context.estimated_size / 1024)
 
         # Register backup in database
-        self.backup = Backup()
         self.backup.bak_destination = self.context.hostport
         self.backup.bak_started_at = datetime.datetime.now()
         self.backup.bak_worker_pid = os.getpid()
@@ -352,6 +365,7 @@ class BackupWorker(threading.Thread):
             snapshot_timestamp = '{:%Y%m%d-%H%M%S}'.format(datetime.datetime.now())
             # Create snapshots
             for i in Volume.objects.filter(vol_fstype='ZFS'):
+                self.context.status_msg = 'Creating snapshot of volume {}'.format(i.vol_name)
                 proc = subprocess.check_call(['zfs', 'snapshot', '-r', i.vol_name + '@' + snapshot_timestamp])
 
             # Estimate data size
@@ -370,16 +384,33 @@ class BackupWorker(threading.Thread):
             # Backup actual data
             for i in Volume.objects.filter(vol_fstype='ZFS'):
                 proc = subprocess.Popen(['zfs', 'send', '-R', i.vol_name + '@' + snapshot_timestamp], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                sink = sftp.open('{}.zfs'.format(i.vol_name), 'wx')
-                self.context.status_msg = 'Backing up volume {}'.format(i.vol_name)
+
+                if self.context.compressed:
+                    out = sftp.open('{}.zfs'.format(i.vol_name), 'wx')
+                    sink = gzip.GzipFile(fileobj=out, mode='wb')
+                else:
+                    sink = sftp.open('{}.zfs'.format(i.vol_name), 'wx')
+
+                self.context.status_msg = 'Backing up ZFS volume {}'.format(i.vol_name)
 
                 while True:
+                    if self.stop:
+                        # Abort backup
+                        self.fail('Aborted by user')
+                        return
+
                     buffer = proc.stdout.read(BUFSIZE)
                     if len(buffer) == 0:
                         break
 
                     sink.write(buffer)
                     self.context.done_size += len(buffer)
+
+                sink.close()
+                if self.context.compressed:
+                    out.close()
+
+                proc.wait()
 
         self.context.status_msg = 'Done'
         self.backup.bak_finished = 'Done'
@@ -393,37 +424,64 @@ class BackupWorker(threading.Thread):
 
 class RestoreWorker(object):
     class BackupEntry:
-        def __init__(self, name, created_at, build, with_data):
+        def __init__(self, name, created_at, build, with_data, compressed):
             self.name = name
             self.created_at = created_at
             self.build = build
             self.with_data = with_data
+            self.compressed = compressed
 
     class RestoreThread(threading.Thread):
-        def __init__(self, context, volumes, sftp):
+        def __init__(self, context, volumes, sftp, compressed):
             super(RestoreWorker.RestoreThread, self).__init__()
             self.context = context
             self.volumes = volumes
             self.sftp = sftp
+            self.compressed = compressed
+
+        def fail(self, message):
+            global progress_muted
+            progress_muted = True
+            print('FATAL: {}'.format(message))
+            return
 
         def run(self):
             # Calculate size
             for name, i in self.volumes.items():
-                self.context.estimated_size += self.sftp.stat(os.path.join('volumes', name + '.zfs')).st_size
+                if i['fstype'] == 'ZFS':
+                    try:
+                        self.context.estimated_size += self.sftp.stat(os.path.join('volumes', name + '.zfs')).st_size
+                    except IOError as err:
+                        self.fail('Unable to estimate size of volume {}: {}'.format(name, err.strerror))
+                        return
 
             # Do actual restore
             for name, i in self.volumes.items():
                 self.context.status_msg = 'Reconstructing data of volume {}'.format(name)
-                source = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r')
-                sink = subprocess.Popen(['zfs', 'receive', '-F', name], stdin=subprocess.PIPE)
+                oldcwd = os.getcwd()
 
-                while True:
-                    buffer = source.read(BUFSIZE)
-                    if len(buffer) == 0:
-                        break
+                if i['fstype'] == 'ZFS':
+                    try:
+                        if self.compressed:
+                            inp = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r')
+                            source = gzip.GzipFile(fileobj=inp, mode='r')
+                        else:
+                            source = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r')
 
-                    sink.stdin.write(buffer)
-                    self.context.done_size += len(buffer)
+                        sink = subprocess.Popen(['zfs', 'receive', '-F', name], stdin=subprocess.PIPE)
+
+                        while True:
+                            buffer = source.read(BUFSIZE)
+                            if len(buffer) == 0:
+                                break
+
+                            sink.stdin.write(buffer)
+                            self.context.done_size += len(buffer)
+                    except IOError as err:
+                        self.fail('Unable to restore volume {}: {}'.format(name, err.strerror))
+                        return
+
+                os.chdir(oldcwd)
 
     def __init__(self, context):
         self.context = context
@@ -431,6 +489,8 @@ class RestoreWorker(object):
         self.used_disks = []
 
     def fail(self, message):
+        global progress_muted
+        progress_muted = True
         print('FATAL: {}'.format(message))
         return
 
@@ -459,10 +519,13 @@ class RestoreWorker(object):
 
         return (None, 'no match')
 
-    def reconstruct_volume(self, name, volume):
+    def reconstruct_zfs_volume(self, name, volume):
         print('Attempting to reconstruct volume {}:'.format(name))
 
         vol = Volume.objects.get(vol_guid=volume['guid'])
+        if vol is None:
+            print('    Volume not found in database - volumes.json and database not in sync')
+            return False
 
         # 1. Check if we already imported that volume
         if vol.status != 'UNKNOWN':
@@ -510,23 +573,38 @@ class RestoreWorker(object):
 
         # 4. Recreate zvols
         if len(volume['zvols']) > 0:
-            print('    Recreating zvols:\n')
+            print('    Recreating zvols:')
             for zvol in volume['zvols']:
-                print('\t{} [{}]'.format(zvol['name'], zvol['size']))
+                print('\t{} [{}]'.format(zvol['name'], humanize_size(zvol['size'])))
                 self.notifier.create_zfs_vol(zvol['name'], zvol['size'])
 
+        return True
+
+    def reconstruct_ufs_volume(self, name, volume):
+        print('Attempting to reconstruct volume {}:'.format(name))
+
+        vol = Volume.objects.get(vol_name=name)
+        if vol is None:
+            print('    Volume not found in database - volumes.json and database not in sync')
+            return False
+
+        self.notifier.init('volume', vol, groups={'root': volume['devs']})
         return True
 
     def reconstruct_volumes(self, volumes):
         nf = notifier.notifier()
         for name, i in volumes.items():
-            self.reconstruct_volume(name, i)
+            if i['fstype'] == 'ZFS':
+                self.reconstruct_zfs_volume(name, i)
 
     def print_backup_details(self, backup):
         print('    Directory name: {}'.format(backup.name))
         print('    Created at: {}'.format(backup.created_at))
         print('    Created using {}'.format(backup.build))
         print('    Backup {}'.format('contains data' if backup.with_data else 'doesn\'t contain data'))
+
+        if backup.with_data and backup.compressed:
+            print('    Backup data is compressed')
 
         my_version = open(VERSIONFILE, 'r').read().strip()
 
@@ -552,7 +630,12 @@ class RestoreWorker(object):
             except ValueError:
                 continue
 
-            backups.append(self.BackupEntry(fname, data['created-at'], data['build'], data['with-data']))
+            backups.append(self.BackupEntry(fname,
+                data['created-at'],
+                data['build'],
+                data['with-data'],
+                data['compression'] if 'compression' in data else False)
+            )
 
         if len(backups) == 0:
             print('No backups found in given directory!')
@@ -623,12 +706,19 @@ class RestoreWorker(object):
 
             print('Restoring database...')
 
+            # Stop services which might use .system
+            if os.path.exists('/var/run/syslog.pid'):
+                self.notifier.stop('syslogd')
+
+            if os.path.exists('/var/run/samba/smbd.pid'):
+                self.notifier.stop('cifs')
+
+            if os.path.exists('/var/run/collectd.pid'):
+                self.notifier.stop('collectd')
+
             # Restore database
             shutil.move(DBFILE, DBFILE + '.bak')
             sftp.get('freenas-v1.db', DBFILE)
-
-            # Stop Django
-            self.notifier.stop('django')
 
             with open(os.devnull, 'w') as devnull:
                 if subprocess.call([
@@ -639,20 +729,36 @@ class RestoreWorker(object):
                     ], stdout=devnull, stderr=devnull) != 0:
                     self.fail('Could not restore database')
 
-            self.notifier.start('django')
+            # Update disk entries
+            self.notifier.sync_disks()
 
             # Download volumes.json
-            f = sftp.open('volumes.json')
-            volumes = json.load(f)
+            try:
+                f = sftp.open('volumes.json')
+                volumes = json.load(f)
+            except ValueError:
+                self.fail('Invalid volumes.json file')
+                return
         except IOError:
             self.fail('Cannot download backup files')
             return
 
         # Destroy old volumes
         print('Destroying existing volumes (if any)...')
-        pools = subprocess.check_output(['zpool', 'list', '-H', '-o', 'name'])
-        for i in pools.split():
-            subprocess.call(['zpool', 'destroy', i])
+        try:
+            pools = subprocess.check_output(['zpool', 'list', '-H', '-o', 'name'])
+            for i in pools.split():
+                subprocess.call(['zpool', 'destroy', i])
+        except subprocess.CalledProcessError:
+            # bug in zpool list with -H argument - returns random
+            # error code when there are no pools
+            pass
+
+        # Remove latest backup entry, since it's the one created
+        # when saving backup
+        bak = Backup.objects.all().order_by('-bak_created_at').first()
+        if not bak.bak_acknowledged:
+            bak.delete()
 
         # Reconstruct volumes
         print('Restoring volumes...')
@@ -661,18 +767,22 @@ class RestoreWorker(object):
         # Reconstruct data
         if backup.with_data:
             print('Restoring data...')
-            thread = self.RestoreThread(self.context, volumes, sftp)
+            thread = self.RestoreThread(self.context, volumes, sftp, backup.compressed)
             thread.start()
 
             sys.stdout.write('\n')
 
             while thread.is_alive():
                 time.sleep(0.5)
-                print_progress(self.context.status_msg,
-                    self.context.done_size,
-                    round(self.context.done_size / float(self.context.estimated_size), 4))
+                if self.context.estimated_size != 0:
+                    print_progress(self.context.status_msg,
+                        self.context.done_size,
+                        round(self.context.done_size / float(self.context.estimated_size), 4))
 
             thread.join()
+
+        # Reboot system at the end
+        self.notifier.restart('system')
 
 
 class PidFile(object):
@@ -728,6 +838,8 @@ def ask(context, backup=True):
         if backup:
             context.backup_data = raw_input("Backup data? (y/n): ").lower() == 'y'
             print('Backup data {}selected'.format('' if context.backup_data else 'not '))
+            context.compressed = raw_input("Compress data? (y/n): ").lower() == 'y'
+            print('Compress data {}selected'.format('' if context.compressed else 'not '))
 
         answer = raw_input('Are these values OK? (y/n/q): ').lower()
         if answer == 'y':
@@ -751,6 +863,9 @@ def print_progress(message, done, percentage):
     global progress_muted
     global progress_old_done
     global progress_old_time
+
+    if percentage > 1:
+        percentage = 1
 
     if progress_muted:
         return
@@ -778,16 +893,24 @@ def print_progress(message, done, percentage):
 def backup(argv):
     context = BackupContext()
     ask(context)
-    context.backup_thread = BackupWorker(context)
+
+    bak = Backup()
+    bak.bak_started_at = datetime.datetime.now()
+    bak.save()
+
+    context.backup_thread = BackupWorker(context, bak)
     context.backup_thread.start()
 
-    print('\n\n')
+    sys.stdout.write('\n')
 
     while context.backup_thread.is_alive():
         time.sleep(0.5)
-        print_progress(context.status_msg,
-            context.done_size,
-            round(context.done_size / float(context.estimated_size), 4))
+        if context.estimated_size != 0:
+            print_progress(context.status_msg,
+                context.done_size,
+                round(context.done_size / float(context.estimated_size), 4))
+
+    sys.stdout.write('\n')
 
     context.backup_thread.join()
 
@@ -796,7 +919,7 @@ def restore(argv):
     ask(context, backup=False)
     restore = RestoreWorker(context)
     restore.run()
-
+    sys.stdout.write('\n')
 
 def files_preserve_by_path(*paths):
     from resource import getrlimit, RLIMIT_NOFILE
