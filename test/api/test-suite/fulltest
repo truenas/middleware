@@ -1,23 +1,12 @@
-#!/usr/local/bin/python
-
-import requests
-import json
 import sys
-#sys.path.append('conn/')
-#import conn
+import os
 
-# Global var
-api_url = ''
-username = ''
-password = ''
-hostname = ''
-
-# Operation Authorization
-warn = raw_input('******Warning******This operation will destory everything on your FreeNAS system and set default configuration on it. Contiune?(yes/no):')
+print '******WARNING******'
+warn = raw_input('******Warning******This operation will destory everything on your FreeNAS system and set configuration on it. Contiune?(yes/no):')
 oper_flag = 1
 while(oper_flag <= 3):
-  if oper_flag == 3:
-    print 'Please re-run full test!'
+  if oper_flag == 3:  
+    print 'Please re-run Fulltest suite!'
     sys.exit(0)
   if warn == 'no' or warn == 'n':
     sys.exit(0)
@@ -28,46 +17,209 @@ while(oper_flag <= 3):
     oper_flag = oper_flag + 1
     continue
 
-# Requests Information
-headers = {"Content-Type":"application/json"}
+import storage_datasets
+import storage_disk
+import storage_scrub
+import storage_snapshot
+import storage_task
+import storage_volume
+
+import tasks_cronjob
+import tasks_initshutdown
+import tasks_rsync
+import tasks_smarttest
+
+import services_afp
+import services_cifs
+import services_domaincontroller
+import services_dynamicdns
+import services_ftp
+import services_lldp
+import services_nfs   
+import services_rsyncd  
+import services_rsyncmod
+#import services_services
+import services_smart
+import services_snmp 
+import services_ssh 
+import services_tftp
+import services_ups 
+
+import system_advanced
+import system_alert
+import system_email
+import system_ntpserver
+import system_reboot
+import system_settings
+import system_shutdown
+import system_ssl
+import system_tunable
+import system_version
+
+os.system('rm *.pyc')
 
 
-#Methods
-def re_get(api_url):
-  r = requests.get(url + api_url, auth = auth)
-  return r
+print '***Running Storage Test Suite***'
 
-def re_get(api_url,timeout):
-  try:
-    r = requests.get(url + api_url, auth = auth, timeout = timeout)
-    return r
-  except:
-    print 'Can not connect to Host: please check Network and Hostname!'
-    sys.exit(0)
-                                                                         
-def re_post(api_url, data):
-  r = requests.post(url + api_url, auth = auth, headers = headers, data = json.dumps(data))
+print '\n***Running Storage-Volume ......'
+storage_volume.delete()
+storage_volume.post()
+print ''
 
-def re_put(api_url, data):
-  r = requests.put(url + api_url, auth = auth, headers = headers, data = json.dumps(data))
+print '***Running Storage-Datasets ......'
+storage_datasets.post()
+storage_datasets.delete()
+print ''
 
-def re_delete(api_url):
-  r = requests.post(url + api_url, auth = auth)
+print '***Running Storage-Disk ......'
+storage_disk.put()
+print ''
 
-# Authentication
-auth_flag = 1
-while (auth_flag <= 3):
-  hostname = raw_input('Input Hostname:')
-  username = raw_input('Username:')
-  password = raw_input('Password:')
-  auth = (username, password)
-  url = 'http://' + hostname + '/api/v1.0/'
-  headers = {"Content-Type":"application/json"}
-  print re_get('account/users/',10)
-  if re_get('account/users/',10).status_code == 401:
-    auth_flag = auth_flag + 1
-    print 'Authentication failed! Please recheck Hosename, Username and Password!'
-  else: 
-    print 'Authentication succeed!'
-    break
+print '***Running Storage-Task ......'
+storage_task.delete()
+storage_task.put()
+print ''
 
+print '***Running Storage-Scrub ......'
+storage_scrub.put()
+storage_scrub.delete()
+print ''
+
+print '***Running Storage-Snapshot ......'
+storage_snapshot.post()
+storage_snapshot.delete()
+print ''
+
+print '***Running Storage-Replication ......'
+import storage_replication
+storage_replication.put()
+storage_replication.delete()
+print '\n'
+
+
+
+print '***Running Tasks Test Suite***'
+
+print '\n***Running Tasks-Crongjob ......'
+tasks_cronjob.run()
+tasks_cronjob.put()
+print ''
+
+print '***Running Tasks-Initshutdown ......'
+tasks_initshutdown.put()
+tasks_initshutdown.delete()
+print ''
+
+print '***Running Tasks-Rsync ......'
+tasks_rsync.run() 
+tasks_rsync.put() 
+print ''
+
+print '***Running Tasks-Smarttest ......'
+tasks_smarttest.put()
+tasks_smarttest.delete()
+print '\n'
+
+
+
+print '***Running Services Test Suite'
+
+print '\n***Running Services-AFP ......'
+services_afp.put()
+print ''
+
+print '***Running Services-CIFS......'
+services_cifs.put()
+print ''
+
+print '***Running Services-DomainController ......'
+services_domaincontroller.put()
+print ''
+
+print '***Running Services-DynamicDNS ......'
+services_dynamicdns.put()
+print ''
+
+print '\n***Running Services-ftp ......'
+services_ftp.put()
+print ''
+
+print '\n***Running Services-LLDP ......'
+services_lldp.put()
+print ''
+
+print '\n***Running Services-nfs ......'
+services_nfs.put()
+print ''
+
+print '\n***Running Services-Rsyncd ......'
+services_rsyncd.put()
+print ''
+
+print '***Running Services-RsyncMod ......'
+services_rsyncmod.put()
+services_rsyncmod.delete()
+print ''
+
+print '\n***Running Services-SMART ......'
+services_smart.put()
+print ''
+
+print '\n***Running Services-SNMP ......'
+services_snmp.put()
+print ''
+
+print '\n***Running Services-SSH ......'
+services_ssh.put()
+print ''
+
+print '\n***Running Services-TFTP ......'
+services_tftp.put()
+print ''
+
+print '\n***Running Services-UPS ......'
+services_ups.put()
+print '\n'
+
+
+
+print '***Running System Test Suite***'
+
+print '\n***Running System-Advanced ......'
+system_advanced.put()
+print ''
+
+print '***Running System-Alert ......'
+system_alert.get()
+print ''
+
+print '***Running System-Email ......'
+system_email.get()
+system_email.put()
+print ''
+
+print '***Running System-NTPServer ......'
+system_ntpserver.put()
+system_ntpserver.delete()
+print ''
+
+print '***Running System-Settings ......'
+system_settings.put()
+print ''
+
+print '***Running System-SSL ......'
+system_ssl.put()
+print ''
+
+print '***Running System-Tunable ......'
+system_tunable.put()
+system_tunable.delete()
+print ''
+
+print '***Running System-Version ......'
+system_version.get()
+print ''
+
+print '***Running System-Reboot/System-Shutdown ......'
+system_reboot.post()
+print '\n'
