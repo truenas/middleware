@@ -67,6 +67,7 @@ from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
     NIS,
+    NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -487,6 +488,30 @@ class InitialWizard(CommonWizard):
                     log.warn(
                         'NIS data failed to validate: %r',
                         nisform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'nt4':
+                try:
+                    nt4 = NT4.objects.all().order_by('-id')[0]
+                except:
+                    nt4 = NT4.objects.create()
+
+                nt4data = nt4.__dict__
+                for name, value in cleaned_data.items():
+                    if not name.startswith('ds_nt4'):
+                        continue
+                    nt4data[name.replace('ds_', '')] = value
+                nt4data.update['nt4_enable': True]
+
+                nt4form = NT4Form(
+                    data=nt4data,
+                    instance=nt4,
+                )
+                if nt4form.is_valid():
+                    nt4form.save()
+                else:
+                    log.warn(
+                        'NT4 data failed to validate: %r',
+                        nt4form._errors,
                     )
 
         # Change permission after joining directory service
