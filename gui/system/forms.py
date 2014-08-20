@@ -1305,12 +1305,12 @@ class InitialWizardDSForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardDSForm, self).__init__(*args, **kwargs)
 
-        for fname, field in NISForm.base_fields.items():
+        for fname, field in NISForm().fields.items():
             if fname.find('enable') == -1:
                 self.fields['ds_%s' % fname] = field
                 field.required = False
 
-        for fname, field in NT4Form.base_fields.items():
+        for fname, field in NT4Form().fields.items():
             if (
                 fname.find('enable') == -1 and
                 fname not in NT4Form.advanced_fields
@@ -1406,6 +1406,18 @@ class InitialWizardDSForm(Form):
 
                 if ret is False:
                     raise forms.ValidationError("%s." % errors[0])
+
+        elif cdata.get('ds_type') == 'nis':
+            for fname, fields in self.fields.items():
+                if not fname.startswith('ds_nis_'):
+                    continue
+                value = cdata.get(fname)
+                if not value and NISForm.base_fields[
+                    fname.replace('ds_', '')
+                ].required:
+                    self._errors[fname] = self.error_class([
+                        _('This field is required.'),
+                    ])
 
         return cdata
 
