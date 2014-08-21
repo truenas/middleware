@@ -69,7 +69,6 @@ from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier
 from freenasUI.common import humanize_size
 
-progress_kill = False
 progress_old_done = 0
 progress_old_time = None
 log = logging.getLogger('tools.backup')
@@ -903,15 +902,11 @@ def sigint_handler(sig, frame):
     os._exit(1)
 
 def print_progress(message, done, percentage):
-    global progress_kill
     global progress_old_done
     global progress_old_time
 
     if percentage > 1:
         percentage = 1
-
-    if progress_kill:
-        return
 
     if progress_old_time is None:
         progress_old_time = datetime.datetime.now()
