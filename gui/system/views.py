@@ -702,7 +702,7 @@ def debug(request):
 
 def backup(request):
     # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at')
+    backups = models.Backup.objects.all().order_by('-id')
 
     if len(backups) < 1 or backups[0].bak_acknowledged:
         # No backup is pending, can schedule next one
@@ -751,7 +751,7 @@ def backup(request):
 
 def backup_progress(request):
     # Check if any backup is currently running
-    backup = models.Backup.objects.all().order_by('-bak_started_at').first()
+    backup = models.Backup.objects.all().order_by('-id').first()
 
     if backup.bak_finished:
         data = {'status': 'finished', 'message': backup.bak_status}

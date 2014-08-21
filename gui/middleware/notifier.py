@@ -5214,7 +5214,7 @@ class notifier:
         if ntries == 0:
             # Mark backup as failed at this point
             from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-bak_started_at').first()
+            backup = Backup.objects.all().order_by('-id').first()
             backup.bak_failed = True
             backup.bak_status = 'Backup process died'
             backup.save()
@@ -5230,7 +5230,7 @@ class notifier:
         except (IOError, ValueError):
             # Mark backup as failed at this point
             from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-bak_started_at').first()
+            backup = Backup.objects.all().order_by('-id').first()
             backup.bak_failed = True
             backup.bak_status = 'Backup process died'
             backup.save()

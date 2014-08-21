@@ -763,7 +763,7 @@ class RestoreWorker(object):
 
         # Remove latest backup entry, since it's the one created
         # when saving backup
-        bak = Backup.objects.all().order_by('-bak_started_at').first()
+        bak = Backup.objects.all().order_by('-id').first()
         if not bak.bak_acknowledged:
             bak.delete()
 
