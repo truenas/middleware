@@ -657,7 +657,7 @@ class RestoreWorker(object):
         if not choose.strip().isdigit():
             idx = 0
         else:
-            idx = int(choose.strip())
+            idx = int(choose.strip()) - 1
 
         backup = backups[idx]
         print('Backup details:')
@@ -716,6 +716,12 @@ class RestoreWorker(object):
             if os.path.exists('/var/run/collectd.pid'):
                 self.notifier.stop('collectd')
 
+            if os.path.exists('/var/run/django.pid'):
+                self.notifier.stop('django')
+
+            if os.path.exists('/var/run/nginx.pid'):
+                self.notifier.stop('nginx')
+
             # Restore database
             shutil.move(DBFILE, DBFILE + '.bak')
             sftp.get('freenas-v1.db', DBFILE)
@@ -728,6 +734,7 @@ class RestoreWorker(object):
                         '--delete-ghost-migrations'
                     ], stdout=devnull, stderr=devnull) != 0:
                     self.fail('Could not restore database')
+                    return
 
             # Update disk entries
             self.notifier.sync_disks()
@@ -756,7 +763,7 @@ class RestoreWorker(object):
 
         # Remove latest backup entry, since it's the one created
         # when saving backup
-        bak = Backup.objects.all().order_by('-bak_created_at').first()
+        bak = Backup.objects.all().order_by('-bak_started_at').first()
         if not bak.bak_acknowledged:
             bak.delete()
 
