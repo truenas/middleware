@@ -47,7 +47,7 @@ import tempfile
 import threading
 import time
 import json
-from paramiko import ssh_exception, sftp_client, transport
+from paramiko import ssh_exception, sftp_client, transport, pkey, rsakey, dsskey
 
 import daemon
 
@@ -69,7 +69,7 @@ from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier
 from freenasUI.common import humanize_size
 
-progress_muted = False
+progress_kill = False
 progress_old_done = 0
 progress_old_time = None
 log = logging.getLogger('tools.backup')
@@ -108,6 +108,7 @@ class BackupContext:
         self.backup_data = False
         self.compressed = False
         self.status_msg = None
+        self.failed_msg = None
         self.estimated_size = 0
         self.done_size = 0
 
@@ -152,9 +153,10 @@ class CommandHandler(SocketServer.StreamRequestHandler):
         self.context.hostport = args.pop('hostport')
         self.context.username = args.pop('username')
         self.context.password = args.pop('password', None)
-        self.context.remote_directory = args.pop("directory")
+        self.context.remote_directory = args.pop('directory')
         self.context.backup_data = args.pop('with-data')
         self.context.compressed = args.pop('compression')
+        self.context.use_key = args.pop('use-keys')
 
         bid = args.pop('backup-id')
         backup = Backup.objects.get(id=bid)
@@ -284,6 +286,8 @@ class BackupWorker(threading.Thread):
         self.backup.save()
         os.unlink(self.temp_db)
 
+        self.context.failed_msg = 'FATAL: {}'.format(reason)
+
         if self.context.shutdown is not None:
             self.context.shutdown()
 
@@ -311,14 +315,13 @@ class BackupWorker(threading.Thread):
 
         # Connect to remote system
         try:
-            session = transport.Transport(split_hostport(self.context.hostport))
-            session.connect(username=self.context.username, password=self.context.password)
-            session.window_size = 134217727
-        except socket.gaierror:
-            self.fail('Cannot connect to remote host')
-            return
-        except ssh_exception.BadAuthenticationType:
-            self.fail('Cannot authenticate')
+            session = open_ssh_connection(
+                self.context.hostport,
+                self.context.username,
+                self.context.password,
+                self.context.use_key)
+        except Exception as err:
+            self.fail(str(err))
             return
 
         log.debug('Connected to remote host')
@@ -440,10 +443,7 @@ class RestoreWorker(object):
             self.compressed = compressed
 
         def fail(self, message):
-            global progress_muted
-            progress_muted = True
-            print('FATAL: {}'.format(message))
-            return
+            self.context.failed_msg = 'FATAL: {}'.format(message)
 
         def run(self):
             # Calculate size
@@ -489,10 +489,7 @@ class RestoreWorker(object):
         self.used_disks = []
 
     def fail(self, message):
-        global progress_muted
-        progress_muted = True
-        print('FATAL: {}'.format(message))
-        return
+        self.context.failed_msg = 'FATAL: {}'.format(message)
 
     def guess_disk(self, diskdata):
         # 1. try to look up disk by serial
@@ -677,11 +674,15 @@ class RestoreWorker(object):
 
         # Connect to remote system
         try:
-            session = transport.Transport(split_hostport(self.context.hostport))
-            session.connect(username=self.context.username, password=self.context.password)
-            session.window_size = 2147483647
-            session.packetizer.REKEY_BYTES = pow(2, 48)
-            session.packetizer.REKEY_PACKETS = pow(2, 48)
+            session = open_ssh_connection(
+                self.context.hostport,
+                self.context.username,
+                self.context.password,
+                self.context.use_key)
+        except Exception as err:
+            self.fail(err.message)
+            return
+
         except socket.gaierror:
             self.fail('Cannot connect to remote host')
             raise
@@ -828,12 +829,54 @@ def split_hostport(str):
     else:
         return (str, 22)
 
+def open_ssh_connection(hostport, username, password, use_keys):
+        try:
+            session = transport.Transport(split_hostport(hostport))
+            session.start_client()
+            session.window_size = 134217727
+            session.packetizer.REKEY_BYTES = pow(2, 48)
+            session.packetizer.REKEY_PACKETS = pow(2, 48)
+
+            if use_keys:
+                if try_key_auth(session, username):
+                    return session
+                else:
+                    raise Exception('Cannot authenticate using keys')
+
+            session.auth_password(username, password)
+            return session
+
+        except socket.gaierror as err:
+            raise Exception('Connection error: {}'.format(err.strerror))
+        except ssh_exception.BadAuthenticationType:
+            raise Exception('Cannot authenticate')
+
+def try_key_auth(session, username):
+    try:
+        key = rsakey.RSAKey.from_private_key_file('/root/.ssh/id_rsa')
+        session.auth_publickey(username, key)
+        return True
+    except ssh_exception.SSHException:
+        pass
+
+    try:
+        key = dsskey.DSSKey.from_private_key_file('/root/.ssh/id_dsa')
+        session.auth_publickey(username, key)
+        return True
+    except ssh_exception.SSHException:
+        pass
+
+    return False
+
 def ask(context, backup=True):
     while True:
         context.hostport = raw_input("Hostname or IP address: ")
         context.username = raw_input("Username: ")
-        context.password = raw_input("Password: ")
+        context.password = raw_input("Password (leave empty to use key authentication): ")
         context.remote_directory = raw_input("Remote directory: ")
+
+        if len(context.password) == 0:
+            context.use_key = True
 
         if backup:
             context.backup_data = raw_input("Backup data? (y/n): ").lower() == 'y'
@@ -860,14 +903,14 @@ def sigint_handler(sig, frame):
     os._exit(1)
 
 def print_progress(message, done, percentage):
-    global progress_muted
+    global progress_kill
     global progress_old_done
     global progress_old_time
 
     if percentage > 1:
         percentage = 1
 
-    if progress_muted:
+    if progress_kill:
         return
 
     if progress_old_time is None:
@@ -913,13 +956,21 @@ def backup(argv):
     sys.stdout.write('\n')
 
     context.backup_thread.join()
+    if context.failed_msg is not None:
+        print(context.failed_msg)
+        sys.exit(1)
 
 def restore(argv):
     context = BackupContext()
     ask(context, backup=False)
-    restore = RestoreWorker(context)
-    restore.run()
+    worker = RestoreWorker(context)
+    worker.run()
     sys.stdout.write('\n')
+
+    if context.failed_msg is not None:
+        print(context.failed_msg)
+        sys.exit(1)
+
 
 def files_preserve_by_path(*paths):
     from resource import getrlimit, RLIMIT_NOFILE

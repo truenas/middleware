@@ -723,6 +723,7 @@ def backup(request):
                     'directory': backup_form.cleaned_data['backup_directory'],
                     'with-data': backup_form.cleaned_data['backup_data'],
                     'compression': backup_form.cleaned_data['backup_compression'],
+                    'use-keys': backup_form.cleaned_data['backup_auth_keys'],
                     'backup-id': backup.id
                 }
 

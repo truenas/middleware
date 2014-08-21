@@ -5227,9 +5227,13 @@ class notifier:
             f.write(json.dumps(args) + '\n')
             resp_json = f.readline()
             response = json.loads(resp_json)
-        except IOError:
-            response = {'status': 'ERROR'}
-        except ValueError:
+        except (IOError, ValueError):
+            # Mark backup as failed at this point
+            from freenasUI.system.models import Backup
+            backup = Backup.objects.all().order_by('-bak_started_at').first()
+            backup.bak_failed = True
+            backup.bak_status = 'Backup process died'
+            backup.save()
             response = {'status': 'ERROR'}
 
         f.close()
