@@ -106,6 +106,10 @@ add an interface or edit an already configured interface.
 
 |1000000000000182000001C49B157EE6_png|
 
+.. |1000000000000182000001C49B157EE6_png| image:: images/1000000000000182000001C49B157EE6.png
+    :width: 4.65in
+    :height: 4.1846in
+
 **Table 7.2a: Interface Configuration Settings**
 
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
@@ -420,6 +424,10 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 
 |1000000000000150000000D15F029EC2_png|
 
+.. |1000000000000150000000D15F029EC2_png| image:: images/1000000000000150000000D15F029EC2.png
+    :width: 3.4992in
+    :height: 2.1772in
+
 The available options are summarized in Table 7.6a.
 
 **Table 7.6a: Static Route Options**
@@ -460,6 +468,10 @@ tags. If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see
 **Figure 7.7a: Adding a VLAN**
 
 |100000000000013A000000F8F965FD90_png|
+
+.. |100000000000013A000000F8F965FD90_png| image:: images/100000000000013A000000F8F965FD90.png
+    :width: 3.2701in
+    :height: 2.5827in
 
 Table 7.7a summarizes the configurable fields.
 

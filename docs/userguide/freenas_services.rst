@@ -612,7 +612,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS export certificate data                                  | checkbox       | only available in "Advanced Mode"; if checked, exports the certificate              |
-                                                               |                | environment variables                                                               |
+|                                                              |                | environment variables                                                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS no certificate request                                   | checkbox       | only available in "Advanced Mode"; try checking this box if the client can not      |
@@ -706,6 +706,10 @@ In the example shown in Figure 11.6b, a user has input the following information
 **Figure 11.6b: Connecting Using Filezilla**
 
 |100000000000038300000122BD3F6150_png|
+
+.. |100000000000038300000122BD3F6150_png| image:: images/100000000000038300000122BD3F6150.png
+    :width: 6.9252in
+    :height: 2.2335in
 
 The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
 site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
@@ -853,6 +857,10 @@ If you will be using CHAP or mutual CHAP to provide authentication, you must cre
 
 |100000000000017F00000171394D6770_png|
 
+.. |100000000000017F00000171394D6770_png| image:: images/100000000000017F00000171394D6770.png
+    :width: 3.989in
+    :height: 3.8429in
+
 Table 11.7a summarizes the settings that can be configured when adding an authorized access:
 
 **Table 11.7a: Authorized Access Configuration Settings**
@@ -969,6 +977,10 @@ which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators
 **Figure 11.7d: Adding an iSCSI Initiator**
 
 |100000000000022A00000107CAD88F71_png|
+
+.. |100000000000022A00000107CAD88F71_png| image:: images/100000000000022A00000107CAD88F71.png
+    :width: 6.6744in
+    :height: 2.4346in
 
 Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
@@ -1106,6 +1118,10 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 **Figure 11.7h: Adding an iSCSI Target**
 
 |10000000000001BD000001C3DC193DAA_png|
+
+.. |10000000000001BD000001C3DC193DAA_png| image:: images/10000000000001BD000001C3DC193DAA.png
+    :width: 5.3602in
+    :height: 4.1756in
 
 **Table 11.7f: Target Settings**
 
@@ -1345,6 +1361,10 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 
 |1000000000000234000000C82AD0CB4B_png|
 
+.. |1000000000000234000000C82AD0CB4B_png| image:: images/1000000000000234000000C82AD0CB4B.png
+    :width: 6.7945in
+    :height: 1.8516in
+
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
 **Table 11.10a: Rsync Configuration Options**
@@ -1373,6 +1393,10 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 **Figure 11.10b: Adding an Rsync Module**
 
 |100000000000023D000001C2EB395B61_png|
+
+.. |100000000000023D000001C2EB395B61_png| image:: images/100000000000023D000001C2EB395B61.png
+    :width: 6.9028in
+    :height: 4.1665in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1541,6 +1565,10 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 
 |10000000000001950000012301F7AD89_png|
 
+.. |10000000000001950000012301F7AD89_png| image:: images/10000000000001950000012301F7AD89.png
+    :width: 4.8783in
+    :height: 2.6937in
+
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`.
@@ -1698,6 +1726,10 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 **Figure 11.14a: TFTP Configuration**
 
 |10000000000001A10000014C23FFB30C_png|
+
+.. |10000000000001A10000014C23FFB30C_png| image:: images/10000000000001A10000014C23FFB30C.png
+    :width: 5.0236in
+    :height: 3.0744in
 
 **Table 11.14a: TFTP Configuration Options**
 

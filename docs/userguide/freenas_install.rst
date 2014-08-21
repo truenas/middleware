@@ -92,6 +92,10 @@ To create the virtual machine, start VirtualBox and click the "New" button, seen
 
 |100000000000030200000194DB5CCF9B_png|
 
+.. |100000000000030200000194DB5CCF9B_png| image:: images/100000000000030200000194DB5CCF9B.png
+    :width: 6.9252in
+    :height: 3.6335in
+
 
 Click the "Next" button to see the screen in Figure 2.2b. Enter a name for the virtual machine, click the "Operating System" drop-down menu and select BSD,
 and select "FreeBSD (64-bit)" from the "Version" dropdown.
@@ -100,6 +104,10 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
 
 |100002010000028A000001B8AD594B93_png|
 
+.. |100002010000028A000001B8AD594B93_png| image:: images/100002010000028A000001B8AD594B93.png
+    :width: 5.4626in
+    :height: 3.6665in
+
 Click "Next" to see the screen in Figure 2.2c. The base memory size must be changed to **at least 2048 MB**.
 **If your system has enough memory, select at least 4096 MB so that you can use ZFS**. When finished, click "Next" to see the screen in Figure 2.2d.
 
@@ -107,15 +115,27 @@ Click "Next" to see the screen in Figure 2.2c. The base memory size must be chan
 
 |100002010000028A000001B83E678583_png|
 
+.. |100002010000028A000001B83E678583_png| image:: images/100002010000028A000001B83E678583.png
+    :width: 5.4626in
+    :height: 3.6665in
+
 **Figure 2.2d: Select Whether to Use an Existing or Create a New Virtual Hard Drive**
 
 |100002010000028A000001B82CB5EA35_png|
+
+.. |100002010000028A000001B82CB5EA35_png| image:: images/100002010000028A000001B82CB5EA35.png
+    :width: 5.4626in
+    :height: 3.6665in
 
 Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 2.2e.
 
 **Figure 2.2e: Create New Virtual Hard Drive Wizard**
 
 |10000201000002F5000001F1967BE2E6_png|
+
+.. |10000201000002F5000001F1967BE2E6_png| image:: images/10000201000002F5000001F1967BE2E6.png
+    :width: 6.361in
+    :height: 4.1417in
 
 Select one of the following types:
 
@@ -129,6 +149,10 @@ Once you make a selection, click the "Next" button to see the screen in Figure 2
 
 |10000201000002F5000001F1A595AB8F_png|
 
+.. |10000201000002F5000001F1A595AB8F_png| image:: images/10000201000002F5000001F1A595AB8F.png
+    :width: 6.361in
+    :height: 4.1417in
+
 You can now choose whether you want "Dynamically allocated" or "Fixed-size" storage. The first option uses disk space as needed until it reaches the
 maximum size that you will set in the next screen. The second option creates a disk the same size as that specified amount of disk space, whether it is used
 or not. Choose the first option if you are worried about disk space; otherwise, choose the second option as it allows VirtualBox to run slightly faster. Once
@@ -137,6 +161,10 @@ you select "Next", you will see the screen in Figure 2.2g.
 **Figure 2.2g: Select the File Name and Size of the Virtual Disk**
 
 |100002010000023E000001BAFB464DC1_png|
+
+.. |100002010000023E000001BAFB464DC1_png| image:: images/100002010000023E000001BAFB464DC1.png
+    :width: 5.9783in
+    :height: 4.6035in
 
 This screen is used to set the size (or upper limit) of the virtual machine. **Increase the default size to 2 or 4 GB**. Use the folder icon to browse to a
 directory on disk with sufficient space to hold the virtual machine.
@@ -149,12 +177,20 @@ Figure 2.2h.
 
 |10000201000002F500000241B6F0F7D2_png|
 
+.. |10000201000002F500000241B6F0F7D2_png| image:: images/10000201000002F500000241B6F0F7D2.png
+    :width: 6.361in
+    :height: 4.8083in
+
 Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyperlink in the right frame to access the storage screen seen in Figure
 2.2i.
 
 **Figure 2.2i: The Storage Settings of the Virtual Machine**
 
 |10000000000002B200000238AA2AAEAB_png|
+
+.. |10000000000002B200000238AA2AAEAB_png| image:: images/10000000000002B200000238AA2AAEAB.png
+    :width: 6.9252in
+    :height: 4.3807in
 
 Click the "Add Attachment" button, select "Add Hard Disk" from the pop-up menu, then click the "Create New Disk" button. This will launch the Create New 
 Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will be used for storage, create a size appropriate to your needs, making sure that
@@ -167,6 +203,10 @@ Figure 2.2j.
 **Figure 2.2j: Configuring the ISO Installation Media**
 
 |100000000000033400000234CCE0A6DA_png|
+
+.. |100000000000033400000234CCE0A6DA_png| image:: images/100000000000033400000234CCE0A6DA.png
+    :width: 6.9252in
+    :height: 3.6602in
 
 Click "Choose a virtual CD/DVD disk file..." to browse to the location of the :file:`.iso` file. Alternately, if you have burned the :file:`.iso` to disk,
 select the detected "Host Drive".
@@ -189,6 +229,10 @@ If you configured the VMDK, the virtual machine will boot directly into FreeNAS�
 **Figure 2.2k: Configuring a Bridged Adapter in VirtualBox**
 
 |1000000000000293000001EB2237CFE9_png|
+
+.. |1000000000000293000001EB2237CFE9_png| image:: images/1000000000000293000001EB2237CFE9.png
+    :width: 6.8634in
+    :height: 5.1138in
 
 Using the VMDK
 ^^^^^^^^^^^^^^
@@ -219,13 +263,25 @@ shown in Figure 2.2n, click "Other" then select a FreeBSD architecture that matc
 
 |10000201000003950000021F0BA6E10F_png|
 
+.. |10000201000003950000021F0BA6E10F_png| image:: images/10000201000003950000021F0BA6E10F.png
+    :width: 6.9252in
+    :height: 4.1in
+
 **Figure 2.2m: Select a Datastore**
 
 |10000201000003950000021F7988BEDD_png|
 
+.. |10000201000003950000021F7988BEDD_png| image:: images/10000201000003950000021F7988BEDD.png
+    :width: 6.9252in
+    :height: 4.1in
+
 **Figure 2.2n: Select the Operating System**
 
 |10000201000003950000021FFB8F2015_png|
+
+.. |10000201000003950000021FFB8F2015_png| image:: images/10000201000003950000021FFB8F2015.png
+    :width: 6.9252in
+    :height: 4.1in
 
 Click "Next" and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.2o.
 
@@ -245,13 +301,25 @@ the amount of storage disks needed to meet your requirements.
 
 |10000201000003950000021F038D89C4_png|
 
+.. |10000201000003950000021F038D89C4_png| image:: images/10000201000003950000021F038D89C4.png
+    :width: 6.7957in
+    :height: 3.8472in
+
 **Figure 2.2p: Virtual Machine's Settings**
 
 |10000201000002C400000270A063501A_png|
 
+.. |10000201000002C400000270A063501A_png| image:: images/10000201000002C400000270A063501A.png
+    :width: 6.7346in
+    :height: 4.3146in
+
 **Figure 2.2q: Creating a Storage Disk**
 
 |100002010000028C00000200588B16CC_png|
+
+.. |100002010000028C00000200588B16CC_png| image:: images/100002010000028C00000200588B16CC.png
+    :width: 6.7925in
+    :height: 5.3339in
 
 Installing from CDROM
 ---------------------
@@ -293,14 +361,26 @@ system will boot from it. FreeNAS® should now be able to boot into the Console 
 
 |10000000000002B50000016CE687B64A_png|
 
+.. |10000000000002B50000016CE687B64A_png| image:: images/10000000000002B50000016CE687B64A.png
+    :width: 5.8228in
+    :height: 3.0335in
+
 
 **Figure 2.3c: FreeNAS® Installation Warning**
 
 |10000000000002CA000001595A6F0226_png|
 
+.. |10000000000002CA000001595A6F0226_png| image:: images/10000000000002CA000001595A6F0226.png
+    :width: 6.9252in
+    :height: 2.5709in
+
 **Figure 2.3d: FreeNAS® Installation Complete**
 
 |10000000000002BF000000E0D845E216_png|
+
+.. |10000000000002BF000000E0D845E216_png| image:: images/10000000000002BF000000E0D845E216.png
+    :width: 6.911in
+    :height: 1.9783in
 
 Burning a USB Stick
 -------------------
@@ -450,6 +530,10 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 **Figure 2.6a: FreeNAS® Console Setup Menu**
 
 |10000000000001EB0000014DF2519984_png|
+
+.. |10000000000001EB0000014DF2519984_png| image:: images/10000000000001EB0000014DF2519984.png
+    :width: 5.9154in
+    :height: 3.0835in
 
 This menu provides the following options:
 
@@ -602,10 +686,17 @@ Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and 
 
 |10000000000002C20000017F0B9104CB_png|
 
+.. |10000000000002C20000017F0B9104CB_png| image:: images/10000000000002C20000017F0B9104CB.png
+    :width: 5.9327in
+    :height: 3.1917in
+
 **Figure 2.7b: FreeNAS® will Preserve and Migrate Settings**
 
 |10000000000002CF0000018CA87134B3_png|
 
+.. |10000000000002CF0000018CA87134B3_png| image:: images/10000000000002CF0000018CA87134B3.png
+    :width: 6.9252in
+    :height: 3.8134in
 
 During the reboot there may be a conversion of the previous configuration database to the new version of the database. This happens during the "Applying
 database schema changes" line in the reboot cycle. This conversion can take a long time to finish so be patient and the boot should complete normally. If
@@ -615,6 +706,10 @@ the "Upload Config" button to upload the configuration that you saved before you
 **Figure 2.7c: Upgrade is Complete**
 
 |10000000000002C300000141704D5CD2_png|
+
+.. |10000000000002C300000141704D5CD2_png| image:: images/10000000000002C300000141704D5CD2.png
+    :width: 6.9252in
+    :height: 2.4161in
 
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~

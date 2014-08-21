@@ -247,6 +247,10 @@ configurable options.
 
 |1000000000000181000001977D3920D2_jpg|
 
+.. |1000000000000181000001977D3920D2_jpg| image:: images/1000000000000181000001977D3920D2.jpg
+    :width: 4.639in
+    :height: 3.7689in
+
 **Table 8.1b: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -310,6 +314,10 @@ multipath-capable hardware.
 **Figure 8.1k: Viewing Multipaths**
 
 |1000020100000398000000DC97182069_png|
+
+.. |1000020100000398000000DC97182069_png| image:: images/1000020100000398000000DC97182069.png
+    :width: 6.9252in
+    :height: 1.6736in
 
 Figure 6.3q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.

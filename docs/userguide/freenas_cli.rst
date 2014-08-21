@@ -131,6 +131,10 @@ example of the client running on a Windows system while an SFTP transfer is occu
 
 |10000000000003CA000002BC6A5C3D2E_png|
 
+.. |10000000000003CA000002BC6A5C3D2E_png| image:: images/10000000000003CA000002BC6A5C3D2E.png
+    :width: 6.9252in
+    :height: 4.9965in
+
 Depending upon the traffic being tested (e.g. the type of share running on your network), you may need to test UDP instead of TCP. To start the iperf server
 in UDP mode, use :command:`iperf -sDu` as the **u** specifies UDP; the startup message should indicate that the server is listening for UDP datagrams. If you
 are not sure if the traffic that you wish to test is UDP or TCP, run this command to determine which services are running on the FreeNAS® system::

@@ -647,6 +647,10 @@ for audiotag.
 
 |10000000000002E1000002757E7365A6_png|
 
+.. |10000000000002E1000002757E7365A6_png| image:: images/10000000000002E1000002757E7365A6.png
+    :width: 6.9252in
+    :height: 4.5425in
+
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
 `bsd.port.mk <http://www.freebsd.org/cgi/cvsweb.cgi/ports/Mk/bsd.port.mk?rev=1.708;content-type=text%2Fplain>`_.
@@ -678,6 +682,10 @@ Since this port has configurable options, the first time this command is run the
 **Figure 13.5b: Configuration Options for Audiotag Port**
 
 |10000000000001DF0000012CAAF5492B_png|
+
+.. |10000000000001DF0000012CAAF5492B_png| image:: images/10000000000001DF0000012CAAF5492B.png
+    :width: 5.7701in
+    :height: 2.778in
 
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.

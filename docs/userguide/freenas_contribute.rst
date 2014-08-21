@@ -63,11 +63,10 @@ Localize
 ---------
 
 FreeNAS® uses
-`Pootle <http://en.wikipedia.org/wiki/Pootle>`_
-, an open source application, for managing the localization of the menu screens used by the FreeNAS® graphical administrative interface. Pootle makes it easy
-to find out the localization status of your native language and to translate the text for any menus that have not been localized yet. By providing a web
-editor and commenting system, Pootle allows translators to spend their time making and reviewing translations rather than learning how to use a translation
-submission tool.
+`Pootle <http://en.wikipedia.org/wiki/Pootle>`_, an open source application, for managing the localization of the menu screens used by the FreeNAS® graphical
+administrative interface. Pootle makes it easy to find out the localization status of your native language and to translate the text for any menus that have
+not been localized yet. By providing a web editor and commenting system, Pootle allows translators to spend their time making and reviewing translations
+rather than learning how to use a translation submission tool.
 
 To see the status of a localization, open
 `pootle.freenas.org <http://pootle.freenas.org/>`_
@@ -76,6 +75,10 @@ in your browser, as seen in Figure 24.2a:
 **Figure 24.2a: FreeNAS® Localization System**
 
 |10000000000003E0000002624E582DF2_png|
+
+.. |10000000000003E0000002624E582DF2_png| image:: images/10000000000003E0000002624E582DF2.png
+    :width: 6.9252in
+    :height: 3.272in
 
 The localizations FreeNAS® users have requested are listed alphabetically on the left. If your language is missing and you would like to help in its
 translation, send an email to the
@@ -100,6 +103,9 @@ menu screens has been assigned a string number. If you click the number, an edit
 
 |100000000000047B00000232CA1DFA0A_png|
 
+.. |100000000000047B00000232CA1DFA0A_png| image:: images/100000000000047B00000232CA1DFA0A.png
+    :width: 6.9252in
+    :height: 3.3929in
 
 Simply type in the translated text and click the "Submit" button to save your change.
 

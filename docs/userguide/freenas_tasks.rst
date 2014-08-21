@@ -436,6 +436,10 @@ created any volumes.
 
 |10000000000001DA0000021AE2615C27_png|
 
+.. |10000000000001DA0000021AE2615C27_png| image:: images/10000000000001DA0000021AE2615C27.png
+    :width: 3.9835in
+    :height: 4.4835in
+
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 
 **Table 6.4a: S.M.A.R.T. Test Options**

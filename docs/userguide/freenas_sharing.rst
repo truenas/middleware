@@ -171,9 +171,17 @@ The user can now copy files to and from the share.
 
 |100000000000024B000001232956E90B_png|
 
+.. |100000000000024B000001232956E90B_png| image:: images/100000000000024B000001232956E90B.png
+    :width: 6.9252in
+    :height: 3.4327in
+
 **Figure 10.1c: Viewing the Contents of the Share From a Mac System**
 
 |10000000000001C60000015C9803C256_png|
+
+.. |10000000000001C60000015C9803C256_png| image:: images/10000000000001C60000015C9803C256.png
+    :width: 6.9272in
+    :height: 3.6102in
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -231,6 +239,10 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
 **Figure 10.1d: Configuring Time Machine on Mac OS X Lion**
 
 |10000000000002A3000001C1F794EDB8_png|
+
+.. |10000000000002A3000001C1F794EDB8_png| image:: images/10000000000002A3000001C1F794EDB8.png
+    :width: 6.9252in
+    :height: 4.6055in
 
 Unix (NFS) Shares
 -----------------
@@ -451,6 +463,10 @@ example :file:`/mnt/data` share of the FreeNAS® system at
 
 |1000000000000374000002AEF63058C7_jpg|
 
+.. |1000000000000374000002AEF63058C7_jpg| image:: images/1000000000000374000002AEF63058C7.jpg
+    :width: 6.9252in
+    :height: 5.3736in
+
 From Mac OS X
 ^^^^^^^^^^^^^
 
@@ -466,9 +482,17 @@ user can now copy files to and from the share.
 
 |100000000000024D0000012FE1DE1BD5_png|
 
+.. |100000000000024D0000012FE1DE1BD5_png| image:: images/100000000000024D0000012FE1DE1BD5.png
+    :width: 6.9252in
+    :height: 3.5618in
+
 **Figure 10.2d: Viewing the NFS Share in Finder**
 
 |10000000000001B9000001650B2A66FA_png|
+
+.. |10000000000001B9000001650B2A66FA_png| image:: images/10000000000001B9000001650B2A66FA.png
+    :width: 6.2193in
+    :height: 4.5102in
 
 Troubleshooting NFS
 ~~~~~~~~~~~~~~~~~~~
@@ -643,6 +667,10 @@ share named :file:`backups`. An example is seen in Figure 10.3b:
 
 |100002010000031D000002804075756D_png|
 
+.. |100002010000031D000002804075756D_png| image:: images/100002010000031D000002804075756D.png
+    :width: 6.9252in
+    :height: 5.5602in
+
 If you click on :file:`backups`, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy
 data to and from the CIFS share.
 
@@ -653,11 +681,19 @@ drive..." as seen in Figure 10.3c:
 
 |100002010000031E0000027D2C5F8621_png|
 
+.. |100002010000031E0000027D2C5F8621_png| image:: images/100002010000031E0000027D2C5F8621.png
+    :width: 6.9252in
+    :height: 5.5272in
+
 Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.3d:
 
 **Figure 10.3d: Selecting the Network Drive Letter**
 
 |1000000000000319000002766C465264_jpg|
+
+.. |1000000000000319000002766C465264_jpg| image:: images/1000000000000319000002766C465264.jpg
+    :width: 6.9252in
+    :height: 5.5016in
 
 Configuring Shadow Copies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -737,3 +773,7 @@ one of the previous versions, which will overwrite the existing file on the Wind
 **Figure 10.3e: Viewing Previous Versions within Explorer**
 
 |10000201000002FE0000028C18A1102B_png|
+
+.. |10000201000002FE0000028C18A1102B_png| image:: images/10000201000002FE0000028C18A1102B.png
+    :width: 6.9252in
+    :height: 5.8945in

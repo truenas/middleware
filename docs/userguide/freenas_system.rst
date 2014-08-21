@@ -130,6 +130,10 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 
 |100000000000011C0000016E12EDFEE5_jpg|
 
+.. |100000000000011C0000016E12EDFEE5_jpg| image:: images/100000000000011C0000016E12EDFEE5.jpg
+    :width: 3.4217in
+    :height: 3.389in
+
 **Table 5.2b: NTP Servers Configuration Options**
 
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -509,6 +513,10 @@ If a tunable is preventing the system from booting, you will need physical acces
 **Figure 5.6b: FreeNAS® Boot Menu**
 
 |10000000000002D10000018F743DB34E_png|
+
+.. |10000000000002D10000018F743DB34E_png| image:: images/10000000000002D10000018F743DB34E.png
+    :width: 6.0583in
+    :height: 3.3252in
 
 The boot loader prompt provides a minimal set of commands described in
 `loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the :command:`unset` command to disable a problematic value, the
