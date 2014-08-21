@@ -314,6 +314,7 @@ disk_is_freenas()
     local os_part=""
     local data_part=""
 
+set -x
     # We have two kinds of potential upgrades here.
     # The old kind, with 4 slices, and the new kind,
     # with two partitions.
@@ -331,18 +332,88 @@ disk_is_freenas()
     fi
 
     if [ "${upgrade_style}" = "new" ]; then
-	# We're going to be very lazy, and just
-	# use zdb to see if there is a freenas-boot
-	# pool on it
+	# This code is very clumsy.  There
+	# should be a way to structure it such that
+	# all of the cleanup happens as we want it to.
 	if zdb -l ${os_part} | grep "name: 'freenas-boot'" > /dev/null ; then
-	    return 0
+	    :
+	else
+	    return 1
 	fi
-	# If it's partitioned this way, and isn't freenas-boot, then
-	# it's not freenas.
-	return 1
+	zpool import -N -f freenas-boot || return 1
+	# Now we want to figure out which dataset to use.
+	# We'll mount freenas-boot/grub, and then look for "default=" in
+	# grub.cfg
+	# Of course, if grub.cfg doesn't exist, this isn't a freenas pool, just
+	# a pool masquerading as us.
+	if ! mount -t zfs freenas-boot/grub /tmp/data_old; then
+	    zpool export freenas-boot
+	    return 1
+	fi
+	if [ !-f /tmp/data_old/grub.cfg ]; then
+	    umount /tmp/data_old
+	    rmdir /tmp/data_old
+	    zpool export freenas-boot
+	    return 1
+	fi
+	# There should always be a "set default=" line in a grub.cfg
+	# that we created.
+	if grep -q '^set default=' /tmp/data_old/grub.cfg ; then
+	    DF=$(grep '^set default=' /tmp/data_old/grub.cfg | tail -1 | sed 's/^set default="\(.*\)"$/\1/')
+	    case "${DF}" in
+		0)	# No default, use "default"
+		    DS=default ;;
+		*FreeNAS*)	# Default dataset
+		    DS=$(expr "${DF}" : "FreeNAS (\(.*\)) .*") ;;
+		*) DS="" ;;
+	    esac
+	    umount /tmp/data_old
+	    if [ -n "${DS}" ]; then
+		# Okay, mount this pool
+		set -x
+		if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
+		    cp -pR /tmp/data_old/data/. /tmp/data_preserved
+		    # Don't want to keep the old pkgdb around, since we're
+		    # nuking the filesystem
+		    rm -rf /tmp/data_preserved/pkgdb
+		    if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
+			cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
+		    fi
+		    if [ -d /tmp/data_old/root/.ssh ]; then
+			cp -pR /tmp/data_old/root/.ssh /tmp/
+		    fi
+		    if [ -d /tmp/data_old/boot/modules ]; then
+			mkdir -p /tmp/modules
+			for i in `ls /tmp/data_old/boot/modules`
+			do
+			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+			done
+		    fi
+		    if [ -d /tmp/data_old/usr/local/fusionio ]; then
+			cp -pR /tmp/data_old/usr/local/fusionio /tmp/
+		    fi
+		    if [ -f /tmp/data_old/boot.config ]; then
+			cp /tmp/data_old/boot.config /tmp/
+		    fi
+		    if [ -f /tmp/data_old/boot/loader.conf.local ]; then
+			cp /tmp/data_old/boot/loader.conf.local /tmp/
+		    fi
+		    umount /tmp/data_old || return 1
+		    zpool export freenas-boot || return 1
+		    return 0
+		fi
+	    fi
+	    zpool export freenas-boot || true
+	    return 1
+	else
+	    umount /tmp/data_old || return 1
+	    zpool export freenas-boot || true
+	    return 1
+	fi
     fi
 
-    # Everything below here is for old style upgrade.
+    # This is now legacy code, to support the old
+    # partitioning scheme (freenas-9.2 and earlier)
     if ! mount "${data_part}" /tmp/data_old ; then
 	return 1
     fi
@@ -529,11 +600,10 @@ menu_install()
 	# This needs to be rewritten.
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
-        rmdir /tmp/data
-	if [ -c /dev/${_disk}s4 ]; then
-	    # Destroy the partition for old-style upgrades
-	    gpart destroy -F ${_disk} || true
+	if [ "${upgrade_style}" = "new" ]; then
+	    zpool export freenas-boot
 	fi
+        rmdir /tmp/data
     else
         # Run through some sanity checks on new installs ;).. some of the
         # checks won't make sense, but others might (e.g. hardware sanity
@@ -553,18 +623,14 @@ menu_install()
     ls $(get_product_path) > /dev/null
 
     if [ ${_do_upgrade} -ne 0 ]; then
-	# For new-style upgrades -- we have a ${_disk}p2 --
-	# we don't need to back up the data, just touch the
-	# sentinal files.
-	if [ "${upgrade_style}" = "old" ]; then
-		partition_disk ${_disk}
-	fi
+	# We repartition even though it's an upgrade.
+	# This destroys all of the pool data, and
+	# ensures a clean filesystems.
+	partition_disk ${_disk}
 	mount_disk ${_disk} /tmp/data
 
-	# XXX if we have preserved /data
-	if [ "${upgrade_style}" = "old" ]; then
-		cp -pR /tmp/data_preserved/ /tmp/data/data
-	fi
+	cp -pR /tmp/data_preserved/ /tmp/data/data
+
 	# Tell it to look in /.mount (with an implied /Packages) for the packages.
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 
@@ -604,18 +670,18 @@ menu_install()
 	# read foo
 
 	# XXX: Fixup
-	tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
-	mount -t devfs devfs /tmp/data/dev
+	# tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
 
+	# grub and beadm will need a devfs
+	mount -t devfs devfs /tmp/data/dev
 	# Create a temporary /var
 	mount -t tmpfs tmpfs /tmp/data/var
 	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
-
 	# Set default boot filesystem
 	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-
 	install_grub /tmp/data ${_disk}
 
+	# Create upgrade sentinel files
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 
