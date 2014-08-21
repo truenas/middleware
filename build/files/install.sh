@@ -253,7 +253,7 @@ install_grub() {
 	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/usr/local/etc/grub.d/10_ktrueos
 	# Having 10_ktruos.bak in place causes grub-mkconfig to
 	# create two boot menu items.  So let's move it out of place
-	mkdir /tmp/bakup
+	mkdir -p /tmp/bakup
 	mv ${_mnt}/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
 	chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
 	chroot ${_mnt} /usr/local/sbin/beadm activate default
@@ -314,7 +314,6 @@ disk_is_freenas()
     local os_part=""
     local data_part=""
 
-set -x
     # We have two kinds of potential upgrades here.
     # The old kind, with 4 slices, and the new kind,
     # with two partitions.
@@ -629,7 +628,9 @@ menu_install()
 	partition_disk ${_disk}
 	mount_disk ${_disk} /tmp/data
 
-	cp -pR /tmp/data_preserved/ /tmp/data/data
+	if [ -d /tmp/data_preserved ]; then
+	    cp -pR /tmp/data_preserved/. /tmp/data/data
+	fi
 
 	# Tell it to look in /.mount (with an implied /Packages) for the packages.
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
@@ -688,8 +689,6 @@ menu_install()
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     else
-#	/rescue/pc-sysinstall -c ${_config_file}
-
 	partition_disk ${_disk}
 	mount_disk ${_disk} /tmp/data
 
@@ -699,18 +698,15 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
 	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
 	echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
-#	echo "/dev/${_disk}p2	/boot/grub	ufs	rw,noatime	1	1" > /tmp/data/etc/fstab
 	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
 
 	mount -t devfs devfs /tmp/data/dev
-
 	# Create a temporary /var
 	mount -t tmpfs tmpfs /tmp/data/var
 	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
 
 	# Set default boot filesystem
 	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-
 	install_grub /tmp/data ${_disk}
 
 	set +x
