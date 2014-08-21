@@ -110,6 +110,7 @@ etc/ix.rc.d/ix_pf_late
 etc/ix.rc.d/ix_register
 etc/ix.rc.d/ix_sshd_save_keys
 etc/ix.rc.d/ix_textdump
+etc/ix.rc.d/ix-apache
 etc/directoryservice/ActiveDirectory/ctl
 etc/directoryservice/DomainController/ctl
 etc/directoryservice/LDAP/ctl
