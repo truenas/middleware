@@ -1717,7 +1717,7 @@ class WebDAV(Model):
 	    default=8080,
 	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
 	    help_text=_("This is the port at which WebDAV will run on."
-			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."),
+			"<br />Do not use a port that is already in use by another service (e.g. 22 for SSH)."),
 	)
     
     webdav_tcpportssl =  models.PositiveIntegerField(
@@ -1725,7 +1725,7 @@ class WebDAV(Model):
 	    default=8081,
 	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
 	    help_text=_("This is the port at which Secure WebDAV will run on."
-			"<br />Please do not use any of default services ports (like 22 for SSH) unless you know what your doing."),
+			"<br />Do not use a port that is already in use by another service (e.g. 22 for SSH)."),
 	)
     
     webdav_password = models.CharField(

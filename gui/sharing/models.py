@@ -334,7 +334,7 @@ class WebDAV_Share(Model):
 	    max_length=120,
 	    verbose_name=_("Share Path Name"),
 	    help_text=_("This will be used to access your WebDAV share."
-	      "<br /> For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name"),
+	      "<br />For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name"),
     )
     
     webdav_comment = models.CharField(
@@ -356,9 +356,9 @@ class WebDAV_Share(Model):
     webdav_perm = models.BooleanField(
 	verbose_name=_('Change Group Ownership'),
 	help_text=_("Changes the group of the shared folder"
-	  " to 'www' recursively (including all subdirectories)"
-	  "<br />If you disable this, then, you will need to manually" 
-	  " add the www group to the share."),
+	  "<br />to 'webdav' recursively (including all subdirectories)"
+	  "<br />If disabled, you will need to manually" 
+	  "<br />add the 'webdav' group to the share."),
 	default=True,
     )
 	  
