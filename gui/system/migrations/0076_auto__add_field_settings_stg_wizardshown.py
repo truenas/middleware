@@ -233,13 +233,6 @@ class Migration(SchemaMigration):
             'tun_value': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'tun_var': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
         },
-        u'system.upgrade': {
-            'Meta': {'object_name': 'Upgrade'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'upd_autocheck': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'upd_location': ('django.db.models.fields.URLField', [], {'default': "'http://download.freenas.org/FreeNAS/'", 'max_length': '200'}),
-            'upd_train': ('django.db.models.fields.CharField', [], {'default': "'stable'", 'max_length': '200'})
-        }
     }
 
     complete_apps = ['storage', 'system']
