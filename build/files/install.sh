@@ -564,11 +564,11 @@ menu_install()
     # Start critical section.
     trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
     set -e
-    set -x
+#    set -x
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
-    build_config  ${_disk} "$(get_image_name)" ${_config_file}
+    # build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
     # For one of the install_worker ISO scripts
     export INSTALL_MEDIA=${_disk}
@@ -621,97 +621,77 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
-    if [ ${_do_upgrade} -ne 0 ]; then
-	# We repartition even though it's an upgrade.
-	# This destroys all of the pool data, and
-	# ensures a clean filesystems.
-	partition_disk ${_disk}
-	mount_disk ${_disk} /tmp/data
-
-	if [ -d /tmp/data_preserved ]; then
-	    cp -pR /tmp/data_preserved/. /tmp/data/data
-	fi
-
-	# Tell it to look in /.mount (with an implied /Packages) for the packages.
-	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
-
-	rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
-	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
-	if [ -f /tmp/hostid ]; then
-            cp -p /tmp/hostid /tmp/data/conf/base/etc
-	fi
-        if [ -d /tmp/.ssh ]; then
-            cp -pR /tmp/.ssh /tmp/data/root/
-        fi
-
-	# TODO: this needs to be revisited.
-        if [ -d /tmp/modules ]; then
-            for i in `ls /tmp/modules`
-            do
-                cp -p /tmp/modules/$i /tmp/data/boot/modules
-            done
-        fi
-        if [ -d /tmp/fusionio ]; then
-            cp -pR /tmp/fusionio /tmp/data/usr/local/
-        fi
-	if [ -f /tmp/boot.config ]; then
-	    cp /tmp/boot.config /tmp/data/
-	fi
-	if [ -f /tmp/loader.conf.local ]; then
-	    cp /tmp/loader.conf.local /tmp/data/boot/
-	fi
-	sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
-
-        if is_truenas ; then
-            install_worker.sh -D /tmp/data -m / install
-        fi
-
-	# Debugging pause.
-	# read foo
-
-	# XXX: Fixup
-	# tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
-
-	# grub and beadm will need a devfs
-	mount -t devfs devfs /tmp/data/dev
-	# Create a temporary /var
-	mount -t tmpfs tmpfs /tmp/data/var
-	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
-	# Set default boot filesystem
-	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-	install_grub /tmp/data ${_disk}
-
+    # We repartition even if it's an upgrade.
+    # This destroys all of the pool data, and
+    # ensures a clean filesystems.
+    partition_disk ${_disk}
+    mount_disk ${_disk} /tmp/data
+    
+    if [ -d /tmp/data_preserved ]; then
+	cp -pR /tmp/data_preserved/. /tmp/data/data
+    else
+	cp -R /data/* /tmp/data/data
+	chown -R www:www /tmp/data/data
+    fi
+    
+    # Tell it to look in /.mount (with an implied /Packages) for the packages.
+    /usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
+    
+    rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
+    echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
+    ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
+    if [ -f /tmp/hostid ]; then
+        cp -p /tmp/hostid /tmp/data/conf/base/etc
+    fi
+    if [ -d /tmp/.ssh ]; then
+        cp -pR /tmp/.ssh /tmp/data/root/
+    fi
+    
+    # TODO: this needs to be revisited.
+    if [ -d /tmp/modules ]; then
+        for i in `ls /tmp/modules`
+        do
+            cp -p /tmp/modules/$i /tmp/data/boot/modules
+        done
+    fi
+    if [ -d /tmp/fusionio ]; then
+        cp -pR /tmp/fusionio /tmp/data/usr/local/
+    fi
+    if [ -f /tmp/boot.config ]; then
+	cp /tmp/boot.config /tmp/data/
+    fi
+    if [ -f /tmp/loader.conf.local ]; then
+	cp /tmp/loader.conf.local /tmp/data/boot/
+    fi
+    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
+    
+    if is_truenas ; then
+        install_worker.sh -D /tmp/data -m / install
+    fi
+    
+    # Debugging pause.
+    # read foo
+    
+    # XXX: Fixup
+    # tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
+    
+    # grub and beadm will need a devfs
+    mount -t devfs devfs /tmp/data/dev
+    # Create a temporary /var
+    mount -t tmpfs tmpfs /tmp/data/var
+    chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
+    # Set default boot filesystem
+    zpool set bootfs=freenas-boot/ROOT/default freenas-boot
+    install_grub /tmp/data ${_disk}
+    
+#    set +x
+    if [ -d /tmp/data_preserved ]; then
 	# Create upgrade sentinel files
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
-
 	dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
-    else
-	partition_disk ${_disk}
-	mount_disk ${_disk} /tmp/data
-
-#	# Copy the initial databases over
-	cp -R /data/* /tmp/data/data
-	chown -R www:www /tmp/data/data
-	/usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
-	rm -f /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab
-	echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
-	ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
-
-	mount -t devfs devfs /tmp/data/dev
-	# Create a temporary /var
-	mount -t tmpfs tmpfs /tmp/data/var
-	chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
-
-	# Set default boot filesystem
-	zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-	install_grub /tmp/data ${_disk}
-
-	set +x
     fi
-
     umount /tmp/data/boot/grub
     umount /tmp/data/dev
     umount /tmp/data/var
