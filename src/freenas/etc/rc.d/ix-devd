@@ -85,12 +85,12 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     # We are already master, insist this by setting all advskew to 1
     if [ -e ${FAILOVER_ASSUMED_MASTER} ]; then
-	ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
+	ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
 	rm -f ${FAILOVER_STATE}\${EVENT}
 	exit 0
     fi
 
-    BACKUPS=\$(ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: BACKUP" | wc -l )
+    BACKUPS=\$(ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: BACKUP" | wc -l )
     if [ \${BACKUPS} -gt 0 ]; then
 	echo "Ignoring UP state on \${SUBSYSTEM} because we still have interfaces that are BACKUP." | logger
 	echo "\$(date), \$(hostname), \${SUBSYSTEM} assumed master while other interfaces are still in slave mode." | mail -s "Failover WARNING" root
@@ -176,13 +176,13 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     # If we reached here, fenced is daemonized and have all drives reserved.  Bring up all carps we own.
-    ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
+    ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
 
     touch ${IMPORTING_FILE}
     rm ${ELECTING_FILE}
 
     # Open every disk for writing once.
-    sysctl -n kern.disks | tr \  \\\\n | grep ^da | xargs -n 1 echo "false >" | sh
+    sysctl -n kern.disks | tr ' ' '\n' | grep ^da | xargs -n 1 echo "false >" | sh
 
     if [ -e /data/zfs/killcache ]; then
 	rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
@@ -254,7 +254,7 @@ fi
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
 
-    MASTERS=\`ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: MASTER" | wc -l \`
+    MASTERS=\`ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: MASTER" | wc -l \`
     if [ \${MASTERS} -gt 0 ]; then
 	echo "Ignoring DOWN state on \${SUBSYSTEM} because we still have interfaces that are UP." | logger
 	rm -f ${FAILOVER_STATE}\${EVENT}
@@ -263,7 +263,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 
     pkill -f fenced
 
-    ifconfig -l | tr \  \\\\n | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 100
+    ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 100
     echo "set block-policy drop" > /etc/pf.conf.block
     echo \${IPS} | xargs -n 1 -J % echo pass in quick proto tcp from any to % port {22, 80, 443} >> /etc/pf.conf.block
     echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto tcp from any to % >> /etc/pf.conf.block
