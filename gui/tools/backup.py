@@ -586,11 +586,12 @@ class RestoreWorker(object):
         return True
 
     def reconstruct_volumes(self, volumes):
-        nf = notifier.notifier()
         for name, i in volumes.items():
             if i['fstype'] == 'ZFS':
                 if not self.reconstruct_zfs_volume(name, i):
                     return False
+
+        return True
 
     def print_backup_details(self, backup):
         print('    Directory name: {}'.format(backup.name))
