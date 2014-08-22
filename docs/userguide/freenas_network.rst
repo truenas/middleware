@@ -1,25 +1,29 @@
 :orphan:
 
+.. _Network:
+
 Network
 =======
 
 The Network section of the administrative GUI contains the following components for viewing and configuring the FreeNAS® system's network settings:
 
-* `Global Configuration`_: used to to set non-interface specific network settings.
+* :ref:`Global Configuration`: used to to set non-interface specific network settings.
 
-* `Interfaces`_: used to configure a specified interface's network settings.
+* :ref:`Interfaces`: used to configure a specified interface's network settings.
 
-* `IPMI`_: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
+* :ref:`IPMI`: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
 
-* `Link Aggregations`_: used to configure link aggregation and link failover.
+* :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
-* `Network Summary`_: provides an overview of the current network settings.
+* :ref:`Network Summary`: provides an overview of the current network settings.
 
-* `Static Routes`_: used to add static routes.
+* :ref:`Static Routes`: used to add static routes.
 
-* `VLANs`_: used to configure IEEE 802.1q tagging.
+* :ref:`VLANs`: used to configure IEEE 802.1q tagging.
 
 Each of these is described in more detail in this section.
+
+.. _Global Configuration:
 
 Global Configuration
 --------------------
@@ -90,6 +94,8 @@ the FreeNAS® system in the "Host name database" field.
    servers that are located outside of the local network. In this case, it is recommended that Static Routes be added in order to reach external DNS, NTP, and
    mail servers which are configured with static IP addresses.
 
+.. _Interfaces:
+
 Interfaces
 ----------
 
@@ -159,6 +165,8 @@ on multiple interfaces.
 When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
 fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
 
+.. _IPMI:
+
 IPMI
 ----
 
@@ -171,7 +179,7 @@ another person remote access to the system in order to assist with a configurati
 management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
 be a dedicated IPMI interface.
 
-Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load*, a "Type" of
+Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*, a "Type" of
 *Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
 *ipmi* kernel module now, without rebooting, type this from Shell::
@@ -215,6 +223,8 @@ prompt for a username and the password that you configured. Refer to the documen
 The default username is *ADMIN* (in all caps). Once you have logged into the management interface, you can change the administrative username as well as
 create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the
 hardware.
+
+.. _Link Aggregations:
 
 Link Aggregations
 -----------------
@@ -260,6 +270,8 @@ mode can cause unordered packet arrival at the client. This has a side effect of
 
 **Do not** configure the interfaces used in the lagg device before creating the lagg device.
 
+.. _LACP, MPIO, NFS, and ESXi:
+
 LACP, MPIO, NFS, and ESXi
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -284,6 +296,8 @@ contains instructions for configuring MPIO on ESXi.
 NFS does not understand MPIO. Therefore, you will need one fast interface since creating an iSCSI portal will not improve bandwidth when using NFS. LACP does
 not work well to increase the bandwidth for point-to-point NFS (one server and one client). LACP is a good solution for link redundancy or for one server and
 many clients.
+
+.. _Creating a Link Aggregation:
 
 Creating a Link Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -408,11 +422,15 @@ To see if the link aggregation is load balancing properly, run the following com
 More information about this command can be found at
 `systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_.
 
+.. _Network Summary:
+
 Network Summary
 ---------------
 
 :menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
 configured IP address(es), DNS server(s), and default gateway will be displayed.
+
+.. _Static Routes:
 
 Static Routes
 -------------
@@ -450,6 +468,8 @@ The available options are summarized in Table 7.6a.
 
 
 If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
+
+.. _VLANs:
 
 VLANs
 -----

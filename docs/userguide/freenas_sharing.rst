@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Sharing:
+
 Sharing
 =======
 
@@ -15,13 +17,13 @@ depends upon the operating system(s) running in your network, your security requ
 
 The following types of shares and services are available:
 
-* `Apple (AFP) Shares`_: the Apple File Protocol (AFP) type of share is a good choice if all of your computers run Mac OS X.
+* :ref:`Apple (AFP) Shares`: the Apple File Protocol (AFP) type of share is a good choice if all of your computers run Mac OS X.
 
-* `Unix (NFS) Shares`_: the Network File System (NFS) type of share is accessible by Mac OS X, Linux, BSD, and the professional and enterprise versions (not
-  the home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system, it
-  may require the installation or configuration of client software on the desktop.
+* :ref:`Unix (NFS) Shares`: the Network File System (NFS) type of share is accessible by Mac OS X, Linux, BSD, and the professional and enterprise versions
+  (not the home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system,
+  it may require the installation or configuration of client software on the desktop.
 
-* `Windows (CIFS) Shares`_: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
+* :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
   containing only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
   the CPU or consider another type of share.
@@ -42,7 +44,9 @@ encryption, but the data passing through the network will be encrypted.
    will access that volume, and configure that volume for that one type of share or service. If you need to support multiple types of shares, divide the
    volume into datasets and use one dataset per share.
 
-This section will demonstrate how to create AFP, NFS, and CIFS shares. FTP and SSH configurations are described in `Services Configuration`_.
+This section will demonstrate how to create AFP, NFS, and CIFS shares. FTP and SSH configurations are described in :ref:`Services Configuration`.
+
+.. _Apple (AFP) Shares:
 
 Apple (AFP) Shares
 ------------------
@@ -124,6 +128,7 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
+.. _Connecting as Guest:
 
 Connecting as Guest
 ~~~~~~~~~~~~~~~~~~~
@@ -185,6 +190,8 @@ The user can now copy files to and from the share.
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
+.. _Using Time Machine:
+
 Using Time Machine
 ~~~~~~~~~~~~~~~~~~
 
@@ -243,6 +250,8 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
 .. |10000000000002A3000001C1F794EDB8_png| image:: images/10000000000002A3000001C1F794EDB8.png
     :width: 6.9252in
     :height: 4.6055in
+
+.. _Unix (NFS) Shares:
 
 Unix (NFS) Shares
 -----------------
@@ -364,6 +373,8 @@ Second NFS share:
 
 Note that this requires the creation of two shares as it can not be accomplished in one share.
 
+.. _Example Configuration:
+
 Example Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -383,6 +394,8 @@ With this configuration, it does not matter which user account connects to the N
 have the permissions that you specified on the volume/dataset. For example, even if the *root* user is able to connect, it will not gain
 *root* access to the share.
 
+.. _Connecting to the Share:
+
 Connecting to the Share
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -400,6 +413,8 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
 *   "MapAll User" and "MapAll Group" are both set to *nobody*
 
 *   the "All Directories" checkbox has been checked
+
+.. _From BSD or Linux:
 
 From BSD or Linux
 ^^^^^^^^^^^^^^^^^
@@ -429,6 +444,8 @@ Should you wish to make any changes to the NFS share's settings or wish to make 
 superuser::
 
  umount /mnt
+
+.. _From Microsoft:
 
 From Microsoft
 ^^^^^^^^^^^^^^
@@ -467,6 +484,8 @@ example :file:`/mnt/data` share of the FreeNAS® system at
     :width: 6.9252in
     :height: 5.3736in
 
+.. _From Mac OS X:
+
 From Mac OS X
 ^^^^^^^^^^^^^
 
@@ -494,6 +513,8 @@ user can now copy files to and from the share.
     :width: 6.2193in
     :height: 4.5102in
 
+.. _Troubleshooting NFS:
+
 Troubleshooting NFS
 ~~~~~~~~~~~~~~~~~~~
 
@@ -513,6 +534,8 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
+
+.. _Windows (CIFS) Shares:
 
 Windows (CIFS) Shares
 ---------------------
@@ -535,7 +558,7 @@ This section will demonstrate some common configuration scenarios:
 
 * If you would like to use Shadow Copies, see Configuring Shadow Copies.
 
-* If you are having problems accessing your CIFS share, see `Troubleshooting CIFS`_.
+* If you are having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
 
 Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`. Some
 settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these
@@ -611,13 +634,15 @@ If you wish some files on a shared volume to be hidden and inaccessible to users
 this line and some examples can be found
 `here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_.
 
+.. _Share Configuration:
+
 Share Configuration
 ~~~~~~~~~~~~~~~~~~~
 
 The process for configuring a share is as follows:
 
 #.  **If you are not using Active Directory or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User` with the
-following attributes:
+    following attributes:
 
 * "Username" and "Password": matches the username and password on the client system
 
@@ -694,6 +719,8 @@ Choose a drive letter from the drop-down menu and click the "Finish" button as s
 .. |1000000000000319000002766C465264_jpg| image:: images/1000000000000319000002766C465264.jpg
     :width: 6.9252in
     :height: 5.5016in
+
+.. _Configuring Shadow Copies:
 
 Configuring Shadow Copies
 ~~~~~~~~~~~~~~~~~~~~~~~~~

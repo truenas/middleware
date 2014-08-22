@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Configuration Quick Start:
+
 Configuration Quick Start
 =========================
 
@@ -9,6 +11,8 @@ the configuration workflow.
 .. note:: it is important to use the GUI (or the console) for all configuration changes. FreeNAS® uses a configuration database to store its settings. While
    you can use the command line to modify your configuration, changes made at the command line are not written to the configuration database. This means that
    any changes made at the command line will not persist after a reboot and will be overwritten by the values in the configuration database during an upgrade.
+
+.. _Set the Root Password:
 
 Set the Root Password
 ---------------------
@@ -20,6 +24,7 @@ password as anyone who knows this password can gain access to the FreeNAS® admi
    *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
    be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
 
+.. _Set the Email Address:
 
 Set the Email Address
 ---------------------
@@ -30,6 +35,8 @@ automatically emails the *root* user account whenever an alert is issued.
 To set the email address for the *root* account, go to :menuselection:`Account --> Users --> View Users`. Click the "Change E-mail" button associated with the
 *root* user account and input the email address of the person to receive the administrative emails.
 
+.. _Enable Console Logging:
+
 Enable Console Logging
 ----------------------
 
@@ -38,6 +45,8 @@ messages in the footer" and click "Save". The output of :command:`tail -f /var/l
 the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
 
 You are now ready to start configuring the FreeNAS® system. Typically, the configuration workflow will use the following steps in their listed order.
+
+.. _Create Storage:
 
 Create Storage
 --------------
@@ -64,6 +73,8 @@ If you format your disk(s) with ZFS, additional options are available:
 
 #.  Create a Zvol to be used when configuring an iSCSI device extent.
 
+.. _Create Users/Groups:
+
 Create Users/Groups
 -------------------
 
@@ -86,6 +97,8 @@ Directory domain. OpenLDAP and Active Directory are mutually exclusive, meaning 
 
 #.  Import existing OpenLDAP account information using the instructions in LDAP.
 
+.. _Configure Permissions:
+
 Configure Permissions
 ---------------------
 
@@ -98,6 +111,8 @@ allowing for greater flexibility when providing access to data.
 
 Before creating your shares, determine which users should have access to which data. This will help you to determine if multiple volumes, datasets, and/or
 shares should be created to meet the permissions needs of your environment.
+
+.. _Configure Sharing:
 
 Configure Sharing
 -----------------
@@ -127,6 +142,8 @@ types of shares and services are available:
 
 * **iSCSI:** FreeNAS® supports the export of virtual disk drives that are accessible to clients running iSCSI initiator software.
 
+.. _Start Service(s):
+
 Start Service(s)
 ----------------
 
@@ -134,6 +151,8 @@ Once you have configured your share or service, you will need to start its assoc
 services are off until you start them. The status of services is managed using :menuselection:`Services --> Control Services`. To start a service, click its
 red "OFF" button. After a second or so, it will change to a blue ON, indicating that the service has been enabled. Watch the console messages as the service
 starts to determine if there are any error messages.
+
+.. _Test Configuration:
 
 Test Configuration
 ------------------
@@ -143,6 +162,8 @@ CIFS share, use an FTP client such as Filezilla to try to connect to an FTP shar
 
 If the service starts correctly and you can make a connection but receive permissions errors, check that the user has permissions to the volume/dataset being
 accessed.
+
+.. _Backup Configuration:
 
 Backup Configuration
 --------------------

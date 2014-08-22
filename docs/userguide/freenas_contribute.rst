@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Contributing to FreeNAS®:
+
 Contributing to FreeNAS®
 =========================
 
@@ -11,11 +13,13 @@ the FreeNAS® community, bring it up on one of the resources mentioned in FreeNA
 
 This section demonstrates how you can:
 
-* `Report a Bug`_
+* :ref:`Report a Bug`
 
-* `Localize`_
+* :ref:`Localize`
 
-* `Beta Test`_
+* :ref:`Beta Test`
+
+.. _Report a Bug:
 
 Report a Bug
 ------------
@@ -58,6 +62,8 @@ If a similar issue does not already exist, keep the following points in mind as 
     understand your problem or request. Once you are satisfied with your ticket, click the "Create Ticket" button to submit it.
 
 An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
+
+.. _Localize:
 
 Localize
 ---------
@@ -109,6 +115,8 @@ menu screens has been assigned a string number. If you click the number, an edit
 
 Simply type in the translated text and click the "Submit" button to save your change.
 
+.. _Beta Test:
+
 Beta Test
 ---------
 
@@ -117,6 +125,8 @@ meant to provide users an opportunity to test the upcoming release and to provid
 Feedback can be sent to the
 `Freenas-testing mailing list <http://lists.freenas.org/mailman/listinfo/freenas-testing>`_
 or a bug report can be submitted.
+
+.. _Rolling a Custom Snapshot:
 
 Rolling a Custom Snapshot
 ~~~~~~~~~~~~~~~~~~~~~~~~~

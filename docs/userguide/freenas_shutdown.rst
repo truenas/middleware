@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Shutdown:
+
 Shutdown
 ========
 

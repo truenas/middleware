@@ -1,19 +1,23 @@
 :orphan:
 
+.. _Directory Service:
+
 Directory Service
 =================
 
 FreeNAS® supports the following directory services:
 
-* `Active Directory`_ (for Windows 2000 and higher networks)
+* :ref:`Active Directory` (for Windows 2000 and higher networks)
 
-* `LDAP`_
+* :ref:`LDAP`
 
-* `NIS`_
+* :ref:`NIS`
 
-* `NT4`_ (for Windows networks older than Windows 2000)
+* :ref:`NT4` (for Windows networks older than Windows 2000)
 
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
+
+.. _Active Directory:
 
 Active Directory
 ----------------
@@ -177,6 +181,8 @@ If no users or groups are listed in the output of those commands, these commands
 If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
 taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of "AD timeout" to 60 seconds.
 
+.. _Using a Keytab:
+
 Using a Keytab
 ~~~~~~~~~~~~~~
 
@@ -210,6 +216,8 @@ This will create a keytab with sufficient privileges to grant tickets for CIFS a
 
 Once the keytab is generated, transfer it to the FreeNAS® system, check the "Use keytab" box and browse to the location of the keytab.
 
+.. _Troubleshooting AD:
+
 Troubleshooting AD
 ~~~~~~~~~~~~~~~~~~
 
@@ -238,6 +246,8 @@ Try creating a Computer entry on the Windows server's OU. When creating this ent
 under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
 "NetBIOS Name" in :menuselection:`Directory Services --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
 Controller" field of :menuselection:`Directory Services --> Active Directory`.
+
+.. _LDAP:
 
 LDAP
 ----
@@ -307,7 +317,7 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Kerberos Keytab         | drop-down menu |                                                                                                       |
 |                         |                |                                                                                                       |
-+-------------------------|----------------|-------------------------------------------------------------------------------------------------------|
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------|
 | Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
 |                         |                | *SSL*, or                                                                                             |
 |                         |                | *TLS*                                                                                                 |
@@ -336,6 +346,8 @@ for common errors and how to fix them. When troubleshooting LDAP, open Shell and
 
 To verify that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type
 :command:`getent group`.
+
+.. _NIS:
 
 NIS
 ---
@@ -381,6 +393,8 @@ options.
 
 Click the "Rebuild Directory Service Cache" button if you add a user to NIS who needs immediate access to FreeNAS®; otherwise this occurs automatically once
 a day as a cron job.
+
+.. _NT4:
 
 NT4
 ---
@@ -430,8 +444,12 @@ After configuring the NT4 service, start it in :menuselection:`Services --> Cont
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
 
+.. _Kerberos Realms:
+
 Kerberos Realms
 ---------------
+
+.. _Kerberos Keytabs:
 
 Kerberos Keytabs
 ----------------

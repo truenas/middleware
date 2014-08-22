@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Installing and Upgrading FreeNAS®:
+
 Installing and Upgrading FreeNAS®
 ==================================
 
@@ -10,21 +12,23 @@ USB thumb drive and use the computer's disk(s) for storage.
 
 This section describes the following:
 
-* `Getting FreeNAS®`_
+* :ref:`Getting FreeNAS®`
 
-* `Virtualization`_
+* :ref:`Virtualization`
 
-* `Installing from CDROM`_
+* :ref:`Installing from CDROM`
 
-* `Burning a USB Stick`_
+* :ref:`Burning a USB Stick`
 
-* `Initial Setup`_
+* :ref:`Initial Setup`
 
-* `Troubleshooting`_
+* :ref:`Troubleshooting`
 
-* `Initial Setup`_
+* :ref:`Initial Setup`
 
-* `Upgrading`_
+* :ref:`Upgrading`
+
+.. _Getting FreeNAS®:
 
 Getting FreeNAS®
 -----------------
@@ -40,7 +44,7 @@ The download page contains the following types of files. Download one file that 
   describes how to write the image.
 
 * **GUI Upgrade:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download this file and see the section on
-  `Upgrading`_.
+  :ref:`Upgrading`.
 
 Each file has an associated SHA256 hash which should be used to verify the integrity of the downloaded file before writing it to the installation media. The
 command you use to verify the checksum varies by operating system:
@@ -55,6 +59,8 @@ command you use to verify the checksum varies by operating system:
   `HashCalc <http://www.slavasoft.com/hashcalc/>`_
   or
   `HashTab <http://implbits.com/HashTab.aspx>`_
+
+.. _Virtualization:
 
 Virtualization
 --------------
@@ -77,6 +83,8 @@ In order to install or run FreeNAS® within a virtual environment, you will need
 * a bridged adapter
 
 This section demonstrates how to create and access a virtual machine within the VirtualBox and VMware ESXi environments.
+
+.. _VirtualBox:
 
 VirtualBox
 ~~~~~~~~~~
@@ -234,12 +242,16 @@ If you configured the VMDK, the virtual machine will boot directly into FreeNAS�
     :width: 6.8634in
     :height: 5.1138in
 
+.. _Using the VMDK:
+
 Using the VMDK
 ^^^^^^^^^^^^^^
 
 Once you have a :file:`.vmdk` file, create a new virtual machine while the USB stick is inserted. When you get to Figure 2.2e, select "Use existing hard disk"
 and browse to your :file:`.vmdk` file. Click "Next", then "Create". This will create the virtual machine and bring you to Figure 2.2h. You can then create
 your storage disks and bridged adapter as usual. When finished, start the virtual machine and it will boot directly into FreeNAS®.
+
+.. _VMware ESXi:
 
 VMware ESXi
 ~~~~~~~~~~~
@@ -321,6 +333,8 @@ the amount of storage disks needed to meet your requirements.
     :width: 6.7925in
     :height: 5.3339in
 
+.. _Installing from CDROM:
+
 Installing from CDROM
 ---------------------
 
@@ -382,6 +396,8 @@ system will boot from it. FreeNAS® should now be able to boot into the Console 
     :width: 6.911in
     :height: 1.9783in
 
+.. _Burning a USB Stick:
+
 Burning a USB Stick
 -------------------
 
@@ -395,7 +411,9 @@ is not supported at this time.
    the image yourself, download the :file:`.iso` file instead and use the instructions in Installing from CDROM.
 
 Once you have written the image to the device, make sure the boot order in the BIOS is set to boot from that device and boot the system. It should boot into
-the Console setup menu described in Initial Setup. If it does not, try the suggestions in `Troubleshooting`_.
+the Console setup menu described in Initial Setup. If it does not, try the suggestions in :ref:`Troubleshooting`.
+
+.. _On FreeBSD or Linux:
 
 On FreeBSD or Linux
 ~~~~~~~~~~~~~~~~~~~
@@ -417,6 +435,8 @@ When using the :command:`dd` command:
   if it is not the first USB device. On Linux, use */dev/sdX,* where *X* refers to the letter of the USB device.
 
 * **bs=** refers to the block size
+
+.. _On OS X:
 
 On OS X
 ~~~~~~~
@@ -466,6 +486,8 @@ Substitute the name of your uncompressed file and the correct path to your USB t
 The :command:`dd` command will take some minutes to complete. Wait until you get a prompt back and a message that displays how long it took to write the image
 to the USB drive.
 
+.. _On Windows:
+
 On Windows
 ~~~~~~~~~~
 
@@ -495,6 +517,7 @@ select its drive letter from the Device drop-down menu. Click the "Write" button
 
 |Figure24b_png|
 
+.. _Troubleshooting:
 
 Troubleshooting
 ---------------
@@ -517,6 +540,8 @@ go into the system BIOS and see if there is an onboard device configuration for 
 If the burned image fails to boot and the image was burned using a Windows system, wipe the USB stick before trying a second burn using a utility such as
 `Active@ KillDisk <http://how-to-erase-hard-drive.com/>`_. Otherwise, the second burn attempt will fail as Windows does not understand the partition which was
 written from the image file. Be very careful that you specify the USB stick when using a wipe utility!
+
+.. _Initial Setup:
 
 Initial Setup
 -------------
@@ -593,6 +618,8 @@ seen in Example 2.6a. In this example, the FreeNAS® system has one network inte
  You may try the following URLs to access the web user interface:
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
+.. _Set the Root Password:
+
 Set the Root Password
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -629,8 +656,12 @@ This
 `blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
 describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
 
+.. _Initial Configuration Wizard:
+
 Initial Configuration Wizard
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _Upgrading:
 
 Upgrading
 ---------
@@ -644,6 +675,8 @@ When upgrading, **be aware of the following caveats:**
 
 * Neither upgrade method can be used to migrate from FreeNAS 0.7x. Instead, install FreeNAS® and either auto-import supported software RAID or import
   supported filesystems. You will need to recreate your configuration as the installation process will not import 0.7 configuration settings.
+
+.. _Initial Preparation:
 
 Initial Preparation
 ~~~~~~~~~~~~~~~~~~~
@@ -662,6 +695,8 @@ Before upgrading the system, perform the following steps:
 #.  Warn users that the FreeNAS® shares will be unavailable during the upgrade; you should schedule the upgrade for a time that will least impact users.
 
 #.  Stop all services in :menuselection:`Services --> Control Services`.
+
+.. _Upgrading from CDROM:
 
 Upgrading from CDROM
 ~~~~~~~~~~~~~~~~~~~~
@@ -711,6 +746,8 @@ the "Upload Config" button to upload the configuration that you saved before you
     :width: 6.9252in
     :height: 2.4161in
 
+.. _Upgrading From the GUI:
+
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -749,6 +786,8 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 
 |Figure27e_png|
 
+.. _Unlocking an Encrypted Volume:
+
 Unlocking an Encrypted Volume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -762,6 +801,8 @@ To unlock the volume, go to :menuselection:`Storage --> Volumes --> View Volumes
 **Figure 2.7f: Unlocking an Encrypted Volume**
 
 |Figure27f_png|
+
+.. _If Something Goes Wrong:
 
 If Something Goes Wrong
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -799,6 +840,8 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 #.  Import your volumes in :menuselection:`Storage --> Auto Import Volume`.
 
 #.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
+
+.. _Upgrading a ZFS Pools:
 
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~

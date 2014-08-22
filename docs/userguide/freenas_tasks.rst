@@ -1,20 +1,24 @@
 :orphan:
 
+.. _Tasks:
+
 Tasks
 =====
 
 The Tasks section of the administrative GUI can be used to perform the following tasks:
 
-* `Cron Jobs`_: provides a graphical front-end to
+* :ref:`Cron Jobs`: provides a graphical front-end to
   `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
 
-* `Init/Shutdown Scripts`_: used to configure a command or script to automatically execute during system startup or shutdown
+* :ref:`Init/Shutdown Scripts`: used to configure a command or script to automatically execute during system startup or shutdown
 
-* `Rsync Tasks`_: allows you to schedule rsync tasks
+* :ref:`Rsync Tasks`: allows you to schedule rsync tasks
 
-* `S.M.A.R.T. Tests`_: allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
+* :ref:`S.M.A.R.T. Tests`: allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
 
 Each of these is described in more detail in this section.
+
+.. _Cron Jobs:
 
 Cron Jobs
 ---------
@@ -80,6 +84,8 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 
 Created cron jobs will be listed in View Cron Jobs. If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
+.. _Init/Shutdown Scripts:
+
 Init/Shutdown Scripts
 ---------------------
 
@@ -114,9 +120,11 @@ When scheduling a script, make sure that the script is executable and has been f
 +-------------+----------------+-----------------------------------------------------------------------------------+
 | Type        | drop-down menu | select when the command/script will run; choices are *Pre Init*                   |
 |             |                | (very early in boot process before filesystems are mounted), *Post Init*          |
-|             |                | (towards end of boot process before FreeNAS services are started), or *Shutdown*  |   
+|             |                | (towards end of boot process before FreeNAS services are started), or *Shutdown*  |
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
+
+.. _Rsync Tasks:
 
 Rsync Tasks
 -----------
@@ -255,6 +263,8 @@ can be configured when creating an rsync task.
 If the rysnc server requires password authentication, input *--password-file=/PATHTO/FILENAME* in the "Extra options" box, replacing
 */PATHTO/FILENAME* with the appropriate path to the file containing the value of the password.
 
+.. _Rsync Module Mode:
+
 Rsync Module Mode
 ~~~~~~~~~~~~~~~~~
 
@@ -306,6 +316,8 @@ To finish the configuration, start the rsync service on *PULL* in :menuselection
 **Figure 6.3c: Configuring the Rsync Server**
 
 |Figure63c_png|
+
+.. _Rsync over SSH Mode
 
 Rsync over SSH Mode
 ~~~~~~~~~~~~~~~~~~~
@@ -415,6 +427,8 @@ Once you save the rsync task, the rsync will automatically occur according to yo
 automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the content does not appear, use Shell on *PULL* to read :file:`/var/log/messages`.
 If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
+
+.. _S.M.A.R.T. Tests:
 
 S.M.A.R.T. Tests
 ----------------

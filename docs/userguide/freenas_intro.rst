@@ -95,6 +95,8 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
 * *italic text:* used to represent device names or text that is input into a GUI field.
 
+.. _Introduction:
+
 Introduction
 ============
 
@@ -135,6 +137,8 @@ Notable features in FreeNAS® include:
 * includes
   `tmux <http://sourceforge.net/projects/tmux/>`_, a BSD-licensed utility similar to GNU screen
 
+.. _What's New in 9.3:
+
 What's New in 9.3
 -----------------
 
@@ -150,12 +154,12 @@ issued since FreeBSD 9.3 RELEASE.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
-  later time by selecting `Wizard`_ from the graphical tree menu.
+  later time by selecting :ref:`Wizard` from the graphical tree menu.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
 
-* Support for Link Layer Discovery Protocol (`LLDP`_) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
+* Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
 
 The GUI has been reorganized as follows:
@@ -172,9 +176,9 @@ The GUI has been reorganized as follows:
 
 * :menuselection:`System --> Settings --> SSL` has been moved to :menuselection:`System --> General --> Set SSL Certificate`.
   
-* A new `Tasks`_ menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
+* A new :ref:`Tasks` menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
 
-* A `ZFS Snapshots`_ menu has been added to Storage.
+* A :ref:`ZFS Snapshots` menu has been added to Storage.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -236,6 +240,8 @@ The following fields have been added or deleted:
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
+.. _Known Issues:
+
 Known Issues
 ------------
 
@@ -258,6 +264,8 @@ Before installing FreeNAS® you should be aware of the following known issues:
   installing FreeNAS® or immediately after upgrading FreeNAS®. Running older firmware can cause many woes, including the failure to probe all of the
   attached disks, which can lead to degraded or unavailable arrays.
 
+.. _Hardware Recommendations:
+
 Hardware Recommendations
 ------------------------
 
@@ -272,6 +280,8 @@ You can also skim through the
 regarding the hardware best suited to meet your requirements. This
 `forum post <http://forums.freenas.org/threads/so-you-want-some-hardware-suggestions.12276/>`_
 provides some specific recommendations if you are planning on purchasing hardware.
+
+.. _RAM:
 
 RAM
 ~~~
@@ -308,6 +318,8 @@ data. Plenty of users expect FreeNAS® to function with less than these requirem
 bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
 IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
 
+.. _Compact or USB Flash:
+
 Compact or USB Flash
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -321,9 +333,11 @@ words, the operating system will take over the drive and will not allow you to s
 
 USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point) chipsets. If you receive a
 "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this will downclock the USB
-ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a `Tunables`_
+ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a :ref:`Tunables`
 named *xhci_load*, set its value to
 *YES*, and reboot the system.
+
+.. _Storage Disks and Controllers:
 
 Storage Disks and Controllers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -375,6 +389,8 @@ first.
 ZFS uses dynamic block sizing, meaning that it is capable of striping different sized disks. However, if you care about performance, use disks of the same
 size. Further, when creating a RAIDZ*, only the size of the smallest disk will be used on each disk.
 
+.. _Network Interfaces:
+
 Network Interfaces
 ~~~~~~~~~~~~~~~~~~
 
@@ -385,8 +401,8 @@ performance from Intel and Chelsio interfaces, so consider these brands if you a
 interfaces with these chipsets do not provide their own processors.
 
 At a minimum, a GigE interface is recommended. While GigE interfaces and switches are affordable for home use, modern disks can easily saturate 110 MB/s. If
-you require higher network throughput, you can bond multiple GigE cards together using the LACP type of `Link Aggregations`_. However, the switch will need to
-support LACP which means you will need a more expensive managed switch.
+you require higher network throughput, you can bond multiple GigE cards together using the LACP type of :ref:`Link Aggregations`. However, the switch will
+need to support LACP which means you will need a more expensive managed switch.
 
 If network performance is a requirement and you have some money to spend, use 10 GigE interfaces and a managed switch. If you are purchasing a managed switch,
 consider one that supports LACP and jumbo frames as both can be used to increase network throughput.
@@ -406,6 +422,6 @@ the following command. In this example, the capabilities line indicates that WOL
  options=42098<VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,WOL_MAGIC,VLAN_HWTSO>
  capabilities=5399b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,TSO4,WOL_UCAST,WOL_MCAST, WOL_MAGIC,VLAN_HWFILTER,VLAN_H WTSO>
 
-If you find that WOL support is indicated but not working for a particular interface, `Report a Bug`_.
+If you find that WOL support is indicated but not working for a particular interface, create a bug report using the instructions in :ref:`Report a Bug`.
 
 .. include:: zfsprimer.rst

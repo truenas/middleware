@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Command Line Utilities:
+
 Command Line Utilities
 ======================
 
@@ -7,29 +9,31 @@ Several command line utilities which are provided with FreeNAS® are demonstrate
 
 The following utilities can be used for benchmarking and performance testing:
 
-* Iperf: used for measuring maximum TCP and UDP bandwidth performance
+* :ref:`Iperf`: used for measuring maximum TCP and UDP bandwidth performance
 
-* Netperf: a tool for measuring network performance
+* :ref:`Netperf`: a tool for measuring network performance
 
-* IOzone: filesystem benchmark utility used to perform a broad filesystem analysis
+* :ref:`IOzone`: filesystem benchmark utility used to perform a broad filesystem analysis
 
-* `arcstat`_: used to gather ZFS ARC statistics
+* :ref:`arcstat`: used to gather ZFS ARC statistics
 
-* XDD: a tool for measuring and characterizing disk subsystem I/O
+* :ref:`XDD`: a tool for measuring and characterizing disk subsystem I/O
 
 The following utilities are specific to RAID controllers:
 
-* `tw_cli`_:_used to monitor and maintain 3ware RAID controllers
+* :ref:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
 
-* `MegaCli`_:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
+* :ref:`MegaCli`:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
-* `freenas-debug`_: the backend used to dump FreeNAS® debugging information
+* :ref:`freenas-debug`: the backend used to dump FreeNAS® debugging information
 
-* tmux: a terminal multiplexer similar to GNU screen
+* :ref:`tmux`: a terminal multiplexer similar to GNU screen
 
-* Dmidecode: reports information about system hardware as described in the system's BIOS
+* :ref:`Dmidecode`: reports information about system hardware as described in the system's BIOS
+
+.. _Iperf:
 
 Iperf
 -----
@@ -165,6 +169,8 @@ are not sure if the traffic that you wish to test is UDP or TCP, run this comman
 
 When you are finished testing, either type :command:`killall iperf` or close Shell to terminate the iperf server process.
 
+.. _Netperf:
+
 Netperf
 -------
 
@@ -226,6 +232,8 @@ separate them with a comma.
 
 For these options taking two parms, specifying one value with no comma will only set the first parms and will leave the second at the default value. To set
 the second value it must be preceded with a comma or be a comma-separated pair. This is to retain previous netperf behaviour.
+
+.. _IOzone:
 
 IOzone
 ------
@@ -366,6 +374,8 @@ Alternatively, consider temporarily disabling compression on the ZFS pool or dat
 	  -+H Hostname  Hostname of the PIT server.
 	  -+P Service  Service of the PIT server.
 	  -+z Enable latency histogram logging.
+
+.. _arcstat:
 
 arcstat
 -------
@@ -650,6 +660,8 @@ changes first at the command line using :command:`sysctl`. For example, to disab
 The output will indicate the old value followed by the new value. If the change is not beneficial, change it back to the original value. If the change turns
 out to be beneficial, you can make it permanent by creating a Tunable.
 
+.. _XDD:
+
 XDD
 ---
 
@@ -770,6 +782,8 @@ This allows the user to change the disk or starting offset and observe the effec
 :command:`xdd` run by using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to
 run using the **-seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
 
+.. _tw_cli:
+
 tw_cli
 ------
 
@@ -860,6 +874,8 @@ This
 `forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`_
 contains a handy wrapper script that will notify you of errors.
 
+.. _MegaCli:
+
 MegaCli
 -------
 
@@ -872,6 +888,8 @@ The :command:`MegaCli` command is quite complex with several dozen options. Whil
 , the commands demonstrated in the
 `Emergency Cheat Sheet <http://tools.rapidsoft.de/perc/perc-cheat-sheet.html>`_
 can get you started.
+
+.. _freenas-debug:
 
 freenas-debug
 -------------
@@ -909,6 +927,8 @@ For example, if you are troubleshooting your Active Directory configuration, try
 
  more /var/tmp/fndebug
 
+.. _tmux:
+
 tmux
 ----
 
@@ -931,6 +951,8 @@ lists all of the key bindings and commands for interacting with :command:`tmux` 
 If you close Shell while :command:`tmux` is running, it will detach its session. The next time you open Shell, run :command:`tmux attach` to return to the
 previous session. To leave the :command:`tmux` session entirely, type :command:`exit`; if you have multiple windows running, you will need to
 :command:`exit` out of each first.
+
+.. _Dmidecode:
 
 Dmidecode
 ---------
