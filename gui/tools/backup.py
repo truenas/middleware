@@ -500,11 +500,9 @@ class RestoreWorker(object):
                 pass
 
         # 2. try to look up for disk with same mediasize
-        try:
-            disk = Disk.objects.exclude(disk_name__in = self.used_disks).filter(disk_size=diskdata['size']).first()
+        disk = Disk.objects.exclude(disk_name__in = self.used_disks).filter(disk_size=diskdata['size']).first()
+        if disk is not None:
             return (disk.disk_name, 'size')
-        except Disk.DoesNotExist:
-            pass
 
         # 3. try to look up for disk with similar size (at most 5% larger but not smaller)
         reqsize = int(diskdata['size'])
@@ -839,7 +837,7 @@ def open_ssh_connection(hostport, username, password, use_keys):
         try:
             session = transport.Transport(split_hostport(hostport))
             session.start_client()
-            session.window_size = 134217727
+            session.window_size = (3 * 1024 * 2014) # 3 MB
             session.packetizer.REKEY_BYTES = pow(2, 48)
             session.packetizer.REKEY_PACKETS = pow(2, 48)
 
