@@ -3,7 +3,7 @@
    :hidden:
 
    Introduction <truenas_introduction>
-   ZFS Primer <truenas_zfsprimer>
+   ZFS Primer <zfsprimer>
    Accessing TrueNAS® <truenas_access>
    Quick Start <truenas_quickstart>
    Account <truenas_account>
