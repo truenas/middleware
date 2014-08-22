@@ -815,41 +815,6 @@ class bsdUserToGroupForm(Form):
         notifier().reload("user")
 
 
-class SetPasswordForm(Form):
-    """
-    A form that lets a user change set his/her password without
-    entering the old password
-    """
-    new_password = forms.CharField(
-        label=_("New password"),
-        widget=forms.PasswordInput,
-    )
-    new_password2 = forms.CharField(
-        label=_("New password confirmation"),
-        widget=forms.PasswordInput,
-    )
-
-    def __init__(self, user, *args, **kwargs):
-        self.user = user
-        super(SetPasswordForm, self).__init__(*args, **kwargs)
-
-    def clean_new_password2(self):
-        password1 = self.cleaned_data.get('new_password')
-        password2 = self.cleaned_data.get('new_password2')
-        if password1 and password2:
-            if password1 != password2:
-                raise forms.ValidationError(
-                    _("The two password fields didn't match.")
-                )
-        return password2
-
-    def save(self, commit=True):
-        self.user.set_password(self.cleaned_data['new_password'])
-        if commit:
-            self.user.save()
-        return self.user
-
-
 class DeleteGroupForm(forms.Form):
 
     cascade = forms.BooleanField(
