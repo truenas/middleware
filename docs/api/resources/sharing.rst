@@ -270,7 +270,8 @@ Create resource
 
         {
                 "nfs_comment": "My Test Share",
-                "nfs_paths": ["/mnt/tank"]
+                "nfs_paths": ["/mnt/tank"],
+                "nfs_security": "sys"
         }
 
    **Example response**:
