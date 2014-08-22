@@ -30,6 +30,8 @@ def get():
   
 def put():
   r = requests.put(url, auth = auth, data = json.dumps(payload), headers = headers)
+  print r.text
+  print r.status_code
   if r.status_code == 200:
     print 'Update directoryservice-activedirectory --> Succeeded!'
   else:

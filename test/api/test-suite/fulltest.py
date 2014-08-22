@@ -34,10 +34,19 @@ import tasks
 print '***Running Services Test Suite'
 import services
 
+# SHARING
+print '***Running Sharing Test Suite***'
+import sharing
+
 # DirectoryService
 print '***Running DirectoryService Test Suite***'
 import directoryservice
 
 # Network
 print '***Running Network Test Suite***'
-#import network
+import network
+
+# Plugins
+print '***Running Plugins Test Suite***'
+import plugins
+plugins.operating()

@@ -14,7 +14,7 @@ payload = {
           "ntp_minpoll": 6,
           "ntp_maxpoll": 10,
           "ntp_prefer": "false",
-          "ntp_address": "0.freebsd.pool.ntp.org",
+          "ntp_address": "br.pool.ntp.org",
           "ntp_burst": "false",
           "ntp_iburst": "true"
 }
@@ -34,10 +34,10 @@ def get():
     print 'Get system-NTPServer --> Failed!'
 
 def post():
-  r = requests.get(url, auth = auth)
-  result = json.loads(r.text)
-  if len(result) > 0:
-    delete()
+#  r = requests.get(url, auth = auth)
+#  result = json.loads(r.text)
+#  if len(result) > 0:
+#    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
 #  print r.status_code
 #  print r.text
@@ -53,6 +53,8 @@ def put():
   id = post()
   if id != 'fail':
     r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
+#    print r.text
+#    print r.status_code
     if r.status_code == 200:
       print 'Update system-NTPServer --> Succeeded!' 
     else:
@@ -61,20 +63,20 @@ def put():
       print 'Update system-NTPServer --> Failed!'
 
 def delete():
-  r = requests.get(url, auth = auth)
-  result = json.loads(r.text)
-  i = 0
-  for i in range(0,len(result)):
-    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
-    if r.status_code == 204:
-      print 'Delete system-NTPServer --> Succeeded!'
-    else:
-      print 'Delete system-NTPServer --> Failed!'
-  if len(result) == 0:
-    id = post()
-    r = requests.delete(url+id, auth = auth)
-    if r.status_code == 204:
-      print 'Delete system-NTPServer --> Succeeded!'
-    else:
-      print 'Delete system-NTPServer --> Failed!'
+#  r = requests.get(url, auth = auth)
+#  result = json.loads(r.text)
+#  i = 0
+#  for i in range(0,len(result)):
+#    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+#    if r.status_code == 204:
+#      print 'Delete system-NTPServer --> Succeeded!'
+#    else:
+#      print 'Delete system-NTPServer --> Failed!'
+#  if len(result) == 0:
+  id = post()
+  r = requests.delete(url+id, auth = auth)
+  if r.status_code == 204:
+    print 'Delete system-NTPServer --> Succeeded!'
+  else:
+    print 'Delete system-NTPServer --> Failed!'
 

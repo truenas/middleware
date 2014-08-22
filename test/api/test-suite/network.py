@@ -33,22 +33,22 @@ print '\n***Running Network_GlobalConfiguration ......'
 network_globalconfiguration.put()
 print ''
 
-print '***Running Network_Interface ......'
-network_interface.put()
-network_interface.delete()
-print ''
+#print '***Running Network_Interface ......'
+#network_interface.put()
+#network_interface.delete()
+#print ''
 
-print '***Running Network_Lagg ......'
-network_lagg.post()
-network_lagg.delete()
-print ''
+#print '***Running Network_Lagg ......'
+#network_lagg.post()
+#network_lagg.delete()
+#print ''
 
-print '***Running Network_StaticRoute ......'
-network_staticroute.put()
-network_staticroute.delete()
-print ''
+#print '***Running Network_StaticRoute ......'
+#network_staticroute.put()
+#network_staticroute.delete()
+#print ''
 
-print '***Running Network_Vlan ......'
-network_vlan.put()
-network_vlan.delete()
-print '\n'
+#print '***Running Network_Vlan ......'
+#network_vlan.put()
+#network_vlan.delete()
+#print '\n'

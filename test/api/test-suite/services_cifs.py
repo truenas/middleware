@@ -27,6 +27,8 @@ def get():
   
 def put():
   r = requests.put(url, auth = auth, data = json.dumps(payload), headers = headers)
+#  print r.status_code
+#  print r.text
   if r.status_code == 200:
     print 'Update services-cifs --> Succeeded!'
   else:
