@@ -2,38 +2,34 @@
 
 import requests
 import json
-import sys
-import os
+import sys 
 import conn
-import storage_disk
+import os
 
-disk_id = storage_disk.get_id()
-headers = conn.headers
+os.system('rm *.pyc')
+url = conn.url + 'network/interface/'
 auth = conn.auth
-url = conn.url + 'tasks/smarttest/'
+headers = conn.headers
 payload = {
-          "smarttest_disks": [disk_id],
-          "smarttest_type": "L",
-          "smarttest_hour": "*",
-          "smarttest_daymonth": "*",
-          "smarttest_month": "*",
-          "smarttest_dayweek": "*",
-          "smarttest_desc": ""
+          "int_ipv4address": "10.5.32.12",
+          "int_name": "ext",
+          "int_v4netmaskbit": "24",
+          "int_interface": "em0"
 }
 
 def get():
-  print 'Getting tasks-smarttest ......'
+  print 'Getting network-interface ......'
   r = requests.get(url, auth = auth)
   if r.status_code == 200:
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-      print '\n'
-    print 'Get tasks-smarttest --> Succeeded!'
+    print '\nGet network-interface --> Succeeded!'
   else:
-    print 'Get tasks-smarttest --> Failed!'
+    print 'Get network-interface --> Failed!'
 
 def post():
   r = requests.get(url, auth = auth)
@@ -43,19 +39,18 @@ def post():
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
-    print 'Create tasks-smarttest --> Succeeded!'
+    print 'Create network-interface --> Succeeded!'
     return str(result['id'])+'/'
-  else:                                                                      
-    print 'Create tasks-smarttest --> Failed!'
-    return ''    
+  else:
+    print 'Create network-interface --> Failed!'
 
 def put():
   id = post()
   r = requests.put(url+id, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 200:
-    print 'Update tasks-smarttest --> Succeeded!'
+    print 'Update network-interface --> Succeeded!'
   else:
-    print 'Update tasks-smarttest --> Failed!'
+    print 'Update network-interface --> Failed!'
 
 def delete():
   r = requests.get(url, auth = auth)
@@ -64,13 +59,13 @@ def delete():
   for i in range(0,len(result)):
     r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
     if r.status_code == 204:
-      print 'Delete tasks-smarttest --> Succeeded!'
+      print 'Delete network-interface --> Succeeded!'
     else:
-      print 'Delete tasks-smarttest --> Failed!'
+      print 'Delete network-interface --> Failed!'
   if len(result) == 0:
     id = post()
     r = requests.delete(url+id, auth = auth)
     if r.status_code == 204:
-      print 'Delete tasks-smarttest --> Succeeded!'
+      print 'Delete network-interface --> Succeeded!'
     else:
-      print 'Delete tasks-smarttest --> Failed!'
+      print 'Delete network-interface --> Failed!'

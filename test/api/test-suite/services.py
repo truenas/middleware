@@ -3,21 +3,25 @@ import os
 
 os.system('rm *.pyc')
 
-print '******WARNING******'
-warn = raw_input('This operation will destory everything including AFP, CIFS, and FTP etc... in Services and Volume in Storage (yes/no):')
-oper_flag = 1
-while(oper_flag <= 3):
-  if oper_flag == 3:
-    print 'Please re-run Services test suite!'
-    sys.exit(0)
-  if warn == 'no' or warn == 'n':
-    sys.exit(0)
-  elif warn == 'yes' or warn == 'y':
-    break
-  elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
-    warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
-    oper_flag = oper_flag + 1
-    continue
+def main():
+  print '******WARNING******'
+  warn = raw_input('This operation will destory everything including AFP, CIFS, and FTP etc... in Services and Volume in Storage (yes/no):')
+  oper_flag = 1
+  while(oper_flag <= 3):
+    if oper_flag == 3:
+      print 'Please re-run Services test suite!'
+      sys.exit(0)
+    if warn == 'no' or warn == 'n':
+      sys.exit(0)
+    elif warn == 'yes' or warn == 'y':
+      break
+    elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
+      warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
+      oper_flag = oper_flag + 1
+      continue
+
+if __name__ == '__main__':
+  main()
 
 import services_afp
 import services_cifs

@@ -1,5 +1,28 @@
 import sys
 import os
+
+os.system('rm *.pyc')
+
+def main():
+  print '******WARNING******'
+  warn = raw_input('This operation will destory everything including Volumes, Datasets, and snapshot etc... in Storage (yes/no):')
+  oper_flag = 1
+  while(oper_flag <= 3):
+    if oper_flag == 3:
+      print 'Please re-run Storage test suite!'
+      sys.exit(0)
+    if warn == 'no' or warn == 'n':
+      sys.exit(0)
+    elif warn == 'yes' or warn == 'y':
+      break
+    elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
+      warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
+      oper_flag = oper_flag + 1
+      continue
+
+if __name__ == '__main__':
+  main()
+
 import storage_datasets
 import storage_disk
 import storage_scrub
@@ -7,23 +30,6 @@ import storage_snapshot
 import storage_task
 import storage_volume
 
-os.system('rm *.pyc')
-
-print '******WARNING******'
-warn = raw_input('This operation will destory everything including Volumes, Datasets, and snapshot etc... in Storage (yes/no):')
-oper_flag = 1
-while(oper_flag <= 3):
-  if oper_flag == 3:
-    print 'Please re-run Storage test suite!'
-    sys.exit(0)
-  if warn == 'no' or warn == 'n':
-    sys.exit(0)
-  elif warn == 'yes' or warn == 'y':
-    break
-  elif warn !='no' and warn != 'yes' and warn != 'y' and warn !='n':
-    warn = raw_input("Invalid operation! Please input 'yes' or 'no':")
-    oper_flag = oper_flag + 1
-    continue
 
 print '\n***Running Storage-Volume ......'
 storage_volume.delete()
