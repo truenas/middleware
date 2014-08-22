@@ -88,8 +88,9 @@ from freenasUI.sharing.models import (
     NFS_Share_Path,
 )
 from freenasUI.storage.forms import VolumeAutoImportForm
-from freenasUI.storage.models import MountPoint, Volume, Scrub
+from freenasUI.storage.models import Disk, MountPoint, Volume, Scrub
 from freenasUI.system import models
+from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
@@ -265,6 +266,22 @@ class InitialWizard(CommonWizard):
                         groups=groups,
                         init_rand=False,
                     )
+
+                # Create SMART tests for every disk available
+                disks = []
+                for o in SMARTTest.objects.all():
+                    for disk in o.smarttest_disks.all():
+                        if disk.pk not in disks:
+                            disks.append(disk.pk)
+                qs = Disk.objects.filter(disk_enabled=True).exclude(pk__in=disks)
+
+                if qs.exists():
+                    smarttest = SMARTTest.objects.create(
+                        smarttest_type='S',
+                        smarttest_dayweek='7',
+                    )
+                    smarttest.smarttest_disks.add(*list(qs))
+
             else:
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
                 volume_name = volume.vol_name
