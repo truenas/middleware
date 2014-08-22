@@ -1,6 +1,10 @@
 :orphan:
 
-|93cover.jpg|
+|fn93cover.jpg|
+
+.. |fn93cover.jpg| image:: images/fn93cover.jpg
+    :width: 8.5in
+    :height: 11in
 
 .. centered:: FreeNAS® is © 2011-2014 iXsystems
 
@@ -18,10 +22,6 @@ Published XX, 2014
 
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
-
-.. |93cover.jpg| image:: images/93cover.jpg
-    :width: 8.5in
-    :height: 11in
     
 This Guide covers the installation and use of FreeNAS® 9.3.
 

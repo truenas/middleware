@@ -98,9 +98,9 @@ To create the virtual machine, start VirtualBox and click the "New" button, seen
 
 **Figure 2.2a: Initial VirtualBox Screen**
 
-|100000000000030200000194DB5CCF9B_png|
+|virtualbox1.png|
 
-.. |100000000000030200000194DB5CCF9B_png| image:: images/100000000000030200000194DB5CCF9B.png
+.. |virtualbox1.png| image:: images/virtualbox1.png
     :width: 6.9252in
     :height: 3.6335in
 
@@ -110,9 +110,9 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
 
 **Figure 2.2b: Type in a Name and Select the Operating System for the New Virtual Machine**
 
-|100002010000028A000001B8AD594B93_png|
+|virtualbox2.png|
 
-.. |100002010000028A000001B8AD594B93_png| image:: images/100002010000028A000001B8AD594B93.png
+.. |virtualbox2.png| image:: images/virtualbox2.png
     :width: 5.4626in
     :height: 3.6665in
 
@@ -121,17 +121,17 @@ Click "Next" to see the screen in Figure 2.2c. The base memory size must be chan
 
 **Figure 2.2c: Select the Amount of Memory Reserved for the Virtual Machine**
 
-|100002010000028A000001B83E678583_png|
+|virtualbox3.png|
 
-.. |100002010000028A000001B83E678583_png| image:: images/100002010000028A000001B83E678583.png
+.. |virtualbox3.png| image:: images/virtualbox3.png
     :width: 5.4626in
     :height: 3.6665in
 
 **Figure 2.2d: Select Whether to Use an Existing or Create a New Virtual Hard Drive**
 
-|100002010000028A000001B82CB5EA35_png|
+|virtualbox4.png|
 
-.. |100002010000028A000001B82CB5EA35_png| image:: images/100002010000028A000001B82CB5EA35.png
+.. |virtualbox4.png| image:: images/virtualbox4.png
     :width: 5.4626in
     :height: 3.6665in
 
@@ -139,9 +139,9 @@ Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 
 
 **Figure 2.2e: Create New Virtual Hard Drive Wizard**
 
-|10000201000002F5000001F1967BE2E6_png|
+|virtualbox5.png|
 
-.. |10000201000002F5000001F1967BE2E6_png| image:: images/10000201000002F5000001F1967BE2E6.png
+.. |virtualbox5.png| image:: images/virtualbox5.png
     :width: 6.361in
     :height: 4.1417in
 
@@ -155,9 +155,9 @@ Once you make a selection, click the "Next" button to see the screen in Figure 2
 
 **Figure 2.2f: Select the Storage Type for the Virtual Disk**
 
-|10000201000002F5000001F1A595AB8F_png|
+|virtualbox6.png|
 
-.. |10000201000002F5000001F1A595AB8F_png| image:: images/10000201000002F5000001F1A595AB8F.png
+.. |virtualbox6.png| image:: images/virtualbox6.png
     :width: 6.361in
     :height: 4.1417in
 
@@ -168,9 +168,9 @@ you select "Next", you will see the screen in Figure 2.2g.
 
 **Figure 2.2g: Select the File Name and Size of the Virtual Disk**
 
-|100002010000023E000001BAFB464DC1_png|
+|virtualbox7.png|
 
-.. |100002010000023E000001BAFB464DC1_png| image:: images/100002010000023E000001BAFB464DC1.png
+.. |virtualbox7.png| image:: images/virtualbox7.png
     :width: 5.9783in
     :height: 4.6035in
 
@@ -183,9 +183,9 @@ Figure 2.2h.
 
 **Figure 2.2h: The New Virtual Machine**
 
-|10000201000002F500000241B6F0F7D2_png|
+|virtualbox8.png|
 
-.. |10000201000002F500000241B6F0F7D2_png| image:: images/10000201000002F500000241B6F0F7D2.png
+.. |virtualbox8.png| image:: images/virtualbox8.png
     :width: 6.361in
     :height: 4.8083in
 
@@ -194,9 +194,9 @@ Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyp
 
 **Figure 2.2i: The Storage Settings of the Virtual Machine**
 
-|10000000000002B200000238AA2AAEAB_png|
+|virtualbox9.png|
 
-.. |10000000000002B200000238AA2AAEAB_png| image:: images/10000000000002B200000238AA2AAEAB.png
+.. |virtualbox9.png| image:: images/virtualbox9.png
     :width: 6.9252in
     :height: 4.3807in
 
@@ -210,9 +210,9 @@ Figure 2.2j.
 
 **Figure 2.2j: Configuring the ISO Installation Media**
 
-|100000000000033400000234CCE0A6DA_png|
+|virtualbox10.png|
 
-.. |100000000000033400000234CCE0A6DA_png| image:: images/100000000000033400000234CCE0A6DA.png
+.. |virtualbox10.png| image:: images/virtualbox10.png
     :width: 6.9252in
     :height: 3.6602in
 
@@ -236,9 +236,9 @@ If you configured the VMDK, the virtual machine will boot directly into FreeNAS�
 
 **Figure 2.2k: Configuring a Bridged Adapter in VirtualBox**
 
-|1000000000000293000001EB2237CFE9_png|
+|virtualbox11.png|
 
-.. |1000000000000293000001EB2237CFE9_png| image:: images/1000000000000293000001EB2237CFE9.png
+.. |virtualbox11.png| image:: images/virtualbox11.png
     :width: 6.8634in
     :height: 5.1138in
 
@@ -273,25 +273,25 @@ shown in Figure 2.2n, click "Other" then select a FreeBSD architecture that matc
 
 **Figure 2.2l: New Virtual Machine Wizard**
 
-|10000201000003950000021F0BA6E10F_png|
+|esxi1.png|
 
-.. |10000201000003950000021F0BA6E10F_png| image:: images/10000201000003950000021F0BA6E10F.png
+.. |esxi1.png| image:: images/esxi1.png
     :width: 6.9252in
     :height: 4.1in
 
 **Figure 2.2m: Select a Datastore**
 
-|10000201000003950000021F7988BEDD_png|
+|esxi2.png|
 
-.. |10000201000003950000021F7988BEDD_png| image:: images/10000201000003950000021F7988BEDD.png
+.. |esxi2.png| image:: images/esxi2.png
     :width: 6.9252in
     :height: 4.1in
 
 **Figure 2.2n: Select the Operating System**
 
-|10000201000003950000021FFB8F2015_png|
+|esxi3.png|
 
-.. |10000201000003950000021FFB8F2015_png| image:: images/10000201000003950000021FFB8F2015.png
+.. |esxi3.png| image:: images/esxi3.png
     :width: 6.9252in
     :height: 4.1in
 
@@ -311,25 +311,25 @@ the amount of storage disks needed to meet your requirements.
 
 **Figure 2.2o: Create a Disk for the Operating System**
 
-|10000201000003950000021F038D89C4_png|
+|esxi4.png|
 
-.. |10000201000003950000021F038D89C4_png| image:: images/10000201000003950000021F038D89C4.png
+.. |esxi4.png| image:: images/esxi4.png
     :width: 6.7957in
     :height: 3.8472in
 
 **Figure 2.2p: Virtual Machine's Settings**
 
-|10000201000002C400000270A063501A_png|
+|esxi5.png|
 
-.. |10000201000002C400000270A063501A_png| image:: images/10000201000002C400000270A063501A.png
+.. |esxi5.png| image:: images/esxi5.png
     :width: 6.7346in
     :height: 4.3146in
 
 **Figure 2.2q: Creating a Storage Disk**
 
-|100002010000028C00000200588B16CC_png|
+|esxi6.png|
 
-.. |100002010000028C00000200588B16CC_png| image:: images/100002010000028C00000200588B16CC.png
+.. |esxi6.png| image:: images/esxi6.png
     :width: 6.7925in
     :height: 5.3339in
 
@@ -373,26 +373,26 @@ system will boot from it. FreeNAS® should now be able to boot into the Console 
 
 **Figure 2.3b: Selecting Which Drive to Install Into**
 
-|10000000000002B50000016CE687B64A_png|
+|cdrom2.png|
 
-.. |10000000000002B50000016CE687B64A_png| image:: images/10000000000002B50000016CE687B64A.png
+.. |cdrom2.png| image:: images/cdrom2.png
     :width: 5.8228in
     :height: 3.0335in
 
 
 **Figure 2.3c: FreeNAS® Installation Warning**
 
-|10000000000002CA000001595A6F0226_png|
+|cdrom3.png|
 
-.. |10000000000002CA000001595A6F0226_png| image:: images/10000000000002CA000001595A6F0226.png
+.. |cdrom3.png| image:: images/cdrom3.png
     :width: 6.9252in
     :height: 2.5709in
 
 **Figure 2.3d: FreeNAS® Installation Complete**
 
-|10000000000002BF000000E0D845E216_png|
+|cdrom4.png|
 
-.. |10000000000002BF000000E0D845E216_png| image:: images/10000000000002BF000000E0D845E216.png
+.. |cdrom4.png| image:: images/cdrom4.png
     :width: 6.911in
     :height: 1.9783in
 
@@ -554,9 +554,9 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 
 **Figure 2.6a: FreeNAS® Console Setup Menu**
 
-|10000000000001EB0000014DF2519984_png|
+|console1.png|
 
-.. |10000000000001EB0000014DF2519984_png| image:: images/10000000000001EB0000014DF2519984.png
+.. |console1.png| image:: images/console1.png
     :width: 5.9154in
     :height: 3.0835in
 
@@ -719,17 +719,17 @@ Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and 
 
 **Figure 2.7a: Upgrading a FreeNAS® Installation**
 
-|10000000000002C20000017F0B9104CB_png|
+|upgrade1.png|
 
-.. |10000000000002C20000017F0B9104CB_png| image:: images/10000000000002C20000017F0B9104CB.png
+.. |upgrade1.png| image:: images/upgrade1.png
     :width: 5.9327in
     :height: 3.1917in
 
 **Figure 2.7b: FreeNAS® will Preserve and Migrate Settings**
 
-|10000000000002CF0000018CA87134B3_png|
+|upgrade2.png|
 
-.. |10000000000002CF0000018CA87134B3_png| image:: images/10000000000002CF0000018CA87134B3.png
+.. |upgrade2.png| image:: images/upgrade2.png
     :width: 6.9252in
     :height: 3.8134in
 
@@ -740,9 +740,9 @@ the "Upload Config" button to upload the configuration that you saved before you
 
 **Figure 2.7c: Upgrade is Complete**
 
-|10000000000002C300000141704D5CD2_png|
+|upgrade3.png|
 
-.. |10000000000002C300000141704D5CD2_png| image:: images/10000000000002C300000141704D5CD2.png
+.. |upgrade3.png| image:: images/upgrade3.png
     :width: 6.9252in
     :height: 2.4161in
 
