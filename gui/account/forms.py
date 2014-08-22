@@ -76,19 +76,15 @@ class NewPasswordForm(Form):
             )
             if qs.exists():
                 user = qs[0]
-                _notifier = notifier()
-                unixhash, smbhash = _notifier.user_changepassword(
-                    username=str(user.bsdusr_username),
-                    password=self.cleaned_data['password'].encode('utf-8'),
+                user.set_password(
+                    self.cleaned_data['password'].encode('utf-8'),
                 )
-                user.bsdusr_unixhash = unixhash
-                user.bsdusr_smbhash = smbhash
                 user.save()
                 self.user_cache = authenticate(
                     username=user.bsdusr_username,
                     password=self.cleaned_data['password'].encode('utf-8'),
                 )
-                _notifier.reload("user")
+                notifier().reload("user")
         return valid
 
 
