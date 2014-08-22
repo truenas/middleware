@@ -38,7 +38,8 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP
+    FreeNAS_LDAP,
+    FreeNAS_ActiveDirectory_Exception,
 )
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
@@ -333,11 +334,14 @@ class ActiveDirectoryForm(ModelForm):
             binddn = "%s@%s" % (bindname, domain)
             errors = []
 
-            ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw, errors=errors
-            )
-            if ret is False:
-                raise forms.ValidationError("%s." % errors[0])
+            try:
+                ret = FreeNAS_ActiveDirectory.validate_credentials(
+                    domain, binddn=binddn, bindpw=bindpw, errors=errors
+                )
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+            except FreeNAS_ActiveDirectory_Exception, e:
+                raise forms.ValidationError('%s.' % e)
 
         return cdata
 
