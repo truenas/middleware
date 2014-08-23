@@ -262,6 +262,11 @@ class CIFS(Model):
            help_text=_("this parameter controls whether or not Samba"
                "should obey PAM's account and session management directives")
            )
+    cifs_SID = models.CharField(
+           max_length=120,
+           blank=True,
+           null=True,
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")
@@ -1666,12 +1671,35 @@ class DomainController(Model):
     dc_kerberos_realm = models.ForeignKey(
             KerberosRealm,
             verbose_name=_("Kerberos Realm"),
-            on_delete=models.DO_NOTHING
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
             )
 
     def __init__(self, *args, **kwargs):
         super(DomainController, self).__init__(*args, **kwargs)
         self.svc = 'domaincontroller'
+
+    def save(self):
+        super(DomainController, self).save()
+
+        if not self.dc_kerberos_realm:
+            try:
+                from freenasUI.common.system import get_dc_hostname 
+
+                dc_hostname = get_dc_hostname()
+                kr = KerberosRealm() 
+                kr.krb_realm = self.dc_realm.upper()
+                kr.krb_kdc = dc_hostname
+                kr.krb_admin_server = dc_hostname
+                kr.krb_kpasswd_server = dc_hostname
+                kr.save()
+
+                self.dc_kerberos_realm = kr
+                super(DomainController, self).save()
+
+            except Exception as e:
+                log.debug("DomainController: Unable to create kerberos realm: %s", e)
 
     class Meta:
         verbose_name = _(u"Domain Controller")

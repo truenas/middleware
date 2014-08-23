@@ -74,11 +74,19 @@ class servicesForm(ModelForm):
 
         self.enabled_svcs = []
         self.disabled_svcs = []
-        directory_services = ['activedirectory', 'domaincontroller', 'ldap', 'nt4', 'nis']
         if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
             obj.srv_enable = True
             obj.save()
             started = True
+
+        elif obj.srv_service == 'domaincontroller':
+            if obj.srv_enable == True:
+                if _notifier._started_domaincontroller():
+                    started = _notifier.restart("domaincontroller")
+                else:
+                    started = _notifier.start("domaincontroller")
+            else: 
+                started = _notifier.stop("domaincontroller")
 
         else:
             """
@@ -116,6 +124,7 @@ class CIFSForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = [ 'cifs_SID' ]
         model = models.CIFS
 
     def __check_octet(self, v):

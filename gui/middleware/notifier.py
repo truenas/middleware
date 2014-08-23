@@ -97,7 +97,8 @@ from freenasUI.common.system import (
     exclude_path,
     get_mounted_filesystems,
     umount,
-    get_sw_name
+    get_sw_name,
+    domaincontroller_enabled
 )
 from freenasUI.common.warden import (Warden, WardenJail,
     WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
@@ -944,20 +945,24 @@ class notifier:
         self._system("/sbin/shutdown -p now")
 
     def _reload_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcereload")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _restart_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service samba_server quietrestart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_cifs(self):
-        self._system("/usr/sbin/service ix-samba quietstart")
+        self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server quietstart")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _stop_cifs(self):
         self._system("/usr/sbin/service samba_server forcestop")
+        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
         self._system("/usr/sbin/service ix-bsnmpd quietstart")
@@ -2083,6 +2088,11 @@ class notifier:
         Returns:
             True whether the user has been successfully added and False otherwise
         """
+
+        # For domaincontroller mode, rely on RSAT for user modification
+        if domaincontroller_enabled():
+            return 0 
+
         command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
         smbpasswd = self._pipeopen(command)
         smbpasswd.communicate("%s\n%s\n" % (password, password))
@@ -2209,11 +2219,15 @@ class notifier:
             self.__issue_pwdchange(username, command, password)
             """
             Make sure to use -d 0 for pdbedit, otherwise it will bomb
-            if CIFS debug level is anything different than 'Minimum'
+            if CIFS debug level is anything different than 'Minimum'. 
+            If in domain controller mode, skip all together since it
+            is expected that RSAT is used for user modifications.
             """
-            smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-            smb_cmd = self._pipeopen(smb_command)
-            smb_hash = smb_cmd.communicate()[0].split('\n')[0]
+            smb_hash = '*'
+            if not domaincontroller_enabled():
+                smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
+                smb_cmd = self._pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         except:
             if new_homedir:
                 # Be as atomic as possible when creating the user if
@@ -3245,6 +3259,30 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
+    def graid_all(self):
+        """
+        Get all available graid instances
+
+        Returns:
+            A list of dicts describing the graid
+        """
+
+        graids = []
+        doc = self._geom_confxml()
+        for geom in doc.xpath("//class[name = 'RAID']/geom"):
+            consumers = []
+            gname = geom.xpath("./name")[0].text
+            for ref in geom.xpath("./consumer/provider/@ref"):
+                for name in doc.xpath(
+                    "//provider[@id = '%s']/name" % ref
+                ):
+                    consumers.append(name.text)
+            graids.append({
+                'name': gname,
+                'consumers': consumers,
+            })
+        return graids
+
     def get_disks(self):
         """
         Grab usable disks and pertinent info about them
@@ -3268,6 +3306,11 @@ class notifier:
                 if dev in disks:
                     disks.remove(dev)
             disks.append(mp.devname)
+
+        for graid in self.graid_all():
+            for dev in graid.get("consumers"):
+                if dev in disks:
+                    disks.remove(dev)
 
         for disk in disks:
             info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')

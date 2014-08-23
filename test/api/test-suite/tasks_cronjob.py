@@ -4,7 +4,9 @@ import requests
 import json
 import sys
 import conn
+import os
 
+os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'tasks/cronjob/'
@@ -26,14 +28,18 @@ def get():
     result = json.loads(r.text)
     i = 0
     for i in range(0,len(result)):
-      print '\n'
+      print ''
       for items in result[i]:
         print items+':', result[i][items]
-    print 'Get tasks-cronjob --> Succeeded!'
+    print '\nGet tasks-cronjob --> Succeeded!'
   else:
     print 'Get tasks-cronjob --> Failed!'
 
 def post():
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  if len(result) > 0:
+    delete()
   r = requests.post(url, auth = auth, data = json.dumps(payload), headers = headers)
   if r.status_code == 201:
     result = json.loads(r.text)
@@ -41,6 +47,7 @@ def post():
     return str(result['id'])+'/'
   else:
     print 'Create tasks-cronjob --> Failed!'
+    return ''
 
 def put():
   id = post()
@@ -51,12 +58,22 @@ def put():
     print 'Update tasks-cronjob --> Failed!'
 
 def delete():
-  id = post()
-  r = requests.delete(url+id, auth = auth)
-  if r.status_code == 204:
-    print 'Delete tasks-cronjob --> Succeeded!'
-  else:
-    print 'Delete tasks-cronjob --> Failed!'
+  r = requests.get(url, auth = auth)
+  result = json.loads(r.text)
+  i = 0
+  for i in range(0,len(result)):
+    r = requests.delete(url+str(result[i]['id'])+'/', auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-initshutdown --> Succeeded!'
+    else:
+      print 'Delete tasks-initshutdown --> Failed!'
+  if len(result) == 0:
+    id = post()
+    r = requests.delete(url+id, auth = auth)
+    if r.status_code == 204:
+      print 'Delete tasks-initshutdown --> Succeeded!'
+    else:
+      print 'Delete tasks-initshutdown --> Failed!'
 
 def run():
   id = post()

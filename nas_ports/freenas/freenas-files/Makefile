@@ -162,7 +162,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-proftpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-proftpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-rsyncd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-rsyncd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-samba
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pre-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pre-samba
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-post-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-post-samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-savehostid ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-savehostid
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sercons ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sercons
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-shutdown ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-shutdown

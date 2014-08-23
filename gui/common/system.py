@@ -337,6 +337,23 @@ def ldap_enabled():
     return enabled
 
 
+def ldap_sudo_configured():
+    h = sqlite3.connect(FREENAS_DATABASE)
+    c = h.cursor()
+
+    enabled = False
+    sql = "select ldap_sudosuffix from directoryservice_ldap"
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0]:
+        enabled = True
+
+    c.close()
+    h.close()
+
+    return enabled
+
+
 def ldap_objects():
     h = sqlite3.connect(FREENAS_DATABASE)
     h.row_factory = sqlite3.Row
@@ -607,3 +624,28 @@ def backup_database():
             number,
         )
         shutil.copy('/data/freenas-v1.db', newfile)
+
+def get_dc_hostname():
+    from freenasUI.network.models import GlobalConfiguration
+    from freenasUI.common.pipesubr import pipeopen
+
+    gc_hostname = gc_domain = hostname = None
+    try:
+        gc = GlobalConfiguration.objects.all()[0]
+        gc_hostname = gc.gc_hostname
+        gc_domain = gc.gc_domain
+
+    except:
+        pass
+
+    if gc_hostname and gc_domain:
+        hostname = "%s.%s" % (gc_hostname, gc_domain)
+    elif gc_hostname: 
+        hostname = gc_hostname
+    else:
+        p = pipeopen("/bin/hostname", allowfork=True)
+        out = p.communicate()
+        if p.returncode == 0:
+            hostname = out[0].strip()
+
+    return hostname

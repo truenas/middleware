@@ -116,7 +116,7 @@
 #
 #	Samba settings
 #
-: ${SMB_CONF:="/usr/local/etc/smb4.conf"}
+: ${SAMBA_CONF:="/usr/local/etc/smb4.conf"}
 
 #
 #	Warden settings

@@ -102,6 +102,8 @@ def __cache_expire(cachedir):
     """Nuke everything under cachedir, but preserve the root directory
        hierarchy so it doesn't screw up certain services like smbd,
        etc."""
+    if not os.path.exists(cachedir):
+        return
 
     for ent in os.listdir(cachedir):
         p = os.path.join(cachedir, ent)

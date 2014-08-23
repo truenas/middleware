@@ -4,7 +4,9 @@ import requests
 import json
 import sys
 import conn
+import os
 
+os.system('rm *.pyc')
 headers = conn.headers
 auth = conn.auth
 url = conn.url + 'system/advanced/'

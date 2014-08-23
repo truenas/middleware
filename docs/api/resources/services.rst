@@ -402,7 +402,13 @@ Update resource
       Content-Type: application/json
 
         {
-                "dc_forest_level": "2008"
+                "dc_forest_level": "2008",
+                "dc_dns_forwarder": "192.168.1.1",
+                "dc_domain": "example",
+                "dc_kerberos_realm": "",
+                "dc_passwd": "newpasswd",
+                "dc_realm": "example.org"
+
         }
 
    **Example response**:
@@ -415,11 +421,11 @@ Update resource
 
         {
                 "dc_dns_backend": "SAMBA_INTERNAL",
-                "dc_dns_forwarder": "",
-                "dc_domain": "",
-                "dc_forest_level": "2003",
-                "dc_passwd": "",
-                "dc_realm": "",
+                "dc_dns_forwarder": "192.168.1.1",
+                "dc_domain": "example",
+                "dc_forest_level": "2008",
+                "dc_passwd": "newpasswd",
+                "dc_realm": "example.org",
                 "dc_role": "dc",
                 "id": 1
         }

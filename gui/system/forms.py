@@ -44,6 +44,7 @@ from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
+from django.utils.html import escapejs
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
@@ -52,6 +53,22 @@ from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP
+)
+from freenasUI.directoryservice.forms import (
+    ActiveDirectoryForm,
+    LDAPForm,
+    NISForm,
+    NT4Form,
+)
+from freenasUI.directoryservice.models import (
+    ActiveDirectory,
+    LDAP,
+    NIS,
+    NT4,
+)
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -71,8 +88,9 @@ from freenasUI.sharing.models import (
     NFS_Share_Path,
 )
 from freenasUI.storage.forms import VolumeAutoImportForm
-from freenasUI.storage.models import MountPoint, Volume, Scrub
+from freenasUI.storage.models import Disk, MountPoint, Volume, Scrub
 from freenasUI.system import models
+from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
@@ -173,10 +191,17 @@ class InitialWizard(CommonWizard):
             'system/wizard.html',
         ]
 
+    def get_context_data(self, form, **kwargs):
+        context = super(InitialWizard, self).get_context_data(form, **kwargs)
+        if self.steps.last:
+            context['form_list'] = self.get_form_list().keys()
+        return context
+
     def done(self, form_list, **kwargs):
 
+        curstep = 0
         progress = {
-            'step': 1,
+            'step': curstep,
             'indeterminate': True,
             'percent': 0,
         }
@@ -192,10 +217,17 @@ class InitialWizard(CommonWizard):
         form_list = self.get_form_list()
         volume_form = form_list.get('volume')
         volume_import = form_list.get('import')
+        ds_form = form_list.get('ds')
 
         with transaction.atomic():
             _n = notifier()
             if volume_form or volume_import:
+
+                curstep += 1
+                progress['step'] = curstep
+
+                with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                    f.write(pickle.dumps(progress))
 
                 if volume_import:
                     volume_name, guid = cleaned_data.get(
@@ -234,11 +266,28 @@ class InitialWizard(CommonWizard):
                         groups=groups,
                         init_rand=False,
                     )
+
+                # Create SMART tests for every disk available
+                disks = []
+                for o in SMARTTest.objects.all():
+                    for disk in o.smarttest_disks.all():
+                        if disk.pk not in disks:
+                            disks.append(disk.pk)
+                qs = Disk.objects.filter(disk_enabled=True).exclude(pk__in=disks)
+
+                if qs.exists():
+                    smarttest = SMARTTest.objects.create(
+                        smarttest_type='S',
+                        smarttest_dayweek='7',
+                    )
+                    smarttest.smarttest_disks.add(*list(qs))
+
             else:
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
                 volume_name = volume.vol_name
 
-            progress['step'] = 2
+            curstep += 1
+            progress['step'] = curstep
             progress['indeterminate'] = False
             progress['percent'] = 0
             with open(WIZARD_PROGRESSFILE, 'wb') as f:
@@ -269,58 +318,41 @@ class InitialWizard(CommonWizard):
 
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
-                        if not share_groupcreate:
-                            raise MiddlewareError(
-                                _('Group does not exist: %s') % share_group
+                        if share_groupcreate:
+                            gid = _n.group_create(share_group)
+                            group = bsdGroups.objects.create(
+                                bsdgrp_gid=gid,
+                                bsdgrp_group=share_group,
                             )
-                        gid = _n.group_create(share_group)
-                        group = bsdGroups.objects.create(
-                            bsdgrp_gid=gid,
-                            bsdgrp_group=share_group,
-                        )
+                        else:
+                            group = bsdGroups.objects.all()[0]
                     else:
                         group = qs[0]
 
                     qs = bsdUsers.objects.filter(bsdusr_username=share_user)
                     if not qs.exists():
-                        if not share_usercreate:
-                            raise MiddlewareError(
-                                _('User does not exist: %s') % share_user
+                        if share_usercreate:
+                            if share_userpw:
+                                password = share_userpw
+                                password_disabled = False
+                            else:
+                                password = '!'
+                                password_disabled = True
+                            uid, gid, unixhash, smbhash = _n.user_create(
+                                share_user,
+                                share_user,
+                                password,
+                                password_disabled=password_disabled
                             )
-                        if share_userpw:
-                            password = share_userpw
-                            password_disabled = False
-                        else:
-                            password = '!'
-                            password_disabled = True
-                        uid, gid, unixhash, smbhash = _n.user_create(
-                            share_user,
-                            share_user,
-                            password,
-                            password_disabled=password_disabled
-                        )
-                        bsdUsers.objects.create(
-                            bsdusr_username=share_user,
-                            bsdusr_full_name=share_user,
-                            bsdusr_uid=uid,
-                            bsdusr_group=group,
-                            bsdusr_unixhash=unixhash,
-                            bsdusr_smbhash=smbhash,
-                        )
+                            bsdUsers.objects.create(
+                                bsdusr_username=share_user,
+                                bsdusr_full_name=share_user,
+                                bsdusr_uid=uid,
+                                bsdusr_group=group,
+                                bsdusr_unixhash=unixhash,
+                                bsdusr_smbhash=smbhash,
+                            )
 
-                    if share_purpose in ('cifs', 'afp'):
-                        share_acl = 'windows'
-                    else:
-                        share_acl = 'unix'
-
-                    _n.mp_change_permission(
-                        path='/mnt/%s/%s' % (volume_name, share_name),
-                        user=share_user,
-                        group=share_group,
-                        mode=share_mode,
-                        recursive=False,
-                        acl=share_acl,
-                    )
                 else:
                     errno, errmsg = _n.create_zfs_vol(
                         '%s/%s' % (volume_name, share_name),
@@ -416,7 +448,142 @@ class InitialWizard(CommonWizard):
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
 
-        progress['step'] = 3
+        if ds_form:
+
+            curstep += 1
+            progress['step'] = curstep
+            progress['indeterminate'] = True
+
+            with open(WIZARD_PROGRESSFILE, 'wb') as f:
+                f.write(pickle.dumps(progress))
+
+            if cleaned_data.get('ds_type') == 'ad':
+                try:
+                    ad = ActiveDirectory.objects.all().order_by('-id')[0]
+                except:
+                    ad = ActiveDirectory.objects.create()
+                addata = ad.__dict__
+                addata.update({
+                    'ad_domainname': cleaned_data.get('ds_ad_domainname'),
+                    'ad_bindname': cleaned_data.get('ds_ad_bindname'),
+                    'ad_bindpw': cleaned_data.get('ds_ad_bindpw'),
+                    'ad_enable': True,
+                })
+                adform = ActiveDirectoryForm(
+                    data=addata,
+                    instance=ad,
+                )
+                if adform.is_valid():
+                    adform.save()
+                else:
+                    log.warn(
+                        'Active Directory data failed to validate: %r',
+                        adform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'ldap':
+                try:
+                    ldap = LDAP.objects.all().order_by('-id')[0]
+                except:
+                    ldap = LDAP.objects.create()
+                ldapdata = ldap.__dict__
+                ldapdata.update({
+                    'ldap_hostname': cleaned_data.get('ds_ldap_hostname'),
+                    'ldap_basedn': cleaned_data.get('ds_ldap_basedn'),
+                    'ldap_binddn': cleaned_data.get('ds_ldap_binddn'),
+                    'ldap_bindpw': cleaned_data.get('ds_ldap_bindpw'),
+                    'ldap_enable': True,
+                })
+                ldapform = LDAPForm(
+                    data=ldapdata,
+                    instance=ldap,
+                )
+                if ldapform.is_valid():
+                    ldapform.save()
+                else:
+                    log.warn(
+                        'LDAP data failed to validate: %r',
+                        ldapform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'nis':
+                try:
+                    nis = NIS.objects.all().order_by('-id')[0]
+                except:
+                    nis = NIS.objects.create()
+                nisdata = nis.__dict__
+                nisdata.update({
+                    'nis_domain': cleaned_data.get('ds_nis_domain'),
+                    'nis_servers': cleaned_data.get('ds_nis_servers'),
+                    'nis_secure_mode': cleaned_data.get('ds_nis_secure_mode'),
+                    'nis_manycast': cleaned_data.get('ds_nis_manycast'),
+                    'nis_enable': True,
+                })
+                nisform = NISForm(
+                    data=nisdata,
+                    instance=nis,
+                )
+                if nisform.is_valid():
+                    nisform.save()
+                else:
+                    log.warn(
+                        'NIS data failed to validate: %r',
+                        nisform._errors,
+                    )
+            elif cleaned_data.get('ds_type') == 'nt4':
+                try:
+                    nt4 = NT4.objects.all().order_by('-id')[0]
+                except:
+                    nt4 = NT4.objects.create()
+
+                nt4data = nt4.__dict__
+                for name, value in cleaned_data.items():
+                    if not name.startswith('ds_nt4'):
+                        continue
+                    nt4data[name.replace('ds_', '')] = value
+                nt4data.update['nt4_enable': True]
+
+                nt4form = NT4Form(
+                    data=nt4data,
+                    instance=nt4,
+                )
+                if nt4form.is_valid():
+                    nt4form.save()
+                else:
+                    log.warn(
+                        'NT4 data failed to validate: %r',
+                        nt4form._errors,
+                    )
+
+        # Change permission after joining directory service
+        # since users/groups may not be local
+        for i, share in enumerate(shares):
+            if not share:
+                continue
+
+            share_name = share.get('share_name')
+            share_purpose = share.get('share_purpose')
+            share_user = share.get('share_user')
+            share_group = share.get('share_group')
+            share_mode = share.get('share_mode')
+
+            if share_purpose == 'iscsitarget':
+                continue
+
+            if share_purpose in ('cifs', 'afp'):
+                share_acl = 'windows'
+            else:
+                share_acl = 'unix'
+
+            _n.mp_change_permission(
+                path='/mnt/%s/%s' % (volume_name, share_name),
+                user=share_user,
+                group=share_group,
+                mode=share_mode,
+                recursive=False,
+                acl=share_acl,
+            )
+
+        curstep += 1
+        progress['step'] = curstep
         progress['indeterminate'] = False
         progress['percent'] = 1
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
@@ -1157,6 +1324,193 @@ class SystemDatasetForm(ModelForm):
             notifier().restart("collectd")
 
 
+class InitialWizardDSForm(Form):
+
+    ds_type = forms.ChoiceField(
+        label=_('Directory Service'),
+        choices=(
+            ('ad', _('Active Directory')),
+            ('ldap', _('LDAP')),
+            ('nis', _('NIS')),
+            ('nt4', _('NT4')),
+        ),
+        initial='ad',
+    )
+    ds_ad_domainname = forms.CharField(
+        label=_('Domain Name (DNS/Realm-Name)'),
+        required=False,
+    )
+    ds_ad_bindname = forms.CharField(
+        label=_('Domain Account Name'),
+        required=False,
+    )
+    ds_ad_bindpw = forms.CharField(
+        label=_('Domain Account Password'),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+    ds_ldap_hostname = forms.CharField(
+        label=_('Hostname'),
+        required=False,
+    )
+    ds_ldap_basedn = forms.CharField(
+        label=('Base DN'),
+        required=False,
+    )
+    ds_ldap_binddn = forms.CharField(
+        label=('Bind DN'),
+        required=False,
+    )
+    ds_ldap_bindpw = forms.CharField(
+        label=('Base Password'),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardDSForm, self).__init__(*args, **kwargs)
+
+        for fname, field in NISForm().fields.items():
+            if fname.find('enable') == -1:
+                self.fields['ds_%s' % fname] = field
+                field.required = False
+
+        for fname, field in NT4Form().fields.items():
+            if (
+                fname.find('enable') == -1 and
+                fname not in NT4Form.advanced_fields
+            ):
+                self.fields['ds_%s' % fname] = field
+                field.required = False
+
+        pertype = defaultdict(list)
+        for fname in self.fields.keys():
+            if fname.startswith('ds_ad_'):
+                pertype['ad'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_ldap_'):
+                pertype['ldap'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_nis_'):
+                pertype['nis'].append('id_ds-%s' % fname)
+            elif fname.startswith('ds_nt4_'):
+                pertype['nt4'].append('id_ds-%s' % fname)
+
+        self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
+            'id_ds-ds_type',
+            escapejs(json.dumps(pertype)),
+        )
+        self.fields['ds_type'].widget.attrs['onChange'] = (
+            self.jsChange
+        )
+
+    def clean(self):
+        cdata = self.cleaned_data
+
+        if cdata.get('ds_type') == 'ad':
+            domain = cdata.get('ds_ad_domainname')
+            bindname = cdata.get('ds_ad_bindname')
+            bindpw = cdata.get('ds_ad_bindpw')
+            binddn = '%s@%s' % (bindname, domain)
+            errors = []
+
+            if not (domain or bindname or bindpw):
+                if not domain:
+                    self._errors['ds_ad_domainname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindname:
+                    self._errors['ds_ad_bindname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindpw:
+                    self._errors['ds_ad_bindpw'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            else:
+
+                try:
+                    ret = FreeNAS_ActiveDirectory.validate_credentials(
+                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    )
+                except Exception, e:
+                    raise forms.ValidationError("%s." % e)
+
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+
+        elif cdata.get('ds_type') == 'ldap':
+            hostname = cdata.get('ds_ldap_hostname')
+            binddn = cdata.get('ds_ldap_binddn')
+            bindpw = cdata.get('ds_ldap_bindpw')
+            errors = []
+
+            if not (hostname or binddn or bindpw):
+                if not hostname:
+                    self._errors['ds_ldap_hostname'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not binddn:
+                    self._errors['ds_ldap_binddn'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+                if not bindpw:
+                    self._errors['ds_ldap_bindpw'] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            else:
+
+                try:
+                    ret = FreeNAS_LDAP.validate_credentials(
+                        hostname, binddn=binddn, bindpw=bindpw, errors=errors
+                    )
+                except Exception, e:
+                    raise forms.ValidationError("%s." % e)
+
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+
+        elif cdata.get('ds_type') == 'nis':
+            for fname, fields in self.fields.items():
+                if not fname.startswith('ds_nis_'):
+                    continue
+                value = cdata.get(fname)
+                if not value and NISForm.base_fields[
+                    fname.replace('ds_', '')
+                ].required:
+                    self._errors[fname] = self.error_class([
+                        _('This field is required.'),
+                    ])
+
+        elif cdata.get('ds_type') == 'nt4':
+            for fname, fields in self.fields.items():
+                if not fname.startswith('ds_nt4_'):
+                    continue
+                value = cdata.get(fname)
+                if not value and NT4Form.base_fields[
+                    fname.replace('ds_', '')
+                ].required:
+                    self._errors[fname] = self.error_class([
+                        _('This field is required.'),
+                    ])
+            password1 = cdata.get('ds_nt4_adminpw')
+            password2 = cdata.get('ds_nt4_adminpw2')
+            if password1 != password2:
+                self._errors['ds_nt4_adminpw2'] = self.error_class([
+                    _('The two password fields didn\'t match.')
+                ])
+
+        return cdata
+
+    def done(self, request=None, **kwargs):
+        dsdata = self.cleaned_data
+        # Save Directory Service (DS) in the session so we can retrieve DS
+        # users and groups for the Ownership screen
+        request.session['wizard_ds'] = dsdata
+
+
 class InitialWizardShareForm(Form):
 
     share_name = forms.CharField(
@@ -1501,6 +1855,8 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
 
     @classmethod
     def show_condition(cls, wizard):
+        if Volume.objects.all().exists():
+            return False
         return len(cls._populate_disk_choices()) > 0
 
 

@@ -66,116 +66,24 @@ def directoryservice_home(request):
     except:
         nt4 = models.NT4()
 
+    try:
+        kerberoskeytab = models.KerberosKeytab.objects.order_by("-id")[0]
+    except:
+        kerberoskeytab = models.KerberosKeytab()
+
+    try:
+        kerberosrealm = models.KerberosRealm.objects.order_by("-id")[0]
+    except:
+        kerberosrealm = models.KerberosRealm()
+
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
         'activedirectory': activedirectory,
-        'ldap': ldap, 
-        'nis': nis, 
-        'nt4': nt4
-    })
-
-
-def directoryservice_activedirectory(request):
-    try:
-        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
-    except:
-        activedirectory = models.ActiveDirectory()
-
-    if request.method == "POST":
-        form = forms.ActiveDirectoryForm(request.POST, instance=activedirectory)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="Active Directory successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.ActiveDirectoryForm(instance=activedirectory)
-
-    return render(request, 'directoryservice/activedirectory.html', {
-        'activedirectory': activedirectory,
-        'form': form,
-        'inline': True
-    })
-
-
-def directoryservice_ldap(request):
-    try:
-        ldap = models.LDAP.objects.order_by("-id")[0]
-    except:
-        ldap = models.LDAP()
-
-    if request.method == "POST":
-        form = forms.LDAPForm(request.POST, instance=ldap)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="LDAP successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.LDAPForm(instance=ldap)
-
-    return render(request, 'directoryservice/ldap.html', {
         'ldap': ldap,
-        'form': form,
-        'inline': True
-    })
-
-
-def directoryservice_nt4(request):
-    try:
-        nt4 = models.NT4.objects.order_by("-id")[0]
-    except:
-        nt4 = models.NT4()
-
-    if request.method == "POST":
-        form = forms.NT4Form(request.POST, instance=nt4)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="NT4 successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.NT4Form(instance=nt4)
-
-    return render(request, 'directoryservice/nt4.html', {
-        'nt4': nt4,
-        'form': form,
-        'inline': True
-    })
-
-
-def directoryservice_nis(request):
-    try:
-        nis = models.NT4.objects.order_by("-id")[0]
-    except:
-        nis = models.NT4()
-
-    if request.method == "POST":
-        form = forms.NISForm(request.POST, instance=nis)
-        if form.is_valid(): 
-            form.save()
-            return JsonResp(
-                request,
-                message="NIS successfully edited."
-            )
-        else:
-            return JsonResp(request, form=form)
-    else:
-        form = forms.NISForm(instance=nis)
-
-    return render(request, 'directoryservice/nis.html', {
         'nis': nis,
-        'form': form,
-        'inline': True
+        'nt4': nt4,
+        'kerberoskeytab': kerberoskeytab,
+        'kerberosrealm':  kerberosrealm
     })
 
 

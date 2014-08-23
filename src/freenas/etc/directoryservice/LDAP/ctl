@@ -112,7 +112,6 @@ ldapctl_start()
 		sssd_start
 	fi
 
-	ldapctl_cmd ${service} ix-samba quietstart
 	cifs_start
 
 	if ! ldapctl_cmd ${service} ix-ldap status
@@ -165,21 +164,20 @@ ldapctl_stop()
 		ldapctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		ldap_set 0
-		ldapctl_cmd ${service} ix-samba start
+		ldapctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		ldapctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
 		ldap_set 0
-		ldapctl_cmd ${service} ix-samba start
+		ldapctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		ldapctl_cmd ${service} samba_server forcestop
 		ldap_set 0
 		srv_set cifs 1
-		ldapctl_cmd ${service} ix-samba start
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
@@ -187,7 +185,6 @@ ldapctl_stop()
 		ldapctl_cmd ${service} samba_server forcestop
 		ldap_set 0
 		srv_set cifs 1
-		ldapctl_cmd ${service} ix-samba start
 		cifs_start
 	fi
 

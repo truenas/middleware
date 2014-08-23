@@ -84,7 +84,8 @@ etc/ix.rc.d/ix-postinit
 etc/ix.rc.d/ix-preinit
 etc/ix.rc.d/ix-proftpd
 etc/ix.rc.d/ix-rsyncd
-etc/ix.rc.d/ix-samba
+etc/ix.rc.d/ix-pre-samba
+etc/ix.rc.d/ix-post-samba
 etc/ix.rc.d/ix-savehostid
 etc/ix.rc.d/ix-sercons
 etc/ix.rc.d/ix-shutdown

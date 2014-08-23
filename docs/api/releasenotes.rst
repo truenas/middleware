@@ -16,6 +16,7 @@ Resources
  - Jails Templates: /api/v1.0/jails/templates/
  - Services Domain Controller: /api/v1.0/services/domaincontroller/
  - Services LLDP: /api/v1.0/services/lldp/
+ - Storage Permission: /api/v1.0/storage/permission/
  - System Reboot: /api/v1.0/system/reboot/ (existed since 9.2.1 but undocumented)
  - System Shutdown: /api/v1.0/system/shutdown/ (existed since 9.2.1 but undocumented)
  - System Version: /api/v1.0/system/version/

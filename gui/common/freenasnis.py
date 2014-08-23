@@ -35,7 +35,10 @@ from freenasUI.common.cmd import cmd_pipe
 log = logging.getLogger('common.freenasnis')
 
 YPCAT = "/usr/bin/ypcat"
+YPBIND = "/usr/sbin/ypbind"
 DOMAINNAME = "/bin/domainname"
+
+FLAGS_DBINIT = 0x00010000
 
 
 class nis_pipe(cmd_pipe):
@@ -53,6 +56,15 @@ class FreeNAS_NIS_Base(object):
         self.domain = None
         if kwargs.has_key('domain') and kwargs['domain']:
             self.domain = kwargs['domain']
+
+        if self.flags & FLAGS_DBINIT:
+            self.ypbind = nis_pipe('%s -S %s,%s%s%s' % (
+                YPBIND,
+                self.domain,
+                kwargs.pop('servers'),
+                ' -s' if kwargs.pop('secure_mode', False) else '',
+                ' -m' if kwargs.pop('manycast', False) else '',
+            ))
 
         self._settings = []
 
@@ -186,6 +198,7 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
         super(FreeNAS_NIS_Users, self).__init__(**kwargs) 
 
         self.__users = {}
+        self.__usernames = []
         self.__ucache = {}
         self.__ducache = {}
 
@@ -236,8 +249,13 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
 
         return ret
 
+    def _get_uncached_usernames(self):
+        return self.__usernames
+
     def __get_users(self):
         log.debug("FreeNAS_NIS_Users.__get_users: enter")
+
+        self.__usernames = []
 
         if self.flags & FLAGS_CACHE_READ_USER:
             dcount = len(self.__domains)
@@ -269,6 +287,8 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
 
             for u in nis_users:
                 uid = u['uid']
+
+                self.__usernames.append(uid)
 
                 if self.flags & FLAGS_CACHE_WRITE_USER:
                     self.__ducache[d][uid] = u
@@ -313,6 +333,7 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
         super(FreeNAS_NIS_Groups, self).__init__(**kwargs)
 
         self.__groups = {}
+        self.__groupnames = []
         self.__gcache = {}
         self.__dgcache = {}
 
@@ -363,8 +384,13 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
 
         return ret
 
+    def _get_uncached_groupnames(self):
+        return self.__groupnames
+
     def __get_groups(self):
         log.debug("FreeNAS_NIS_Groups.__get_groups: enter")
+
+        self.__groupnames = []
 
         if (self.flags & FLAGS_CACHE_READ_GROUP):
             dcount = len(self.__domains)
@@ -399,6 +425,8 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[d][group.upper()] = g
+
+                self.__groupnames.append(group)
 
                 try:
                     gr = grp.getgrnam(group)

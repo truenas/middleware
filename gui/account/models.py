@@ -209,8 +209,12 @@ class bsdUsers(Model):
         return True
 
     def set_password(self, password):
-        """stub required for the API"""
-        pass
+        unixhash, smbhash = notifier().user_changepassword(
+            username=self.bsdusr_username.encode('utf-8'),
+            password=password,
+        )
+        self.bsdusr_unixhash = unixhash
+        self.bsdusr_smbhash = smbhash
 
     def check_password(self, raw_password):
         # Only allow uid 0 for now

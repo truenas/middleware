@@ -1,0 +1,6 @@
+:orphan:
+
+.. _Wizard:
+
+Wizard
+======
