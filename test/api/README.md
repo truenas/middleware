@@ -24,6 +24,11 @@ freenas-test-api
 
 * You can check content of all APIs on http://api.freenas.org
 
+* Configure Host information by
+  * $ cd [path]/freenas/test/api/test-suite/
+  * $ vi server.config
+  * Config Hostname, Username (usually as root) and password (of username)
+
 * If you want to test a single leaf such as Sharing-CIFS under Sharing
   * $ cd [path]/freenas/test/api/test-suite/
   * $ python
@@ -49,74 +54,66 @@ freenas-test-api
 ## API function list
 
 * Directory Service
-  * ActiveDirectory
-  * LDAP
-  * NIS
-  * NT4
-
-* Jails
-  * Configuration
-  * Jails
-  * MountPoints
-  * Templates
+  * ActiveDirectory: get(), put()
+  * LDAP: get(), put()
+  * NIS: get(), put()
+  * NT4: get(), put()
 
 * Network
-  * Global Configuration
-  * Interface
-  * VLAN
-  * LAGG
-  * Static Route
+  * Global Configuration: get(), put()
+  * Interface: get(), post(), put(), delete()
+  * VLAN: get(), post(), put(), delete()
+  * LAGG: get(), post(), delete()
+  * Static Route: get(), post(), put(), delete()
 
 * Plugins
-  * Plugins
+  * Plugins: get(), start(), stop(), delete()
 
 * Services
-  * Services
-  * AFP
-  * CIFS
-  * Domain Controller
-  * DynamicDNS
-  * FTP
-  * iSCSI
-  * LLDP
-  * NFS
-  * Rsyncd
-  * RsyncMod
-  * SMART
-  * SNMP
-  * SSH
-  * TFTP
-  * UPS
+  * AFP: get(), put()
+  * CIFS: get(), put()
+  * Domain Controller: get(), put()
+  * DynamicDNS: get(), put()
+  * FTP: get(), put()
+  * LLDP: get(), put()
+  * NFS: get(), put()
+  * Rsyncd: get(), put()
+  * RsyncMod: get(), post(), put(), delete()
+  * SMART: get(), put()
+  * SNMP: get(), put()
+  * SSH: get(), put()
+  * TFTP: get(), put()
+  * UPS: get(), put()
 
 * Sharing
-  * CIFS
-  * NFS
-  * AFP
+  * CIFS: get(), post(), put(), delete()
+  * NFS: get(), post(), put(), delete()
+  * AFP: get(), post(), put(), delete()
 
 * Storage
-  * Volume
-  * Snapshot
-  * Task
-  * Replication
-  * Scrub
-  * Disk
+  * Volume: get(), post(), delete()
+  * Snapshot: get(), post(), delete()
+  * Task: get(), post(), put(), delete()
+  * Replication: get(), post(), put(), delete()
+  * Scrub: get(), post(), put(), delete()
+  * Disk: get(), put()
 
 * System
-  * Advanced
-  * Alert
-  * Email
-  * NTPServer
-  * Reboot
-  * Settings
-  * Shutdown
-  * SSL
-  * Tunable
-  * Version
+  * Advanced: get(), put()
+  * Alert: get()
+  * Email: get()
+  * NTPServer: get(), post(), put(), delete()
+  * Reboot: post()
+  * Settings: get(), put()
+  * Shutdown: post()
+  * SSL: get(), put()
+  * Tunable: get(), post(), put(), delete()
+  * Version: get()
 
 * Tasks
-  * CronJob
-  * InitShutdown
-  * Rsync
-  * SMARTTest
+  * CronJob: get(), post(), put(), delete(), run()
+  * InitShutdown: get(), post(), put(), delete()
+  * Rsync: get(), post(), put(), delete(), run
+  * SMARTTest: get(), post(), put(), delete()
 
 
