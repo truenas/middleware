@@ -9,8 +9,7 @@ import Package
 
 log = logging.getLogger('freenasOS.Manifest')
 
-SYSTEM_MANIFEST_FILE = "/etc/manifest"
-BACKUP_MANIFEST_FILE = "/conf/base/etc/manifest"
+SYSTEM_MANIFEST_FILE = "/data/manifest"
 
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
@@ -144,9 +143,6 @@ class Manifest(object):
 
     def Save(self, root):
         # Need to write out the manifest
-        # It needs to to into the specified root; however,
-        # if root is none, we can't then link to the backup.
-        # 
         if root is None:
             root = self._root
 
@@ -155,31 +151,6 @@ class Manifest(object):
         else:
             prefix = root
         self.StorePath(prefix + SYSTEM_MANIFEST_FILE)
-        # See if the primary and backup file are the same
-        # If this raises an exception we deserve it
-        primary = os.stat(prefix + SYSTEM_MANIFEST_FILE)
-        try:
-            secondary = os.stat(prefix + BACKUP_MANIFEST_FILE)
-        except:
-            secondary = None
-
-        if secondary is None or \
-           primary.st_dev != secondary.st_dev or \
-            primary.st_ino != secondary.st_ino:
-            try:
-                # This could cause problems if /etc is a tmpfs
-                os.unlink(prefix + BACKUP_MANIFEST_FILE)
-            except:
-                pass
-            try:
-                os.link(prefix + SYSTEM_MANIFEST_FILE,
-                        prefix + BACKUP_MANIFEST_FILE)
-            except OSError as e:
-                if e[0] == errno.EXDEV:
-                    # Just write it out to the backup location
-                    self.StorePath(prefix + BACKUP_MANIFEST_FILE)
-            except:
-                raise e
 
     def Validate(self):
         # A manifest needs to have a sequence number, train,

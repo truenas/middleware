@@ -354,64 +354,6 @@ last_orders() {
 	vmdk_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk"
 	vmdk_image_compressed="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk.xz"
 
-	if $do_copyout_partition; then
-
-		pprint 2 "Compressing GUI upgrade image"
-		log_file "${gui_image_log}"
-
-		(
-		set -x
-
-		# NOTE: keep in synch with create_*_diskimage.
-		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
-
-		# the -s arguments map root's "update*" files into the
-		# gui image's bin directory.
-
-		if is_truenas ; then
-			tar -c -p -v -f ${gui_upgrade_bname}.tar \
-				-s '@^update$@bin/update@' \
-				-s '@^updatep1$@bin/updatep1@' \
-				-s '@^updatep2$@bin/updatep2@' \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
-					update updatep1 updatep2 \
-				-C "$NANO_WORLDDIR" \
-					etc/avatar.conf \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
-					. \
-				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
-					. \
-				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
-					. \
-				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/}
-				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
-				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
-		else
-			tar -c -p -v -f ${gui_upgrade_bname}.tar \
-				-s '@^update$@bin/update@' \
-				-s '@^updatep1$@bin/updatep1@' \
-				-s '@^updatep2$@bin/updatep2@' \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
-					update updatep1 updatep2 \
-				-C "$NANO_WORLDDIR" \
-					etc/avatar.conf \
-				-C "$AVATAR_ROOT/build/nanobsd-cfg/Installer" \
-					. \
-				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
-					. \
-				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/}
-				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
-				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
-		fi
-		) > "${gui_image_log}" 2>&1
-		(
-		cd $NANO_DISKIMGDIR
-		sha256_signature=`sha256 ${NANO_IMGNAME}.GUI_Upgrade.txz`
-		echo "${sha256_signature}" > ${NANO_IMGNAME}.GUI_Upgrade.txz.sha256.txt
-		)
-	fi
 
 	if false; then
 	    pprint 2 "Creating VMDK"
@@ -460,6 +402,73 @@ last_orders() {
 	sh "$AVATAR_ROOT/build/create_iso.sh"
 
 	) > "${cd_image_log}" 2>&1
+	if $do_copyout_partition; then
+
+		pprint 2 "Compressing GUI upgrade image"
+		log_file "${gui_image_log}"
+
+		(
+		set -x
+
+		# NOTE: keep in synch with create_*_diskimage.
+		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
+
+		# the -s arguments map root's "update*" files into the
+		# gui image's bin directory.
+
+		if is_truenas ; then
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
+				-s '@^update$@bin/update@' \
+				-s '@^updatep1$@bin/updatep1@' \
+				-s '@^updatep2$@bin/updatep2@' \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
+					update updatep1 updatep2 \
+				-C "$NANO_WORLDDIR" \
+					etc/avatar.conf \
+				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
+					. \
+				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
+					. \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
+					. \
+				-C "$NANO_DISKIMGDIR" \
+					${firmware_img##*/}
+				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
+		else
+		    	tar -c -p -f ${NANO_OBJ}/gui-boot.tar \
+			    	-C ${NANO_OBJ}/_.isodir ./boot
+			tar -c -p -f ${NANO_OBJ}/gui-install-environment.tar \
+			    	-C ${NANO_OBJ}/_.instufs .
+			tar -c -p -f ${NANO_OBJ}/gui-packages.tar \
+			    	-s '@^Packages@FreeNAS/Packages@' \
+				-C ${NANO_OBJ}/_.packages .
+			tar -c -p -v -f ${gui_upgrade_bname}.tar \
+				-s '@^update$@bin/update@' \
+				-s '@^updatep1$@bin/updatep1@' \
+				-s '@^updatep2$@bin/updatep2@' \
+				-C "$NANO_WORLDDIR" \
+					etc/avatar.conf \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/Installer" \
+					. \
+				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
+					. \
+			    	-C "${NANO_OBJ}" \
+					gui-boot.tar \
+			    		gui-install-environment.tar \
+					gui-packages.tar
+			${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+			mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
+			rm -f ${NANO_OBJ}/gui-boot.tar ${NANO_OBJ}/gui-install-environment.tar
+			rm -f ${NANO_OBJ}/gui-packages.tar
+		fi
+		) > "${gui_image_log}" 2>&1
+		(
+		cd $NANO_DISKIMGDIR
+		sha256_signature=`sha256 ${NANO_IMGNAME}.GUI_Upgrade.txz`
+		echo "${sha256_signature}" > ${NANO_IMGNAME}.GUI_Upgrade.txz.sha256.txt
+		)
+	fi
 
 }
 

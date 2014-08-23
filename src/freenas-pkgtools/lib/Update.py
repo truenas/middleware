@@ -75,6 +75,15 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
             rv = RunCommand(beadm, args)
         except:
             return False
+        # Also create a snapshot of the grub filesystem,
+        # but we don't do anything with it
+        zfs = "/sbin/zfs"
+        try:
+            args = ["snapshot", "freenas-boot/grub@Pre-Upgrade-%s" % name]
+            RunCommand(zfs, args)
+        except:
+            log.debug("Unable to create grub snapshot Pre-Upgrade-%s" % name)
+
         return rv
 
     def MountClone(name):

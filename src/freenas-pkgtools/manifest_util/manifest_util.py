@@ -3,10 +3,10 @@
 """
 Utility to manage a manifest file.
 
-Usage is:  manifest_util [-C conf] [-M manifest] cmd [args]
+Usage is:  manifest_util [-C conf] [-M manifest] [-R path] cmd [args]
 -C specifies a configuration file to use (defaults to system config file)
 -M specifies a manifest file (defaults to system manifest)
-
+-R specifies a remote manifest name by train/sequence.  E.g., FreeNAS-EXPERIMENTAL/LATEST
 Commands are:
 
 list	List the package contents of the manifest
@@ -28,7 +28,7 @@ from freenasOS.Configuration import ChecksumFile
 import freenasOS.Package as Package
 
 def usage(subopt = None):
-    print >> sys.stderr, "Usage: %s [-M manifest] [-C config] cmd [args]"
+    print >> sys.stderr, "Usage: %s [-M manifest] [-C config] [-R remote] cmd [args]"
     print >> sys.stderr, "cmd is one of:\n"
     print >> sys.stderr, "\tlist\tList the package contents of the manifest"
     print >> sys.stderr, "\tsign\tSign the manifest"
@@ -144,9 +144,10 @@ def sign_manifest(mani, args):
 def main():
     config_file = None
     mani_file = None
+    remote_train = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "C:M:")
+        opts, args = getopt.getopt(sys.argv[1:], "C:M:R:")
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -156,14 +157,21 @@ def main():
             config = a
         elif o == "-M":
             mani_file = a
+        elif o == "-R":
+            if "/" in a:
+                (remote_train, remote_manifest) = a.split("/")
+                if remote_manifest is not None and remote_manifest.startswith("FreeNAS-"):
+                    remote_manifest = remote_manifest[len("FreeNAS-"):]
         else:
             usage()
 
     if len(args) == 0:
         usage()
 
-    conf = Configuration.Configuration(file = config_file, nopkgdb = True)
-    if mani_file is not None:
+    conf = Configuration.Configuration(file = config_file)
+    if remote_train is not None:
+        mani = conf.GetManifest(remote_train, remote_manifest)
+    elif mani_file is not None:
         mani = Manifest.Manifest(conf)
         mani.LoadPath(mani_file)
     else:

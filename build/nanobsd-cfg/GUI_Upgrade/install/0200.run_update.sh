@@ -64,30 +64,42 @@ trampoline_upgrade()
 		fi
 	fi
 
+	# ${SCRIPTDIR} has the contents of the GUI upgrade file, extracted.
+	# Files we need to concern ourselves with:
+	# gui-boot.tar -- /boot
+	# gui-install-environment.tar -- the installation environment.  Also /rescue
+	# gui-packages.tar -- the packages (should be extracted into .mount)
+	#
+	# Everything goes under ${TRAMPOLINE_MP}
+	
+	# We need to have /boot in ${TRAMPOLINE_MFS_ROOT.
+	# We need to put /rescue in ${TRAMPOLINE_MFS_ROOT}
+	# We need to copy gui-install-environment.tar and gui-packages.tar to
+	# ${TRAMPOLINE_IMG}, which will be recoverdisk'd to the filesystem.
 	MP_ROOTS=${SCRIPTDIR}/tmp/mp
 	mkdir -p ${MP_ROOTS}
 
 	# Extract the installation image for future use
-	INSTALLATION_IMG=${SCRIPTDIR}/firmware.img
 	INSTALLATION_ROOT=${SCRIPTDIR}/tmp/newroot
 	rm -rf ${INSTALLATION_ROOT} || chflags -R 0 ${INSTALLATION_ROOT} && rm -fr ${INSTALLATION_ROOT}
 	mkdir -p ${INSTALLATION_ROOT}
 
-	INSTALLATION_MD=`mdconfig -a -o ro -t vnode -f ${INSTALLATION_IMG}`
-	INSTALLATION_MD_ROOT=${MP_ROOTS}/install
-	mkdir -p ${INSTALLATION_MD_ROOT}
-	mount -o ro ${INSTALLATION_MD} ${INSTALLATION_MD_ROOT}
+#	INSTALLATION_MD=`mdconfig -a -o ro -t vnode -f ${INSTALLATION_IMG}`
+#	INSTALLATION_MD_ROOT=${MP_ROOTS}/install
+
+#	mkdir -p ${INSTALLATION_MD_ROOT}
+#	mount -o ro ${INSTALLATION_MD} ${INSTALLATION_MD_ROOT}
 	trap "umount ${INSTALLATION_MD_ROOT} && mdconfig -d -u ${INSTALLATION_MD##md}" 1 2 15 EXIT
-	tar cf - -C ${INSTALLATION_MD_ROOT} | tar xf - -C ${INSTALLATION_ROOT}
-	umount ${INSTALLATION_MD_ROOT}
-	mdconfig -d -u ${INSTALLATION_MD##md}
+#	tar cf - -C ${INSTALLATION_MD_ROOT} | tar xf - -C ${INSTALLATION_ROOT}
+#	umount ${INSTALLATION_MD_ROOT}
+#	mdconfig -d -u ${INSTALLATION_MD##md}
 	trap 1 2 15 EXIT
 
 	# Data to be migrated into the new system
-	tar cf - /data /root/.ssh | tar xf - -C ${INSTALLATION_ROOT}
+#	tar cf - /data /root/.ssh | tar xf - -C ${INSTALLATION_ROOT}
 	# Touch sentinals to simulate CD-ROM upgrade (except we don't have a returning ticket)
-	touch ${INSTALLATION_ROOT}${NEED_UPDATE_SENTINEL}
-	touch ${INSTALLATION_ROOT}${CD_UPGRADE_SENTINEL}
+#	touch ${INSTALLATION_ROOT}${NEED_UPDATE_SENTINEL}
+#	touch ${INSTALLATION_ROOT}${CD_UPGRADE_SENTINEL}
 
 	#
 	# Create the trampoline MFS image.  This MFS image does the following:
@@ -109,9 +121,11 @@ trampoline_upgrade()
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/dev
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/mnt
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer
-
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/dev
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/.mount/FreeNAS
+	
 	# Copy /rescue from the installation image.
-	tar cf - -C ${INSTALLATION_ROOT} rescue | tar xf - -C ${TRAMPOLINE_MFS_ROOT}
+	tar xf ${SCRIPTDIR}/gui-install-environment.tar -C ${TRAMPOLINE_MFS_ROOT} ./rescue
 
 	# Determine the running slice and the target slice
 	if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
@@ -129,16 +143,24 @@ trampoline_upgrade()
 
 echo -n "Extracting upgrade image, please wait..."
 
-/rescue/mount -o ro ${NANO_DRIVE}s${TRAMPOLINE_SLICE}a /mnt
+/rescue/mount -o ro /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a /mnt
 /rescue/mount -t tmpfs tmpfs /installer
-/rescue/tar xf /mnt/installer.tar.xz -C /installer || (echo "FAILED" && /rescue/sleep 15 && /rescue/reboot)
+/rescue/mkdir -p /installer/.mount/FreeNAS
+
+/rescue/tar xf /mnt/gui-install-environment.tar  -C /installer || (echo "FAILED BASE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
+/rescue/tar xf /mnt/gui-packages.tar -C /installer/.mount || (echo "FAILED PACKAGE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
+/rescue/mv /installer/.mount/Packages /installer/.mount/FreeNAS/Packages
+/rescue/umount /mnt
 
 echo " Done!"
 echo -n "Applying upgrade..."
 
 # Set up chroot jail for the first time installer
 /rescue/mount -t devfs devfs /installer/dev
-/rescue/chroot /installer /bin/sh /usr/local/libexec/install-firsttime ${ROOTDEV} || (echo "FAILED" && /rescue/sleep 15 && /rescue/reboot)
+echo "Starting a shell now; exit when done"
+/rescue/sh
+
+/rescue/chroot /installer /bin/sh /etc/install.sh "${ROOTDEV}" || (echo "FAILED" && /bin/sh && /bin/sh && /rescue/reboot)
 echo " Done!"
 echo "Rebooting..."
 /rescue/reboot
@@ -148,9 +170,8 @@ EOF
 
 	# Create the trampoline MFS image
 	makefs ${TRAMPOLINE_MFS_IMG} ${TRAMPOLINE_MFS_ROOT}
-	rm -fr ${TRAMPOLINE_MFS_ROOT} &
+#	rm -fr ${TRAMPOLINE_MFS_ROOT} &
 	gzip -9 ${TRAMPOLINE_MFS_IMG}
-	TRAMPOLINE_MFS_IMG=${TRAMPOLINE_MFS_IMG}.gz
 
 	# Trampoline partition.  This contains:
 	# 1. The kernel to boot the system;
@@ -169,12 +190,14 @@ EOF
 	mkdir -p ${TRAMPOLINE_MP}
 	mount /dev/${TRAMPOLINE_MD}a ${TRAMPOLINE_MP}
 
-	tar cf - -C {INSTALLATION_ROOT} boot | tar xf - -C ${TRAMPOLINE_MP}
-	mv ${TRAMPOLINE_MFS_IMG} ${TRAMPOLINE_MP}/boot/
-	tar Jcf ${TRAMPOLINE_MP}/installer.tar.xz -C {INSTALLATION_ROOT}
+	# Get /boot into ${TRAMPOLINE_MP}
+	tar xf ${SCRIPTDIR}/gui-boot.tar -C ${TRAMPOLINE_MP} ./boot
+	mv ${TRAMPOLINE_MFS_IMG}.gz ${TRAMPOLINE_MP}/boot/
+	cp ${SCRIPTDIR}/gui-install-environment.tar ${TRAMPOLINE_MP}
+	cp ${SCRIPTDIR}/gui-packages.tar ${TRAMPOLINE_MP}
 
 	# Create loader.conf
-	TARGET_MFS=/boot/`basename ${TRAMPOLINE_MFS_IMG}`
+	TARGET_MFS=/boot/$(basename ${TRAMPOLINE_MFS_IMG})
 	cat > ${TRAMPOLINE_MP}/boot/loader.conf <<-EOF
 autoboot_delay="0"
 beastie_disable="YES"
@@ -186,7 +209,6 @@ mfsroot_name="${TARGET_MFS}"
 init_path="/rescue/init"
 init_shell="/rescue/sh"
 init_script="/${TRAMPOLINE_MFS_RC}"
-
 tmpfs_load="YES"
 zfs_load="YES"
 EOF

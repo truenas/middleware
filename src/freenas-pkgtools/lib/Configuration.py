@@ -23,7 +23,13 @@ TRAIN_CHECKED_KEY = "LastChecked"
 log = logging.getLogger('freenasOS.Configuration')
 
 # Change this for release
-SEARCH_LOCATIONS = [ "/cdrom", "http://10.2.4.88/~sef/FreeNAS/" ]
+# Need to change search code since it isn't really
+# searching any longer.
+UPDATE_SERVER = "http://sef.he.ixsystems.com/FreeNAS/"
+SEARCH_LOCATIONS = [ "http://sef.he.ixsystems.com/FreeNAS/" ]
+
+# List of trains
+TRAIN_FILE = UPDATE_SERVER + "trains.txt"
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
@@ -89,10 +95,12 @@ class PackageDB:
     __conn = None
     __close = True
 
-    def __init__(self, root = ""):
+    def __init__(self, root = "", create = True):
         self.__db_root = root
         self.__db_path = self.__db_root + "/" + PackageDB.DB_NAME
         if os.path.exists(os.path.dirname(self.__db_path)) == False:
+            if create is False:
+                raise Exception("Cannot connect to database file %s" % self.__db_path)
             log.debug("Need to create %s", os.path.dirname(self.__db_path))
             os.makedirs(os.path.dirname(self.__db_path))
 
@@ -380,17 +388,15 @@ class PackageDB:
 
 class Configuration(object):
     _root = ""
-    _config_path = "/etc/freenas.conf"
+    _config_path = "/data/update.conf"
     _trains = None
     _temp = "/tmp"
-    _nopkgdb = False
     _system_pool_link = "/var/db/system"
     _package_dir = None
 
-    def __init__(self, root = None, file = None, nopkgdb = False):
+    def __init__(self, root = None, file = None):
         if root is not None: self._root = root
         if file is not None: self._config_path = file
-        self._nopkgdb = nopkgdb
         self.LoadConfigurationFile(self._config_path)
         # Set _temp to the system pool, if it exists.
         if os.path.islink(self._system_pool_link):
@@ -409,22 +415,25 @@ class Configuration(object):
         # it may need to be handled through the database.
         raise Exception("This is obsolete")
         cfp = ConfigParser.SafeConfigParser()
-        cfp.add_section(CONFIG_DEFAULT)
         if self._trains is not None:
             for train in self._trains:
                 cfp.add_section(train.Name())
-                if cfp.has_option(train.Name, TRAIN_SEQ_KEY):
+                if train.LastSequence() is not None:
                     cfp.set(train.Name(), TRAIN_SEQ_KEY, train.LastSequence())
-                if cfp.has_option(train.Name(), TRAIN_DESC_KEY):
+                if train.Description() is not None:
                     cfp.set(train.Name(), TRAIN_DESC_KEY, train.Description())
-                if cfp.has_option(train.Name(), TRAIN_CHECKED_KEY):
+                if train.LastCheckedTime() is not None:
                     cfp.set(train.Name(), TRAIN_CHECKED_KEY, train.LastCheckedTime())
-        with open(path, "w") as f:
+        if path is None:
+            filename = self._root + self._config_path
+        else:
+            filename = path
+        with open(filename, "w") as f:
             cfp.write(f)
         return
 
-    def PackageDB(self):
-        return PackageDB(self._root)
+    def PackageDB(self, create = True):
+        return PackageDB(self._root, create)
 
     def LoadConfigurationFile(self, path):
         self._trains = None
@@ -481,13 +490,45 @@ class Configuration(object):
         self._trains.append(train)
         return
 
-    def ListTrains(self):
-        # I'm not sure how to do this.  This should allow
-        # the program to query the search locations, and see
-        # what trains are available.  Should this be done by
-        # getdirentries / http-search?  Or should there be a
-        # file somewhere indicating which trains are availbale?
-        raise Exception("Not implemented yet")
+    def AvailableTrains(self):
+        """
+        Returns the set of available trains from
+        the upgrade server.  The return value is
+        a dictionary, keyed by the train name, and
+        value being the description.
+        The list of trains is on the upgrade server,
+        with the name "trains.txt".  Or whatever
+        I decide it should be called.
+        """
+        rv = {}
+        sys_mani = self.SystemManifest()
+        if sys_mani is None:
+            current_version = "unknown"
+        else:
+            current_version = str(sys_mani.Sequence())
+
+        fileref = TryGetNetworkFile(TRAIN_FILE,
+                                    self._temp,
+                                    current_version,
+                                    )
+
+        if fileref is None:
+            return None
+
+        for line in fileref:
+            import re
+            line = line.rstrip()
+            # Ignore comments
+            if line.startswith("#"):
+                continue
+            # Input is <name><white_space><description>
+            m = re.search("(\S+)\s+(.*)$", line)
+            if m.lastindex == None:
+                log.debug("Input line `%s' is unparsable" % line)
+                continue
+            rv[m.group(1)] = m.group(2)
+
+        return rv if len(rv) > 0 else None
 
     def Trains(self):
         return self._trains
@@ -552,6 +593,36 @@ class Configuration(object):
                 yield file_ref
         return
             
+    def GetManifest(self, train = None, sequence = None, handler = None):
+        """
+        GetManifest:  fetch, over the network, the requested
+        manifest file.  If train isn't specified, it'll use
+        the current system; if sequence isn't specified, it'll
+        use LATEST.
+        Returns either a manifest object, or None.
+        """
+        # Get the specified manifeset.
+        # If train is None, then we use the current train;
+        # if sequence is None, then we get LATEST.
+        sys_mani = self.SystemManifest()
+        if sys_mani is None:
+            raise Exceptions.ConfigurationInvalidException
+        current_version = str(sys_mani.Sequence())
+        if train is None:
+            train = sys_mani.Train()
+        if sequence is None:
+            ManifestFile = "%s/LATEST" % train
+        else:
+            # This needs to change for TrueNAS, doesn't it?
+            ManifestFile = "%s/FreeNAS-%s" % (train, sequence)
+
+        file_ref = TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
+                                     self._temp,
+                                     current_version,
+                                     handler=handler,
+                                 )
+        return file_ref
+
     def FindLatestManifest(self, train = None):
         # Finds the latest (largest sequence number)
         # manifest for a given train, iterating through
@@ -593,11 +664,10 @@ class Configuration(object):
         if upgrade_from is None:
             pkgInfo = None
             pkgdb = None
-            if self._nopkgdb == False:
-                try:
-                    pkgdb = self.PackageDB()
-                except:
-                    pass
+            try:
+                pkgdb = self.PackageDB(create = False)
+            except:
+                pass
                 
             if pkgdb is not None:
                 pkgInfo = pkgdb.FindPackage(package.Name())

@@ -1,4 +1,4 @@
-#!/usr/local/bin/python -R
+#!/usr/local/bin/python
 import os
 import sys
 

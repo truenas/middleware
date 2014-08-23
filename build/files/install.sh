@@ -465,7 +465,7 @@ menu_install()
     local _answer
     local _cdlist
     local _items
-    local _disk
+    local _disk=""
     local _disk_old
     local _config_file
     local _desc
@@ -480,6 +480,7 @@ menu_install()
     local os_part
     local data_part
     local upgrade_style
+    local interactive
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -488,65 +489,81 @@ menu_install()
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
 
+    if [ $# -eq 1 ]; then
+	_disk="$1"
+	interactive=false
+    else
+	interactive=true
+    fi
     if do_sata_dom
     then
 	_satadom="YES"
     else
 	_satadom=""
-	get_physical_disks_list
-	_disklist="${VAL}"
+	if ${interactive}; then
+	    get_physical_disks_list
+	    _disklist="${VAL}"
 
-	_list=""
-	_items=0
-	for _disk in ${_disklist}; do
-	    get_media_description "${_disk}"
-	    _desc="${VAL}"
-	    _list="${_list} ${_disk} '${_desc}'"
-	    _items=$((${_items} + 1))
-	done
-
-	_tmpfile="/tmp/answer"
-	if [ ${_items} -ge 10 ]; then
-	    _items=10
-	    _menuheight=20
-	else
-	    _menuheight=8
-	    _menuheight=$((${_menuheight} + ${_items}))
-	fi
-	if [ "${_items}" -eq 0 ]; then
+	    _list=""
+	    _items=0
+	    for _disk in ${_disklist}; do
+		get_media_description "${_disk}"
+		_desc="${VAL}"
+		_list="${_list} ${_disk} '${_desc}'"
+		_items=$((${_items} + 1))
+	    done
+	    
+	    _tmpfile="/tmp/answer"
+	    if [ ${_items} -ge 10 ]; then
+		_items=10
+		_menuheight=20
+	    else
+		_menuheight=8
+		_menuheight=$((${_menuheight} + ${_items}))
+	    fi
+	    if [ "${_items}" -eq 0 ]; then
 		# Inform the user
 		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
 		return 0
-	fi
-	eval "dialog --title 'Choose destination media' \
+	    fi
+	    eval "dialog --title 'Choose destination media' \
 	      --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
-	[ $? -eq 0 ] || exit 1
-
+	    [ $? -eq 0 ] || exit 1
+	fi
     fi # ! do_sata_dom
 
-    _disk=`cat "${_tmpfile}"`
-    rm -f "${_tmpfile}"
+    if [ -f "${_tmpfile}" ]; then
+	_disk=`cat "${_tmpfile}"`
+	rm -f "${_tmpfile}"
+    fi
 
     # Debugging seatbelts
     if disk_is_mounted "${_disk}" ; then
-        dialog --msgbox "The destination drive is already in use!" 6 74
+        ${interactive} && dialog --msgbox "The destination drive is already in use!" 6 74
         exit 1
     fi
 
     _do_upgrade=0
     _action="installation"
     if disk_is_freenas ${_disk} ; then
-        if ask_upgrade ${_disk} ; then
-            _do_upgrade=1
-            _action="upgrade"
-        fi
+        if ${interactive}; then
+	    if ask_upgrade ${_disk} ; then
+		_do_upgrade=1
+		_action="upgrade"
+            fi
+	else
+	    # Always doing an upgrade in this case
+	    _do_upgrade=1
+	    _action="upgrade"
+	fi
 	if [ -c /dev/${_disk}s4 ]; then
 	    upgrade_style="old"
 	elif [ -c /dev/${_disk}p2 ]; then
 	    upgrade_style="new"
 	else
 	    echo "Unknown upgrade style" 1>&2
+	    exit 1
 	fi
     elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
@@ -558,11 +575,15 @@ menu_install()
 	    fi
 	fi
     fi
-    new_install_verify "$_action" ${_disk}
+    ${interactive} && new_install_verify "$_action" ${_disk}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     # Start critical section.
-    trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
+    if ${interactive}; then
+	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
+    else
+	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disk} has failed.\" ; sleep 15" EXIT
+    fi
     set -e
 #    set -x
 
@@ -662,8 +683,8 @@ menu_install()
     fi
     if [ -f /tmp/loader.conf.local ]; then
 	cp /tmp/loader.conf.local /tmp/data/boot/
+	sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
     fi
-    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
     
     if is_truenas ; then
         install_worker.sh -D /tmp/data -m / install
@@ -689,7 +710,7 @@ menu_install()
 	# Create upgrade sentinel files
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
-	dialog --msgbox "The installer has preserved your database file.
+	${interactive} && dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     fi
     umount /tmp/data/boot/grub
@@ -728,7 +749,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     else
         _msg="${_msg}Please remove the CDROM and reboot."
     fi
-    dialog --msgbox "$_msg" 6 74
+    ${interactive} && dialog --msgbox "$_msg" 6 74
 
     return 0
 }
@@ -806,6 +827,12 @@ main()
     local _number
     local _test_option=
 
+    if [ $# -eq 1 ]; then
+	# $1 will have the device name
+	menu_install "$1"
+	exit $?
+    fi
+
     case "$(kenv test.run_tests_on_boot 2> /dev/null)" in
     [Yy][Ee][Ss])
         menu_test
@@ -840,4 +867,4 @@ if is_truenas ; then
     . "$(dirname "$0")/install_sata_dom.sh"
 fi
 
-main
+main "$@"

@@ -81,7 +81,7 @@ if __name__ == "__main__":
         usage()
     
     # We need a configuration to do searching
-    conf = Configuration.Configuration(file = config_file, nopkgdb = True)
+    conf = Configuration.Configuration(file = config_file)
     mani = Manifest.Manifest(conf)
     mani.SetTrain(trainname)
     mani.SetSequence(sequencenum)

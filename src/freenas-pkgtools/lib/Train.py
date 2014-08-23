@@ -1,6 +1,8 @@
 import os
 import sys
 
+import time
+
 import Exceptions
 
 class Train(object):
@@ -9,10 +11,13 @@ class Train(object):
     _seqno = None
     _time = None
 
-    def __init__(name, description = None):
+    def __init__(self, name, description = None):
         self._name = name
         self._descr = description
         return
+
+    def Name(self):
+        return self._name
 
     def Description(self):
         return self._descr
@@ -31,6 +36,6 @@ class Train(object):
     def LastCheckedTime(self):
         return self._time
 
-    def SetLastCheckedTime(self, time):
+    def SetLastCheckedTime(self, time = int(time.time())):
         self._time = time
         return
