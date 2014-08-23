@@ -1555,6 +1555,7 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
             self.__ducache = FreeNAS_Directory_UserCache()
 
         self.__users = []
+        self.__usernames = []
         self.__get_users()
 
         log.debug("FreeNAS_LDAP_Users.__init__: leave")
@@ -1598,8 +1599,13 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
         for user in self.__users:
             yield user
 
+    def _get_uncached_usernames(self):
+        return self.__usernames
+
     def __get_users(self):
         log.debug("FreeNAS_LDAP_Users.__get_users: enter")
+
+        self.__usernames = []
 
         if (self.flags & FLAGS_CACHE_READ_USER) and self.__loaded('u'):
             log.debug("FreeNAS_LDAP_Users.__get_users: users in cache")
@@ -1636,6 +1642,8 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
                     u['uid'][0]
                 )
 
+            self.__usernames.append(uid)
+
             try:
                 pw = pwd.getpwnam(uid)
 
@@ -1662,6 +1670,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
         super(FreeNAS_ActiveDirectory_Users, self).__init__(**kwargs)
 
         self.__users = {}
+        self.__usernames = []
         self.__ucache = {}
         self.__ducache = {}
 
@@ -1726,41 +1735,12 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 yield user
 
     def _get_uncached_usernames(self):
-
-        usernames = []
-        for d in self.__domains:
-            n = d['nETBIOSName']
-
-            dcs = self.get_domain_controllers(d['dnsRoot'])
-            if not dcs:
-                raise FreeNAS_ActiveDirectory_Exception(
-                    "Unable to find domain controllers for %s" % d['dnsRoot'])
-            (self.host, self.port) = self.get_best_host(dcs)
-
-            self.basedn = d['nCName']
-            self.attributes = ['sAMAccountName']
-            self.pagesize = FREENAS_LDAP_PAGESIZE
-
-            ad_users = self.get_users()
-
-            for u in ad_users:
-                CN = str(u[0])
-
-                u = u[1]
-                if self.use_default_domain:
-                    sAMAccountName = u['sAMAccountName'][0]
-                else:
-                    sAMAccountName = "{}{}{}".format(
-                        n,
-                        FREENAS_AD_SEPARATOR,
-                        u['sAMAccountName'][0]
-                    )
-                usernames.append(sAMAccountName)
-
-        return usernames
+        return self.__usernames
 
     def __get_users(self):
         log.debug("FreeNAS_ActiveDirectory_Users.__get_users: enter")
+
+        self.__usernames = []
 
         if (self.flags & FLAGS_CACHE_READ_USER):
             dcount = len(self.__domains)
@@ -1819,6 +1799,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                         u['sAMAccountName'][0]
                     )
 
+                self.__usernames.append(sAMAccountName)
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
@@ -1871,6 +1852,7 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
             self.__dgcache = FreeNAS_Directory_GroupCache()
 
         self.__groups = []
+        self.__groupnames = []
         self.__get_groups()
 
         log.debug("FreeNAS_LDAP_Groups.__init__: leave")
@@ -1914,8 +1896,13 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
         for group in self.__groups:
             yield group
 
+    def _get_uncached_groupnames(self):
+        return self.__groupnames
+
     def __get_groups(self):
         log.debug("FreeNAS_LDAP_Groups.__get_groups: enter")
+
+        self.__groupnames = []
 
         if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__loaded('g'):
             log.debug("FreeNAS_LDAP_Groups.__get_groups: groups in cache")
@@ -1953,6 +1940,8 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
                     g['cn'][0]
                 )
 
+            self.__groupnames.append(cn)
+
             try:
                 gr = grp.getgrnam(cn)
 
@@ -1980,6 +1969,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
         super(FreeNAS_ActiveDirectory_Groups, self).__init__(**kwargs)
 
         self.__groups = {}
+        self.__groupnames = []
         self.__gcache = {}
         self.__dgcache = {}
 
@@ -2044,41 +2034,12 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 yield group
 
     def _get_uncached_groupnames(self):
-
-        groupnames = []
-        for d in self.__domains:
-            n = d['nETBIOSName']
-
-            dcs = self.get_domain_controllers(d['dnsRoot'])
-            if not dcs:
-                raise FreeNAS_ActiveDirectory_Exception(
-                    "Unable to find domain controllers for %s" % d['dnsRoot'])
-            (self.host, self.port) = self.get_best_host(dcs)
-
-            self.basedn = d['nCName']
-            self.attributes = ['sAMAccountName']
-            self.pagesize = FREENAS_LDAP_PAGESIZE
-
-            ad_groups = self.get_groups()
-
-            for g in ad_groups:
-                CN = str(g[0])
-
-                if self.use_default_domain:
-                    sAMAccountName = g[1]['sAMAccountName'][0]
-                else:
-                    sAMAccountName = "{}{}{}".format(
-                        n,
-                        FREENAS_AD_SEPARATOR,
-                        g[1]['sAMAccountName'][0]
-                    )
-
-                groupnames.append(sAMAccountName)
-
-        return groupnames
+        return self.__groupnames
 
     def __get_groups(self):
         log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: enter")
+
+        self.__groupnames = []
 
         if (self.flags & FLAGS_CACHE_READ_GROUP):
             dcount = len(self.__domains)
@@ -2133,6 +2094,8 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                         FREENAS_AD_SEPARATOR,
                         g[1]['sAMAccountName'][0]
                     )
+
+                self.__groupnames.append(sAMAccountName)
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[n][CN] = g

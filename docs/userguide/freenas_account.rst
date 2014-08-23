@@ -1,16 +1,20 @@
 :orphan:
 
+.. _Account:
+
 Account
 =======
 
 The Account Configuration section of the administrative GUI describes how to manually create and manage users and groups. This section contains the following
 entries:
 
-* `Groups`_: used to manage UNIX-style groups on the FreeNAS® system.
+* :ref:`Groups`: used to manage UNIX-style groups on the FreeNAS® system.
 
-* `Users`_: used to manage UNIX-style accounts on the FreeNAS® system.
+* :ref:`Users`: used to manage UNIX-style accounts on the FreeNAS® system.
 
 Each of these entries are described in more detail in this section.
+
+.. _Groups:
 
 Groups
 ------
@@ -78,6 +82,8 @@ that the built-in groups do not provide a "Delete Group" button.
 **Figure 4.1c: Assigning a User as a Member of a Group**
 
 |Figure41c_png|
+
+.. _Users:
 
 Users
 -----

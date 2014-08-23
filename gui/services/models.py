@@ -262,6 +262,11 @@ class CIFS(Model):
            help_text=_("this parameter controls whether or not Samba"
                "should obey PAM's account and session management directives")
            )
+    cifs_SID = models.CharField(
+           max_length=120,
+           blank=True,
+           null=True,
+           )
 
     class Meta:
         verbose_name = _(u"CIFS")

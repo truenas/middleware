@@ -93,7 +93,7 @@ if ! is_truenas ; then
 fi
 add_port security/libgpg-error
 add_port security/libgcrypt
-add_port databases/db46
+add_port databases/db48
 add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client
 add_port net/nss_ldap

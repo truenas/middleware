@@ -1037,8 +1037,10 @@ class AutoImportWizard(SessionWizardView):
                     mp_options='rw')
                 mp.save()
 
+                _n = notifier()
+
                 if vol['type'] != 'zfs':
-                    notifier().label_disk(
+                    _n.label_disk(
                         volume_name,
                         "%s/%s" % (group_type, volume_name),
                         'UFS')
@@ -1047,19 +1049,19 @@ class AutoImportWizard(SessionWizardView):
                     volume.save()
                     models.Scrub.objects.create(scrub_volume=volume)
 
-                if vol['type'] == 'zfs' and not notifier().zfs_import(
+                if vol['type'] == 'zfs' and not _n.zfs_import(
                         vol['label'], vol['id']):
                     raise MiddlewareError(_(
                         'The volume "%s" failed to import, '
                         'for futher details check pool status') % vol['label'])
                 for disk in enc_disks:
-                    notifier().geli_setkey(
+                    _n.geli_setkey(
                         "/dev/%s" % disk,
                         volume.get_geli_keyfile(),
                         passphrase=passfile
                     )
                     if disk.startswith("gptid"):
-                        diskname = notifier().identifier_to_device(
+                        diskname = _n.identifier_to_device(
                             "{uuid}%s" % disk.replace("gptid/", "")
                         )
                     else:
@@ -1077,11 +1079,12 @@ class AutoImportWizard(SessionWizardView):
                 os.unlink(passfile)
             raise
 
-        notifier().reload("disk")
-        notifier().start("ix-system")
-        notifier().start("ix-syslogd")
-        notifier().start("ix-warden")
-        notifier().restart("system_datasets")
+        _n.reload("disk")
+        _n.start("ix-system")
+        _n.start("ix-syslogd")
+        _n.start("ix-warden")
+        # FIXME: do not restart collectd again
+        _n.restart("system_datasets")
 
         alertPlugins.run()
 

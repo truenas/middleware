@@ -1,5 +1,7 @@
 :orphan:
 
+.. _FreeNAS® Support Resources:
+
 FreeNAS® Support Resources
 ===========================
 
@@ -9,17 +11,19 @@ describe your error message or the function that you are trying to implement.
 
 The rest of this section discusses the following resources which are available to FreeNAS® users:
 
-* `Website and Social Media`_
+* :ref:`Website and Social Media`
 
-* Forums
+* :ref:`Forums`
 
-* `IRC`_
+* :ref:`IRC`
 
-* `Mailing Lists`_
+* :ref:`Mailing Lists`
 
-* `Videos`_
+* :ref:`Videos`
 
-* `Professional Support`_
+* :ref:`Professional Support`
+
+.. _Website and Social Media:
 
 Website and Social Media
 ------------------------
@@ -38,6 +42,9 @@ Users are welcome to network on the FreeNAS® social media sites:
 
 * `Twitter <http://twitter.com/freenasteam>`_
 
+
+.. _Forums:
+
 Forums
 ------
 
@@ -54,7 +61,6 @@ The following categories are available under **Forum Information:**
   versions and features.
 
 The following categories are available under **Help and Support:**
-
 
 * `New to FreeNAS? <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_: post here if you are new to FreeNAS® and are unsure which category best
   matches your question.
@@ -80,7 +86,6 @@ The following categories are available under **Help and Support:**
 * `Plugins <http://forums.freenas.org/forumdisplay.php?34-Plugins>`_: provides a discussion area for creating and troubleshooting PBIs.
 
 The following categories are available under **Development:**
-
 
 * `FreeNAS <http://forums.freenas.org/forumdisplay.php?9-FreeNAS>`_: general development discussion.
 
@@ -147,6 +152,8 @@ When asking a question on the forum, it is important that you:
   checked. If you want to be notified by email, also check the "and receive email notifications" box. That way you will be notified whenever anyone
   answers your question.
 
+.. _IRC:
+
 IRC
 ---
 
@@ -174,6 +181,8 @@ To get the most out of the IRC channel, keep the following points in mind:
 * Do not post error messages in the channel as the IRC software will probably kick you out. Instead, use a pasting service such as
   `pastebin <http://www.pastebin.com/>`_
   and paste the resulting URL into the IRC discussion.
+
+.. _Mailing Lists:
 
 Mailing Lists
 -------------
@@ -206,6 +215,8 @@ The following mailing lists are available:
 .. note:: the mailing lists were migrated from SourceForge to Mailman in December, 2013. Archives of the SourceForge mailing lists are available at
    `Gmane <http://dir.gmane.org/index.php?prefix=gmane.os.freenas>`_.
 
+.. _Videos:
+
 Videos
 ------
 
@@ -229,6 +240,8 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 
 .. note:: videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
    doubt, refer to the documentation specific to your version of FreeNAS®. 
+
+.. _Professional Support:
 
 Professional Support
 --------------------

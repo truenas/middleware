@@ -1,23 +1,27 @@
 :orphan:
 
+.. _System:
+
 System
 ======
 
 The System section of the administrative GUI contains the following entries:
 
-* `Information`_: provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
+* :ref:`Information`: provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
 
-* `General`_: used to general settings such as HTTPS access, the language, and the timezone
+* :ref:`General`: used to general settings such as HTTPS access, the language, and the timezone
 
-* `Advanced`_: used to configure advanced settings such as the serial console, swap, console messages, and other advanced fields
+* :ref:`Advanced`: used to configure advanced settings such as the serial console, swap, console messages, and other advanced fields
 
-* `Email`_: used to configure the email address to receive notifications
+* :ref:`Email`: used to configure the email address to receive notifications
 
-* `System Dataset`_: used to configure the location of the system dataset
+* :ref:`System Dataset`: used to configure the location of the system dataset
 
-* `Tunables`_: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
+* :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
 Each of these is described in more detail in this section.
+
+.. _Information:
 
 Information
 -----------
@@ -33,6 +37,8 @@ does not use a domain name add *.local* to the end of the hostname.
 **Figure 5.1a: System Information Tab**
 
 |Figure51a_png|
+
+.. _General:
 
 General
 -------
@@ -130,6 +136,10 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 
 |100000000000011C0000016E12EDFEE5_jpg|
 
+.. |100000000000011C0000016E12EDFEE5_jpg| image:: images/100000000000011C0000016E12EDFEE5.jpg
+    :width: 3.4217in
+    :height: 3.389in
+
 **Table 5.2b: NTP Servers Configuration Options**
 
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -197,6 +207,7 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 |                     |            |                                                                                                                  |
 +---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 
+.. _Advanced:
 
 Advanced
 --------
@@ -278,6 +289,8 @@ This tab also contains the following buttons:
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
 
+.. _Autotune:
+
 Autotune
 ~~~~~~~~
 
@@ -299,6 +312,8 @@ autotune.
 
 If you wish to read the script to see which checks are performed, the script is located in :file:`/usr/local/bin/autotune`.
 
+.. _Email:
+
 Email
 -----
 
@@ -311,7 +326,6 @@ that can be configured using the Email tab.
 **Figure 5.4a: Email Screen**
 
 |Figure54a_png|
-
 
 **Table 5.4a: Email Configuration Settings**
 
@@ -353,6 +367,8 @@ that can be configured using the Email tab.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
+.. _System Dataset:
+
 System Dataset
 --------------
 
@@ -375,6 +391,8 @@ To also store the reporting information, check the "Reporting Database" box.
 
 If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
 location. 
+
+.. _Tunables:
 
 Tunables
 --------
@@ -452,7 +470,7 @@ Any sysctls or loaders that you add will be listed alphabetically in :menuselect
 existing tunable, click its "Edit" button. To remove a tunable, click its "Delete" button.
 
 Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
-Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1* , use the command :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value
+Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value
 is read-only, an error message will indicate that the setting is read-only. If you do not get an error, the setting is now applied. However, for the setting
 to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
 
@@ -500,6 +518,8 @@ The ZFS version used in 9.2.2 deprecates the following loaders::
 If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
 loaders back.
 
+.. _Recovering From Incorrect Tunables:
+
 Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -509,6 +529,10 @@ If a tunable is preventing the system from booting, you will need physical acces
 **Figure 5.6b: FreeNAS® Boot Menu**
 
 |10000000000002D10000018F743DB34E_png|
+
+.. |10000000000002D10000018F743DB34E_png| image:: images/10000000000002D10000018F743DB34E.png
+    :width: 6.0583in
+    :height: 3.3252in
 
 The boot loader prompt provides a minimal set of commands described in
 `loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the :command:`unset` command to disable a problematic value, the

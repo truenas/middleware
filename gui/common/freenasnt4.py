@@ -225,6 +225,7 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
         super(FreeNAS_NT4_Users, self).__init__(**kwargs)
 
         self.__users = {}
+        self.__usernames = []
         self.__ucache = {}
         self.__ducache = {}
 
@@ -275,8 +276,13 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
 
         return ret
 
+    def _get_uncached_usernames(self):
+        return self.__usernames
+
     def __get_users(self):
         log.debug("FreeNAS_NT4_Users.__get_users: enter")
+
+        self.__usernames = []
 
         if self.flags & FLAGS_CACHE_READ_USER:
             dcount = len(self.__domains) 
@@ -313,6 +319,7 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
                     self.__ducache[d][uid] = u
 
                 sAMAccountName = u['sAMAccountName']
+                usernames.append(sAMAccountName)
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 
@@ -352,6 +359,7 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
         super(FreeNAS_NT4_Groups, self).__init__(**kwargs)
 
         self.__groups = {}
+        self.__groupnames = []
         self.__gcache = {}
         self.__dgcache = {}
 
@@ -413,8 +421,13 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
             for group in self.__groups[d]:
                 yield group
 
+    def _get_uncached_groupnames(self):
+        return self.__groupnames
+
     def __get_groups(self):
         log.debug("FreeNAS_NT4_Groups.__get_groups: enter")
+
+        self.__groupnames = []
 
         if (self.flags & FLAGS_CACHE_READ_GROUP):
             dcount = len(self.__domains)
@@ -446,6 +459,7 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
 
             for g in nt4_groups:
                 sAMAccountName = g['sAMAccountName']
+                self.__groupnames.append(sAMAccountName)
 
                 if self.flags & FLAGS_CACHE_WRITE_GROUP:
                     self.__dgcache[d][sAMAccountName.upper()] = g

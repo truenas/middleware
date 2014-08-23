@@ -376,6 +376,7 @@ Hello,
             msg = f.read().strip('\n').strip('\r')
         os.remove(templog)
         log.debug("Replication result: %s" % (msg))
+        msg = msg.replace('WARNING: enabled NONE cipher\n', '')
         results[replication.id] = msg
 
         # Determine if the remote side have the snapshot we have now.
