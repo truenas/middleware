@@ -415,7 +415,7 @@ class notifier:
 	dav_auth_type=dav_auth_type[0]
 	
 	# Check to see there is a http auth password file if not then create one
-	oscmd="/usr/local/www/apache24/webdavht%s" % dav_auth_type
+	oscmd="/etc/local/apache24/webdavht%s" % dav_auth_type
 	if not os.path.isfile(oscmd):
 	  dav_passwd=c.execute("select webdav_password from services_webdav;").fetchone()
 	  dav_passwd=dav_passwd[0]
@@ -423,7 +423,7 @@ class notifier:
 	
 	# Check to see if there is a webdav lock databse directory, if not create one 
 	# Take care of necessary permissions whilst creating it!
-	oscmd="/usr/local/www/apache24/var"
+	oscmd="/etc/local/apache24/var"
 	if not os.path.isdir(oscmd):
 	  os.mkdir(oscmd, 0774)
 	  self._chownrecur(oscmd,pwd.getpwnam("webdav").pw_uid,grp.getgrnam("webdav").gr_gid)
@@ -450,13 +450,13 @@ class notifier:
 	      dav_auth_text="AuthDigestProvider file"
 	  
 	  dav_config_pretext = """
-	    DavLockDB "/usr/local/www/apache24/var/DavLock"
+	    DavLockDB "/etc/local/apache24/var/DavLock"
 	    AssignUserId webdav webdav
 	    
 	    <Directory />
 	      AuthType %s
 	      AuthName webdav
-	      AuthUserFile "/usr/local/www/apache24/webdavht%s"
+	      AuthUserFile "/etc/local/apache24/webdavht%s"
 	      %s
 	      Require valid-user
 	      
@@ -540,11 +540,11 @@ class notifier:
     
     def dav_passwd_change(self,passwd,auth_type):
 	if auth_type == 'basic':
-	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /usr/local/www/apache24/webdavhtbasic webdav %s" % passwd
+	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /etc/local/apache24/webdavhtbasic webdav %s" % passwd
 	else:
-	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /usr/local/www/apache24/webdavhtdigest""" % passwd
+	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /etc/local/apache24/webdavhtdigest""" % passwd
 	self._pipeopen(cmd)
-	self._pipeopen("chown webdav:webdav /usr/local/www/apache24/webdavht%s" % (auth_type,))
+	self._pipeopen("chown webdav:webdav /etc/local/apache24/webdavht%s" % (auth_type,))
 
     def _start_webdav(self):
 	self.gen_dav_config()

@@ -80,6 +80,15 @@ class servicesForm(ModelForm):
             obj.save()
             started = True
         
+        elif obj.srv_service == 'domaincontroller':
+            if obj.srv_enable == True:
+                if _notifier._started_domaincontroller():
+                    started = _notifier.restart("domaincontroller")
+                else:
+                    started = _notifier.start("domaincontroller")
+            else:
+                started = _notifier.stop("domaincontroller")
+
         else:
             """
             Using rc.d restart verb and depend on rc_var service_enable
