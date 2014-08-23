@@ -1596,8 +1596,10 @@ class WebDAVForm(ModelForm):
       if self.__webdav_password_changed():
 	  notifier().dav_passwd_change(self.instance.webdav_password,self.instance.webdav_htauth)
       
-      #if ( self.__webdav_protocol_changed() and self.instance._original_webdav_protocol == 'http' ):
-	  # will wait for the ssl cert manager to fo this
+      if ( self.__webdav_protocol_changed() and self.instance._original_webdav_protocol == 'http' ):
+	  # The below piece of unforgivable hackery will soon be taken,
+	  # For Hackery for the sake of Hackery is also forsaken!
+	  notifier().start_ssl("nginx")
       
       if self.__original_changed():
 	  started = notifier().reload("webdav")
