@@ -188,7 +188,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_register ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_register
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_sshd_save_keys ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_sshd_save_keys
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_textdump ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_textdump
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-afpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-apache
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-apache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-apache
 
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController
