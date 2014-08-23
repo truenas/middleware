@@ -354,11 +354,11 @@ class WebDAV_Share(Model):
     )
     
     webdav_perm = models.BooleanField(
-	verbose_name=_('Change Group Ownership'),
-	help_text=_("Changes the group of the shared folder"
-	  "<br />to 'webdav' recursively (including all subdirectories)"
+	verbose_name=_('Change User & Group Ownership'),
+	help_text=_("Changes the usr & group of the shared folder"
+	  " to 'webdav:webdav' recursively (including all subdirectories)"
 	  "<br />If disabled, you will need to manually" 
-	  "<br />add the 'webdav' group to the share."),
+	  "<br />add the 'webdav' user & group to the share."),
 	default=True,
     )
 	  

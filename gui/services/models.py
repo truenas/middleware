@@ -1751,3 +1751,4 @@ class WebDAV(Model):
 
     class FreeAdmin:
 	deletable = False
+        icon_model = u"WebDAVShareIcon"
