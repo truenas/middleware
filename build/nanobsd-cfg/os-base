@@ -43,7 +43,6 @@ fi
 
 . "$NANO_CFG_BASE/os-base-functions.sh"
 
-# SUraj's edit to make the size of the build larger (org. was 2g)
 FlashDevice generic 2g
 
 # Pull in common definitions.
