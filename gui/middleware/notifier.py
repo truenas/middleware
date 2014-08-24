@@ -513,6 +513,9 @@ class notifier:
 	      f.write(dav_config_posttext)
 	  
 	  if dav_protocol in ['https','httphttps']:
+            if  dav_protocol == 'https':
+              with open('/etc/local/apache24/Includes/webdav.conf','w') as f:
+                f.write("")
 	    with open('/etc/local/apache24/Includes/webdav-ssl.conf','w') as f2:
 	      f2.write(" Listen "+str(dav_tcpportssl)+"\n")
 	      f2.write("\t <VirtualHost *:"+str(dav_tcpportssl)+">\n")
