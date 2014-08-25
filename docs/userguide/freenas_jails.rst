@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Jails:
+
 Jails
 =====
 
@@ -72,15 +74,17 @@ installed into that jail.
 
 The rest of this section describes the following:
 
-* `Jails Configuration`_
+* :ref:`Jails Configuration`
 
-* `Add Jails`_
+* :ref:`Add Jails`
 
-* `Jail Templates`_
+* :ref:`Jail Templates`
 
-* `Installing FreeNAS® PBIs`_
+* :ref:`Installing FreeNAS® PBIs`
 
-* `Installing non-PBI Software`_
+* :ref:`Installing non-PBI Software`
+
+.. _Jails Configuration:
 
 Jails Configuration
 -------------------
@@ -143,6 +147,8 @@ are created, they will automatically be assigned the next free IP address within
    double-check the values in these fields. In particular, make sure that the specified IPv4 settings are reachable by clients and that the specified
    addresses are not in use by any other clients in the network.
 
+.. _Add Jails:
+
 Add Jails
 ---------
 
@@ -153,7 +159,6 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 **Figure 13.2a: Creating a Jail**
 
 |Figure132a_png|
-
 
 **Table 13.2a: Jail Configuration Options**
 
@@ -263,6 +268,8 @@ Internet, the jail creation will fail. Otherwise, a progress bar will indicate t
 complete. Once the first jail is created, subsequent jails of that type will be added instantaneously as the downloaded base for creating that type of jail is
 saved to the "Jail Root".
 
+.. _Managing Jails:
+
 Managing Jails
 ~~~~~~~~~~~~~~
 
@@ -275,11 +282,11 @@ the list entry for the jail named *pluginjail* has been clicked.
 
 Click a jail's entry to access its configuration icons. In order, from left to right, these icons are used to:
 
-**Edit Jail:** edit the jail's settings as described in `Edit Jail`_.
+**Edit Jail:** edit the jail's settings as described in :ref:`Edit Jail`.
 
-**Add Storage:** configure the jail to access an area of storage as described in `Add Storage`_.
+**Add Storage:** configure the jail to access an area of storage as described in :ref:`Add Storage`.
 
-**Upload Plugin:** only available in a plugin jail. Used to install plugins as described in `Installing FreeNAS® PBIs`_.
+**Upload Plugin:** only available in a plugin jail. Used to install plugins as described in :ref:`Installing FreeNAS® PBIs`.
 
 **Start/Stop:** this icon will vary, depending upon the current running status of the jail. If the jail is currently stopped, the icon will be green and can
 be used to start the jail. If the jail is currently running, the icon will be red and can be used to stop the jail. A stopped jail and its applications are
@@ -289,6 +296,8 @@ inaccessible until it is restarted.
 
 **Delete:** deleting the specified jail also deletes any software that was installed in that jail. The GUI will display a warning which requires you to click
 the "Yes" button, indicating that you are sure that you want to delete the jail, before this operation is performed.
+
+.. _Accessing a Jail Using SSH:
 
 Accessing a Jail Using SSH
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -336,6 +345,8 @@ Finally, test from another system that the user can successfully :command:`ssh` 
 .. note:: each jail has its own user accounts and service configuration. This means that you will need to repeat these steps for each jail that requires SSH
    access.
 
+.. _Edit Jail:
+
 Edit Jail
 ^^^^^^^^^
 
@@ -359,6 +370,8 @@ between the "Add Jail" and "Edit Jail" screens:
 
 .. note:: if you need to modify the IP address information for a jail, use it's "Edit Jail" button instead of the associated networking commands from the
    command line of the jail.
+
+.. _Add Storage:
 
 Add Storage
 ^^^^^^^^^^^
@@ -439,6 +452,8 @@ To delete the storage, click its "Delete" button.
 
 |Figure132e_png|
 
+.. _Jail Templates:
+
 Jail Templates
 --------------
 
@@ -463,6 +478,8 @@ The listing contains the following columns:
 * **Instances:** indicates if the template has been used to create a jail. In this example, one pluginjail, portjail, standard, and debian jail have been
   created, so their instances show as *1*. The rest of the templates have not been used yet so their instances show as
   *0*. 
+
+.. _Creating Templates:
 
 Creating Templates
 ~~~~~~~~~~~~~~~~~~
@@ -521,7 +538,7 @@ Table 13.3a summarizes the fields in this screen.
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
 
-
+.. _Installing FreeNAS® PBIs:
 
 Installing FreeNAS® PBIs
 -------------------------
@@ -550,6 +567,8 @@ You can now configure and manage the installed software as described in Installi
 
 |Figure134b_png|
 
+.. _Installing non-PBI Software:
+
 Installing non-PBI Software
 ---------------------------
 
@@ -558,6 +577,8 @@ port, or standard jail using FreeBSD ports or pkgng packages. This section descr
 entire section first to determine which method of software installation best meets your needs.
 
 .. note:: the commands demonstrated in this section need to be executed from the shell icon of the jail the software is to be installed into.
+
+.. _Installing Packages:
 
 Installing Packages
 ~~~~~~~~~~~~~~~~~~~
@@ -620,6 +641,8 @@ To see what was installed with the package::
 In FreeBSD, third-party software is always stored in :file:`/usr/local` to differentiate it from the software that came with the operating system. Binaries
 are almost always located in a subdirectory called :file:`bin` or :file:`sbin` and configuration files in a subdirectory called :file:`etc`.
 
+.. _Compiling Ports:
+
 Compiling Ports
 ~~~~~~~~~~~~~~~
 
@@ -646,6 +669,10 @@ for audiotag.
 **Figure 13.5a: Configuration Options for Audiotag**
 
 |10000000000002E1000002757E7365A6_png|
+
+.. |10000000000002E1000002757E7365A6_png| image:: images/10000000000002E1000002757E7365A6.png
+    :width: 6.9252in
+    :height: 4.5425in
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
@@ -679,6 +706,10 @@ Since this port has configurable options, the first time this command is run the
 
 |10000000000001DF0000012CAAF5492B_png|
 
+.. |10000000000001DF0000012CAAF5492B_png| image:: images/10000000000001DF0000012CAAF5492B.png
+    :width: 5.7701in
+    :height: 2.778in
+
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
 
@@ -690,6 +721,8 @@ good idea to keep an eye on the compile until it finishes and you are returned t
 
 Once the port is installed, it is registered in the same package database that manages packages. This means that you can use :command:`pkg info` to determine
 what was installed, as described in the previous section.
+
+.. _Starting Installed Software:
 
 Starting Installed Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

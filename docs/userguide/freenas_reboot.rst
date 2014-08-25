@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Reboot:
+
 Reboot
 ======
 
@@ -7,8 +9,7 @@ If you click "Reboot", you will receive the warning message shown in Figure 18a 
 an option that will negatively impact users of the FreeNAS® system.
 
 .. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key using the
-   instructions in Creating an Encrypted Volume_before performing a reboot.
-   **Without these, you will not be able to unlock the encrypted volume after the reboot.**
+   instructions in :ref:`Encryption` before performing a reboot. **Without these, you will not be able to unlock the encrypted volume after the reboot.**
 
 **Figure 18a: Reboot Warning Message**
 

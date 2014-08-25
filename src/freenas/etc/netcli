@@ -27,6 +27,7 @@
 # $FreeBSD$
 #####################################################################
 
+import getpass
 import os
 import re
 import signal
@@ -448,17 +449,39 @@ Acceptable formats are 255.255.255.0,
         print _("ok")
         return True
 
-def reset_gui_login():
+def reset_root_pw():
     from freenasUI.account.models import bsdUsers
     qs = bsdUsers.objects.filter(bsdusr_uid=0)
-    qs.update(bsdusr_unixhash='*')
+    if not qs.exists():
+        return None
+    user = qs[0]
+
     print
-    print _("The password for your root accounts (%s) have been reseted." % (
-        ', '.join([u.bsdusr_username for u in qs]),
-    ))
-    print _("Set a new password from the WebGUI.")
+    print _("Changing password for %s") % user.bsdusr_username
     print
-    print _("Press Enter to continue")
+
+    prompt = lambda y: (getpass.getpass(), getpass.getpass(y))
+    while True:
+        p1, p2 = prompt(_('Retype password: '))
+        if p1 == p2:
+            break
+        print
+        print _('Passwords do not match. Try again.')
+        print
+            
+    if p1:
+        user.set_password(p1)
+        user.save()
+        print
+        print _('Password successfully changed.')
+        print
+    else:
+        print
+        print _('Password change aborted.')
+        print
+    
+
+    print _('Press enter to continue')
     print
     raw_input("")
 
@@ -1040,7 +1063,7 @@ def main_menu():
         [ _("Configure Default Route"), configure_default_route ],
         [ _("Configure Static Routes"), configure_static_routes ],
         [ _("Configure DNS"), configure_dns ],
-        [ _("Reset WebGUI login credentials"), reset_gui_login ],
+        [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
         [ _("Reboot"), reboot ],

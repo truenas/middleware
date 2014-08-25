@@ -210,7 +210,8 @@ define([
         invalidMessage: gettext('This user does not exist.'),
         validator: function(value, constraints) {
           var found;
-          me._storeUsers.fetch({query: {id: value}, onComplete: function(results) {
+          value = value.replace("\\", "\\\\");
+          me._storeUsers.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
             found = true;
             } else {
@@ -271,7 +272,8 @@ define([
         invalidMessage: gettext('This group does not exist.'),
         validator: function(value, constraints) {
           var found;
-          me._storeGroups.fetch({query: {id: value}, onComplete: function(results) {
+          value = value.replace("\\", "\\\\");
+          me._storeGroups.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
             found = true;
             } else {

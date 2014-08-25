@@ -130,6 +130,7 @@ List resource
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
+                "afp_srv_global_aux": "",
                 "afp_srv_dbpath": ""
         }
 
@@ -170,6 +171,7 @@ Update resource
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
+                "afp_srv_global_aux": "",
                 "afp_srv_dbpath": ""
         }
 
@@ -179,6 +181,7 @@ Update resource
    :json string afp_srv_homedir: path to home directory
    :json boolean afp_srv_homedir_enable: enable to home directory feature
    :json string afp_srv_dbpath: database information to be stored in path
+   :json string afp_srv_global_aux: auxiliary parameters in Global section
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
@@ -402,7 +405,13 @@ Update resource
       Content-Type: application/json
 
         {
-                "dc_forest_level": "2008"
+                "dc_forest_level": "2008",
+                "dc_dns_forwarder": "192.168.1.1",
+                "dc_domain": "example",
+                "dc_kerberos_realm": "",
+                "dc_passwd": "newpasswd",
+                "dc_realm": "example.org"
+
         }
 
    **Example response**:
@@ -415,11 +424,11 @@ Update resource
 
         {
                 "dc_dns_backend": "SAMBA_INTERNAL",
-                "dc_dns_forwarder": "",
-                "dc_domain": "",
-                "dc_forest_level": "2003",
-                "dc_passwd": "",
-                "dc_realm": "",
+                "dc_dns_forwarder": "192.168.1.1",
+                "dc_domain": "example",
+                "dc_forest_level": "2008",
+                "dc_passwd": "newpasswd",
+                "dc_realm": "example.org",
                 "dc_role": "dc",
                 "id": 1
         }

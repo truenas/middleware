@@ -192,6 +192,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_register ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_register
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_sshd_save_keys ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_sshd_save_keys
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_textdump ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_textdump
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-apache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-apache
+
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/LDAP
@@ -230,6 +232,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/samba ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/sshd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/sshd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/su ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/su
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/sudo ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/sudo
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/system ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/system
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/telnetd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/telnetd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/xdm ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/xdm

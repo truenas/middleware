@@ -74,11 +74,28 @@ class servicesForm(ModelForm):
 
         self.enabled_svcs = []
         self.disabled_svcs = []
-        directory_services = ['activedirectory', 'domaincontroller', 'ldap', 'nt4', 'nis']
         if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
             obj.srv_enable = True
             obj.save()
             started = True
+        
+        elif obj.srv_service == 'domaincontroller':
+            if obj.srv_enable == True:
+                if _notifier._started_domaincontroller():
+                    started = _notifier.restart("domaincontroller")
+                else:
+                    started = _notifier.start("domaincontroller")
+            else:
+                started = _notifier.stop("domaincontroller")
+
+        elif obj.srv_service == 'domaincontroller':
+            if obj.srv_enable == True:
+                if _notifier._started_domaincontroller():
+                    started = _notifier.restart("domaincontroller")
+                else:
+                    started = _notifier.start("domaincontroller")
+            else: 
+                started = _notifier.stop("domaincontroller")
 
         else:
             """
@@ -111,11 +128,14 @@ class servicesForm(ModelForm):
 
         return obj
 
+    def done(self, request=None, events=None, **kwargs):
+	return super(servicesForm, self).done(request=request, events=events, **kwargs)
 
 class CIFSForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = [ 'cifs_SID' ]
         model = models.CIFS
 
     def __check_octet(self, v):
@@ -992,6 +1012,7 @@ class iSCSITargetExtentForm(ModelForm):
             used_disks.extend(v.get_disks())
 
         _notifier = notifier()
+        zsnapshots = _notifier.zfs_snapshot_list()
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = _notifier.list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
@@ -999,10 +1020,9 @@ class iSCSITargetExtentForm(ModelForm):
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
                         humanize_size(attrs['volsize']))
-                zsnapshots = _notifier.zfs_snapshot_list(path=zvol).values()
-                if not zsnapshots:
+                if zvol not in zsnapshots:
                     continue
-                for snap in zsnapshots[0]:
+                for snap in zsnapshots.get(zvol):
                     diskchoices["zvol/" + snap.fullname] = "%s (%s)" % (
                         snap.fullname,
                         humanize_size(attrs['volsize']))
@@ -1514,3 +1534,102 @@ class DomainControllerForm(ModelForm):
 
         if self.__dc_passwd_changed():
             Samba4().set_administrator_password()
+
+class WebDAVForm(ModelForm):
+  webdav_password2 = forms.CharField(
+      max_length=120,
+      label=_("Confirm WebDAV Password"),
+      widget=forms.widgets.PasswordInput(),
+      required=False,
+    )
+  class Meta:
+      #fields = "__all__"
+      fields = ('webdav_protocol', 'webdav_tcpport','webdav_tcpportssl','webdav_htauth','webdav_password')
+      model = models.WebDAV
+      widgets = {
+	'webdav_tcpport' : forms.widgets.TextInput(),
+	'webdav_tcpportssl' : forms.widgets.TextInput(),
+	'webdav_password' : forms.widgets.PasswordInput(render_value=False), 
+	}
+    
+  def __original_save(self):
+      for name in ('webdav_password', 'webdav_tcpport','webdav_tcpportssl','webdav_protocol','webdav_htauth'):
+	  setattr(self.instance, "_original_%s" % name,
+	      getattr(self.instance, name)
+          )
+	  
+  def __webdav_password_changed(self):
+      if self.instance._original_webdav_password != self.instance.webdav_password:
+	return True
+      return False
+  
+  def __webdav_protocol_changed(self):
+      if self.instance._original_webdav_protocol != self.instance.webdav_protocol:
+	return True
+      return False
+  
+  def __original_changed(self):
+      for name in ('webdav_password', 'webdav_tcpport', 'webdav_protocol','webdav_tcpportssl','webdav_htauth'):
+	  original_value = getattr(self.instance, "_original_%s" % name)
+	  instance_value = getattr(self.instance, name)
+	  if original_value != instance_value:
+	      return True
+      return False
+  
+  def __init__(self, *args, **kwargs):
+      super(WebDAVForm, self).__init__(*args, **kwargs)
+      if self.instance.webdav_password:
+	self.fields['webdav_password'].required = False
+      if self._api is True:
+	  del self.fields['webdav_password2']
+      self.fields['webdav_protocol'].widget.attrs['onChange'] = (
+            "webdavprotocolToggle();"
+        )
+      self.__original_save()
+      
+  def clean_webdav_password2(self):
+      password1 = self.cleaned_data.get("webdav_password")
+      password2 = self.cleaned_data.get("webdav_password2")
+      if password1 != password2:
+	  raise forms.ValidationError(_("The two password fields didn't match."))
+      return password2
+
+
+  def clean(self):
+      cdata = self.cleaned_data
+      if not cdata.get("webdav_password"):
+	  cdata['webdav_password'] = self.instance.webdav_password
+      if not cdata.get("webdav_tcpport"):
+	  cdata['webdav_tcpport'] = self.instance.webdav_tcpport
+      if not cdata.get("webdav_tcpportssl"):
+	  cdata['webdav_tcpportssl'] = self.instance.webdav_tcpportssl
+      if self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl"):
+	  self._errors["webdav_tcpport"] = self.error_class([_("The HTTP and HTTPS ports cannot be the same!")])
+	
+      return cdata
+  
+  def save(self):
+      super(WebDAVForm,self).save()
+      
+      if self.__webdav_password_changed():
+	  notifier().dav_passwd_change(self.instance.webdav_password,self.instance.webdav_htauth)
+      
+      if ( self.__webdav_protocol_changed() and self.instance._original_webdav_protocol == 'http' ):
+	  # The below piece of unforgivable hackery will soon be taken,
+	  # For Hackery for the sake of Hackery is also forsaken!
+	  notifier().start_ssl("nginx")
+      
+      if self.__original_changed():
+	  started = notifier().reload("webdav")
+	  if ( started is False
+	      and
+	      models.services.objects.get(srv_service='webdav').srv_enable
+	     ):
+	      raise ServiceFailed( "webdav", _("The WebDAV service failed to reload.") )
+
+
+
+  def done(self, request=None, events=None, **kwargs):
+      return super(WebDAVForm, self).done(
+	  request=request, events=events, **kwargs
+      )

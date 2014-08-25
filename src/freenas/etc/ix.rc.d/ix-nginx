@@ -13,7 +13,6 @@
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
-
 generate_plugins_conf()
 {
 	local IFS="|"
@@ -145,7 +144,7 @@ http {
     #gzip  on;
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
-
+    
     server {
         server_name  localhost;
 __EOF__

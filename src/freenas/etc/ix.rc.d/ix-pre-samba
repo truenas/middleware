@@ -14,13 +14,23 @@ set_sambaSID()
 {
 	local sambaSID
 
-	if [ -s "${SAMBA_SIDFILE}" ]
-	then
-		sambaSID="$(cat "${SAMBA_SIDFILE}")"
-
-		export LOGNAME=anonymous
-		/usr/local/bin/net setlocalsid "${sambaSID}"
-	fi
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_SID
+	FROM
+		services_cifs
+	ORDER BY
+		-id
+	LIMIT
+		1
+	" | while read sambaSID
+	do
+		if [ -n "${sambaSID}" ]
+		then
+			export LOGNAME=anonymous
+			/usr/local/bin/net setlocalsid "${sambaSID}"
+		fi
+	done
 }
 
 generate_smb_config()

@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Reporting:
+
 Reporting
 =========
 

@@ -27,3 +27,10 @@ class ViewWin(TreeNode):
     type = 'opensharing'
     append_app = False
     append_to = 'sharing.CIFS_Share'
+
+class ViewWebDAV(TreeNode):
+    
+    gname = 'View'
+    type = 'opensharing'
+    append_app = False
+    append_to = 'sharing.WebDAV_Share'

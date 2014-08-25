@@ -1,20 +1,24 @@
 :orphan:
 
+.. _Tasks:
+
 Tasks
 =====
 
 The Tasks section of the administrative GUI can be used to perform the following tasks:
 
-* `Cron Jobs`_: provides a graphical front-end to
+* :ref:`Cron Jobs`: provides a graphical front-end to
   `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
 
-* `Init/Shutdown Scripts`_: used to configure a command or script to automatically execute during system startup or shutdown
+* :ref:`Init/Shutdown Scripts`: used to configure a command or script to automatically execute during system startup or shutdown
 
-* `Rsync Tasks`_: allows you to schedule rsync tasks
+* :ref:`Rsync Tasks`: allows you to schedule rsync tasks
 
-* `S.M.A.R.T. Tests`_: allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
+* :ref:`S.M.A.R.T. Tests`: allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
 
 Each of these is described in more detail in this section.
+
+.. _Cron Jobs:
 
 Cron Jobs
 ---------
@@ -26,11 +30,15 @@ using syntax that can be perplexing to new Unix users. The FreeNAS® GUI makes i
 
 .. note:: due to a limitation in FreeBSD, users with account names that contain spaces or exceed 17 characters are unable to create cron jobs.
 
-Figure 6.1a shows the screen that opens when you click :menuselection:`System --> Cron Jobs --> Add Cron Job`.
+Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks --> Cron Jobs --> Add Cron Job`.
 
 **Figure 6.1a: Creating a Cron Job**
 
-|Figure61a_png|
+|cron.png|
+
+.. |cron.png| image:: images/cron.png
+    :width: 9.3in
+    :height: 4.4in
 
 Table 6.1a summarizes the configurable options when creating a cron job.
 
@@ -80,12 +88,14 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 
 Created cron jobs will be listed in View Cron Jobs. If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
+.. _Init/Shutdown Scripts:
+
 Init/Shutdown Scripts
 ---------------------
 
 FreeNAS® provides the ability to schedule commands or scripts to run at system startup or shutdown.
 
-Figure 6.2a shows the screen that opens when you click :menuselection:`System --> Init/Shutdown Scripts --> Add Init/Shutdown Script`. Table 6.2a summarizes
+Figure 6.2a shows the screen that opens when you click :menuselection:`Tasks --> Init/Shutdown Scripts --> Add Init/Shutdown Script`. Table 6.2a summarizes
 the available options.
 
 When scheduling a command, make sure that the command is in your path or give the full path to the command. One way to test the path is to type
@@ -95,7 +105,11 @@ When scheduling a script, make sure that the script is executable and has been f
 
 **Figure 6.2a: Add an Init/Shutdown Script**
 
-|Figure62a_png|
+|init.png|
+
+.. |init.png| image:: images/init.png
+    :width: 4.6in
+    :height: 2.6in
 
 **Table 6.2a: Options When Adding an Init/Shutdown Script**
 
@@ -112,11 +126,13 @@ When scheduling a script, make sure that the script is executable and has been f
 |             |                | *Script* is selected, browse to the location of the script                        |
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
-| Type        | drop-down menu | select when the command/script will run; choices are *Pre Init*                   |
+| When        | drop-down menu | select when the command/script will run; choices are *Pre Init*                   |
 |             |                | (very early in boot process before filesystems are mounted), *Post Init*          |
-|             |                | (towards end of boot process before FreeNAS services are started), or *Shutdown*  |   
+|             |                | (towards end of boot process before FreeNAS services are started), or *Shutdown*  |
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
+
+.. _Rsync Tasks:
 
 Rsync Tasks
 -----------
@@ -155,7 +171,11 @@ can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
 
-|Figure63a_png|
+|rsync1.png|
+
+.. |rsync1.png| image:: images/rsync1.png
+    :width: 10.74in
+    :height: 4.4in
 
 **Table 6.3a: Rsync Configuration Options**
 
@@ -255,6 +275,8 @@ can be configured when creating an rsync task.
 If the rysnc server requires password authentication, input *--password-file=/PATHTO/FILENAME* in the "Extra options" box, replacing
 */PATHTO/FILENAME* with the appropriate path to the file containing the value of the password.
 
+.. _Rsync Module Mode:
+
 Rsync Module Mode
 ~~~~~~~~~~~~~~~~~
 
@@ -266,7 +288,7 @@ This configuration example will configure rsync module mode between the two foll
 * *192.168.2.6* has an existing volume named :file:`/mnt/remote`. It will be the rsync server, meaning that it will receive the contents of
   :file:`/mnt/local/images`. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as *PULL.*
 
-On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task` as shown in Figure 6.3b. In this example:
+On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task`. In this example:
 
 * the "Path" points to :file:`/usr/local/images`, the directory to be copied
 
@@ -284,7 +306,7 @@ On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --
 
 * the "Preserve Permissions" checkbox is checked so that the original permissions are not overwritten by the *root* user
 
-On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modules --> Add Rsync Module`, shown in Figure 6.3c. In this example:
+On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modules --> Add Rsync Module`. In this example:
 
 * the "Module Name" is *backups*; this needs to match the setting on the rsync client
 
@@ -294,18 +316,12 @@ On *PULL*, an rsync module is defined in :menuselection:`Services --> Rsync Modu
 
 * "Hosts allow" is set to *192.168.2.2*, the IP address of the rsync client
 
-Descriptions of the configurable options can be found in `Rsync Modules`_.
+Descriptions of the configurable options can be found in `Rsync Modules`.
 
 To finish the configuration, start the rsync service on *PULL* in :menuselection:`Services --> Control Services`. If the rsync is successful, the contents of
 :file:`/mnt/local/images/` will be mirrored to :file:`/mnt/remote/images/`.
 
-**Figure 6.3b: Configuring the Rsync Client**
-
-|Figure63b_png|
-
-**Figure 6.3c: Configuring the Rsync Server**
-
-|Figure63c_png|
+.. _Rsync over SSH Mode
 
 Rsync over SSH Mode
 ~~~~~~~~~~~~~~~~~~~
@@ -374,12 +390,16 @@ Next, view and copy the contents of the generated public key::
 
 Go to *PULL* and paste (or append) the copied key into the "SSH Public Key" field of
 :menuselection:`Account --> Users --> View Users --> root --> Modify User`, or the username of the specified rsync user account. The paste for the above
-example is shown in Figure 6.3d. When pasting the key, ensure that it is pasted as one long line and, if necessary, remove any extra spaces representing line
+example is shown in Figure 6.3b. When pasting the key, ensure that it is pasted as one long line and, if necessary, remove any extra spaces representing line
 breaks.
 
-**Figure 6.3d: Pasting the User's SSH Public Key**
+**Figure 6.3b: Pasting the User's SSH Public Key**
 
-|Figure63d_png|
+|rsync2.png|
+
+.. |rsync2.png| image:: images/rsync2.png
+    :width: 7.9in
+    :height: 4.5in
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
 
@@ -416,6 +436,8 @@ automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the con
 If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
 
+.. _S.M.A.R.T. Tests:
+
 S.M.A.R.T. Tests
 ----------------
 
@@ -434,7 +456,11 @@ created any volumes.
 
 **Figure 6.4a: Adding a S.M.A.R.T. Test**
 
-|10000000000001DA0000021AE2615C27_png|
+|smart1.png|
+
+.. |smart1.png| image:: images/smart1.png
+    :width: 6.94in
+    :height: 4.9in
 
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 
@@ -445,7 +471,7 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 |                   |                           |                                                                                                            |
 |                   |                           |                                                                                                            |
 +===================+===========================+============================================================================================================+
-| Disk              | list                      | highlight disk(s) to monitor                                                                               |
+| Disks             | list                      | highlight disk(s) to monitor                                                                               |
 |                   |                           |                                                                                                            |
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
 | Type              | drop-down menu            | select type of test to run; see                                                                            |
