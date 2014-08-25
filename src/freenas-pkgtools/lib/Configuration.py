@@ -25,8 +25,8 @@ log = logging.getLogger('freenasOS.Configuration')
 # Change this for release
 # Need to change search code since it isn't really
 # searching any longer.
-UPDATE_SERVER = "http://sef.he.ixsystems.com/FreeNAS/"
-SEARCH_LOCATIONS = [ "http://sef.he.ixsystems.com/FreeNAS/" ]
+UPDATE_SERVER = "beta-update.freenas.org"
+SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/FreeNAS" ]
 
 # List of trains
 TRAIN_FILE = UPDATE_SERVER + "trains.txt"
