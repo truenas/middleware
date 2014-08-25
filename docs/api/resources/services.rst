@@ -130,6 +130,7 @@ List resource
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
+                "afp_srv_global_aux": "",
                 "afp_srv_dbpath": ""
         }
 
@@ -170,6 +171,7 @@ Update resource
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
+                "afp_srv_global_aux": "",
                 "afp_srv_dbpath": ""
         }
 
@@ -179,6 +181,7 @@ Update resource
    :json string afp_srv_homedir: path to home directory
    :json boolean afp_srv_homedir_enable: enable to home directory feature
    :json string afp_srv_dbpath: database information to be stored in path
+   :json string afp_srv_global_aux: auxiliary parameters in Global section
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
