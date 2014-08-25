@@ -587,10 +587,10 @@ jail_get_jid()
 		return 1
 	fi
 
-	local jail=$(jls|tail +2|awk -v jail="^${name}\$" '$3 ~ jail { print $3 }')
+	local jail=$(jls name|awk -v jail="^${name}\$" '$1 ~ jail { print $1 }')
 	if [ -n "${jail}" ]
 	then
-		jls|tail +2|awk -v jail="^${jail}\$" '$3 ~ jail { print $1 }'
+		jls jid name|awk -v jail="^${jail}\$" '$2 ~ jail { print $1 }'
 		return $?
 	fi
 
