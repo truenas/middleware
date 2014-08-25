@@ -217,6 +217,11 @@ define([
           handleAs: 'text'
         }).then(function(data) {
 
+          if(data.match("<!-- THIS IS A LOGIN WEBPAGE -->")) {
+            window.location = '/';
+            return;
+          }
+
           me.islocked = false;
           if (!me.isactive) {
             me.isactive = true;

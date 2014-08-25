@@ -35,6 +35,7 @@ Fields
 
  - account User resource: bsdusr_sshpubkey
  - network Global Configuration resource: gc_httpproxy
+ - service AFP resource: afp_srv_global_aux
  - service CIFS resource: cifs_srv_domain_logons, cifs_srv_obey_pam_restrictions
  - service Dynamic DNS resource: ddns_ipserver
  - service NFS resource: nfs_srv_v4

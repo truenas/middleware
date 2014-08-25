@@ -38,7 +38,8 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP
+    FreeNAS_LDAP,
+    FreeNAS_ActiveDirectory_Exception,
 )
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
@@ -333,11 +334,14 @@ class ActiveDirectoryForm(ModelForm):
             binddn = "%s@%s" % (bindname, domain)
             errors = []
 
-            ret = FreeNAS_ActiveDirectory.validate_credentials(
-                domain, binddn=binddn, bindpw=bindpw, errors=errors
-            )
-            if ret is False:
-                raise forms.ValidationError("%s." % errors[0])
+            try:
+                ret = FreeNAS_ActiveDirectory.validate_credentials(
+                    domain, binddn=binddn, bindpw=bindpw, errors=errors
+                )
+                if ret is False:
+                    raise forms.ValidationError("%s." % errors[0])
+            except FreeNAS_ActiveDirectory_Exception, e:
+                raise forms.ValidationError('%s.' % e)
 
         return cdata
 
@@ -374,6 +378,25 @@ class NISForm(ModelForm):
         self.fields["nis_enable"].widget.attrs["onChange"] = (
             "nis_mutex_toggle();"
         )
+
+    def save(self):
+        enable = self.cleaned_data.get("nis_enable")
+
+        started = notifier().started("nis")
+        super(NISForm, self).save()
+
+        if enable:
+            if started is True:
+                started = notifier().restart("nis")
+            if started is False:
+                started = notifier().start("nis")
+            if started is False:
+                self.instance.ad_enable = False
+                super(NISForm, self).save()
+                raise ServiceFailed("nis", _("NIS failed to reload."))
+        else:
+            if started == True:
+                started = notifier().stop("nis")
 
 
 class LDAPForm(ModelForm):

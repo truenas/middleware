@@ -796,12 +796,12 @@ require([
     directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
         var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
 
-        var table = dojo.query("#" + eid)[0];
+        var table = query("#" + eid)[0];
         var td = table.parentNode;
         var node = domConstruct.create("a", {
             "href": "#",
-            "title": "Edit",
-            "innerHTML": "Edit",
+            "title": gettext("Edit"),
+            "innerHTML": gettext("Edit"),
             "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
         });
 
@@ -862,6 +862,26 @@ require([
             domStyle.set(trpo, "display", "none");
         }
 
+    }
+
+    webdavprotocolToggle = function() {
+	
+	var select = registry.byId("id_webdav_protocol");
+	var portssl = registry.byId("id_webdav_tcpportssl");
+	var trpossl = portssl.domNode.parentNode.parentNode;
+	var port = registry.byId("id_webdav_tcpport");
+	var trpo = port.domNode.parentNode.parentNode;
+	if (select == 'http') {
+	  domStyle.set(trpo,"display","");
+	  domStyle.set(trpossl,"display","none");
+	} else if (select == 'https') {
+	  domStyle.set(trpo,"display","none");
+	  domStyle.set(trpossl,"display","");
+	} else {
+	  domStyle.set(trpo,"display","");
+	  domStyle.set(trpossl,"display","");
+	}
+      
     }
 
     upsModeToggle = function() {
@@ -1701,16 +1721,6 @@ require([
             f();
         }
         dialog.show();
-    };
-
-    addObject = function(name, url, nodes) {
-        commonDialog({
-            id: "add_dialog",
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            name: name,
-            url: url,
-            nodes: nodes
-            });
     };
 
     editObject = function(name, url, nodes, onload) {

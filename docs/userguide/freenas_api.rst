@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Using the FreeNAS® API:
+
 Using the FreeNAS® API
 =======================
 
@@ -15,6 +17,8 @@ through some code examples to get you started using the APIs.
 
 .. note:: an online version of the API is now hosted at
    `api.freenas.org <http://api.freenas.org>`_.
+
+.. _Building a Local Copy:
 
 Building a Local Copy
 ---------------------
@@ -57,6 +61,8 @@ resources are laid out in an order that is similar to the tree menu of the FreeN
 **Figure 25.1a: FreeNAS® API Documentation**
 
 |Figure251a_png|
+
+.. _A Simple API Example:
 
 A Simple API Example
 --------------------
@@ -170,6 +176,8 @@ or *False*.
    *False* in your Python scripts even though the example JSON responses in the API documentation are displayed as
    *true* or
    *false*.
+
+.. _A More Complex Example:
 
 A More Complex Example
 ----------------------

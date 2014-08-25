@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/local/bin/python2
 from collections import defaultdict
 
 import os
@@ -51,6 +51,7 @@ def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
                 cf_contents.append("\tinitiator-portal %s\n" % name)
     cf_contents.append("}\n\n")
 
+
 def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
@@ -92,7 +93,6 @@ def main():
                 initiator=target.iscsi_target_initiatorgroup,
             )
 
-
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
@@ -104,7 +104,11 @@ def main():
                                gconf.iscsi_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
         for obj in listen:
-            cf_contents.append("\tlisten %s:%s\n" % (obj.iscsi_target_portalip_ip,
+            if ':' in obj.iscsi_target_portalip_ip:
+                address = '[%s]' % obj.iscsi_target_portalip_ip
+            else:
+                address = obj.iscsi_target_portalip_ip
+            cf_contents.append("\tlisten %s:%s\n" % (address,
                                                      obj.iscsi_target_portalip_port))
         cf_contents.append("}\n\n")
 

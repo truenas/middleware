@@ -49,6 +49,7 @@ urlpatterns = patterns('freenasUI.system.views',
             ('confirm', InitialWizardConfirmForm),
         ],
         condition_dict={
+            'ds': InitialWizardDSForm.show_condition,
             'import': InitialWizardVolumeImportForm.show_condition,
             'volume': InitialWizardVolumeForm.show_condition,
         },

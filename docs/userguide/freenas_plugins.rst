@@ -1,5 +1,7 @@
 :orphan:
 
+.. _Plugins:
+
 Plugins
 =======
 
@@ -18,10 +20,12 @@ multiple applications within the same jail.
 The Jails method provides much more control over software installation but assumes that the user is comfortable working from the command line can and has a
 good understanding of networking basics and software installation on FreeBSD-based systems.
 
-It is recommended that users skim through both the Plugins_ and `Jails`_ sections in order to become familiar with the features and limitations of each and
-to choose the method that best meets their software needs.
+It is recommended that users skim through both the :ref:`Plugins` and :ref:`Jails` sections in order to become familiar with the features and limitations of
+each and to choose the method that best meets their software needs.
 
 Due to ABI (application binary interface) changes, FreeNAS® 8.x PBIs can not be installed on a 9.x system.
+
+.. _Installing Plugins:
 
 Installing Plugins
 ------------------
@@ -85,10 +89,12 @@ If the application requires access to the data stored on the FreeNAS® system, c
 add a storage as described in Adding Storage.
 
 If you need to access the shell of the jail containing the application to complete or test your configuration, click the entry for the associated jail in the
-"Jails" section of the tree. You can then click its "shell" icon as described in `Managing Jails`_.
+"Jails" section of the tree. You can then click its "shell" icon as described in :ref:`Managing Jails`.
 
 Once the configuration is complete, click the red "OFF" button in the entry for the PBI. If the service successfully starts, it will change to a blue ON. If
 it fails to start, click the jail's "shell" icon and type :command:`tail /var/log/messages` to see if any errors were logged.
+
+.. _Updating Plugins:
 
 Updating Plugins
 ----------------
@@ -102,6 +108,8 @@ If a newer version of a FreeNAS® PBI becomes available in the official reposito
 
 Click the "OK" button and the latest version of the PBI will automatically be downloaded and installed. Once the update is complete, the entry for the PBI
 will be refreshed to show the new version number and the "Update" button will disappear.
+
+.. _Uploading Plugins:
 
 Uploading Plugins
 -----------------
@@ -122,6 +130,8 @@ When the installation is complete, an entry for the PBI will be added to the "In
 it is not a FreeNAS® PBI, it will not be added to "Plugins". In other words, if the application requires any configuration, you will have to perform it from
 the command line of the jail's shell instead of the GUI.
 
+.. _Deleting Plugins:
+
 Deleting Plugins
 ----------------
 
@@ -138,6 +148,8 @@ PBI shows as installed in the "Installed" tab of Plugins. A pop-up message asks 
 **Figure 12.4a: Deleting an Installed PBI**
 
 |Figure124a_png|
+
+.. _Available Plugins:
 
 Available Plugins
 -----------------

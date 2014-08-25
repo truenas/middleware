@@ -26,6 +26,7 @@
     {% endblock %}
     <tr>
       <td colspan="2">
+        {% if wizard.steps.prev %}
         <button data-dojo-type="dijit.form.Button" type="button">
           {% trans "Previous" %}
           <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
@@ -41,6 +42,7 @@
           });
           </script>
         </button>
+        {% endif %}
 
         <button id="btn_{% cls_name wizard.form %}_Ok" class="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
           {% block oklabel %}{% trans "Next" %}{% endblock %}

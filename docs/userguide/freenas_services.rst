@@ -1,40 +1,46 @@
 :orphan:
 
+.. _Services Configuration:
+
 Services Configuration
 ======================
 
 The Services section of the GUI allows you to configure, start, and stop the various services that ship with the FreeNAS® system. FreeNAS® supports the
 following built-in services:
 
-* `AFP`_
+* :ref:`AFP`
 
-* `CIFS`_
+* :ref:`CIFS`
 
-* `Domain Controller`_
+* :ref:`Domain Controller`
 
-* `Dynamic DNS`_
+* :ref:`Dynamic DNS`
 
-* `FTP`_
+* :ref:`FTP`
 
-* `iSCSI`_
+* :ref:`iSCSI`
 
-* `LLDP`_
+* :ref:`LLDP`
 
-* `NFS`_
+* :ref:`NFS`
 
-* Rsync
+* :ref:`Rsync`
 
-* S.M.A.R.T.
+* :ref:`S.M.A.R.T.`
 
-* `SNMP`_
+* :ref:`SNMP`
 
-* SSH
+* :ref:`SSH`
 
-* `TFTP`_
+* :ref:`TFTP`
 
-* `UPS`_
+* :ref:`UPS`
+
+* "ref:`WebDAV`
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
+
+.. _Control Services:
 
 Control Services
 ----------------
@@ -55,6 +61,8 @@ show at the bottom of your browser. If you click the console messages area, it w
 messages. Watch these messages for errors when you stop and start the problematic service.
 
 If you would like to read the system logs to get more information about a service failure, open Shell and type :command:`more /var/log/messages`.
+
+.. _AFP:
 
 AFP
 ---
@@ -108,6 +116,8 @@ example, create a dataset named :file:`volume1/homedirs` and browse to this data
 you create each user, first create a child dataset for that user. For example, create a dataset named :file:`volume1/homedirs/user1`. When you create the
 *user1* user, browse to the :file:`volume1/homedirs/user1` dataset in the "Home Directory" field of the "Add New User" screen.
 
+.. _Troubleshooting AFP:
+
 Troubleshooting AFP
 ~~~~~~~~~~~~~~~~~~~
 
@@ -118,6 +128,8 @@ AFP share::
 
 This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the
 CNIIDs stored in the AppleDouble files.
+
+.. _CIFS:
 
 CIFS
 ----
@@ -306,6 +318,8 @@ until you manually stop and start the CIFS service.
 .. note:: do not set the
    *directory name cache size* as an auxiliary parameter. Due to differences in how Linux and BSD handle file descriptors, directory name caching is disabled
    on BSD systems in order to improve performance.
+   
+.. _Troubleshooting CIFS:
 
 Troubleshooting CIFS
 ~~~~~~~~~~~~~~~~~~~~
@@ -351,6 +365,8 @@ right-click on the share, click "Properties" and navigate to the "Security" tab.
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
 section of the Samba documentation contains additional troubleshooting tips.
+
+.. _Domain Controller:
 
 Domain Controller
 -----------------
@@ -410,6 +426,7 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
+.. _Dynamic DNS:
 
 Dynamic DNS
 -----------
@@ -461,6 +478,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
+.. _FTP:
 
 FTP
 ---
@@ -612,7 +630,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS export certificate data                                  | checkbox       | only available in "Advanced Mode"; if checked, exports the certificate              |
-                                                               |                | environment variables                                                               |
+|                                                              |                | environment variables                                                               |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS no certificate request                                   | checkbox       | only available in "Advanced Mode"; try checking this box if the client can not      |
@@ -662,6 +680,7 @@ The following example demonstrates the auxiliary parameters that will prevent al
  DenyAll
  </Limit>
 
+.. _Anonymous FTP:
 
 Anonymous FTP
 ~~~~~~~~~~~~~
@@ -707,9 +726,15 @@ In the example shown in Figure 11.6b, a user has input the following information
 
 |100000000000038300000122BD3F6150_png|
 
+.. |100000000000038300000122BD3F6150_png| image:: images/100000000000038300000122BD3F6150.png
+    :width: 6.9252in
+    :height: 2.2335in
+
 The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
 site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
 and the remote site (the FreeNAS® system).
+
+.. _FTP in chroot:
 
 FTP in chroot
 ~~~~~~~~~~~~~
@@ -754,6 +779,8 @@ Password for that user. The messages should indicate that the authorization and 
 the root folder on the remote site—this time it is not the entire volume but the dataset that was created for that user. The user should be able to
 transfer files between the local site (their system) and the remote site (their dataset on the FreeNAS® system).
 
+.. _Encrypting FTP:
+
 Encrypting FTP
 ~~~~~~~~~~~~~~
 
@@ -773,6 +800,8 @@ To force encrypted connections, add the following line to Auxiliary Parameters::
 
  TLS Required on
 
+.. _Troubleshooting FTP:
+
 Troubleshooting FTP
 ~~~~~~~~~~~~~~~~~~~
 
@@ -788,6 +817,8 @@ for errors.
 
 If the error refers to DNS, either create an entry in your local DNS server with the FreeNAS® system's hostname and IP address or add an entry for the IP
 address of the FreeNAS® system in the "Host name database" field of :menuselection:`Network --> Global Configuration`.
+
+.. _iSCSI:
 
 iSCSI
 -----
@@ -841,6 +872,8 @@ In order to configure iSCSI:
 
 The rest of this section describes these steps in more detail.
 
+.. _Authorized Accesses:
+
 Authorized Accesses
 ~~~~~~~~~~~~~~~~~~~
 
@@ -852,6 +885,10 @@ If you will be using CHAP or mutual CHAP to provide authentication, you must cre
 **Figure 11.7a: Adding an iSCSI Authorized Access**
 
 |100000000000017F00000171394D6770_png|
+
+.. |100000000000017F00000171394D6770_png| image:: images/100000000000017F00000171394D6770.png
+    :width: 3.989in
+    :height: 3.8429in
 
 Table 11.7a summarizes the settings that can be configured when adding an authorized access:
 
@@ -894,6 +931,8 @@ entry to display its "Edit" and "Delete" buttons.
 
 |Figure117b_png|
 
+.. _Extents:
+
 Extents
 ~~~~~~~
 
@@ -923,7 +962,6 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 **Figure 11.7c: Adding an iSCSI Extent**
 
 |Figure117c_png|
-
 
 **Table 11.7b: Extent Configuration Settings**
 
@@ -960,6 +998,8 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
+.. _Initiators:
+
 Initiators
 ~~~~~~~~~~
 
@@ -969,6 +1009,10 @@ which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators
 **Figure 11.7d: Adding an iSCSI Initiator**
 
 |100000000000022A00000107CAD88F71_png|
+
+.. |100000000000022A00000107CAD88F71_png| image:: images/100000000000022A00000107CAD88F71.png
+    :width: 6.6744in
+    :height: 2.4346in
 
 Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
@@ -999,6 +1043,8 @@ from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to 
 **Figure 11.7e: Sample iSCSI Initiator Configuration**
 
 |Figure117e_png|
+
+.. _Portals:
 
 Portals
 ~~~~~~~
@@ -1053,6 +1099,8 @@ four interfaces, but connections to target A would be limited to the first two n
 Another scenario would be to create a portal which includes every IP address **except** for the one used by a management interface. This would prevent iSCSI
 connections to the management interface.
 
+.. _Target Global Configuration:
+
 Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1091,6 +1139,8 @@ summarizes the settings that can be configured in the Target Global Configuratio
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
+.. _Targets:
+
 Targets
 ~~~~~~~
 
@@ -1106,6 +1156,10 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 **Figure 11.7h: Adding an iSCSI Target**
 
 |10000000000001BD000001C3DC193DAA_png|
+
+.. |10000000000001BD000001C3DC193DAA_png| image:: images/10000000000001BD000001C3DC193DAA.png
+    :width: 5.3602in
+    :height: 4.1756in
 
 **Table 11.7f: Target Settings**
 
@@ -1143,6 +1197,7 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
+.. _Targets/Extents:
 
 Target/Extents
 ~~~~~~~~~~~~~~
@@ -1178,6 +1233,8 @@ target.
 
 Once iSCSI has been configured, don't forget to start it in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to iSCSI. After a
 second or so, it will change to a blue ON, indicating that the service has started.
+
+.. _Connecting to iSCSI:
 
 Connecting to iSCSI
 ~~~~~~~~~~~~~~~~~~~
@@ -1220,6 +1277,8 @@ If you can see the target but not connect to it, check the "discovery authentica
 
 If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to "Accept" in the vswitch.
 
+.. _Growing LUNs:
+
 Growing LUNs
 ~~~~~~~~~~~~
 
@@ -1227,6 +1286,8 @@ The method used to grow the size of an existing iSCSI LUN depends on whether the
 section.
 
 After the LUN is expanded using one of the methods below, use the tools from the initiator software to grow the partitions and the filesystems it contains.
+
+.. _Zvol Based LUN:
 
 Zvol Based LUN
 ^^^^^^^^^^^^^^
@@ -1253,6 +1314,8 @@ Verify that the changes have taken effect::
 
 You can now start the iSCSI service and allow initiators to connect.
 
+.. _File Extent Based LUN:
+
 File Extent Based LUN
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -1268,8 +1331,12 @@ this causes the iSCSI target to use the new size of the file.
 
 You can now start the iSCSI service and allow initiators to connect.
 
+.. _LLDP:
+
 LLDP
 ----
+
+.. _NFS:
 
 NFS
 ---
@@ -1327,6 +1394,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
+.. _Rsync:
 
 Rsync
 -----
@@ -1336,6 +1404,8 @@ Configuring Rsync Module Mode Between Two FreeNAS® Systems for a configuration 
 
 This section describes the configurable options for the :command:`rsyncd` service and rsync modules.
 
+.. _Configure Rsyncd:
+
 Configure Rsyncd
 ~~~~~~~~~~~~~~~~
 
@@ -1344,6 +1414,10 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 **Figure 11.10a: Rsyncd Configuration**
 
 |1000000000000234000000C82AD0CB4B_png|
+
+.. |1000000000000234000000C82AD0CB4B_png| image:: images/1000000000000234000000C82AD0CB4B.png
+    :width: 6.7945in
+    :height: 1.8516in
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -1362,6 +1436,7 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 |                      |           |                                                                     |
 +----------------------+-----------+---------------------------------------------------------------------+
 
+.. _Rsync Modules:
 
 Rsync Modules
 ~~~~~~~~~~~~~
@@ -1373,6 +1448,10 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 **Figure 11.10b: Adding an Rsync Module**
 
 |100000000000023D000001C2EB395B61_png|
+
+.. |100000000000023D000001C2EB395B61_png| image:: images/100000000000023D000001C2EB395B61.png
+    :width: 6.9028in
+    :height: 4.1665in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1416,6 +1495,8 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Auxiliary parameters | string         | additional parameters from rsyncd.conf(5)                                     |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
+
+.. _S.M.A.R.T.:
 
 S.M.A.R.T.
 ----------
@@ -1480,6 +1561,7 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
+.. _SNMP:
 
 SNMP
 ----
@@ -1522,6 +1604,8 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 +----------------------+------------+----------------------------------------------------------------+
 
 
+.. _SSH:
+
 SSH
 ---
 
@@ -1540,6 +1624,10 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 **Figure 11.13a: SSH Configuration**
 
 |10000000000001950000012301F7AD89_png|
+
+.. |10000000000001950000012301F7AD89_png| image:: images/10000000000001950000012301F7AD89.png
+    :width: 4.8783in
+    :height: 2.6937in
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1597,6 +1685,8 @@ A few sshd_config(5) options that are useful to input in the "Extra Options" fie
 * **ClientAliveInterval**: increase this number if ssh connections tend to drop
 
 * **ClientMaxStartup**: defaults to 10; increase if you have more users
+
+.. _SFTP Chroot:
 
 SFTP Chroot
 ~~~~~~~~~~~
@@ -1664,6 +1754,8 @@ the following steps.
 #.  **Test the connection** from a client by running :command:`sftp`, :command:`ssh`, and :command:`scp` as the user. The :command:`sftp` command should work
     but be limited to the user's home directory and the :command:`ssh` and :command:`scp` commands should fail.
 
+.. _Troubleshooting SSH:
+
 Troubleshooting SSH
 ~~~~~~~~~~~~~~~~~~~
 
@@ -1682,6 +1774,8 @@ to what the problem is. Type the following command within Shell to read these me
 
 Additional messages regarding authentication errors may be found in :file:`/var/log/auth.log`.
 
+.. _TFTP:
+
 TFTP
 ----
 
@@ -1698,6 +1792,10 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 **Figure 11.14a: TFTP Configuration**
 
 |10000000000001A10000014C23FFB30C_png|
+
+.. |10000000000001A10000014C23FFB30C_png| image:: images/10000000000001A10000014C23FFB30C.png
+    :width: 5.0236in
+    :height: 3.0744in
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1730,6 +1828,7 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 
+.. _UPS:
 
 UPS
 ---
@@ -1825,3 +1924,42 @@ man page gives some other usage examples.
 `upscmd(8) <http://www.networkupstools.org/docs/man/upscmd.html>`_
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
 this command. These users are created in the "Extra users" field.
+
+.. _WebDAV:
+
+WeDAV
+-----
+
+Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
+
+Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available options.
+
+**Figure 11.16a: WebDAV Configuration Screen**
+
+|Figure1116a_png|
+
+**Tablee 11.16a: WebDAV Configuration Options**
+
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                       |
+|                           |                |                                                                                                       |
+|                           |                |                                                                                                       |
++===========================+================+=======================================================================================================+
+| Protocol                  | drop-down menu | choices are *HTTP* (connection always unencrypted),                                                   |
+|                           |                | *HTTPS* (connection always encrypted), or                                                             |
+|                           |                | *HTTP+HTTPS* (both types of connections allowed)                                                      |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Port                 | string         | specify the port to be used for the connection; the default of *8080* should work, if you change it,  |
+|                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Authentication       | drop-down menu | choices are *Basic Authentication* (unencrypted) or                                                   |
+|                           |                | *Digest Authentication* (encrypted)                                                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Webdav Password           | string         | default is *davtest*; this should be changed as it is a known value                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+

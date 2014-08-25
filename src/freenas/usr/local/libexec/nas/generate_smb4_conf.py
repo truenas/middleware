@@ -1085,11 +1085,7 @@ def main():
         os.write(fd, line + '\n')
     os.close(fd)
 
-    if role == 'dc':
-        import_users(smb_conf_path, tmpfile)
-        smb4_import_groups()  
-
-    else:
+    if role != 'dc':
         import_users(smb_conf_path, tmpfile,
             "tdbsam:/var/etc/private/passdb.tdb")
         smb4_map_groups()

@@ -148,7 +148,9 @@ def volumemanager(request):
                 events=events,
             )
         else:
-            return JsonResp(request, form=form, formsets={'layout': form._formset})
+            return JsonResp(request, form=form, formsets={'layout': {
+                'instance': form._formset,
+            }})
     disks = []
 
     # Grab disk list

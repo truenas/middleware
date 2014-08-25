@@ -1,25 +1,29 @@
 :orphan:
 
+.. _Network:
+
 Network
 =======
 
 The Network section of the administrative GUI contains the following components for viewing and configuring the FreeNAS® system's network settings:
 
-* `Global Configuration`_: used to to set non-interface specific network settings.
+* :ref:`Global Configuration`: used to to set non-interface specific network settings.
 
-* `Interfaces`_: used to configure a specified interface's network settings.
+* :ref:`Interfaces`: used to configure a specified interface's network settings.
 
-* `IPMI`_: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
+* :ref:`IPMI`: configures hardware side-band management should the appliance become unavailable through the graphical administrative interface.
 
-* `Link Aggregations`_: used to configure link aggregation and link failover.
+* :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
-* `Network Summary`_: provides an overview of the current network settings.
+* :ref:`Network Summary`: provides an overview of the current network settings.
 
-* `Static Routes`_: used to add static routes.
+* :ref:`Static Routes`: used to add static routes.
 
-* `VLANs`_: used to configure IEEE 802.1q tagging.
+* :ref:`VLANs`: used to configure IEEE 802.1q tagging.
 
 Each of these is described in more detail in this section.
+
+.. _Global Configuration:
 
 Global Configuration
 --------------------
@@ -90,6 +94,8 @@ the FreeNAS® system in the "Host name database" field.
    servers that are located outside of the local network. In this case, it is recommended that Static Routes be added in order to reach external DNS, NTP, and
    mail servers which are configured with static IP addresses.
 
+.. _Interfaces:
+
 Interfaces
 ----------
 
@@ -104,7 +110,11 @@ add an interface or edit an already configured interface.
 
 **Figure 7.2a: Adding or Editing an Interface**
 
-|1000000000000182000001C49B157EE6_png|
+|interface.png|
+
+.. |interface.png| image:: images/interface.png
+    :width: 8.0in
+    :height: 4.5in
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -155,6 +165,8 @@ on multiple interfaces.
 When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
 fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
 
+.. _IPMI:
+
 IPMI
 ----
 
@@ -167,7 +179,7 @@ another person remote access to the system in order to assist with a configurati
 management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
 be a dedicated IPMI interface.
 
-Before configuring IPMI, add a Tunable_ with a "Variable" of *ipmi_load*, a "Type" of
+Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*, a "Type" of
 *Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
 *ipmi* kernel module now, without rebooting, type this from Shell::
@@ -211,6 +223,8 @@ prompt for a username and the password that you configured. Refer to the documen
 The default username is *ADMIN* (in all caps). Once you have logged into the management interface, you can change the administrative username as well as
 create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the
 hardware.
+
+.. _Link Aggregations:
 
 Link Aggregations
 -----------------
@@ -256,6 +270,8 @@ mode can cause unordered packet arrival at the client. This has a side effect of
 
 **Do not** configure the interfaces used in the lagg device before creating the lagg device.
 
+.. _LACP, MPIO, NFS, and ESXi:
+
 LACP, MPIO, NFS, and ESXi
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -281,6 +297,8 @@ NFS does not understand MPIO. Therefore, you will need one fast interface since 
 not work well to increase the bandwidth for point-to-point NFS (one server and one client). LACP is a good solution for link redundancy or for one server and
 many clients.
 
+.. _Creating a Link Aggregation:
+
 Creating a Link Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -292,32 +310,33 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 
 **Figure 7.4a: Creating a lagg Interface**
 
-|Figure74a_png|
+|lagg1.png|
+
+.. |lagg1.png| image:: images/lagg1.png
+    :width: 4.5in
+    :height: 3.25in
 
 .. note:: if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_.
 
 Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
-Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. As seen in Figure 7.4b, it will also
-appear in View Link Aggregations.
+Once the lagg device has been created, click its entry to enable its "Edit", "Delete", and "Edit Members" buttons.
 
-**Figure 7.4b: Viewing Link Aggregations**
-
-|Figure74b_png|
-
-Click a link aggregation entry to see the buttons to edit that lagg interface, delete the link aggregation, or edit the lagg's member interfaces.
-
-If you click the "Edit" button for a lagg, you will see the configuration screen shown in Figure 7.4c. Table 7.4a describes the options in this screen.
+If you click the "Edit" button for a lagg, you will see the configuration screen shown in Figure 7.4b. Table 7.4a describes the options in this screen.
 
 After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
 so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
 After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get
 access into the GUI through the new lagg interface.
 
-**Figure 7.4c: Editing a lagg**
+**Figure 7.4b: Editing a lagg**
 
-|Figure74c_png|
+|lagg2.png|
+
+.. |lagg2.png| image:: images/lagg2.png
+    :width: 5.1in
+    :height: 4.9in
 
 **Table 7.4a: Configurable Options for a lagg**
 
@@ -360,12 +379,16 @@ access into the GUI through the new lagg interface.
 This screen also allows you to configure an alias for the lagg interface. If you wish to set multiple aliases, click the "Add extra Alias" link for each
 alias you wish to configure.
 
-If you click the "Edit Members" button, click the entry for a member, then click its "Edit" button, you will see the configuration screen shown in Figure 7.4d.
+If you click the "Edit Members" button, click the entry for a member, then click its "Edit" button, you will see the configuration screen shown in Figure 7.4c.
 The configurable options are summarized in Table 7.4b.
 
-**Figure 7.4d: Editing a Member Interface**
+**Figure 7.4c: Editing a Member Interface**
 
-|Figure74d_png|
+|lagg3.png|
+
+.. |lagg3.png| image:: images/lagg3.png
+    :width: 6.2in
+    :height: 4.5in
 
 **Table 7.4b: Configuring a Member Interface**
 
@@ -404,11 +427,15 @@ To see if the link aggregation is load balancing properly, run the following com
 More information about this command can be found at
 `systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_.
 
+.. _Network Summary:
+
 Network Summary
 ---------------
 
 :menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
 configured IP address(es), DNS server(s), and default gateway will be displayed.
+
+.. _Static Routes:
 
 Static Routes
 -------------
@@ -418,7 +445,11 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 
 **Figure 7.6a: Adding a Static Route**
 
-|1000000000000150000000D15F029EC2_png|
+|static.png|
+
+.. |static.png| image:: images/static.png
+    :width: 5.6in
+    :height: 2.5in
 
 The available options are summarized in Table 7.6a.
 
@@ -443,6 +474,8 @@ The available options are summarized in Table 7.6a.
 
 If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
 
+.. _VLANs:
+
 VLANs
 -----
 
@@ -459,7 +492,11 @@ tags. If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see
 
 **Figure 7.7a: Adding a VLAN**
 
-|100000000000013A000000F8F965FD90_png|
+|vlan.png|
+
+.. |vlan.png| image:: images/vlan.png
+    :width: 5.1in
+    :height: 2.6in
 
 Table 7.7a summarizes the configurable fields.
 

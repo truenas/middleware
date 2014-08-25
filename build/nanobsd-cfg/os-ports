@@ -101,7 +101,8 @@ add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UN
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
 add_port lang/python
-add_port devel/py-setuptools
+# conflicting version of python (the below is installed as dependency of another port albeit as a different version)
+#add_port devel/py-setuptools
 add_port dns/py-bonjour
 add_port dns/py-dnspython
 add_port devel/tevent
@@ -142,8 +143,14 @@ add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
 add_port security/openssl
+add_port security/py-openssl
+add_port security/py-htpasswd
+add_port www/apache24
+add_port www/mod_mpm_itk
 add_port www/nginx WITH_OPENSSL_PORT=yes \
-		OPTIONS_FILE_SET+=HTTP_DAV \
+		OPTIONS_FILE_SET+=HTTP_GZIP_STATIC \
+		OPTIONS_FILE_SET+=HTTP_PERL \
+		OPTIONS_FILE_SET+=HTTP_AUTH_DIGEST \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \

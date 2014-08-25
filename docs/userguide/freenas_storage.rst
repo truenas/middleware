@@ -1,21 +1,25 @@
 :orphan:
 
+.. _Storage:
+
 Storage
 =======
 
 The Storage section of the graphical interface allows you to configure the following:
 
-* `Volumes`_: used to create and manage storage volumes.
+* :ref:`Volumes`: used to create and manage storage volumes.
 
-* `Periodic Snapshot Tasks`_: used to schedule the automatic creation of ZFS snapshots.
+* :ref:`Periodic Snapshot Tasks`: used to schedule the automatic creation of ZFS snapshots.
 
-* `Replication Tasks`_: used to schedule the replication of snapshots over an encrypted connection.
+* :ref:`Replication Tasks`: used to schedule the replication of snapshots over an encrypted connection.
 
-* `ZFS Scrubs`_: used to schedule ZFS scrubs as part of ongoing disk maintenance.
+* :ref:`ZFS Scrubs`: used to schedule ZFS scrubs as part of ongoing disk maintenance.
 
-* `ZFS Snapshots`_:
+* :ref:`ZFS Snapshots`:
 
 These configurations are described in more detail in this section.
+
+.. _Volumes:
 
 Volumes
 -------
@@ -32,6 +36,8 @@ volumes. ZFS volumes are recommended to get the most out of your FreeNAS® syste
 
 Proper storage design is important for any NAS.
 **It is recommended that you read through this entire chapter first, before configuring your storage disks, so that you are aware of all of the possible features, know which ones will benefit your setup most, and are aware of any caveats or hardware restrictions.**
+
+.. _Auto Import Volume:
 
 Auto Import Volume
 ~~~~~~~~~~~~~~~~~~
@@ -55,7 +61,6 @@ If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No
 
 |Figure81a_png|
 
-
 **Figure 8.1b: Auto Importing a Non-Encrypted Volume**
 
 |Figure81b_png|
@@ -65,13 +70,15 @@ existing, unencrypted ZFS pool. Once the volume is selected, click the "OK" butt
 
 FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to :command:`fsck` the volume.
 
-If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from Shell_ to import the pool.
+If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
 
 If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an "in use by another
 machine" error during the import.
 
 If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from Shell. If the disk does not appear in the output, check to see
 if the controller driver is supported or if it needs to be loaded by creating a Tunable.
+
+.. _Auto Importing an Encrypted Pool:
 
 Auto Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -91,6 +98,8 @@ decrypt the disks.
    View Volumes screen is used to manage the keys for encrypted volumes.
 
 Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1b. Click the "OK" button to finish the volume import.
+
+.. _Import Volume:
 
 Import Volume
 ~~~~~~~~~~~~~
@@ -114,6 +123,8 @@ Before importing a disk, be aware of the following caveats:
 
 * if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
   drive.
+
+.. _UFS Volume Manager:
 
 UFS Volume Manager
 ~~~~~~~~~~~~~~~~~~
@@ -163,6 +174,8 @@ Manager is a destructive action that reformats the selected disks. If your inten
 is supported by the auto-import or import actions. If so, perform the supported action instead. If the current storage format is not supported, you will need
 to backup the data to an external media, format the disks, then restore the data to the new volume.
 
+.. _View Disks:
+
 View Disks
 ~~~~~~~~~~
 
@@ -181,6 +194,8 @@ option before discarding a disk.
 
 .. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within Shell. For example, to determine the
    serial number of disk ada0, type :command:`smartctl -a /dev/ada0 | grep Serial`.
+
+.. _View Volumes:
 
 View Volumes
 ~~~~~~~~~~~
@@ -247,6 +262,10 @@ configurable options.
 
 |1000000000000181000001977D3920D2_jpg|
 
+.. |1000000000000181000001977D3920D2_jpg| image:: images/1000000000000181000001977D3920D2.jpg
+    :width: 4.639in
+    :height: 3.7689in
+
 **Table 8.1b: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -291,6 +310,8 @@ A ZFS dataset only has six icons as the "Scrub Volume", "Volume Status", and "Up
 is replaced with the "Destroy Dataset" button. If you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive
 action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots of that dataset.
 
+.. _View Multipaths:
+
 View Multipaths
 ~~~~~~~~~~~~~~~
 
@@ -311,8 +332,14 @@ multipath-capable hardware.
 
 |1000020100000398000000DC97182069_png|
 
+.. |1000020100000398000000DC97182069_png| image:: images/1000020100000398000000DC97182069.png
+    :width: 6.9252in
+    :height: 1.6736in
+
 Figure 6.3q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.
+
+.. _ZFS Volume Manager:
 
 ZFS Volume Manager
 ~~~~~~~~~~~~~~~~~~
@@ -320,7 +347,7 @@ ZFS Volume Manager
 If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS
 pool.
 
-If you are new to how ZFS handles redundancy, skim through the `ZFS Primer`_ before using ZFS Volume Manager.
+If you are new to how ZFS handles redundancy, skim through the :ref:`ZFS Primer` before using ZFS Volume Manager.
 
 If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you will see a screen similar to the example shown in Figure 8.1l.
 
@@ -342,10 +369,10 @@ Table 8.1c summarizes the configuration options of this screen.
 |                  |                | :file:`data` or :file:`freenas`)                                                           |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Volume to extend | drop-down menu | requires an existing ZFS pool to extend; see `Extending a ZFS Volume`_ for instructions    |
+| Volume to extend | drop-down menu | requires an existing ZFS pool to extend; see :ref:`Extending a ZFS Volume` for instructions|
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Encryption       | checkbox       | read `Encryption`_ before choosing to use encryption                                       |
+| Encryption       | checkbox       | read :ref:`Encryption` before choosing to use encryption                                   |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Available disks  | display        | displays the size of available disks; hover over "show" to list the available device names |
@@ -394,10 +421,12 @@ supported:
 * **cache device:** add a dedicated cache device
 
 If you have more than five disks and are using ZFS, consider the number of disks to use for best performance and scalability. An overview of the recommended
-disk group sizes as well as more information about log and cache devices can be found in the `ZFS Overview`_.
+disk group sizes as well as more information about log and cache devices can be found in the :ref:`ZFS Primer`.
 
 Depending upon the size and number of disks, the type of controller, and whether or not encryption is selected, creating the volume may take some time. Once
 the volume is created, the screen will refresh and the new volume will be listed under :menuselection:`Storage --> Volumes`.
+
+.. _Encryption:
 
 Encryption
 ^^^^^^^^^^
@@ -479,6 +508,8 @@ selecting the directory in which to store the key.
 The passphrase, recovery key, and encryption key need to be protected. Do not reveal the passphrase to others. On the system containing the downloaded keys,
 take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be discarded or stolen.
 
+.. _Key Management:
+
 Key Management
 ''''''''''''''
 
@@ -515,6 +546,8 @@ the passphrase is forgotten. **Always immediately** add a recovery key whenever 
 **Immediately** create a new passphrase and recovery key.
 
 Each of these icons will prompt for the password used to access the FreeNAS® administrative GUI.
+
+.. _Manual Volume Creation:
 
 Manual Volume Creation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -560,6 +593,7 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 
+.. _Extending a ZFS Volume:
 
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -600,6 +634,8 @@ ZFS volume, you are really striping similar vdevs. Here are some examples:
 
 If you try to add an incorrect number of disks to the existing vdev, an error message will appear, indicating the number of disks that are needed. You will
 need to select the correct number of disks in order to continue.
+
+.. _Change Permissions:
 
 Change Permissions
 ~~~~~~~~~~~~~~~~~~
@@ -658,6 +694,8 @@ However, if you change from Windows ACLs to Unix ACLs, the extended permissions 
 When you select Windows ACLs, the "Mode" will become greyed out as it only applies to Unix permissions. The default Windows ACLs are always set to what
 Windows sets on new files and directories by default. The Windows client should then be used to fine-tune the permissions as required.
 
+.. _Create ZFS Dataset:
+
 Create ZFS Dataset
 ~~~~~~~~~~~~~~~~~~
 
@@ -691,7 +729,7 @@ click the "Advanced Mode" button or configure the system to always display these
 | Dataset Name             | string              | mandatory                                                                                                 |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Compression Level        | drop-down menu      | see the section on `Compression`_ for a comparison of the available algorithms                            |
+| Compression Level        | drop-down menu      | see the section on :ref:`Compression` for a comparison of the available algorithms                        |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Share type               | drop-down menu      | select the type of share that will be used on the dataset; choices are *UNIX* for an NFS share,           |
@@ -720,7 +758,7 @@ click the "Advanced Mode" button or configure the system to always display these
 | dataset and all children |                     | megabyte), G (gigabyte), or T (terabyte) as in *20G* for 20 GB                                            |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| ZFS Deduplication        | drop-down menu      | read the section on `Deduplication`_ before making a change to this setting                               |
+| ZFS Deduplication        | drop-down menu      | read the section on :ref:`Deduplication` before making a change to this setting                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Record Size              | drop-down menu      | only available in "Advanced Mode"; while ZFS automatically adapts the record size dynamically to adapt to |
@@ -728,6 +766,7 @@ click the "Advanced Mode" button or configure the system to always display these
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 
+.. _Deduplication:
 
 Deduplication
 ^^^^^^^^^^^^^
@@ -756,6 +795,8 @@ the block contents are identical. Since hash collisions are extremely rare, veri
    only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data back in again.
    Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original dataset.
 
+.. _Compression:
+
 Compression
 ^^^^^^^^^^^
 
@@ -775,6 +816,8 @@ are supported:
 
 If you leave the default of *Inherit* or select
 *Off*, compression will not be used on the dataset.
+
+.. _Create zvol:
 
 Create zvol
 ~~~~~~~~~~~
@@ -815,6 +858,8 @@ Mode" button or configure the system to always display these settings by checkin
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
+.. _Replacing a Failed Drive:
+
 Replacing a Failed Drive
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -851,14 +896,15 @@ In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ad
 
 |Figure81s_png|
 
+.. _Replacing an Encrypted Drive:
+
 Replacing an Encrypted Drive
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If the ZFS pool is encrypted, additional steps are needed when replacing a failed drive.
 
-First, make sure that a passphrase has been set using the instructions in Creating an Encrypted Volume_ **before** attempting to replace the failed drive.
-Then, follow the steps 1 and 2 as described above. During step 3, you will be prompted to input the passphrase for the pool. Wait until the resilvering is
-complete.
+First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive. Then, follow
+the steps 1 and 2 as described above. During step 3, you will be prompted to input the passphrase for the pool. Wait until the resilvering is complete.
 
 Next, restore the encryption keys to the pool.
 **If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**
@@ -875,10 +921,12 @@ Next, restore the encryption keys to the pool.
 #.  Highlight the pool that contains the disk you just replaced and click the "Add Recovery Key" button in order to save the new recovery key. The old
     recovery key will no longer function, so it can be safely discarded.
 
+.. _Removing a Log or Cache Device:
+
 Removing a Log or Cache Device
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have added any log or cache devices, these devices will also appear in :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status. If you
+If you have added any log or cache devices, these devices will also appear in :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status`. If you
 click the device, you can either use its "Replace" button to replace the device as described above, or click its "Remove" button to remove the device.
 
 Before performing either of these operations, verify the version of ZFS running on the system by running :command:`zpool upgrade -v|more` from Shell.
@@ -888,6 +936,8 @@ data restored from a backup. For other ZFS versions, removing or replacing the l
 This is typically the last few seconds of writes.
 
 Removing or replacing a cache device will not result in any data loss, but may have an impact on read performance until the device is replaced.
+
+.. _Replacing Drives to Grow a ZFS Pool:
 
 Replacing Drives to Grow a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -943,6 +993,8 @@ replaced and the resilver completes, you should see the added space in the pool.
 
 You can view the status of the resilver process by running :command:`zpool status Vol1`.
 
+.. _Enabling ZFS Pool Expansion:
+
 Enabling ZFS Pool Expansion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -992,6 +1044,8 @@ Once the import completes, all of the drive space should be available. Verify th
  Vol1	9.06T	1.41T	7.24T	31%	1.00x	ONLINE	/mnt
 
 If you cannot see the extra space, you may need to run :command:`zpool online -e pool_name device_name` for every device listed in :command:`zpool status`.
+
+.. _Splitting a Mirrored Pool:
 
 Splitting a Mirrored Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1092,6 +1146,8 @@ Once the disk is physically re-installed, run this command on the original syste
 Should you ever need to create a new clone, remember to remove the old clone first::
 
  zpool destroy migrant
+
+.. _Periodic Snapshot Tasks:
 
 Periodic Snapshot Tasks
 -----------------------
@@ -1232,6 +1288,8 @@ If you create multiple filters, select the filter you wish to use before leaving
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
 available snapshots will be listed.
 
+.. _Replication Tasks:
+
 Replication Tasks
 -----------------
 
@@ -1266,6 +1324,8 @@ This section will demonstrate how to configure a replication task between the fo
 * *192.168.2.6* will be referred to as
   *PULL*. This system has an existing ZFS volume named :file:`/mnt/remote` which will store the pushed snapshots.
 
+.. _Configure PULL:
+
 Configure PULL
 ~~~~~~~~~~~~~~
 
@@ -1284,6 +1344,8 @@ replication (by default this is the *root* user). Paste the copied key into the 
 text after the existing key.
 
 On *PULL*, ensure that the SSH service is enabled in :menuselection:`Services --> Control Services`. Start it if it is not already running.
+
+.. _Configure PUSH:
 
 Configure PUSH
 ~~~~~~~~~~~~~~
@@ -1384,6 +1446,8 @@ is not replicated, see the next section for troubleshooting tips.
 
 |Figure83c_png|
 
+.. _Troubleshooting Replication:
+
 Troubleshooting Replication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1428,6 +1492,8 @@ command::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
  
+.. _ZFS Scrubs:
+
 ZFS Scrubs
 ----------
 
@@ -1438,7 +1504,8 @@ consumer-quality drives, consider a weekly scrubbing schedule. If you have datac
 Depending upon the amount of data, a scrub can take a long time. Scrubs are I/O intensive and can negatively impact performance. They should be scheduled for
 evenings or weekends to minimize the impact to users.
 
-A ZFS scrub only checks used disk space. To check unused disk space, schedule a S.M.A.R.T. Test_ "Type" of *Long Self-Test* to run once or twice a month.
+A ZFS scrub only checks used disk space. To check unused disk space, schedule :ref:`S.M.A.R.T. Tests` of "Type" of *Long Self-Test* to run once or twice a
+month.
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
 :menuselection:`Storage --> ZFS Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> ZFS Scrubs --> View ZFS Scrubs`. Figure 8.4a
@@ -1447,7 +1514,6 @@ displays the default settings for the volume named :file:`volume1`. Table 8.4a s
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
 |Figure84a_png|
-
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1497,6 +1563,8 @@ While a "delete" button is provided,
 too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
 
 If you do delete a scrub, you can create a new scrub task by clicking :menuselection:`Storage --> Volumes --> ZFS Scrubs --> Add ZFS Scrub`.
+
+.. _ZFS Snapshots:
 
 ZFS Snapshots
 -------------
