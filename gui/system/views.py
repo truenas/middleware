@@ -815,3 +815,118 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+def CA_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityImportForm(request.POST)
+        if form.is_valid():
+            m = form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate Authority successfully imported.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityImportForm()
+
+    return render(request, "system/certificate/CA_import.html", {
+        'form': form
+    })
+
+
+def CA_create_internal(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityCreateInternalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate Authority successfully created.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityCreateInternalForm()
+
+    return render(request, "system/certificate/CA_create_internal.html", {
+        'form': form
+    })
+
+
+def CA_create_intermediate(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityCreateIntermediateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Intermediate Certificate Authority successfully created.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityCreateIntermediateForm()
+
+    return render(request, "system/certificate/CA_create_intermediate.html", {
+        'form': form
+    })
+
+
+
+def certificate_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateImportForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate successfully imported.")
+            )
+
+    else:
+        form = forms.CertificateImportForm()
+
+    return render(request, "system/certificate/certificate_import.html", {
+        'form': form
+    })
+
+
+def certificate_create_internal(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCreateInternalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate successfully created.")
+            )
+
+    else:
+        form = forms.CertificateCreateInternalForm()
+
+    return render(request, "system/certificate/certificate_create_internal.html", {
+        'form': form
+    })
+
+
+def certificate_create_CSR(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCreateCSRForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate CSR successfully created.")
+            )
+
+    else:
+        form = forms.CertificateCreateCSRForm()
+
+    return render(request, "system/certificate/certificate_create_CSR.html", {
+        'form': form
+    })

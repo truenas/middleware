@@ -538,3 +538,141 @@ class SystemDataset(Model):
     @property
     def usedataset(self):
         return self.sys_syslog_usedataset
+
+
+CA_TYPE_EXISTING        = 0x00000001
+CA_TYPE_INTERNAL        = 0x00000002
+CA_TYPE_INTERMEDIATE    = 0x00000004
+CERT_TYPE_EXISTING      = 0x00000008
+CERT_TYPE_INTERNAL      = 0x00000010
+CERT_TYPE_CSR           = 0x00000020
+
+class CertificateBase(Model):
+    cert_type = models.CharField(
+            max_length=120
+            )
+    cert_name = models.CharField(
+            max_length=120,
+            verbose_name=_("Name"),
+            help_text=_("Descriptive Name)")
+            )
+    cert_certificate = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Certificate"),
+            help_text=_("Cut and paste the contents of your certificate here")
+            )
+    cert_privatekey = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Private Key"),
+            help_text=_("Cut and paste the contents of your private key here")
+            )
+    cert_key_length = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Key length"),
+            default=2048
+            )
+    cert_digest_algorithm = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Digest Algorithm"),
+            default='SHA256'
+            )
+    cert_lifetime = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Lifetime"),
+            default=3650
+            )
+    cert_country = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Country"),
+            help_text=_("Country Name (2 letter code)")
+            )
+    cert_state = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("State"),
+            help_text=_("State or Province Name (full name)")
+            )
+    cert_city = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Locality"),
+            help_text=_("Locality Name (eg, city)")
+            )
+    cert_organization = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Organization"),
+            help_text=_("Organization Name (eg, company)")
+            )
+    cert_email = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Email Address"),
+            help_text=_("Email Address")
+            )
+    cert_common = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Common Name"),
+            help_text=_("Common Name (eg, YOUR name)")
+            )
+    cert_signedby = models.ForeignKey(
+            "self",
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Certificate Authority")
+            )
+
+    @property
+    def cert_internal(self):
+        return None
+
+    @property
+    def cert_issuer(self):
+        return None
+
+    @property
+    def cert_ncertificates(self):
+        return 0
+
+    @property
+    def cert_DN(self):
+        return None
+
+    @property
+    def cert_expire(self):
+        return None
+
+    class Meta:
+        abstract = True
+
+
+class CertificateAuthority(CertificateBase):
+
+    class Meta:
+        verbose_name = _("Certificate Authority")
+
+    class FreeAdmin:
+        deletable = False
+
+
+class Certificate(CertificateBase):
+
+    class Meta:
+        verbose_name = _("Certificate")
+
+    class FreeAdmin:
+        deletable = False
