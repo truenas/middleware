@@ -47,8 +47,12 @@ General
 
 **Figure 5.2a: General Screen**
 
-|Figure52a_png|
+|system2.png|
 
+.. |system2.png| image:: images/system2.png
+    :width: 4.8in
+    :height: 4.2in
+    
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
 **Table 5.2a: General Configuration Settings**
@@ -80,7 +84,8 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI -> HTTPS Port | checkbox       |                                                                                                                                |
+| WebGUI HTTPS -->     | checkbox       |                                                                                                                                |
+| HTTPS Redirect       |                |                                                                                                                                |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at             |
@@ -126,19 +131,20 @@ shown in Figure 5.2b. Table 5.2b summarizes the options when adding an NTP serve
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Set SSL Certificate:** If you change the "Protocol" value to "HTTPS" or "HTTP+HTTPS", an unsigned RSA certificate and key are auto-generated. To view these,
-click "Set SSL Certificate" and review its "SSL Certificate" field. If you already have a signed certificate that you wish to use for SSL/TLS connections,
-replace the values in the "SSL certificate" field with a copy/paste of your own key and certificate. Table 5.2c summarizes the settings that can be configured using the SSL tab. This
+**Set SSL Certificate:** If you change the "Protocol" value to "HTTPS" or "HTTP+HTTPS", an unsigned RSA certificate and key are auto-generated. To view or
+edit the certificate and key, click the "Set SSL Certificate" button and review the contents of the "SSL Certificate" field shown in Figure 5.2.c. If you
+already have a signed certificate that you wish to use for SSL/TLS connections, replace the values in the "SSL certificate" field with a copy/paste of your
+own key and certificate. Table 5.2c summarizes the settings that can be configured using the SSL tab. This
 `howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
 shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
 
 **Figure 5.2b: Add a NTP Server**
 
-|100000000000011C0000016E12EDFEE5_jpg|
+|ntp1.png|
 
-.. |100000000000011C0000016E12EDFEE5_jpg| image:: images/100000000000011C0000016E12EDFEE5.jpg
-    :width: 3.4217in
-    :height: 3.389in
+.. |ntp1.png| image:: images/ntp1.png
+    :width: 7.1in
+    :height: 3.9in
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -171,6 +177,14 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 | Force       | checkbox  | forces the addition of the NTP server, even if it is currently unreachable                                            |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
+
+**Figure 5.2c: Set SSL Certificate**
+
+|ssl1.png|
+
+.. |ssl1.png| image:: images/ssl1.png
+    :width: 4.2in
+    :height: 4.4in
 
 **Table 5.2c: SSL Certificate Configuration Settings**
 
@@ -217,7 +231,11 @@ are summarized in Table 5.3a.
 
 **Figure 5.3a: Advanced Screen**
 
-|Figure53a_png|
+|system3.png|
+
+.. |system3.png| image:: images/system3.png
+    :width: 11.1in
+    :height: 4.4in
 
 **Table 5.3a: Advanced Configuration Settings**
 
@@ -302,10 +320,9 @@ will always slow the system down as it caps the ARC.
 The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default; check it if you would like the autotuner to run
 at boot time. If you would like the script to run immediately, reboot the system.
 
-If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Sysctls` (for :file:`sysctl.conf` values)
-and in :menuselection:`System --> Tunables` (for :file:`loader.conf` values). If you do not like the changes, you can modify the values that are displayed in
-the GUI and your changes will override the values that were created by the autotune script. However, if you delete a sysctl or tunable that was created by
-autotune, it will be recreated at next boot. This is because autotune only creates values that do not already exist.
+If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Tunables`. If you do not like the changes,
+you can modify the values that are displayed in the GUI and your changes will override the values that were created by the autotune script. However, if you
+delete a tunable that was created by autotune, it will be recreated at next boot. This is because autotune only creates values that do not already exist.
 
 If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
 autotune.
@@ -325,7 +342,11 @@ that can be configured using the Email tab.
 
 **Figure 5.4a: Email Screen**
 
-|Figure54a_png|
+|system4.png|
+
+.. |system4.png| image:: images/system4.png
+    :width: 4.7in
+    :height: 3.7in
 
 **Table 5.4a: Email Configuration Settings**
 
@@ -378,7 +399,11 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.5a: System Dataset Screen**
 
-|Figure55a_png|
+|system5.png|
+
+.. |system5.png| image:: images/system5.png
+    :width: 3.8in
+    :height: 2.0in
 
 The system dataset can optionally be configured to also store the system log and the Reporting information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` from filling up as :file:`/var/` has limited space. 
@@ -433,7 +458,11 @@ To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tun
 
 **Figure 5.6a: Adding a Tunable**
 
-|Figure56a_png|
+|tunable.png|
+
+.. |tunable.png| image:: images/tunable.png
+    :width: 2.8in
+    :height: 2.4in
 
 Table 5.6a summarizes the options when adding a tunable.
 
@@ -466,8 +495,8 @@ Table 5.6a summarizes the options when adding a tunable.
    value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is rebooted
    as loaders are only read when the kernel is loaded at boot time. As long as the loader exists, your changes will persist at each boot and across upgrades.
 
-Any sysctls or loaders that you add will be listed alphabetically in :menuselection:`System --> Tunables --> View Tunables`. To change the value of an
-existing tunable, click its "Edit" button. To remove a tunable, click its "Delete" button.
+Any sysctls or loaders that you add will be listed alphabetically in :menuselection:`System --> Tunables`. To change the value of an existing tunable, click
+its "Edit" button. To remove a tunable, click its "Delete" button.
 
 Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
 Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value
@@ -480,6 +509,7 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
  kern.dirdelay=4
  kern.filedelay=5
  kern.coredump=0
+ kern.sugid_coredump=1
  net.inet.tcp.delayed_ack=0
 
 
@@ -503,10 +533,11 @@ At this time, the GUI does not display the loaders that are pre-set in the insta
  hint.isp.3.role=2
  module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
+ vfs.zfs.vol.mode=2
 
 **Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
 
-The ZFS version used in 9.2.2 deprecates the following loaders::
+The ZFS version used in 9.3 deprecates the following loaders::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
