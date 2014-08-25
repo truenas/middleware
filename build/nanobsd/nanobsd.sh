@@ -187,7 +187,7 @@ if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
     else
 	seq_arg=""
     fi
-    env PYTHONPATH="${TOOLDIR}/usr/local/lib" ${TOOLDIR}/usr/local/bin/create_manifest -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS-${VERSION} ${seq_arg} -T FreeNAS-EXPERIMENTAL freenas=${VERSION}-${REVISION:-0} freenasUI=${VERSION}-${REVISION:-0} freenas-pkg-tools=${VERSION}-${REVISION:-0}
+    env PYTHONPATH="${TOOLDIR}/usr/local/lib" ${TOOLDIR}/usr/local/bin/create_manifest -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST -R FreeNAS-${VERSION} ${seq_arg} -T ${TRAIN:-FreeNAS} freenas=${VERSION}-${REVISION:-0} freenasUI=${VERSION}-${REVISION:-0} freenas-pkg-tools=${VERSION}-${REVISION:-0}
 else
     echo "What happened to the tools?!?!?!"
     false
