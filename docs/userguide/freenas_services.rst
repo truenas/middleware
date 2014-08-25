@@ -36,6 +36,8 @@ following built-in services:
 
 * :ref:`UPS`
 
+* "ref:`WebDAV`
+
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
 .. _Control Services:
@@ -1922,3 +1924,42 @@ man page gives some other usage examples.
 `upscmd(8) <http://www.networkupstools.org/docs/man/upscmd.html>`_
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
 this command. These users are created in the "Extra users" field.
+
+.. _WebDAV:
+
+WeDAV
+-----
+
+Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
+
+Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available options.
+
+**Figure 11.16a: WebDAV Configuration Screen**
+
+|Figure1116a_png|
+
+**Tablee 11.16a: WebDAV Configuration Options**
+
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                       |
+|                           |                |                                                                                                       |
+|                           |                |                                                                                                       |
++===========================+================+=======================================================================================================+
+| Protocol                  | drop-down menu | choices are *HTTP* (connection always unencrypted),                                                   |
+|                           |                | *HTTPS* (connection always encrypted), or                                                             |
+|                           |                | *HTTP+HTTPS* (both types of connections allowed)                                                      |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Port                 | string         | specify the port to be used for the connection; the default of *8080* should work, if you change it,  |
+|                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Authentication       | drop-down menu | choices are *Basic Authentication* (unencrypted) or                                                   |
+|                           |                | *Digest Authentication* (encrypted)                                                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Webdav Password           | string         | default is *davtest*; this should be changed as it is a known value                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+
