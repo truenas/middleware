@@ -373,6 +373,8 @@ last_orders() {
 	    ) > "${vmdk_image_log}" 2>&1
 	fi
 
+	if false ; then
+        # I don't think we need this any longer
 	pprint 2 "Compressing full disk image"
 	log_file "${full_image_log}"
 
@@ -392,6 +394,7 @@ last_orders() {
 	sha256_signature=`sha256 ${NANO_IMGNAME}.img.xz`
 	echo "${sha256_signature}" > ${NANO_IMGNAME}.img.xz.sha256.txt
 	)
+	fi
 
 	pprint 2 "Creating ISO image"
 	log_file "${cd_image_log}"
