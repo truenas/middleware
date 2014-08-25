@@ -1012,6 +1012,7 @@ class iSCSITargetExtentForm(ModelForm):
             used_disks.extend(v.get_disks())
 
         _notifier = notifier()
+        zsnapshots = _notifier.zfs_snapshot_list()
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = _notifier.list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
@@ -1019,10 +1020,9 @@ class iSCSITargetExtentForm(ModelForm):
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
                         humanize_size(attrs['volsize']))
-                zsnapshots = _notifier.zfs_snapshot_list(path=zvol).values()
-                if not zsnapshots:
+                if zvol not in zsnapshots:
                     continue
-                for snap in zsnapshots[0]:
+                for snap in zsnapshots.get(zvol):
                     diskchoices["zvol/" + snap.fullname] = "%s (%s)" % (
                         snap.fullname,
                         humanize_size(attrs['volsize']))
