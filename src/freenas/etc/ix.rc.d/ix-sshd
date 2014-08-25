@@ -22,9 +22,7 @@ generate_sshd()
     cfg=/etc/ssh/sshd_config
 
     if [ ! -d /root/.ssh ]; then
-	mount -uw -onoatime /
 	mkdir -p /root/.ssh
-	mount -ur /
     fi
 
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \

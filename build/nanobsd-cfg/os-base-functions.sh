@@ -70,16 +70,6 @@ move_data()
 	rm -rf ${db}
 }
 
-add_data_to_fstab ( )
-{
-	(
-	cd ${NANO_WORLDDIR}
-	echo "/dev/${NANO_DRIVE}s4 /data ufs rw,noatime 2 2" >> etc/fstab
-	mkdir -p data
-	)
-	
-}
-
 select_httpd ( )
 {
 	echo 'nginx_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
@@ -334,7 +324,7 @@ freenas_custom()
 	find ${NANO_WORLDDIR} -type f -name "*~" -delete
 	find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
 	find ${NANO_WORLDDIR} -type f -name "*.service" -delete
-	mkdir ${NANO_WORLDDIR}/data/zfs
+	mkdir -p ${NANO_WORLDDIR}/data/zfs
 	ln -s -f /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s -f /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 
@@ -364,6 +354,57 @@ last_orders() {
 	vmdk_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk"
 	vmdk_image_compressed="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk.xz"
 
+
+	if false; then
+	    pprint 2 "Creating VMDK"
+	    log_file "${vmdk_image_log}"
+	    
+	    (
+		set -x
+		if [ -f /usr/local/bin/VBoxManage ]; then
+		    VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
+		    chmod 644 "${vmdk_image}"
+		    time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "${vmdk_image}"
+		    sha256_signature=`sha256 ${vmdk_image_compressed}`
+		    echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
+		else
+		    echo "VBoxManage not found"
+		fi
+	    ) > "${vmdk_image_log}" 2>&1
+	fi
+
+	if false ; then
+        # I don't think we need this any longer
+	pprint 2 "Compressing full disk image"
+	log_file "${full_image_log}"
+
+	(
+	set -x
+
+	# NOTE: keep in synch with create_iso.sh.
+	# NOTE: this is still needed after the .txz payload has been
+	# added because pc-sysinstall doesn't support raw images
+	# (-.-).
+	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
+	time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "$full_image"
+
+	) > "${full_image_log}" 2>&1
+	(
+	cd $NANO_DISKIMGDIR
+	sha256_signature=`sha256 ${NANO_IMGNAME}.img.xz`
+	echo "${sha256_signature}" > ${NANO_IMGNAME}.img.xz.sha256.txt
+	)
+	fi
+
+	pprint 2 "Creating ISO image"
+	log_file "${cd_image_log}"
+
+	(
+	set -x
+
+	sh "$AVATAR_ROOT/build/create_iso.sh"
+
+	) > "${cd_image_log}" 2>&1
 	if $do_copyout_partition; then
 
 		pprint 2 "Compressing GUI upgrade image"
@@ -398,22 +439,31 @@ last_orders() {
 				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
 				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else
+		    	tar -c -p -f ${NANO_OBJ}/gui-boot.tar \
+			    	-C ${NANO_OBJ}/_.isodir ./boot
+			tar -c -p -f ${NANO_OBJ}/gui-install-environment.tar \
+			    	-C ${NANO_OBJ}/_.instufs .
+			tar -c -p -f ${NANO_OBJ}/gui-packages.tar \
+			    	-s '@^Packages@FreeNAS/Packages@' \
+				-C ${NANO_OBJ}/_.packages .
 			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
-					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
 				-C "$AVATAR_ROOT/build/nanobsd-cfg/Installer" \
 					. \
 				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
 					. \
-				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/}
-				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
-				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
+			    	-C "${NANO_OBJ}" \
+					gui-boot.tar \
+			    		gui-install-environment.tar \
+					gui-packages.tar
+			${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
+			mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
+			rm -f ${NANO_OBJ}/gui-boot.tar ${NANO_OBJ}/gui-install-environment.tar
+			rm -f ${NANO_OBJ}/gui-packages.tar
 		fi
 		) > "${gui_image_log}" 2>&1
 		(
@@ -422,54 +472,6 @@ last_orders() {
 		echo "${sha256_signature}" > ${NANO_IMGNAME}.GUI_Upgrade.txz.sha256.txt
 		)
 	fi
-
-	if false; then
-	    pprint 2 "Creating VMDK"
-	    log_file "${vmdk_image_log}"
-	    
-	    (
-		set -x
-		if [ -f /usr/local/bin/VBoxManage ]; then
-		    VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
-		    chmod 644 "${vmdk_image}"
-		    time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "${vmdk_image}"
-		    sha256_signature=`sha256 ${vmdk_image_compressed}`
-		    echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
-		else
-		    echo "VBoxManage not found"
-		fi
-	    ) > "${vmdk_image_log}" 2>&1
-	fi
-
-	pprint 2 "Compressing full disk image"
-	log_file "${full_image_log}"
-
-	(
-	set -x
-
-	# NOTE: keep in synch with create_iso.sh.
-	# NOTE: this is still needed after the .txz payload has been
-	# added because pc-sysinstall doesn't support raw images
-	# (-.-).
-	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
-	time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "$full_image"
-
-	) > "${full_image_log}" 2>&1
-	(
-	cd $NANO_DISKIMGDIR
-	sha256_signature=`sha256 ${NANO_IMGNAME}.img.xz`
-	echo "${sha256_signature}" > ${NANO_IMGNAME}.img.xz.sha256.txt
-	)
-
-	pprint 2 "Creating ISO image"
-	log_file "${cd_image_log}"
-
-	(
-	set -x
-
-	sh "$AVATAR_ROOT/build/create_iso.sh"
-
-	) > "${cd_image_log}" 2>&1
 
 }
 
@@ -570,6 +572,11 @@ install_debug_kernel ( )
 	local _kernconf=$(basename ${NANO_KERNEL})
 
 	install_kernel2  ${NANO_OBJ}/${_kernconf}-DEBUG  /boot/kernel-debug
+}
+
+clean_etc()
+{
+	rm -f ${NANO_WORLDDIR}/etc/fstab ${NANO_WORLDDIR}/conf/base/etc/fstab
 }
 
 install_ports()

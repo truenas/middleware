@@ -15,10 +15,10 @@ class Migration(DataMigration):
         # and orm['appname.ModelName'] for models in other applications.
         for item in orm.NFS.objects.all():
             if os.path.isfile("/conf/base/etc/nfsv4_enable"):
-                ret = os.system("mount -uw -o noatime /")
-                if not ret:
-                    os.remove("/conf/base/etc/nfsv4_enable")
-                    os.system("mount -ur /")
+                #ret = os.system("mount -uw -o noatime /")
+                #if not ret:
+                os.remove("/conf/base/etc/nfsv4_enable")
+                #    os.system("mount -ur /")
                 item.nfs_srv_v4 = 1
                 item.save()
 
@@ -26,10 +26,10 @@ class Migration(DataMigration):
         "Write your backwards methods here."
         for item in orm.NFS.objects.all():
             if item.nfs_srv_v4 == 1:
-                ret = os.system("mount -uw -o noatime /")
-                if not ret:
-                    open("/conf/base/etc/nfsv4_enable", "w").close()
-                    os.system("mount -ur /")
+                #ret = os.system("mount -uw -o noatime /")
+                #if not ret:
+                open("/conf/base/etc/nfsv4_enable", "w").close()
+                #    os.system("mount -ur /")
 
     models = {
         u'services.afp': {

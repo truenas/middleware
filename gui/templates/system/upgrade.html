@@ -1,0 +1,47 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{{ request.path }}',
+    longRunning: true,
+    progressbar: {
+      steps: [
+         {"label": gettext("Downloading packages")},
+         {"label": gettext("Installing packages")}
+      ],
+      poolUrl: '{% url "system_upgrade_progress" %}',
+      fileUpload: false
+    }
+});
+{% endblock %}
+{% block form %}
+<tr>
+  <td>
+{% if update %}
+{% trans "You're about to upgrade. The following packages will be changed:" %}
+<pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
+{% trans "Are you sure you want to continue?" %}
+{% else %}
+    <p>{% trans "No updates available" %}</p>
+{% endif %}
+  </td>
+</tr>
+{% endblock %}
+
+{% block oklabel %}
+{% trans "Upgrade" %}
+{% endblock %}
+
+{% block buttons %}
+{% if update %}
+{{ block.super }}
+{% else %}
+<button id="btn_Upgrade_Close" data-dojo-type="dijit.form.Button"type="button">
+    {% trans "Close" %}
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        cancelDialog(this);
+    </script>
+</button>
+{% endif %}
+{% endblock %}

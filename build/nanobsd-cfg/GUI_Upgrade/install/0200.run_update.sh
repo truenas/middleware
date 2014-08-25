@@ -1,6 +1,6 @@
 #!/bin/sh
 #-
-# Copyright (c) 2013 iXsystems, Inc.
+# Copyright (c) 2014 iXsystems, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,210 +25,206 @@
 # SUCH DAMAGE.
 #
 
-#
-# Run the nanobsd updater with the fixed partition image.
-#
-# Garrett Cooper, March 2012
-#
-# Run the old updater if we're not absolutely certain we're FreeNAS.
-
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
+
+. /etc/nanobsd.conf
+. /etc/rc.freenas
 
 upgrade_cleanup()
 {
 	find ${SCRIPTDIR} -type f -exec truncate -s 0 {} +
 }
 
-if true || [ ! \( "$OLD_AVATAR_PROJECT" = "FreeNAS" -a \
-    "$NEW_AVATAR_PROJECT" = "FreeNAS" \) ] ; then
+upgrade_fail()
+{
+	warn $1
+	upgrade_cleanup
+	exit 1
+}
 
-    echo "Doing old upgrade" > /data/0200.run_update.sh.log
-    date >> /data/0200.run_update.sh.log
+standard_upgrade()
+{
+	# TODO: Implement actual upgrade code: create boot environment from current file system,
+	#       apply the upgrade image over it, activate, and reboot.
 
-    if [ "$VERBOSE" != "" -a "$VERBOSE" != "0" ] ; then
-        sh -x $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
-    else
-        sh $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
-    fi
-else
-    echo "Doing NEW upgrade" > /data/0200.run_update.sh.log
-    date >> /data/0200.run_update.sh.log
+	upgrade_fail "Not implemented yet"
+}
 
-. /etc/nanobsd.conf
-. /etc/rc.freenas
+trampoline_upgrade()
+{
+	# Trampoline upgrade.  Determine eligibility.
+	ROOTDEV=`/sbin/glabel status | /usr/bin/grep ${NANO_DRIVE}s1a | /usr/bin/awk '{print $3;}' | sed -e 's,s1a$,,g'`
+	if [ -c /dev/${ROOTDEV} ]; then
+		ROOTDEV_SIZE=`diskinfo /dev/${ROOTDEV} | awk '{print $3;}'`
 
-ROOTDEV=`/sbin/glabel status | /usr/bin/grep ${NANO_DRIVE}s1a | /usr/bin/awk '{print $3;}' | sed -e 's,s1a$,,g'`
-if [ -c /dev/${ROOTDEV} ]; then
-	ROOTDEV_SIZE=`diskinfo /dev/${ROOTDEV} | awk '{print $3;}'`
-
-	# Check if the root device have enough space to hold new image.
-	# TODO: Find a way so we do not hardcode this value.
-	if [ ${ROOTDEV_SIZE} -lt 3699999744 ]; then
-		warn "Root device too small!"
-		upgrade_cleanup
-		exit 1
+		# Check if the root device have enough space to hold new image.
+		# TODO: Find a way so we do not hardcode this value.
+		if [ ${ROOTDEV_SIZE} -lt 3699999744 ]; then
+			upgrade_fail "Root device too small!"
+		fi
 	fi
 
-	# Check if we need to do a full trampoline upgrade
-	ROOTS1_SIZE=`diskinfo /dev/${ROOTDEV}s1 | awk '{print $3;}'`
-	ROOTS2_SIZE=`diskinfo /dev/${ROOTDEV}s2 | awk '{print $3;}'`
+	# ${SCRIPTDIR} has the contents of the GUI upgrade file, extracted.
+	# Files we need to concern ourselves with:
+	# gui-boot.tar -- /boot
+	# gui-install-environment.tar -- the installation environment.  Also /rescue
+	# gui-packages.tar -- the packages (should be extracted into .mount)
+	#
+	# Everything goes under ${TRAMPOLINE_MP}
+	
+	# We need to have /boot in ${TRAMPOLINE_MFS_ROOT.
+	# We need to put /rescue in ${TRAMPOLINE_MFS_ROOT}
+	# We need to copy gui-install-environment.tar and gui-packages.tar to
+	# ${TRAMPOLINE_IMG}, which will be recoverdisk'd to the filesystem.
+	MP_ROOTS=${SCRIPTDIR}/tmp/mp
+	mkdir -p ${MP_ROOTS}
 
-	if [ ${ROOTS1_SIZE} -ge 1838301696 -a ${ROOTS2_SIZE} -ge 1838301696 ]; then
-		# Use "normal" procedure.
-		sh $SCRIPTDIR/bin/update $SCRIPTDIR/firmware.img
+	# Extract the installation image for future use
+	INSTALLATION_ROOT=${SCRIPTDIR}/tmp/newroot
+	rm -rf ${INSTALLATION_ROOT} || chflags -R 0 ${INSTALLATION_ROOT} && rm -fr ${INSTALLATION_ROOT}
+	mkdir -p ${INSTALLATION_ROOT}
+
+#	INSTALLATION_MD=`mdconfig -a -o ro -t vnode -f ${INSTALLATION_IMG}`
+#	INSTALLATION_MD_ROOT=${MP_ROOTS}/install
+
+#	mkdir -p ${INSTALLATION_MD_ROOT}
+#	mount -o ro ${INSTALLATION_MD} ${INSTALLATION_MD_ROOT}
+	trap "umount ${INSTALLATION_MD_ROOT} && mdconfig -d -u ${INSTALLATION_MD##md}" 1 2 15 EXIT
+#	tar cf - -C ${INSTALLATION_MD_ROOT} | tar xf - -C ${INSTALLATION_ROOT}
+#	umount ${INSTALLATION_MD_ROOT}
+#	mdconfig -d -u ${INSTALLATION_MD##md}
+	trap 1 2 15 EXIT
+
+	# Data to be migrated into the new system
+#	tar cf - /data /root/.ssh | tar xf - -C ${INSTALLATION_ROOT}
+	# Touch sentinals to simulate CD-ROM upgrade (except we don't have a returning ticket)
+#	touch ${INSTALLATION_ROOT}${NEED_UPDATE_SENTINEL}
+#	touch ${INSTALLATION_ROOT}${CD_UPGRADE_SENTINEL}
+
+	#
+	# Create the trampoline MFS image.  This MFS image does the following:
+	#
+	# 1. Mount the real / (file system where it booted from) read-only at /mnt
+	# 2. Create a memory file system at /installer and copy the full FreeNAS
+	#    image into memory. (we already copied /data there)
+	# 3. Unmount the real / mounted at /mnt.  Now we can write the ${ROOTDEV}
+	# 4. Chroot into the image and have the real installer core to perform
+	#    the actual installation against ${ROOTDEV}
+	#
+	TRAMPOLINE_MFS_ROOT=${SCRIPTDIR}/tmp/trampoline_mfsroot
+	TRAMPOLINE_MFS_IMG=${SCRIPTDIR}/tmp/trampoline.ufs
+	TRAMPOLINE_MFS_RC=trampoline.rc
+	rm -fr ${TRAMPOLINE_MFS_ROOT}
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}
+
+	# Mountpoints
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/dev
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/mnt
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/dev
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/.mount/FreeNAS
+	
+	# Copy /rescue from the installation image.
+	tar xf ${SCRIPTDIR}/gui-install-environment.tar -C ${TRAMPOLINE_MFS_ROOT} ./rescue
+
+	# Determine the running slice and the target slice
+	if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
+		CURRENT_SLICE=1
+		TRAMPOLINE_SLICE=2
 	else
-		# Full trampoline upgrade.
+		CURRENT_SLICE=2
+		TRAMPOLINE_SLICE=1
+	fi
 
-		# We can not do this if our backing storage is a md.
-		VOLUME_MOUNTPOINT=`dirname ${SCRIPTDIR}`
-		VOLUME_DEVICE=`mount | grep ${VOLUME_MOUNTPOINT} | awk '{print $1;}'`
-		if [ "${VOLUME_DEVICE##/dev/md}" != ${VOLUME_DEVICE} ]; then
-			warn "Can not do trampoline upgrade without backing storage."
-			upgrade_cleanup
-			exit 1
-		fi
-
-		if [ "${VOLUME_DEVICE##/dev/}" = ${VOLUME_DEVICE} ]; then
-			POOL=${VOLUME_DEVICE%%/*}
-			IMPORTCMD="/rescue/zpool import -R /mnt -o readonly=on -f ${POOL}"
-			EXPORTCMD="/rescue/zpool export ${POOL}"
-		else
-			IMPORTCMD="/rescue/mkdir -p ${SCRIPTDIR} ; /rescue/mount -o ro ${VOLUME_DEVICE} ${VOLUME_MOUNTPOINT}"
-			EXPORTCMD="/rescue/umount ${VOLUME_MOUNTPOINT}"
-		fi
-			
-
-		# Create a temporary file
-		rm -f ${SCRIPTDIR}/newdisk.img
-		truncate -s ${ROOTDEV_SIZE} ${SCRIPTDIR}/newdisk.img
-		NEWDISK_MD=`mdconfig -a -t vnode -f ${SCRIPTDIR}/newdisk.img`
-		echo "\
-g c1023 h16 s63
-p 1 165 63 3590433
-p 2 165 3590559 3590433
-p 3 165 7180992 3024
-p 4 165 7184016 41328
-a 1" > ${SCRIPTDIR}/newdisk.fdisk
-		fdisk -i -f ${SCRIPTDIR}/newdisk.fdisk ${NEWDISK_MD}
-		rm -f ${SCRIPTDIR}/newdisk.fdisk
-
-		# Write the binary partition.
-		recoverdisk ${SCRIPTDIR}/firmware.img /dev/${NEWDISK_MD}s1
-		mkdir -p ${SCRIPTDIR}/mp/newroot
-		mount /dev/${NEWDISK_MD}s1a ${SCRIPTDIR}/mp/newroot
-
-		# Write MBR
-		boot0cfg -B -b ${SCRIPTDIR}/mp/newroot/boot/boot0 -o packet -s 1 -m 3 -t 18 ${NEWDISK_MD}
-
-		NANO_LABEL=`echo ${NANO_DRIVE} | cut -f2 -d/`
-
-		# Populate /data and /cfg partitions
-		newfs -b 4096 -f 512 -i 8192 -O1 -U -L ${NANO_LABEL}s3 /dev/${NEWDISK_MD}s3
-		newfs -b 4096 -f 512 -i 8192 -O1 -U -L ${NANO_LABEL}s4 /dev/${NEWDISK_MD}s4
-
-		# Copy over our /data to new /data, and copy files in /root to new image.
-		rm -fr ${SCRIPTDIR}/mp/newroot/data
-		mkdir -p ${SCRIPTDIR}/mp/newroot/data
-		mount /dev/${NEWDISK_MD}s4 ${SCRIPTDIR}/mp/newroot/data
-		rsync -au /root/ ${SCRIPTDIR}/mp/newroot/root/
-		rsync -a /data/ ${SCRIPTDIR}/mp/newroot/data/
-		# Touch update sentinals, this is similar to a CD upgrade case.
-		touch ${SCRIPTDIR}/mp/newroot${NEED_UPDATE_SENTINEL}
-		touch ${SCRIPTDIR}/mp/newroot${CD_UPGRADE_SENTINEL}
-		umount ${SCRIPTDIR}/mp/newroot/data/
-
-		# Create the trampoline filesystem.
-		if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
-			CURRENT_SLICE=1
-			TRAMPOLINE_SLICE=2
-		else
-			CURRENT_SLICE=2
-			TRAMPOLINE_SLICE=1
-		fi
-		TRAMPOLINE_SIZE=`diskinfo /dev/${ROOTDEV}s${TRAMPOLINE_SLICE} | awk '{print $3;}'`
-		rm -f ${SCRIPTDIR}/trampoline.img
-		truncate -s ${TRAMPOLINE_SIZE} ${SCRIPTDIR}/trampoline.img
-		TRAMPOLINE_MD=`mdconfig -a -t vnode -f ${SCRIPTDIR}/trampoline.img`
-		bsdlabel -w -B /dev/${TRAMPOLINE_MD}
-		newfs -b 4096 -f 512 -i 8192 -O1 -U /dev/${TRAMPOLINE_MD}a
-		mkdir -p ${SCRIPTDIR}/mp/trampoline
-		mount /dev/${TRAMPOLINE_MD}a ${SCRIPTDIR}/mp/trampoline
-		rsync -a ${SCRIPTDIR}/mp/newroot/boot ${SCRIPTDIR}/mp/trampoline/
-
-		# Generate trampoline memdisk files
-		rm -fr ${SCRIPTDIR}/mp/trampoline-mfs
-		mkdir -p ${SCRIPTDIR}/mp/trampoline-mfs
-		tar cf - -C ${SCRIPTDIR}/mp/newroot/ rescue | tar xf - -C ${SCRIPTDIR}/mp/trampoline-mfs
-		mkdir -p ${SCRIPTDIR}/mp/trampoline-mfs/dev
-		mkdir -p ${SCRIPTDIR}/mp/trampoline-mfs/mnt
-		mkdir -p ${SCRIPTDIR}/mp/trampoline-mfs/nextroot
-
-		# The trampoline script
-		cat > ${SCRIPTDIR}/mp/trampoline-mfs/upgrade-trampoline.rc <<-EOF
+	# The trampoline script
+	##########################################
+	cat > ${TRAMPOLINE_MFS_ROOT}/${TRAMPOLINE_MFS_RC} <<-EOF
 #!/bin/sh
 
-mdmfs -s 8m md /mnt
+echo -n "Extracting upgrade image, please wait..."
 
-${IMPORTCMD}
+/rescue/mount -o ro /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a /mnt
+/rescue/mount -t tmpfs tmpfs /installer
+/rescue/mkdir -p /installer/.mount/FreeNAS
 
-if [ -e ${SCRIPTDIR}/newdisk.img ]; then
-	echo "Upgrade is being applied, please be patient..."
-	dd if=${SCRIPTDIR}/newdisk.img of=/dev/${ROOTDEV} bs=1m
-	umount ${SCRIPTDIR}/..
-	${EXPORTCMD}
-	mount -o ro /dev/${NANO_DRIVE}s1a /nextroot
-	mount -t devfs devfs /nextroot/dev
-else
-	echo "Upgrade FAILED!  Reverting to previous state..."
-	/rescue/gpart set -a active -i ${CURRENT_SLICE} ${ROOTDEV}
-	/rescue/sleep 15
-	echo "Rebooting..."
-	/rescue/reboot
-	exit 0
-fi
+/rescue/tar xf /mnt/gui-install-environment.tar  -C /installer || (echo "FAILED BASE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
+/rescue/tar xf /mnt/gui-packages.tar -C /installer/.mount || (echo "FAILED PACKAGE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
+/rescue/mv /installer/.mount/Packages /installer/.mount/FreeNAS/Packages
+/rescue/umount /mnt
 
-/rescue/gpart set -a active -i 1 ${ROOTDEV}
+echo " Done!"
+echo -n "Applying upgrade..."
 
-kenv init_shell="/bin/sh"
-echo "Done, let's try migrate the data..."
-exit 0
+# Set up chroot jail for the first time installer
+/rescue/mount -t devfs devfs /installer/dev
+#echo "Starting a shell now; exit when done"
+#/rescue/sh
+
+/rescue/chroot /installer /bin/sh /etc/install.sh "${ROOTDEV}" || (echo "FAILED" && /bin/sh && /bin/sh && /rescue/reboot)
+echo " Done!"
+echo "Rebooting..."
+/rescue/reboot
 EOF
+	##########################################
+	# The trampoline script, end.
 
+	# Create the trampoline MFS image
+	makefs ${TRAMPOLINE_MFS_IMG} ${TRAMPOLINE_MFS_ROOT}
+#	rm -fr ${TRAMPOLINE_MFS_ROOT} &
+	gzip -9 ${TRAMPOLINE_MFS_IMG}
 
-		# Create the trampoline MFS image
-		makefs ${SCRIPTDIR}/mp/trampoline/boot/trampoline.ufs ${SCRIPTDIR}/mp/trampoline-mfs/
-		rm -fr ${SCRIPTDIR}/mp/trampoline-mfs/
+	# Trampoline partition.  This contains:
+	# 1. The kernel to boot the system;
+	# 2. The trampoline MFS image, loaded via loader on boot;
+	# 3. The installation image, re-packed because we modified its contents;
+	TRAMPOLINE_IMG=${SCRIPTDIR}/tmp/trampoline.img
+	TRAMPOLINE_SIZE=`diskinfo /dev/${ROOTDEV}s${TRAMPOLINE_SLICE} | awk '{print $3;}'`
+	TRAMPOLINE_MP=${SCRIPTDIR}/tmp/mp
 
-		# Create loader.conf
-		cat > ${SCRIPTDIR}/mp/trampoline/boot/loader.conf <<-EOF
+	rm -f ${TRAMPOLINE_IMG}
+	truncate -s ${TRAMPOLINE_SIZE} ${TRAMPOLINE_IMG}
+	TRAMPOLINE_MD=`mdconfig -a -t vnode -f ${TRAMPOLINE_IMG}`
+	bsdlabel -w -B /dev/${TRAMPOLINE_MD}
+	newfs -b 4096 -f 512 -i 8192 -O1 -U /dev/${TRAMPOLINE_MD}a
+
+	mkdir -p ${TRAMPOLINE_MP}
+	mount /dev/${TRAMPOLINE_MD}a ${TRAMPOLINE_MP}
+
+	# Get /boot into ${TRAMPOLINE_MP}
+	tar xf ${SCRIPTDIR}/gui-boot.tar -C ${TRAMPOLINE_MP} ./boot
+	mv ${TRAMPOLINE_MFS_IMG}.gz ${TRAMPOLINE_MP}/boot/
+	cp ${SCRIPTDIR}/gui-install-environment.tar ${TRAMPOLINE_MP}
+	cp ${SCRIPTDIR}/gui-packages.tar ${TRAMPOLINE_MP}
+
+	# Create loader.conf
+	TARGET_MFS=/boot/$(basename ${TRAMPOLINE_MFS_IMG})
+	cat > ${TRAMPOLINE_MP}/boot/loader.conf <<-EOF
 autoboot_delay="0"
 beastie_disable="YES"
 
 mfsroot_load="YES"
 mfsroot_type="md_image"
-mfsroot_name="/boot/trampoline.ufs"
+mfsroot_name="${TARGET_MFS}"
 
 init_path="/rescue/init"
 init_shell="/rescue/sh"
-init_script="/upgrade-trampoline.rc"
-init_chroot="/nextroot"
-
+init_script="/${TRAMPOLINE_MFS_RC}"
+tmpfs_load="YES"
 zfs_load="YES"
 EOF
 
-		umount ${SCRIPTDIR}/mp/trampoline
-		mdconfig -d -u ${TRAMPOLINE_MD##md}
-		umount ${SCRIPTDIR}/mp/newroot
+	umount ${TRAMPOLINE_MP}
+	mdconfig -d -u ${TRAMPOLINE_MD##md}
+	recoverdisk ${TRAMPOLINE_IMG} /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}
+	rm -f ${TRAMPOLINE_IMG}
+	gpart set -a active -i ${TRAMPOLINE_SLICE} ${ROOTDEV}
+}
 
-		recoverdisk ${SCRIPTDIR}/trampoline.img /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}
-		rm -f ${SCRIPTDIR}/trampoline.img
-		gpart set -a active -i ${TRAMPOLINE_SLICE} ${ROOTDEV}
-	fi
+if [ ! -d /.zfs ]; then
+	trampoline_upgrade
 else
-	warn "Can not determine root device"
-	upgrade_cleanup
-	exit 1
+	standard_upgrade
 fi
 
-fi
 upgrade_cleanup
+exit 0

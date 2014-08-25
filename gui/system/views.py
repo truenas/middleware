@@ -34,6 +34,7 @@ import shutil
 import signal
 import socket
 import subprocess
+import sys
 import sysctl
 import time
 import urllib
@@ -52,6 +53,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
+from freenasOS.Update import CheckForUpdates, Update
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
@@ -63,6 +65,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
+from freenasUI.system.utils import CheckUpdateHandler, UpdateHandler
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -222,6 +225,11 @@ def home(request):
     except:
         registration = None
 
+    try:
+        upgrade = models.Upgrade.objects.order_by("-id")[0]
+    except:
+        upgrade = models.Upgrade.objects.create()
+
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
@@ -230,6 +238,7 @@ def home(request):
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
+        'upgrade': upgrade,
     })
 
 
@@ -815,3 +824,53 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+def upgrade(request):
+
+    if request.method == 'POST':
+        uuid = request.GET.get('uuid')
+        handler = UpdateHandler(uuid=uuid)
+        if not uuid:
+            #FIXME: ugly
+            pid = os.fork()
+            if pid != 0:
+                return HttpResponse(handler.uuid, status=202)
+            else:
+                handler.pid = os.getpid()
+                handler.dump()
+                try:
+                    Update(
+                        get_handler=handler.get_handler,
+                        install_handler=handler.install_handler,
+                    )
+                except Exception, e:
+                    #FIXME: error handling
+                    pass
+                handler.finished = True
+                handler.dump()
+                #os.kill(handler.pid, 15)
+        else:
+            if not handler.finished:
+                return HttpResponse(handler.uuid, status=202)
+            handler.exit()
+            request.session['allow_reboot'] = True
+            return render(request, 'system/done.html')
+
+    handler = CheckUpdateHandler()
+    try:
+        update = CheckForUpdates(handler=handler.call)
+    except ValueError:
+        update = False
+    return render(request, 'system/upgrade.html', {
+        'update': update,
+        'handler': handler,
+    })
+
+
+def upgrade_progress(request):
+    handler = UpdateHandler()
+    return HttpResponse(
+        json.dumps(handler.load()),
+        content_type='application/json',
+    )

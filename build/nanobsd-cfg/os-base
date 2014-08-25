@@ -67,8 +67,6 @@ fi
 
 customize_cmd move_data
 
-customize_cmd add_data_to_fstab
-
 if is_truenas ; then
 	customize_cmd afpd_conf_symlink
 fi
@@ -80,6 +78,8 @@ customize_cmd remove_patch_divots
 customize_cmd configure_mnt_md
 
 customize_cmd shrink_md_fbsize
+
+customize_cmd clean_etc
 
 if [ "${DEBUG}" = 1 ]; then
 	customize_cmd unmute_console_logging

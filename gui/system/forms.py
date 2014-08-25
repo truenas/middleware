@@ -1890,3 +1890,10 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
 
 class InitialWizardConfirmForm(Form):
     pass
+
+
+class UpgradeForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Upgrade

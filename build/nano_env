@@ -109,6 +109,12 @@ if [ -z "${SVNVERSION}" ]; then
 fi
 
 
+if [ -n "${git}" ]; then
+    # Get the sequence number from the time of the commit
+    SEQUENCE=`$git_cmd show -s --format=%ct ${git}`
+    export SEQUENCE
+fi
+
 # REVISION gets set to "" when doing tagged versions, SVNREVISION allows
 # us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
@@ -331,6 +337,7 @@ WITHOUT_NDIS=true
 WITHOUT_NLS=true
 WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
+WITH_OPENSSH_NONE_CIPHER=true
 WITHOUT_PORTSNAP=true
 WITHOUT_PPP=true
 WITHOUT_PROFILE=true

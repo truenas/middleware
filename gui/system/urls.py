@@ -83,4 +83,6 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^reload-httpd/$', 'reload_httpd', name="system_reload_httpd"),
     url(r'^terminal/$', 'terminal', name="system_terminal"),
     url(r'^terminal/paste/$', 'terminal_paste', name="system_terminal_paste"),
+    url(r'^upgrade/$', 'upgrade', name="system_upgrade"),
+    url(r'^upgrade/progress/$', 'upgrade_progress', name="system_upgrade_progress"),
 )
