@@ -157,8 +157,8 @@ echo -n "Applying upgrade..."
 
 # Set up chroot jail for the first time installer
 /rescue/mount -t devfs devfs /installer/dev
-echo "Starting a shell now; exit when done"
-/rescue/sh
+#echo "Starting a shell now; exit when done"
+#/rescue/sh
 
 /rescue/chroot /installer /bin/sh /etc/install.sh "${ROOTDEV}" || (echo "FAILED" && /bin/sh && /bin/sh && /rescue/reboot)
 echo " Done!"
