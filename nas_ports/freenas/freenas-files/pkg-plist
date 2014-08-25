@@ -138,6 +138,7 @@ etc/ix/templates/pam.d/rsh
 etc/ix/templates/pam.d/samba
 etc/ix/templates/pam.d/sshd
 etc/ix/templates/pam.d/su
+etc/ix/templates/pam.d/sudo
 etc/ix/templates/pam.d/system
 etc/ix/templates/pam.d/telnetd
 etc/ix/templates/pam.d/xdm
