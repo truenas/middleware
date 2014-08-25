@@ -292,11 +292,22 @@ partition_disk() {
 	fi
 
 	gpart destroy -F ${_disk} || true
+	# Get rid of any MBR.  Shouldn't be necessary,
+	# but caching seems to have caused problems.
+	dd if=/dev/zero of=/dev/${_disk} bs=1m count=1
+
+	# Now create a GPT partition.
 	gpart create -s gpt ${_disk}
 	# For grub
-	gpart add -t bios-boot -s 512k ${_disk}
+	gpart add -t bios-boot -i 1 -s 512k ${_disk}
+
+	# If we're truenas, add swap
+	if is_truenas; then
+	    # Is this correct?
+	    gpart add -t swap -i 3 -s 16g ${_disk}
+	fi
 	# The rest of the disk
-	gpart add -t freebsd-zfs -a 4k ${_disk}
+	gpart add -t freebsd-zfs -i 2 -a 4k ${_disk}
 
 	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
 	zfs create -o canmount=off freenas-boot/ROOT
@@ -660,6 +671,9 @@ menu_install()
     
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
+    if is_truenas; then
+            echo "/dev/${_disk}p3.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
+    fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ -f /tmp/hostid ]; then
         cp -p /tmp/hostid /tmp/data/conf/base/etc
@@ -718,23 +732,22 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
     umount /tmp/data/var
     umount /tmp/data/
 
+    # We created a 16m swap partition earlier, for TrueNAS
+    # And created /data/fstab.swap as well.
     if is_truenas ; then
-	# This is not going to work at all right now.
-	# We'd need to create a partition earlier.
-	false
-        # Put a swap partition on newly created installation image
-        if [ -e /dev/${_disk}s3 ]; then
-            gpart delete -i 3 ${_disk}
-            gpart add -t freebsd ${_disk}
-            echo "/dev/${_disk}s3.eli		none			swap		sw		0	0" > /tmp/fstab.swap
-        fi
-
-        mkdir -p /tmp/data
-        mount /dev/${_disk}s4 /tmp/data
-        ls /tmp/data > /dev/null
-        mv /tmp/fstab.swap /tmp/data/
-        umount /tmp/data
-        rmdir /tmp/data
+#        # Put a swap partition on newly created installation image
+#        if [ -e /dev/${_disk}s3 ]; then
+#            gpart delete -i 3 ${_disk}
+#            gpart add -t freebsd ${_disk}
+#            echo "/dev/${_disk}s3.eli		none			swap		sw		0	0" > /tmp/fstab.swap
+#        fi
+#
+#        mkdir -p /tmp/data
+#        mount /dev/${_disk}s4 /tmp/data
+#        ls /tmp/data > /dev/null
+#        mv /tmp/fstab.swap /tmp/data/
+#        umount /tmp/data
+#        rmdir /tmp/data
     fi
 
     # End critical section.
