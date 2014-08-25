@@ -143,6 +143,7 @@ add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
 add_port security/openssl
+add_port security/py-openssl
 add_port security/py-htpasswd
 add_port www/apache24
 add_port www/mod_mpm_itk
