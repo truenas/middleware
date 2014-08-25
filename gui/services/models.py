@@ -321,6 +321,13 @@ class AFP(Model):
             'specify a writable location, even if the volume is read only.'
         ),
     )
+    afp_srv_global_aux = models.TextField(
+        verbose_name=_("Global auxiliary parameters"),
+        blank=True,
+        help_text=_(
+            "These parameters are added to [Global] section of afp.conf"
+        )
+    )
 
     class Meta:
         verbose_name = _(u"AFP")
