@@ -30,7 +30,11 @@ If you click :menuselection:`Groups --> View Groups`, you will see a screen simi
 
 **Figure 4.1a: FreeNAS® Groups Management**
 
-|Figure41a_png|
+|group1.png|
+
+.. |group1.png| image:: images/group1.png
+    :width: 4.2in
+    :height: 4.5in
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with FreeNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
@@ -40,7 +44,11 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 
 **Figure 4.1b: Creating a New Group**
 
-|Figure41b_png|
+|group2.png|
+
+.. |group2.png| image:: images/group2.png
+    :width: 3.1in
+    :height: 2.1in
 
 **Table 4.1a: Options When Creating a Group**
 
@@ -81,7 +89,11 @@ that the built-in groups do not provide a "Delete Group" button.
 
 **Figure 4.1c: Assigning a User as a Member of a Group**
 
-|Figure41c_png|
+|group3.png|
+
+.. |group3.png| image:: images/group3.png
+    :width: 7.8in
+    :height: 4.4in
 
 .. _Users:
 
@@ -113,11 +125,16 @@ shown in Figure 4.2a.
 
 **Figure 4.2a: Managing User Accounts**
 
-|Figure42a_png|
+|user1.png|
+
+.. |user1.png| image:: images/user1.png
+    :width: 7.8in
+    :height: 4.4in
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
-is allowed to use :command:`sudo`. To reorder the list, click the desired column.
+is allowed to use :command:`sudo`. To reorder the list, click the desired column name. An arrow indicates which column the view is sorted by; click the arrow
+to reverse the sort order.
 
 If you click a user account, the following buttons will appear for that account:
 
@@ -140,7 +157,11 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 
 **Figure 4.2b: Adding or Editing a User Account**
 
-|Figure42b_jpg|
+|user2.png|
+
+.. |user2.png| image:: images/user2.png
+    :width: 5.8in
+    :height: 4.4in
 
 **Table 4.2a: User Account Configuration**
 
