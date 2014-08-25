@@ -1402,6 +1402,14 @@ class InitialWizardDSForm(Form):
             self.jsChange
         )
 
+    @classmethod
+    def show_condition(cls, wizard):
+        ad = ActiveDirectory.objects.all().filter(ad_enable=True).exists()
+        ldap = LDAP.objects.all().filter(ldap_enable=True).exists()
+        nt4 = NT4.objects.all().filter(nt4_enable=True).exists()
+        nis = NIS.objects.all().filter(nis_enable=True).exists()
+        return not(ad or ldap or nt4 or nis)
+
     def clean(self):
         cdata = self.cleaned_data
 
