@@ -641,7 +641,7 @@ class CertificateBase(Model):
             help_text=_("Serial for next certificate")
             )
     cert_signedby = models.ForeignKey(
-            "self",
+            "CertificateAuthority",
             blank=True,
             null=True,
             verbose_name=_("Signing Certificate Authority")
@@ -682,6 +682,8 @@ class CertificateBase(Model):
             issuer = "external"
         elif self.cert_type == CA_TYPE_INTERNAL:
             issuer = "self-signed"
+        elif self.cert_type == CERT_TYPE_INTERNAL:
+            issuer = self.cert_signedby
 
         return issuer
 

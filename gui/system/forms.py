@@ -2211,12 +2211,55 @@ class CertificateCreateInternalForm(ModelForm):
         help_text=_("Common Name (eg, YOUR name)")
     )
 
+    def __init__(self, *args, **kwargs):
+        super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_signedby'].required = True
+        self.fields['cert_signedby'].queryset = \
+            models.CertificateAuthority.objects.exclude(
+                Q(cert_certificate__isnull=True) |
+                Q(cert_privatekey__isnull=True) |
+                Q(cert_certificate__exact='') |
+                Q(cert_privatekey__exact='')
+            )
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_INTERNAL
+        cert_info = {
+            'key_length': self.instance.cert_key_length,
+            'country': self.instance.cert_country,
+            'state': self.instance.cert_state,
+            'city': self.instance.cert_city,
+            'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'email': self.instance.cert_email,
+            'lifetime': self.instance.cert_lifetime,
+            'digest_algorithm': self.instance.cert_digest_algorithm
+        }
+
+        signing_cert = self.instance.cert_signedby
+
+        publickey = generate_key(self.instance.cert_key_length)
+        signkey = crypto.load_privatekey(
+            crypto.FILETYPE_PEM,
+            signing_cert.cert_privatekey
+        )
+
+        cert = create_certificate(cert_info)
+        cert.set_pubkey(publickey)
+
+        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
+
+        self.instance.cert_certificate = \
+            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        self.instance.cert_privatekey = \
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
+
         super(CertificateCreateInternalForm, self).save()
 
     class Meta:
         fields = [
+            'cert_signedby',
             'cert_name',
             'cert_key_length',
             'cert_digest_algorithm',
@@ -2226,8 +2269,7 @@ class CertificateCreateInternalForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common',
-            'cert_signedby'
+            'cert_common'
         ]
         model = models.Certificate
 

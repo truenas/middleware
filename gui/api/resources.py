@@ -2231,3 +2231,14 @@ class CertificateAuthorityResourceMixin(object):
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
         return bundle
+
+
+class CertificateResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
+        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+        bundle.data['cert_DN'] = bundle.obj.cert_DN
+        bundle.data['cert_from'] = bundle.obj.cert_from
+        bundle.data['cert_until'] = bundle.obj.cert_until
+        return bundle
