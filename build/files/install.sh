@@ -589,6 +589,12 @@ menu_install()
     ${interactive} && new_install_verify "$_action" ${_disk}
     _config_file="/tmp/pc-sysinstall.cfg"
 
+    if [ ${_do_upgrade} -eq 0 ]; then
+	# With the new partitioning, disk_is_freenas may
+	# copy /data.  So if we don't need it, remove it,
+	# or else it'll do an update anyway.  Oops.
+	rm -rf /tmp/data_preserved
+    fi
     # Start critical section.
     if ${interactive}; then
 	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
@@ -675,31 +681,32 @@ menu_install()
             echo "/dev/${_disk}p3.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
     fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
-    if [ -f /tmp/hostid ]; then
-        cp -p /tmp/hostid /tmp/data/conf/base/etc
+    if [ "${_do_upgrade}" -ne 0 ]; then
+	if [ -f /tmp/hostid ]; then
+            cp -p /tmp/hostid /tmp/data/conf/base/etc
+	fi
+	if [ -d /tmp/.ssh ]; then
+            cp -pR /tmp/.ssh /tmp/data/root/
+	fi
+	
+	# TODO: this needs to be revisited.
+	if [ -d /tmp/modules ]; then
+            for i in `ls /tmp/modules`
+            do
+		cp -p /tmp/modules/$i /tmp/data/boot/modules
+            done
+	fi
+	if [ -d /tmp/fusionio ]; then
+            cp -pR /tmp/fusionio /tmp/data/usr/local/
+	fi
+	if [ -f /tmp/boot.config ]; then
+	    cp /tmp/boot.config /tmp/data/
+	fi
+	if [ -f /tmp/loader.conf.local ]; then
+	    cp /tmp/loader.conf.local /tmp/data/boot/
+	    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
+	fi
     fi
-    if [ -d /tmp/.ssh ]; then
-        cp -pR /tmp/.ssh /tmp/data/root/
-    fi
-    
-    # TODO: this needs to be revisited.
-    if [ -d /tmp/modules ]; then
-        for i in `ls /tmp/modules`
-        do
-            cp -p /tmp/modules/$i /tmp/data/boot/modules
-        done
-    fi
-    if [ -d /tmp/fusionio ]; then
-        cp -pR /tmp/fusionio /tmp/data/usr/local/
-    fi
-    if [ -f /tmp/boot.config ]; then
-	cp /tmp/boot.config /tmp/data/
-    fi
-    if [ -f /tmp/loader.conf.local ]; then
-	cp /tmp/loader.conf.local /tmp/data/boot/
-	sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
-    fi
-    
     if is_truenas ; then
         install_worker.sh -D /tmp/data -m / install
     fi

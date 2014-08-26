@@ -39,4 +39,3 @@ exclude = /usr/local/www/freenasUI
 	/conf/base/var/db/fontconfig
 	/var/db/pkg
 	/conf/var/db/pkg
-	*perl*
