@@ -78,6 +78,12 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_id=obj_id
         )
 
+    elif idmap_type == "adex":
+        idmap = models.idmap_adex.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
+
     elif idmap_type == "autorid":
         idmap = models.idmap_autorid.objects.get(
             idmap_ds_type=obj_type,
@@ -142,6 +148,10 @@ def get_idmap(obj_type, obj_id, idmap_type):
     if idmap_type == "ad":
         if not idmap:
             idmap = models.idmap_ad()
+
+    elif idmap_type == "adex":
+        if not idmap:
+            idmap = models.idmap_adex()
 
     elif idmap_type == "autorid":
         if not idmap:

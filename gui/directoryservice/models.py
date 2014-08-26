@@ -89,12 +89,14 @@ IDMAP_TYPE_RFC2307 = 6
 IDMAP_TYPE_RID = 7
 IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
+IDMAP_TYPE_ADEX = 10
 
 
 def idmap_to_enum(idmap_type):
     enum = IDMAP_TYPE_NONE
     idmap_dict = {
         'ad': IDMAP_TYPE_AD,
+        'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
         'hash': IDMAP_TYPE_HASH,
         'ldap': IDMAP_TYPE_LDAP,
@@ -117,6 +119,7 @@ def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
         IDMAP_TYPE_AD: 'ad',
+        IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
         IDMAP_TYPE_HASH: 'hash',
         IDMAP_TYPE_LDAP: 'ldap',
@@ -203,6 +206,30 @@ class idmap_ad(idmap_base):
 
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/ad'
+
+
+class idmap_adex(idmap_base):
+    idmap_adex_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=10000
+    )
+    idmap_adex_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=90000000
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_adex, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_ADEX
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("ADEX Idmap")
+        verbose_name_plural = _("ADEX Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/adex'
 
 
 class idmap_autorid(idmap_base):

@@ -796,6 +796,7 @@ TUNABLE_TYPES = (
 
 IDMAP_CHOICES = (
     ('ad', _('ad')),
+    ('adex', _('adex')),
     ('autorid', _('autorid')),
     ('hash', _('hash')),
     ('ldap', _('ldap')),

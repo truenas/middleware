@@ -58,6 +58,16 @@ class idmap_ad_Form(ModelForm):
         ]
 
 
+class idmap_adex_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_adex
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
 class idmap_autorid_Form(ModelForm):
     class Meta:
         fields = '__all__'
