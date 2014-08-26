@@ -36,6 +36,8 @@ import stat
 import subprocess
 import tempfile
 
+from OpenSSL import crypto
+
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -57,6 +59,8 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
 )
+from freenasUI.common.ssl import create_self_signed_certificate
+
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
     LDAPForm,
@@ -1882,6 +1886,11 @@ class CertificateAuthorityImportForm(ModelForm):
         required=True,
         help_text=_("Cut and paste the contents of your certificate here")
     )
+    cert_serial = forms.IntegerField(
+        label=_("Serial"),
+        required=True,
+        help_text=_("Serial for next Certificate")
+    )
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
@@ -1891,7 +1900,8 @@ class CertificateAuthorityImportForm(ModelForm):
         fields = [
             'cert_name',
             'cert_certificate',
-            'cert_privatekey'
+            'cert_privatekey',
+            'cert_serial'
         ]
         model = models.CertificateAuthority
 
@@ -1951,6 +1961,25 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERNAL
+        cert_info = {
+            'key_length': self.instance.cert_key_length,
+            'country': self.instance.cert_country,
+            'state': self.instance.cert_state,
+            'city': self.instance.cert_city,
+            'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'email': self.instance.cert_email,
+            'serial': self.instance.cert_serial,
+            'lifetime': self.instance.cert_lifetime,
+            'digest_algorithm': self.instance.cert_digest_algorithm
+        }
+
+        (cert, key) = create_self_signed_certificate(cert_info)
+        self.instance.cert_certificate = \
+            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        self.instance.cert_privatekey = \
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+
         super(CertificateAuthorityCreateInternalForm, self).save()
 
     class Meta:

@@ -24,15 +24,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+import string
+
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from OpenSSL import crypto
+
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
+log = logging.getLogger('system.models')
 
 class Alert(Model):
     message_id = models.CharField(
@@ -548,9 +554,7 @@ CERT_TYPE_INTERNAL      = 0x00000010
 CERT_TYPE_CSR           = 0x00000020
 
 class CertificateBase(Model):
-    cert_type = models.CharField(
-            max_length=120
-            )
+    cert_type = models.IntegerField()
     cert_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -629,6 +633,13 @@ class CertificateBase(Model):
             verbose_name=_("Common Name"),
             help_text=_("Common Name (eg, YOUR name)")
             )
+    cert_serial = models.IntegerField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Serial"),
+            help_text=_("Serial for next certificate")
+            )
     cert_signedby = models.ForeignKey(
             "self",
             blank=True,
@@ -636,13 +647,41 @@ class CertificateBase(Model):
             verbose_name=_("Signing Certificate Authority")
             )
 
+    def __load_certificate(self):
+        if self.cert_certificate != None and self.__certificate == None:
+            self.__certificate = crypto.load_certificate(
+                crypto.FILETYPE_PEM,
+                self.cert_certificate
+            )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateBase, self).__init__(*args, **kwargs)
+        self.__certificate = None
+        self.__load_certificate() 
+
     @property
     def cert_internal(self):
-        return None
+        internal = "YES"
+
+        if self.cert_type == CA_TYPE_EXISTING:
+            internal = "NO" 
+        elif self.cert_type == CERT_TYPE_EXISTING: 
+            internal = "NO" 
+
+        return internal
 
     @property
     def cert_issuer(self):
-        return None
+        issuer = None
+
+        if self.cert_type == CA_TYPE_EXISTING:
+            issuer = "external"
+        elif self.cert_type == CERT_TYPE_EXISTING:
+            issuer = "external"
+        elif self.cert_type == CA_TYPE_INTERNAL:
+            issuer = "self-signed"
+
+        return issuer
 
     @property
     def cert_ncertificates(self):
@@ -650,11 +689,30 @@ class CertificateBase(Model):
 
     @property
     def cert_DN(self):
-        return None
+        self.__load_certificate()
 
+        parts = []
+        for c in self.__certificate.get_subject().get_components():
+            parts.append("%s=%s" % (c[0], c[1]))
+        DN = "/%s" % string.join(parts, '/')
+        return DN
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
     @property
-    def cert_expire(self):
-        return None
+    def cert_from(self):
+        self.__load_certificate()
+        return self.__certificate.get_notBefore()
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
+    @property
+    def cert_until(self):
+        self.__load_certificate()
+        return self.__certificate.get_notAfter()
+
 
     class Meta:
         abstract = True

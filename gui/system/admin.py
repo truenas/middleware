@@ -1,6 +1,9 @@
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
+from freenasUI.api.resources import (
+    CertificateAuthorityResourceMixin
+)
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
@@ -28,6 +31,8 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
     icon_model = u"SettingsIcon"
     icon_add = u"SettingsIcon"
     icon_view = u"SettingsIcon"
+
+    resource_mixin = CertificateAuthorityResourceMixin
 
     def get_datagrid_columns(self):
         columns = []
@@ -58,8 +63,13 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
         }) 
 
         columns.append({
-            'name': 'cert_expire',
-            'label': _('Expires') 
+            'name': 'cert_from',
+            'label': _('From') 
+        }) 
+
+        columns.append({
+            'name': 'cert_until',
+            'label': _('Until') 
         }) 
 
         return columns

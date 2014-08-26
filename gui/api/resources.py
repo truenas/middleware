@@ -2218,3 +2218,16 @@ class KerberosKeytabResourceMixin(object):
             )
 
         return bundle
+
+
+class CertificateAuthorityResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(CertificateAuthorityResourceMixin, self).dehydrate(bundle)
+        bundle.data['cert_internal'] = bundle.obj.cert_internal
+        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+        bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
+        bundle.data['cert_DN'] = bundle.obj.cert_DN
+        bundle.data['cert_from'] = bundle.obj.cert_from
+        bundle.data['cert_until'] = bundle.obj.cert_until
+        return bundle
