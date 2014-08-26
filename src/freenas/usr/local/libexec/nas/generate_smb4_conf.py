@@ -45,6 +45,7 @@ from freenasUI.directoryservice.models import (
     LDAP,
     NT4,
     idmap_ad,
+    idmap_adex,
     idmap_autorid,
     idmap_hash,
     idmap_ldap,
@@ -55,6 +56,7 @@ from freenasUI.directoryservice.models import (
     idmap_tdb2,
     IDMAP_TYPE_NONE,
     IDMAP_TYPE_AD,
+    IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
     IDMAP_TYPE_HASH,
     IDMAP_TYPE_LDAP,
@@ -192,6 +194,20 @@ def configure_idmap_ad(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: schema mode = %s" % (
         domain,
         idmap.idmap_ad_schema_mode
+    ))
+
+
+def configure_idmap_adex(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap backend = adex")
+    confset1(smb4_conf, "idmap uid = %d-%d" % (
+        domain,
+        idmap.idmap_adex_range_low,
+        idmap.idmap_adex_range_high
+    ))
+    confset1(smb4_conf, "idmap gid = %d-%d" % (
+        domain,
+        idmap.idmap_adex_range_low,
+        idmap.idmap_adex_range_high
     ))
 
 
@@ -367,6 +383,7 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
 def configure_idmap_backend(smb4_conf, idmap, domain):
     idmap_functions = {
         IDMAP_TYPE_AD: configure_idmap_ad,
+        IDMAP_TYPE_ADEX: configure_idmap_ad,
         IDMAP_TYPE_AUTORID: configure_idmap_autorid,
         IDMAP_TYPE_HASH: configure_idmap_hash,
         IDMAP_TYPE_LDAP: configure_idmap_ldap,
