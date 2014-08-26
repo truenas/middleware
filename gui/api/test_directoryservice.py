@@ -120,7 +120,10 @@ class LDAPResourceTest(APITestCase):
             u'ldap_bindpw': u'',
             u'ldap_binddn': u'',
             u'ldap_ssl': u'off',
+            u'ldap_idmap_backend': u'ldap',
             u'ldap_usersuffix': u'',
+            u'ldap_sudosuffix': u'',
+            u'ldap_use_default_domain': False,
             u'ldap_enable': False,
             u'ldap_certfile': u'',
         })
@@ -238,6 +241,8 @@ class NT4ResourceTest(APITestCase):
             u'nt4_dcname': u'',
             u'nt4_netbiosname': u'NAS',
             u'nt4_workgroup': u'',
+            u'nt4_idmap_backend': u'rid',
+            u'nt4_use_default_domain': False,
             u'nt4_enable': False,
         })
 
