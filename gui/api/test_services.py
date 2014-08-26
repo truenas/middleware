@@ -1359,7 +1359,7 @@ class iSCSITargetResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
-        self.assertEqual(data['iscsi_target_alias'], )
+        self.assertEqual(data['iscsi_target_alias'], "test")
 
     def test_Delete(self):
         obj = models.iSCSITarget.objects.create(

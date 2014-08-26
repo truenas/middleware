@@ -196,7 +196,8 @@ class SettingsResourceTest(APITestCase):
             u'stg_kbdmap': u'',
             u'stg_language': u'en',
             u'stg_syslogserver': u'',
-            u'stg_timezone': u'America/Los_Angeles'
+            u'stg_timezone': u'America/Los_Angeles',
+            u'stg_wizardshown': False
         })
 
     def test_Update(self):
