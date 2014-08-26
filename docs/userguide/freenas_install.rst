@@ -841,7 +841,7 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 
 #.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
 
-.. _Upgrading a ZFS Pools:
+.. _Upgrading a ZFS Pool:
 
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~

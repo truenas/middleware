@@ -155,6 +155,8 @@ issued since FreeBSD 9.3 RELEASE.
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
+  
+* The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
@@ -162,8 +164,8 @@ issued since FreeBSD 9.3 RELEASE.
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
   
-* Support for WebDAV has been added which can be configured from `Services --> WebDAV`. This provides a file browser with HTTP authentication and optional
-  SSL encryption.
+* Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
+  and optional SSL encryption.
 
 The GUI has been reorganized as follows:
 
