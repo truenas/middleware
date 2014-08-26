@@ -42,6 +42,7 @@ from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
+from django.db.models import Q
 from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
@@ -59,7 +60,12 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
 )
-from freenasUI.common.ssl import create_self_signed_certificate
+from freenasUI.common.ssl import (
+    create_self_signed_certificate,
+    create_certificate,
+    sign_certificate,
+    generate_key
+)
 
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
@@ -2051,8 +2057,50 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         help_text=_("Common Name (eg, YOUR name)")
     )
 
+    def __init__(self, *args, **kwargs):
+        super(CertificateAuthorityCreateIntermediateForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_signedby'].required = True
+        self.fields['cert_signedby'].queryset = \
+            models.CertificateAuthority.objects.exclude(
+                Q(cert_certificate__isnull=True) |
+                Q(cert_privatekey__isnull=True) |
+                Q(cert_certificate__exact='') |
+                Q(cert_privatekey__exact='')
+            )
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
+        cert_info = {
+            'key_length': self.instance.cert_key_length,
+            'country': self.instance.cert_country,
+            'state': self.instance.cert_state,
+            'city': self.instance.cert_city,
+            'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'email': self.instance.cert_email,
+            'lifetime': self.instance.cert_lifetime,
+            'digest_algorithm': self.instance.cert_digest_algorithm
+        }
+
+        signing_cert = self.instance.cert_signedby
+
+        publickey = generate_key(self.instance.cert_key_length)
+        signkey = crypto.load_privatekey(
+            crypto.FILETYPE_PEM,
+            signing_cert.cert_privatekey
+        )
+
+        cert = create_certificate(cert_info)
+        cert.set_pubkey(publickey)
+
+        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
+
+        self.instance.cert_certificate = \
+            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        self.instance.cert_privatekey = \
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
+
         super(CertificateAuthorityCreateIntermediateForm, self).save()
 
     class Meta:

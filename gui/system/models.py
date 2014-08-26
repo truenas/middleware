@@ -659,6 +659,9 @@ class CertificateBase(Model):
         self.__certificate = None
         self.__load_certificate() 
 
+    def __unicode__(self):
+        return self.cert_name
+
     @property
     def cert_internal(self):
         internal = "YES"
@@ -674,9 +677,8 @@ class CertificateBase(Model):
     def cert_issuer(self):
         issuer = None
 
-        if self.cert_type == CA_TYPE_EXISTING:
-            issuer = "external"
-        elif self.cert_type == CERT_TYPE_EXISTING:
+        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
+            CERT_TYPE_EXISTING):
             issuer = "external"
         elif self.cert_type == CA_TYPE_INTERNAL:
             issuer = "self-signed"

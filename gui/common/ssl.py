@@ -30,11 +30,14 @@ from OpenSSL import crypto
 
 log = logging.getLogger('common.ssl')
 
-def create_self_signed_certificate(cert_info):
+def generate_key(key_length):
     k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, cert_info['key_length'])
+    k.generate_key(crypto.TYPE_RSA, key_length)
+    return k
 
-    cert = crypto.X509()
+
+def create_certificate(cert_info):
+    cert= crypto.X509()
     cert.get_subject().C = cert_info['country']
     cert.get_subject().ST = cert_info['state']
     cert.get_subject().L =  cert_info['city']
@@ -42,13 +45,27 @@ def create_self_signed_certificate(cert_info):
     cert.get_subject().CN =  cert_info['common']
     cert.get_subject().emailAddress = cert_info['email']
 
-    #cert.set_serial_number(cert_info['serial'])
+    serial = cert_info.get('serial')
+    if serial != None:
+        cert.set_serial_number(serial)
 
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60*60*24))
 
     cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-    cert.sign(k, str(cert_info['digest_algorithm']))
+    return cert
 
-    return (cert, k)
+
+def sign_certificate(cert, key, digest_algorithm):
+    cert.sign(key, str(digest_algorithm))
+
+
+def create_self_signed_certificate(cert_info):
+    key = generate_key(cert_info['key_length'])
+
+    cert = create_certificate(cert_info)
+    cert.set_pubkey(key)
+
+    sign_certificate(cert, key, cert_info['digest_algorithm'])
+
+    return (cert, key)
