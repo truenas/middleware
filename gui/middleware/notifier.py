@@ -4461,8 +4461,13 @@ class notifier:
             return
 
         doc = self._geom_confxml()
+        disks = self.__get_disks()
         self.__diskserial.clear()
         self.__camcontrol = None
+
+        # Abort if the disk is not recognized as an available disk
+        if devname not in disks:
+            return
 
         ident = self.device_to_identifier(devname)
         qs = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
