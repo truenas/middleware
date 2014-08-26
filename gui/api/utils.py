@@ -35,10 +35,12 @@ from django.http import QueryDict
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.models.fields import MultiSelectField
 
 from tastypie.authentication import (
     Authentication, BasicAuthentication, MultiAuthentication
 )
+from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpUnauthorized
@@ -226,6 +228,13 @@ class ResourceMixin(object):
 
 
 class DojoModelResource(ResourceMixin, ModelResource):
+
+    @classmethod
+    def api_field_from_django_field(cls, f, default=fields.CharField):
+        if isinstance(f, MultiSelectField):
+            return fields.ListField
+        else:
+            return super(DojoModelResource, cls).api_field_from_django_field(f, default=default)
 
     def apply_sorting(self, obj_list, options=None):
         """
