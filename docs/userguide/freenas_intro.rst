@@ -237,9 +237,15 @@ The following fields have been added or deleted:
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
+* A "Global auxiliary parameters" field has been added to :menuselection:`Services --> AFP`.
+
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 
-* The "Obey pam restrictions" has been added to :menuselection:`Services --> CIFS`.
+* The "Obey pam restrictions" checkbox and the "Idmap Range Low" and "Idmap Range High" fields have been added to :menuselection:`Services --> CIFS`.
+
+* :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
+
+* The "Kerberos Realm" drop-down menu has been added to :menuselection:`Services --> Domain Controller`.
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 

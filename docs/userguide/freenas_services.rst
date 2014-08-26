@@ -36,7 +36,7 @@ following built-in services:
 
 * :ref:`UPS`
 
-* "ref:`WebDAV`
+* :ref:`WebDAV`
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
@@ -50,7 +50,11 @@ services, and to configure services. By default, all services (except for the S.
 
 **Figure 11.1a: Control Services**
 
-|Figure111a_png|
+|services.png|
+
+.. |services.png| image:: images/services.png
+    :width: 3.8in
+    :height: 4.5in
 
 A service is stopped if its icon is a red OFF. A service is running if its icon is a blue ON. To start or stop a service, click its ON/OFF icon.
 
@@ -67,31 +71,26 @@ If you would like to read the system logs to get more information about a servic
 AFP
 ---
 
-The Apple Filing Protocol (AFP) is a network protocol that offers file services for Mac computers. Before configuring this service, you should first create
-your AFP Shares in :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`. After configuring this service, go to
-:menuselection:`Services --> Control Services` to start the service. The AFP shares will not be available on the network if this service is not running.
+The settings that are configured when creating AFP Shares in :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share` are specific to each
+configured AFP Share. In contrast, global settings which apply to all AFP shares are configured in :menuselection:`Services --> AFP`.
 
-Starting this service will open the following ports on the FreeNAS® system:
+Figure 11.2a shows the available global AFP configuration options which are described in Table 11.2a.
 
-* TCP 548 (afpd)
+**Figure 11.2a: Global AFP Configuration**
 
-* TCP 4799 (cnid_metadata)
+|afp1.png|
 
-* UDP 5353 and a random UDP port (avahi)
+.. |afp1.png| image:: images/afp1.png
+    :width: 4.6in
+    :height: 3.3in
 
-Figure 11.2a shows the configuration options which are described in Table 11.2a.
-
-**Figure 11.2a: AFP Configuration**
-
-|Figure112a_png|
-
-**Table 11.2a: AFP Configuration Options**
+**Table 11.2a: Global AFP Configuration Options**
 
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                                 |
 |                         |                |                                                                                                                 |
 +=========================+================+=================================================================================================================+
-| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing the AFP share                         |
+| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing AFP shares                            |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Guest Account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
@@ -107,8 +106,12 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 | Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Database Path           |string          | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be  |
+| Database Path           |Browse button   | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
 |                         |                | writable                                                                                                        |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Global Auxiliary        | string         | additional `afp.conf(5) <http://netatalk.sourceforge.net/3.0/htmldocs/afp.conf.5.html>`_                        |
+| Parameters              |                | parameters not covered elsewhere in this screen                                                                 |
+|                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 
 When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an
@@ -134,34 +137,25 @@ CNIIDs stored in the AppleDouble files.
 CIFS
 ----
 
-The Common Internet File System (CIFS) is a network protocol that offers file services for (typically) Windows computers. Unix-like systems that provide a
-`CIFS client <http://www.samba.org/samba/GUI/>`_
-can also connect to CIFS shares. Before configuring this service, you should first create your CIFS shares in
-:menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share`. After configuring this service, go to
-:menuselection:`Services --> Control Services` to start the service. The CIFS shares will not be available on the network if this service is not running.
+The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share` are specific to
+each configured CIFS Share. In contrast, global settings which apply to all CIFS shares are configured in :menuselection:`Services --> CIFS`.
 
 .. note:: after starting the CIFS service, it may take several minutes for the
    `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
    to occur and for the FreeNAS® system to become available in Windows Explorer.
 
-Starting this service will open the following ports on the FreeNAS® system:
+Figure 11.3a shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
+`smb4.conf <http://www.sloop.net/smb.conf.html>`_.
 
-* TCP 139 (smbd)
+**Figure 11.3a: Global CIFS Configuration**
 
-* TCP 445 (smbd)
+|cifs1.png|
 
-* UDP 137 (nmbd)
+.. |cifs1.png| image:: images/cifs1.png
+    :width: 4.9in
+    :height: 4.4in
 
-* UDP 138 (nmbd)
-
-Figure 11.3a shows the configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
-`smb.conf(5) <http://samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_.
-
-**Figure 11.3a: Configuring CIFS**
-
-|Figure113a_png|
-
-**Table 11.3a: CIFS Configuration Options**
+**Table 11.3a: Global CIFS Configuration Options**
 
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**                      | **Value**      | **Description**                                                                                       |
@@ -264,6 +258,12 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Obey pam restrictions            | checkbox       |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Idmap Range Low                  | integer        |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Idmap Range High                 | integer        |                                                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -385,7 +385,11 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 
 **Figure 11.4a: Domain Controller Settings**
 
-|Figure114a_png|
+|directory1.png|
+
+.. |directory1.png| image:: images/directory1.png
+    :width: 3.9in
+    :height: 3.7in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -441,7 +445,11 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 **Figure 11.5a: Configuring DDNS**
 
-|Figure115a_png|
+|ddns.png|
+
+.. |ddns.png| image:: images/ddns.png
+    :width: 4.2in
+    :height: 3.9in
 
 **Table 11.5a: DDNS Configuration Options**
 
@@ -1927,8 +1935,8 @@ this command. These users are created in the "Extra users" field.
 
 .. _WebDAV:
 
-WeDAV
------
+WebDAV
+------
 
 Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
 
