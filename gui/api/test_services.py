@@ -51,7 +51,8 @@ class AFPResourceTest(APITestCase):
             u'afp_srv_guest_user': u'nobody',
             u'afp_srv_homedir': None,
             u'afp_srv_homedir_enable': False,
-            u'afp_srv_dbpath': '',
+            u'afp_srv_dbpath': None,
+            u'afp_srv_global_aux': u'',
         })
 
     def test_Update(self):
