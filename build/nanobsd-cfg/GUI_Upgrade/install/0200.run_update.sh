@@ -44,10 +44,47 @@ upgrade_fail()
 
 standard_upgrade()
 {
-	# TODO: Implement actual upgrade code: create boot environment from current file system,
-	#       apply the upgrade image over it, activate, and reboot.
-
-	upgrade_fail "Not implemented yet"
+	# To upgrade a system that is already based on the new package/installation
+	# system, we need to use freenas-install.  First, though, we need to
+	# make a BE clone, and snapshot the grub filesystem.
+	# Unlike the trampoline install, we've got the basics we need in
+	# place, so we only have to be concerned with gui-packages.tar.
+    set -x
+	UPGRADE_DIR=${SCRIPTDIR}/update
+	mkdir -p ${UPGRADE_DIR} || upgrade_fail "Unable to create package directory"
+	tar xf ${SCRIPTDIR}/gui-packages.tar -C ${UPGRADE_DIR} || upgrade_fail "Unable to extract package files"
+	NEW_VERSION=FreeNAS-$(/usr/local/bin/manifest_util -M ${UPGRADE_DIR}/FreeNAS-MANIFEST sequence)
+	if [ "${NEW_VERSION}" = "FreeNAS-" ]; then
+	    upgrade_fail "Unable to determine sequence for new version"
+	fi
+	beadm create "${NEW_VERSION}" || upgrade_fail "Unable to create new boot environment"
+	if zfs snapshot freenas-boot/boot/grub@Pre-Upgrade-${NEW_VERSION}; then
+	    grub_clone=true
+	else
+	    grub_clone=false
+	fi
+	dest=$(mktemp -d upgrade-XXXXXX)
+	if [ -z "${dest}" ]; then
+	    upgrade_fail "Could not create temporary directory"
+	fi
+	if ! beadm mount "${NEW_VERSION}" ${dest}; then
+	    beadm destroy -F "${NEW_VERSION}" || true
+	    ${grub_clone} && zfs destroy freenas-boot/boot/grub@Pre-Upgrade-${NEW_VERSION}
+	    upgrade_fail "Could not mount new boot environment"
+	fi
+	mount -t nullfs /boot/grub ${dest}/boot/grub
+	/usr/local/bin/freenas-install -M ${UPGRADE_DIR}/FreeNAS-MANIFEST \
+	    -P ${UPGRADE_DIR} ${dest}
+	rv=$?
+	umount ${dest}/boot/grub
+	beadm unmount ${NEW_VERSION}
+	if [ $? -ne 0 ]; then
+	    beadm destroy -F ${NEW_VERSION}
+	    upgrade_fail "Could not install new version"
+	else
+	    beadm activate ${NEW_VERSION}
+	fi
+	set +x
 }
 
 trampoline_upgrade()
