@@ -806,8 +806,8 @@ class ActiveDirectory(DirectoryServiceBase):
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
 
-    def save(self):
-        super(ActiveDirectory, self).save()
+    def save(self, **kwargs):
+        super(ActiveDirectory, self).save(**kwargs)
 
         if not self.ad_kerberos_realm:
             from freenasUI.common.freenasldap import (
