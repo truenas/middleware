@@ -155,6 +155,8 @@ issued since FreeBSD 9.3 RELEASE.
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
+  
+* The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
@@ -162,8 +164,8 @@ issued since FreeBSD 9.3 RELEASE.
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
   
-* Support for WebDAV has been added which can be configured from `Services --> WebDAV`. This provides a file browser with HTTP authentication and optional
-  SSL encryption.
+* Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
+  and optional SSL encryption.
 
 The GUI has been reorganized as follows:
 
@@ -213,6 +215,10 @@ The following fields have been added or deleted:
 
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
   you no longer need to upgrade a ZFS pool from the command line.
+  
+* The "Enable High Speed Ciphers" checkbox has been replaced by the "Encryption Cipher" drop-down menu in 
+  :menuselection:`Storage --> Replication Tasks -> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
+  can significantly reduce the time needed for the initial replication.
 
 * The "Domain logons" checkbox has been added to :menuselection:`Services --> CIFS`.
 
@@ -231,9 +237,15 @@ The following fields have been added or deleted:
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
+* A "Global auxiliary parameters" field has been added to :menuselection:`Services --> AFP`.
+
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 
-* The "Obey pam restrictions" has been added to :menuselection:`Services --> CIFS`.
+* The "Obey pam restrictions" checkbox and the "Idmap Range Low" and "Idmap Range High" fields have been added to :menuselection:`Services --> CIFS`.
+
+* :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
+
+* The "Kerberos Realm" drop-down menu has been added to :menuselection:`Services --> Domain Controller`.
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 

@@ -253,7 +253,8 @@ class NFSResourceTest(CommonMixin, APITestCase):
             u'nfs_paths': [u'/mnt/tank'],
             u'nfs_alldirs': False,
             u'nfs_quiet': False,
-            u'nfs_ro': False
+            u'nfs_ro': False,
+            u'nfs_security': []
         })
 
     def test_Retrieve(self):
@@ -278,7 +279,8 @@ class NFSResourceTest(CommonMixin, APITestCase):
             u'nfs_network': u'',
             u'nfs_paths': [],
             u'nfs_quiet': False,
-            u'nfs_ro': False
+            u'nfs_ro': False,
+            u'nfs_security': []
         }])
 
     def test_Update(self):
