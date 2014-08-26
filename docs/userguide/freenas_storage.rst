@@ -1234,7 +1234,11 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a ZFS Periodic Snapshot**
 
-|Figure82a_png|
+|periodic1.png|
+
+.. |periodic1.png| image:: images/periodic1.png
+    :width: 8.2in
+    :height: 4.8in
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1281,19 +1285,26 @@ Click an entry to access its "Modify" and "Delete" buttons.
 
 **Figure 8.2b: View Periodic Snapshot Tasks**
 
-|Figure82b_png|
+|periodic2.png|
 
-If you click the "ZFS Snapshots" tab (above the "Add Periodic Snapshot" button), you can review the listing of available snapshots. An example is shown in
-Figure 8.2c.
+.. |periodic2.png| image:: images/periodic2.png
+    :width: 4.5in
+    :height: 4.5in
+
+Click the "ZFS Snapshots" tab to review the listing of available snapshots. An example is shown in Figure 8.2c.
 
 .. note:: if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
    but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in Shell.
 
 **Figure 8.2c: Viewing Available Snapshots**
 
-|Figure82c_png|
+|periodic3.png|
 
-The listing will include the name of the volume or dataset, the name of each snapshot, as well as the amount of used and referenced data, where:
+.. |periodic3.png| image:: images/periodic3.png
+    :width: 11.1in
+    :height: 4.5in
+
+The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
 
 **Used:** indicates the amount of space consumed by this dataset and all its descendents. This value is checked against this dataset's quota and reservation.
 The space used does not include this dataset's reservation, but does take into account the reservations of any descendent datasets. The amount of space that
@@ -1307,6 +1318,8 @@ space usage information is updated immediately.
 **Refer:** indicates the amount of data that is accessible by this dataset, which may or may not be shared  with other  datasets  in  the pool. When a
 snapshot or clone is created, it initially references the same amount of space as the file system or snapshot it was created from, since its contents are
 identical.
+
+It will also indicate if the snapshot has been replicated to a remote system.
 
 The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
 
@@ -1395,12 +1408,16 @@ Configure PULL
 A copy of the public key for the replication user on *PUSH* needs to be pasted to the public key of the replication user on the
 *PULL* system.
 
-To obtain a copy of the replication key: on *PUSH* go to :menuselection:`Storage --> View Replication Tasks`. Click the "View Public Key" button and copy its
-contents. An example is shown in Figure 8.3a.
+To obtain a copy of the replication key: on *PUSH* go to :menuselection:`Storage --> Replication Tasks --> View Replication Tasks`. Click the "View Public
+Key" button and copy its contents. An example is shown in Figure 8.3a.
 
 **Figure 8.3a: Copy the Replication Key**
 
-|Figure83a_png|
+|replication1.png|
+
+.. |replication1.png| image:: images/replication1.png
+    :width: 6.8in
+    :height: 2.5in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1416,8 +1433,8 @@ Configure PUSH
 On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in
 :menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots`.
 
-To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task`. Figure 8.3b shows the required configuration
-for our example:
+To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task` which will open the screen shown in Figure 8.3b.
+For this example, the required configuration is as follows:
 
 * the Volume/Dataset is :file:`local/data`
 
@@ -1434,7 +1451,11 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 
 **Figure 8.3b: Adding a Replication Task**
 
-|Figure83b_png|
+|replication2.png|
+
+.. |replication2.png| image:: images/replication2.png
+    :width: 6.6in
+    :height: 4.4in
 
 **Table 8.3a: Adding a Replication Task**
 
@@ -1485,7 +1506,10 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 | Dedicated User            | drop-down menu | only available if "Dedicated User Enabled" is checked; select the user account to be used for replication    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Enable High Speed Ciphers | checkbox       | note that the cipher is quicker because it has a lower strength                                              |
+| Encryption Cipher         | drop-down menu | choices are *Standard*,                                                                                      |
+|                           |                | *Fast*, or                                                                                                   |
+|                           |                | *Disabled*; temporarily selecting                                                                            |
+|                           |                | *Disabled* can significantly reduce the time for the initial replication                                     |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Remote hostkey            | string         | use the "SSH Key Scan" button to retrieve the public key of *PULL*                                           |
@@ -1493,17 +1517,23 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
 
-By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The Begin
-and End times can be used to create a window of time where replication occurs. Change the default times (which allow replication to occur at any time of the
-day a snapshot occurs) if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For the End time,
-consider how long replication will take so that it finishes before the next day's office hours begin.
+By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The initial
+replication can take a significant period of time, from many hours to possibly days, as the structure of the entire ZFS pool needs to be recreated on the
+remote system. The actual time will depend upon the size of the pool and the speed of the network. Subsequent replications will take far less time, as only
+the modified data will be replicated. If the security policy allows it, temporarily change the "Encryption Cipher" to *Disabled* until the initial replication
+is complete. This will turn off encryption but will speed up the replication. The "Encryption Cipher" can then be changed to *Standard* or
+*Fast* for subsequent replications.
 
-Once the replication task is created, it will appear in the View Replication Tasks of *PUSH.*
+The "Begin" and "End" times can be used to create a window of time where replication occurs. The default times allow replication to occur at any time of the
+day a snapshot occurs. Change these times if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For
+the "End" time, consider how long replication will take so that it finishes before the next day's office hours begin.
+
+Once the replication task is created, it will appear in the "View Replication Tasks" of *PUSH.*
 
 *PUSH* will immediately attempt to replicate its latest snapshot to
 *PULL*. If the replication is successful, the snapshot will appear in the
 :menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots` tab of *PULL*, as seen in Figure 8.3c. If the snapshot
-is not replicated, see the next section for troubleshooting tips.
+is not replicated, see :ref:`Troubleshooting Replication` for troubleshooting tips.
 
 **Figure 8.3c: Verifying the Snapshot was Replicated**
 
@@ -1518,7 +1548,7 @@ If you have followed all of the steps above and have *PUSH* snapshots that are n
 *PULL*, check to see if SSH is working properly. On
 *PUSH*, open Shell and try to :command:`ssh` into
 *PULL*. Replace
-*hostname_or_ip* with the value for
+**hostname_or_ip** with the value for
 *PULL*::
 
  ssh -vv -i /data/ssh/replication hostname_or_ip
@@ -1572,11 +1602,16 @@ month.
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
 :menuselection:`Storage --> ZFS Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> ZFS Scrubs --> View ZFS Scrubs`. Figure 8.4a
-displays the default settings for the volume named :file:`volume1`. Table 8.4a summarizes the options in this screen.
+displays the default settings for the volume named :file:`volume1`. In this example, the entry has been highlighted and the "Edit" button clicked in order to
+display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
-|Figure84a_png|
+|scrub.png|
+
+.. |scrub.png| image:: images/scrub.png
+    :width: 9.5in
+    :height: 4.4in
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1621,11 +1656,9 @@ displays the default settings for the volume named :file:`volume1`. Table 8.4a s
 
 You should review the default selections and, if necessary, modify them to meet the needs of your environment.
 
-While a "delete" button is provided,
+While a "Delete" button is provided,
 **deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
-too intensive for your hardware, consider disabling the scrub as a temporary measure until the hardware can be upgraded.
-
-If you do delete a scrub, you can create a new scrub task by clicking :menuselection:`Storage --> Volumes --> ZFS Scrubs --> Add ZFS Scrub`.
+too intensive for your hardware, consider unchecking the "Enabled" button for the scrub as a temporary measure until the hardware can be upgraded.
 
 .. _ZFS Snapshots:
 
