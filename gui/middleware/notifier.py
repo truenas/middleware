@@ -4742,7 +4742,7 @@ class notifier:
                 disk = prov.xpath("../name")[0].text
                 mp_disks.append(disk)
 
-        reserved = [self._find_root_dev()]
+        reserved = self._find_root_devs()
 
         # disks already in use count as reserved as well
         for vol in Volume.objects.all():
@@ -4802,32 +4802,22 @@ class notifier:
 
         Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
-    def _find_root_dev(self):
+    def _find_root_devs(self):
         """Find the root device.
 
-        The original algorithm was adapted from /root/updatep*, but this
-        grabs the relevant information from geom's XML facility.
-
         Returns:
-             The root device name in string format, e.g. FreeNASp1,
-             FreeNASs2, etc.
+             The root device name in string format
 
-        Raises:
-             AssertionError: the root device couldn't be determined.
         """
 
         sw_name = get_sw_name()
-        doc = self._geom_confxml()
 
-        for pref in doc.xpath("//class[name = 'LABEL']/geom/provider["
-                "starts-with(name, 'ufs/%ss')]/../consumer/provider/@ref"
-                % (sw_name, )):
-            prov = doc.xpath("//provider[@id = '%s']" % pref)[0]
-            pid = prov.xpath("../consumer/provider/@ref")[0]
-            prov = doc.xpath("//provider[@id = '%s']" % pid)[0]
-            name = prov.xpath("../name")[0]
-            return name.text
-        log.warn("Root device not found!")
+        try:
+            zpool = self.zpool_parse('%s-boot' % sw_name.lower())
+            return zpool.get_disks()
+        except:
+            log.warn("Root device not found!")
+            return []
 
     def __get_disks(self):
         """Return a list of available storage disks.
@@ -4843,13 +4833,7 @@ class notifier:
         disks = self.sysctl('kern.disks').split()
         disks.reverse()
 
-        root_dev = self._find_root_dev()
-        if root_dev and root_dev.startswith('mirror/'):
-            mirror = self.gmirror_status(root_dev.split('/')[1])
-            blacklist_devs = [c.get("name") for c in mirror.get("consumers")]
-        else:
-            blacklist_devs = [root_dev]
-
+        blacklist_devs = self._find_root_devs()
         device_blacklist_re = re.compile('a?cd[0-9]+')
 
         return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
