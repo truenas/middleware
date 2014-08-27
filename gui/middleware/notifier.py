@@ -2771,10 +2771,12 @@ class notifier:
 
     def validate_update(self, path):
 
-        os.chdir(os.path.dirname(path))
+        extract_dir = os.path.dirname(path)
 
-        # XXX: ugly
-        self._system("rm -rf */")
+        if not os.path.exists(extract_dir):
+            raise MiddlewareError("Can not find extract dir %s" % extract_dir)
+
+        for dname in glob.glob(extract_dir + '/*/'): shutil.rmtree(dname)
 
         percent = 0
         with open('/tmp/.extract_progress', 'w') as fp:
@@ -2786,6 +2788,8 @@ class notifier:
                     "/usr/bin/tar",
                     "-xSJpf",  # -S for sparse
                     path,
+                    "-C",
+                    extract_dir
                 ], stderr=f)
                 RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
                 while True:
@@ -2807,7 +2811,6 @@ class notifier:
                         fp.flush()
             err = proc.communicate()[1]
             if proc.returncode != 0:
-                os.chdir('/')
                 raise MiddlewareError(
                     'The firmware image is invalid, make sure to use .txz file: %s' % err
                 )
@@ -2822,13 +2825,10 @@ class notifier:
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The firmware does not meet the '
                                   'pre-install criteria: %s' % (cpe.output, ))
-        finally:
-            os.chdir('/')
         # XXX: bleh
         return True
 
     def apply_update(self, path):
-        os.chdir(os.path.dirname(path))
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'install'],
@@ -2837,7 +2837,6 @@ class notifier:
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed: %s' % (str(cpe), ))
         finally:
-            os.chdir('/')
             os.unlink(path)
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
