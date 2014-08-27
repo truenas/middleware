@@ -9,7 +9,11 @@ Reporting displays several graphs, as seen in the example in Figure 14a. Click t
 
 **Figure 14a: Reporting Graphs**
 
-|Figure14a_png|
+|reporting.png|
+
+.. |reporting.png| image:: images/reporting.png
+    :width: 4.7in
+    :height: 4.3in
 
 FreeNAS® uses
 `collectd <https://collectd.org/>`_
