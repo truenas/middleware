@@ -15,8 +15,6 @@ COMMENT=        Driver for Areca 13xx SAS HBAs
 
 USE_XZ=		yes
 
-LOCALBASE=/
-
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
