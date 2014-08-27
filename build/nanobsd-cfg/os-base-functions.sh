@@ -235,11 +235,6 @@ create_var_home_symlink()
 	ln -sfh /var/home $NANO_WORLDDIR/home
 }
 
-add_netcli_to_etc_shells()
-{
-	echo "/etc/netcli.sh" >> ${NANO_WORLDDIR}/etc/shells
-}
-
 freenas_custom()
 {
 	compress_ko()

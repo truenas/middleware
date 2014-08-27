@@ -149,5 +149,5 @@ etc/ix/templates/warden/jail-pre-delete
 etc/ix/templates/warden/jail-pre-start
 etc/ix/templates/warden/jail-pre-stop
 etc/netcli
-etc/netcli.sh
+@shell etc/netcli.sh
 etc/find_alias_for_smtplib.py
