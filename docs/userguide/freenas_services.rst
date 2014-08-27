@@ -507,7 +507,11 @@ either click the "Advanced Mode" button or configure the system to always displa
 
 **Figure 11.6a: Configuring FTP**
 
-|Figure116a_png|
+|ftp1.png|
+
+.. |ftp1.png| image:: images/ftp1.png
+    :width: 4.7in
+    :height: 4.4in
 
 Table 11.6a summarizes the available options when configuring the FTP server:
 
@@ -675,7 +679,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | used for TLS FTP connections                                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Auxiliary parameters                                         | string         | only available in "Advanced Mode"; only available in Advanced Mode; include         |
+| Auxiliary parameters                                         | string         | only available in "Advanced Mode";                                  include         |
 |                                                              |                | `proftpd(8) <http://linux.die.net/man/8/proftpd>`_                                  |
 |                                                              |                | parameters not covered elsewhere in this screen                                     |
 |                                                              |                |                                                                                     |
@@ -701,20 +705,20 @@ To configure anonymous FTP:
 
 #.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in :menuselection:`Storage --> Volumes` as follows:
 
-* "Owner(user)": select the built-in *ftp* user from the drop-down menu
+    * "Owner(user)": select the built-in *ftp* user from the drop-down menu
 
-* "Owner(group)": select the built-in *ftp* group from the drop-down menu
+    * "Owner(group)": select the built-in *ftp* group from the drop-down menu
 
-* "Mode": review that the permissions are appropriate for the share
+    * "Mode": review that the permissions are appropriate for the share
 
-.. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
-   be accessing FreeNAS® via FTP.
+    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+       will be accessing FreeNAS® via FTP.
 
 #.  **Configure anonymous FTP** in :menuselection:`Services --> FTP` by setting the following attributes:
 
-* check the box "Allow Anonymous Login"
+    * check the box "Allow Anonymous Login"
 
-* "Path": browse to the volume/dataset/directory to be shared
+    * "Path": browse to the volume/dataset/directory to be shared
 
 #.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -732,9 +736,9 @@ In the example shown in Figure 11.6b, a user has input the following information
 
 **Figure 11.6b: Connecting Using Filezilla**
 
-|100000000000038300000122BD3F6150_png|
+|filezilla.png|
 
-.. |100000000000038300000122BD3F6150_png| image:: images/100000000000038300000122BD3F6150.png
+.. |filezilla.png| image:: images/filezilla.png
     :width: 6.9252in
     :height: 2.2335in
 
@@ -764,18 +768,18 @@ To configure this scenario:
 #.  **Set the permissions for each dataset** in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
     account as "Owner" of that dataset and to set the desired permissions for that user. Repeat for each dataset.
 
-.. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
-   be accessing FreeNAS® via FTP.
+    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+       will be accessing FreeNAS® via FTP.
 
 #.  **Configure FTP** in :menuselection:`Services --> FTP` with the following attributes:
 
-* "Path": browse to the parent volume containing the datasets
+    * "Path": browse to the parent volume containing the datasets
 
-* make sure the boxes for "Allow Anonymous Login" and "Allow Root Login" are **unchecked**
+    * make sure the boxes for "Allow Anonymous Login" and "Allow Root Login" are **unchecked**
 
-* check the box "Allow Local User Login"
+    * check the box "Allow Local User Login"
 
-* check the box "Always Chroot"
+    * check the box "Always Chroot"
 
 #.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -888,13 +892,13 @@ Authorized Accesses
 If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
 :menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 11.7a.
 
-.. note:: this screen sets login authentication. This is different from discovery authentication which is set in Target Global Configuration.
+.. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
 
 **Figure 11.7a: Adding an iSCSI Authorized Access**
 
-|100000000000017F00000171394D6770_png|
+|authorized1.png|
 
-.. |100000000000017F00000171394D6770_png| image:: images/100000000000017F00000171394D6770.png
+.. |authorized1.png| image:: images/authorized1.png
     :width: 3.989in
     :height: 3.8429in
 
@@ -969,7 +973,11 @@ Table 11.7b summarizes the settings that can be configured when creating an exte
 
 **Figure 11.7c: Adding an iSCSI Extent**
 
-|Figure117c_png|
+|extent.png|
+
+.. |extent.png| image:: images/extent.png
+    :width: 3.5in
+    :height: 2.8in
 
 **Table 11.7b: Extent Configuration Settings**
 
@@ -1016,11 +1024,11 @@ which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators
 
 **Figure 11.7d: Adding an iSCSI Initiator**
 
-|100000000000022A00000107CAD88F71_png|
+|initiator1.png|
 
-.. |100000000000022A00000107CAD88F71_png| image:: images/100000000000022A00000107CAD88F71.png
-    :width: 6.6744in
-    :height: 2.4346in
+.. |initiator1.png| image:: images/initiator1.png
+    :width: 6.5in
+    :height: 2.5in
 
 Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
@@ -1065,7 +1073,11 @@ Table 11.7d summarizes the settings that can be configured when adding a portal.
 
 **Figure 11.7f: Adding an iSCSI Portal**
 
-|Figure117f_png|
+|portal.png|
+
+.. |portal.png| image:: images/portal.png
+    :width: 2.8in
+    :height: 2.2in
 
 **Table 11.7d: Portal Configuration Settings**
 
@@ -1163,11 +1175,11 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 
 **Figure 11.7h: Adding an iSCSI Target**
 
-|10000000000001BD000001C3DC193DAA_png|
+|target1png|
 
-.. |10000000000001BD000001C3DC193DAA_png| image:: images/10000000000001BD000001C3DC193DAA.png
-    :width: 5.3602in
-    :height: 4.1756in
+.. |target1png| image:: images/target1.png
+    :width: 3.7in
+    :height: 3.4in
 
 **Table 11.7f: Target Settings**
 
@@ -1215,7 +1227,11 @@ in Figure 11.7i. Use the drop-down menus to select the existing target and exten
 
 **Figure 11.7i: Associating iSCSI Targets/Extents**
 
-|Figure117i_png|
+|target2.png|
+
+.. |target2.png| image:: images/target2.png
+    :width: 2.5in
+    :height: 1.8in
 
 Table 11.7g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1344,14 +1360,39 @@ You can now start the iSCSI service and allow initiators to connect.
 LLDP
 ----
 
+Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
+
+**Figure 11.8a: Configuring LLDP**
+
+|lldp.png|
+
+.. |lldp.png| image:: images/lldp.png
+    :width: 3.2in
+    :height: 1.8in
+
+**Table 11.8a: LLDP Configuration Options**
+
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value**  | **Description**                                                                                                     |
+|                        |            |                                                                                                                     |
++========================+============+=====================================================================================================================+
+| Interface Description  | checkbox   |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Country Code           | string     |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Location               |            |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+
 .. _NFS:
 
 NFS
 ---
 
-Network File System (NFS) is a protocol for sharing files on a network. Before configuring this service, you should first create your NFS Shares in
-:menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`. After configuring this service, go to :menuselection:`Services --> Control Panel` to
-start the service.
+The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
+configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
@@ -1365,7 +1406,11 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Figure 11.9a: Configuring NFS**
 
-|Figure119a_png|
+|nfs1.png|
+
+.. |nfs1.png| image:: images/nfs1.png
+    :width: 3.3in
+    :height: 3.9in
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -1384,6 +1429,9 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Allow non-root mount   | checkbox   | check this box only if the NFS client requires it                                                                   |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Enable NFSv4           | checkbox   |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | mountd(8) bind port    | integer    | optional; specify port for                                                                                          |
@@ -1407,8 +1455,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 Rsync
 -----
 
-:menuselection:`Services --> Rsync` is used to configure an rsync server when using rsync module mode. See the section on
-Configuring Rsync Module Mode Between Two FreeNAS® Systems for a configuration example.
+:menuselection:`Services --> Rsync` is used to configure an rsync server when using rsync module mode. See the section on Rsync Module Mode for a
+configuration example.
 
 This section describes the configurable options for the :command:`rsyncd` service and rsync modules.
 
@@ -1421,11 +1469,11 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 
 **Figure 11.10a: Rsyncd Configuration**
 
-|1000000000000234000000C82AD0CB4B_png|
+|rsyncd.png|
 
-.. |1000000000000234000000C82AD0CB4B_png| image:: images/1000000000000234000000C82AD0CB4B.png
-    :width: 6.7945in
-    :height: 1.8516in
+.. |rsyncd.png| image:: images/rsyncd.png
+    :width: 6in
+    :height: 1.8in
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -1455,11 +1503,11 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 
 **Figure 11.10b: Adding an Rsync Module**
 
-|100000000000023D000001C2EB395B61_png|
+|rsync3.png|
 
-.. |100000000000023D000001C2EB395B61_png| image:: images/100000000000023D000001C2EB395B61.png
-    :width: 6.9028in
-    :height: 4.1665in
+.. |rsync3.png| image:: images/rsync3.png
+    :width: 6.8in
+    :height: 4.2in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1526,7 +1574,11 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 
 **Figure 11.11a: S.M.A.R.T Configuration Options**
 
-|Figure1111a_png|
+|smart2.png|
+
+.. |smart2.png| image:: images/smart2.png
+    :width: 2.9in
+    :height: 2.7in
 
 .. note:: :command:`smartd` will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described
    in Figure 4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a
@@ -1587,7 +1639,11 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Figure 11.12a: Configuring SNMP**
 
-|Figure1112a_png|
+|snmp.png|
+
+.. |snmp.png| image:: images/snmp.png
+    :width: 4.2in
+    :height: 2.3in
 
 **Table 11.12a: SNMP Configuration Options**
 
@@ -1631,11 +1687,11 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 
 **Figure 11.13a: SSH Configuration**
 
-|10000000000001950000012301F7AD89_png|
+|ssh1.png|
 
-.. |10000000000001950000012301F7AD89_png| image:: images/10000000000001950000012301F7AD89.png
-    :width: 4.8783in
-    :height: 2.6937in
+.. |ssh1.png| image:: images/ssh1.png
+    :width: 4.8in
+    :height: 2.7in
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1735,26 +1791,30 @@ the following steps.
     to create a home directory called *user1* for the user account
     *user1* on dataset :file:`/mnt/volume1/user1`:
 
-**Figure 11.13b: Permissions Required by SSH Chroot**
+    **Figure 11.13b: Permissions Required by SSH Chroot**
 
-|Figure1113b_png|
+    |chroot.png|
 
-**Example 11.13a: Creating a User's Home Directory**
-::
+    .. |chroot.png| image:: images/chroot.png
+       :width: 3.6in
+       :height: 3.5in
 
- mkdir /mnt/volume1/user1/user1
+    **Example 11.13a: Creating a User's Home Directory**
+    ::
 
- chown user1:user1 /mnt/volume1/user1/user1
+     mkdir /mnt/volume1/user1/user1
+
+     chown user1:user1 /mnt/volume1/user1/user1
 
 #.  **Configure SSH** in :menuselection:`Services --> SSH`. Add these lines to the "Extra Options" section:
-::
+    ::
 
 
 
- Match Group sftp
- ChrootDirectory %h
- ForceCommand internal-sftp
- AllowTcpForwarding no
+     Match Group sftp
+     ChrootDirectory %h
+     ForceCommand internal-sftp
+     AllowTcpForwarding no
 
 #.  **Start the SSH service** in Control Services. Click the red "OFF" button next to SSH. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -1799,11 +1859,11 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 
 **Figure 11.14a: TFTP Configuration**
 
-|10000000000001A10000014C23FFB30C_png|
+|tftp.png|
 
-.. |10000000000001A10000014C23FFB30C_png| image:: images/10000000000001A10000014C23FFB30C.png
-    :width: 5.0236in
-    :height: 3.0744in
+.. |tftp.png| image:: images/tftp.png
+    :width: 5.0in
+    :height: 3.1in
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1850,7 +1910,11 @@ Figure 11.15a shows the UPS configuration screen:
 
 **Figure 11.15a: UPS Configuration Screen**
 
-|Figure1115a_png|
+|ups.png|
+
+.. |ups.png| image:: images/ups.png
+    :width: 4.8in
+    :height: 4.4in
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1944,7 +2008,11 @@ Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the
 
 **Figure 11.16a: WebDAV Configuration Screen**
 
-|Figure1116a_png|
+|webdav.png|
+
+.. |webdav.png| image:: images/webdav.png
+    :width: 3.6in
+    :height: 2.4in
 
 **Tablee 11.16a: WebDAV Configuration Options**
 

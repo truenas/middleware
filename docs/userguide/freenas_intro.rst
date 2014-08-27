@@ -255,6 +255,8 @@ The following fields have been added or deleted:
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
+* The "Enable NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
 .. _Known Issues:
 
 Known Issues
