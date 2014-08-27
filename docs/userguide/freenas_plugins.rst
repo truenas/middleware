@@ -45,24 +45,36 @@ To install a FreeNAS® PBI using the plugins method, click "Plugins". As seen in
 
 **Figure 12.1a: Using Plugins to Install a PBI**
 
-|Figure121a_png|
+|plugins1.png|
+
+.. |plugins1.png| image:: images/plugins1.png
+    :width: 11.1in
+    :height: 4.5in
 
 .. note:: if the list of available PBIs is not displayed, open Shell and verify that the FreeNAS® system can :command:`ping` an address on the Internet. If
    it cannot, you may have to add a default gateway address and/or DNS server address in :menuselection:`Network --> Global Configuration`.
 
-Highlight the entry of the PBI you would like to install, then click its "Install" button. In the example shown in Figure 12.1b, the transmission PBI is
-selected for installation.
+Highlight the entry of the PBI you would like to install, click its "Install" button, then click "OK". In the example shown in Figure 12.1b, the SABnzbd PBI
+is selected for installation.
 
 **Figure 12.1b: Selecting a PBI to Install**
 
-|Figure121b_png|
+|plugins2.png|
 
-Click "OK" to start the installation. It will take a few minutes as the system will first download and configure a jail to contain the installed software. It
-will then install the PBI and add it to the "Installed" tab as shown in Figure 12.1c. Be patient as it may take a few minutes for the installation to finish.
+.. |plugins2.png| image:: images/plugins2.png
+    :width: 6.0in
+    :height: 4.5in
+
+The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the
+PBI and add it to the "Installed" tab as shown in Figure 12.1c.
 
 **Figure 12.1c: Viewing Installed PBIs**
 
-|Figure121c_png|
+|plugins3.png|
+
+.. |plugins3.png| image:: images/plugins3.png
+    :width: 6.7in
+    :height: 4.9in
 
 As seen in the example shown in Figure 12.1c, entries for the installed PBI will appear in the following locations:
 
@@ -139,11 +151,11 @@ When you install a PBI using the Plugins method, an associated jail is created. 
 longer required. **Before deleting a PBI,** make sure that you don't have any data or configuration in the jail that you do not want to lose. If you do, back
 it up first, before deleting the PBI.
 
-In the example shown in Figure 12.4a, the CouchPotato PBI has been installed and the user has clicked its "Delete" button. As described in the previous
-sections, this PBI appears in the "Plugins" portion of the tree, its associated jail, *couchpotato_1* , appears in the "Jails" portion of the tree, and the
+In the example shown in Figure 12.4a, the Sabnzbd PBI has been installed and the user has clicked its "Delete" button. As described in the previous
+sections, this PBI appears in the "Plugins" portion of the tree, its associated jail, *sabnzbd_1* , appears in the "Jails" portion of the tree, and the
 PBI shows as installed in the "Installed" tab of Plugins. A pop-up message asks the user if they are sure that they want to delete.
 **This is the one and only warning.** If the user clicks "Yes", this PBI will be removed from the Plugins portion of the tree, its associated jail,
-*couchpotato_1*, will be deleted, and the PBI will no longer show as installed in the "Installed" tab of Plugins.
+*sabnzbd_1*, will be deleted, and the PBI will no longer show as installed in the "Installed" tab of Plugins.
 
 **Figure 12.4a: Deleting an Installed PBI**
 
@@ -156,39 +168,45 @@ Available Plugins
 
 Currently, the following FreeNAS® PBIs are available:
 
-* `Bacula (storage daemon) <http://bacula.org/>`_
+* `bacula-sd (storage daemon) <http://bacula.org/>`_
 
-* `btsync <http://www.bittorrent.com/sync>`_
+* `BTSync <http://www.bittorrent.com/sync>`_
 
 * `CouchPotato <https://couchpota.to/>`_
 
-* `CrashPlan <http://www.code42.com/crashplan/>`_
+* `crashplan <http://www.code42.com/crashplan/>`_
 
-* `Firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
+* `cruciblewds <http://cruciblewds.org/>`_
+
+* `firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
 
 * `Headphones <https://github.com/rembo10/headphones>`_
 
-* `HTPC Manager <http://htpc.io/>`_
+* `HTPC-Manager <http://htpc.io/>`_
 
 * `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>`_
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
-* `MiniDLNA <https://wiki.archlinux.org/index.php/MiniDLNA>`_
+* `minidlna <https://wiki.archlinux.org/index.php/MiniDLNA>`_
 
-* `mylar <https://github.com/evilhero/mylar>`_
+* `Mylar <https://github.com/evilhero/mylar>`_
 
-* `ownCloud <http://owncloud.org/>`_
+* `owncloud <http://owncloud.org/>`_
 
-* `Plex Media Server <http://www.plexapp.com/>`_
+* `plexmediaserver <http://www.plexapp.com/>`_
+
+* `s3cmd <http://s3tools.org/s3cmd>`_
 
 * `SABnzbd <http://sabnzbd.org/>`_
 
-* `Sick Beard <http://sickbeard.com/>`_
+* `SickBeard <http://sickbeard.com/>`_
 
 * `Subsonic <http://subsonic.org/>`_
 
-* `Transmission <http://www.transmissionbt.com/>`_
+* `Syncthing <http://syncthing.net/>`_
+
+* `transmission <http://www.transmissionbt.com/>`_
 
 * `XDM <https://github.com/lad1337/XDM>`_
 

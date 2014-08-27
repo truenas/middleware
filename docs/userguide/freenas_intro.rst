@@ -166,6 +166,8 @@ issued since FreeBSD 9.3 RELEASE.
   
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
+  
+* The cruciblewds, s3cmd, and Syncthing Plugins have been added.
 
 The GUI has been reorganized as follows:
 
