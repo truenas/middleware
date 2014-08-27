@@ -6,7 +6,7 @@ Shell
 =====
 
 Beginning with version 8.2.0, the FreeNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user.
-The link to Shell is the third entry from the bottom of the menu tree. In Figure 16a, the link has been clicked and Shell is open.
+The link to Shell is the fourth entry from the bottom of the menu tree. In Figure 16a, the link has been clicked and Shell is open.
 
 The prompt indicates that the current user is *root*, the hostname is
 *freenas*, and the current working directory is :file:`~`
@@ -19,7 +19,11 @@ paste the text into the box that opens, and click the "OK" button to complete th
 
 **Figure 16a: Web Shell**
 
-|Figure16a_png|
+|shell.png|
+
+.. |shell.png| image:: images/shell.png
+    :width: 4.9in
+    :height: 4.7in
 
 While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
 Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last session.

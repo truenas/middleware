@@ -5,15 +5,19 @@
 Reboot
 ======
 
-If you click "Reboot", you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate that you have selected
-an option that will negatively impact users of the FreeNAS® system.
+If you click the "Reboot" entry in the tree, you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate
+that you have selected an option that will negatively impact users of the FreeNAS® system.
 
 .. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key using the
    instructions in :ref:`Encryption` before performing a reboot. **Without these, you will not be able to unlock the encrypted volume after the reboot.**
 
 **Figure 18a: Reboot Warning Message**
 
-|Figure18a_png|
+|reboot.png|
+
+.. |reboot.png| image:: images/reboot.png
+    :width: 6.0in
+    :height: 1.9in
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from Shell until it is verified that the scrub or resilver
