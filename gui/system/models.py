@@ -564,6 +564,9 @@ class Upgrade(Model):
     class Meta:
         verbose_name = _('Upgrade')
 
+    class FreeAdmin:
+        deletable = False
+
 
 CA_TYPE_EXISTING        = 0x00000001
 CA_TYPE_INTERNAL        = 0x00000002
