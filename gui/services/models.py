@@ -444,7 +444,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "services.ISCSI"
         icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'iscsi'}
+        nav_extra = {'type': 'iscsi', 'order': -10}
         resource_name = 'services/iscsi/globalconfiguration'
 
 
@@ -635,6 +635,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
         icon_view = u"ViewAllInitiatorsIcon"
+        nav_extra = {'order': 0}
         resource_name = 'services/iscsi/authorizedinitiator'
 
     def __unicode__(self):
