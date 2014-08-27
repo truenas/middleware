@@ -15,7 +15,7 @@ COMMENT=        miscellaneous files for FreeNAS
 
 USE_XZ=		yes
 
-LOCALBASE=/
+PREFIX=/
 
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
