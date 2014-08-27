@@ -874,6 +874,26 @@ def CA_create_intermediate(request):
     })
 
 
+def CA_edit(request, id):
+
+    ca = models.CertificateAuthority.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityEditForm(request.POST, instance=ca)
+        if form.is_valid():
+            m = form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate Authority successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityEditForm(instance=ca)
+
+    return render(request, "system/certificate/CA_edit.html", {
+        'form': form
+    })
+
 
 def certificate_import(request):
 
@@ -928,5 +948,26 @@ def certificate_create_CSR(request):
         form = forms.CertificateCreateCSRForm()
 
     return render(request, "system/certificate/certificate_create_CSR.html", {
+        'form': form
+    })
+
+
+def certificate_edit(request, id):
+
+    cert = models.Certificate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateEditForm(request.POST, instance=cert)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateEditForm(instance=cert)
+
+    return render(request, "system/certificate/certificate_edit.html", {
         'form': form
     })

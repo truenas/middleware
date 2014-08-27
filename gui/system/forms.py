@@ -1882,6 +1882,34 @@ class CertificateAuthorityForm(ModelForm):
         model = models.CertificateAuthority
 
 
+class CertificateAuthorityEditForm(ModelForm):
+    cert_name = forms.CharField(
+        label=_("Name"),
+        required=True,
+        help_text=_("Descriptive Name")
+    )
+    cert_certificate = forms.CharField(
+        label=_("Certificate"),
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_("Cut and paste the contents of your certificate here")
+    )
+    cert_serial = forms.IntegerField(
+        label=_("Serial"),
+        required=True,
+        help_text=_("Serial for next Certificate")
+    )
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_certificate',
+            'cert_privatekey',
+            'cert_serial'
+        ]
+        model = models.CertificateAuthority
+
+
 class CertificateAuthorityImportForm(ModelForm):
     cert_name = forms.CharField(
         label=_("Name"),
@@ -2135,6 +2163,34 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 class CertificateForm(ModelForm):
     class Meta:
         fields = '__all__'
+        model = models.Certificate
+
+
+class CertificateEditform(ModelForm):
+    cert_name = forms.CharField(
+        label=_("Name"),
+        required=True,
+        help_text=_("Descriptive Name")
+    )
+    cert_certificate = forms.CharField(
+        label=_("Certificate"),
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_("Cut and paste the contents of your certificate here")
+    )
+    cert_serial = forms.IntegerField(
+        label=_("Serial"),
+        required=True,
+        help_text=_("Serial for next Certificate")
+    )
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_certificate',
+            'cert_privatekey',
+            'cert_serial'
+        ]
         model = models.Certificate
 
 

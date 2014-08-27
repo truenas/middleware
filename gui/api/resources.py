@@ -2231,6 +2231,9 @@ class CertificateAuthorityResourceMixin(object):
         bundle.data['cert_DN'] = bundle.obj.cert_DN
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
+        bundle.data['_edit_url'] = reverse('CA_edit', kwargs={
+            'id': bundle.obj.id 
+        })
 
         return bundle
 
@@ -2245,5 +2248,8 @@ class CertificateResourceMixin(object):
         bundle.data['cert_CSR'] = bundle.obj.cert_CSR
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
+        bundle.data['_edit_url'] = reverse('certificate_edit', kwargs={
+            'id': bundle.obj.id 
+        })
 
         return bundle

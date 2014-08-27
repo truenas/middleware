@@ -26,8 +26,8 @@ class SettingsFAdmin(BaseFreeAdmin):
 
 class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
-    create_modelform = "CertificateAuthorityForm"
-    edit_modelform = "CertificateAuthorityForm"
+    #create_modelform = "CertificateAuthorityEditForm"
+    #edit_modelform = "CertificateAuthorityEditForm"
     icon_object = u"SettingsIcon"
     icon_model = u"SettingsIcon"
     icon_add = u"SettingsIcon"
