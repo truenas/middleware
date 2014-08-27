@@ -35,6 +35,7 @@ import signal
 import socket
 import subprocess
 import sysctl
+import tempfile
 import time
 import urllib
 import xmlrpclib
@@ -54,8 +55,16 @@ from django.views.decorators.cache import never_cache
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
-from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.common.system import (
+    get_sw_name,
+    get_sw_version, 
+    send_mail
+)
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.ssl import (
+    export_certificate,
+    export_privatekey,
+)
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -894,6 +903,35 @@ def CA_edit(request, id):
         'form': form
     })
 
+def buf_generator(buf):
+    for line in buf:
+        yield line
+
+def CA_export_certificate(request, id):
+    ca = models.CertificateAuthority.objects.get(pk=id)
+    cert = export_certificate(ca.cert_certificate)
+
+    response = StreamingHttpResponse(
+        buf_generator(cert), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(cert)
+    response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
+
+    return response
+
+
+def CA_export_privatekey(request, id):
+    ca = models.CertificateAuthority.objects.get(pk=id)
+    key = export_privatekey(ca.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(key), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(key)
+    response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
+
+    return response
+
 
 def certificate_import(request):
 
@@ -971,3 +1009,45 @@ def certificate_edit(request, id):
     return render(request, "system/certificate/certificate_edit.html", {
         'form': form
     })
+
+
+def certificate_export_certificate(request, id):
+    c = models.Certificate.objects.get(pk=id)
+    cert = export_certificate(c.cert_certificate)
+
+    response = StreamingHttpResponse(
+        buf_generator(cert), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(cert)
+    response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
+
+    return response
+
+
+def certificate_export_privatekey(request, id):
+    c = models.Certificate.objects.get(pk=id)
+    key = export_privatekey(c.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(key), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(key)
+    response['Content-Disposition'] = 'attachment; filename=%s.key' % c
+
+    return response
+
+
+# Need to figure this one out...
+def certificate_export_certificate_and_privatekey(request, id):
+    c = models.Certificate.objects.get(pk=id)
+
+    cert = export_certificate(c.cert_certificate)
+    key = export_privatekey(c.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(combined), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(combined)
+    response['Content-Disposition'] = 'attachment; filename=%s.p12' % c
+
+    return response

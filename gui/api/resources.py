@@ -2231,9 +2231,24 @@ class CertificateAuthorityResourceMixin(object):
         bundle.data['cert_DN'] = bundle.obj.cert_DN
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
-        bundle.data['_edit_url'] = reverse('CA_edit', kwargs={
-            'id': bundle.obj.id 
-        })
+
+        bundle.data['_edit_url'] = reverse('CA_edit',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_certificate_url'] = reverse(
+             'CA_export_certificate',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_privatekey_url'] = reverse(
+             'CA_export_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
 
         return bundle
 
@@ -2248,8 +2263,29 @@ class CertificateResourceMixin(object):
         bundle.data['cert_CSR'] = bundle.obj.cert_CSR
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
-        bundle.data['_edit_url'] = reverse('certificate_edit', kwargs={
-            'id': bundle.obj.id 
-        })
+
+        bundle.data['_edit_url'] = reverse('certificate_edit',
+             kwargs={
+                'id': bundle.obj.id 
+             }
+        )
+        bundle.data['_export_certificate_url'] = reverse(
+             'certificate_export_certificate',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_privatekey_url'] = reverse(
+             'certificate_export_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_certificate_and_privatekey_url'] = reverse(
+             'certificate_export_certificate_and_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
 
         return bundle

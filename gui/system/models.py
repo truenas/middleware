@@ -683,11 +683,9 @@ class CertificateBase(Model):
 
     def __init__(self, *args, **kwargs):
         super(CertificateBase, self).__init__(*args, **kwargs)
-        log.debug("XXX: CSR __init__: start")
         self.__certificate = None
         self.__CSR = None
         self.__load_thingy() 
-        log.debug("XXX: CSR __init__: return")
 
     def __unicode__(self):
         return self.cert_name

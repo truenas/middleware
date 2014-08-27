@@ -86,8 +86,13 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^CA/create/internal/$', 'CA_create_internal', name="CA_create_internal"),
     url(r'^CA/create/intermediate/$', 'CA_create_intermediate', name="CA_create_intermediate"),
     url(r'^CA/edit/(?P<id>\d+)/$', 'CA_edit', name="CA_edit"),
+    url(r'^CA/export/certificate/(?P<id>\d+)/$', 'CA_export_certificate', name="CA_export_certificate"),
+    url(r'^CA/export/privatekey/(?P<id>\d+)/$', 'CA_export_privatekey', name="CA_export_privatekey"),
     url(r'^certificate/import/$', 'certificate_import', name="certificate_import"),
     url(r'^certificate/create/internal/$', 'certificate_create_internal', name="certificate_create_internal"),
     url(r'^certificate/edit/(?P<id>\d+)/$', 'certificate_edit', name="certificate_edit"),
     url(r'^certificate/create/CSR/$', 'certificate_create_CSR', name="certificate_create_CSR"),
+    url(r'^certificate/export/certificate/(?P<id>\d+)$', 'certificate_export_certificate', name="certificate_export_certificate"),
+    url(r'^certificate/export/privatekey/(?P<id>\d+)$', 'certificate_export_privatekey', name="certificate_export_privatekey"),
+    url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', 'certificate_export_certificate_and_privatekey', name="certificate_export_certificate_and_privatekey")
 )

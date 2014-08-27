@@ -106,3 +106,13 @@ def load_certificate(buf):
         cert_info['digest_algorithm'] = m.group(1).upper()
 
     return cert_info 
+
+
+def export_certificate(buf):
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
+    return crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+
+
+def export_privatekey(buf):
+    key = crypto.load_privatekey(crypto.FILETYPE_PEM, buf)
+    return crypto.dump_privatekey(crypto.FILETYPE_PEM, key)

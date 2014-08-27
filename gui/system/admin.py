@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+from django.conf import settings
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
@@ -26,8 +29,6 @@ class SettingsFAdmin(BaseFreeAdmin):
 
 class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
-    #create_modelform = "CertificateAuthorityEditForm"
-    #edit_modelform = "CertificateAuthorityEditForm"
     icon_object = u"SettingsIcon"
     icon_model = u"SettingsIcon"
     icon_add = u"SettingsIcon"
@@ -75,11 +76,58 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
         return columns
 
+    def get_actions(self):
+        actions = OrderedDict()
+
+        actions['edit'] = {
+            'button_name': 'Edit',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Edit', data._edit_url, [mybtn,]);
+                }
+            }""",
+        }
+
+        actions['export_certificate'] = {
+            'button_name': 'Export Certificate',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    location.href=data._export_certificate_url;
+                }
+            }""",
+        }
+
+        actions['export_privatekey'] = {
+            'button_name': 'Export Private Key',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    location.href=data._export_privatekey_url;
+                }
+            }""",
+        }
+
+        actions['delete'] = {
+            'button_name': 'Delete',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Delete', data._delete_url, [mybtn,]);
+                }  
+            }""",
+        }
+
+        return actions
+
 
 class CertificateFAdmin(BaseFreeAdmin):
 
-    create_modelform = "CertificateForm"
-    edit_modelform = "CertificateForm"
     icon_object = u"SettingsIcon"
     icon_model = u"SettingsIcon"
     icon_add = u"SettingsIcon"
@@ -116,6 +164,66 @@ class CertificateFAdmin(BaseFreeAdmin):
         }) 
 
         return columns
+
+    def get_actions(self):
+        actions = OrderedDict()
+
+        actions['edit'] = {
+            'button_name': 'Edit',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Edit', data._edit_url, [mybtn,]);
+                }
+            }""",
+        }
+
+        actions['export_certificate'] = {
+            'button_name': 'Export Certificate',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    location.href=data._export_certificate_url;
+                }
+            }""",
+        }
+
+        actions['export_privatekey'] = {
+            'button_name': 'Export Private Key',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    location.href=data._export_privatekey_url;
+                }
+            }""",
+        }
+
+#        actions['export_certificate_and_privatekey'] = {
+#            'button_name': 'Export Certificate + Private Key',
+#            'on_click': """function() {
+#                var mybtn = this;
+#                for (var i in grid.selection) {
+#                    var data = grid.row(i).data;
+#                    location.href=data._export_certificate_and_privatekey_url;
+#                }
+#            }""",
+#        }
+
+        actions['delete'] = {
+            'button_name': 'Delete',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Delete', data._delete_url, [mybtn,]);
+                }  
+            }""",
+        }
+
+        return actions
 
 
 site.register(models.Settings, SettingsFAdmin)
