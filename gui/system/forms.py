@@ -65,6 +65,7 @@ from freenasUI.common.ssl import (
     create_certificate_signing_request,
     create_certificate,
     sign_certificate,
+    load_certificate,
     generate_key
 )
 
@@ -1901,6 +1902,16 @@ class CertificateAuthorityImportForm(ModelForm):
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
+
+        cert_info = load_certificate(self.instance.cert_certificate)
+        self.instance.cert_country = cert_info['country']
+        self.instance.cert_state = cert_info['state']
+        self.instance.cert_city = cert_info['city']
+        self.instance.cert_organization = cert_info['organization']
+        self.instance.cert_common = cert_info['common']
+        self.instance.cert_email = cert_info['email']
+        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
+
         super(CertificateAuthorityImportForm, self).save()
 
     class Meta:
@@ -2148,6 +2159,16 @@ class CertificateImportForm(ModelForm):
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
+
+        cert_info = load_certificate(self.instance.cert_certificate)
+        self.instance.cert_country = cert_info['country']
+        self.instance.cert_state = cert_info['state']
+        self.instance.cert_city = cert_info['city']
+        self.instance.cert_organization = cert_info['organization']
+        self.instance.cert_common = cert_info['common']
+        self.instance.cert_email = cert_info['email']
+        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
+
         super(CertificateImportForm, self).save()
 
     class Meta:
