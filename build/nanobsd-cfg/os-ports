@@ -148,9 +148,6 @@ add_port security/py-htpasswd
 add_port www/apache24
 add_port www/mod_mpm_itk
 add_port www/nginx WITH_OPENSSL_PORT=yes \
-		OPTIONS_FILE_SET+=HTTP_GZIP_STATIC \
-		OPTIONS_FILE_SET+=HTTP_PERL \
-		OPTIONS_FILE_SET+=HTTP_AUTH_DIGEST \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
