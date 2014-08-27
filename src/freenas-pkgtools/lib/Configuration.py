@@ -2,7 +2,6 @@ import ConfigParser
 import hashlib
 import logging
 import os
-import sqlite3
 import sys
 import tempfile
 import urllib2
@@ -123,6 +122,7 @@ class PackageDB:
         return
 
     def _connectdb(self, returniferror = False, cursor = False):
+	import sqlite3
         if self.__conn is not None:
             if cursor:
                 return self.__conn.cursor()
