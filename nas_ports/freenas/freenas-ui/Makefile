@@ -31,7 +31,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django \
 	${PYTHON_PKGNAMEPREFIX}xml:${PORTSDIR}/textproc/py-xml \
 	${PYTHON_PKGNAMEPREFIX}bonjour:${PORTSDIR}/dns/py-bonjour \
 	${PYTHON_PKGNAMEPREFIX}dnspython:${PORTSDIR}/dns/py-dnspython \
-	${PYTHON_PKGNAMEPREFIX}requests:${PORTSDIR}/www/py-requests
+	${PYTHON_PKGNAMEPREFIX}requests:${PORTSDIR}/www/py-requests \
+	${PYTHON_PKGNAMEPREFIX}openssl:${PORTSDIR}/security/py-openssl
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
