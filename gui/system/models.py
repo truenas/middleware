@@ -24,15 +24,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+import string
+
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from OpenSSL import crypto
+
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
+log = logging.getLogger('system.models')
 
 class Alert(Model):
     message_id = models.CharField(
@@ -557,6 +563,241 @@ class Upgrade(Model):
 
     class Meta:
         verbose_name = _('Upgrade')
+
+
+CA_TYPE_EXISTING        = 0x00000001
+CA_TYPE_INTERNAL        = 0x00000002
+CA_TYPE_INTERMEDIATE    = 0x00000004
+CERT_TYPE_EXISTING      = 0x00000008
+CERT_TYPE_INTERNAL      = 0x00000010
+CERT_TYPE_CSR           = 0x00000020
+
+class CertificateBase(Model):
+    cert_type = models.IntegerField()
+    cert_name = models.CharField(
+            max_length=120,
+            verbose_name=_("Name"),
+            help_text=_("Descriptive Name)")
+            )
+    cert_certificate = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Certificate"),
+            help_text=_("Cut and paste the contents of your certificate here")
+            )
+    cert_privatekey = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Private Key"),
+            help_text=_("Cut and paste the contents of your private key here")
+            )
+    cert_CSR = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Request"),
+            help_text=_("Cut and paste the contents of your CSR here")
+            )
+    cert_key_length = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Key length"),
+            default=2048
+            )
+    cert_digest_algorithm = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Digest Algorithm"),
+            default='SHA256'
+            )
+    cert_lifetime = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Lifetime"),
+            default=3650
+            )
+    cert_country = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Country"),
+            help_text=_("Country Name (2 letter code)")
+            )
+    cert_state = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("State"),
+            help_text=_("State or Province Name (full name)")
+            )
+    cert_city = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Locality"),
+            help_text=_("Locality Name (eg, city)")
+            )
+    cert_organization = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Organization"),
+            help_text=_("Organization Name (eg, company)")
+            )
+    cert_email = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Email Address"),
+            help_text=_("Email Address")
+            )
+    cert_common = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Common Name"),
+            help_text=_("Common Name (eg, YOUR name)")
+            )
+    cert_serial = models.IntegerField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Serial"),
+            help_text=_("Serial for next certificate")
+            )
+    cert_signedby = models.ForeignKey(
+            "CertificateAuthority",
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Certificate Authority")
+            )
+
+    def __load_certificate(self):
+        if self.cert_certificate != None and self.__certificate == None:
+            self.__certificate = crypto.load_certificate(
+                crypto.FILETYPE_PEM,
+                self.cert_certificate
+            )
+
+    def __load_CSR(self):
+        if self.cert_CSR != None and self.__CSR == None:
+            self.__CSR = crypto.load_certificate_request(
+                crypto.FILETYPE_PEM,
+                self.cert_CSR
+            )
+
+    def __load_thingy(self):
+        if self.cert_type == CERT_TYPE_CSR:
+            self.__load_CSR() 
+        else:
+            self.__load_certificate() 
+         
+
+    def __get_thingy(self):
+        thingy = self.__certificate
+        if self.cert_type == CERT_TYPE_CSR:
+            thingy = self.__CSR
+ 
+        return thingy
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateBase, self).__init__(*args, **kwargs)
+        self.__certificate = None
+        self.__CSR = None
+        self.__load_thingy() 
+
+    def __unicode__(self):
+        return self.cert_name
+
+    @property
+    def cert_internal(self):
+        internal = "YES"
+
+        if self.cert_type == CA_TYPE_EXISTING:
+            internal = "NO" 
+        elif self.cert_type == CERT_TYPE_EXISTING: 
+            internal = "NO" 
+
+        return internal
+
+    @property
+    def cert_issuer(self):
+        issuer = None
+
+        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
+            CERT_TYPE_EXISTING):
+            issuer = "external"
+        elif self.cert_type == CA_TYPE_INTERNAL:
+            issuer = "self-signed"
+        elif self.cert_type == CERT_TYPE_INTERNAL:
+            issuer = self.cert_signedby
+        elif self.cert_type == CERT_TYPE_CSR:
+            issuer = "external - signature pending"
+
+        return issuer
+
+    @property
+    def cert_ncertificates(self):
+        return 0
+
+    @property
+    def cert_DN(self):
+        self.__load_thingy()
+
+        parts = []
+        for c in self.__get_thingy().get_subject().get_components():
+            parts.append("%s=%s" % (c[0], c[1]))
+        DN = "/%s" % string.join(parts, '/')
+        return DN
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
+    @property
+    def cert_from(self):
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            before = thingy.get_notBefore()
+        except Exception as e:
+            before = None
+
+        return before
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
+    @property
+    def cert_until(self):
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            after = thingy.get_notAfter()
+        except Exception as e:
+            after = None
+
+        return after
+
+
+    class Meta:
+        abstract = True
+
+
+class CertificateAuthority(CertificateBase):
+
+    class Meta:
+        verbose_name = _("Certificate Authority")
+
+    class FreeAdmin:
+        deletable = False
+
+
+class Certificate(CertificateBase):
+
+    class Meta:
+        verbose_name = _("Certificate")
 
     class FreeAdmin:
         deletable = False

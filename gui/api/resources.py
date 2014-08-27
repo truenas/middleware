@@ -2218,3 +2218,74 @@ class KerberosKeytabResourceMixin(object):
             )
 
         return bundle
+
+
+class CertificateAuthorityResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(CertificateAuthorityResourceMixin, self).dehydrate(bundle)
+
+        bundle.data['cert_internal'] = bundle.obj.cert_internal
+        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+        bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
+        bundle.data['cert_DN'] = bundle.obj.cert_DN
+        bundle.data['cert_from'] = bundle.obj.cert_from
+        bundle.data['cert_until'] = bundle.obj.cert_until
+
+        bundle.data['_edit_url'] = reverse('CA_edit',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_certificate_url'] = reverse(
+             'CA_export_certificate',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_privatekey_url'] = reverse(
+             'CA_export_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+
+        return bundle
+
+
+class CertificateResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
+
+        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+        bundle.data['cert_DN'] = bundle.obj.cert_DN
+        bundle.data['cert_CSR'] = bundle.obj.cert_CSR
+        bundle.data['cert_from'] = bundle.obj.cert_from
+        bundle.data['cert_until'] = bundle.obj.cert_until
+
+        bundle.data['_edit_url'] = reverse('certificate_edit',
+             kwargs={
+                'id': bundle.obj.id 
+             }
+        )
+        bundle.data['_export_certificate_url'] = reverse(
+             'certificate_export_certificate',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_privatekey_url'] = reverse(
+             'certificate_export_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+        bundle.data['_export_certificate_and_privatekey_url'] = reverse(
+             'certificate_export_certificate_and_privatekey',
+             kwargs={
+                'id': bundle.obj.id 
+            }
+        )
+
+        return bundle
