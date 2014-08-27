@@ -27,9 +27,10 @@ db_update_real()
 
 handle_error()
 {
+	local restore_old_partition="$1"
 	local LABELNAME OTHER_PARTNUM PARTNUM TARGET_DRIVE
 
-	echo "Reverting to previous state"
+	echo "Reverting to previous state, restore_old_partition=$restore_old_partition"
 
 	rm -f $NEED_UPDATE_SENTINEL
 	mv ${FREENAS_CONFIG}.bak ${FREENAS_CONFIG}
@@ -56,7 +57,14 @@ EOF
 		OTHER_PARTNUM=1
 	fi
 	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}s${PARTNUM}'a/ { print $3; }' | sed -e 's/s.a//'`
-	gpart set -a active -i $OTHER_PARTNUM ${TARGET_DRIVE}
+
+	if $restore_old_partition ; then
+		echo "Restoring old partition $PARTNUM > $OTHER_PARTNUM"
+		gpart set -a active -i $OTHER_PARTNUM ${TARGET_DRIVE}
+		echo "Next boot will be on partition $OTHER_PARTNUM"
+	else
+		echo "Next boot will be on partition $PARTNUM"
+	fi
 
 	cat <<EOF
 Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
@@ -77,13 +85,18 @@ db_update()
 	mount -uw /
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
+
+	# If we have done a config upload then we must tell
+	# handle_error() to NOT switch active partitions on failure.
+	local restore_old_partition="true"
 	if [ -f /data/uploaded.db ]; then
 		echo "Moving uploaded config to ${FREENAS_CONFIG}"
 		mv /data/uploaded.db ${FREENAS_CONFIG}
+		restore_old_partition="false"
 	fi
 
 	set +e
-	db_update_real || handle_error
+	db_update_real || handle_error "$restore_old_partition"
 	set -e
 
 	rm -f $NEED_UPDATE_SENTINEL
