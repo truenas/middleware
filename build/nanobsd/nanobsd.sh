@@ -170,7 +170,8 @@ run_late_customize
 set -x
 TOOLDIR=${NANO_OBJ}/_.pkgtools
 mkdir -p ${TOOLDIR}
-rm -rf ${NANO_OBJ}/_.packages/Packages
+rm -rf ${NANO_OBJ}/_.packages
+mkdir -p ${NANO_OBJ}/_.packages/Packages
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools obj
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools all
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools install BINDIR=${TOOLDIR}/usr/local/bin \
@@ -179,7 +180,6 @@ make -C ${AVATAR_ROOT}/src/freenas-pkgtools package BINDIR=${TOOLDIR}/usr/local/
     LIBDIR=${TOOLDIR}/usr/local/lib/freenasOS PACKAGE_DIR=${NANO_OBJ}/_.packages/Packages
 # Now we should have some package tools and even a package.
 if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
-    mkdir -p ${NANO_OBJ}/_.packages/Packages
     ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_WORLDDIR}" -T build/Templates/freenas -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenas-${VERSION}-${REVISION:-0}.tgz
     ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_WORLDDIR}" -T build/Templates/freenasUI -V ${VERSION}-${REVISION:-0} ${NANO_OBJ}/_.packages/Packages/freenasUI-${VERSION}-${REVISION:-0}.tgz
     if [ -n "${SEQUENCE}" ]; then
@@ -188,7 +188,7 @@ if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
 	seq_arg=""
     fi
     env PYTHONPATH="${TOOLDIR}/usr/local/lib" ${TOOLDIR}/usr/local/bin/create_manifest -P ${NANO_OBJ}/_.packages -o ${NANO_OBJ}/_.packages/FreeNAS-${SEQUENCE:-0} -R FreeNAS-${VERSION} ${seq_arg} -T ${TRAIN:-FreeNAS} freenas=${VERSION}-${REVISION:-0} freenasUI=${VERSION}-${REVISION:-0} freenas-pkg-tools=${VERSION}-${REVISION:-0}
-    ln -s ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST FreeNAS-${SEQUENCE:-0}
+    ln -sf FreeNAS-${SEQUENCE:-0} ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST
 else
     echo "What happened to the tools?!?!?!"
     false
