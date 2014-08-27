@@ -62,6 +62,7 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.common.ssl import (
     create_self_signed_certificate,
+    create_certificate_signing_request,
     create_certificate,
     sign_certificate,
     generate_key
@@ -2324,6 +2325,22 @@ class CertificateCreateCSRForm(ModelForm):
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_CSR
+        req_info = {
+            'key_length': self.instance.cert_key_length,
+            'country': self.instance.cert_country,
+            'state': self.instance.cert_state,
+            'city': self.instance.cert_city,
+            'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'email': self.instance.cert_email,
+            'digest_algorithm': self.instance.cert_digest_algorithm
+        }
+
+        (req, key) = create_certificate_signing_request(req_info)
+
+        self.instance.cert_CSR = \
+            crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
+
         super(CertificateCreateCSRForm, self).save()
 
     class Meta:

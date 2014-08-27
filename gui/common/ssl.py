@@ -37,12 +37,12 @@ def generate_key(key_length):
 
 
 def create_certificate(cert_info):
-    cert= crypto.X509()
+    cert = crypto.X509()
     cert.get_subject().C = cert_info['country']
     cert.get_subject().ST = cert_info['state']
-    cert.get_subject().L =  cert_info['city']
-    cert.get_subject().O =  cert_info['organization']
-    cert.get_subject().CN =  cert_info['common']
+    cert.get_subject().L = cert_info['city']
+    cert.get_subject().O = cert_info['organization']
+    cert.get_subject().CN = cert_info['common']
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
@@ -69,3 +69,20 @@ def create_self_signed_certificate(cert_info):
     sign_certificate(cert, key, cert_info['digest_algorithm'])
 
     return (cert, key)
+
+
+def create_certificate_signing_request(cert_info):
+    key = generate_key(cert_info['key_length'])
+
+    req = crypto.X509Req()
+    req.get_subject().C = cert_info['country']
+    req.get_subject().ST = cert_info['state']
+    req.get_subject().L = cert_info['city']
+    req.get_subject().O = cert_info['organization']
+    req.get_subject().CN = cert_info['common']
+    req.get_subject().emailAddress = cert_info['email']
+
+    req.set_pubkey(key)
+    sign_certificate(req, key, cert_info['digest_algorithm'])
+
+    return (req, key)

@@ -572,6 +572,12 @@ class CertificateBase(Model):
             verbose_name=_("Private Key"),
             help_text=_("Cut and paste the contents of your private key here")
             )
+    cert_CSR = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Request"),
+            help_text=_("Cut and paste the contents of your CSR here")
+            )
     cert_key_length = models.IntegerField(
             blank=True,
             null=True,
@@ -654,10 +660,34 @@ class CertificateBase(Model):
                 self.cert_certificate
             )
 
+    def __load_CSR(self):
+        if self.cert_CSR != None and self.__CSR == None:
+            self.__CSR = crypto.load_certificate_request(
+                crypto.FILETYPE_PEM,
+                self.cert_CSR
+            )
+
+    def __load_thingy(self):
+        if self.cert_type == CERT_TYPE_CSR:
+            self.__load_CSR() 
+        else:
+            self.__load_certificate() 
+         
+
+    def __get_thingy(self):
+        thingy = self.__certificate
+        if self.cert_type == CERT_TYPE_CSR:
+            thingy = self.__CSR
+ 
+        return thingy
+
     def __init__(self, *args, **kwargs):
         super(CertificateBase, self).__init__(*args, **kwargs)
+        log.debug("XXX: CSR __init__: start")
         self.__certificate = None
-        self.__load_certificate() 
+        self.__CSR = None
+        self.__load_thingy() 
+        log.debug("XXX: CSR __init__: return")
 
     def __unicode__(self):
         return self.cert_name
@@ -684,6 +714,8 @@ class CertificateBase(Model):
             issuer = "self-signed"
         elif self.cert_type == CERT_TYPE_INTERNAL:
             issuer = self.cert_signedby
+        elif self.cert_type == CERT_TYPE_CSR:
+            issuer = "external - signature pending"
 
         return issuer
 
@@ -693,10 +725,10 @@ class CertificateBase(Model):
 
     @property
     def cert_DN(self):
-        self.__load_certificate()
+        self.__load_thingy()
 
         parts = []
-        for c in self.__certificate.get_subject().get_components():
+        for c in self.__get_thingy().get_subject().get_components():
             parts.append("%s=%s" % (c[0], c[1]))
         DN = "/%s" % string.join(parts, '/')
         return DN
@@ -706,16 +738,30 @@ class CertificateBase(Model):
     #
     @property
     def cert_from(self):
-        self.__load_certificate()
-        return self.__certificate.get_notBefore()
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            before = thingy.get_notBefore()
+        except Exception as e:
+            before = None
+
+        return before
 
     #
     # Returns ASN1 GeneralizedTime - Need to parse it...
     #
     @property
     def cert_until(self):
-        self.__load_certificate()
-        return self.__certificate.get_notAfter()
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            after = thingy.get_notAfter()
+        except Exception as e:
+            after = None
+
+        return after
 
 
     class Meta:
