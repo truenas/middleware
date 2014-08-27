@@ -296,7 +296,6 @@ add_port security/nettle
 add_port devel/libinotify
 add_port dns/samba-nsupdate
 add_port security/gnutls
-add_port sysutils/glusterfs
 add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \

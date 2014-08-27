@@ -9,6 +9,8 @@ BLACKLIST = [
     'SSL',
     'SystemDataset',
     'Registration',
+    'CertificateAuthority',
+    'Certificate'
 ]
 NAME = _('System')
 ICON = u'SystemIcon'
@@ -73,3 +75,19 @@ class Upgrade(TreeNode):
     name = _('Upgrade')
     type = 'opensystem'
     icon = 'UpgradeIcon'
+
+
+class CertificateAuthorityView(TreeNode):
+
+    gname = 'CertificateAuthority'
+    name = _('CAs')
+    type = 'opensystem'
+    icon = u'SettingsIcon'
+
+
+class CertificateView(TreeNode):
+
+    gname = 'Certificate'
+    name = _('Certificates')
+    type = 'opensystem'
+    icon = u'SettingsIcon'

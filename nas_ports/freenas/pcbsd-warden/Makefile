@@ -15,6 +15,8 @@ COMMENT=        miscellaneous files for FreeNAS
 
 USE_XZ=		yes
 
+PREFIX=/
+
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
