@@ -345,15 +345,17 @@ class InitialWizard(CommonWizard):
                     if not qs.exists():
                         if share_usercreate:
                             if share_userpw:
-                                password = share_userpw
+                                password = share_userpw.encode('utf8')
                                 password_disabled = False
                             else:
                                 password = '!'
                                 password_disabled = True
                             uid, gid, unixhash, smbhash = _n.user_create(
-                                share_user,
-                                share_user,
-                                password,
+                                username=share_user,
+                                fullname=share_user,
+                                password=password,
+                                shell='/bin/csh',
+                                homedir='/nonexistent',
                                 password_disabled=password_disabled
                             )
                             bsdUsers.objects.create(
