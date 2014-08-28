@@ -745,7 +745,12 @@ class CertificateBase(Model):
 
     @property
     def cert_ncertificates(self):
-        return 0
+        count = 0
+        certs = Certificate.objects.all()
+        for cert in certs:
+            if self.cert_name == str(cert.cert_signedby):
+                count += 1
+        return count
 
     @property
     def cert_DN(self):
