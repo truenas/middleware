@@ -295,6 +295,8 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 if field and isinstance(field.field, ForeignKey):
                     data[noid] = val
                     del data[key]
+            elif key not in bundle.obj.__class__._meta.fields:
+                del data[key]
         data.update(bundle.data)
         bundle.data = data
 
