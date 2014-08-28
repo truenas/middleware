@@ -30,6 +30,7 @@ import re
 import urllib
 
 from django.contrib.auth import authenticate
+from django.db.models import FieldDoesNotExist
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
@@ -295,8 +296,11 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 if field and isinstance(field.field, ForeignKey):
                     data[noid] = val
                     del data[key]
-            elif key not in bundle.obj.__class__._meta.fields:
-                del data[key]
+            else:
+                try:
+                    bundle.obj.__class__._meta.get_field(key)
+                except FieldDoesNotExist:
+                    del data[key]
         data.update(bundle.data)
         bundle.data = data
 
