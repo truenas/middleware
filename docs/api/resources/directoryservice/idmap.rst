@@ -322,7 +322,7 @@ Delete resource
 Hash Idmap
 ----------
 
-Active Directory Ex. Idmap.
+Hash Idmap.
 
 Create resource
 +++++++++++++++
@@ -402,7 +402,7 @@ Create resource
 
    :json integer idmap_hash_range_low: range low
    :json integer idmap_hash_range_high: range high
-   :json integer idmap_hash_range_name_map: absolute path to the name mapping file
+   :json string idmap_hash_range_name_map: absolute path to the name mapping file
    :json integer idmap_ds_type: type of the directory service (ad, ldap, nis, cifs)
    :json integer idmap_ds_id: id of the directory service object
    :reqheader Content-Type: the request content type
@@ -447,7 +447,7 @@ Update resource
 
    :json integer idmap_hash_range_low: range low
    :json integer idmap_hash_range_high: range high
-   :json integer idmap_hash_range_name_map: absolute path to the name mapping file
+   :json string idmap_hash_range_name_map: absolute path to the name mapping file
    :json integer idmap_ds_type: type of the directory service (ad, ldap, nis, cifs)
    :json integer idmap_ds_id: id of the directory service object
    :reqheader Content-Type: the request content type
@@ -467,6 +467,177 @@ Delete resource
    .. sourcecode:: http
 
       DELETE /api/v1.0/directoryservice/idmap/hash/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
+LDAP Idmap
+----------
+
+LDAP Idmap.
+
+Create resource
++++++++++++++++
+
+.. http:get:: /api/v1.0/directoryservice/idmap/ldap/
+
+   Returns a list of all LDAP Idmaps.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/directoryservice/idmap/ldap/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "id": 1,
+                "idmap_ldap_range_low": 10000,
+                "idmap_ldap_range_high": 90000000,
+                "idmap_ldap_ldap_base_dn": "",
+                "idmap_ldap_ldap_user_dn": "",
+                "idmap_ldap_ldap_url": "",
+                "idmap_ds_id": 1,
+                "idmap_ds_type": 4
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/directoryservice/idmap/ldap/
+
+   Creates a new idmap and returns the new object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/directoryservice/idmap/ldap/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "idmap_ldap_ldap_url": "ldap://ldap.example.org",
+                "idmap_ds_id": 1,
+                "idmap_ds_type": 4
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "id": 1,
+                "idmap_ldap_range_low": 10000,
+                "idmap_ldap_range_high": 90000000,
+                "idmap_ldap_ldap_base_dn": "",
+                "idmap_ldap_ldap_user_dn": "",
+                "idmap_ldap_ldap_url": "ldap://ldap.example.org",
+                "idmap_ds_id": 1,
+                "idmap_ds_type": 4
+        }
+
+   :json integer idmap_ldap_range_low: range low
+   :json integer idmap_ldap_range_high: range high
+   :json string idmap_ldap_ldap_base_dn: directory base suffix to use for SID/uid/gid
+   :json string idmap_ldap_ldap_user_dn: user DN to be used for authentication
+   :json string idmap_ldap_ldap_url: Specifies the LDAP server to use for SID/uid/gid map entries
+   :json integer idmap_ds_type: type of the directory service (ad, ldap, nis, cifs)
+   :json integer idmap_ds_id: id of the directory service object
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/directoryservice/idmap/ldap/(int:id)/
+
+   Update extent `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/directoryservice/idmap/ldap/1/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "idmap_ldap_range_high": 110000000
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "id": 1,
+                "idmap_ldap_range_high": 110000000,
+                "idmap_ldap_range_low": 10000,
+                "idmap_ldap_ldap_base_dn": "",
+                "idmap_ldap_ldap_user_dn": "",
+                "idmap_ldap_ldap_url": "ldap://ldap.example.org",
+                "idmap_ds_id": 1,
+                "idmap_ds_type": 1
+        }
+
+   :json integer idmap_ldap_range_low: range low
+   :json integer idmap_ldap_range_high: range high
+   :json string idmap_ldap_ldap_base_dn: directory base suffix to use for SID/uid/gid
+   :json string idmap_ldap_ldap_user_dn: user DN to be used for authentication
+   :json string idmap_ldap_ldap_url: Specifies the LDAP server to use for SID/uid/gid map entries
+   :json integer idmap_ds_type: type of the directory service (ad, ldap, nis, cifs)
+   :json integer idmap_ds_id: id of the directory service object
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/directoryservice/idmap/ldap/(int:id)/
+
+   Delete extent `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/directoryservice/idmap/ldap/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
