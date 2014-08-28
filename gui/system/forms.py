@@ -2201,7 +2201,7 @@ class CertificateForm(ModelForm):
         model = models.Certificate
 
 
-class CertificateEditform(ModelForm):
+class CertificateEditForm(ModelForm):
     cert_name = forms.CharField(
         label=_("Name"),
         required=True,
@@ -2213,18 +2213,19 @@ class CertificateEditform(ModelForm):
         required=True,
         help_text=_("Cut and paste the contents of your certificate here")
     )
-    cert_serial = forms.IntegerField(
-        label=_("Serial"),
-        required=True,
-        help_text=_("Serial for next Certificate")
-    )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateEditForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_name'].widget.attrs['readonly'] = True
+        self.fields['cert_certificate'].widget.attrs['readonly'] = True
+        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     class Meta:
         fields = [
             'cert_name',
             'cert_certificate',
-            'cert_privatekey',
-            'cert_serial'
+            'cert_privatekey'
         ]
         model = models.Certificate
 
