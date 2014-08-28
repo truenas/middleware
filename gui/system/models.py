@@ -24,8 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import dateutil
 import logging
 import string
+
+from datetime import datetime
+from dateutil import tz, parser as dtparser
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -763,6 +767,10 @@ class CertificateBase(Model):
         thingy = self.__get_thingy()
         try:
             before = thingy.get_notBefore()
+            t1 = dtparser.parse(before) 
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            before = t2.ctime() 
+
         except Exception as e:
             before = None
 
@@ -778,6 +786,10 @@ class CertificateBase(Model):
         thingy = self.__get_thingy()
         try:
             after = thingy.get_notAfter()
+            t1 = dtparser.parse(after) 
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            after = t2.ctime() 
+
         except Exception as e:
             after = None
 
