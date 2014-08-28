@@ -1,3 +1,5 @@
+import logging
+
 from collections import OrderedDict
 
 from django.conf import settings
@@ -12,6 +14,7 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
 
+log = logging.getLogger('system.admin')
 
 class SettingsFAdmin(BaseFreeAdmin):
 
@@ -224,6 +227,20 @@ class CertificateFAdmin(BaseFreeAdmin):
         }
 
         return actions
+
+    def get_datagrid_dblclick(self, request=None):
+        func = """
+            grid.on(".dgrid-row:dblclick", function(evt) {
+                var row = grid.row(evt);
+                if (row.data.cert_type_CSR) {
+                    editObject('Edit', row.data._CSR_edit_url, [this, ]);
+                } else {
+                    editObject('Edit', row.data._edit_url, [this, ]);
+                } 
+            });
+        """
+
+        return func
 
 
 site.register(models.Settings, SettingsFAdmin)

@@ -108,6 +108,25 @@ def load_certificate(buf):
     return cert_info 
 
 
+def load_certificate_signing_request(buf):
+    cert = crypto.load_certificate_request(crypto.FILETYPE_PEM, buf)
+    
+    cert_info = {}
+    cert_info['country'] = cert.get_subject().C
+    cert_info['state'] = cert.get_subject().ST
+    cert_info['city'] = cert.get_subject().L
+    cert_info['organization'] = cert.get_subject().O
+    cert_info['common'] = cert.get_subject().CN
+    cert_info['email'] = cert.get_subject().emailAddress
+
+    signature_algorithm = cert.get_signature_algorithm()
+    m = re.match('^(.+)[Ww]ith', signature_algorithm)
+    if m:
+        cert_info['digest_algorithm'] = m.group(1).upper()
+
+    return cert_info 
+
+
 def export_certificate(buf):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
     return crypto.dump_certificate(crypto.FILETYPE_PEM, cert)

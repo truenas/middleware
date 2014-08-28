@@ -2232,6 +2232,10 @@ class CertificateAuthorityResourceMixin(object):
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
 
+        bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
+        bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
+        bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
+
         bundle.data['_edit_url'] = reverse('CA_edit',
              kwargs={
                 'id': bundle.obj.id 
@@ -2263,6 +2267,18 @@ class CertificateResourceMixin(object):
         bundle.data['cert_CSR'] = bundle.obj.cert_CSR
         bundle.data['cert_from'] = bundle.obj.cert_from
         bundle.data['cert_until'] = bundle.obj.cert_until
+
+        bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
+        bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
+        bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
+
+        if bundle.obj.cert_type_CSR:
+            bundle.data['_CSR_edit_url'] = reverse(
+                'CSR_edit',
+                kwargs={
+                    'id': bundle.obj.id 
+                }
+            )
 
         bundle.data['_edit_url'] = reverse('certificate_edit',
              kwargs={

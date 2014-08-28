@@ -1070,6 +1070,27 @@ def certificate_edit(request, id):
     })
 
 
+def CSR_edit(request, id):
+
+    cert = models.Certificate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateCSREditForm(request.POST, instance=cert)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("CSR successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateCSREditForm(instance=cert)
+
+    return render(request, "system/certificate/CSR_edit.html", {
+        'form': form
+    })
+
+
 def certificate_export_certificate(request, id):
     c = models.Certificate.objects.get(pk=id)
     cert = export_certificate(c.cert_certificate)

@@ -2230,6 +2230,43 @@ class CertificateEditForm(ModelForm):
         model = models.Certificate
 
 
+class CertificateCSREditForm(ModelForm):
+    cert_name = forms.CharField(
+        label=_("Name"),
+        required=True,
+        help_text=_("Descriptive Name")
+    )
+    cert_CSR = forms.CharField(
+        label=_("Certificate Signing Request"),
+        widget=forms.Textarea(),
+        required=True
+    )
+    cert_certificate = forms.CharField(
+        label=_("Certificate"),
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_("Cut and paste the contents of your certificate here")
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateCSREditForm, self).__init__(*args, **kwargs)
+
+        self.fields['cert_name'].widget.attrs['readonly'] = True
+        self.fields['cert_CSR'].widget.attrs['readonly'] = True
+
+    def save(self):
+        self.instance.cert_type = models.CERT_TYPE_EXISTING
+        super(CertificateCSREditForm, self).save()
+
+    class Meta:
+        fields = [
+            'cert_name',
+            'cert_CSR',
+            'cert_certificate'
+        ]
+        model = models.Certificate
+
+
 class CertificateImportForm(ModelForm):
     cert_name = forms.CharField(
         label=_("Name"),

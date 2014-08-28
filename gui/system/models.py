@@ -783,6 +783,47 @@ class CertificateBase(Model):
 
         return after
 
+    @property
+    def cert_type_existing(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_EXISTING:
+            ret = True
+        return ret
+
+    @property
+    def cert_type_internal(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_INTERNAL:
+            ret = True
+        return ret
+
+    @property
+    def cert_type_CSR(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_CSR:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_existing(self):
+        ret = False
+        if self.cert_type & CA_TYPE_EXISTING:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_internal(self):
+        ret = False
+        if self.cert_type & CA_TYPE_INTERNAL:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_intermediate(self):
+        ret = False
+        if self.cert_type & CA_TYPE_INTERMEDIATE:
+            ret = True
+        return ret
 
     class Meta:
         abstract = True
