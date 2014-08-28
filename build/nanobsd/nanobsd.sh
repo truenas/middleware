@@ -195,11 +195,6 @@ else
 fi
 set +x
 
-if $do_image ; then
-	create_${NANO_ARCH}_diskimage
-else
-	pprint 2 "Skipping image build (as instructed)"
-fi
 last_orders
 
-pprint 1 "NanoBSD image ${NANO_NAME} completed"
+pprint 1 "NanoBSD stuff ${NANO_NAME} completed"

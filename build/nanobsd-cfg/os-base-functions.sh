@@ -334,62 +334,17 @@ freenas_custom()
 
 last_orders() {
 	local cd_image_log
-	local full_image full_image_log
-	local firmware_img gui_upgrade_bname gui_upgrade_image_log
+	local gui_upgrade_bname gui_upgrade_image_log
 	local vmdk_image vmdk_image_compressed vmdk_image_log
 
 	cd_image_log="${MAKEOBJDIRPREFIX}/_.cd_iso"
-	full_image_log="${MAKEOBJDIRPREFIX}/_.full_image"
 	gui_image_log="${MAKEOBJDIRPREFIX}/_.gui_image"
 	vmdk_image_log="${MAKEOBJDIRPREFIX}/_.vmdk_image"
 
-	firmware_img="$NANO_DISKIMGDIR/firmware.img"
-	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.img"
 	gui_upgrade_bname="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
 	vmdk_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk"
 	vmdk_image_compressed="$NANO_DISKIMGDIR/$NANO_IMGNAME.vmdk.xz"
 
-
-	if false; then
-	    pprint 2 "Creating VMDK"
-	    log_file "${vmdk_image_log}"
-	    
-	    (
-		set -x
-		if [ -f /usr/local/bin/VBoxManage ]; then
-		    VBoxManage convertfromraw "$NANO_DISKIMGDIR/$NANO_IMGNAME" "${vmdk_image}" --format VMDK
-		    chmod 644 "${vmdk_image}"
-		    time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "${vmdk_image}"
-		    sha256_signature=`sha256 ${vmdk_image_compressed}`
-		    echo "${sha256_signature}" > ${vmdk_image_compressed}.sha256.txt
-		else
-		    echo "VBoxManage not found"
-		fi
-	    ) > "${vmdk_image_log}" 2>&1
-	fi
-
-	if false ; then
-        # I don't think we need this any longer
-	pprint 2 "Compressing full disk image"
-	log_file "${full_image_log}"
-
-	(
-	set -x
-
-	# NOTE: keep in synch with create_iso.sh.
-	# NOTE: this is still needed after the .txz payload has been
-	# added because pc-sysinstall doesn't support raw images
-	# (-.-).
-	mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
-	time ${NANO_XZ} ${PXZ_ACCEL} --verbose -9 -f "$full_image"
-
-	) > "${full_image_log}" 2>&1
-	(
-	cd $NANO_DISKIMGDIR
-	sha256_signature=`sha256 ${NANO_IMGNAME}.img.xz`
-	echo "${sha256_signature}" > ${NANO_IMGNAME}.img.xz.sha256.txt
-	)
-	fi
 
 	pprint 2 "Creating ISO image"
 	log_file "${cd_image_log}"
@@ -408,9 +363,6 @@ last_orders() {
 		(
 		set -x
 
-		# NOTE: keep in synch with create_*_diskimage.
-		mv "$NANO_DISKIMGDIR/_.disk.image" "$firmware_img"
-
 		# the -s arguments map root's "update*" files into the
 		# gui image's bin directory.
 
@@ -428,9 +380,7 @@ last_orders() {
 				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
 					. \
 				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
-					. \
-				-C "$NANO_DISKIMGDIR" \
-					${firmware_img##*/}
+					.
 				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
 				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else

@@ -21,8 +21,6 @@ main()
 
 	requires_root
 
-	# Keep in sync with os-base and nano_env.
-	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 
 	INSTALLER_FILES="$AVATAR_ROOT/build/nanobsd-cfg/Installer"
@@ -44,19 +42,6 @@ main()
 		error "mkisofs not available.  Please install the sysutils/cdrtools port."
 	fi
 
-	if false; then
-	    # I don't think we need this any longer
-	if [ ! -f "${IMGFILE}" ]; then
-		error "Can't find image file (${IMGFILE}) for ${REVISION}, punting"
-	fi
-
-	IMG_SIZE=$(xz --list --robot "$IMGFILE" | awk '/^totals/ { print $5 }')
-	if [ "${IMG_SIZE:-0}" -le 0 ]
-	then
-		error "Image file (${IMGFILE}) is invalid/empty"
-	fi
-	fi
-
 	cleanup
 
 	cd "$AVATAR_ROOT"
@@ -75,7 +60,6 @@ main()
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
-#	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/usr/local
@@ -136,11 +120,6 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
 	mkdir -p ${INSTALLUFSDIR}/tank
-
-#    echo "IMG_SIZE=\"${IMG_SIZE}\"" > \
-#        ${INSTALLUFSDIR}/etc/avatar_img_size.conf
-#    cp -p ${AVATAR_ROOT}/build/files/0005.verify_media_size.sh \
-#        "${INSTALLUFSDIR}/usr/local/pre-install/0005.verify_media_size.sh"
 
 	# XXX: tied too much to the host system to be of value in the
 	# installer code.
