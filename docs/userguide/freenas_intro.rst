@@ -152,6 +152,12 @@ issued since FreeBSD 9.3 RELEASE.
 
 * FreeNAS® is now 64-bit only.
 
+* There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
+  file as new versions of FreeNAS® must be installed using a menu-driven installer.
+  
+* FreeNAS® now formats the installation media with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments, allowing you to
+  easily recover from a failed upgrade or configuration.
+
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
@@ -196,6 +202,8 @@ The GUI has been reorganized as follows:
 * Log Out has been moved from the upper right corner to the tree menu.
 
 The following fields have been added or deleted:
+
+* The "Reset WebGUI login credentials" entry in the "Console setup" menu has been renamed to "Reset Root Password".
 
 * The "WebGUI -> HTTPS Port" field has been added to :menuselection:`System --> General`.
 
