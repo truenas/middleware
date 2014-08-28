@@ -289,7 +289,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
             # Add the pk of the foreign key in the mix
             if key.endswith('_id'):
                 noid = key[:-3]
-                field = getattr(bundle.obj.__class__, noid)
+                field = getattr(bundle.obj.__class__, noid, None)
                 if not field:
                     continue
                 if field and isinstance(field.field, ForeignKey):
