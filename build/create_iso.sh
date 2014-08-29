@@ -38,9 +38,9 @@ main()
 	#		 -b boot/cdboot ${ISODIR}"
 	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid ${CDROM_LABEL}"
 
-	if ! command -v mkisofs >/dev/null 2>&1; then
-		error "mkisofs not available.  Please install the sysutils/cdrtools port."
-	fi
+	#if ! command -v mkisofs >/dev/null 2>&1; then
+	#	error "mkisofs not available.  Please install the sysutils/cdrtools port."
+	#fi
 
 	cleanup
 
