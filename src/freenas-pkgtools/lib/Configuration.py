@@ -612,10 +612,10 @@ class Configuration(object):
         if train is None:
             train = sys_mani.Train()
         if sequence is None:
-            ManifestFile = "%s/LATEST" % train
+            ManifestFile = "/%s/LATEST" % train
         else:
             # This needs to change for TrueNAS, doesn't it?
-            ManifestFile = "%s/FreeNAS-%s" % (train, sequence)
+            ManifestFile = "/%s/FreeNAS-%s" % (train, sequence)
 
         file_ref = TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
                                      self._temp,
