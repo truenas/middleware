@@ -39,6 +39,11 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
+from freenasUI.common.ssl import (
+    write_certificate,
+    write_certificate_signing_request,
+    write_privatekey
+)
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
@@ -679,26 +684,55 @@ class CertificateBase(Model):
             verbose_name=_("Signing Certificate Authority")
             )
 
-    def __load_certificate(self):
-        if self.cert_certificate != None and self.__certificate == None:
-            self.__certificate = crypto.load_certificate(
+    def get_certificate(self):
+        certificate = None
+        if self.cert_certificate:
+            certificate = crypto.load_certificate(
                 crypto.FILETYPE_PEM,
                 self.cert_certificate
             )
+        return certificate
+            
+    def get_privatekey(self):
+        privatekey = None
+        if self.cert_privatekey:
+            privatekey = crypto.load_privatekey(
+                crypto.FILETYPE_PEM,
+                self.cert_privatekey
+            )
+        return privatekey
 
-    def __load_CSR(self):
-        if self.cert_CSR != None and self.__CSR == None:
-            self.__CSR = crypto.load_certificate_request(
+    def get_CSR(self):
+        CSR = None 
+        if self.cert_CSR:
+            CSR = crypto.load_certificate_request(
                 crypto.FILETYPE_PEM,
                 self.cert_CSR
             )
+        return CSR
+
+    def write_certificate(self, path):
+        write_certificate(self.get_certificate(), path)
+
+    def write_privatekey(self, path):
+        write_privatekey(self.get_privatekey(), path)
+
+    def write_CSR(self, path):
+        write_certificate_signing_request(self.get_CSR(), path)
+
+    def __load_certificate(self):
+        if self.cert_certificate != None and self.__certificate == None:
+            self.__certificate = self.get_certificate()
+
+    def __load_CSR(self):
+        if self.cert_CSR != None and self.__CSR == None:
+            self.__CSR = self.get_CSR()
 
     def __load_thingy(self):
         if self.cert_type == CERT_TYPE_CSR:
             self.__load_CSR() 
         else:
             self.__load_certificate() 
-         
 
     def __get_thingy(self):
         thingy = self.__certificate

@@ -135,3 +135,21 @@ def export_certificate(buf):
 def export_privatekey(buf):
     key = crypto.load_privatekey(crypto.FILETYPE_PEM, buf)
     return crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+
+
+def write_certificate(certificate, path):
+    open(path, "w").write(
+        crypto.dump_certificate(crypo.FILETYPE_PEM, certificate)
+    )
+
+
+def write_privatekey(privatekey, path):
+    open(path, "w").write(
+        crypto.dump_privatekey(crypo.FILETYPE_PEM, certificate)
+    )
+
+
+def write_certificate_signing_request(req, path):
+    open(path, "w").write(
+        crypto.dump_certificate_request(crypo.FILETYPE_PEM, certificate)
+    )
