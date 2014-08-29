@@ -17,6 +17,13 @@ SIGNATURE_KEY = "Signature"
 NOTES_KEY = "Notes"
 TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
+SCHEME_KEY = "Scheme"
+
+# SCHEME_V1 is the first scheme for packaging and manifests.
+# Manifest is at <location>/FreeNAS/<train_name>/LATEST,
+# packages are at <location>/Packages
+
+SCHEME_V1 = "version1"
 
 class ChecksumFailException(Exception):
     pass
@@ -75,6 +82,7 @@ class Manifest(object):
     _packages = None
     _signature = None
     _version = None
+    _scheme = SCHEME_V1
 
     def __init__(self, configuration = None):
         if configuration is None:
@@ -83,12 +91,13 @@ class Manifest(object):
 
     def dict(self):
         retval = {}
-        if self._sequence is not None: retval[SEQUENCE_KEY] = int(self._sequence)
+        if self._sequence is not None: retval[SEQUENCE_KEY] = self._sequence
         if self._packages is not None: retval[PACKAGES_KEY] = self._packages
         if self._signature is not None: retval[SIGNATURE_KEY] = self._signature
         if self._notes is not None: retval[NOTES_KEY] = self._notes
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
+        retval[SCHEME_KEY] = self._scheme
         return retval
 
     def String(self):
@@ -109,7 +118,7 @@ class Manifest(object):
 
         for key in tdict.keys():
             if key == SEQUENCE_KEY:
-                self.SetSequence(int(tdict[key]))
+                self.SetSequence(tdict[key])
             elif key == PACKAGES_KEY:
                 for p in tdict[key]:
                     pkg = Package.Package(p[Package.NAME_KEY], p[Package.VERSION_KEY], p[Package.CHECKSUM_KEY])
@@ -125,6 +134,8 @@ class Manifest(object):
                 self.SetTrain(tdict[key])
             elif key == VERSION_KEY:
                 self.SetVersion(tdict[key])
+            elif key == SCHEME_KEY:
+                self.SetScheme(tdict[key])
             else:
                 raise ManifestInvalidException
         self.Validate()
@@ -158,8 +169,6 @@ class Manifest(object):
         # it needs to match the computed signature.
         if self._sequence is None:
             raise ManifestInvalidException
-        if self._sequence != int(self._sequence):
-            raise ManifestInvalidException
         if self._train is None:
             raise ManifestInvalidException
         if self._packages is None or len(self._packages) == 0:
@@ -174,11 +183,18 @@ class Manifest(object):
                 raise ChecksumFailException
         return True
 
+    def Scheme(self):
+        return self._scheme
+
+    def SetScheme(shelf, s):
+        self._scheme = s
+        return
+
     def Sequence(self):
         return self._sequence
 
     def SetSequence(self, seq):
-        self._sequence = int(seq)
+        self._sequence = seq
         return
 
     def Notes(self):
