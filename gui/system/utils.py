@@ -30,6 +30,8 @@ from uuid import uuid4
 
 from django.utils.translation import ugettext as _
 
+from freenasUI.common import humanize_size
+
 log = logging.getLogger('system.utils')
 
 
@@ -69,6 +71,7 @@ class UpdateHandler(object):
             self.progress = 0
             self.step = 1
             self.finished = False
+            self.error = False
         self._pkgname = ''
         self._baseprogress = 0
 
@@ -88,10 +91,21 @@ class UpdateHandler(object):
         self.dump()
         return self.get_file_handler
 
-    def get_file_handler(self, method, filename, progress=None):
+    def get_file_handler(
+        self, method, filename, size=None, progress=None, download_rate=None
+    ):
         if progress is not None and self._pkgname:
             self.progress = (progress * self._baseprogress) / 100
-            self.details = '%s (%d%%)' % (self._pkgname, progress)
+            if self.progress == 0:
+                self.progress = 1
+            self.details = '%s<br />%s(%d%%)%s' % (
+                self._pkgname,
+                '%s ' % humanize_size(size)
+                if size else '',
+                progress,
+                '  %s/s' % humanize_size(download_rate)
+                if download_rate else '',
+            )
         self.dump()
 
     def install_handler(self, index, name, packages):
@@ -109,6 +123,7 @@ class UpdateHandler(object):
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
             data = {
+                'error': self.error,
                 'finished': self.finished,
                 'indeterminate': self.indeterminate,
                 'pid': self.pid,
@@ -126,6 +141,7 @@ class UpdateHandler(object):
         with open(self.DUMPFILE, 'rb') as f:
             data = json.loads(f.read())
         self.details = data.get('details', '')
+        self.error = data['error']
         self.finished = data['finished']
         self.indeterminate = data['indeterminate']
         self.progress = data['percent']
