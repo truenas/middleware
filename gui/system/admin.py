@@ -32,10 +32,10 @@ class SettingsFAdmin(BaseFreeAdmin):
 
 class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
-    icon_object = u"SettingsIcon"
-    icon_model = u"SettingsIcon"
-    icon_add = u"SettingsIcon"
-    icon_view = u"SettingsIcon"
+    icon_object = u"CertificateAuthorityIcon"
+    icon_model = u"CertiicateAuthorityIcon"
+    icon_add = u"CertificateAuthorityIcon"
+    icon_view = u"CertificateAuthorityIcon"
 
     resource_mixin = CertificateAuthorityResourceMixin
 
@@ -131,10 +131,10 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
 class CertificateFAdmin(BaseFreeAdmin):
 
-    icon_object = u"SettingsIcon"
-    icon_model = u"SettingsIcon"
-    icon_add = u"SettingsIcon"
-    icon_view = u"SettingsIcon"
+    icon_object = u"CertificateIcon"
+    icon_model = u"CertificateIcon"
+    icon_add = u"CertificateIcon"
+    icon_view = u"CertificateIcon"
 
     resource_mixin = CertificateResourceMixin
 
