@@ -169,6 +169,9 @@ or *False*.
 | bsdusr_sudo              | boolean  | if set to *True*, :command:`sudo` is enabled for the user                                                            |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
+| bsdusr_sshpubkey         | string   | contents of SSH authorized keys file                                                                                 |
+|                          |          |                                                                                                                      |
++--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 
 
 .. note:: when using boolean values, JSON returns raw lowercase values whereas Python uses uppercase values. This means that you should use

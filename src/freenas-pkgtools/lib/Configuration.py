@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import tempfile
+import time
 import urllib2
 
 import Exceptions
@@ -72,18 +73,28 @@ def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
     retval = tempfile.TemporaryFile(dir = tmp)
     read = 0
     lastpercent = percent = 0
+    lasttime = time.time()
     while True:
         data = furl.read(chunk_size)
+        tmptime = time.time()
+        downrate = int(chunk_size / (tmptime - lasttime))
+        lasttime = tmptime
         if not data:
             break
         read += len(data)
         if handler and totalsize:
             percent = int((float(read) / float(totalsize)) * 100.0)
             if percent != lastpercent:
-                handler('network', url, progress=percent)
+                handler(
+                   'network',
+                    url,
+                    size=totalsize,
+                    progress=percent,
+                    download_rate=downrate,
+                )
             lastpercent = percent
-
         retval.write(data)
+
     retval.seek(0)
     return retval
 

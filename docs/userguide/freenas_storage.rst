@@ -944,12 +944,9 @@ you have located the failed device in the GUI, perform the following steps:
 
 #.  Once the disk is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
-    Once you click the "Replace Disk" button, the ZFS pool will start to resilver. You can use the :command:`zpool status` command in Shell to monitor the
-    status of the resilvering.
+    Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-#.  If the replaced disk continues to be listed after resilvering is complete, click its entry and use the "Detach" button to remove the disk from the list.
-
-In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ada3* in the volume named :file:`volume1`.
+In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
 **Figure 8.1s: Replacing a Failed Disk**
 
@@ -959,6 +956,17 @@ In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ad
     :width: 4.9in
     :height: 4.5in
 
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1t indicates that the
+disk replacement was successful for this example.
+
+**Figure 8.1t: Disk Replacement is Complete**
+
+|replace2.png|
+
+.. |replace2.png| image:: images/replace2.png
+    :width: 4.9in
+    :height: 2.4in
+    
 .. _Replacing an Encrypted Drive:
 
 Replacing an Encrypted Drive

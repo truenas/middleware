@@ -854,12 +854,13 @@ def upgrade(request):
                         install_handler=handler.install_handler,
                     )
                 except Exception, e:
-                    #FIXME: error handling
-                    pass
+                    handler.error = unicode(e)
                 handler.finished = True
                 handler.dump()
-                #os.kill(handler.pid, 15)
+                os.kill(handler.pid, 9)
         else:
+            if handler.error is not False:
+                raise MiddlewareError(handler.error)
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()

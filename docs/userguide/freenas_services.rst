@@ -866,17 +866,17 @@ is more than one target per LUN.
 
 In order to configure iSCSI:
 
-#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an authorized access.
+#.  Review the Target Global Configuration parameters.
 
-#.  Create either a device extent or a file extent to be used as storage.
+#.  Create at least one Portal.
 
-#.  Determine which hosts are allowed to connect using iSCSI and create an initiator.
+#.  Determine which hosts are allowed to connect using iSCSI and create an Initiator.
 
-#.  Create at least one portal.
+#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an Authorized Access.
 
-#.  Review the target global configuration parameters.
+#.  Create a Target.
 
-#.  Create a target.
+#.  Create either a device or a file Extent to be used as storage.
 
 #.  Associate a target with an extent.
 
@@ -884,181 +884,49 @@ In order to configure iSCSI:
 
 The rest of this section describes these steps in more detail.
 
-.. _Authorized Accesses:
+.. _Target Global Configuration:
 
-Authorized Accesses
-~~~~~~~~~~~~~~~~~~~
+Target Global Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
-:menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 11.7a.
+:menuselection:`Services --> iSCSI --> Target Global Configuration`, shown in Figures 11.7a, contains settings that apply to all iSCSI shares. Table 11.7a
+summarizes the settings that can be configured in the Target Global Configuration screen.
 
-.. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
+.. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
+   existing extent.
 
-**Figure 11.7a: Adding an iSCSI Authorized Access**
+**Figure 11.7a: iSCSI Target Global Configuration Variables**
 
-|authorized1.png|
+|global.png|
 
-.. |authorized1.png| image:: images/authorized1.png
-    :width: 3.989in
-    :height: 3.8429in
+.. |global.png| image:: images/global.png
+    :width: 5.8in
+    :height: 2.0in
 
-Table 11.7a summarizes the settings that can be configured when adding an authorized access:
+**Table 11.7a: Target Global Configuration Settings**
 
-**Table 11.7a: Authorized Access Configuration Settings**
-
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Setting** | **Value** | **Description**                                                                                                                  |
-|             |           |                                                                                                                                  |
-+=============+===========+==================================================================================================================================+
-| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of *1*  |
-|             |           | will inherit the authentication profile associated with Group *1*                                                                |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
-|             |           | initiator name as the user                                                                                                       |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
-|             |           | "Peer User" is set                                                                                                               |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-
-
-.. note:: CHAP does not work with GlobalSAN initiators on Mac OS X.
-
-As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 11.7b, three users (*test1*,
-*test2*, and
-*test3*) and two groups (
-*1* and
-*2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
-entry to display its "Edit" and "Delete" buttons.
-
-**Figure 11.7b: Viewing Authorized Accesses**
-
-|Figure117b_png|
-
-.. _Extents:
-
-Extents
-~~~~~~~
-
-In iSCSI, the target virtualizes something and presents it as a device to the iSCSI client. That something can be a device extent or a file extent:
-
-**Device extent:** virtualizes an unformatted physical disk, RAID controller, zvol, zvol snapshot, or an existing
-`HAST device <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/disks-hast.html>`_.
-
-Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of
-virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the
-capabilities of the disk or controller.
-
-Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
-as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
-
-**File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
-
-To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7c, the device extent is using the
-:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
-
-.. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
-   the disk, resulting in data loss. This bug was fixed in 8.3.1.
-
-Table 11.7b summarizes the settings that can be configured when creating an extent. Note that
-**file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
-
-**Figure 11.7c: Adding an iSCSI Extent**
-
-|extent.png|
-
-.. |extent.png| image:: images/extent.png
-    :width: 3.5in
-    :height: 2.8in
-
-**Table 11.7b: Extent Configuration Settings**
-
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| **Setting**        | **Value**      | **Description**                                                                                                      |
-|                    |                |                                                                                                                      |
-+====================+================+======================================================================================================================+
-| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Extent Type        | drop-down menu | select from *File* or                                                                                                |
-|                    |                | *Device*                                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
-|                    |                | *0* as the "Extent size",                                                                                            |
-|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the "Extent Name" to the path, and specify  |
-|                    |                | a value in "Extent size"                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
-|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
-|                    |                | create                                                                                                               |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Comment            | string         | optional                                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
-|                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-
-.. _Initiators:
-
-Initiators
-~~~~~~~~~~
-
-The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
-which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators --> Add Initiator`, shown in Figure 11.7d.
-
-**Figure 11.7d: Adding an iSCSI Initiator**
-
-|initiator1.png|
-
-.. |initiator1.png| image:: images/initiator1.png
-    :width: 6.5in
-    :height: 2.5in
-
-Table 11.7c summarizes the settings that can be configured when adding an initiator.
-
-**Table 11.7c: Initiator Configuration Settings**
-
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| **Setting**        | **Value** | **Description**                                                                      |
-|                    |           |                                                                                      |
-+====================+===========+======================================================================================+
-| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas with no space |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
-|                    |           | *192.168.2.0/24*                                                                     |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| Comment            | string    | optional description                                                                 |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-
-
-In the example shown in Figure 11.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
-from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
-
-.. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
-   these will be deleted as well.
-
-**Figure 11.7e: Sample iSCSI Initiator Configuration**
-
-|Figure117e_png|
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| **Setting**                     | **Value**                    | **Description**                                                                           |
+|                                 |                              |                                                                                           |
+|                                 |                              |                                                                                           |
++=================================+==============================+===========================================================================================+
+| Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
+|                                 |                              | if you are unfamiliar with this format                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
+|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
+|                                 |                              | *CHAP* and                                                                                |
+|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
+|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
+|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
+|                                 |                              | *Auto*, and not needed if set to                                                          |
+|                                 |                              | *None*                                                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
 .. _Portals:
 
@@ -1066,12 +934,12 @@ Portals
 ~~~~~~~
 
 A portal specifies the IP address and port number to be used for iSCSI connections. :menuselection:`Services --> ISCSI --> Portals --> Add Portal` will bring
-up the screen shown in Figure 11.7f.
+up the screen shown in Figure 11.7b.
 
-Table 11.7d summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
+Table 11.7b summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
 "Add extra Portal IP".
 
-**Figure 11.7f: Adding an iSCSI Portal**
+**Figure 11.7b: Adding an iSCSI Portal**
 
 |portal.png|
 
@@ -1079,7 +947,7 @@ Table 11.7d summarizes the settings that can be configured when adding a portal.
     :width: 2.8in
     :height: 2.2in
 
-**Table 11.7d: Portal Configuration Settings**
+**Table 11.7b: Portal Configuration Settings**
 
 +-------------+----------------+-----------------------------------------------------------------------------+
 | **Setting** | **Value**      | **Description**                                                             |
@@ -1119,53 +987,126 @@ four interfaces, but connections to target A would be limited to the first two n
 Another scenario would be to create a portal which includes every IP address **except** for the one used by a management interface. This would prevent iSCSI
 connections to the management interface.
 
-.. _Target Global Configuration:
+.. _Initiators:
 
-Target Global Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Initiators
+~~~~~~~~~~
 
-:menuselection:`Services --> iSCSI --> Target Global Configuration`, shown in Figures 11.7g, contains settings that apply to all iSCSI shares. Table 11.7e
-summarizes the settings that can be configured in the Target Global Configuration screen.
+The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
+which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators --> Add Initiator`, shown in Figure 11.7c.
 
-.. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
-   existing extent.
+**Figure 11.7c: Adding an iSCSI Initiator**
 
-**Figure 11.7g: iSCSI Target Global Configuration Variables**
+|initiator1.png|
 
-|Figure117g_png|
+.. |initiator1.png| image:: images/initiator1.png
+    :width: 6.5in
+    :height: 2.5in
 
-**Table 11.7e: Target Global Configuration Settings**
+Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| **Setting**                     | **Value**                    | **Description**                                                                           |
-|                                 |                              |                                                                                           |
-|                                 |                              |                                                                                           |
-+=================================+==============================+===========================================================================================+
-| Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
-|                                 |                              | if you are unfamiliar with this format                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
-|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
-|                                 |                              | *CHAP* and                                                                                |
-|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
-|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+**Table 11.7c: Initiator Configuration Settings**
+
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| **Setting**        | **Value** | **Description**                                                                      |
+|                    |           |                                                                                      |
++====================+===========+======================================================================================+
+| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas with no space |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
+|                    |           | *192.168.2.0/24*                                                                     |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Comment            | string    | optional description                                                                 |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+
+
+In the example shown in Figure 11.7d, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
+from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
+
+.. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
+   these will be deleted as well.
+
+**Figure 11.7d: Sample iSCSI Initiator Configuration**
+
+|initiator2.png|
+
+.. |initiator2.png| image:: images/initiator2.png
+    :width: 5.7in
+    :height: 4.5in
+
+.. _Authorized Accesses:
+
+Authorized Accesses
+~~~~~~~~~~~~~~~~~~~
+
+If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
+:menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 11.7e.
+
+.. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
+
+**Figure 11.7e: Adding an iSCSI Authorized Access**
+
+|authorized1.png|
+
+.. |authorized1.png| image:: images/authorized1.png
+    :width: 3.989in
+    :height: 3.8429in
+
+Table 11.7d summarizes the settings that can be configured when adding an authorized access:
+
+**Table 11.7d: Authorized Access Configuration Settings**
+
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value** | **Description**                                                                                                                  |
+|             |           |                                                                                                                                  |
++=============+===========+==================================================================================================================================+
+| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of *1*  |
+|             |           | will inherit the authentication profile associated with Group *1*                                                                |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
+|             |           | initiator name as the user                                                                                                       |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
+|             |           | "Peer User" is set                                                                                                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+
+
+.. note:: CHAP does not work with GlobalSAN initiators on Mac OS X.
+
+As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 11.7f, three users (*test1*,
+*test2*, and
+*test3*) and two groups (
+*1* and
+*2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
+entry to display its "Edit" and "Delete" buttons.
+
+**Figure 11.7f: Viewing Authorized Accesses**
+
+|authorized2.png|
+
+.. |authorized2.png| image:: images/authorized2.png
+    :width: 5.7in
+    :height: 4.5in
 
 .. _Targets:
 
 Targets
 ~~~~~~~
 
-Next, create a Target using :menuselection:`Services --> ISCSI --> Targets --> Add Target`, as shown in Figure 11.7h. A target combines a portal ID, allowed
-initiator ID, and an authentication method. Table 11.7f summarizes the settings that can be configured when creating a Target.
+Next, create a Target using :menuselection:`Services --> ISCSI --> Targets --> Add Target`, as shown in Figure 11.7g. A target combines a portal ID, allowed
+initiator ID, and an authentication method. Table 11.7e summarizes the settings that can be configured when creating a Target.
 
 .. note:: an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
    as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -1173,7 +1114,7 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
    filesystem corruption. If you need to support multiple clients to the same data on a non-clustered filesystem, use CIFS or NFS instead of iSCSI or create
    multiple iSCSI targets (one per client).
 
-**Figure 11.7h: Adding an iSCSI Target**
+**Figure 11.7g: Adding an iSCSI Target**
 
 |target1png|
 
@@ -1181,7 +1122,7 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
     :width: 3.7in
     :height: 3.4in
 
-**Table 11.7f: Target Settings**
+**Table 11.7e: Target Settings**
 
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**                 | **Value**      | **Description**                                                                                             |
@@ -1216,6 +1157,77 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 |                             |                | filesystems on an operating system limited by block count                                                   |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
+
+.. _Extents:
+
+Extents
+~~~~~~~
+
+In iSCSI, the target virtualizes something and presents it as a device to the iSCSI client. That something can be a device extent or a file extent:
+
+**Device extent:** virtualizes an unformatted physical disk, RAID controller, zvol, zvol snapshot, or an existing
+`HAST device <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/disks-hast.html>`_.
+
+Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of
+virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the
+capabilities of the disk or controller.
+
+Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
+as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
+
+**File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
+
+To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7h, the device extent is using the
+:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
+
+.. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
+   the disk, resulting in data loss. This bug was fixed in 8.3.1.
+
+Table 11.7f summarizes the settings that can be configured when creating an extent. Note that
+**file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
+
+**Figure 11.7h: Adding an iSCSI Extent**
+
+|extent.png|
+
+.. |extent.png| image:: images/extent.png
+    :width: 3.5in
+    :height: 2.8in
+
+**Table 11.7f: Extent Configuration Settings**
+
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| **Setting**        | **Value**      | **Description**                                                                                                      |
+|                    |                |                                                                                                                      |
++====================+================+======================================================================================================================+
+| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent Type        | drop-down menu | select from *File* or                                                                                                |
+|                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
+|                    |                | *0* as the "Extent size",                                                                                            |
+|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the "Extent Name" to the path, and specify  |
+|                    |                | a value in "Extent size"                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
+|                    |                | create                                                                                                               |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Comment            | string         | optional                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
+|                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. _Targets/Extents:
 
