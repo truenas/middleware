@@ -24,11 +24,12 @@ log = logging.getLogger('freenasOS.Configuration')
 # Change this for release
 # Need to change search code since it isn't really
 # searching any longer.
-UPDATE_SERVER = "beta-update.freenas.org"
+# All of this needs to be changed for TrueNAS
+UPDATE_SERVER = "http://beta-update.freenas.org/FreeNAS"
 SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/FreeNAS" ]
 
 # List of trains
-TRAIN_FILE = UPDATE_SERVER + "trains.txt"
+TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
