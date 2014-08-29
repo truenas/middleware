@@ -119,6 +119,7 @@ class UpdateHandler(object):
             index,
             total,
         )
+        self.dump()
 
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
