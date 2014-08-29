@@ -273,7 +273,7 @@ install_grub() {
 mount_disk() {
 	local _mnt
 
-	if [ $# -ne 2 ]; then
+	if [ $# -ne 1 ]; then
 		return 1
 	fi
 
@@ -292,23 +292,23 @@ partition_disk() {
 	_disks=$*
 
 	_disksparts=$(for _disk in ${_disks}; do
-	    gpart destroy -F ${_disk} || true
+	    gpart destroy -F ${_disk} >&2 || true
 	    # Get rid of any MBR.  Shouldn't be necessary,
 	    # but caching seems to have caused problems.
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1 >&2
 
 	    # Now create a GPT partition.
-	    gpart create -s gpt ${_disk}
+	    gpart create -s gpt ${_disk} >&2
 	    # For grub
-	    gpart add -t bios-boot -i 1 -s 512k ${_disk}
+	    gpart add -t bios-boot -i 1 -s 512k ${_disk} >&2
 
 	    # If we're truenas, add swap
 	    if is_truenas; then
 	        # Is this correct?
-	        gpart add -t swap -i 3 -s 16g ${_disk}
+	        gpart add -t swap -i 3 -s 16g ${_disk} >&2
 	    fi
 	    # The rest of the disk
-	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk}
+	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk} >&2
 
 	    echo ${_disk}p2
 	done)
