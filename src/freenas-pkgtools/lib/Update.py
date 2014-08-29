@@ -12,6 +12,7 @@ log = logging.getLogger('freenasOS.Update')
 debug = False
 
 # Used by the clone functions below
+beadm = "/usr/local/sbin/beadm"
 grub_dir = "/boot/grub"
 grub_cfg = "/boot/grub/grub.cfg"
 freenas_pool = "freenas-boot"
@@ -40,11 +41,38 @@ def RunCommand(command, args):
     else:
         return False
 
+def ListClones():
+    # Return a list of boot-environment clones.
+    # This is just a simple wrapper for
+    # "beadm list -H"
+    # Because of that, it can't use RunCommand
+    cmd = [beadm, "list", "-H" ]
+    rv = []
+    if debug:
+        print >> sys.stderr, cmd
+        return None
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    except:
+        log.error("Could not run %s" % cmd)
+        return None
+    for line in p.stdout:
+        try:
+            fields = line.split()
+        except:
+            log.error("Malformed output from %s:  %s" % (beadm, line))
+            continue
+        rv.append(fields[0])
+    p.wait()
+    if p.returncode != 0:
+        log.error("`%s' returned %d" % (cmd, p.returncode))
+        return None
+    return rv
+    
 def CreateClone(name, snap_grub = True):
     # Create a boot environment from the current
     # root, using the given name.  Returns False
     # if it could not create it
-    beadm = "/usr/local/sbin/beadm"
     args = ["create", name]
     rv = RunCommand(beadm, args)
     if rv is False:
@@ -75,7 +103,6 @@ def MountClone(name, mountpoint = None):
 
     if mount_point is None:
         return None
-    beadm = "/usr/local/sbin/beadm"
     args = ["mount", name, mount_point ]
     rv = RunCommand(beadm, args)
     if rv is False:
@@ -103,7 +130,6 @@ def MountClone(name, mountpoint = None):
 
 def ActivateClone(name):
     # Set the clone to be active for the next boot
-    beadm = "/usr/local/sbin/beadm"
     args = ["activate", name]
     return RunCommand(beadm, args)
 
@@ -119,7 +145,6 @@ def UnmountClone(name, mount_point = None):
         RunCommand(cmd, args)
 
     # Now we ask beadm to unmount it.
-    beadm = "/usr/local/sbin/beadm"
     args = ["unmount", "-f", name]
     
     if RunCommand(beadm, args) is False:
@@ -134,7 +159,6 @@ def UnmountClone(name, mount_point = None):
         
 def DeleteClone(name, delete_grub = False):
     # Delete the clone we created.
-    beadm = "/usr/local/sbin/beadm"
     args = ["destroy", "-F", name]
     rv = RunCommand(beadm, args)
     if rv is False:
