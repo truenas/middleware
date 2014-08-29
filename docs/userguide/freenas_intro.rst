@@ -161,7 +161,11 @@ issued since FreeBSD 9.3 RELEASE.
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
-  
+
+* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`.
+
+* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`.
+
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
@@ -173,7 +177,7 @@ issued since FreeBSD 9.3 RELEASE.
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
   
-* The cruciblewds, s3cmd, and Syncthing Plugins have been added.
+* The cruciblewds, s3cmd, and Syncthing plugins have been added.
 
 The GUI has been reorganized as follows:
 
