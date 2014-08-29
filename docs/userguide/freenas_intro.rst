@@ -231,6 +231,8 @@ The following fields have been added or deleted:
   you no longer need to upgrade a ZFS pool from the command line.
   
 * The "Volume Status" screen now shows the status of the latest ZFS scrub, the number of errors, number of repaired blocks, and the date of the last scrub.
+
+* The "Volume Status" screen now shows the resilvering status when a disk is replaced.
   
 * The "Enable High Speed Ciphers" checkbox has been replaced by the "Encryption Cipher" drop-down menu in 
   :menuselection:`Storage --> Replication Tasks -> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
