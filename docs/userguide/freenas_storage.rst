@@ -796,21 +796,19 @@ click the "Advanced Mode" button or configure the system to always display these
 |                          |                     | avoids producing log traffic when reading files and can result in significant performance gains           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of 0 is off; can specify M (megabyte), G (gigabyte), or T      |
-|                          |                     | (terabyte) as in *20G* for 20 GB, can also include a decimal point (e.g.                                  |
-|                          |                     | *2.8G*)                                                                                                   |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of 0 is off; e.g. *20GiB* for 20 GB                            |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* is off; can specify M (megabyte), G (gigabyte), or T    |
-| and all children         |                     | (terabyte) as in *20G* for 20 GB                                                                          |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* is off; e.g. *20GiB* for 20 GB                          |
+| and all children         |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited (besides hardware); can specify M          |
-| dataset                  |                     | (megabyte), G (gigabyte), or T (terabyte) as in *20G* for 20 GB                                           |
+| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB |
+| dataset                  |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in Advanced Mode; default of *0* is unlimited (besides hardware); can specify M            |
-| dataset and all children |                     | megabyte), G (gigabyte), or T (terabyte) as in *20G* for 20 GB                                            |
+| Reserved space for this  | integer             | only available in Advanced Mode; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB   |
+| dataset and all children |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | ZFS Deduplication        | drop-down menu      | read the section on :ref:`Deduplication` before making a change to this setting                           |
@@ -903,7 +901,7 @@ Mode" button or configure the system to always display these settings by checkin
 | zvol Name          | string         | input a name for the zvol                                                                                            |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Size for this zvol | integer        | specify size and value such as *10G*                                                                                 |
+| Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Compression level  | drop-down menu | default of *Inherit* means it will use the same compression level as the existing zpool used to create the zvol      |
