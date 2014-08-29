@@ -203,12 +203,14 @@ disk_is_mounted()
 new_install_verify()
 {
     local _type="$1"
-    local _disk="$2"
+    shift
+
+    local _disks="$*"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
 WARNING:
-- This will erase ALL partitions and data on ${_disk}.
-- You can't use ${_disk} for sharing data.
+- This will erase ALL partitions and data on ${_disks}.
+- You can't use ${_disks} for sharing data.
 
 NOTE:
 - Installing on flash media is preferred to installing on a
@@ -238,14 +240,16 @@ EOD
 }
 
 install_grub() {
-	local _disk
+	local _disk _disks
 	local _mnt
 
 	if [ $# -ne 2 ]; then
 		return 1
 	fi
 	_mnt="$1"
-	_disk="$2"
+	shift
+
+	_disks="$*"
 
 	# Install grub
 	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
@@ -255,7 +259,9 @@ install_grub() {
 	# create two boot menu items.  So let's move it out of place
 	mkdir -p /tmp/bakup
 	mv ${_mnt}/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
-	chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
+	for _disk in ${_disks}; do
+	    chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
+	done
 	chroot ${_mnt} /usr/local/sbin/beadm activate default
 	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 	# And now move the backup files back in place
@@ -265,15 +271,13 @@ install_grub() {
 }
 
 mount_disk() {
-	local _disk
 	local _mnt
 
 	if [ $# -ne 2 ]; then
 		return 1
 	fi
 
-	_disk="$1"
-	_mnt="$2"
+	_mnt="$1"
 	mkdir -p "${_mnt}"
 	mount -t zfs -o noatime freenas-boot/ROOT/default ${_mnt}
 	mkdir -p ${_mnt}/boot/grub
@@ -283,33 +287,39 @@ mount_disk() {
 }
 	
 partition_disk() {
-	local _disk
+	local _disks _disksparts
 
-	if [ $# -ne 1 ]; then
-	    false
+	_disks=$*
+
+	for _disk in ${_disks}; do
+	    gpart destroy -F ${_disk} || true
+	    # Get rid of any MBR.  Shouldn't be necessary,
+	    # but caching seems to have caused problems.
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1
+
+	    # Now create a GPT partition.
+	    gpart create -s gpt ${_disk}
+	    # For grub
+	    gpart add -t bios-boot -i 1 -s 512k ${_disk}
+
+	    # If we're truenas, add swap
+	    if is_truenas; then
+	        # Is this correct?
+	        gpart add -t swap -i 3 -s 16g ${_disk}
+	    fi
+	    # The rest of the disk
+	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk}
+
+	    _disksparts="${_diskparts} ${_disk}p2"
+	done
+
+	
+
+	if [ $(echo ${_disks} | grep -c " ") -gt 1]; then
+	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot mirror ${_disksparts}
 	else
-	    _disk=$1
+	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disksparts}
 	fi
-
-	gpart destroy -F ${_disk} || true
-	# Get rid of any MBR.  Shouldn't be necessary,
-	# but caching seems to have caused problems.
-	dd if=/dev/zero of=/dev/${_disk} bs=1m count=1
-
-	# Now create a GPT partition.
-	gpart create -s gpt ${_disk}
-	# For grub
-	gpart add -t bios-boot -i 1 -s 512k ${_disk}
-
-	# If we're truenas, add swap
-	if is_truenas; then
-	    # Is this correct?
-	    gpart add -t swap -i 3 -s 16g ${_disk}
-	fi
-	# The rest of the disk
-	gpart add -t freebsd-zfs -i 2 -a 4k ${_disk}
-
-	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disk}p2
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
 	zfs create -o mountpoint=legacy freenas-boot/grub
@@ -476,7 +486,8 @@ menu_install()
     local _answer
     local _cdlist
     local _items
-    local _disk=""
+    local _disk
+    local _disks=""
     local _disk_old
     local _config_file
     local _desc
@@ -500,8 +511,8 @@ menu_install()
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
 
-    if [ $# -eq 1 ]; then
-	_disk="$1"
+    if [ $# -gt 1 ]; then
+	_disks="$*"
 	interactive=false
     else
 	interactive=true
@@ -520,7 +531,7 @@ menu_install()
 	    for _disk in ${_disklist}; do
 		get_media_description "${_disk}"
 		_desc="${VAL}"
-		_list="${_list} ${_disk} '${_desc}'"
+		_list="${_list} ${_disk} '${_desc}' off"
 		_items=$((${_items} + 1))
 	    done
 	    
@@ -537,16 +548,22 @@ menu_install()
 		eval "dialog --title 'Choose destination media' --msgbox 'No drives available' 5 60" 2>${_tmpfile}
 		return 0
 	    fi
+
 	    eval "dialog --title 'Choose destination media' \
-	      --menu 'Select the drive where $AVATAR_PROJECT should be installed.' \
+	      --checklist 'Select the drive where $AVATAR_PROJECT should be installed.' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
 	    [ $? -eq 0 ] || exit 1
 	fi
     fi # ! do_sata_dom
 
     if [ -f "${_tmpfile}" ]; then
-	_disk=`cat "${_tmpfile}"`
+	_disks=`cat "${_tmpfile}"`
 	rm -f "${_tmpfile}"
+    fi
+
+    if [ -z "${_disks}" ]; then
+	${interactive} && dialog --msgbox "You need to select at least one disk!" 6 74
+	exit 1
     fi
 
     # Debugging seatbelts
@@ -557,6 +574,7 @@ menu_install()
 
     _do_upgrade=0
     _action="installation"
+    for _disk in ${_disks}; do
     if disk_is_freenas ${_disk} ; then
         if ${interactive}; then
 	    if ask_upgrade ${_disk} ; then
@@ -576,6 +594,7 @@ menu_install()
 	    echo "Unknown upgrade style" 1>&2
 	    exit 1
 	fi
+	break
     elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
 	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
@@ -583,10 +602,12 @@ menu_install()
 	    if ask_upgrade ${_disk_old} ; then
 		_do_upgrade=2
 		_action="upgrade"
+		break
 	    fi
 	fi
     fi
-    ${interactive} && new_install_verify "$_action" ${_disk}
+    done
+    ${interactive} && new_install_verify "$_action" ${_disks}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     if [ ${_do_upgrade} -eq 0 ]; then
@@ -597,9 +618,9 @@ menu_install()
     fi
     # Start critical section.
     if ${interactive}; then
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on $_disk has failed. Press any key to continue.. \" junk" EXIT
+	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
     else
-	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disk} has failed.\" ; sleep 15" EXIT
+	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed.\" ; sleep 15" EXIT
     fi
     set -e
 #    set -x
@@ -609,7 +630,7 @@ menu_install()
     # build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
     # For one of the install_worker ISO scripts
-    export INSTALL_MEDIA=${_disk}
+    export INSTALL_MEDIA=${_disks}
     if [ ${_do_upgrade} -eq 1 ]
     then
         /etc/rc.d/dmesg start
@@ -649,7 +670,9 @@ menu_install()
 
 	# Destroy existing partition table, if there is any but tolerate
 	# failure.
-	gpart destroy -F ${_disk} || true
+	for _disk in ${_disks}; do
+	    gpart destroy -F ${_disk} || true
+	done
     fi
 
     # Run pc-sysinstall against the config generated
@@ -662,8 +685,8 @@ menu_install()
     # We repartition even if it's an upgrade.
     # This destroys all of the pool data, and
     # ensures a clean filesystems.
-    partition_disk ${_disk}
-    mount_disk ${_disk} /tmp/data
+    partition_disk ${_disks}
+    mount_disk /tmp/data
     
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
@@ -724,7 +747,7 @@ menu_install()
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-    install_grub /tmp/data ${_disk}
+    install_grub /tmp/data ${_disks}
     
 #    set +x
     if [ -d /tmp/data_preserved ]; then
@@ -762,7 +785,7 @@ $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 
 
     trap - EXIT
 
-    _msg="The $AVATAR_PROJECT $_action on ${_disk} succeeded!\n"
+    _msg="The $AVATAR_PROJECT $_action on ${_disks} succeeded!\n"
     _dlv=`/sbin/sysctl -n vfs.nfs.diskless_valid 2> /dev/null`
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
