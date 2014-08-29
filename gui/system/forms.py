@@ -1918,6 +1918,10 @@ class CertificateAuthorityForm(ModelForm):
         fields = '__all__'
         model = models.CertificateAuthority
 
+    def save(self):
+        super(CertificateAuthorityForm, self).save()
+        notifier().start("ix-ssl")
+
 
 class CertificateAuthorityEditForm(ModelForm):
     cert_name = forms.CharField(
@@ -1936,6 +1940,10 @@ class CertificateAuthorityEditForm(ModelForm):
         required=True,
         help_text=_("Serial for next Certificate")
     )
+
+    def save(self):
+        super(CertificateAuthorityEditForm, self).save()
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -1978,6 +1986,8 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
         super(CertificateAuthorityImportForm, self).save()
+
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2064,6 +2074,8 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
         super(CertificateAuthorityCreateInternalForm, self).save()
+
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2180,6 +2192,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
         super(CertificateAuthorityCreateIntermediateForm, self).save()
 
+        notifier().start("ix-ssl")
+
     class Meta:
         fields = [
             'cert_signedby',
@@ -2202,6 +2216,10 @@ class CertificateForm(ModelForm):
         fields = '__all__'
         model = models.Certificate
 
+    def save(self):
+        super(CertificateForm, self).save()
+        notifier().start("ix-ssl") 
+
 
 class CertificateEditForm(ModelForm):
     cert_name = forms.CharField(
@@ -2222,6 +2240,10 @@ class CertificateEditForm(ModelForm):
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
+
+    def save(self):
+        super(CertificateEditForm, self).save()
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2259,6 +2281,7 @@ class CertificateCSREditForm(ModelForm):
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2301,6 +2324,8 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
         super(CertificateImportForm, self).save()
+
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2410,6 +2435,8 @@ class CertificateCreateInternalForm(ModelForm):
 
         super(CertificateCreateInternalForm, self).save()
 
+        notifier().start("ix-ssl") 
+
     class Meta:
         fields = [
             'cert_signedby',
@@ -2494,6 +2521,8 @@ class CertificateCreateCSRForm(ModelForm):
             crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
 
         super(CertificateCreateCSRForm, self).save()
+
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
