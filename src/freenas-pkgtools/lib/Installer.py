@@ -741,7 +741,7 @@ class Installer(object):
     def InstallPackages(self, progressFunc=None, handler=None):
         for i, pkg in enumerate(self._packages):
             for pkgname in pkg:
-                if verbose or debug:  log.debug("Installing package %s" % pkg)
+                log.debug("Installing package %s" % pkg)
                 if handler is not None:
                     handler(index=i + 1, name=pkgname, packages=self._packages)
                 if install_file(pkg[pkgname], self._root) is False:
