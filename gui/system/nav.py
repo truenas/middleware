@@ -82,7 +82,7 @@ class CertificateAuthorityView(TreeNode):
     gname = 'CertificateAuthority'
     name = _('CAs')
     type = 'opensystem'
-    icon = u'SettingsIcon'
+    icon = u'CertificateAuthorityIcon'
 
 
 class CertificateView(TreeNode):
@@ -90,4 +90,4 @@ class CertificateView(TreeNode):
     gname = 'Certificate'
     name = _('Certificates')
     type = 'opensystem'
-    icon = u'SettingsIcon'
+    icon = u'CertificateIcon'

@@ -1096,6 +1096,16 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.CertificateAuthorityIcon {
+    background-image:url('/static/images/ui/tree/certificate_authority.png');
+    width:16px;
+    height:16px;
+}
+.CertificateIcon {
+    background-image:url('/static/images/ui/tree/certificate.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }
