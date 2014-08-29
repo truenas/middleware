@@ -291,7 +291,7 @@ partition_disk() {
 
 	_disks=$*
 
-	for _disk in ${_disks}; do
+	_disksparts=$(for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} || true
 	    # Get rid of any MBR.  Shouldn't be necessary,
 	    # but caching seems to have caused problems.
@@ -310,12 +310,12 @@ partition_disk() {
 	    # The rest of the disk
 	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk}
 
-	    _disksparts="${_diskparts} ${_disk}p2"
-	done
+	    echo ${_disk}p2
+	done)
 
 	
 
-	if [ $(echo ${_disks} | grep -c " ") -gt 1]; then
+	if [ $# -gt 1 ]; then
 	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot mirror ${_disksparts}
 	else
 	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disksparts}
@@ -557,7 +557,7 @@ menu_install()
     fi # ! do_sata_dom
 
     if [ -f "${_tmpfile}" ]; then
-	_disks=`cat "${_tmpfile}"`
+	_disks=$(eval "echo `cat "${_tmpfile}"`")
 	rm -f "${_tmpfile}"
     fi
 
