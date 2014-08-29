@@ -243,9 +243,6 @@ install_grub() {
 	local _disk _disks
 	local _mnt
 
-	if [ $# -ne 2 ]; then
-		return 1
-	fi
 	_mnt="$1"
 	shift
 
