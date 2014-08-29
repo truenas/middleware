@@ -32,6 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.system.models import Certificate
 
 log = logging.getLogger("directoryservice.models")
 
@@ -763,10 +764,10 @@ class ActiveDirectory(DirectoryServiceBase):
         choices=choices.LDAP_SSL_CHOICES,
         default='off'
     )
-    ad_certfile = models.TextField(
+    ad_certfile = models.ForeignKey(
+        Certificate, 
         verbose_name=_("SSL Certificate"),
         blank=True,
-        help_text=_("Upload your certificate file here.")
     )
     ad_verbose_logging = models.BooleanField(
         verbose_name=_("Verbose logging"),
@@ -1027,10 +1028,10 @@ class LDAP(DirectoryServiceBase):
         choices=choices.LDAP_SSL_CHOICES,
         default='off'
     )
-    ldap_certfile = models.TextField(
+    ldap_certfile = models.ForeignKey(
+        Certificate, 
         verbose_name=_("SSL Certificate"),
-        help_text=_("Upload your certificate file here."),
-        blank=True
+        blank=True,
     )
     ldap_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),

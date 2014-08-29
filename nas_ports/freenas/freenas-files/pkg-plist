@@ -42,6 +42,7 @@ usr/local/libexec/nas/generate_ctl_conf.py
 usr/local/libexec/nas/generate_krb5_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
+usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
 usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/samba-backtrace
