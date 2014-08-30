@@ -43,7 +43,6 @@ class FTPFAdmin(BaseFreeAdmin):
         'ftp_tls_opt_no_empty_fragments',
         'ftp_tls_opt_no_session_reuse_required',
         'ftp_tls_opt_stdenvvars',
-        'ftp_tls_opt_use_implicit_ssl',
         'ftp_tls_opt_dns_name_required',
         'ftp_tls_opt_ip_address_required',
         'ftp_ssltls_certfile',
