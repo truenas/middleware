@@ -97,7 +97,7 @@ class Manifest(object):
         if self._notes is not None: retval[NOTES_KEY] = self._notes
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
-        retval[SCHEME_KEY] = self._scheme
+#        retval[SCHEME_KEY] = self._scheme
         return retval
 
     def String(self):
