@@ -219,7 +219,7 @@ EOF
 # it here. The certificates are written to the filesystem using
 # the certificate name, so we also have to add the .crt and .key
 # extension, when that would be available from the Model via a function.
-tls_cert_dir="/etc/certificates"
+tls_cert_dir="${SSLDIR}"
 tls_options="\
 $(ifnz ${ftp_tls_opt_allow_client_renegotiations} "AllowClientRenegotiations") \
 $(ifnz ${ftp_tls_opt_allow_dot_login} "AllowDotLogin") \

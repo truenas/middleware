@@ -13,6 +13,46 @@
 NGINX_PLUGINS_CONF="${HTTPDDIR}/plugins.conf"
 NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
+get_ssl_certificate_name()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		sc.cert_name
+	FROM
+		system_settings
+	LEFT OUTER JOIN
+		system_certificate as sc
+	ON
+		(stg_guicertificate_id = sc.id)
+	ORDER BY
+		-system_settings.id
+	LIMIT
+		1
+	"
+}
+
+get_ssl_certificate()
+{
+	local certname
+
+	certname="$(get_ssl_certificate_name)"
+	if [ -n "${certname}" ]
+	then
+		echo "${SSLDIR}/${certname}.crt"
+	fi
+}
+
+get_ssl_privatekey()
+{
+	local certname
+
+	certname="$(get_ssl_certificate_name)"
+	if [ -n "${certname}" ]
+	then
+		echo "${SSLDIR}/${certname}.key"
+	fi
+}
+
 generate_plugins_conf()
 {
 	local IFS="|"
@@ -112,7 +152,7 @@ generate_nginx_conf()
 	local working_ssl=false
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print settings.DOJANGO_DOJO_VERSION')
 
-	[ -f /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
+	[ -s /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
 
 	{
 	cat << __EOF__
@@ -150,11 +190,13 @@ http {
 __EOF__
 
 	if [ "${proto}" = "https" -o "${proto}" = "httphttps" ]; then
+                local httpdcert="$(get_ssl_certificate)"
+                local httpdkey="$(get_ssl_privatekey)"
 
 		local validcert=0
-		${OPENSSL} x509 -in "${HTTPDCERT}" -noout -text -dates -purpose > /dev/null 2>&1
+		${OPENSSL} x509 -in "${httpdcert}" -noout -text -dates -purpose > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
-		${OPENSSL} rsa -in "${HTTPDKEY}" -check -noout > /dev/null 2>&1
+		${OPENSSL} rsa -in "${httpdkey}" -check -noout > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
 
 		if [ ${validcert} -eq 0 ]; then
@@ -164,8 +206,8 @@ __EOF__
 	listen			${addr}:${httpsport} default_server ssl spdy;
 	listen			[${addr6}]:${httpsport} default_server ssl spdy;
 
-	ssl_certificate		${HTTPDCERT};
-	ssl_certificate_key	${HTTPDKEY};
+	ssl_certificate		${httpdcert};
+	ssl_certificate_key	${httpdkey};
 	ssl_dhparam /data/dhparam.pem;
 
 	ssl_session_timeout	120m;
@@ -408,15 +450,6 @@ ix_nginx_start()
 	local port=$(echo "${settings}"|cut -f4 -d"|")
 	local httpsport=$(echo "${settings}"|cut -f5 -d"|")
 	local httpsredirect=$(echo "${settings}"|cut -f6 -d"|")
-
-	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
-	then
-		port="80"
-		proto="http"
-
-		set_stg_guiprotocol "${proto}"
-		set_stg_guiport "${port}"
-	fi
 
 	generate_plugins_conf
 	generate_fastcgi_params

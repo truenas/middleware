@@ -67,6 +67,13 @@ class Settings(Model):
             default="http",
             verbose_name=_("Protocol")
             )
+    stg_guicertificate = models.ForeignKey(
+            "Certificate",
+            verbose_name=_("Certificate"),
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
+            )
     stg_guiaddress = models.CharField(
             max_length=120,
             blank=True,

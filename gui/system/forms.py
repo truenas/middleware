@@ -731,6 +731,19 @@ class SettingsForm(ModelForm):
             ['::', '::']
         ] + list(choices.IPChoices(ipv4=False))
 
+    def clean(self):
+        cdata = self.cleaned_data
+        proto = cdata.get("stg_guiprotocol")
+        if proto == "http": 
+            return cdata
+
+        certificate = cdata["stg_guicertificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "HTTPS specified without certificate")
+
+        return cdata
+
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
