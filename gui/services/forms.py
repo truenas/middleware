@@ -399,6 +399,19 @@ class FTPForm(ModelForm):
             )
         return path
 
+    def clean(self):
+        cdata = self.cleaned_data
+        ftp_tls = cdata.get("ftp_tls")
+        if not ftp_tls: 
+            return cdata
+
+        certificate = cdata["ftp_ssltls_certificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "TLS specified without certificate")
+
+        return cdata
+
     def save(self):
         super(FTPForm, self).save()
         started = notifier().reload("ftp")

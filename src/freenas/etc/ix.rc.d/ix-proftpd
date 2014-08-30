@@ -15,8 +15,6 @@ proftpd_flags=${proftpd_flags:-""}
 proftpd_config=${proftpd_config:-"/usr/local/etc/proftpd.conf"}
 proftpd_delaytable=${proftpd_delaytable:-"/var/run/proftpd/proftpd.delay"}
 proftpd_displaylogin=${proftpd_displaylogin:-"/var/run/proftpd/proftpd.motd"}
-proftpd_tlsrsacertfile=${FTPDCERT}
-proftpd_tlsrsakeyfile=${FTPDKEY}
 proftpd_tcpaccessfilesallow=${proftpd_tcpaccessfilesallow:-"/etc/hosts.allow"}
 proftpd_tcpaccessfilesdeny=${proftpd_tcpaccessfilesdeny:-"/etc/hosts.allow"}
 proftpd_umaskfile=${proftpd_umaskfile:-"077"}
@@ -94,12 +92,25 @@ generate_proftp()
 #XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
     local ftp_chrooteveryone=0 ftp_mod_ban=0 ftp_banner
 #XXX unused: ftp_chrooteveryone
-    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_tls ftp_tls_policy ftp_tls_opt_allow_client_renegotiations ftp_tls_opt_allow_dot_login ftp_tls_opt_allow_per_user ftp_tls_opt_common_name_required ftp_tls_opt_enable_diags ftp_tls_opt_export_cert_data ftp_tls_opt_no_cert_request ftp_tls_opt_no_empty_fragments ftp_tls_opt_no_session_reuse_required ftp_tls_opt_stdenvvars ftp_tls_opt_use_implicit_ssl ftp_tls_opt_dns_name_required ftp_tls_opt_ip_address_required ftp_anonpath"
+    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_tls ftp_tls_policy ftp_tls_opt_allow_client_renegotiations ftp_tls_opt_allow_dot_login ftp_tls_opt_allow_per_user ftp_tls_opt_common_name_required ftp_tls_opt_enable_diags ftp_tls_opt_export_cert_data ftp_tls_opt_no_cert_request ftp_tls_opt_no_empty_fragments ftp_tls_opt_no_session_reuse_required ftp_tls_opt_stdenvvars ftp_tls_opt_dns_name_required ftp_tls_opt_ip_address_required ftp_anonpath"
     eval local $f
     local sf=$(var_to_sf $f)
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM services_ftp ORDER BY -services_ftp.id LIMIT 1" | \
-    while eval read $f; do
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+        SELECT
+            $sf,
+            sc.cert_name
+        FROM
+            services_ftp
+        LEFT OUTER JOIN
+            system_certificate as sc
+        ON  
+            ftp_ssltls_certificate_id = sc.id
+        ORDER BY
+            -services_ftp.id
+        LIMIT
+            1
+    " | \
+    while eval read $f certname; do
 	# Check if required directories exists.
 	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
 	[ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
@@ -202,6 +213,13 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
 EOF
 
 	if [ ${ftp_tls} -gt 0 ]; then
+# This is hacky, this should be converted to use the ORM.
+# system.Certificate contains the raw certificates. The path
+# is also only available via the model, so we have to hard code
+# it here. The certificates are written to the filesystem using
+# the certificate name, so we also have to add the .crt and .key
+# extension, when that would be available from the Model via a function.
+tls_cert_dir="${SSLDIR}"
 tls_options="\
 $(ifnz ${ftp_tls_opt_allow_client_renegotiations} "AllowClientRenegotiations") \
 $(ifnz ${ftp_tls_opt_allow_dot_login} "AllowDotLogin") \
@@ -213,7 +231,6 @@ $(ifnz ${ftp_tls_opt_no_cert_request} "NoCertRequest") \
 $(ifnz ${ftp_tls_opt_no_empty_fragments} "NoEmptyFragments") \
 $(ifnz ${ftp_tls_opt_no_session_reuse_required} "NoSessionReuseRequired") \
 $(ifnz ${ftp_tls_opt_stdenvvars} "StdEnvVars") \
-$(ifnz ${ftp_tls_opt_use_implicit_ssl} "UseImplicitSSL") \
 $(ifnz ${ftp_tls_opt_dns_name_required} "dNSNameRequired") \
 $(ifnz ${ftp_tls_opt_ip_address_required} "iPAddressRequired")"
 if [ ! -z "$(echo ${tls_options}|sed -E 's|( +)||g')" ]; then
@@ -228,8 +245,8 @@ LoadModule mod_tls.c
   TLSEngine on
   TLSProtocol ${proftpd_tlsprotocol}
   ${tls_options}
-  TLSRSACertificateFile ${proftpd_tlsrsacertfile}
-  TLSRSACertificateKeyFile ${proftpd_tlsrsakeyfile}
+  TLSRSACertificateFile ${tls_cert_dir}/${certname}.crt
+  TLSRSACertificateKeyFile ${tls_cert_dir}/${certname}.key
   TLSVerifyClient ${proftpd_tlsverifyclient}
   TLSRequired ${ftp_tls_policy}
 </IfModule>

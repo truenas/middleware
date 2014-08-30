@@ -25,6 +25,12 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FLAGS_DBINIT
 )
+from freenasUI.common.ssl import (
+    get_certificate_path,
+    get_privatekey_path,
+    get_certificateauthority_path,
+    get_certificateauthority_privatekey_path
+)
 from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
@@ -529,10 +535,15 @@ def add_ldap(sc):
     ldap_section.ldap_default_authtok = ldap.ldap_bindpw
 
     if ldap.ldap_ssl == 'on':
-        ldap_section.ldap_tls_cacert = ldap.ldap_certfile
+        certpath = get_certificateauthority_path(ldap.ldap_certificate)
+        if certpath:
+            ldap_section.ldap_tls_cacert = certpath
+
     elif ldap.ldap_ssl == 'start_tls':
         ldap_section.tls_reqcert = 'demand'
-        ldap_section.ldap_tls_cacert = ldap.ldap_certfile
+        certpath = get_certificateauthority_path(ldap.ldap_certificate)
+        if certpath:
+            ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
 
     sc[ldap_domain] = ldap_section

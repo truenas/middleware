@@ -50,7 +50,7 @@ class ActiveDirectoryResourceTest(APITestCase):
             u'ad_use_default_domain': False,
             u'ad_use_keytab': False,
             u'ad_verbose_logging': False,
-            u'ad_certfile': u'',
+            u'ad_certificate': u'',
             u'ad_enable': False,
             u'ad_ssl': u'off',
         })

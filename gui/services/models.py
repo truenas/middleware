@@ -47,6 +47,7 @@ from freenasUI.freeadmin.models import (
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk
+from freenasUI.system.models import Certificate
 
 log = logging.getLogger("services.forms")
 
@@ -1226,10 +1227,6 @@ class FTP(Model):
             verbose_name=_("TLS export standard vars"),
             default=False
             )
-    ftp_tls_opt_use_implicit_ssl = models.BooleanField(
-            verbose_name=_("TLS use implicit SSL"),
-            default=False
-            )
     ftp_tls_opt_dns_name_required = models.BooleanField(
             verbose_name=_("TLS DNS name required"),
             default=False
@@ -1238,11 +1235,12 @@ class FTP(Model):
             verbose_name=_("TLS IP address required"),
             default=False
             )
-    ftp_ssltls_certfile = models.TextField(
-            verbose_name=_("Certificate and private key"),
+    ftp_ssltls_certificate = models.ForeignKey(
+            Certificate,
+            verbose_name=_("Certificate"),
+            on_delete=models.SET_NULL,
             blank=True,
-            help_text=_("Place the contents of your certificate and private "
-                "key here.")
+            null=True
             )
     ftp_options = models.TextField(
             max_length=120,

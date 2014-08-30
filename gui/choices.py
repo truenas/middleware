@@ -773,6 +773,11 @@ SHARE_TYPE_CHOICES = (
     ('mac', 'Mac')
 )
 
+CASE_SENSITIVITY_CHOICES = (
+   ('sensitive', 'sensitive'),
+   ('insensitive', 'insensitive'),
+   ('mixed', 'mixed')
+)
 
 class SERIAL_CHOICES(object):
 

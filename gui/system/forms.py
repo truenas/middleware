@@ -731,6 +731,19 @@ class SettingsForm(ModelForm):
             ['::', '::']
         ] + list(choices.IPChoices(ipv4=False))
 
+    def clean(self):
+        cdata = self.cleaned_data
+        proto = cdata.get("stg_guiprotocol")
+        if proto == "http": 
+            return cdata
+
+        certificate = cdata["stg_guicertificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "HTTPS specified without certificate")
+
+        return cdata
+
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
@@ -964,151 +977,6 @@ class EmailForm(ModelForm):
             email.em_pass = self.cleaned_data['em_pass2']
             email.save()
         return email
-
-
-class SSLForm(ModelForm):
-    ssl_passphrase2 = forms.CharField(
-        max_length=120,
-        label=_("Confirm Passphrase"),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
-
-    class Meta:
-        fields = '__all__'
-        model = models.SSL
-        widgets = {
-            'ssl_passphrase': forms.widgets.PasswordInput(render_value=False),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(SSLForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder = [
-            'ssl_org',
-            'ssl_unit',
-            'ssl_email',
-            'ssl_city',
-            'ssl_state',
-            'ssl_country',
-            'ssl_common',
-            'ssl_passphrase',
-            'ssl_passphrase2',
-            'ssl_certfile',
-        ]
-        if self.instance.ssl_passphrase:
-            self.fields['ssl_passphrase'].required = False
-
-    def clean_ssl_passphrase2(self):
-        passphrase1 = self.cleaned_data.get("ssl_passphrase")
-        passphrase2 = self.cleaned_data.get("ssl_passphrase2")
-        if passphrase1 != passphrase2:
-            raise forms.ValidationError(
-                _("The two passphrase fields didn't match.")
-            )
-        return passphrase2
-
-    def get_x509_modulus(self, x509_file_path):
-        if not x509_file_path:
-            return None
-
-        proc = subprocess.Popen([
-            "/usr/bin/openssl",
-            "x509",
-            "-noout",
-            "-modulus",
-            "-in", x509_file_path,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        modulus, err = proc.communicate()
-        if proc.returncode != 0:
-            return None
-
-        return modulus.strip()
-
-    def get_key_modulus(self, key_file_path, type='rsa'):
-        if not key_file_path:
-            return None
-
-        proc = subprocess.Popen([
-            "/usr/bin/openssl",
-            type,
-            "-noout",
-            "-modulus",
-            "-in", key_file_path,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        modulus, err = proc.communicate()
-        if proc.returncode != 0:
-            return None
-
-        return modulus.strip()
-
-    def clean_ssl_certfile(self):
-        certfile = self.cleaned_data.get("ssl_certfile")
-        if not certfile:
-            return None
-        reg = re.search(
-            r'(-----BEGIN ([DR]SA) PRIVATE KEY-----.*?'
-            r'-----END \2 PRIVATE KEY-----)',
-            certfile,
-            re.M | re.S
-        )
-        if not reg:
-            raise forms.ValidationError(
-                _("RSA or DSA private key not found")
-            )
-        priv = reg.group()
-
-        priv_file = tempfile.mktemp(dir='/tmp/')
-        with open(priv_file, 'w') as f:
-            f.write(priv)
-
-        keytype = None
-        reg = re.search(r'-----BEGIN ([DR]SA) PRIVATE KEY-----', priv)
-        if reg:
-            keytype = reg.group(1).lower()
-
-        modulus1 = self.get_key_modulus(priv_file, keytype)
-        os.unlink(priv_file)
-        if not modulus1:
-            raise forms.ValidationError(
-                _("RSA or DSA private key is not valid"))
-
-        reg = re.findall(
-            r'(-----BEGIN CERTIFICATE-----.*?'
-            r'-----END CERTIFICATE-----)',
-            certfile,
-            re.M | re.S
-        )
-
-        verified = False
-        for cert in reg:
-            x509_file = tempfile.mktemp(dir='/tmp')
-            with open(x509_file, 'w') as f:
-                f.write(cert)
-
-            modulus2 = self.get_x509_modulus(x509_file)
-            os.unlink(x509_file)
-            if modulus1 == modulus2:
-                verified = True
-                break
-
-        if not verified:
-            raise forms.ValidationError(
-                _("The modulus of certificate and key must match")
-            )
-
-        return certfile
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ssl_passphrase2"):
-            cdata['ssl_passphrase'] = cdata['ssl_passphrase2']
-        return cdata
-
-    def save(self):
-        super(SSLForm, self).save()
-        notifier().start_ssl("nginx")
 
 
 class FirmwareTemporaryLocationForm(Form):
@@ -1918,6 +1786,10 @@ class CertificateAuthorityForm(ModelForm):
         fields = '__all__'
         model = models.CertificateAuthority
 
+    def save(self):
+        super(CertificateAuthorityForm, self).save()
+        notifier().start("ix-ssl")
+
 
 class CertificateAuthorityEditForm(ModelForm):
     cert_name = forms.CharField(
@@ -1936,6 +1808,10 @@ class CertificateAuthorityEditForm(ModelForm):
         required=True,
         help_text=_("Serial for next Certificate")
     )
+
+    def save(self):
+        super(CertificateAuthorityEditForm, self).save()
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -1978,6 +1854,8 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
         super(CertificateAuthorityImportForm, self).save()
+
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2064,6 +1942,8 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
         super(CertificateAuthorityCreateInternalForm, self).save()
+
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2180,6 +2060,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
         super(CertificateAuthorityCreateIntermediateForm, self).save()
 
+        notifier().start("ix-ssl")
+
     class Meta:
         fields = [
             'cert_signedby',
@@ -2202,6 +2084,10 @@ class CertificateForm(ModelForm):
         fields = '__all__'
         model = models.Certificate
 
+    def save(self):
+        super(CertificateForm, self).save()
+        notifier().start("ix-ssl") 
+
 
 class CertificateEditForm(ModelForm):
     cert_name = forms.CharField(
@@ -2222,6 +2108,10 @@ class CertificateEditForm(ModelForm):
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
+
+    def save(self):
+        super(CertificateEditForm, self).save()
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2259,6 +2149,7 @@ class CertificateCSREditForm(ModelForm):
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2301,6 +2192,8 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
         super(CertificateImportForm, self).save()
+
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2410,6 +2303,8 @@ class CertificateCreateInternalForm(ModelForm):
 
         super(CertificateCreateInternalForm, self).save()
 
+        notifier().start("ix-ssl") 
+
     class Meta:
         fields = [
             'cert_signedby',
@@ -2494,6 +2389,8 @@ class CertificateCreateCSRForm(ModelForm):
             crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
 
         super(CertificateCreateCSRForm, self).save()
+
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [

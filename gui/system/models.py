@@ -26,6 +26,7 @@
 #####################################################################
 import dateutil
 import logging
+import os
 import string
 
 from datetime import datetime
@@ -65,6 +66,13 @@ class Settings(Model):
             choices=choices.PROTOCOL_CHOICES,
             default="http",
             verbose_name=_("Protocol")
+            )
+    stg_guicertificate = models.ForeignKey(
+            "Certificate",
+            verbose_name=_("Certificate"),
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
             )
     stg_guiaddress = models.CharField(
             max_length=120,
@@ -331,78 +339,6 @@ class Email(Model):
         deletable = False
 
 
-class SSL(Model):
-    ssl_org = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Organization"),
-            help_text=_("Organization Name (eg, company)"),
-            )
-    ssl_unit = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Organizational Unit"),
-            help_text=_("Organizational Unit Name (eg, section)"),
-            )
-    ssl_email = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Email Address"),
-            help_text=_("Email Address"),
-            )
-    ssl_city = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Locality"),
-            help_text=_("Locality Name (eg, city)"),
-            )
-    ssl_state = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("State"),
-            help_text=_("State or Province Name (full name)"),
-            )
-    ssl_country = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Country"),
-            help_text=_("Country Name (2 letter code)"),
-            )
-    ssl_common = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Common Name"),
-            help_text=_("Common Name (eg, YOUR name)"),
-            )
-    ssl_passphrase = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Passphrase"),
-            help_text=_("Private key passphrase"),
-            )
-    ssl_certfile = models.TextField(
-            blank=True,
-            null=True,
-            verbose_name=_("SSL Certificate"),
-            help_text=_("Cut and paste the contents of your private and "
-                "public certificate files here."),
-            )
-
-    class Meta:
-        verbose_name = _("SSL")
-
-    class FreeAdmin:
-        deletable = False
-
-
 class Tunable(Model):
     tun_var = models.CharField(
             max_length=50,
@@ -585,11 +521,14 @@ CERT_TYPE_INTERNAL      = 0x00000010
 CERT_TYPE_CSR           = 0x00000020
 
 class CertificateBase(Model):
+    cert_root_path = "/etc/certificates"
+
     cert_type = models.IntegerField()
     cert_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
-            help_text=_("Descriptive Name)")
+            help_text=_("Descriptive Name)"),
+            unique=True
             )
     cert_certificate = models.TextField(
             blank=True,
@@ -711,13 +650,28 @@ class CertificateBase(Model):
             )
         return CSR
 
-    def write_certificate(self, path):
+    def get_certificate_path(self):
+        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
+
+    def get_privatekey_path(self):
+        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
+
+    def get_CSR_path(self):
+        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
+
+    def write_certificate(self, path=None):
+        if not path:
+            path = self.get_certificate_path()
         write_certificate(self.get_certificate(), path)
 
-    def write_privatekey(self, path):
+    def write_privatekey(self, path=None):
+        if not path:
+            path = self.get_privatekey_path()
         write_privatekey(self.get_privatekey(), path)
 
-    def write_CSR(self, path):
+    def write_CSR(self, path=None):
+        if not path:
+            path = self.get_CSR_path()
         write_certificate_signing_request(self.get_CSR(), path)
 
     def __load_certificate(self):
@@ -743,9 +697,13 @@ class CertificateBase(Model):
 
     def __init__(self, *args, **kwargs):
         super(CertificateBase, self).__init__(*args, **kwargs)
+
         self.__certificate = None
         self.__CSR = None
         self.__load_thingy() 
+
+        if not os.path.exists(self.cert_root_path):
+            os.mkdir(self.cert_root_path, 0755)
 
     def __unicode__(self):
         return self.cert_name
@@ -782,8 +740,11 @@ class CertificateBase(Model):
         count = 0
         certs = Certificate.objects.all()
         for cert in certs:
-            if self.cert_name == str(cert.cert_signedby):
-                count += 1
+            try:
+                if self.cert_name == cert.cert_signedby.cert_name:
+                    count += 1
+            except:
+                pass
         return count
 
     @property
@@ -881,6 +842,13 @@ class CertificateBase(Model):
 
 
 class CertificateAuthority(CertificateBase):
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateAuthority, self).__init__(*args, **kwargs)
+
+        self.cert_root_path = "%s/CA" % self.cert_root_path
+        if not os.path.exists(self.cert_root_path):
+            os.mkdir(self.cert_root_path, 0755)
 
     class Meta:
         verbose_name = _("Certificate Authority")
