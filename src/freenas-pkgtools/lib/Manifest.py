@@ -137,7 +137,7 @@ class Manifest(object):
             elif key == SCHEME_KEY:
                 self.SetScheme(tdict[key])
             else:
-                raise ManifestInvalidException
+                log.debug("Unknown key %s" % key)
         self.Validate()
         return
 
