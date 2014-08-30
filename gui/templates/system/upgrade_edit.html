@@ -1,0 +1,12 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{%load freeadmin %}
+
+{% block buttons_extra %}
+            <button id="btn_{% cls_name form %}_Check" data-dojo-type="dijit.form.Button">
+                <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+                    editObject('{% trans "Check for Updates"|escapejs %}', '{% url "system_upgrade" %}', [this, ]);
+                </script>
+            {% trans "Check for Updates" %}
+            </button>
+
+{% endblock %}

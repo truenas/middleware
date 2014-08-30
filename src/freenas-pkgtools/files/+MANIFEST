@@ -1,0 +1,9 @@
+name freenas-pkg-tools
+version VERSION
+origin freenas/pkg-tools
+comment FreeNAS Package tools
+arch freebsd:9:x86:64
+www http://www.freenas.org/
+maintainer dev@ixsystems.com
+prefix /
+desc FreeNAS package management tools.  Packages are PKGNG-like.

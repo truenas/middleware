@@ -1432,6 +1432,11 @@ class ZFSDataset(Form):
         choices=choices.SHARE_TYPE_CHOICES,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Share type'))
+    dataset_case_sensitivity = forms.ChoiceField(
+        choices=choices.CASE_SENSITIVITY_CHOICES,
+        initial=choices.CASE_SENSITIVITY_CHOICES[0][0], 
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Case Sensitivity')) 
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),

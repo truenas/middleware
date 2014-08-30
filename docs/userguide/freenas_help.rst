@@ -9,12 +9,16 @@ The "Help" button in the upper right corner provides a pop-up menu containing hy
 
 * the Community Forum
 
-* each mailing list
+* the mailing lists
 
 * the web interface to the IRC channel
 
+* the bug tracker
+
 * the online FreeBSD manual pages
 
-* a link to professional support
+* this documentation
 
-These resources are discussed in more detail in FreeNAS® Support Resources.
+* professional support
+
+These resources are discussed in more detail in :ref:`FreeNAS® Support Resources`.

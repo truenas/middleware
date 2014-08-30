@@ -397,6 +397,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.UpgradeIcon {
+    background-image:url('/static/images/ui/tree/upgrade.png');
+    width:16px;
+    height:16px;
+}
 .ViewAllInterfacesIcon {
     background-image:url('/static/images/ui/tree/view_all_interfaces.png');
     width:16px;
@@ -702,6 +707,25 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+
+.WebDAVShareIcon {
+    background-image:url('/static/images/ui/tree/webdav.png');
+    width:16px;
+    height:16px;
+}
+
+.AddWebDAVShareIcon {
+    background-image:url('/static/images/ui/tree/add_webdav_share.png');
+    width:16px;
+    height:16px;
+}
+
+.ViewAllWebDAVSharesIcon {
+    background-image:url('/static/images/ui/tree/view_all_webdav_shares.png');
+    width:16px;
+    height:16px;
+}
+
 .TargetExtentIcon {
     background-image:url('/static/images/ui/tree/target_extents.png');
     width:16px;
@@ -1069,6 +1093,16 @@ table.grid tr {
 }
 .WizardIcon {
     background-image:url('/static/images/ui/tree/wizard.png');
+    width:16px;
+    height:16px;
+}
+.CertificateAuthorityIcon {
+    background-image:url('/static/images/ui/tree/certificate_authority.png');
+    width:16px;
+    height:16px;
+}
+.CertificateIcon {
+    background-image:url('/static/images/ui/tree/certificate.png');
     width:16px;
     height:16px;
 }

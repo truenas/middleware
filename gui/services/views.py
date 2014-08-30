@@ -134,6 +134,11 @@ def core(request):
     except IndexError:
         ups = models.UPS.objects.create()
 
+    try:
+        webdav = models.WebDAV.objects.order_by("-id")[0]
+    except IndexError:
+	webdav = models.WebDAV.objects.create()
+
     srv = models.services.objects.all()
     return render(request, 'services/core.html', {
         'srv': srv,
@@ -149,7 +154,8 @@ def core(request):
         'tftp': tftp,
         'smart': smart,
         'ssh': ssh,
-        'domaincontroller': domaincontroller
+        'domaincontroller': domaincontroller,
+        'webdav': webdav
     })
 
 
@@ -180,7 +186,8 @@ def servicesToggleView(request, formname):
         'smartd_toggle': 'smartd',
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
-        'domaincontroller_toggle': 'domaincontroller'
+        'domaincontroller_toggle': 'domaincontroller',
+        'webdav_toggle': 'webdav'
     }
     changing_service = form2namemap[formname]
     if changing_service == "":

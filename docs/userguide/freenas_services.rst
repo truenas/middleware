@@ -36,6 +36,8 @@ following built-in services:
 
 * :ref:`UPS`
 
+* :ref:`WebDAV`
+
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
 .. _Control Services:
@@ -48,7 +50,11 @@ services, and to configure services. By default, all services (except for the S.
 
 **Figure 11.1a: Control Services**
 
-|Figure111a_png|
+|services.png|
+
+.. |services.png| image:: images/services.png
+    :width: 3.8in
+    :height: 4.5in
 
 A service is stopped if its icon is a red OFF. A service is running if its icon is a blue ON. To start or stop a service, click its ON/OFF icon.
 
@@ -65,31 +71,26 @@ If you would like to read the system logs to get more information about a servic
 AFP
 ---
 
-The Apple Filing Protocol (AFP) is a network protocol that offers file services for Mac computers. Before configuring this service, you should first create
-your AFP Shares in :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`. After configuring this service, go to
-:menuselection:`Services --> Control Services` to start the service. The AFP shares will not be available on the network if this service is not running.
+The settings that are configured when creating AFP Shares in :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share` are specific to each
+configured AFP Share. In contrast, global settings which apply to all AFP shares are configured in :menuselection:`Services --> AFP`.
 
-Starting this service will open the following ports on the FreeNAS® system:
+Figure 11.2a shows the available global AFP configuration options which are described in Table 11.2a.
 
-* TCP 548 (afpd)
+**Figure 11.2a: Global AFP Configuration**
 
-* TCP 4799 (cnid_metadata)
+|afp1.png|
 
-* UDP 5353 and a random UDP port (avahi)
+.. |afp1.png| image:: images/afp1.png
+    :width: 4.6in
+    :height: 3.3in
 
-Figure 11.2a shows the configuration options which are described in Table 11.2a.
-
-**Figure 11.2a: AFP Configuration**
-
-|Figure112a_png|
-
-**Table 11.2a: AFP Configuration Options**
+**Table 11.2a: Global AFP Configuration Options**
 
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                                 |
 |                         |                |                                                                                                                 |
 +=========================+================+=================================================================================================================+
-| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing the AFP share                         |
+| Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing AFP shares                            |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Guest Account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
@@ -105,8 +106,12 @@ Figure 11.2a shows the configuration options which are described in Table 11.2a.
 | Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Database Path           |string          | specify the path to store the CNID databases used by AFP (default is the root of the volume); the path must be  |
+| Database Path           |Browse button   | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
 |                         |                | writable                                                                                                        |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Global Auxiliary        | string         | additional `afp.conf(5) <http://netatalk.sourceforge.net/3.0/htmldocs/afp.conf.5.html>`_                        |
+| Parameters              |                | parameters not covered elsewhere in this screen                                                                 |
+|                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 
 When configuring home directories, it is recommended to create a dataset to hold the home directories which contains a child dataset for each user. As an
@@ -132,34 +137,25 @@ CNIIDs stored in the AppleDouble files.
 CIFS
 ----
 
-The Common Internet File System (CIFS) is a network protocol that offers file services for (typically) Windows computers. Unix-like systems that provide a
-`CIFS client <http://www.samba.org/samba/GUI/>`_
-can also connect to CIFS shares. Before configuring this service, you should first create your CIFS shares in
-:menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share`. After configuring this service, go to
-:menuselection:`Services --> Control Services` to start the service. The CIFS shares will not be available on the network if this service is not running.
+The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share` are specific to
+each configured CIFS Share. In contrast, global settings which apply to all CIFS shares are configured in :menuselection:`Services --> CIFS`.
 
 .. note:: after starting the CIFS service, it may take several minutes for the
    `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
    to occur and for the FreeNAS® system to become available in Windows Explorer.
 
-Starting this service will open the following ports on the FreeNAS® system:
+Figure 11.3a shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
+`smb4.conf <http://www.sloop.net/smb.conf.html>`_.
 
-* TCP 139 (smbd)
+**Figure 11.3a: Global CIFS Configuration**
 
-* TCP 445 (smbd)
+|cifs1.png|
 
-* UDP 137 (nmbd)
+.. |cifs1.png| image:: images/cifs1.png
+    :width: 4.9in
+    :height: 4.4in
 
-* UDP 138 (nmbd)
-
-Figure 11.3a shows the configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
-`smb.conf(5) <http://samba.org/samba/docs/man/manpages-3/smb.conf.5.html>`_.
-
-**Figure 11.3a: Configuring CIFS**
-
-|Figure113a_png|
-
-**Table 11.3a: CIFS Configuration Options**
+**Table 11.3a: Global CIFS Configuration Options**
 
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**                      | **Value**      | **Description**                                                                                       |
@@ -262,6 +258,12 @@ Figure 11.3a shows the configuration options which are described in Table 11.3a.
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Obey pam restrictions            | checkbox       |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Idmap Range Low                  | integer        |                                                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Idmap Range High                 | integer        |                                                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
@@ -383,7 +385,11 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 
 **Figure 11.4a: Domain Controller Settings**
 
-|Figure114a_png|
+|directory1.png|
+
+.. |directory1.png| image:: images/directory1.png
+    :width: 3.9in
+    :height: 3.7in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -439,7 +445,11 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 
 **Figure 11.5a: Configuring DDNS**
 
-|Figure115a_png|
+|ddns.png|
+
+.. |ddns.png| image:: images/ddns.png
+    :width: 4.2in
+    :height: 3.9in
 
 **Table 11.5a: DDNS Configuration Options**
 
@@ -497,7 +507,11 @@ either click the "Advanced Mode" button or configure the system to always displa
 
 **Figure 11.6a: Configuring FTP**
 
-|Figure116a_png|
+|ftp1.png|
+
+.. |ftp1.png| image:: images/ftp1.png
+    :width: 4.7in
+    :height: 4.4in
 
 Table 11.6a summarizes the available options when configuring the FTP server:
 
@@ -665,7 +679,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | used for TLS FTP connections                                                        |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Auxiliary parameters                                         | string         | only available in "Advanced Mode"; only available in Advanced Mode; include         |
+| Auxiliary parameters                                         | string         | only available in "Advanced Mode";                                  include         |
 |                                                              |                | `proftpd(8) <http://linux.die.net/man/8/proftpd>`_                                  |
 |                                                              |                | parameters not covered elsewhere in this screen                                     |
 |                                                              |                |                                                                                     |
@@ -691,20 +705,20 @@ To configure anonymous FTP:
 
 #.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in :menuselection:`Storage --> Volumes` as follows:
 
-* "Owner(user)": select the built-in *ftp* user from the drop-down menu
+    * "Owner(user)": select the built-in *ftp* user from the drop-down menu
 
-* "Owner(group)": select the built-in *ftp* group from the drop-down menu
+    * "Owner(group)": select the built-in *ftp* group from the drop-down menu
 
-* "Mode": review that the permissions are appropriate for the share
+    * "Mode": review that the permissions are appropriate for the share
 
-.. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
-   be accessing FreeNAS® via FTP.
+    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+       will be accessing FreeNAS® via FTP.
 
 #.  **Configure anonymous FTP** in :menuselection:`Services --> FTP` by setting the following attributes:
 
-* check the box "Allow Anonymous Login"
+    * check the box "Allow Anonymous Login"
 
-* "Path": browse to the volume/dataset/directory to be shared
+    * "Path": browse to the volume/dataset/directory to be shared
 
 #.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -722,9 +736,9 @@ In the example shown in Figure 11.6b, a user has input the following information
 
 **Figure 11.6b: Connecting Using Filezilla**
 
-|100000000000038300000122BD3F6150_png|
+|filezilla.png|
 
-.. |100000000000038300000122BD3F6150_png| image:: images/100000000000038300000122BD3F6150.png
+.. |filezilla.png| image:: images/filezilla.png
     :width: 6.9252in
     :height: 2.2335in
 
@@ -754,18 +768,18 @@ To configure this scenario:
 #.  **Set the permissions for each dataset** in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
     account as "Owner" of that dataset and to set the desired permissions for that user. Repeat for each dataset.
 
-.. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients will
-   be accessing FreeNAS® via FTP.
+    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+       will be accessing FreeNAS® via FTP.
 
 #.  **Configure FTP** in :menuselection:`Services --> FTP` with the following attributes:
 
-* "Path": browse to the parent volume containing the datasets
+    * "Path": browse to the parent volume containing the datasets
 
-* make sure the boxes for "Allow Anonymous Login" and "Allow Root Login" are **unchecked**
+    * make sure the boxes for "Allow Anonymous Login" and "Allow Root Login" are **unchecked**
 
-* check the box "Allow Local User Login"
+    * check the box "Allow Local User Login"
 
-* check the box "Always Chroot"
+    * check the box "Always Chroot"
 
 #.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -852,17 +866,17 @@ is more than one target per LUN.
 
 In order to configure iSCSI:
 
-#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an authorized access.
+#.  Review the Target Global Configuration parameters.
 
-#.  Create either a device extent or a file extent to be used as storage.
+#.  Create at least one Portal.
 
-#.  Determine which hosts are allowed to connect using iSCSI and create an initiator.
+#.  Determine which hosts are allowed to connect using iSCSI and create an Initiator.
 
-#.  Create at least one portal.
+#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an Authorized Access.
 
-#.  Review the target global configuration parameters.
+#.  Create a Target.
 
-#.  Create a target.
+#.  Create either a device or a file Extent to be used as storage.
 
 #.  Associate a target with an extent.
 
@@ -870,177 +884,49 @@ In order to configure iSCSI:
 
 The rest of this section describes these steps in more detail.
 
-.. _Authorized Accesses:
+.. _Target Global Configuration:
 
-Authorized Accesses
-~~~~~~~~~~~~~~~~~~~
+Target Global Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
-:menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 11.7a.
+:menuselection:`Services --> iSCSI --> Target Global Configuration`, shown in Figures 11.7a, contains settings that apply to all iSCSI shares. Table 11.7a
+summarizes the settings that can be configured in the Target Global Configuration screen.
 
-.. note:: this screen sets login authentication. This is different from discovery authentication which is set in Target Global Configuration.
+.. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
+   existing extent.
 
-**Figure 11.7a: Adding an iSCSI Authorized Access**
+**Figure 11.7a: iSCSI Target Global Configuration Variables**
 
-|100000000000017F00000171394D6770_png|
+|global.png|
 
-.. |100000000000017F00000171394D6770_png| image:: images/100000000000017F00000171394D6770.png
-    :width: 3.989in
-    :height: 3.8429in
+.. |global.png| image:: images/global.png
+    :width: 5.8in
+    :height: 2.0in
 
-Table 11.7a summarizes the settings that can be configured when adding an authorized access:
+**Table 11.7a: Target Global Configuration Settings**
 
-**Table 11.7a: Authorized Access Configuration Settings**
-
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Setting** | **Value** | **Description**                                                                                                                  |
-|             |           |                                                                                                                                  |
-+=============+===========+==================================================================================================================================+
-| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of *1*  |
-|             |           | will inherit the authentication profile associated with Group *1*                                                                |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
-|             |           | initiator name as the user                                                                                                       |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
-|             |           | "Peer User" is set                                                                                                               |
-|             |           |                                                                                                                                  |
-+-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-
-
-.. note:: CHAP does not work with GlobalSAN initiators on Mac OS X.
-
-As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 11.7b, three users (*test1*,
-*test2*, and
-*test3*) and two groups (
-*1* and
-*2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
-entry to display its "Edit" and "Delete" buttons.
-
-**Figure 11.7b: Viewing Authorized Accesses**
-
-|Figure117b_png|
-
-.. _Extents:
-
-Extents
-~~~~~~~
-
-In iSCSI, the target virtualizes something and presents it as a device to the iSCSI client. That something can be a device extent or a file extent:
-
-**Device extent:** virtualizes an unformatted physical disk, RAID controller, zvol, zvol snapshot, or an existing
-`HAST device <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/disks-hast.html>`_.
-
-Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of
-virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the
-capabilities of the disk or controller.
-
-Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
-as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
-
-**File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
-
-To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7c, the device extent is using the
-:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
-
-.. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
-   the disk, resulting in data loss. This bug was fixed in 8.3.1.
-
-Table 11.7b summarizes the settings that can be configured when creating an extent. Note that
-**file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
-
-**Figure 11.7c: Adding an iSCSI Extent**
-
-|Figure117c_png|
-
-**Table 11.7b: Extent Configuration Settings**
-
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| **Setting**        | **Value**      | **Description**                                                                                                      |
-|                    |                |                                                                                                                      |
-+====================+================+======================================================================================================================+
-| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Extent Type        | drop-down menu | select from *File* or                                                                                                |
-|                    |                | *Device*                                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
-|                    |                | *0* as the "Extent size",                                                                                            |
-|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the "Extent Name" to the path, and specify  |
-|                    |                | a value in "Extent size"                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
-|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
-|                    |                | create                                                                                                               |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Comment            | string         | optional                                                                                                             |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
-|                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-
-.. _Initiators:
-
-Initiators
-~~~~~~~~~~
-
-The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
-which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators --> Add Initiator`, shown in Figure 11.7d.
-
-**Figure 11.7d: Adding an iSCSI Initiator**
-
-|100000000000022A00000107CAD88F71_png|
-
-.. |100000000000022A00000107CAD88F71_png| image:: images/100000000000022A00000107CAD88F71.png
-    :width: 6.6744in
-    :height: 2.4346in
-
-Table 11.7c summarizes the settings that can be configured when adding an initiator.
-
-**Table 11.7c: Initiator Configuration Settings**
-
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| **Setting**        | **Value** | **Description**                                                                      |
-|                    |           |                                                                                      |
-+====================+===========+======================================================================================+
-| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas with no space |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
-|                    |           | *192.168.2.0/24*                                                                     |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-| Comment            | string    | optional description                                                                 |
-|                    |           |                                                                                      |
-+--------------------+-----------+--------------------------------------------------------------------------------------+
-
-
-In the example shown in Figure 11.7e, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
-from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
-
-.. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
-   these will be deleted as well.
-
-**Figure 11.7e: Sample iSCSI Initiator Configuration**
-
-|Figure117e_png|
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| **Setting**                     | **Value**                    | **Description**                                                                           |
+|                                 |                              |                                                                                           |
+|                                 |                              |                                                                                           |
++=================================+==============================+===========================================================================================+
+| Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
+|                                 |                              | if you are unfamiliar with this format                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
+|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
+|                                 |                              | *CHAP* and                                                                                |
+|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
+|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
+|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
+|                                 |                              | *Auto*, and not needed if set to                                                          |
+|                                 |                              | *None*                                                                                    |
+|                                 |                              |                                                                                           |
++---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
 .. _Portals:
 
@@ -1048,16 +934,20 @@ Portals
 ~~~~~~~
 
 A portal specifies the IP address and port number to be used for iSCSI connections. :menuselection:`Services --> ISCSI --> Portals --> Add Portal` will bring
-up the screen shown in Figure 11.7f.
+up the screen shown in Figure 11.7b.
 
-Table 11.7d summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
+Table 11.7b summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
 "Add extra Portal IP".
 
-**Figure 11.7f: Adding an iSCSI Portal**
+**Figure 11.7b: Adding an iSCSI Portal**
 
-|Figure117f_png|
+|portal.png|
 
-**Table 11.7d: Portal Configuration Settings**
+.. |portal.png| image:: images/portal.png
+    :width: 2.8in
+    :height: 2.2in
+
+**Table 11.7b: Portal Configuration Settings**
 
 +-------------+----------------+-----------------------------------------------------------------------------+
 | **Setting** | **Value**      | **Description**                                                             |
@@ -1097,53 +987,126 @@ four interfaces, but connections to target A would be limited to the first two n
 Another scenario would be to create a portal which includes every IP address **except** for the one used by a management interface. This would prevent iSCSI
 connections to the management interface.
 
-.. _Target Global Configuration:
+.. _Initiators:
 
-Target Global Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Initiators
+~~~~~~~~~~
 
-:menuselection:`Services --> iSCSI --> Target Global Configuration`, shown in Figures 11.7g, contains settings that apply to all iSCSI shares. Table 11.7e
-summarizes the settings that can be configured in the Target Global Configuration screen.
+The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
+which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators --> Add Initiator`, shown in Figure 11.7c.
 
-.. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
-   existing extent.
+**Figure 11.7c: Adding an iSCSI Initiator**
 
-**Figure 11.7g: iSCSI Target Global Configuration Variables**
+|initiator1.png|
 
-|Figure117g_png|
+.. |initiator1.png| image:: images/initiator1.png
+    :width: 6.5in
+    :height: 2.5in
 
-**Table 11.7e: Target Global Configuration Settings**
+Table 11.7c summarizes the settings that can be configured when adding an initiator.
 
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| **Setting**                     | **Value**                    | **Description**                                                                           |
-|                                 |                              |                                                                                           |
-|                                 |                              |                                                                                           |
-+=================================+==============================+===========================================================================================+
-| Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
-|                                 |                              | if you are unfamiliar with this format                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
-|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
-|                                 |                              | *CHAP* and                                                                                |
-|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
-|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+**Table 11.7c: Initiator Configuration Settings**
+
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| **Setting**        | **Value** | **Description**                                                                      |
+|                    |           |                                                                                      |
++====================+===========+======================================================================================+
+| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas with no space |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
+|                    |           | *192.168.2.0/24*                                                                     |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+| Comment            | string    | optional description                                                                 |
+|                    |           |                                                                                      |
++--------------------+-----------+--------------------------------------------------------------------------------------+
+
+
+In the example shown in Figure 11.7d, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
+from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
+
+.. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
+   these will be deleted as well.
+
+**Figure 11.7d: Sample iSCSI Initiator Configuration**
+
+|initiator2.png|
+
+.. |initiator2.png| image:: images/initiator2.png
+    :width: 5.7in
+    :height: 4.5in
+
+.. _Authorized Accesses:
+
+Authorized Accesses
+~~~~~~~~~~~~~~~~~~~
+
+If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
+:menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 11.7e.
+
+.. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
+
+**Figure 11.7e: Adding an iSCSI Authorized Access**
+
+|authorized1.png|
+
+.. |authorized1.png| image:: images/authorized1.png
+    :width: 3.989in
+    :height: 3.8429in
+
+Table 11.7d summarizes the settings that can be configured when adding an authorized access:
+
+**Table 11.7d: Authorized Access Configuration Settings**
+
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| **Setting** | **Value** | **Description**                                                                                                                  |
+|             |           |                                                                                                                                  |
++=============+===========+==================================================================================================================================+
+| Group ID    | integer   | allows different groups to be configured with different authentication profiles; for instance, all users with a Group ID of *1*  |
+|             |           | will inherit the authentication profile associated with Group *1*                                                                |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| User        | string    | name of user account to create for CHAP authentication with the user on the remote system; many initiators default to using the  |
+|             |           | initiator name as the user                                                                                                       |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
+|             |           | "Peer User" is set                                                                                                               |
+|             |           |                                                                                                                                  |
++-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
+
+
+.. note:: CHAP does not work with GlobalSAN initiators on Mac OS X.
+
+As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 11.7f, three users (*test1*,
+*test2*, and
+*test3*) and two groups (
+*1* and
+*2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
+entry to display its "Edit" and "Delete" buttons.
+
+**Figure 11.7f: Viewing Authorized Accesses**
+
+|authorized2.png|
+
+.. |authorized2.png| image:: images/authorized2.png
+    :width: 5.7in
+    :height: 4.5in
 
 .. _Targets:
 
 Targets
 ~~~~~~~
 
-Next, create a Target using :menuselection:`Services --> ISCSI --> Targets --> Add Target`, as shown in Figure 11.7h. A target combines a portal ID, allowed
-initiator ID, and an authentication method. Table 11.7f summarizes the settings that can be configured when creating a Target.
+Next, create a Target using :menuselection:`Services --> ISCSI --> Targets --> Add Target`, as shown in Figure 11.7g. A target combines a portal ID, allowed
+initiator ID, and an authentication method. Table 11.7e summarizes the settings that can be configured when creating a Target.
 
 .. note:: an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
    as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -1151,15 +1114,15 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
    filesystem corruption. If you need to support multiple clients to the same data on a non-clustered filesystem, use CIFS or NFS instead of iSCSI or create
    multiple iSCSI targets (one per client).
 
-**Figure 11.7h: Adding an iSCSI Target**
+**Figure 11.7g: Adding an iSCSI Target**
 
-|10000000000001BD000001C3DC193DAA_png|
+|target1png|
 
-.. |10000000000001BD000001C3DC193DAA_png| image:: images/10000000000001BD000001C3DC193DAA.png
-    :width: 5.3602in
-    :height: 4.1756in
+.. |target1png| image:: images/target1.png
+    :width: 3.7in
+    :height: 3.4in
 
-**Table 11.7f: Target Settings**
+**Table 11.7e: Target Settings**
 
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**                 | **Value**      | **Description**                                                                                             |
@@ -1195,6 +1158,77 @@ initiator ID, and an authentication method. Table 11.7f summarizes the settings 
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
+.. _Extents:
+
+Extents
+~~~~~~~
+
+In iSCSI, the target virtualizes something and presents it as a device to the iSCSI client. That something can be a device extent or a file extent:
+
+**Device extent:** virtualizes an unformatted physical disk, RAID controller, zvol, zvol snapshot, or an existing
+`HAST device <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/disks-hast.html>`_.
+
+Virtualizing a single disk is slow as there is no caching but virtualizing a hardware RAID controller has higher performance due to its cache. This type of
+virtualization does a pass-through to the disk or hardware RAID controller. None of the benefits of ZFS are provided and performance is limited to the
+capabilities of the disk or controller.
+
+Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
+as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
+
+**File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
+
+To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 11.7h, the device extent is using the
+:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
+
+.. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
+   the disk, resulting in data loss. This bug was fixed in 8.3.1.
+
+Table 11.7f summarizes the settings that can be configured when creating an extent. Note that
+**file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
+
+**Figure 11.7h: Adding an iSCSI Extent**
+
+|extent.png|
+
+.. |extent.png| image:: images/extent.png
+    :width: 3.5in
+    :height: 2.8in
+
+**Table 11.7f: Extent Configuration Settings**
+
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| **Setting**        | **Value**      | **Description**                                                                                                      |
+|                    |                |                                                                                                                      |
++====================+================+======================================================================================================================+
+| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent Type        | drop-down menu | select from *File* or                                                                                                |
+|                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
+|                    |                | *0* as the "Extent size",                                                                                            |
+|                    |                | **or** browse to the volume or dataset, click the "Close" button, append the "Extent Name" to the path, and specify  |
+|                    |                | a value in "Extent size"                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Device             | drop-down menu | only appears if *Device* is selected; select the unformatted disk, controller, zvol, zvol snapshot, or HAST device   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
+|                    |                | create                                                                                                               |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Comment            | string         | optional                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
+|                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+
 .. _Targets/Extents:
 
 Target/Extents
@@ -1205,7 +1239,11 @@ in Figure 11.7i. Use the drop-down menus to select the existing target and exten
 
 **Figure 11.7i: Associating iSCSI Targets/Extents**
 
-|Figure117i_png|
+|target2.png|
+
+.. |target2.png| image:: images/target2.png
+    :width: 2.5in
+    :height: 1.8in
 
 Table 11.7g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1334,14 +1372,39 @@ You can now start the iSCSI service and allow initiators to connect.
 LLDP
 ----
 
+Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
+
+**Figure 11.8a: Configuring LLDP**
+
+|lldp.png|
+
+.. |lldp.png| image:: images/lldp.png
+    :width: 3.2in
+    :height: 1.8in
+
+**Table 11.8a: LLDP Configuration Options**
+
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value**  | **Description**                                                                                                     |
+|                        |            |                                                                                                                     |
++========================+============+=====================================================================================================================+
+| Interface Description  | checkbox   |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Country Code           | string     |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Location               |            |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+
 .. _NFS:
 
 NFS
 ---
 
-Network File System (NFS) is a protocol for sharing files on a network. Before configuring this service, you should first create your NFS Shares in
-:menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`. After configuring this service, go to :menuselection:`Services --> Control Panel` to
-start the service.
+The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
+configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
 Starting this service will open the following ports on the FreeNAS® system:
 
@@ -1355,7 +1418,11 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Figure 11.9a: Configuring NFS**
 
-|Figure119a_png|
+|nfs1.png|
+
+.. |nfs1.png| image:: images/nfs1.png
+    :width: 3.3in
+    :height: 3.9in
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -1374,6 +1441,9 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Allow non-root mount   | checkbox   | check this box only if the NFS client requires it                                                                   |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Enable NFSv4           | checkbox   |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | mountd(8) bind port    | integer    | optional; specify port for                                                                                          |
@@ -1397,8 +1467,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 Rsync
 -----
 
-:menuselection:`Services --> Rsync` is used to configure an rsync server when using rsync module mode. See the section on
-Configuring Rsync Module Mode Between Two FreeNAS® Systems for a configuration example.
+:menuselection:`Services --> Rsync` is used to configure an rsync server when using rsync module mode. See the section on Rsync Module Mode for a
+configuration example.
 
 This section describes the configurable options for the :command:`rsyncd` service and rsync modules.
 
@@ -1411,11 +1481,11 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 
 **Figure 11.10a: Rsyncd Configuration**
 
-|1000000000000234000000C82AD0CB4B_png|
+|rsyncd.png|
 
-.. |1000000000000234000000C82AD0CB4B_png| image:: images/1000000000000234000000C82AD0CB4B.png
-    :width: 6.7945in
-    :height: 1.8516in
+.. |rsyncd.png| image:: images/rsyncd.png
+    :width: 6in
+    :height: 1.8in
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -1445,11 +1515,11 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 
 **Figure 11.10b: Adding an Rsync Module**
 
-|100000000000023D000001C2EB395B61_png|
+|rsync3.png|
 
-.. |100000000000023D000001C2EB395B61_png| image:: images/100000000000023D000001C2EB395B61.png
-    :width: 6.9028in
-    :height: 4.1665in
+.. |rsync3.png| image:: images/rsync3.png
+    :width: 6.8in
+    :height: 4.2in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1516,7 +1586,11 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 
 **Figure 11.11a: S.M.A.R.T Configuration Options**
 
-|Figure1111a_png|
+|smart2.png|
+
+.. |smart2.png| image:: images/smart2.png
+    :width: 2.9in
+    :height: 2.7in
 
 .. note:: :command:`smartd` will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described
    in Figure 4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a
@@ -1577,7 +1651,11 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Figure 11.12a: Configuring SNMP**
 
-|Figure1112a_png|
+|snmp.png|
+
+.. |snmp.png| image:: images/snmp.png
+    :width: 4.2in
+    :height: 2.3in
 
 **Table 11.12a: SNMP Configuration Options**
 
@@ -1621,11 +1699,11 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 
 **Figure 11.13a: SSH Configuration**
 
-|10000000000001950000012301F7AD89_png|
+|ssh1.png|
 
-.. |10000000000001950000012301F7AD89_png| image:: images/10000000000001950000012301F7AD89.png
-    :width: 4.8783in
-    :height: 2.6937in
+.. |ssh1.png| image:: images/ssh1.png
+    :width: 4.8in
+    :height: 2.7in
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1725,26 +1803,30 @@ the following steps.
     to create a home directory called *user1* for the user account
     *user1* on dataset :file:`/mnt/volume1/user1`:
 
-**Figure 11.13b: Permissions Required by SSH Chroot**
+    **Figure 11.13b: Permissions Required by SSH Chroot**
 
-|Figure1113b_png|
+    |chroot.png|
 
-**Example 11.13a: Creating a User's Home Directory**
-::
+    .. |chroot.png| image:: images/chroot.png
+       :width: 3.6in
+       :height: 3.5in
 
- mkdir /mnt/volume1/user1/user1
+    **Example 11.13a: Creating a User's Home Directory**
+    ::
 
- chown user1:user1 /mnt/volume1/user1/user1
+     mkdir /mnt/volume1/user1/user1
+
+     chown user1:user1 /mnt/volume1/user1/user1
 
 #.  **Configure SSH** in :menuselection:`Services --> SSH`. Add these lines to the "Extra Options" section:
-::
+    ::
 
 
 
- Match Group sftp
- ChrootDirectory %h
- ForceCommand internal-sftp
- AllowTcpForwarding no
+     Match Group sftp
+     ChrootDirectory %h
+     ForceCommand internal-sftp
+     AllowTcpForwarding no
 
 #.  **Start the SSH service** in Control Services. Click the red "OFF" button next to SSH. After a second or so, it will change to a blue ON, indicating that
     the service has been enabled.
@@ -1789,11 +1871,11 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 
 **Figure 11.14a: TFTP Configuration**
 
-|10000000000001A10000014C23FFB30C_png|
+|tftp.png|
 
-.. |10000000000001A10000014C23FFB30C_png| image:: images/10000000000001A10000014C23FFB30C.png
-    :width: 5.0236in
-    :height: 3.0744in
+.. |tftp.png| image:: images/tftp.png
+    :width: 5.0in
+    :height: 3.1in
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1840,7 +1922,11 @@ Figure 11.15a shows the UPS configuration screen:
 
 **Figure 11.15a: UPS Configuration Screen**
 
-|Figure1115a_png|
+|ups.png|
+
+.. |ups.png| image:: images/ups.png
+    :width: 4.8in
+    :height: 4.4in
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1922,3 +2008,46 @@ man page gives some other usage examples.
 `upscmd(8) <http://www.networkupstools.org/docs/man/upscmd.html>`_
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
 this command. These users are created in the "Extra users" field.
+
+.. _WebDAV:
+
+WebDAV
+------
+
+Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
+
+Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available options.
+
+**Figure 11.16a: WebDAV Configuration Screen**
+
+|webdav.png|
+
+.. |webdav.png| image:: images/webdav.png
+    :width: 3.6in
+    :height: 2.4in
+
+**Tablee 11.16a: WebDAV Configuration Options**
+
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**               | **Value**      | **Description**                                                                                       |
+|                           |                |                                                                                                       |
+|                           |                |                                                                                                       |
++===========================+================+=======================================================================================================+
+| Protocol                  | drop-down menu | choices are *HTTP* (connection always unencrypted),                                                   |
+|                           |                | *HTTPS* (connection always encrypted), or                                                             |
+|                           |                | *HTTP+HTTPS* (both types of connections allowed)                                                      |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Port                 | string         | specify the port to be used for the connection; the default of *8080* should work, if you change it,  |
+|                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTP Authentication       | drop-down menu | choices are *Basic Authentication* (unencrypted) or                                                   |
+|                           |                | *Digest Authentication* (encrypted)                                                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Webdav Password           | string         | default is *davtest*; this should be changed as it is a known value                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+

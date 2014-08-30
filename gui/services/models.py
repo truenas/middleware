@@ -47,6 +47,7 @@ from freenasUI.freeadmin.models import (
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk
+from freenasUI.system.models import Certificate
 
 log = logging.getLogger("services.forms")
 
@@ -321,6 +322,13 @@ class AFP(Model):
             'specify a writable location, even if the volume is read only.'
         ),
     )
+    afp_srv_global_aux = models.TextField(
+        verbose_name=_("Global auxiliary parameters"),
+        blank=True,
+        help_text=_(
+            "These parameters are added to [Global] section of afp.conf"
+        )
+    )
 
     class Meta:
         verbose_name = _(u"AFP")
@@ -437,7 +445,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "services.ISCSI"
         icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'iscsi'}
+        nav_extra = {'type': 'iscsi', 'order': -10}
         resource_name = 'services/iscsi/globalconfiguration'
 
 
@@ -628,6 +636,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
         icon_view = u"ViewAllInitiatorsIcon"
+        nav_extra = {'order': 0}
         resource_name = 'services/iscsi/authorizedinitiator'
 
     def __unicode__(self):
@@ -1218,10 +1227,6 @@ class FTP(Model):
             verbose_name=_("TLS export standard vars"),
             default=False
             )
-    ftp_tls_opt_use_implicit_ssl = models.BooleanField(
-            verbose_name=_("TLS use implicit SSL"),
-            default=False
-            )
     ftp_tls_opt_dns_name_required = models.BooleanField(
             verbose_name=_("TLS DNS name required"),
             default=False
@@ -1230,11 +1235,12 @@ class FTP(Model):
             verbose_name=_("TLS IP address required"),
             default=False
             )
-    ftp_ssltls_certfile = models.TextField(
-            verbose_name=_("Certificate and private key"),
+    ftp_ssltls_certificate = models.ForeignKey(
+            Certificate,
+            verbose_name=_("Certificate"),
+            on_delete=models.SET_NULL,
             blank=True,
-            help_text=_("Place the contents of your certificate and private "
-                "key here.")
+            null=True
             )
     ftp_options = models.TextField(
             max_length=120,
@@ -1708,3 +1714,52 @@ class DomainController(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"DomainControllerIcon"
+
+class WebDAV(Model):
+    webdav_protocol = models.CharField(
+            max_length=120,
+            choices=choices.PROTOCOL_CHOICES,
+            default="http",
+            verbose_name=_("Protocol")
+        )
+    
+    webdav_tcpport = models.PositiveIntegerField(
+	    verbose_name=_("HTTP Port"),
+	    default=8080,
+	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
+	    help_text=_("This is the port at which WebDAV will run on."
+			"<br />Do not use a port that is already in use by another service (e.g. 22 for SSH)."),
+	)
+    
+    webdav_tcpportssl =  models.PositiveIntegerField(
+	    verbose_name=_("HTTPS Port"),
+	    default=8081,
+	    validators=[MinValueValidator(1),MaxValueValidator(65535)],
+	    help_text=_("This is the port at which Secure WebDAV will run on."
+			"<br />Do not use a port that is already in use by another service (e.g. 22 for SSH)."),
+	)
+    
+    webdav_password = models.CharField(
+            max_length=120,
+            verbose_name=_("Webdav Password"),
+            default="davtest",
+            help_text=_("The Default Password is: davtest"),
+        )
+    
+    webdav_htauth = models.CharField(
+            max_length=120,
+            verbose_name=_("HTTP Authentication"),
+            choices=choices.HTAUTH_CHOICES,
+            default='digest',
+            help_text=_("Type of HTTP Authentication for WebDAV"
+			"<br />Basic Auth: Password is sent over the network as plaintext (Avoid if HTTPS is disabled)"
+			"<br />Digest Auth: Hash of the password is sent over the network (more secure)")
+        )
+
+    class Meta:
+	verbose_name = _(u"WebDAV")
+	verbose_name_plural = _(u"WebDAV")
+
+    class FreeAdmin:
+	deletable = False
+        icon_model = u"WebDAVShareIcon"

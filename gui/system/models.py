@@ -24,15 +24,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import dateutil
+import logging
+import os
+import string
+
+from datetime import datetime
+from dateutil import tz, parser as dtparser
+
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from OpenSSL import crypto
+
 from freenasUI import choices
+from freenasUI.common.ssl import (
+    write_certificate,
+    write_certificate_signing_request,
+    write_privatekey
+)
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
+log = logging.getLogger('system.models')
 
 class Alert(Model):
     message_id = models.CharField(
@@ -50,6 +66,13 @@ class Settings(Model):
             choices=choices.PROTOCOL_CHOICES,
             default="http",
             verbose_name=_("Protocol")
+            )
+    stg_guicertificate = models.ForeignKey(
+            "Certificate",
+            verbose_name=_("Certificate"),
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True
             )
     stg_guiaddress = models.CharField(
             max_length=120,
@@ -316,78 +339,6 @@ class Email(Model):
         deletable = False
 
 
-class SSL(Model):
-    ssl_org = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Organization"),
-            help_text=_("Organization Name (eg, company)"),
-            )
-    ssl_unit = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Organizational Unit"),
-            help_text=_("Organizational Unit Name (eg, section)"),
-            )
-    ssl_email = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Email Address"),
-            help_text=_("Email Address"),
-            )
-    ssl_city = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Locality"),
-            help_text=_("Locality Name (eg, city)"),
-            )
-    ssl_state = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("State"),
-            help_text=_("State or Province Name (full name)"),
-            )
-    ssl_country = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Country"),
-            help_text=_("Country Name (2 letter code)"),
-            )
-    ssl_common = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Common Name"),
-            help_text=_("Common Name (eg, YOUR name)"),
-            )
-    ssl_passphrase = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Passphrase"),
-            help_text=_("Private key passphrase"),
-            )
-    ssl_certfile = models.TextField(
-            blank=True,
-            null=True,
-            verbose_name=_("SSL Certificate"),
-            help_text=_("Cut and paste the contents of your private and "
-                "public certificate files here."),
-            )
-
-    class Meta:
-        verbose_name = _("SSL")
-
-    class FreeAdmin:
-        deletable = False
-
-
 class Tunable(Model):
     tun_var = models.CharField(
             max_length=50,
@@ -538,3 +489,378 @@ class SystemDataset(Model):
     @property
     def usedataset(self):
         return self.sys_syslog_usedataset
+
+
+class Upgrade(Model):
+    upd_train = models.CharField(
+        editable=False,
+        max_length=200,
+        default='stable',
+    )
+    upd_autocheck = models.BooleanField(
+        verbose_name=_('Check Automatically For Updates'),
+        default=True,
+    )
+    upd_location = models.URLField(
+        verbose_name=_('Location'),
+        default='http://download.freenas.org/FreeNAS/',
+    )
+
+    class Meta:
+        verbose_name = _('Upgrade')
+
+    class FreeAdmin:
+        deletable = False
+
+
+CA_TYPE_EXISTING        = 0x00000001
+CA_TYPE_INTERNAL        = 0x00000002
+CA_TYPE_INTERMEDIATE    = 0x00000004
+CERT_TYPE_EXISTING      = 0x00000008
+CERT_TYPE_INTERNAL      = 0x00000010
+CERT_TYPE_CSR           = 0x00000020
+
+class CertificateBase(Model):
+    cert_root_path = "/etc/certificates"
+
+    cert_type = models.IntegerField()
+    cert_name = models.CharField(
+            max_length=120,
+            verbose_name=_("Name"),
+            help_text=_("Descriptive Name)"),
+            unique=True
+            )
+    cert_certificate = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Certificate"),
+            help_text=_("Cut and paste the contents of your certificate here")
+            )
+    cert_privatekey = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Private Key"),
+            help_text=_("Cut and paste the contents of your private key here")
+            )
+    cert_CSR = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Request"),
+            help_text=_("Cut and paste the contents of your CSR here")
+            )
+    cert_key_length = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Key length"),
+            default=2048
+            )
+    cert_digest_algorithm = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Digest Algorithm"),
+            default='SHA256'
+            )
+    cert_lifetime = models.IntegerField(
+            blank=True,
+            null=True,
+            verbose_name=_("Lifetime"),
+            default=3650
+            )
+    cert_country = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Country"),
+            help_text=_("Country Name (2 letter code)")
+            )
+    cert_state = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("State"),
+            help_text=_("State or Province Name (full name)")
+            )
+    cert_city = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Locality"),
+            help_text=_("Locality Name (eg, city)")
+            )
+    cert_organization = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Organization"),
+            help_text=_("Organization Name (eg, company)")
+            )
+    cert_email = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Email Address"),
+            help_text=_("Email Address")
+            )
+    cert_common = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Common Name"),
+            help_text=_("Common Name (eg, YOUR name)")
+            )
+    cert_serial = models.IntegerField(
+            blank=True,
+            null=True,
+            max_length=120,
+            verbose_name=_("Serial"),
+            help_text=_("Serial for next certificate")
+            )
+    cert_signedby = models.ForeignKey(
+            "CertificateAuthority",
+            blank=True,
+            null=True,
+            verbose_name=_("Signing Certificate Authority")
+            )
+
+    def get_certificate(self):
+        certificate = None
+        if self.cert_certificate:
+            certificate = crypto.load_certificate(
+                crypto.FILETYPE_PEM,
+                self.cert_certificate
+            )
+        return certificate
+            
+    def get_privatekey(self):
+        privatekey = None
+        if self.cert_privatekey:
+            privatekey = crypto.load_privatekey(
+                crypto.FILETYPE_PEM,
+                self.cert_privatekey
+            )
+        return privatekey
+
+    def get_CSR(self):
+        CSR = None 
+        if self.cert_CSR:
+            CSR = crypto.load_certificate_request(
+                crypto.FILETYPE_PEM,
+                self.cert_CSR
+            )
+        return CSR
+
+    def get_certificate_path(self):
+        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
+
+    def get_privatekey_path(self):
+        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
+
+    def get_CSR_path(self):
+        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
+
+    def write_certificate(self, path=None):
+        if not path:
+            path = self.get_certificate_path()
+        write_certificate(self.get_certificate(), path)
+
+    def write_privatekey(self, path=None):
+        if not path:
+            path = self.get_privatekey_path()
+        write_privatekey(self.get_privatekey(), path)
+
+    def write_CSR(self, path=None):
+        if not path:
+            path = self.get_CSR_path()
+        write_certificate_signing_request(self.get_CSR(), path)
+
+    def __load_certificate(self):
+        if self.cert_certificate != None and self.__certificate == None:
+            self.__certificate = self.get_certificate()
+
+    def __load_CSR(self):
+        if self.cert_CSR != None and self.__CSR == None:
+            self.__CSR = self.get_CSR()
+
+    def __load_thingy(self):
+        if self.cert_type == CERT_TYPE_CSR:
+            self.__load_CSR() 
+        else:
+            self.__load_certificate() 
+
+    def __get_thingy(self):
+        thingy = self.__certificate
+        if self.cert_type == CERT_TYPE_CSR:
+            thingy = self.__CSR
+ 
+        return thingy
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateBase, self).__init__(*args, **kwargs)
+
+        self.__certificate = None
+        self.__CSR = None
+        self.__load_thingy() 
+
+        if not os.path.exists(self.cert_root_path):
+            os.mkdir(self.cert_root_path, 0755)
+
+    def __unicode__(self):
+        return self.cert_name
+
+    @property
+    def cert_internal(self):
+        internal = "YES"
+
+        if self.cert_type == CA_TYPE_EXISTING:
+            internal = "NO" 
+        elif self.cert_type == CERT_TYPE_EXISTING: 
+            internal = "NO" 
+
+        return internal
+
+    @property
+    def cert_issuer(self):
+        issuer = None
+
+        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
+            CERT_TYPE_EXISTING):
+            issuer = "external"
+        elif self.cert_type == CA_TYPE_INTERNAL:
+            issuer = "self-signed"
+        elif self.cert_type == CERT_TYPE_INTERNAL:
+            issuer = self.cert_signedby
+        elif self.cert_type == CERT_TYPE_CSR:
+            issuer = "external - signature pending"
+
+        return issuer
+
+    @property
+    def cert_ncertificates(self):
+        count = 0
+        certs = Certificate.objects.all()
+        for cert in certs:
+            try:
+                if self.cert_name == cert.cert_signedby.cert_name:
+                    count += 1
+            except:
+                pass
+        return count
+
+    @property
+    def cert_DN(self):
+        self.__load_thingy()
+
+        parts = []
+        for c in self.__get_thingy().get_subject().get_components():
+            parts.append("%s=%s" % (c[0], c[1]))
+        DN = "/%s" % string.join(parts, '/')
+        return DN
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
+    @property
+    def cert_from(self):
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            before = thingy.get_notBefore()
+            t1 = dtparser.parse(before) 
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            before = t2.ctime() 
+
+        except Exception as e:
+            before = None
+
+        return before
+
+    #
+    # Returns ASN1 GeneralizedTime - Need to parse it...
+    #
+    @property
+    def cert_until(self):
+        self.__load_thingy()
+
+        thingy = self.__get_thingy()
+        try:
+            after = thingy.get_notAfter()
+            t1 = dtparser.parse(after) 
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            after = t2.ctime() 
+
+        except Exception as e:
+            after = None
+
+        return after
+
+    @property
+    def cert_type_existing(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_EXISTING:
+            ret = True
+        return ret
+
+    @property
+    def cert_type_internal(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_INTERNAL:
+            ret = True
+        return ret
+
+    @property
+    def cert_type_CSR(self):
+        ret = False
+        if self.cert_type & CERT_TYPE_CSR:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_existing(self):
+        ret = False
+        if self.cert_type & CA_TYPE_EXISTING:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_internal(self):
+        ret = False
+        if self.cert_type & CA_TYPE_INTERNAL:
+            ret = True
+        return ret
+
+    @property
+    def CA_type_intermediate(self):
+        ret = False
+        if self.cert_type & CA_TYPE_INTERMEDIATE:
+            ret = True
+        return ret
+
+    class Meta:
+        abstract = True
+
+
+class CertificateAuthority(CertificateBase):
+
+    def __init__(self, *args, **kwargs):
+        super(CertificateAuthority, self).__init__(*args, **kwargs)
+
+        self.cert_root_path = "%s/CA" % self.cert_root_path
+        if not os.path.exists(self.cert_root_path):
+            os.mkdir(self.cert_root_path, 0755)
+
+    class Meta:
+        verbose_name = _("Certificate Authority")
+
+    class FreeAdmin:
+        deletable = False
+
+
+class Certificate(CertificateBase):
+
+    class Meta:
+        verbose_name = _("Certificate")
+
+    class FreeAdmin:
+        deletable = False

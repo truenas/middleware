@@ -26,10 +26,4 @@
             viewModel('{% trans "NTP Servers"|escapejs %}', '{% url "freeadmin_system_ntpserver_datagrid" %}');
         </script>
     </button>
-    <button id="btn_{% cls_name form %}_SSL" data-dojo-type="dijit.form.Button" type="button">
-        {% trans "Set SSL Certificate" %}
-        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            editObject('{% trans "Set SSL Certificate"|escapejs %}', '{{ ssl.get_edit_url }}');
-        </script>
-    </button>
 {% endblock %}

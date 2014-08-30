@@ -43,6 +43,8 @@ def main():
         cf_contents.append("\tvol dbpath = %s\n" % afp.afp_srv_dbpath)
     else:
         cf_contents.append("\tvol dbnest = yes\n")
+    if afp.afp_srv_global_aux:
+        cf_contents.append("\t%s" % afp.afp_srv_global_aux.encode('utf8'))
     cf_contents.append("\n")
 
     if afp.afp_srv_homedir_enable:

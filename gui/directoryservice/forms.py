@@ -58,6 +58,16 @@ class idmap_ad_Form(ModelForm):
         ]
 
 
+class idmap_adex_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_adex
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
 class idmap_autorid_Form(ModelForm):
     class Meta:
         fields = '__all__'
@@ -131,7 +141,7 @@ class idmap_tdb_Form(ModelForm):
 class idmap_tdb2_Form(ModelForm):
     class Meta:
         fields = '__all__'
-        model = models.idmap_tdb
+        model = models.idmap_tdb2
         exclude = [
             'idmap_ds_type',
             'idmap_ds_id'
@@ -224,17 +234,13 @@ class NT4Form(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
-    ad_certfile = FileField(
-        label=_("Certificate"),
-        required=False
-    )
 
     advanced_fields = [
         'ad_netbiosname',
         'ad_use_keytab',
         'ad_kerberos_keytab',
         'ad_ssl',
-        'ad_certfile',
+        'ad_certificate',
         'ad_verbose_logging',
         'ad_unix_extensions',
         'ad_allow_trusted_doms',
@@ -304,24 +310,6 @@ class ActiveDirectoryForm(ModelForm):
             "activedirectory_mutex_toggle();"
         )
 
-    def clean_ad_certfile(self):
-        filename = "/data/activedirectory_certfile"
-
-        ad_certfile = self.cleaned_data.get("ad_certfile", None)
-        if ad_certfile and ad_certfile != filename:  
-            if hasattr(ad_certfile, 'temporary_file_path'):
-                shutil.move(ad_certfile.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ad_certfile.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ad_certfile = filename
-
-        return filename
-
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
@@ -342,6 +330,15 @@ class ActiveDirectoryForm(ModelForm):
                     raise forms.ValidationError("%s." % errors[0])
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
+
+        ssl = cdata.get("ad_ssl")
+        if ssl in ("off", None):
+            return cdata
+
+        certificate = cdata["ad_certificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "SSL/TLS specified without certificate")
 
         return cdata
 
@@ -400,10 +397,6 @@ class NISForm(ModelForm):
 
 
 class LDAPForm(ModelForm):
-    ldap_certfile = FileField(
-        label=_("Certificate"),
-        required=False
-    )
 
     advanced_fields = [
         'ldap_anonbind',
@@ -416,7 +409,7 @@ class LDAPForm(ModelForm):
         'ldap_kerberos_realm',
         'ldap_kerberos_keytab',
         'ldap_ssl',
-        'ldap_certfile',
+        'ldap_certificate',
         'ldap_idmap_backend'
     ]
 
@@ -434,24 +427,6 @@ class LDAPForm(ModelForm):
             "ldap_mutex_toggle();"
         )
 
-    def clean_ldap_certfile(self):
-        filename = "/data/ldap_certfile"
-
-        ldap_certfile = self.cleaned_data.get("ldap_certfile", None)
-        if ldap_certfile and ldap_certfile != filename:  
-            if hasattr(ldap_certfile, 'temporary_file_path'):
-                shutil.move(ldap_certfile.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in ldap_certfile.chunks():
-                        f.write(c)
-                    f.close()
-
-            os.chmod(filename, 0400)
-            self.instance.ldap_certfile = filename
-
-        return filename
-
     def clean_bindpw(self):
         cdata = self.cleaned_data
         if not cdata.get("ldap_bindpw"):
@@ -467,6 +442,19 @@ class LDAPForm(ModelForm):
         )
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
+
+    def clean(self):
+        cdata = self.cleaned_data
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ("off", None):
+            return cdata
+
+        certificate = cdata["ldap_certificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "SSL/TLS specified without certificate")
+
+        return cdata
 
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")

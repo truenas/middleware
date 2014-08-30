@@ -32,6 +32,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.system.models import (
+    CertificateAuthority,
+    Certificate
+)
 
 log = logging.getLogger("directoryservice.models")
 
@@ -41,6 +45,7 @@ DS_TYPE_LDAP = 2
 DS_TYPE_NIS = 3
 DS_TYPE_NT4 = 4
 DS_TYPE_CIFS = 5
+
 
 def directoryservice_to_enum(ds_type):
     enum = DS_TYPE_NONE
@@ -54,7 +59,7 @@ def directoryservice_to_enum(ds_type):
 
     try:
         enum = ds_dict[ds_type]
-    except: 
+    except:
         pass
 
     return enum
@@ -70,9 +75,9 @@ def enum_to_directoryservice(enum):
         DS_TYPE_CIFS: 'CIFS'
     }
 
-    try: 
+    try:
         ds = ds_dict[enum]
-    except: 
+    except:
         pass
 
     return ds
@@ -88,11 +93,14 @@ IDMAP_TYPE_RFC2307 = 6
 IDMAP_TYPE_RID = 7
 IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
+IDMAP_TYPE_ADEX = 10
+
 
 def idmap_to_enum(idmap_type):
-    enum = IDMAP_TYPE_NONE 
+    enum = IDMAP_TYPE_NONE
     idmap_dict = {
         'ad': IDMAP_TYPE_AD,
+        'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
         'hash': IDMAP_TYPE_HASH,
         'ldap': IDMAP_TYPE_LDAP,
@@ -106,7 +114,7 @@ def idmap_to_enum(idmap_type):
     try:
         enum = idmap_dict[idmap_type]
     except:
-        pass 
+        pass
 
     return enum
 
@@ -115,6 +123,7 @@ def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
         IDMAP_TYPE_AD: 'ad',
+        IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
         IDMAP_TYPE_HASH: 'hash',
         IDMAP_TYPE_LDAP: 'ldap',
@@ -200,14 +209,38 @@ class idmap_ad(idmap_base):
         verbose_name_plural = _("AD Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/ad'
+
+
+class idmap_adex(idmap_base):
+    idmap_adex_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=10000
+    )
+    idmap_adex_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=90000000
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_adex, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_ADEX
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("ADEX Idmap")
+        verbose_name_plural = _("ADEX Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/adex'
 
 
 class idmap_autorid(idmap_base):
     idmap_autorid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=10000
-    ) 
+    )
     idmap_autorid_range_high = models.IntegerField(
         verbose_name=_("Range High"),
         default=90000000
@@ -215,13 +248,13 @@ class idmap_autorid(idmap_base):
     idmap_autorid_rangesize = models.IntegerField(
         verbose_name=_("Range Size"),
         help_text=_(
-           "Defines the number of uids/gids available per domain range. "
-           "The minimum needed value is 2000. SIDs with RIDs larger "
-           "than this value will be mapped into extension ranges "
-           "depending upon number of available ranges. If the autorid "
-           "backend runs out of available ranges, mapping requests for "
-           "new domains (or new extension ranges for domains already "
-           "known) are ignored and the corresponding map is discarded."
+            "Defines the number of uids/gids available per domain range. "
+            "The minimum needed value is 2000. SIDs with RIDs larger "
+            "than this value will be mapped into extension ranges "
+            "depending upon number of available ranges. If the autorid "
+            "backend runs out of available ranges, mapping requests for "
+            "new domains (or new extension ranges for domains already "
+            "known) are ignored and the corresponding map is discarded."
         ),
         default=100000
     )
@@ -251,7 +284,7 @@ class idmap_autorid(idmap_base):
         verbose_name_plural = _("AutoRID Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/autorid'
 
 
 class idmap_hash(idmap_base):
@@ -266,10 +299,10 @@ class idmap_hash(idmap_base):
     idmap_hash_range_name_map = PathField(
         verbose_name=_("Name Map"),
         help_text=_(
-           'Specifies the absolute path to the name mapping file '
-           'used by the nss_info API. Entries in the file are of '
-           'the form "unix name = qualified domain name". Mapping '
-           'of both user and group names is supported.'
+            'Specifies the absolute path to the name mapping file '
+            'used by the nss_info API. Entries in the file are of '
+            'the form "unix name = qualified domain name". Mapping '
+            'of both user and group names is supported.'
         )
     )
 
@@ -284,7 +317,7 @@ class idmap_hash(idmap_base):
         verbose_name_plural = _("Hash Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/hash'
 
 
 class idmap_ldap(idmap_base):
@@ -306,7 +339,7 @@ class idmap_ldap(idmap_base):
         ),
         blank=True
     )
-    idmap_ldap_ldap_user_dn = models.CharField( 
+    idmap_ldap_ldap_user_dn = models.CharField(
         verbose_name=_("User DN"),
         max_length=120,
         help_text=_(
@@ -322,8 +355,10 @@ class idmap_ldap(idmap_base):
     idmap_ldap_ldap_url = models.CharField(
         verbose_name=_("URL"),
         max_length=255,
-        help_text=_("Specifies the LDAP server to use for "
-            "SID/uid/gid map entries.")
+        help_text=_(
+            "Specifies the LDAP server to use for "
+            "SID/uid/gid map entries."
+        )
     )
 
     def __init__(self, *args, **kwargs):
@@ -337,7 +372,7 @@ class idmap_ldap(idmap_base):
         verbose_name_plural = _("LDAP Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/ldap'
 
 
 class idmap_nss(idmap_base):
@@ -361,7 +396,7 @@ class idmap_nss(idmap_base):
         verbose_name_plural = _("NSS Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/nss'
 
 
 class idmap_rfc2307(idmap_base):
@@ -389,28 +424,32 @@ class idmap_rfc2307(idmap_base):
     )
     idmap_rfc2307_bind_path_user = models.CharField(
         verbose_name=_("User Bind Path"),
-        max_length=120, 
-        help_text=_("Specifies the bind path where user objects "
+        max_length=120,
+        help_text=_(
+            "Specifies the bind path where user objects "
             "can be found in the LDAP server."
         )
     )
     idmap_rfc2307_bind_path_group = models.CharField(
         verbose_name=_("Group Bind Path"),
-        max_length=120, 
-        help_text=_("Specifies the bind path where group objects can "
+        max_length=120,
+        help_text=_(
+            "Specifies the bind path where group objects can "
             "be found in the LDAP server."
         )
     )
     idmap_rfc2307_user_cn = models.BooleanField(
         verbose_name=_("User CN"),
-        help_text=_("Query cn attribute instead of uid attribute "
+        help_text=_(
+            "Query cn attribute instead of uid attribute "
             "for the user name in LDAP."
         ),
         default=False
     )
     idmap_rfc2307_cn_realm = models.BooleanField(
         verbose_name=_("CN Realm"),
-        help_text=_("Append @realm to cn for groups (and users if "
+        help_text=_(
+            "Append @realm to cn for groups (and users if "
             "user_cn is set) in LDAP."
         ),
         default=False
@@ -432,7 +471,8 @@ class idmap_rfc2307(idmap_base):
     idmap_rfc2307_ldap_url = models.CharField(
         verbose_name=_("LDAP URL"),
         max_length=255,
-        help_text=_("When using a stand-alone LDAP server, this "
+        help_text=_(
+            "When using a stand-alone LDAP server, this "
             "parameter specifies the ldap URL for accessing the LDAP server."
         ),
         blank=True
@@ -470,7 +510,7 @@ class idmap_rfc2307(idmap_base):
         verbose_name_plural = _("RFC2307 Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/rfc2307'
 
 
 class idmap_rid(idmap_base):
@@ -494,14 +534,14 @@ class idmap_rid(idmap_base):
         verbose_name_plural = _("RID Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/rid'
 
 
 class idmap_tdb(idmap_base):
     idmap_tdb_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
         default=90000001
-    ) 
+    )
     idmap_tdb_range_high = models.IntegerField(
         verbose_name=_("Range High"),
         default=100000000
@@ -550,7 +590,7 @@ class idmap_tdb2(idmap_base):
         verbose_name_plural = _("TDB2 Idmap")
 
     class FreeAdmin:
-        deletable = False
+        resource_name = 'directoryservice/idmap/tdb2'
 
 
 class KerberosRealm(Model):
@@ -587,7 +627,7 @@ class KerberosRealm(Model):
     )
 
     def __unicode__(self):
-        return self.krb_realm 
+        return self.krb_realm
 
 
 class KerberosKeytab(Model):
@@ -645,7 +685,8 @@ class NT4(DirectoryServiceBase):
     )
     nt4_use_default_domain = models.BooleanField(
         verbose_name=_("Use Default Domain"),
-        help_text=_("Set this if you want to use the default "
+        help_text=_(
+            "Set this if you want to use the default "
             "domain for users and groups."),
         default=False
     )
@@ -726,10 +767,12 @@ class ActiveDirectory(DirectoryServiceBase):
         choices=choices.LDAP_SSL_CHOICES,
         default='off'
     )
-    ad_certfile = models.TextField(
-        verbose_name=_("SSL Certificate"),
+    ad_certificate = models.ForeignKey(
+        CertificateAuthority, 
+        verbose_name=_("Certificate"),
+        on_delete=models.SET_NULL,
         blank=True,
-        help_text=_("Upload your certificate file here.")
+        null=True
     )
     ad_verbose_logging = models.BooleanField(
         verbose_name=_("Verbose logging"),
@@ -747,7 +790,8 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_use_default_domain = models.BooleanField(
         verbose_name=_("Use Default Domain"),
-        help_text=_("Set this if you want to use the default "
+        help_text=_(
+            "Set this if you want to use the default "
             "domain for users and groups."),
         default=False
     )
@@ -798,7 +842,7 @@ class ActiveDirectory(DirectoryServiceBase):
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
         self.ds_name = enum_to_directoryservice(self.ds_type)
 
-        if not self.ad_netbiosname:  
+        if not self.ad_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
             gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
             if gc_hostname:
@@ -806,8 +850,8 @@ class ActiveDirectory(DirectoryServiceBase):
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
 
-    def save(self):
-        super(ActiveDirectory, self).save()
+    def save(self, **kwargs):
+        super(ActiveDirectory, self).save(**kwargs)
 
         if not self.ad_kerberos_realm:
             from freenasUI.common.freenasldap import (
@@ -892,14 +936,16 @@ class LDAP(DirectoryServiceBase):
     ldap_basedn = models.CharField(
         verbose_name=_("Base DN"),
         max_length=120,
-        help_text=_("The default base Distinguished Name (DN) to use for "
+        help_text=_(
+            "The default base Distinguished Name (DN) to use for "
             "searches, eg dc=test,dc=org"),
         blank=True
     )
     ldap_binddn = models.CharField(
         verbose_name=_("Bind DN"),
         max_length=120,
-        help_text=_("The distinguished name with which to bind to the "
+        help_text=_(
+            "The distinguished name with which to bind to the "
             "directory server, e.g. cn=admin,dc=test,dc=org"),
         blank=True
     )
@@ -916,7 +962,8 @@ class LDAP(DirectoryServiceBase):
     ldap_usersuffix = models.CharField(
         verbose_name=_("User Suffix"),
         max_length=120,
-        help_text=_("This parameter specifies the suffix that is used for "
+        help_text=_(
+            "This parameter specifies the suffix that is used for "
             "users when these are added to the LDAP directory, e.g. "
             "ou=Users"),
         blank=True
@@ -924,7 +971,8 @@ class LDAP(DirectoryServiceBase):
     ldap_groupsuffix = models.CharField(
         verbose_name=_("Group Suffix"),
         max_length=120,
-        help_text=_("This parameter specifies the suffix that is used "
+        help_text=_(
+            "This parameter specifies the suffix that is used "
             "for groups when these are added to the LDAP directory, e.g. "
             "ou=Groups"),
         blank=True
@@ -932,7 +980,8 @@ class LDAP(DirectoryServiceBase):
     ldap_passwordsuffix = models.CharField(
         verbose_name=_("Password Suffix"),
         max_length=120,
-        help_text=_("This parameter specifies the suffix that is used for "
+        help_text=_(
+            "This parameter specifies the suffix that is used for "
             "passwords when these are added to the LDAP directory, e.g. "
             "ou=Passwords"),
         blank=True
@@ -940,7 +989,8 @@ class LDAP(DirectoryServiceBase):
     ldap_machinesuffix = models.CharField(
         verbose_name=_("Machine Suffix"),
         max_length=120,
-        help_text=_("This parameter specifies the suffix that is used for "
+        help_text=_(
+            "This parameter specifies the suffix that is used for "
             "machines when these are added to the LDAP directory, e.g. "
             "ou=Computers"),
         blank=True
@@ -948,7 +998,8 @@ class LDAP(DirectoryServiceBase):
     ldap_sudosuffix = models.CharField(
         verbose_name=_("SUDO Suffix"),
         max_length=120,
-        help_text=_("This parameter specifies the suffix that is used for "
+        help_text=_(
+            "This parameter specifies the suffix that is used for "
             "the SUDO configuration in the LDAP directory, e.g. "
             "ou=SUDOers"),
         blank=True
@@ -982,10 +1033,12 @@ class LDAP(DirectoryServiceBase):
         choices=choices.LDAP_SSL_CHOICES,
         default='off'
     )
-    ldap_certfile = models.TextField(
-        verbose_name=_("SSL Certificate"),
-        help_text=_("Upload your certificate file here."),
-        blank=True
+    ldap_certificate = models.ForeignKey(
+        CertificateAuthority, 
+        verbose_name=_("Certificate"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
     ldap_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),

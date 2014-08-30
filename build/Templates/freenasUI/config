@@ -1,0 +1,25 @@
+[Package]
+
+name = freenasUI
+comment = "FreeNAS User Interface"
+desc = "FreeNAS UI (django-based)"
+www = http://www.freenas.org/
+origin = freenas/ui
+maintainer = dev@ixsystems.com
+prefix = /
+arch = freebsd:9:x86:64
+licenselogic = or
+licenses = [BSD, MIT, GPL]
+
+[Files]
+include = /usr/local/www/freenasUI
+
+[Scripts]
+
+# This is a huge hack for demo purposes.  Remove
+# when I figure out something sane.
+
+post-install = /usr/sbin/service restart django || true
+
+post-upgrade = /usr/bin/touch /data/cd-upgrade
+	     /usr/bin/touch /data/need-update

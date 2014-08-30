@@ -109,6 +109,12 @@ if [ -z "${SVNVERSION}" ]; then
 fi
 
 
+if [ -n "${git}" ]; then
+    # Get the sequence number from the time of the commit
+    SEQUENCE=`$git_cmd show -s --format=%ct ${git}`
+    export SEQUENCE
+fi
+
 # REVISION gets set to "" when doing tagged versions, SVNREVISION allows
 # us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
@@ -255,7 +261,7 @@ export PORTS_DISTFILES_CACHE
 
 # See bsd.port.mk
 # This is our local package cache.
-MASTER_SITE_BACKUP="${PORTS_DISTFILES_CACHE}/\${DIST_SUBDIR}/ http://download.freenas.org/distfiles/\${DIST_SUBDIR}/ http://ftp.FreeBSD.org/pub/FreeBSD/ports/distfiles/\${DIST_SUBDIR}/"
+MASTER_SITE_BACKUP="${PORTS_DISTFILES_CACHE}/\${DIST_SUBDIR}/ http://download.freenas.org/distfiles/\${DIST_SUBDIR}/ http://distcache.FreeBSD.org/ports-distfiles/\${DIST_SUBDIR}/"
 
 : ${MASTER_SITE_FREEBSD:=yes}
 export MASTER_SITE_FREEBSD
@@ -331,6 +337,7 @@ WITHOUT_NDIS=true
 WITHOUT_NLS=true
 WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
+WITH_OPENSSH_NONE_CIPHER=true
 WITHOUT_PORTSNAP=true
 WITHOUT_PPP=true
 WITHOUT_PROFILE=true

@@ -404,3 +404,12 @@ Update resource
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
+
+
+Idmap
+-----
+
+.. toctree::
+   :glob:
+
+   directoryservice/idmap

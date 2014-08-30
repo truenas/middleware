@@ -188,6 +188,27 @@ def directoryservice_idmap_ad(request, id):
     })
 
 
+def directoryservice_idmap_adex(request, id):
+    idmap_ad = models.idmap_adex.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_adex_Form(request.POST, instance=idmap_ad)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap adex successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_adex_Form(instance=idmap_ad)
+
+    return render(request, 'directoryservice/idmap_adex.html', {
+        'form': form
+    })
+
+
 def directoryservice_idmap_autorid(request, id):
     idmap_autorid = models.idmap_autorid.objects.get(id=id)
 

@@ -21,8 +21,6 @@ main()
 
 	requires_root
 
-	# Keep in sync with os-base and nano_env.
-	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.img.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 
 	INSTALLER_FILES="$AVATAR_ROOT/build/nanobsd-cfg/Installer"
@@ -40,19 +38,9 @@ main()
 	#		 -b boot/cdboot ${ISODIR}"
 	MKISOFS_CMD="/usr/local/bin/grub-mkrescue -o ${OUTPUT} ${ISODIR} -- -volid ${CDROM_LABEL}"
 
-	if ! command -v mkisofs >/dev/null 2>&1; then
-		error "mkisofs not available.  Please install the sysutils/cdrtools port."
-	fi
-
-	if [ ! -f "${IMGFILE}" ]; then
-		error "Can't find image file (${IMGFILE}) for ${REVISION}, punting"
-	fi
-
-	IMG_SIZE=$(xz --list --robot "$IMGFILE" | awk '/^totals/ { print $5 }')
-	if [ "${IMG_SIZE:-0}" -le 0 ]
-	then
-		error "Image file (${IMGFILE}) is invalid/empty"
-	fi
+	#if ! command -v mkisofs >/dev/null 2>&1; then
+	#	error "mkisofs not available.  Please install the sysutils/cdrtools port."
+	#fi
 
 	cleanup
 
@@ -72,7 +60,6 @@ main()
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
-	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH_HUMANIZED.img.xz
 
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
 	rm -rf ${INSTALLUFSDIR}/usr/local
@@ -85,6 +72,30 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/usr/local/firmware
 	mkdir -p ${INSTALLUFSDIR}/usr/local/install
 	mkdir -p ${INSTALLUFSDIR}/usr/local/sbin
+
+	# Copy python and sqlite3 to the installation directory
+	set -x
+	echo " * * * * * * * * "
+	( cd ${NANO_OBJ}/_.w ; tar -cf - ./usr/local/lib/*python* ./usr/local/bin/python* ./usr/local/lib/libsqlite* ) |
+	tar -xf - -C ${INSTALLUFSDIR}
+	# Copy the installation scripts and modules as well
+	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/freenas-install | tar -C ${INSTALLUFSDIR} -xf -
+	set +x
+# SEF
+# Build packages here.
+
+	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
+	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
+	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
+	    cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.isodir/FreeNAS-MANIFEST
+	else
+		echo "Hey, where are the install filess?"
+	fi
+	if [ -d ${NANO_OBJ}/_.data ]; then
+		mkdir -p ${NANO_OBJ}/_.instufs/data
+		tar -C ${NANO_OBJ}/_.data -cf - . |
+			tar -C ${NANO_OBJ}/_.instufs/data -xpf -
+	fi
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
 	if is_truenas ; then
@@ -109,11 +120,6 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
 	mkdir -p ${INSTALLUFSDIR}/tank
-
-    echo "IMG_SIZE=\"${IMG_SIZE}\"" > \
-        ${INSTALLUFSDIR}/etc/avatar_img_size.conf
-    cp -p ${AVATAR_ROOT}/build/files/0005.verify_media_size.sh \
-        "${INSTALLUFSDIR}/usr/local/pre-install/0005.verify_media_size.sh"
 
 	# XXX: tied too much to the host system to be of value in the
 	# installer code.

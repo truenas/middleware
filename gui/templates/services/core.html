@@ -30,7 +30,7 @@
        <img id="domaincontroller_toggle" name="domaincontroller_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s in srv %}{% if s.srv_service == "domaincontroller" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" {% if domaincontroller.onclick_enable == 'enable' %} onClick="toggle_service(this)" {% endif %}>
        </td>
        <td>
-           <img id="domaincontroller_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Directory Service Settings"|force_escape|force_escape %}', '{{ domaincontroller.get_edit_url }}');" title="{% trans "Domain Controller Settings" %}">
+           <img id="domaincontroller_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Domain Controller Settings"|force_escape|force_escape %}', '{{ domaincontroller.get_edit_url }}');" title="{% trans "Domain Controller Settings" %}">
        </td>
    </tr>
   <tr>
@@ -156,6 +156,18 @@
        </td>
        <td>
            <img id="ups_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "UPS Settings"|force_escape|force_escape %}', '{{ ups.get_edit_url }}');" title="{% trans "UPS Settings" %}">
+       </td>
+  </tr>
+  <!-- Adding the WebDAV toggle here -->
+  <tr>
+       <td>
+           <strong>{% trans "WebDAV" %}</strong>
+       </td>
+       <td>
+            <img id="webdav_toggle" name="webdav_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "webdav" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       </td>
+       <td>
+           <img id="webdav_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "WebDAV Settings"|force_escape|force_escape %}', '{{ webdav.get_edit_url }}');" title="{% trans "WebDAV Settings" %}">
        </td>
   </tr>
 </table>

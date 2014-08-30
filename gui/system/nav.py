@@ -9,6 +9,8 @@ BLACKLIST = [
     'SSL',
     'SystemDataset',
     'Registration',
+    'CertificateAuthority',
+    'Certificate'
 ]
 NAME = _('System')
 ICON = u'SystemIcon'
@@ -65,3 +67,29 @@ class TunableView(TreeNode):
     gname = 'View'
     type = 'opensystem'
     append_to = 'system.Tunable'
+
+
+class Upgrade(TreeNode):
+
+    gname = 'Upgrade'
+    name = _('Upgrade')
+    type = 'opensystem'
+    icon = 'UpgradeIcon'
+
+
+class CertificateAuthorityView(TreeNode):
+
+    gname = 'CertificateAuthority'
+    name = _('CAs')
+    type = 'opensystem'
+    icon = u'CertificateAuthorityIcon'
+    order = 10
+
+
+class CertificateView(TreeNode):
+
+    gname = 'Certificate'
+    name = _('Certificates')
+    type = 'opensystem'
+    icon = u'CertificateIcon'
+    order = 15

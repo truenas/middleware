@@ -10,9 +10,9 @@ If you click "Display System Processes", a screen will open showing the output o
 
 **Figure 15a: System Processes Running on FreeNAS®**
 
-|10000000000001F70000019B91B24E55_png|
+|process.png|
 
-.. |10000000000001F70000019B91B24E55_png| image:: images/10000000000001F70000019B91B24E55.png
+.. |process.png| image:: images/process.png
     :width: 6.0598in
     :height: 3.8055in
 

@@ -34,7 +34,9 @@ import shutil
 import signal
 import socket
 import subprocess
+import sys
 import sysctl
+import tempfile
 import time
 import urllib
 import xmlrpclib
@@ -52,10 +54,19 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
+from freenasOS.Update import CheckForUpdates, Update
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
-from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.common.system import (
+    get_sw_name,
+    get_sw_version, 
+    send_mail
+)
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.ssl import (
+    export_certificate,
+    export_privatekey,
+)
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -63,6 +74,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
+from freenasUI.system.utils import CheckUpdateHandler, UpdateHandler
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -222,6 +234,11 @@ def home(request):
     except:
         registration = None
 
+    try:
+        upgrade = models.Upgrade.objects.order_by("-id")[0]
+    except:
+        upgrade = models.Upgrade.objects.create()
+
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
@@ -230,6 +247,7 @@ def home(request):
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
+        'upgrade': upgrade,
     })
 
 
@@ -815,3 +833,302 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+def upgrade(request):
+
+    if request.method == 'POST':
+        uuid = request.GET.get('uuid')
+        handler = UpdateHandler(uuid=uuid)
+        if not uuid:
+            #FIXME: ugly
+            pid = os.fork()
+            if pid != 0:
+                return HttpResponse(handler.uuid, status=202)
+            else:
+                handler.pid = os.getpid()
+                handler.dump()
+                try:
+                    Update(
+                        get_handler=handler.get_handler,
+                        install_handler=handler.install_handler,
+                    )
+                except Exception, e:
+                    handler.error = unicode(e)
+                handler.finished = True
+                handler.dump()
+                os.kill(handler.pid, 9)
+        else:
+            if handler.error is not False:
+                raise MiddlewareError(handler.error)
+            if not handler.finished:
+                return HttpResponse(handler.uuid, status=202)
+            handler.exit()
+            request.session['allow_reboot'] = True
+            return render(request, 'system/done.html')
+
+    handler = CheckUpdateHandler()
+    try:
+        update = CheckForUpdates(handler=handler.call)
+    except ValueError:
+        update = False
+    return render(request, 'system/upgrade.html', {
+        'update': update,
+        'handler': handler,
+    })
+
+
+def upgrade_progress(request):
+    handler = UpdateHandler()
+    return HttpResponse(
+        json.dumps(handler.load()),
+        content_type='application/json',
+    )
+
+
+def CA_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityImportForm(request.POST)
+        if form.is_valid():
+            m = form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate Authority successfully imported.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityImportForm()
+
+    return render(request, "system/certificate/CA_import.html", {
+        'form': form
+    })
+
+
+def CA_create_internal(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityCreateInternalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate Authority successfully created.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityCreateInternalForm()
+
+    return render(request, "system/certificate/CA_create_internal.html", {
+        'form': form
+    })
+
+
+def CA_create_intermediate(request):
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityCreateIntermediateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Intermediate Certificate Authority successfully created.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityCreateIntermediateForm()
+
+    return render(request, "system/certificate/CA_create_intermediate.html", {
+        'form': form
+    })
+
+
+def CA_edit(request, id):
+
+    ca = models.CertificateAuthority.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateAuthorityEditForm(request.POST, instance=ca)
+        if form.is_valid():
+            m = form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate Authority successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateAuthorityEditForm(instance=ca)
+
+    return render(request, "system/certificate/CA_edit.html", {
+        'form': form
+    })
+
+def buf_generator(buf):
+    for line in buf:
+        yield line
+
+def CA_export_certificate(request, id):
+    ca = models.CertificateAuthority.objects.get(pk=id)
+    cert = export_certificate(ca.cert_certificate)
+
+    response = StreamingHttpResponse(
+        buf_generator(cert), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(cert)
+    response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
+
+    return response
+
+
+def CA_export_privatekey(request, id):
+    ca = models.CertificateAuthority.objects.get(pk=id)
+    key = export_privatekey(ca.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(key), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(key)
+    response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
+
+    return response
+
+
+def certificate_import(request):
+
+    if request.method == "POST":
+        form = forms.CertificateImportForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate successfully imported.")
+            )
+
+    else:
+        form = forms.CertificateImportForm()
+
+    return render(request, "system/certificate/certificate_import.html", {
+        'form': form
+    })
+
+
+def certificate_create_internal(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCreateInternalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate successfully created.")
+            )
+
+    else:
+        form = forms.CertificateCreateInternalForm()
+
+    return render(request, "system/certificate/certificate_create_internal.html", {
+        'form': form
+    })
+
+
+def certificate_create_CSR(request):
+
+    if request.method == "POST":
+        form = forms.CertificateCreateCSRForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Certificate CSR successfully created.")
+            )
+
+    else:
+        form = forms.CertificateCreateCSRForm()
+
+    return render(request, "system/certificate/certificate_create_CSR.html", {
+        'form': form
+    })
+
+
+def certificate_edit(request, id):
+
+    cert = models.Certificate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateEditForm(request.POST, instance=cert)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Internal Certificate successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateEditForm(instance=cert)
+
+    return render(request, "system/certificate/certificate_edit.html", {
+        'form': form
+    })
+
+
+def CSR_edit(request, id):
+
+    cert = models.Certificate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.CertificateCSREditForm(request.POST, instance=cert)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("CSR successfully edited.")
+            )
+
+    else:
+        form = forms.CertificateCSREditForm(instance=cert)
+
+    return render(request, "system/certificate/CSR_edit.html", {
+        'form': form
+    })
+
+
+def certificate_export_certificate(request, id):
+    c = models.Certificate.objects.get(pk=id)
+    cert = export_certificate(c.cert_certificate)
+
+    response = StreamingHttpResponse(
+        buf_generator(cert), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(cert)
+    response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
+
+    return response
+
+
+def certificate_export_privatekey(request, id):
+    c = models.Certificate.objects.get(pk=id)
+    key = export_privatekey(c.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(key), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(key)
+    response['Content-Disposition'] = 'attachment; filename=%s.key' % c
+
+    return response
+
+
+# Need to figure this one out...
+def certificate_export_certificate_and_privatekey(request, id):
+    c = models.Certificate.objects.get(pk=id)
+
+    cert = export_certificate(c.cert_certificate)
+    key = export_privatekey(c.cert_privatekey)
+
+    response = StreamingHttpResponse(
+        buf_generator(combined), content_type='application/octet-stream'
+    )
+    response['Content-Length'] = len(combined)
+    response['Content-Disposition'] = 'attachment; filename=%s.p12' % c
+
+    return response

@@ -45,6 +45,7 @@ BLACKLIST = [
     'NIS',
     'NT4',
     'idmap_ad',
+    'idmap_adex',
     'idmap_autorid',
     'idmap_hash',
     'idmap_ldap',

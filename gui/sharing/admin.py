@@ -106,7 +106,22 @@ class NFSShareFAdmin(BaseFreeAdmin):
         })
         return columns
 
+class WebDAVShareFAdmin(BaseFreeAdmin):
+  
+    icon_model = u"WebDAVShareIcon"
+    icon_add = u"AddWebDAVShareIcon"
+    icon_view = u"ViewAllWebDAVSharesIcon"
+    icon_object = u"WebDAVShareIcon"
+    fields = (
+          'webdav_name',
+          'webdav_comment',
+          'webdav_path',
+          'webdav_ro',
+          'webdav_perm',
+    )
+    resource_name = 'sharing/webdav'
 
 site.register(models.AFP_Share, AFPShareFAdmin)
 site.register(models.CIFS_Share, CIFSShareFAdmin)
 site.register(models.NFS_Share, NFSShareFAdmin)
+site.register(models.WebDAV_Share, WebDAVShareFAdmin)

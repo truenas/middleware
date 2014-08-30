@@ -22,6 +22,8 @@ The following types of shares and services are available:
 * :ref:`Unix (NFS) Shares`: the Network File System (NFS) type of share is accessible by Mac OS X, Linux, BSD, and the professional and enterprise versions
   (not the home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system,
   it may require the installation or configuration of client software on the desktop.
+  
+* :ref:`WebDAV Shares`:
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
@@ -534,6 +536,11 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
+
+.. _WebDAV Shares:
+
+WebDAV Shares
+------------------
 
 .. _Windows (CIFS) Shares:
 

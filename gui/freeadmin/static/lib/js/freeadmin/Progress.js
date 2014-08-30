@@ -125,6 +125,9 @@ define([
           if(data.step) {
             me._curStep = data.step;
           }
+          if(data.details) {
+            me.dapDetails.innerHTML = data.details;
+          }
           if(data.percent) {
             if(data.percent == 100) {
               me._subProgress.update({'indeterminate': true});

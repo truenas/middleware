@@ -864,6 +864,26 @@ require([
 
     }
 
+    webdavprotocolToggle = function() {
+	
+	var select = registry.byId("id_webdav_protocol");
+	var portssl = registry.byId("id_webdav_tcpportssl");
+	var trpossl = portssl.domNode.parentNode.parentNode;
+	var port = registry.byId("id_webdav_tcpport");
+	var trpo = port.domNode.parentNode.parentNode;
+	if (select == 'http') {
+	  domStyle.set(trpo,"display","");
+	  domStyle.set(trpossl,"display","none");
+	} else if (select == 'https') {
+	  domStyle.set(trpo,"display","none");
+	  domStyle.set(trpossl,"display","");
+	} else {
+	  domStyle.set(trpo,"display","");
+	  domStyle.set(trpossl,"display","");
+	}
+      
+    }
+
     upsModeToggle = function() {
 
         var select = registry.byId("id_ups_mode");
@@ -1368,13 +1388,40 @@ require([
 
         } else {
 
-            xhr.post(attrs.url, {
+            var promise = xhr.post(attrs.url, {
                 data: newData,
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
-            }).then(handleReq, function(evt) {
-                handleReq(evt.response.data, evt.response, true);
-                });
+            });
+            promise.then(
+                function(data) {
+                  promise.response.then(function(response) {
+                    if(attrs.longRunning && response.status == 202) {
+                      waitForComplete = function() {
+                        var longpromise = xhr.post(attrs.url + '?uuid=' + data, {
+                          headers: {"X-CSRFToken": CSRFToken},
+                          handleAs: 'text'
+                        });
+                        longpromise.then(function(data) {
+                           longpromise.response.then(function(response) {
+                            if(response.status == 202) {
+                              setTimeout(waitForComplete, 2000);
+                            } else {
+                              handleReq(data);
+                            }
+                           });
+                        });
+                      }
+                      setTimeout(waitForComplete, 2000);
+                    } else {
+                      handleReq(data);
+                    }
+                  });
+                },
+                function(evt) {
+                    handleReq(evt.response.data, evt.response, true);
+                }
+            );
 
         }
 

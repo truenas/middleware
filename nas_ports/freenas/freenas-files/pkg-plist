@@ -40,8 +40,10 @@ usr/local/libexec/freenas-debug/zfs/zfs.sh
 usr/local/libexec/nas/generate_afpd_conf.py
 usr/local/libexec/nas/generate_ctl_conf.py
 usr/local/libexec/nas/generate_krb5_conf.py
+usr/local/libexec/nas/generate_ldap_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
+usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
 usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/samba-backtrace
@@ -110,6 +112,7 @@ etc/ix.rc.d/ix_pf_late
 etc/ix.rc.d/ix_register
 etc/ix.rc.d/ix_sshd_save_keys
 etc/ix.rc.d/ix_textdump
+etc/ix.rc.d/ix-apache
 etc/directoryservice/ActiveDirectory/ctl
 etc/directoryservice/DomainController/ctl
 etc/directoryservice/LDAP/ctl
@@ -137,6 +140,7 @@ etc/ix/templates/pam.d/rsh
 etc/ix/templates/pam.d/samba
 etc/ix/templates/pam.d/sshd
 etc/ix/templates/pam.d/su
+etc/ix/templates/pam.d/sudo
 etc/ix/templates/pam.d/system
 etc/ix/templates/pam.d/telnetd
 etc/ix/templates/pam.d/xdm
@@ -147,5 +151,5 @@ etc/ix/templates/warden/jail-pre-delete
 etc/ix/templates/warden/jail-pre-start
 etc/ix/templates/warden/jail-pre-stop
 etc/netcli
-etc/netcli.sh
+@shell etc/netcli.sh
 etc/find_alias_for_smtplib.py

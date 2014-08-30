@@ -23,29 +23,21 @@ update_sercons()
 	0)
 		if [ -f ${bc} ]; then
 			if [ -s ${bc} ]; then
-				mount -uw -onoatime /
 				rm -f ${bc}
 				touch ${bc}
-				mount -ur /
 			fi
 		else
-			mount -uw -onoatime /
 			touch ${bc}
-			mount -ur /
 		fi
 		;;
 	1)
 		echo "-Dh -S${serspeed}" > ${tmp}
 		if [ -f ${bc} ] ; then
 			if ! [ $(sha256 -q ${tmp}) == $(sha256 -q ${bc}) ] ; then
-				mount -uw -onoatime /
 				mv ${tmp} ${bc}
-				mount -ur /
 			fi
 		else
-			mount -uw -onoatime /
 			mv ${tmp} ${bc}
-			mount -ur /
 		fi
 		;;
         esac

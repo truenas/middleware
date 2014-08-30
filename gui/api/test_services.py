@@ -51,7 +51,8 @@ class AFPResourceTest(APITestCase):
             u'afp_srv_guest_user': u'nobody',
             u'afp_srv_homedir': None,
             u'afp_srv_homedir_enable': False,
-            u'afp_srv_dbpath': '',
+            u'afp_srv_dbpath': None,
+            u'afp_srv_global_aux': u'',
         })
 
     def test_Update(self):
@@ -114,6 +115,7 @@ class CIFSResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': obj.id,
+            u'cifs_SID': None,
             u'cifs_srv_aio_enable': False,
             u'cifs_srv_aio_rs': 4096,
             u'cifs_srv_aio_ws': 4096,
@@ -136,6 +138,7 @@ class CIFSResourceTest(APITestCase):
             u'cifs_srv_syslog': False,
             u'cifs_srv_netbiosname': u'',
             u'cifs_srv_nullpw': False,
+            u'cifs_srv_obey_pam_restrictions': True,
             u'cifs_srv_smb_options': u'',
             u'cifs_srv_timeserver': False,
             u'cifs_srv_unixcharset': u'UTF-8',
@@ -421,6 +424,7 @@ class NFSResourceTest(APITestCase):
             u'nfs_srv_rpcstatd_port': None,
             u'nfs_srv_servers': 4,
             u'nfs_srv_udp': False,
+            u'nfs_srv_v4': False
         })
 
     def test_Update(self):
@@ -1017,6 +1021,8 @@ class iSCSITargetExtentResourceTest(APITestCase):
             u'id': 1,
             u'iscsi_target_extent_comment': u'',
             u'iscsi_target_extent_filesize': u'10MB',
+            u'iscsi_target_extent_insecure_tpc': True,
+            u'iscsi_target_extent_naa': u'0x3424a029e4881552',
             u'iscsi_target_extent_name': u'extent',
             u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
             u'iscsi_target_extent_type': u'File'
@@ -1039,6 +1045,8 @@ class iSCSITargetExtentResourceTest(APITestCase):
             u'id': obj.id,
             u'iscsi_target_extent_comment': u'',
             u'iscsi_target_extent_filesize': u'10MB',
+            u'iscsi_target_extent_insecure_tpc': True,
+            u'iscsi_target_extent_naa': u'',
             u'iscsi_target_extent_name': u'extent',
             u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
             u'iscsi_target_extent_type': u'File'
@@ -1302,14 +1310,12 @@ class iSCSITargetResourceTest(APITestCase):
             u'iscsi_target_alias': None,
             u'iscsi_target_authgroup': None,
             u'iscsi_target_authtype': u'Auto',
-            u'iscsi_target_flags': u'rw',
             u'iscsi_target_initialdigest': u'Auto',
             u'iscsi_target_initiatorgroup': 1,
             u'iscsi_target_logical_blocksize': 512,
             u'iscsi_target_name': u'target',
             u'iscsi_target_portalgroup': 1,
             u'iscsi_target_serial': u'10000001',
-            u'iscsi_target_type': u'Disk'
         })
 
     def test_Retrieve(self):
@@ -1329,14 +1335,12 @@ class iSCSITargetResourceTest(APITestCase):
             u'iscsi_target_alias': None,
             u'iscsi_target_authgroup': None,
             u'iscsi_target_authtype': u'Auto',
-            u'iscsi_target_flags': u'rw',
             u'iscsi_target_initialdigest': u'Auto',
             u'iscsi_target_initiatorgroup': 1,
             u'iscsi_target_logical_blocksize': 512,
             u'iscsi_target_name': u'target',
             u'iscsi_target_portalgroup': 1,
             u'iscsi_target_serial': u'10000001',
-            u'iscsi_target_type': u'Disk'
         }])
 
     def test_Update(self):
@@ -1355,7 +1359,7 @@ class iSCSITargetResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], obj.id)
-        self.assertEqual(data['iscsi_target_alias'], )
+        self.assertEqual(data['iscsi_target_alias'], "test")
 
     def test_Delete(self):
         obj = models.iSCSITarget.objects.create(

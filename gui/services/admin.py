@@ -43,7 +43,6 @@ class FTPFAdmin(BaseFreeAdmin):
         'ftp_tls_opt_no_empty_fragments',
         'ftp_tls_opt_no_session_reuse_required',
         'ftp_tls_opt_stdenvvars',
-        'ftp_tls_opt_use_implicit_ssl',
         'ftp_tls_opt_dns_name_required',
         'ftp_tls_opt_ip_address_required',
         'ftp_ssltls_certfile',
@@ -64,6 +63,7 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
         'iscsi_target_initialdigest',
         'iscsi_target_type',
     )
+    nav_extra = {'order': 10}
 
     resource_mixin = ISCSITargetResourceMixin
 
@@ -81,6 +81,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
             'prefix': 'portalip_set',
         },
     ]
+    nav_extra = {'order': -5}
 
     resource_mixin = ISCSIPortalResourceMixin
 
@@ -107,6 +108,7 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
         'iscsi_target_auth_secret',
         'iscsi_target_auth_peersecret',
         )
+    nav_extra = {'order': 5}
 
     resource_name = 'services/iscsi/authcredential'
 
@@ -118,6 +120,7 @@ class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
     icon_model = u"TargetExtentIcon"
     icon_add = u"AddTargetExtentIcon"
     icon_view = u"ViewAllTargetExtentsIcon"
+    nav_extra = {'order': 20}
 
     resource_mixin = ISCSITargetToExtentResourceMixin
 
@@ -131,6 +134,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
     icon_model = u"ExtentIcon"
     icon_add = u"AddExtentIcon"
     icon_view = u"ViewAllExtentsIcon"
+    nav_extra = {'order': 15}
 
     resource_mixin = ISCSITargetExtentResourceMixin
 

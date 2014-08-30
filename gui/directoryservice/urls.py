@@ -42,6 +42,8 @@ urlpatterns = patterns(
         name="directoryservice_kerberoskeytab_add"),
     url(r"^idmap_ad/(?P<id>\d+)/$", "directoryservice_idmap_ad",
         name="directoryservice_idmap_ad"),
+    url(r"^idmap_adex/(?P<id>\d+)/$", "directoryservice_idmap_adex",
+        name="directoryservice_idmap_adex"),
     url(r"^idmap_autorid/(?P<id>\d+)/$", "directoryservice_idmap_autorid",
         name="directoryservice_idmap_autorid"),
     url(r"^idmap_hash/(?P<id>\d+)/$", "directoryservice_idmap_hash",

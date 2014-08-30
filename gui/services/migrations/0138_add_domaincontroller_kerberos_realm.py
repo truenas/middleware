@@ -11,15 +11,19 @@ from subprocess import Popen, PIPE
 class Migration(DataMigration):
     no_dry_run = True
 
+    depends_on = (
+        ('network', '0015_auto__add_field_globalconfiguration_gc_httpproxy'),
+    )
+
     def get_dc_hostname(self, orm):
         res = db.execute("SELECT gc_hostname "
             "FROM network_globalconfiguration")
         gc_hostname = res[0][0]
 
-	res = db.execute("SELECT gc_domain "
+        res = db.execute("SELECT gc_domain "
             "FROM network_globalconfiguration")
         gc_domain = res[0][0]
-     
+
         hostname = None
         if gc_hostname and gc_domain:
             hostname = "%s.%s" % (gc_hostname, gc_domain)
@@ -41,7 +45,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         try:
-            dc = orm.DomainController.objects.all()[0] 
+            dc = orm.DomainController.objects.all()[0]
             dc_hostname = self.get_dc_hostname(orm)
 
             kr = orm['directoryservice.KerberosRealm']()
@@ -50,7 +54,7 @@ class Migration(DataMigration):
             kr.krb_admin_server = dc_hostname
             kr.krb_kpasswd_server = dc_hostname
             kr.save()
-           
+
         except Exception as e:
             print >> sys.stderr, "ERROR: %s" % e
 

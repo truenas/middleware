@@ -39,6 +39,11 @@ from django.utils.translation import ugettext_lazy as _
 
 log = logging.getLogger('choices')
 
+HTAUTH_CHOICES = (
+	('basic', _('Basic Authentication')),
+	('digest', _('Digest Authentication')),
+	)
+
 SMTPAUTH_CHOICES = (
         ('plain', _('Plain')),
         ('ssl', _('SSL')),
@@ -768,6 +773,11 @@ SHARE_TYPE_CHOICES = (
     ('mac', 'Mac')
 )
 
+CASE_SENSITIVITY_CHOICES = (
+   ('sensitive', 'sensitive'),
+   ('insensitive', 'insensitive'),
+   ('mixed', 'mixed')
+)
 
 class SERIAL_CHOICES(object):
 
@@ -791,6 +801,7 @@ TUNABLE_TYPES = (
 
 IDMAP_CHOICES = (
     ('ad', _('ad')),
+    ('adex', _('adex')),
     ('autorid', _('autorid')),
     ('hash', _('hash')),
     ('ldap', _('ldap')),
@@ -799,4 +810,31 @@ IDMAP_CHOICES = (
     ('rid', _('rid')),
     ('tdb', _('tdb')),
     ('tdb2', _('tdb2'))
+)
+
+CERT_TYPE_CA_CHOICES = (
+    ('ca', _('Import an existing Certificate Authority')),
+    ('internal_ca', _('Create an internal Certificate Authority')),
+    ('intermediate_ca', _('Create an intermediate Certificate Authority')),
+)
+
+CERT_TYPE_CERTIFICATE_CHOICES = (
+    ('cert', _('Import an existing Certificate')),
+    ('internal_cert', _('Create an internal Certificate')),
+    ('csr', _('Create a Certificate Signing Request')),
+)
+
+CERT_KEY_LENGTH_CHOICES = (
+    (512, _('512')),
+    (1024, _('1024')),
+    (2048, _('2048')),
+    (4096, _('4096'))
+)
+
+CERT_DIGEST_ALGORITHM_CHOICES = (
+    ('SHA1', _('SHA1')),
+    ('SHA224', _('SHA224')),
+    ('SHA256', _('SHA256')),
+    ('SHA384', _('SHA384')),
+    ('SHA512', _('SHA512'))
 )

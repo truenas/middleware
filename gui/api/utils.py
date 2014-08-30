@@ -30,15 +30,18 @@ import re
 import urllib
 
 from django.contrib.auth import authenticate
+from django.db.models import FieldDoesNotExist
 from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.models.fields import MultiSelectField
 
 from tastypie.authentication import (
     Authentication, BasicAuthentication, MultiAuthentication
 )
+from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpUnauthorized
@@ -227,6 +230,13 @@ class ResourceMixin(object):
 
 class DojoModelResource(ResourceMixin, ModelResource):
 
+    @classmethod
+    def api_field_from_django_field(cls, f, default=fields.CharField):
+        if isinstance(f, MultiSelectField):
+            return fields.ListField
+        else:
+            return super(DojoModelResource, cls).api_field_from_django_field(f, default=default)
+
     def apply_sorting(self, obj_list, options=None):
         """
         Dojo aware filtering
@@ -280,11 +290,16 @@ class DojoModelResource(ResourceMixin, ModelResource):
             # Add the pk of the foreign key in the mix
             if key.endswith('_id'):
                 noid = key[:-3]
-                field = getattr(bundle.obj.__class__, noid)
+                field = getattr(bundle.obj.__class__, noid, None)
                 if not field:
                     continue
                 if field and isinstance(field.field, ForeignKey):
                     data[noid] = val
+                    del data[key]
+            else:
+                try:
+                    bundle.obj.__class__._meta.get_field(key)
+                except FieldDoesNotExist:
                     del data[key]
         data.update(bundle.data)
         bundle.data = data
