@@ -321,101 +321,68 @@ def service_enabled(name):
 
 
 def ldap_enabled():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    c = h.cursor()
+    from freenasUI.directoryservice.models import LDAP
 
-    enabled = False
-    sql = "select ldap_enable from directoryservice_ldap"
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0] != 0:
-        enabled = True
+    try:
+        ldap = LDAP.objects.all()[0]
+        enabled = ldap.ldap_enable
 
-    c.close()
-    h.close()
+    except: 
+        enabled = False
 
     return enabled
 
 
 def ldap_sudo_configured():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    c = h.cursor()
+    from freenasUI.directoryservice.models import LDAP
 
-    enabled = False
-    sql = "select ldap_sudosuffix from directoryservice_ldap"
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0]:
-        enabled = True
+    try:
+        ldap = LDAP.objects.all()[0]
+        if ldap.ldap_sudosuffix:
+            enabled = True
 
-    c.close()
-    h.close()
+    except: 
+        enabled = False
 
     return enabled
 
 
 def ldap_objects():
     from freenasUI.directoryservice.models import LDAP
+
     return LDAP.objects.all()
 
 
 def activedirectory_enabled():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    c = h.cursor()
+    from freenasUI.directoryservice.models import ActiveDirectory
 
-    enabled = False
-    sql = "select ad_enable from directoryservice_activedirectory"
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0] != 0:
-        enabled = True
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+        enabled = ad.ad_enable
 
-    c.close()
-    h.close()
+    except: 
+        enabled = False
 
     return enabled
 
 
 def activedirectory_has_unix_extensions():
-    ad_unix_extensions = False
-
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    c.execute("SELECT ad_unix_extensions " \
-        "FROM directoryservice_activedirectory ORDER BY -id LIMIT 1")
-    row = c.fetchone()
+    from freenasUI.directoryservice.models import ActiveDirectory
 
     try:
-        if int(row[0]) == 1:
-            ad_unix_extensions = True
-    except:
-        pass
+        ad = ActiveDirectory.objects.all()[0]
+        ad_unix_extensions = ad.ad_unix_extensions 
 
-    c.close()
-    h.close()
+    except:
+        ad_unix_extensions = False
 
     return ad_unix_extensions
 
 
 def activedirectory_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
+    from freenasUI.directoryservice.models import ActiveDirectory
 
-    results = c.execute("SELECT * FROM directoryservice_activedirectory ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
+    return ActiveDirectory.objects.all()
 
 
 def domaincontroller_enabled():

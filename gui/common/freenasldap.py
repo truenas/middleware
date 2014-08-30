@@ -437,123 +437,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             'use_default_domain'
         ]
 
-    def __db_init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_Base.__db_init__: enter")
-
-        ldap = ldap_objects()[0]
-
-        host = port = None
-        tmphost = ldap['ldap_hostname']
-        if tmphost:
-            parts = tmphost.split(':')
-            host = parts[0]
-            if len(parts) > 1 and parts[1]:
-                port = long(parts[1])
-
-        binddn = bindpw = None
-        anonbind = ldap['ldap_anonbind']
-        if not anonbind:
-            binddn = ldap['ldap_binddn']
-            bindpw = ldap['ldap_bindpw']
-        basedn = ldap['ldap_basedn']
-
-        ssl = FREENAS_LDAP_NOSSL
-        if ldap.has_key('ldap_ssl') and ldap['ldap_ssl']:
-            ssl = ldap['ldap_ssl']
-
-        args = {
-            'binddn': binddn,
-            'bindpw': bindpw,
-            'basedn': basedn,
-            'ssl': ssl,
-            }
-        if host:
-            args['host'] = host
-            if port:
-                args['port'] = port
-
-        if kwargs.has_key('flags'):
-            args['flags'] = kwargs['flags']
-
-        super(FreeNAS_LDAP_Base, self).__init__(**args)
-
-        self.binddn = ldap['ldap_binddn']
-        self.bindpw = ldap['ldap_bindpw']
-        self.usersuffix = ldap['ldap_usersuffix']
-        self.groupsuffix = ldap['ldap_groupsuffix']
-        self.machinesuffix = ldap['ldap_machinesuffix']
-        self.passwordsuffix = ldap['ldap_passwordsuffix']
-        self.anonbind = ldap['ldap_anonbind']
-
-        log.debug("FreeNAS_LDAP_Base.__db_init__: leave")
-
-    def __no_db_init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_Base.__no_db_init__: enter")
-
-        host = None
-        tmphost = kwargs.get('host', None)
-        if tmphost:
-            host = tmphost.split(':')[0]
-            port = long(kwargs['port']) if kwargs.has_key('port') else None
-            if port == None:
-                tmp = tmphost.split(':')
-                if len(tmp) > 1:
-                    port = long(tmp[1])
-
-        if kwargs.has_key('port') and kwargs['port'] and not port:
-            port = long(kwargs['port'])
-
-        binddn = bindpw = None
-        anonbind = kwargs.get('anonbind', None)
-        if not anonbind:
-            binddn = kwargs.get('binddn', None)
-            bindpw = kwargs.get('bindpw', None)
-        basedn = kwargs.get('basedn', None)
-
-        ssl = FREENAS_LDAP_NOSSL
-        if kwargs.has_key('ssl') and kwargs['ssl']:
-            ssl = kwargs['ssl']
-
-        args = {
-            'binddn': binddn,
-            'bindpw': bindpw,
-            'basedn': basedn,
-            'ssl': ssl,
-            }
-        if host:
-            args['host'] = host
-            if port:
-                args['port'] = port
-
-        if kwargs.has_key('flags'):
-            args['flags'] = kwargs['flags']
-
-        super(FreeNAS_LDAP_Base, self).__init__(**args)
-
-        self.binddn = kwargs.get('binddn', None)
-        self.bindpw = kwargs.get('bindpw', None)
-        self.usersuffix = kwargs.get('usersuffix', None)
-        self.groupsuffix = kwargs.get('groupsuffix', None)
-        self.machinesuffix = kwargs.get('machinesuffix', None)
-        self.passwordsuffix = kwargs.get('passwordsuffix', None)
-        self.pwencryption = kwargs.get('pwencryption', None)
-        self.anonbind = kwargs.get('anonbind', None)
-
-        log.debug("FreeNAS_LDAP_Base.__no_db_init__: leave")
-
-    def __old_init__(self, **kwargs):
-        log.debug("FreeNAS_LDAP_Base.__init__: enter")
-
-        __initfunc__ = self.__no_db_init__
-        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
-            __initfunc__ = self.__db_init__
-
-        __initfunc__(**kwargs)
-        self.ucount = 0
-        self.gcount = 0
-
-        log.debug("FreeNAS_LDAP_Base.__init__: leave")
-
     def __set_defaults(self): 
         log.debug("FreeNAS_LDAP_Base.__set_defaults: enter")
 
@@ -586,34 +469,42 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
             ldap = ldap_objects()[0]
 
-            (host, port) = self.__name_to_host(ldap.ldap_hostname)
-            if not 'host' in kwargs:
-                kwargs['host'] = host 
-            if not 'port' in kwargs:
-                kwargs['port'] = port
+            for key in ldap.__dict__.keys():
+                if not key.startswith("ldap_"):
+                    continue
 
-            kwargs['basedn'] = ldap.ldap_basedn
-            kwargs['binddn'] = ldap.ldap_binddn
-            kwargs['bindpw'] = ldap.ldap_bindpw
-            kwargs['anonbind'] = ldap.ldap_anonbind 
-            kwargs['usersuffix'] = ldap.ldap_usersuffix
-            kwargs['groupsuffix'] = ldap.ldap_groupsuffix
-            kwargs['passwordsuffix'] = ldap.ldap_passwordsuffix
-            kwargs['machinesuffix'] = ldap.ldap_machinesuffix
-            kwargs['sudosuffix'] = ldap.ldap_sudosuffix
-            kwargs['use_default_domain'] = ldap.ldap_use_default_domain
+                newkey = key.replace("ldap_", "")
+                if newkey == 'hostname':
+                    (host, port) = self.__name_to_host(ldap.__dict__[key])
+                    if not 'host' in kwargs:
+                        kwargs['host'] = host
+                    if not 'port' in kwargs:
+                        kwargs['port'] = port
+            
+                elif newkey == 'anonbind':
+                    if not 'anonbind' in kwargs:
+                        kwargs[newkey] = \
+                             False if long(ldap.__dict__[key]) == 0 else True
 
-            kwargs['kerberos_realm'] = ldap.ldap_kerberos_realm
-            kwargs['kerberos_keytab'] = ldap.ldap_kerberos_keytab
+                elif newkey == 'use_default_domain':
+                    if not 'use_default_domain' in kwargs:
+                        kwargs[newkey] = \
+                             False if long(ldap.__dict__[key]) == 0 else True
 
-            kwargs['ssl'] = ldap.ldap_ssl
+                elif newkey == 'certificate_id':
+                    cert = get_certificateauthority_path(ldap.ldap_certificate) 
+                    kwargs['certfile'] = cert
 
-            if ldap.ldap_certificate:
-                cert = get_certificateauthority_path(ldap.ldap_certificate) 
-                kwargs['certfile'] = cert
+                elif newkey == 'kerberos_realm_id':
+                    kwargs['kerberos_realm'] = ldap.ldap_kerberos_realm 
 
-            kwargs['idmap_backend']= ldap.ldap_idmap_backend
-            kwargs['enable']= ldap.ldap_enable
+                elif newkey == 'kerberos_keytab_id':
+                    kwargs['kerberos_keytab'] = ldap.ldap_kerberos_keytab
+
+                else:
+                    if not newkey in kwargs:
+                        kwargs[newkey] = ldap.__dict__[key] \
+                            if ldap.__dict__[key] else None
     
         for key in kwargs:
             if key in self.__keys():
@@ -1099,15 +990,30 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
             ad = activedirectory_objects()[0]
-            for key in ad.keys():
+            for key in ad.__dict__.keys():
+                if not key.startswith("ad_"):
+                    continue
+
                 newkey = key.replace("ad_", "")
                 if newkey in ('use_keytab', 'verbose_logging',
                     'unix_extensions', 'allow_trusted_doms',
                     'use_default_domain'):
                     self.__dict__[newkey] = \
-                        False if long(ad[key]) == 0 else True
+                        False if long(ad.__dict__[key]) == 0 else True
+
+                elif newkey == 'certificate_id':
+                    cert = get_certificateauthority_path(ad.ad_certificate)
+                    self.__dict__['certfile'] = cert
+
+                elif newkey == 'kerberos_realm_id':
+                    self.__dict__['kerberos_realm'] = ad.ad_kerberos_realm
+
+                elif newkey == 'kerberos_keytab_id':
+                    self.__dict__['kerberos_keytab'] = ad.ad_kerberos_keytab
+
                 else:
-                    self.__dict__[newkey] = ad[key] if ad[key] else None
+                    self.__dict__[newkey] = ad.__dict__[key] \
+                        if ad.__dict__[key] else None
 
         for key in kwargs:
             if key in self.__keys():
