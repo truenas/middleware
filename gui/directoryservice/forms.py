@@ -240,7 +240,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_use_keytab',
         'ad_kerberos_keytab',
         'ad_ssl',
-        'ad_certfile',
+        'ad_certificate',
         'ad_verbose_logging',
         'ad_unix_extensions',
         'ad_allow_trusted_doms',
@@ -400,7 +400,7 @@ class LDAPForm(ModelForm):
         'ldap_kerberos_realm',
         'ldap_kerberos_keytab',
         'ldap_ssl',
-        'ldap_certfile',
+        'ldap_certificate',
         'ldap_idmap_backend'
     ]
 

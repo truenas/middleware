@@ -355,22 +355,8 @@ def ldap_sudo_configured():
 
 
 def ldap_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM directoryservice_ldap ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
+    from freenasUI.directoryservice.models import LDAP
+    return LDAP.objects.all()
 
 
 def activedirectory_enabled():

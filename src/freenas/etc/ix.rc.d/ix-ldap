@@ -9,93 +9,10 @@
 
 . /etc/rc.freenas
 
-save_certificate()
-{
-	local ldap_id="${1}"
-
-	mkdir -p "$(dirname ${LDAPCACERT})"
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ldap_certfile
-
-	FROM
-		directoryservice_ldap
-
-	WHERE
-		id = ${ldap_id}
-
-	" | while read -r ldap_certfile
-	do
-		if [ -f "${ldap_certfile}" ]
-		then
-			cp "${ldap_certfile}" "${LDAPCACERT}"
-			break
-		fi
-
-	done
-}
-    
 generate_ldapconf()
 {
-	local IFS=\|
-	local ldapconf="${LDAP_CONF}"
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		directoryservice_ldap.id as ldap_id,
-		ldap_hostname, 	 
-		ldap_basedn, 	 
-		ldap_anonbind, 	 
-		ldap_binddn, 	 
-		ldap_bindpw, 	 
-		ldap_usersuffix, 	 
-		ldap_groupsuffix, 	 
-		ldap_passwordsuffix, 	 
-		ldap_machinesuffix, 	 
-		ldap_ssl
-
-	FROM
-		directoryservice_ldap
-
-	ORDER BY
-		-directoryservice_ldap.id
-
-	LIMIT 1
-	" | \
-	while eval read ldap_id ldap_hostname ldap_basedn ldap_anonbind ldap_binddn \
-		ldap_bindpw ldap_usersuffix ldap_groupsuffix \
-		ldap_passwordsuffix ldap_machinesuffix ldap_ssl;
-	do
-		[ -z "${ldap_hostname}" -o -z "${ldap_basedn}" ] && return 1
-
-		if [ "${ldap_ssl}" = "start_tls" -o "${ldap_ssl}" = "on" ]; then
-			save_certificate "${ldap_id}"
-
-		fi
-
-		echo "HOST ${ldap_hostname}" > "${ldapconf}"
-		echo "BASE ${ldap_basedn}" >> "${ldapconf}"
-		case "$ldap_ssl" in
-		start_tls)
-			cat >> "${ldapconf}" <<-EOF
-			TLS_CACERT ${LDAPCACERT}
-			TLS_REQCERT allow
-EOF
-			;;
-		on)
-			cat >> "${ldapconf}" <<-EOF
-			URI ldaps://${ldap_hostname}
-			TLS_CACERT ${LDAPCACERT}
-			TLS_REQCERT allow
-EOF
-			;;
-		esac
-	done
-
-	return 0
+	/usr/local/libexec/nas/generate_ldap_conf.py
 }
-
 
 get_cifs_homedir()
 {

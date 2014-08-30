@@ -39,6 +39,12 @@ import types
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 
+from freenasUI.common.ssl import (
+    get_certificate_path,
+    get_privatekey_path,
+    get_certificateauthority_path,
+    get_certificateauthority_privatekey_path
+)
 from freenasUI.common.system import (
     get_freenas_var,
     get_freenas_var_by_file,
@@ -210,8 +216,9 @@ class FreeNAS_LDAP_Directory(object):
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self._handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                self._handle.set_option(ldap.OPT_X_TLS_CACERTFILE,
-                    self.certfile)
+                if self.certfile:
+                    self._handle.set_option(ldap.OPT_X_TLS_CACERTFILE,
+                        self.certfile)
                 self._handle.set_option(ldap.OPT_X_TLS_REQUIRE_CERT,
                     ldap.OPT_X_TLS_DEMAND)
                 self._handle.set_option(ldap.OPT_X_TLS_NEWCTX,
@@ -222,8 +229,7 @@ class FreeNAS_LDAP_Directory(object):
                     self._handle.start_tls_s()
                     log.debug("FreeNAS_LDAP_Directory.open: started TLS")
 
-                except ldap.LDAPError, e:
-                    print 'fuck me running: ', e
+                except ldap.LDAPError as e:
                     self._logex(e)
                     raise e
 
@@ -579,28 +585,35 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
             ldap = ldap_objects()[0]
-            for key in ldap.keys():
-                newkey = key.replace("ldap_", "")
-                if newkey == 'hostname':
-                    (host, port) = self.__name_to_host(ldap[key])
-                    if not 'host' in kwargs:
-                        kwargs['host'] = host 
-                    if not 'port' in kwargs:
-                        kwargs['port'] = port
 
-                elif newkey == 'anonbind':
-                    if not 'anonbind' in kwargs:
-                        kwargs[newkey] = \
-                             False if long(ldap[key]) == 0 else True
- 
-                elif newkey == 'use_default_domain':
-                    if not 'use_default_domain' in kwargs:
-                        kwargs[newkey] = \
-                             False if long(ldap[key]) == 0 else True
+            (host, port) = self.__name_to_host(ldap.ldap_hostname)
+            if not 'host' in kwargs:
+                kwargs['host'] = host 
+            if not 'port' in kwargs:
+                kwargs['port'] = port
 
-                else:
-                    if not newkey in kwargs:
-                        kwargs[newkey] = ldap[key] if ldap[key] else None
+            kwargs['basedn'] = ldap.ldap_basedn
+            kwargs['binddn'] = ldap.ldap_binddn
+            kwargs['bindpw'] = ldap.ldap_bindpw
+            kwargs['anonbind'] = ldap.ldap_anonbind 
+            kwargs['usersuffix'] = ldap.ldap_usersuffix
+            kwargs['groupsuffix'] = ldap.ldap_groupsuffix
+            kwargs['passwordsuffix'] = ldap.ldap_passwordsuffix
+            kwargs['machinesuffix'] = ldap.ldap_machinesuffix
+            kwargs['sudosuffix'] = ldap.ldap_sudosuffix
+            kwargs['use_default_domain'] = ldap.ldap_use_default_domain
+
+            kwargs['kerberos_realm'] = ldap.ldap_kerberos_realm
+            kwargs['kerberos_keytab'] = ldap.ldap_kerberos_keytab
+
+            kwargs['ssl'] = ldap.ldap_ssl
+
+            if ldap.ldap_certificate:
+                cert = get_certificateauthority_path(ldap.ldap_certificate) 
+                kwargs['certfile'] = cert
+
+            kwargs['idmap_backend']= ldap.ldap_idmap_backend
+            kwargs['enable']= ldap.ldap_enable
     
         for key in kwargs:
             if key in self.__keys():

@@ -153,3 +153,51 @@ def write_certificate_signing_request(req, path):
     open(path, "w").write(
         crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
     )
+
+
+def get_certificate_path(name):
+    from freenasUI.system.models import Certificate
+
+    try:
+        certificate = Certificate.objects.get(cert_name=name)
+        path = certificate.get_certificate_path() 
+    except:
+        path = None
+
+    return path
+
+
+def get_privatekey_path(name):
+    from freenasUI.system.models import Certificate
+
+    try:
+        certificate = Certificate.objects.get(cert_name=name)
+        path = certificate.get_privatekey_path()
+    except:
+        path = None
+
+    return path
+
+
+def get_certificateauthority_path(name):
+    from freenasUI.system.models import CertificateAuthority
+
+    try:
+        certificate = CertificateAuthority.objects.get(cert_name=name)
+        path = certificate.get_certificate_path() 
+    except:
+        path = None
+
+    return path
+
+
+def get_certificateauthority_privatekey_path(name):
+    from freenasUI.system.models import CertificateAuthority
+
+    try:
+        certificate = CertificateAuthority.objects.get(cert_name=name)
+        path = certificate.get_privatekey_path()
+    except:
+        path = None
+
+    return path
