@@ -17,15 +17,13 @@ VALID_CATEGORIES+= truenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        zfsd for TrueNAS
 
-NO_STAGE=yes
-
-USE_XZ=		yes
+USES+=		uidfix
 
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 
 EXTRACT_ONLY=
-WRKSRC=/usr/nas_source/zfsd
+WRKSRC?=/usr/nas_source/zfsd
 
 # no checksum, we just used git!
  #extract:
@@ -35,9 +33,9 @@ checksum fetch:
 pre-clean:
 	@cd ${WRKSRC} && ${MAKE} clean cleandepend
 
+pre-install:
+	@${MKDIR} ${STAGEDIR}/etc/rc.d
+
 ALL_TARGET=obj all
 
-MAKE_JOBS_UNSAFE=yes
-
 .include <bsd.port.mk>
-
