@@ -331,6 +331,15 @@ class ActiveDirectoryForm(ModelForm):
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
 
+        ssl = cdata.get("ad_ssl")
+        if ssl in ("off", None):
+            return cdata
+
+        certificate = cdata["ad_certificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "SSL/TLS specified without certificate")
+
         return cdata
 
     def save(self):
