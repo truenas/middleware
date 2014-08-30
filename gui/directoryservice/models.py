@@ -769,7 +769,7 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_certificate = models.ForeignKey(
         CertificateAuthority, 
-        verbose_name=_("SSL Certificate"),
+        verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -1035,7 +1035,7 @@ class LDAP(DirectoryServiceBase):
     )
     ldap_certificate = models.ForeignKey(
         CertificateAuthority, 
-        verbose_name=_("SSL Certificate"),
+        verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True

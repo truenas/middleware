@@ -434,6 +434,19 @@ class LDAPForm(ModelForm):
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
 
+    def clean(self):
+        cdata = self.cleaned_data
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ("off", None):
+            return cdata
+
+        certificate = cdata["ldap_certificate"]
+        if not certificate:
+            raise forms.ValidationError(
+                "SSL/TLS specified without certificate")
+
+        return cdata
+
     def save(self):
         enable = self.cleaned_data.get("ldap_enable")
 
