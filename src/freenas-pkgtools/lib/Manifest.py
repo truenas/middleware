@@ -186,7 +186,7 @@ class Manifest(object):
     def Scheme(self):
         return self._scheme
 
-    def SetScheme(shelf, s):
+    def SetScheme(self, s):
         self._scheme = s
         return
 
