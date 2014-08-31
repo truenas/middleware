@@ -91,12 +91,6 @@ class JailCreateForm(ModelForm):
         label=_("type"),
     )
 
-    jail_vanilla = forms.BooleanField(
-        label=_("vanilla"),
-        required=False,
-        initial=True
-    )
-
     class Meta:
         model = Jails
         exclude = [
@@ -210,8 +204,8 @@ class JailCreateForm(ModelForm):
 #            jail_flags |= WARDEN_CREATE_FLAGS_SRC
 #        if self.cleaned_data['jail_ports']:
 #            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
-        if self.cleaned_data['jail_vanilla']:
-            jail_flags |= WARDEN_CREATE_FLAGS_VANILLA
+
+        jail_flags |= WARDEN_CREATE_FLAGS_VANILLA 
 
         template_create_args = {}
 
