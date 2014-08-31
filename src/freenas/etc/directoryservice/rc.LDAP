@@ -87,20 +87,36 @@ LDAP_show_config()
 {
 	printf "LDAP Config:\n"
 	printf "+---------------------------------------------------------+\n"
-	printf "ldap_hostname:          %s\n" $(LDAP_get ldap_hostname)
-	printf "ldap_basedn:            %s\n" $(LDAP_get ldap_basedn)
-	printf "ldap_anonbind:          %s\n" $(LDAP_get ldap_anonbind)
-	printf "ldap_basedn:            %s\n" $(LDAP_get ldap_basedn)
-	printf "ldap_bindpw:            %s\n" $(LDAP_get ldap_bindpw)
-	printf "ldap_pwencryption:      %s\n" $(LDAP_get ldap_pwencryption)
-	printf "ldap_usersuffix:        %s\n" $(LDAP_get ldap_usersuffix)
-	printf "ldap_groupsuffix:       %s\n" $(LDAP_get ldap_groupsuffix)
-	printf "ldap_passwordsuffix:    %s\n" $(LDAP_get ldap_passwordsuffix)
-	printf "ldap_machinesuffix:     %s\n" $(LDAP_get ldap_machinesuffix)
-	printf "ldap_ssl:               %s\n" $(LDAP_get ldap_ssl)
-	printf "ldap_certfile:          %s\n" $(LDAP_get ldap_certfile)
-	#printf "ldap_options:           %s\n" $(LDAP_get ldap_options)
+	printf "ldap_hostname:           %s\n" $(LDAP_get ldap_hostname)
+	printf "ldap_basedn:             %s\n" $(LDAP_get ldap_basedn)
+	printf "ldap_anonbind:           %s\n" $(LDAP_get ldap_anonbind)
+	printf "ldap_basedn:             %s\n" $(LDAP_get ldap_basedn)
+	printf "ldap_bindpw:             %s\n" $(LDAP_get ldap_bindpw)
+	printf "ldap_pwencryption:       %s\n" $(LDAP_get ldap_pwencryption)
+	printf "ldap_usersuffix:         %s\n" $(LDAP_get ldap_usersuffix)
+	printf "ldap_groupsuffix:        %s\n" $(LDAP_get ldap_groupsuffix)
+	printf "ldap_passwordsuffix:     %s\n" $(LDAP_get ldap_passwordsuffix)
+	printf "ldap_machinesuffix:      %s\n" $(LDAP_get ldap_machinesuffix)
+	printf "ldap_sudosuffix:         %s\n" $(LDAP_get ldap_sudosuffix)
+	printf "ldap_use_default_domain: %s\n" $(LDAP_get ldap_use_defalt_domain)
+	printf "ldap_kerberos_realm_id:  %s\n" $(LDAP_get ldap_kerberos_realm_id)
+	printf "ldap_kerberos_keytab_id: %s\n" $(LDAP_get ldap_kerberos_keytab_id)
+	printf "ldap_ssl:                %s\n" $(LDAP_get ldap_ssl)
+	printf "ldap_certificate_id:     %s\n" $(LDAP_get ldap_certificate_id)
+	printf "ldap_idmap_backend:      %s\n" $(LDAP_get ldap_idmap_backend)
+	printf "ldap_has_samba_schema:   %s\n" $(LDAP_get ldap_has_samba_schema)
+	printf "ldap_enable:             %s\n" $(LDAP_get ldap_has_samba_schema)
 	printf "+---------------------------------------------------------+\n"
+}
+
+LDAP_has_samba_schema()
+{
+	local has_samba_schema="$(LDAP_get ldap_has_samba_schema)"
+	if [ "${has_samba_schema}" = "1" ]
+	then
+		return 0
+	fi
+	return 1
 }
 
 LDAP_log()
@@ -130,9 +146,15 @@ LDAP_load_database_values()
 		ldap_groupsuffix,
 		ldap_passwordsuffix,
 		ldap_machinesuffix,
+		ldap_sudosuffix,
+		ldap_use_default_domain,
+		ldap_kerberos_realm_id,
+		ldap_kerberos_keytab_id,
 		ldap_ssl,
-		ldap_certfile,
-		ldap_options
+		ldap_certificate_id,
+		ldap_idmap_backend,
+		ldap_has_samba_schema,
+		ldap_enable
  
 	FROM
 		directoryservice_ldap

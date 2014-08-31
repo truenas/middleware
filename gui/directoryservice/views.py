@@ -86,7 +86,6 @@ def directoryservice_home(request):
         'kerberosrealm':  kerberosrealm
     })
 
-
 def directoryservice_kerberosrealm(request, id):
     kr = models.KerberosRealm.objects.get(pk=id)
 

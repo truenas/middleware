@@ -347,6 +347,20 @@ def ldap_sudo_configured():
     return enabled
 
 
+def ldap_has_samba_schema():
+    from freenasUI.directoryservice.models import LDAP
+
+    try:
+        ldap = LDAP.objects.all()[0]
+        if ldap.ldap_has_samba_schema:
+            has_samba_schema = True
+
+    except: 
+        has_samba_schema = False
+
+    return has_samba_schema
+
+
 def ldap_objects():
     from freenasUI.directoryservice.models import LDAP
 

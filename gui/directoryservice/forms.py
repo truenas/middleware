@@ -41,6 +41,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -331,6 +332,8 @@ class ActiveDirectoryForm(ModelForm):
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
 
+              
+
         ssl = cdata.get("ad_ssl")
         if ssl in ("off", None):
             return cdata
@@ -415,7 +418,10 @@ class LDAPForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['ldap_idmap_backend_type']
+        exclude = [
+            'ldap_idmap_backend_type',
+            'ldap_has_samba_schema'
+        ]
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
@@ -435,6 +441,7 @@ class LDAPForm(ModelForm):
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         hostname = cdata.get("ldap_hostname")
+
         errors = []
 
         ret = FreeNAS_LDAP.validate_credentials(
@@ -443,10 +450,37 @@ class LDAPForm(ModelForm):
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
 
+    def check_for_samba_schema(self):
+        cdata = self.cleaned_data
+
+        binddn = cdata.get("ldap_binddn")
+        bindpw = cdata.get("ldap_bindpw")
+        basedn = cdata.get("ldap_basedn")
+        hostname = cdata.get("ldap_hostname")
+
+        certfile = None
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ('start_tls', 'on'):
+            certificate = cdata["ldap_certificate"]
+            certfile = get_certificateauthority_path(certificate)
+
+        fl = FreeNAS_LDAP(
+            host=hostname,
+            binddn=binddn,
+            bindpw=bindpw,
+            basedn=basedn,
+            certfile=certfile,
+            ssl=ssl
+        )
+
+        if fl.has_samba_schema():
+            self.instance.ldap_has_samba_schema = True
+
     def clean(self):
         cdata = self.cleaned_data
         ssl = cdata.get("ldap_ssl")
         if ssl in ("off", None):
+            self.check_for_samba_schema()
             return cdata
 
         certificate = cdata["ldap_certificate"]
@@ -454,6 +488,7 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError(
                 "SSL/TLS specified without certificate")
 
+        self.check_for_samba_schema()
         return cdata
 
     def save(self):
@@ -475,6 +510,10 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
+
+    def done(self, request, events):
+        events.append("refreshById('tab_LDAP')")
+        super(LDAPForm, self).done(request, events)
 
 
 class KerberosRealmForm(ModelForm):

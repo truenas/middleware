@@ -1047,6 +1047,9 @@ class LDAP(DirectoryServiceBase):
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
     )
+    ldap_has_samba_schema = models.BooleanField(
+        default=False
+    )
     ldap_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False

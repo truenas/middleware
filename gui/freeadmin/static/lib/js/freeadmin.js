@@ -1693,6 +1693,10 @@ require([
 
     };
 
+    refreshById = function(id) {
+        registry.byId(id).refresh();
+    };
+
     refreshTree = function() {
         var fadeArgs = {
            node: "fntree",

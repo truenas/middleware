@@ -692,6 +692,25 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
         return domain_names
 
+    def has_samba_schema(self):
+        log.debug("FreeNAS_LDAP_Base.has_samba_schema: enter")
+        isopen = self._isopen
+        self.open()
+
+        ret = False
+        scope = ldap.SCOPE_SUBTREE
+ 
+        filter = '(objectclass=sambaDomain)'
+        results = self._search(self.basedn, scope, filter, self.attributes)
+        if results:
+            ret = True
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Base.has_samba_schema: leave")
+        return ret
+
 
 class FreeNAS_LDAP(FreeNAS_LDAP_Base):
     def __init__(self, **kwargs):

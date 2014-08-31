@@ -38,6 +38,7 @@ from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
     ldap_enabled,
+    ldap_has_samba_schema,
     nt4_enabled
 )
 from freenasUI.directoryservice.models import (
@@ -77,6 +78,13 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 
+def smb4_ldap_enabled():
+    ret = False
+
+    if ldap_enabled() and ldap_has_samba_schema():
+        ret = True
+
+    return ret
 
 def is_within_zfs(mountpoint):
     try:
@@ -139,7 +147,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role():
     role = "standalone"
-    if nt4_enabled() or activedirectory_enabled() or ldap_enabled():
+    if nt4_enabled() or activedirectory_enabled() or smb4_ldap_enabled():
         role = "member"
 
     if domaincontroller_enabled():
@@ -692,7 +700,7 @@ def generate_smb4_conf(smb4_conf, role):
         if nt4_enabled():
             add_nt4_conf(smb4_conf)
 
-        elif ldap_enabled():
+        elif smb4_ldap_enabled():
             add_ldap_conf(smb4_conf)
 
         elif activedirectory_enabled():
@@ -1094,7 +1102,7 @@ def main():
             f.write(line + '\n')
         f.close()
 
-    if role == 'member' and ldap_enabled():
+    if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
 
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
