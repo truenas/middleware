@@ -29,9 +29,8 @@
 #
 
 if is_truenas ; then
-	add_port truenas/zfsd LOCALBASE=/
-	add_port truenas/licensor LOCALBASE=/ \
-                            PRODUCT_VERSION=${VERSION} \
+	add_port truenas/zfsd
+	add_port truenas/licensor PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
 fi
