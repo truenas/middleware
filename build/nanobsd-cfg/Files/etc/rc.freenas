@@ -70,8 +70,7 @@
 #
 #	LDAP settings
 #
-: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
-: ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
+: ${SSSD_CONF:="/usr/local/etc/sssd/sssd.conf"}
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 : ${LDAP_TIMEOUT:="0"}

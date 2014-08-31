@@ -39,11 +39,14 @@ ldap_func()
 	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		srv_enable
+		ldap_enable
 	FROM
-		services_services
-	WHERE
-		srv_service = 'ldap'
+		directoryservice_ldap
+
+	ORDER BY
+		-id
+
+	LIMIT 1
 	")
 
 	enabled="DISABLED"
@@ -60,20 +63,23 @@ ldap_func()
 	#	Next, dump LDAP configuration
 	#
 	local IFS="|"
-	read hostname basedn pwencryption anonbind ssl machinesuffix\
-		groupsuffix usersuffix passwordsuffix basedn<<-__LDAP__
+	read hostname basedn binddn anonbind usersuffix \
+		groupsuffix passwordsuffix machinesuffix sudosuffix \
+		use_default_domain ssl has_samba_schema <<-__LDAP__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ldap_hostname,
 		ldap_basedn,
-		ldap_pwencryption,
+		ldap_binddn,
 		ldap_anonbind,
-		ldap_ssl,
-		ldap_machinesuffix,
-		ldap_groupsuffix,
 		ldap_usersuffix,
+		ldap_groupsuffix,
 		ldap_passwordsuffix,
-		ldap_basedn
+		ldap_machinesuffix,
+		ldap_sudosuffix,
+		ldap_use_default_domain,
+		ldap_ssl,
+		ldap_has_samba_schema
 
 	FROM
 		directoryservice_ldap
@@ -92,14 +98,16 @@ __LDAP__
 	cat<<-__EOF__
 	Hostname:               ${hostname}
 	Base DN:                ${basedn}
-	Password encryption:    ${pwencryption}
-	Anonymous bind:         ${anonbind}
-	SSL:                    ${ssl}
-	Machine Suffix:         ${machinesuffix}
-	Group Suffix:           ${groupsuffix}
+	Bind DN:                ${binddn}
+	Anonymous Bind:         ${anonbind}
 	User Suffix:            ${usersuffix}
+	Group Suffix:           ${groupsuffix}
 	Password Suffix:        ${passwordsuffix}
-	Base DN:                ${basedn}
+	Machine Suffix:         ${machinesuffix}
+	SUDO Suffix:            ${sudosuffix}
+	Use Default Domain:     ${use_default_domain}
+	SSL:                    ${ssl}
+	Samba Schema:           ${has_samba_schema}
 __EOF__
 	section_footer
 
@@ -125,10 +133,10 @@ __EOF__
 	section_footer
 
 	#
-	#	Dump NSS configuration
+	#	Dump SSSD configuration
 	#
-	section_header "${NSS_LDAP_CONF}"
-	sc "${NSS_LDAP_CONF}"
+	section_header "${SSSD_CONF}"
+	sc "${SSSD_CONF}" | grep -iv ldap_default_authtok
 	section_footer
 
 	#
