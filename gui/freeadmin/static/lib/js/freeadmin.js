@@ -689,6 +689,57 @@ require([
       }
     }
 
+    generic_certificate_autopopulate = function(url) {
+        var certinfo = null;
+        xhr.get(url, {
+            sync: true
+        }).then(function(data) {
+            certinfo = JSON.parse(data);
+            if (!certinfo) {
+                return;
+            }
+        });
+
+        cert_country = registry.byId("id_cert_country");
+        if (certinfo.cert_country) {
+            cert_country.set("value", certinfo.cert_country);
+        }
+
+        cert_state = registry.byId("id_cert_state");
+        if (certinfo.cert_state) {
+            cert_state.set("value", certinfo.cert_state);
+        }
+
+        cert_city = registry.byId("id_cert_city");
+        if (certinfo.cert_city) {
+            cert_city.set("value", certinfo.cert_city);
+        }
+
+        cert_organization = registry.byId("id_cert_organization");
+        if (certinfo.cert_organization) {
+            cert_organization.set("value", certinfo.cert_organization);
+        }
+
+        cert_email = registry.byId("id_cert_email");
+        if (certinfo.cert_email) {
+            cert_email.set("value", certinfo.cert_email);
+        }
+    }
+
+    CA_autopopulate = function() {
+        var signedby_id = registry.byId("id_cert_signedby").get("value");
+        generic_certificate_autopopulate(
+            '/system/CA/info/' + signedby_id + '/'
+        );
+    }   
+
+    certificate_autopopulate = function() {
+        var signedby_id = registry.byId("id_cert_signedby").get("value");
+        generic_certificate_autopopulate(
+            '/system/certificate/info/' + signedby_id + '/'
+        );
+    }
+
     get_directoryservice_set = function(enable) {
         var fullset = [
             "ad_enable",

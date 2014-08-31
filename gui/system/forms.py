@@ -2025,6 +2025,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        self.fields['cert_signedby'].widget.attrs["onChange"] = (
+            "javascript:CA_autopopulate();"
+        )
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
@@ -2268,6 +2271,9 @@ class CertificateCreateInternalForm(ModelForm):
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        self.fields['cert_signedby'].widget.attrs["onChange"] = (
+            "javascript:certificate_autopopulate();"
+        )
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_INTERNAL

@@ -708,6 +708,18 @@ class CertificateBase(Model):
     def __unicode__(self):
         return self.cert_name
 
+    @property 
+    def cert_certificate_path(self):
+        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
+
+    @property 
+    def cert_privatekey_path(self):
+        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
+
+    @property 
+    def cert_CSR_path(self):
+        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
+
     @property
     def cert_internal(self):
         internal = "YES"

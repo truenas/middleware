@@ -1132,3 +1132,61 @@ def certificate_export_certificate_and_privatekey(request, id):
     response['Content-Disposition'] = 'attachment; filename=%s.p12' % c
 
     return response
+
+
+def certificate_to_json(certtype):
+    try:
+        data = {
+            'cert_root_path':  certtype.cert_root_path,
+            'cert_type': certtype.cert_type,
+            'cert_certificate': certtype.cert_certificate,
+            'cert_privatekey': certtype.cert_privatekey,
+            'cert_CSR': certtype.cert_CSR,
+            'cert_key_length': certtype.cert_key_length,
+            'cert_digest_algorithm': certtype.cert_digest_algorithm,
+            'cert_lifetime': certtype.cert_lifetime,
+            'cert_country': certtype.cert_country,
+            'cert_state': certtype.cert_state,
+            'cert_city': certtype.cert_city,
+            'cert_organization': certtype.cert_organization,
+            'cert_email': certtype.cert_email,
+            'cert_serial': certtype.cert_serial,
+            'cert_internal': certtype.cert_internal,
+            'cert_certificate_path': certtype.cert_certificate_path,
+            'cert_privatekey_path': certtype.cert_privatekey_path,
+            'cert_CSR_path': certtype.cert_CSR_path,
+            'cert_issuer': certtype.cert_issuer,
+            'cert_ncertificates': certtype.cert_ncertificates,
+            'cert_DN': certtype.cert_DN,
+            'cert_from': certtype.cert_from,
+            'cert_until': certtype.cert_until,
+            'cert_type_existing': certtype.cert_type_existing,
+            'cert_type_internal': certtype.cert_type_internal,
+            'cert_type_CSR': certtype.cert_type_CSR,
+            'CA_type_existing': certtype.CA_type_existing,
+            'CA_type_internal': certtype.CA_type_internal,
+            'CA_type_intermediate': certtype.CA_type_intermediate,
+        }
+
+    except Exception as e:
+        log.debug("certificate_to_json: caught exception: '%s'", e)
+
+    try:
+        data['cert_signedby'] = "%s" % certtype.cert_signedby
+    except:
+        data['cert_signedby'] = None
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def CA_info(request, id):
+    return certificate_to_json(
+        models.CertificateAuthority.objects.get(pk=int(id))
+    ) 
+
+
+def certificate_info(request, id):
+    return certificate_to_json(
+        models.Certificate.objects.get(pk=int(id))
+    ) 
