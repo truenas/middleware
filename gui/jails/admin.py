@@ -51,7 +51,7 @@ class JailsFAdmin(BaseFreeAdmin):
     icon_view = u"ServicesIcon"
 
     resource_mixin = JailsResourceMixin
-    exclude_fields = (
+    exclude_fields = [
         'id',
         'jail_ipv4',
         'jail_alias_ipv4',
@@ -65,7 +65,29 @@ class JailsFAdmin(BaseFreeAdmin):
         'jail_defaultrouter_ipv6',
         'jail_vnet',
         'jail_nat'
-    )
+    ]
+
+    advanced_fields = [
+        'jail_alias_ipv4',
+        'jail_bridge_ipv4',
+        'jail_bridge_ipv4_netmask',
+        'jail_alias_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
+        'jail_ipv6',
+        'jail_ipv6_prefix',
+        'jail_alias_ipv6',
+        'jail_bridge_ipv6',
+        'jail_bridge_ipv6_prefix',
+        'jail_alias_bridge_ipv6',
+        'jail_defaultrouter_ipv6',
+        'jail_mac',
+        'jail_iface',
+        'jail_flags',
+        'jail_autostart',
+        'jail_status',
+        'jail_vnet',
+        'jail_nat'
+    ]
 
     def get_datagrid_columns(self):
         columns = []

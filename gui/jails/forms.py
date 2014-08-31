@@ -99,14 +99,14 @@ class JailCreateForm(ModelForm):
 
     class Meta:
         model = Jails
-        exclude = (
+        exclude = [
             'jail_id',
             'jail_status',
             'jail_alias_ipv4',
             'jail_alias_bridge_ipv4',
             'jail_alias_ipv6',
             'jail_alias_bridge_ipv6'
-        )
+        ]
         #FIXME: translate in dojango
         widgets = {
             'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
@@ -519,12 +519,34 @@ class JailsEditForm(ModelForm):
     jail_vnet = forms.BooleanField(label=_("VIMAGE"), required=False)
     jail_nat = forms.BooleanField(label=_("NAT"), required=False)
 
+    advanced_fields = [
+        'jail_alias_ipv4',
+        'jail_bridge_ipv4',
+        'jail_bridge_ipv4_netmask',
+        'jail_alias_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
+        'jail_ipv6',
+        'jail_ipv6_prefix',
+        'jail_alias_ipv6',
+        'jail_bridge_ipv6',
+        'jail_bridge_ipv6_prefix',
+        'jail_alias_bridge_ipv6',
+        'jail_defaultrouter_ipv6',
+        'jail_mac', 
+        'jail_iface',
+        'jail_flags',
+        'jail_autostart',
+        'jail_status',
+        'jail_vnet',
+        'jail_nat'
+    ]
+
     class Meta:
         model = Jails
-        exclude = (
+        exclude = [
             'jail_status',
             'jail_type',
-        )
+        ]
         #FIXME: translate in dojango
         widgets = {
             'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
