@@ -38,9 +38,15 @@ log = logging.getLogger('system.utils')
 class BootEnv(object):
 
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(
+        self, name=None, active=None, mountpoint=None, space=None, created=None
+    ):
         self._id = name
+        self.active = active
+        self.created = created
+        self.mountpoint = mountpoint
         self.name = name
+        self.space = space
 
     @property
     def id(self):

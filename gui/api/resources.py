@@ -2319,6 +2319,9 @@ class BootEnvResource(DojoResource):
 
     id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
+    active = fields.CharField(attribute='active')
+    space = fields.CharField(attribute='space')
+    create = fields.DateTimeField(attribute='created')
 
     class Meta:
         object_class = BootEnv
