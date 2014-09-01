@@ -1,7 +1,8 @@
 import errno
-import os
-import sys
 import logging
+import os
+import subprocess
+import sys
 
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
@@ -41,6 +42,7 @@ def RunCommand(command, args):
     else:
         return False
 
+
 def ListClones():
     # Return a list of boot-environment clones.
     # This is just a simple wrapper for
@@ -54,21 +56,22 @@ def ListClones():
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     except:
-        log.error("Could not run %s" % cmd)
+        log.error("Could not run %s", cmd)
         return None
     for line in p.stdout:
         try:
             fields = line.split()
         except:
-            log.error("Malformed output from %s:  %s" % (beadm, line))
+            log.error("Malformed output from %s:  %s", beadm, line)
             continue
         rv.append(fields[0])
     p.wait()
     if p.returncode != 0:
-        log.error("`%s' returned %d" % (cmd, p.returncode))
+        log.error("`%s' returned %d", cmd, p.returncode)
         return None
     return rv
-    
+
+
 def CreateClone(name, snap_grub = True):
     # Create a boot environment from the current
     # root, using the given name.  Returns False
