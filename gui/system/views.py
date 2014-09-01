@@ -52,7 +52,12 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
-from freenasOS.Update import CheckForUpdates, Update, DeleteClone
+from freenasOS.Update import (
+    ActivateClone,
+    CheckForUpdates,
+    DeleteClone,
+    Update,
+)
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -162,7 +167,11 @@ def bootenv_datagrid_actions(request):
         _('Delete'): {
             'on_click': onclick % (_('Delete'), '_delete_url'),
             'button_name': _('Delete'),
-        }
+        },
+        _('Activate'): {
+            'on_click': onclick % (_('Activate'), '_activate_url'),
+            'button_name': _('Activate'),
+        },
     }
     return HttpResponse(
         json.dumps(actions),
@@ -180,6 +189,23 @@ def bootenv_datagrid_structure(request):
         json.dumps(structure),
         content_type='application/json',
     )
+
+
+def bootenv_activate(request, name):
+    if request.method == 'POST':
+        active = ActivateClone(name)
+        if active is not False:
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully activated.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to activate Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_activate.html', {
+        'name': name,
+    })
 
 
 def bootenv_add(request, source):

@@ -67,6 +67,7 @@ urlpatterns = patterns('freenasUI.system.views',
         [FirmwareTemporaryLocationForm, FirmwareUploadForm]
     ), name='system_firmwizard'),
     url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
+    url(r'^bootenv/activate/(?P<name>[^/]+)/$', 'bootenv_activate', name='system_bootenv_activate'),
     url(r'^bootenv/add/(?P<source>[^/]+)/$', 'bootenv_add', name='system_bootenv_add'),
     url(r'^bootenv/delete/(?P<name>[^/]+)/$', 'bootenv_delete', name='system_bootenv_delete'),
     url(r'^bootenv/datagrid/$', 'bootenv_datagrid', name='system_bootenv_datagrid'),

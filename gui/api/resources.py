@@ -2380,4 +2380,13 @@ class BootEnvResource(DojoResource):
             bundle.data['_delete_url'] = reverse(
                 'system_bootenv_delete', kwargs={'name': bundle.obj.name},
             )
+            bundle.data['_delete_url'] = reverse(
+                'system_bootenv_delete', kwargs={'name': bundle.obj.name},
+            )
+            if 'R' not in bundle.obj.active:
+                bundle.data['_activate_url'] = reverse(
+                    'system_bootenv_activate', kwargs={
+                        'name': bundle.obj.name
+                    },
+                )
         return bundle
