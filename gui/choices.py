@@ -757,7 +757,7 @@ SAMBA4_ROLE_CHOICES = (
 #    ('classic', 'classic primary domain controller'),
 #    ('netbios', 'netbios backup domain controller'),
     ('dc', 'active directory domain controller'),
-    ('sdc', 'active directory secondary domain controller'),
+#    ('sdc', 'active directory secondary domain controller'),
 #    ('member', 'member server'),
 #    ('standalone', 'standalone')
 )
