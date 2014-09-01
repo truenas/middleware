@@ -453,8 +453,9 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError("%s." % errors[0])
 
     def check_for_samba_schema(self):
-        cdata = self.cleaned_data
+        self.clean_bindpw()
 
+        cdata = self.cleaned_data
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
         basedn = cdata.get("ldap_basedn")
