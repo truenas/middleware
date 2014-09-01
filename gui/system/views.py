@@ -34,9 +34,7 @@ import shutil
 import signal
 import socket
 import subprocess
-import sys
 import sysctl
-import tempfile
 import time
 import urllib
 import xmlrpclib
@@ -59,7 +57,7 @@ from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
     get_sw_name,
-    get_sw_version, 
+    get_sw_version,
     send_mail
 )
 from freenasUI.common.pipesubr import pipeopen
@@ -123,6 +121,28 @@ def system_info(request):
     sysinfo = _system_info(request)
     sysinfo['info_hook'] = appPool.get_system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
+
+
+def bootenv_datagrid(request):
+    return render(request, 'system/bootenv_datagrid.html', {
+        'resource_url': reverse('api_dispatch_list', kwargs={
+            'api_name': 'v1.0',
+            'resource_name': 'system/bootenv',
+        }),
+        'structure_url': reverse('system_bootenv_datagrid_structure'),
+    })
+
+
+def bootenv_datagrid_structure(request):
+    structure = {
+        'name': {'label': _('Name')},
+        'active': {'label': _('Active')},
+        'created': {'label': _('Created')},
+    }
+    return HttpResponse(
+        json.dumps(structure),
+        content_type='application/json',
+    )
 
 
 def config_restore(request):

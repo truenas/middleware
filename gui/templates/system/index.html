@@ -6,6 +6,9 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "General" %}', doLayout:false, refreshOnShow: true{% if focus_form == "system.General" %}, selected:true{% endif %}, href: '{{ settings.get_edit_url }}?inline=true'" tab="system.General" class="objrefresh">
     </div>
 
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Boot" %}', doLayout:false {% if focus_form == "system.BootEnv" %},selected: true{% endif %}, href: '{% url "system_bootenv_datagrid" %}', parseOnLoad: true, refreshOnShow: true" tab="system.BootEnv" class="objrefresh">
+    </div>
+
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Advanced" %}', doLayout:false {% if focus_form == "system.Advanced" %},selected: true{% endif %}, href: '{{ advanced.get_edit_url }}?inline=true', parseOnLoad: true, refreshOnShow: true" tab="system.Advanced" class="objrefresh">
     </div>
 

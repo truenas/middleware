@@ -67,6 +67,8 @@ urlpatterns = patterns('freenasUI.system.views',
         [FirmwareTemporaryLocationForm, FirmwareUploadForm]
     ), name='system_firmwizard'),
     url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
+    url(r'^bootenv/datagrid/$', 'bootenv_datagrid', name='system_bootenv_datagrid'),
+    url(r'^bootenv/datagrid/structure/$', 'bootenv_datagrid_structure', name='system_bootenv_datagrid_structure'),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),
