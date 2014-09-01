@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
+from collections import OrderedDict
 import cPickle as pickle
 import json
 import logging
@@ -134,11 +134,11 @@ def bootenv_datagrid(request):
 
 
 def bootenv_datagrid_structure(request):
-    structure = {
-        'name': {'label': _('Name')},
-        'active': {'label': _('Active')},
-        'created': {'label': _('Created')},
-    }
+    structure = OrderedDict((
+        ('name', {'label': _('Name')}),
+        ('active', {'label': _('Active')}),
+        ('created', {'label': _('Created')}),
+    ))
     return HttpResponse(
         json.dumps(structure),
         content_type='application/json',
