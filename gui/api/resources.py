@@ -77,6 +77,7 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -2307,3 +2308,56 @@ class CertificateResourceMixin(object):
             )
 
         return bundle
+
+
+class BootEnvResource(DojoResource):
+
+    id = fields.CharField(attribute='id')
+    name = fields.CharField(attribute='name')
+
+    class Meta:
+        object_class = BootEnv
+        resource_name = 'system/bootenv'
+
+    def get_list(self, request, **kwargs):
+        results = []
+
+        for sfield in self._apply_sorting(request.GET):
+            if sfield.startswith('-'):
+                field = sfield[1:]
+                reverse = True
+            else:
+                field = sfield
+                reverse = False
+            results.sort(
+                key=lambda item: getattr(item, field),
+                reverse=reverse)
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
+        return response

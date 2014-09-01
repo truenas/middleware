@@ -35,6 +35,12 @@ from freenasUI.common import humanize_size
 log = logging.getLogger('system.utils')
 
 
+class BootEnv(object):
+
+    def __init_(self, **kwargs):
+        pass
+
+
 class CheckUpdateHandler(object):
 
     def __init__(self):

@@ -36,6 +36,7 @@ from freenasUI import freeadmin
 from freenasUI.api import v1_api
 from freenasUI.api.resources import (
     AlertResource,
+    BootEnvResource,
     PermissionResource,
     RebootResource,
     ShutdownResource,
@@ -50,6 +51,7 @@ handler500 = 'freenasUI.freeadmin.views.server_error'
 handler404 = 'freenasUI.freeadmin.views.page_not_found'
 
 v1_api.register(AlertResource())
+v1_api.register(BootEnvResource())
 v1_api.register(PermissionResource())
 v1_api.register(RebootResource())
 v1_api.register(ShutdownResource())
