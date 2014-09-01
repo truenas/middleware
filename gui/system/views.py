@@ -191,6 +191,7 @@ def bootenv_add(request, source):
     else:
         form = forms.BootEnvAddForm(source=source)
     return render(request, 'system/bootenv_add.html', {
+        'form': form,
     })
 
 

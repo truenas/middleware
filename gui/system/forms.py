@@ -52,6 +52,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
+from freenasOS import Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
@@ -154,7 +155,12 @@ class BootEnvAddForm(Form):
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        pass
+        clone = Update.CreateClone(
+            self.cleaned_data.get('name'),
+            bename=self._source,
+        )
+        if clone is False:
+            raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
 class CommonWizard(SessionWizardView):
