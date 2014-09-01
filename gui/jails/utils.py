@@ -245,10 +245,12 @@ def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
 
         if ipv4_exclude_dict and str(addr) in ipv4_exclude_dict:
             addr += 1
+            i += 1
             continue
 
         if ping_host(str(addr).split('/')[0]):
             addr += 1
+            i += 1
             continue
 
         else:
@@ -293,10 +295,12 @@ def get_available_ipv6(ipv6_start, ipv6_end=None, ipv6_exclude_dict=None):
 
         if ipv6_exclude_dict and str(addr) in ipv6_exclude_dict:
             addr += 1
+            i += 1
             continue
 
         if ping_host(str(addr).split('/')[0], ping6=True):
             addr += 1
+            i += 1
             continue
 
         else:
