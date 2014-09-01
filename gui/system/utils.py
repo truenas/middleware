@@ -37,8 +37,14 @@ log = logging.getLogger('system.utils')
 
 class BootEnv(object):
 
-    def __init_(self, **kwargs):
-        pass
+
+    def __init__(self, name=None, **kwargs):
+        self._id = name
+        self.name = name
+
+    @property
+    def id(self):
+        return self._id
 
 
 class CheckUpdateHandler(object):

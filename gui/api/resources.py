@@ -40,6 +40,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
+from freenasOS import Update
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -2321,6 +2322,8 @@ class BootEnvResource(DojoResource):
 
     def get_list(self, request, **kwargs):
         results = []
+        for clone in Update.ListClones():
+            results.append(BootEnv(**clone))
 
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
