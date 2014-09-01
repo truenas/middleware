@@ -170,6 +170,9 @@ def bootenv_datagrid_actions(request):
         },
         _('Activate'): {
             'on_click': onclick % (_('Activate'), '_activate_url'),
+            'on_select_after': onselectafter % (
+                'row.data._activate_url === undefined'
+            ),
             'button_name': _('Activate'),
         },
     }
