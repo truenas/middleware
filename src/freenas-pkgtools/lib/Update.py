@@ -1,6 +1,7 @@
-import errno
+from datetime import datetime
 import logging
 import os
+import re
 import subprocess
 import sys
 
@@ -58,18 +59,21 @@ def ListClones():
     except:
         log.error("Could not run %s", cmd)
         return None
-    for line in p.stdout:
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        log.error("`%s' returned %d", cmd, p.returncode)
+        return None
+
+    for line in stdout.strip('\n').split('\n'):
+        log.error("line: %r", line)
         fields = line.split('\t')
         rv.append({
             'name': fields[0],
             'active': fields[1],
             'mountpoint': fields[2],
             'space': fields[3],
+            'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
         })
-    p.communicate()
-    if p.returncode != 0:
-        log.error("`%s' returned %d", cmd, p.returncode)
-        return None
     return rv
 
 
