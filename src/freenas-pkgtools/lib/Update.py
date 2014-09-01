@@ -77,11 +77,14 @@ def ListClones():
     return rv
 
 
-def CreateClone(name, snap_grub = True):
+def CreateClone(name, snap_grub=True, bename=None):
     # Create a boot environment from the current
     # root, using the given name.  Returns False
     # if it could not create it
-    args = ["create", name]
+    if bename:
+        args = ["create", "-e", bename, name]
+    else:
+        args = ["create", name]
     rv = RunCommand(beadm, args)
     if rv is False:
         return False
@@ -92,8 +95,8 @@ def CreateClone(name, snap_grub = True):
         zfs = "/sbin/zfs"
         args = ["snapshot", _grub_snapshot(name)]
         if RunCommand(zfs, args) is False:
-            log.debug("Unable to create grub snapshot Pre-Upgrade-%s" % name)
-        
+            log.debug("Unable to create grub snapshot Pre-Upgrade-%s", name)
+
     return True
 
 def MountClone(name, mountpoint = None):
