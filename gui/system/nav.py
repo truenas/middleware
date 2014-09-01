@@ -26,6 +26,15 @@ class Advanced(TreeNode):
     order = -90
 
 
+class BootEnv(TreeNode):
+
+    gname = 'BootEnv'
+    name = _(u'Boot')
+    icon = 'BootIcon'
+    type = 'opensystem'
+    order = -92
+
+
 class Email(TreeNode):
 
     gname = 'Email'
