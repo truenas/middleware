@@ -106,7 +106,7 @@ generate_plugins_conf()
 		fi
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
-		location ~ /plugins/${name}/${id}/ {
+		location ~ '/plugins/${name}/${id}/' {
 		    fastcgi_pass   ${ip}:${port};
 		    include		fastcgi_params;
 		    root ${ppath};
