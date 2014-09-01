@@ -52,7 +52,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
-from freenasOS.Update import CheckForUpdates, Update
+from freenasOS.Update import CheckForUpdates, Update, DeleteClone
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -158,6 +158,10 @@ def bootenv_datagrid_actions(request):
         _('Create'): {
             'on_click': onclick % (_('Create'), '_add_url'),
             'button_name': _('Create'),
+        },
+        _('Delete'): {
+            'on_click': onclick % (_('Delete'), '_delete_url'),
+            'button_name': _('Delete'),
         }
     }
     return HttpResponse(
@@ -193,6 +197,23 @@ def bootenv_add(request, source):
     return render(request, 'system/bootenv_add.html', {
         'form': form,
         'source': source,
+    })
+
+
+def bootenv_delete(request, name):
+    if request.method == 'POST':
+        delete = DeleteClone(name)
+        if delete is not False:
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully deleted.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to delete Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_delete.html', {
+        'name': name,
     })
 
 

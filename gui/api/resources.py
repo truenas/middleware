@@ -2377,4 +2377,7 @@ class BootEnvResource(DojoResource):
             bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
                 'source': bundle.obj.name,
             })
+            bundle.data['_delete_url'] = reverse(
+                'system_bootenv_delete', kwargs={'name': bundle.obj.name},
+            )
         return bundle
