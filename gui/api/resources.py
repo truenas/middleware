@@ -58,6 +58,7 @@ from freenasUI.common.system import (
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import JailCreateForm, JailsEditForm
+from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1812,6 +1813,9 @@ class JailsResourceMixin(NestedMixin):
 
 
 class JailTemplateResourceMixin(object):
+
+    class Meta:
+        queryset = JailTemplate.objects.exclude(jt_system=True)
 
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)

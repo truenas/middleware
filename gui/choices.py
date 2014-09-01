@@ -738,6 +738,14 @@ JAIL_TEMPLATE_ARCH_CHOICES = (
     ('x86', 'x86')
 )
 
+class JAIL_TEMPLATE_CHOICES(object):
+    def __iter__(self):
+        from freenasUI.jails.models import JailTemplate
+        yield ('', '-----')
+        for jt in JailTemplate.objects.exclude(jt_system=True):
+            yield (jt.jt_name, jt.jt_name)
+     
+
 REPL_CIPHER = (
     ('standard', _('Standard')),
     ('fast', _('Fast')),
@@ -749,6 +757,7 @@ SAMBA4_ROLE_CHOICES = (
 #    ('classic', 'classic primary domain controller'),
 #    ('netbios', 'netbios backup domain controller'),
     ('dc', 'active directory domain controller'),
+    ('sdc', 'active directory secondary domain controller'),
 #    ('member', 'member server'),
 #    ('standalone', 'standalone')
 )

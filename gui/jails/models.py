@@ -438,6 +438,10 @@ class JailTemplate(Model):
         verbose_name=_("URL")
     )
 
+    jt_system = models.BooleanField(
+        default=False
+    )
+
     @property
     def jt_instances(self):
         template = self.jt_name

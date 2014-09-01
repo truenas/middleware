@@ -1012,6 +1012,8 @@ CR()
     shift
 
     mount -t devfs none "${jaildir}/dev"
+    devfs -m "${jaildir}/dev" rule -s 4 applyset
+
     chroot "${jaildir}" /bin/sh -exc "$@" | warden_pipe
     umount "${jaildir}/dev"
 }

@@ -68,6 +68,7 @@ class JailsFAdmin(BaseFreeAdmin):
     ]
 
     advanced_fields = [
+        'jail_type',
         'jail_alias_ipv4',
         'jail_bridge_ipv4',
         'jail_bridge_ipv4_netmask',

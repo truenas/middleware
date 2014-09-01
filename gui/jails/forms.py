@@ -32,6 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.jails.models import (
@@ -88,7 +89,8 @@ log = logging.getLogger('jails.forms')
 
 class JailCreateForm(ModelForm):
     jail_type = forms.ChoiceField(
-        label=_("type"),
+        label=_("Template"),
+        required=False
     )
 
     class Meta:
@@ -128,8 +130,7 @@ class JailCreateForm(ModelForm):
         self.arch = arch
 
         os.environ['EXTRACT_TARBALL_STATUSFILE'] = self.statusfile
-        types = ((jt.jt_name, jt.jt_name) for jt in JailTemplate.objects.all())
-        self.fields['jail_type'].choices = types
+        self.fields['jail_type'].choices = choices.JAIL_TEMPLATE_CHOICES()
         self.fields['jail_type'].widget.attrs['onChange'] = (
             "jail_type_toggle();"
         )
@@ -195,21 +196,17 @@ class JailCreateForm(ModelForm):
         jail_ipv6_prefix = self.cleaned_data.get('jail_ipv6_prefix', jc_ipv6_prefix)
 
         jail_flags = WARDEN_FLAGS_NONE
+        jail_flags |= WARDEN_CREATE_FLAGS_VANILLA 
+
         jail_create_args = {}
         jail_create_args['jail'] = jail_host
 
         w = Warden()
 
-#        if self.cleaned_data['jail_source']:
-#            jail_flags |= WARDEN_CREATE_FLAGS_SRC
-#        if self.cleaned_data['jail_ports']:
-#            jail_flags |= WARDEN_CREATE_FLAGS_PORTS
-
-        jail_flags |= WARDEN_CREATE_FLAGS_VANILLA 
-
         template_create_args = {}
-
         jail_type = self.cleaned_data['jail_type']
+        if not jail_type:
+            jail_type = 'standard'
         template = JailTemplate.objects.get(jt_name=jail_type)
         template_create_args['nick'] = template.jt_name
         template_create_args['tar'] = template.jt_url
@@ -514,6 +511,7 @@ class JailsEditForm(ModelForm):
     jail_nat = forms.BooleanField(label=_("NAT"), required=False)
 
     advanced_fields = [
+        'jail_type',
         'jail_alias_ipv4',
         'jail_bridge_ipv4',
         'jail_bridge_ipv4_netmask',
@@ -537,10 +535,7 @@ class JailsEditForm(ModelForm):
 
     class Meta:
         model = Jails
-        exclude = [
-            'jail_status',
-            'jail_type',
-        ]
+        exclude = [ 'jail_status' ]
         #FIXME: translate in dojango
         widgets = {
             'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
@@ -627,6 +622,7 @@ class JailsEditForm(ModelForm):
         )
 
         self.__set_ro(instance, 'jail_host')
+        self.__set_ro(instance, 'jail_type')
 
     def save(self):
         jail_host = self.cleaned_data.get('jail_host')
