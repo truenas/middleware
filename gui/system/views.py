@@ -125,12 +125,45 @@ def system_info(request):
 
 def bootenv_datagrid(request):
     return render(request, 'system/bootenv_datagrid.html', {
+        'actions_url': reverse('system_bootenv_datagrid_actions'),
         'resource_url': reverse('api_dispatch_list', kwargs={
             'api_name': 'v1.0',
             'resource_name': 'system/bootenv',
         }),
         'structure_url': reverse('system_bootenv_datagrid_structure'),
     })
+
+
+def bootenv_datagrid_actions(request):
+    onclick = '''function() {
+    var mybtn = this;
+    for (var i in grid.selection) {
+        var data = grid.row(i).data;
+        editObject('%s', data.%s, [mybtn,]);
+    }
+}'''
+
+    onselectafter = '''function(evt, actionName, action) {
+    for(var i=0;i < evt.rows.length;i++) {
+        var row = evt.rows[i];
+        if(%s) {
+            query(".grid" + actionName).forEach(function(item, idx) {
+                domStyle.set(item, "display", "none");
+            });
+            break;
+        }
+     }
+}'''
+    actions = {
+        _('Create'): {
+            'on_click': onclick % (_('Create'), '_add_url'),
+            'button_name': _('Create'),
+        }
+    }
+    return HttpResponse(
+        json.dumps(actions),
+        content_type='application/json',
+    )
 
 
 def bootenv_datagrid_structure(request):
