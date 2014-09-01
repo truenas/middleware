@@ -631,6 +631,12 @@ class KerberosRealm(Model):
 
 
 class KerberosKeytab(Model):
+    keytab_name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=120,
+        help_text=_("Descriptive Name."),
+        unique=True
+    )
     keytab_principal = models.CharField(
         verbose_name=_("Principal"),
         max_length=120,

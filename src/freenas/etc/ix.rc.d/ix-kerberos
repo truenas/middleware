@@ -24,7 +24,12 @@ generate_krb5_keytab()
 		directoryservice_kerberoskeytab
         " | while read keytab_file
 	do
-		ktutil copy "${keytab_file}" /etc/krb5.keytab
+		local tmp="$(mktemp /tmp/tmp.XXXXXX)"
+		
+		echo "${keytab_file}" | /usr/bin/b64decode -r > "${tmp}"
+
+		/usr/sbin/ktutil copy "${tmp}" "/etc/krb5.keytab"
+		rm -f "${tmp}"
 	done
 }
 

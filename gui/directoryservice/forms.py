@@ -24,10 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import base64
 import logging
 import os
 import re
 import shutil
+import tempfile
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
@@ -551,19 +553,27 @@ class KerberosKeytabForm(ModelForm):
                 _("A keytab is required.")
             )
 
-        principal = self.cleaned_data.get("keytab_principal")
-        filename = "/data/%s.keytab" % re.sub('[^a-zA-Z0-9]+', '_', principal)
+        encoded = None
+        if hasattr(keytab_file, 'temporary_file_path'):
+            filename = keytab_file.temporary_file_path()
+            with open(temporary_file_path, "r") as f:
+                keytab_contents = f.read()
+                encoded = base64.b64encode(keytab_contents)
+                f.close()
+        else:
+            filename = tempfile.mktemp(dir='/tmp')
+            with open(filename, 'wb+') as f:
+                for c in keytab_file.chunks():
+                    f.write(c)
+                f.close()
+            with open(filename, "r") as f:
+                keytab_contents = f.read()
+                encoded = base64.b64encode(keytab_contents)
+                f.close()
+            os.unlink(filename)
 
-        if keytab_file and keytab_file != filename:
-            if hasattr(keytab_file, 'temporary_file_path'):
-                shutil.move(keytab_file.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in keytab_file.chunks():
-                        f.write(c)
-                    f.close()
+        return encoded
 
-            os.chmod(filename, 0400)
-            self.instance.keytab_file = filename
-
-        return filename
+    def save(self):
+        super(KerberosKeytabForm, self).save()
+        notifier().start("ix-kerberos")
