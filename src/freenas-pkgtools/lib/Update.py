@@ -59,13 +59,14 @@ def ListClones():
         log.error("Could not run %s", cmd)
         return None
     for line in p.stdout:
-        try:
-            fields = line.split()
-        except:
-            log.error("Malformed output from %s:  %s", beadm, line)
-            continue
-        rv.append(fields[0])
-    p.wait()
+        fields = line.split('\t')
+        rv.append({
+            'name': fields[0],
+            'active': fields[1],
+            'mountpoint': fields[2],
+            'space': fields[3],
+        })
+    p.communicate()
     if p.returncode != 0:
         log.error("`%s' returned %d", cmd, p.returncode)
         return None
