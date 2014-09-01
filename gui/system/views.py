@@ -145,6 +145,22 @@ def bootenv_datagrid_structure(request):
     )
 
 
+def bootenv_add(request, source):
+    if request.method == 'POST':
+        form = forms.BootEnvAddForm(request.POST, source=source)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully added.'),
+            )
+        return JsonResp(request, form=form)
+    else:
+        form = forms.BootEnvAddForm(source=source)
+    return render(request, 'system/bootenv_add.html', {
+    })
+
+
 def config_restore(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True

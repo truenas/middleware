@@ -2371,3 +2371,10 @@ class BootEnvResource(DojoResource):
             len(results)
         )
         return response
+
+    def dehydrate(self, bundle):
+        if self.is_webclient(bundle.request):
+            bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
+                'source': bundle.obj.name,
+            })
+        return bundle

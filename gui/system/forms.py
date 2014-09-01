@@ -142,6 +142,21 @@ def clean_path_locked(mp):
             )
 
 
+class BootEnvAddForm(Form):
+
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=50,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self._source = kwargs.pop('source')
+        super(BootEnvAddForm, self).__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        pass
+
+
 class CommonWizard(SessionWizardView):
 
     template_done = 'system/done.html'
