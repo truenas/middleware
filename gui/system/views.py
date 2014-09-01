@@ -192,6 +192,7 @@ def bootenv_add(request, source):
         form = forms.BootEnvAddForm(source=source)
     return render(request, 'system/bootenv_add.html', {
         'form': form,
+        'source': source,
     })
 
 
