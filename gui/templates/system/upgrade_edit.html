@@ -9,4 +9,10 @@
             {% trans "Check for Updates" %}
             </button>
 
+            <button id="btn_{% cls_name form %}_FwUpdate" data-dojo-type="dijit.form.Button" type="button">
+                {% trans "Firmware Update" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    editObject('{% trans "Firmware Update"|force_escape|force_escape %}', '{% url "system_firmwizard" %}');
+                </script>
+            </button>
 {% endblock %}
