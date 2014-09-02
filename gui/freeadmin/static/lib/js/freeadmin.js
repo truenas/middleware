@@ -492,11 +492,14 @@ require([
 
     jail_is_linuxjail = function() {
         var type = registry.byId("id_jail_type");
-        if (type == undefined) {
+        if (!type) {
             return false;
         }
 
         var jail_type = type.get("value");
+        if (!jail_type) {
+            return false;
+        }
 
         var is_linuxjail = false;
         xhr.get('/jails/template_info/' + jail_type + '/', {
@@ -513,11 +516,14 @@ require([
 
     jail_is_x86 = function() {
         var type = registry.byId("id_jail_type");
-        if (type == undefined) {
+        if (!type) {
             return false;
         }
 
         var jail_type = type.get("value");
+        if (!jail_type) {
+            return false;
+        }
 
         var is_x86 = false;
         xhr.get('/jails/template_info/' + jail_type + '/', {
@@ -536,7 +542,6 @@ require([
         var type = registry.byId("id_jail_type");
         var vnet = registry.byId("id_jail_vnet");
         var arch = registry.byId("id_jail_32bit");
-        var vanilla = registry.byId("id_jail_vanilla");
 
         var jail_type = type.get("value");
         var jail_vnet = vnet.get("value");
@@ -546,22 +551,13 @@ require([
             vnet.set("checked", false);
             vnet.set("disabled", true);
 
-            vanilla.set("checked", false);
-            vanilla.set("disabled", true);
-
         } else if (jail_is_x86()) {
             vnet.set("checked", false);
             vnet.set("disabled", true);
 
-            vanilla.set("checked", true);
-            vanilla.set("disabled", false);
-
         } else {
             vnet.set("checked", true);
             vnet.set("disabled", false);
-
-            vanilla.set("checked", true);
-            vanilla.set("disabled", false);
         }
     }
 

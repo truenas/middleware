@@ -463,14 +463,20 @@ def jail_zfsrmsnap(request, id):
 
 
 def jail_template_info(request, name):
+    data = {
+        'jt_name': None,
+        'jt_os': None,
+        'jt_arch': None,
+        'jt_url': None
+    }
 
-    data = { }
-    jt = models.JailTemplate.objects.get(jt_name=name)
-    if jt:
-        data['jt_name'] = jt.jt_name
-        data['jt_os'] = jt.jt_os
-        data['jt_arch'] = jt.jt_arch
-        data['jt_url'] = jt.jt_url
+    if name:
+        jt = models.JailTemplate.objects.get(jt_name=name)
+        if jt:
+            data['jt_name'] = jt.jt_name
+            data['jt_os'] = jt.jt_os
+            data['jt_arch'] = jt.jt_arch
+            data['jt_url'] = jt.jt_url
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
