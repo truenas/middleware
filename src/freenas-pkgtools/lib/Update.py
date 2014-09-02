@@ -99,6 +99,18 @@ def CreateClone(name, snap_grub=True, bename=None):
 
     return True
 
+
+def RenameClone(oldname, newname):
+    # Create a boot environment from the current
+    # root, using the given name.  Returns False
+    # if it could not create it
+    args = ["rename", oldname, newname]
+    rv = RunCommand(beadm, args)
+    if rv is False:
+        return False
+    return True
+
+
 def MountClone(name, mountpoint = None):
     # Mount the given boot environment.  It will
     # create a random name in /tmp.  Returns the
