@@ -79,14 +79,14 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
-from freenasUI.system.forms import BootEnvAddForm
+from freenasUI.system.forms import BootEnvAddForm, BootEnvRenameForm
 from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
     HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
-from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.exceptions import ImmediateHttpResponse, NotFound
 from tastypie.utils import trailing_slash
 from tastypie.validation import FormValidation
 
@@ -2316,7 +2316,7 @@ class CertificateResourceMixin(object):
         return bundle
 
 
-class BootEnvResource(DojoResource):
+class BootEnvResource(NestedMixin, DojoResource):
 
     id = fields.CharField(attribute='id')
     name = fields.CharField(attribute='name')
@@ -2327,6 +2327,39 @@ class BootEnvResource(DojoResource):
     class Meta:
         object_class = BootEnv
         resource_name = 'system/bootenv'
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/rename%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('rename_detail'),
+                name="api_bootenv_rename"
+            ),
+        ]
+
+    def rename_detail(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = BootEnvRenameForm(
+            name=obj.name,
+            data=deserialized,
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Boot Environment has been renamed.', status=202)
 
     def get_list(self, request, **kwargs):
         results = []
@@ -2422,6 +2455,16 @@ class BootEnvResource(DojoResource):
                 )
             )
         return HttpResponse(status=204)
+
+    def obj_get(self, bundle, **kwargs):
+        obj = None
+        for clone in Update.ListClones():
+            if clone['name'] == kwargs.get('pk'):
+                obj = BootEnv(**clone)
+                break
+        if obj is None:
+            raise NotFound("Boot Environment not found")
+        return obj
 
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):
