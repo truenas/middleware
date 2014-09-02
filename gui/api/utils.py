@@ -37,6 +37,8 @@ from django.http import QueryDict
 from freenasUI.account.models import bsdUsers
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.services.exceptions import ServiceFailed
 
 from tastypie.authentication import (
     Authentication, BasicAuthentication, MultiAuthentication
@@ -49,7 +51,7 @@ from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
-log = logging.getLogger('api.resources')
+log = logging.getLogger('api.utils')
 
 
 class DjangoAuthentication(Authentication):
@@ -220,6 +222,18 @@ class ResourceMixin(object):
             paginator.offset, paginator.offset+length-1, len(sorted_objects)
         )
         return response
+
+    def dispatch(self, request_type, request, *args, **kwargs):
+        try:
+            return super(ResourceMixin, self).dispatch(
+                request_type, request, *args, **kwargs
+            )
+        except (MiddlewareError, ServiceFailed), e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error_message': unicode(e),
+                })
+            )
 
     def dehydrate(self, bundle):
         bundle = super(ResourceMixin, self).dehydrate(bundle)
