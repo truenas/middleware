@@ -2389,4 +2389,7 @@ class BootEnvResource(DojoResource):
                         'name': bundle.obj.name
                     },
                 )
+            bundle.data['_rename_url'] = reverse(
+                'system_bootenv_rename', kwargs={'name': bundle.obj.name},
+            )
         return bundle

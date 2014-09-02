@@ -175,6 +175,10 @@ def bootenv_datagrid_actions(request):
             ),
             'button_name': _('Activate'),
         },
+        _('Rename'): {
+            'on_click': onclick % (_('Rename'), '_rename_url'),
+            'button_name': _('Rename'),
+        },
     }
     return HttpResponse(
         json.dumps(actions),
@@ -242,6 +246,24 @@ def bootenv_delete(request, name):
             message=_('Failed to delete Boot Environment.'),
         )
     return render(request, 'system/bootenv_delete.html', {
+        'name': name,
+    })
+
+
+def bootenv_rename(request, name):
+    if request.method == 'POST':
+        form = forms.BootEnvRenameForm(request.POST, name=name)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully renamed.'),
+            )
+        return JsonResp(request, form=form)
+    else:
+        form = forms.BootEnvRenameForm(name=name)
+    return render(request, 'system/bootenv_rename.html', {
+        'form': form,
         'name': name,
     })
 

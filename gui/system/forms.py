@@ -163,6 +163,26 @@ class BootEnvAddForm(Form):
             raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
+class BootEnvRenameForm(Form):
+
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=50,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self._name = kwargs.pop('name')
+        super(BootEnvRenameForm, self).__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        rename = Update.RenameClone(
+            self._name,
+            self.cleaned_data.get('name'),
+        )
+        if rename is False:
+            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+
+
 class CommonWizard(SessionWizardView):
 
     template_done = 'system/done.html'
