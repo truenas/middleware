@@ -323,6 +323,7 @@ def service_enabled(name):
 def ldap_enabled():
     from freenasUI.directoryservice.models import LDAP
 
+    enabled = False
     try:
         ldap = LDAP.objects.all()[0]
         enabled = ldap.ldap_enable
@@ -336,6 +337,7 @@ def ldap_enabled():
 def ldap_sudo_configured():
     from freenasUI.directoryservice.models import LDAP
 
+    enabled = False
     try:
         ldap = LDAP.objects.all()[0]
         if ldap.ldap_sudosuffix:
@@ -350,6 +352,7 @@ def ldap_sudo_configured():
 def ldap_has_samba_schema():
     from freenasUI.directoryservice.models import LDAP
 
+    has_samba_schema = False
     try:
         ldap = LDAP.objects.all()[0]
         if ldap.ldap_has_samba_schema:
@@ -370,6 +373,7 @@ def ldap_objects():
 def activedirectory_enabled():
     from freenasUI.directoryservice.models import ActiveDirectory
 
+    enabled = False
     try:
         ad = ActiveDirectory.objects.all()[0]
         enabled = ad.ad_enable
@@ -383,6 +387,7 @@ def activedirectory_enabled():
 def activedirectory_has_unix_extensions():
     from freenasUI.directoryservice.models import ActiveDirectory
 
+    ad_unix_extensions = False
     try:
         ad = ActiveDirectory.objects.all()[0]
         ad_unix_extensions = ad.ad_unix_extensions 
