@@ -478,6 +478,8 @@ class LDAPForm(ModelForm):
 
         if fl.has_samba_schema():
             self.instance.ldap_has_samba_schema = True
+        else:
+            self.instance.ldap_has_samba_schema = False
 
     def clean(self):
         cdata = self.cleaned_data
