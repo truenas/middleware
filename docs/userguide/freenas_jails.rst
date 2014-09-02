@@ -8,69 +8,30 @@ Jails
 The previous section described how to find, install, and configure software using the Plugins method.
 
 This section describes how to use the Jails method, which allows users who are comfortable using the command line to have more control over software
-installation and management.
+installation and management. Any software installed using the Jails method must be managed from the command line and will not appear in the FreeNAS® GUI. If
+you prefer to use the FreeNAS® GUI to manage software, use :ref:`Plugins` instead.
 
-While the Plugins method automatically created a FreeBSD jail for each installed PBI, the Jails method allows the user to create as many jails as needed and
-to specify the type of jail. Unlike the Plugins method, one is not limited to installing only one application per jail.
+While the Plugins method automatically creates a FreeBSD jail for each installed PBI, the Jails method allows users to create as many jails as needed and
+to customize the operating system and software within each jail. Unlike the Plugins method, one is not limited to installing only one application per jail.
 
 Essentially, a
-`FreeBSD jail <http://en.wikipedia.org/wiki/Freebsd_jail>`_
-provides a very light-weight, operating system-level virtualization. Consider it as an independent FreeBSD operating system running on the same hardware,
-without all of the overhead usually associated with virtualization. This means that any software and configurations within a jail are isolated from both the
-FreeNAS® operating system and any other jails running on that system. During creation, some jail types provide a *VIMAGE* option which provides that jail
-with its own, independent networking stack. This allows the jail to do its own IP broadcasting, which is required by some applications.
+`jail <http://en.wikipedia.org/wiki/Freebsd_jail>`_
+provides a very light-weight, operating system-level virtualization. Consider it as an independent operating system running on the same hardware, without all
+of the overhead usually associated with virtualization. This means that any software and configurations within a jail are isolated from both the FreeNAS®
+operating system and any other jails running on that system. During creation, the *VIMAGE* option can be selected which provides that jail with its own,
+independent networking stack. This allows the jail to do its own IP broadcasting, which is required by some applications.
 
-The following types of jails can be created:
+By default, creating a jail installs an instance of FreeBSD and its software management utilities. This means that you can compile FreeBSD ports and install
+FreeBSD pkgng packages from the command line of a FreeBSD jail.
 
-#.  **Plugin jail:** this type of jail provides the most flexibility for software installation. Similar to the Plugins method, this type of jail supports the
-    installation of FreeNAS® PBIs, which integrate into the FreeNAS® GUI. In addition to FreeNAS® PBIs, you can also install the following types of
-    software within a plugin jail: FreeBSD ports and FreeBSD pkgng packages. However, only FreeNAS® PBIs can be managed from the GUI as the other types of
-    software are managed from the command line of the jail. Further, the other types of jails do not support the ability to install FreeNAS® PBIs. If you
-    plan to install FreeNAS® PBIs, install a plugin jail.
+In addition to FreeBSD jails, one can use the Virtualbox template to install an instance of phpVirtualBox, which provides a web-based front-end to
+VirtualBox. This can be used to install any operating system and to use the software management tools provided by that operating system.
 
-#.  **Port jail:** this type of jail supports the installation of FreeBSD ports and FreeBSD pkgng packages. It does
-    **not** support the installation of FreeNAS® PBIs, meaning that any software installed in this type of jail must be managed from the command line of the
-    jail.
+Advanced users can also create custom templates to automate the creation of pre-installed and customized operating systems.
 
-#.  **Standard jail:** this type of jail is functionally the same as a port jail. A distinction is made for those users who prefer to separate network
-    servers, such as DHCP or DNS services, from other installed software.
-
-#.  **Linux jail:**  due to the
-    `FreeBSD linux binary compatibility layer <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/linuxemu.html>`_
-    , Linux can be installed into a jail and software can be installed using the package management system provided by the installed Linux distro. At this
-    time, the Linux distro must be a 32-bit version and any applications installed into the jail must be available as a 32-bit binary.
-    
-#.  **Virtualbox jail:**
-
-Table 13a summarizes the type of software which can be installed into each type of jail.
-
-.. note:: the software which can be installed into a Linux jail is limited to the command line package management tool provided by that Linux distribution. If
-   you install software into a Linux jail, install the 32-bit version of the software.
-
-**Table 13a: What Type of Software can be Installed Into a Jail?**
-
-+------------------+---------------------+-----------------------------------------------------------+---------------------+
-| **Type of Jail** | **FreeNAS PBI**     | **FreeBSD pkgng package**                                 | **FreeBSD port**    |
-|                  |                     |                                                           |                     |
-+==================+=====================+===========================================================+=====================+
-| Plugin           | yes                 | yes                                                       | yes                 |
-|                  |                     |                                                           |                     |
-+------------------+---------------------+-----------------------------------------------------------+---------------------+
-| Port             | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
-|                  |                     |                                                           |                     |
-+------------------+---------------------+-----------------------------------------------------------+---------------------+
-| Standard         | no                  | no, unless  *vanilla* is unchecked during jail creation   | yes                 |
-|                  |                     |                                                           |                     |
-+------------------+---------------------+-----------------------------------------------------------+---------------------+
-| Linux            | no                  | no                                                        | no                  |
-|                  |                     |                                                           |                     |
-+------------------+---------------------+-----------------------------------------------------------+---------------------+
-
-
-The ability to create multiple jails and multiple types of jails offers great flexibility and application separation to the administrator. For example, one
-could create a separate plugin jail for each FreeNAS® plugin, a separate port jail for each application that is not available as a FreeNAS® plugin, and a
-separate standard jail for each installed network server. Alternately, one has the ability to create one jail and to mix and match how the software is
-installed into that jail.
+The ability to create multiple jails running different operating systems offers great flexibility regarding software management. For example, the
+administrator can choose to provide application separation by installing different applications in each jail, or to create one jail for all installed
+applications, or to mix and match how software is installed into each jail.
 
 The rest of this section describes the following:
 
@@ -78,11 +39,11 @@ The rest of this section describes the following:
 
 * :ref:`Add Jails`
 
+* :ref:`Using phpVirtualBox`
+
 * :ref:`Jail Templates`
 
-* :ref:`Installing FreeNAS® PBIs`
-
-* :ref:`Installing non-PBI Software`
+* :ref:`Installing Software in a FreeBSD Jail`
 
 .. _Jails Configuration:
 
@@ -90,20 +51,25 @@ Jails Configuration
 -------------------
 
 Before you can create any jails, you must first configure which volume or dataset will be used to hold the jails. To do so, click
-:menuselection:`Jails --> Configuration` to access the screen shown in Figure 10.1a.
+:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. While a jail can be installed on a UFS volume, it is recommended to use
+ZFS and to create a dataset to use for the "Jail Root". As jails are created on a ZFS system, they will automatically be installed into their own dataset
+under the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail named *jail1*, it will be installed
+into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
 
 **Figure 13.1a: Global Jail Configuration**
 
-|Figure131a_png|
+|jails1.png|
 
-.. note:: if you have already used the Plugins method, all of the fields in this screen will automatically be filled in. You should still double-check that
-   the pre-configured values are appropriate for your jails.
+.. |jails1.png| image:: images/jails1.png
+    :width: 4.2in
+    :height: 2.4in
 
-While a jail can be installed on a UFS volume, it is recommended to use ZFS and to create a dataset to use for the "Jail Root". As jails are created on a ZFS
-system, they will automatically be installed into their own dataset under the specified path. For example, if you configure a "Jail Root" of
-:file:`/mnt/volume1/dataset1` and create a jail named *jail1*, it will be installed into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
+.. warning:: if you have already used the Plugins method, all of the fields in this screen will automatically be filled in. You should still double-check that
+   the pre-configured IP addressing values are appropriate for your jails and will not conflict with addresses used by other systems on the network.
 
-Table 13.1a summarizes the fields in this configuration screen.
+Table 13.1a summarizes the fields in this configuration screen. Some settings are only available in "Advanced Mode". To see these settings, either click the
+"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
 
 **Table 13.1a: Jail Configuration Options**
 
@@ -112,7 +78,8 @@ Table 13.1a summarizes the fields in this configuration screen.
 |                            |               |                                                                          |
 |                            |               |                                                                          |
 +============================+===============+==========================================================================+
-| Jail Root                  | browse button | mandatory as you cannot add a jail until this is set                     |
+| Jail Root                  | browse button | see explanation below table; mandatory as you cannot add a jail until    |
+|                            |               | this is set                                                              |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
 | IPv4 Network               | string        | see explanation below table; format is IP address of *network/CIDR mask* |
@@ -124,6 +91,18 @@ Table 13.1a summarizes the fields in this configuration screen.
 | IPv4 Network End Address   | string        | see explanation below table; format is IP address of *host/CIDR mask*    |
 |                            |               |                                                                          |
 +----------------------------+---------------+--------------------------------------------------------------------------+
+| IPv6 Network               | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
+|                            |               | over a properly configured IPv6 network                                  |
++----------------------------+---------------+--------------------------------------------------------------------------+
+| IPv6 Network Start Address | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
+|                            |               | over a properly configured IPv6 network                                  |
++----------------------------+---------------+--------------------------------------------------------------------------+
+| IPv6 Network End Address   | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
+|                            |               | over a properly configured IPv6 network                                  |
++----------------------------+---------------+--------------------------------------------------------------------------+
+| Collection URL             | string        | only available in "Advanced Mode"; changing the default may break the    |
+|                            |               | ability to install jails                                                 |
++----------------------------+---------------+--------------------------------------------------------------------------+
 
 
 When selecting the "Jail Root", ensure that the size of the selected volume or dataset is sufficient to hold the number of jails to be installed as well
@@ -134,7 +113,7 @@ than 2GB in size.
    dataset name plus the jail name does not exceed this limit.
 
 FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the IPv4
-network must be :command:`ping`able from the FreeNAS® system in order for your jails and any installed software to be accessible. If your network topology
+network must be :command:`ping` able from the FreeNAS® system in order for your jails and any installed software to be accessible. If your network topology
 requires you to change the default value, you will also need to configure a default gateway, and possibly a static route, to the specified network. If you
 change this value, ensure that the subnet mask value is correct as an incorrect mask can make the IP network unreachable. When in doubt, keep the default
 setting for "IPv4 Network". If you are using VMware, make sure that the vswitch is set to "promiscuous mode".
@@ -147,18 +126,43 @@ are created, they will automatically be assigned the next free IP address within
    double-check the values in these fields. In particular, make sure that the specified IPv4 settings are reachable by clients and that the specified
    addresses are not in use by any other clients in the network.
 
+The "Advanced Mode" fields only need to be completed if jails are to be accessible by IPv6 clients. You should not need to change the "Collection URL".
+
+Once you click the "Save" button to save the configuration, the "Jails" tab will change, as seen in the example shown in Figure 13.1b.
+
+**Figure 13.1a: Jails Tab**
+
+|jails2.png|
+
+.. |jails2.png| image:: images/jails2.png
+    :width: 4.2in
+    :height: 2.4in
+
+You can now create and manage jails as described in the rest of this chapter.
+
 .. _Add Jails:
 
 Add Jails
 ---------
 
-To create a jail, click :menuselection:`Jails --> Add Jails` to access the screen shown in Figure 13.2a. Table 13.2a summarizes the available options.
+To create a jail, click :menuselection:`Jails --> Add Jails` to access the screen shown in Figure 13.2a.
 
 .. note:: the "Add Jails" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
 
 **Figure 13.2a: Creating a Jail**
 
-|Figure132a_png|
+|jails3.png|
+
+.. |jails3.png| image:: images/jails3.png
+    :width: 4.2in
+    :height: 2.4in
+
+By default, the only required value to create a jail is to give it a name and to double-check that the suggested IP address will not conflict with any other
+address being used on the network. The default is to create a FreeBSD jail.
+
+Table 13.2a summarizes the available options. Most settings are only available in "Advanced Mode" and are not needed if the intent is to create a FreeBSD
+jail. To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show
+advanced fields by default" in :menuselection:`System --> Advanced`.
 
 **Table 13.2a: Jail Configuration Options**
 
@@ -170,14 +174,8 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 | Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| type                      | drop-down menu | default choices are *pluginjail*,                                                                            |
-|                           |                | *portjail*,                                                                                                  |
-|                           |                | *standard*,                                                                                                  |
-|                           |                | *debian*,                                                                                                    |                
-|                           |                | *gentoo*,                                                                                                    |
-|                           |                | *ubuntu*,                                                                                                    |
-|                           |                | *suse*, and                                                                                                  |
-|                           |                | *centos*; options are also available for creating the 32-bit versions of a plugin, port, or standard jail    |
+| Template                  | drop-down menu | by default, contains the *VirtualBox* template for creating an instance of phpVirtualBox; advanced users can |
+|                           |                | create and install custom templates as described in `Creating Templates`_                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in "Jails Configuration"; if   |
@@ -189,38 +187,32 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if "VIMAGE" is unchecked                               |
+| IPv4 bridge address       | integer        | see NOTE below; will be greyed out if "VIMAGE" is unchecked                                                  |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with "IPv4 bridge address"; will be greyed out for Linux jails or if       |
-|                           |                | "VIMAGE" is unchecked                                                                                        |
+| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with "IPv4 bridge address"; will be greyed if "VIMAGE" is unchecked        |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out for Linux jails or if "VIMAGE" is    |
-|                           |                | unchecked                                                                                                    |
+| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out if "VIMAGE" is unchecked             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free address from the range specified   |
 |                           |                | in "Jails Configuration"_                                                                                    |
 |                           |                |                                                                                                              |
-|                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv6 prefix length        | drop-down menu | select the prefix length associated with "IPv6 address"                                                      |
 |                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv6 bridge address       | integer        | see NOTE below; will be greyed if "VIMAGE" is unchecked                                                      |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge address       | integer        | see NOTE below; will be greyed out for Linux jails or if *VIMAGE* is unchecked                               |
+| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with "IPv6 address"; will be greyed out if "VIMAGE" is unchecked         |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with *IPv6 address*; will be greyed out for Linux jails or if            |
-|                           |                | "VIMAGE" is unchecked                                                                                        |
+| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out if "VIMAGE" is unchecked             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out for Linux jails or if "VIMAGE" is    |
-|                           |                | unchecked                                                                                                    |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | if a static MAC address is needed, input it here; requires "VIMAGE" to be checked                            |
+| MAC                       | string         | if a static MAC address is needed, input it here; will be greyed out if "VIMAGE" is unchecked                |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g. *allow.sysvipc=1,allow.raw_sockets=1*)              |
@@ -229,16 +221,11 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 | Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface;    |
-|                           |                | does not apply to Linux jails                                                                                |
+| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface     |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if "VIMAGE" is       |
 |                           |                | unchecked                                                                                                    |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| vanilla                   | checkbox       | uncheck this box if you plan to install FreeBSD packages into a *portjail* or                                |
-|                           |                | *standard* jail                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 
@@ -255,17 +242,16 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
    address specified for that jail. The bridge interface will be assigned an alias of the default gateway for that jail, if configured, or the bridge IP, if
    configured; either is correct.
 
-A "traditional" FreeBSD jail does not use VIMAGE or NAT. If you uncheck both of these boxes, you need to configure the jail with an IP address within the
-same network as the interface it is bound to, and that address will be assigned as an alias on that interface. To use a VIMAGE jail on the same subnet,
-disable NAT, and configure an IP address within the same network. In both of these cases, you only configure an IP address and do not configure a bridge or a
-gateway address.
+If you uncheck both the "VIMAGE" and "NAT" boxes, the jail must be configured with an IP address within the same network as the interface it is bound to, and
+that address will be assigned as an alias on that interface. To use a "VIMAGE" jail on the same subnet, uncheck "NAT" and configure an IP address within the
+same network. In both of these cases, you only configure an IP address and do not configure a bridge or a gateway address.
 
-After making your selections, click the "OK" button. The jail will be created and will be added to the tree under Jails. By default, a plugin jail will be
-created and automatically started, unless you specify otherwise.
+After making your selections, click the "OK" button. The jail will be created and will be added to the "Jails" tab as well as in the tree menu under "Jails".
+By default, the jail will automatically start, unless you specify otherwise by unchecking the "Autostart" box.
 
-The first time you add a type of jail, the GUI will automatically download the necessary components from the Internet. If it is unable to connect to the
-Internet, the jail creation will fail. Otherwise, a progress bar will indicate the status of the download and provide an estimated time for the process to
-complete. Once the first jail is created, subsequent jails of that type will be added instantaneously as the downloaded base for creating that type of jail is
+The first time you add a jail or use a template, the GUI will automatically download the necessary components from the Internet. If it is unable to connect to
+the Internet, the jail creation will fail. Otherwise, a progress bar will indicate the status of the download and provide an estimated time for the process to
+complete. Once the first jail is created, or a template used, subsequent jails will be added instantaneously as the downloaded base for creating the jail is
 saved to the "Jail Root".
 
 .. _Managing Jails:
@@ -452,6 +438,11 @@ To delete the storage, click its "Delete" button.
 
 |Figure132e_png|
 
+.. _Using phpVirtualBox:
+
+Using phpVirtualBox
+-------------------
+
 .. _Jail Templates:
 
 Jail Templates
@@ -538,38 +529,9 @@ Table 13.3a summarizes the fields in this screen.
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
 
-.. _Installing FreeNAS® PBIs:
+.. _Installing Software in a FreeBSD Jail:
 
-Installing FreeNAS® PBIs
--------------------------
-
-Typically, FreeNAS® PBIs are installed using Plugins as it provides a method for browsing for available PBIs.
-
-However, if a user has created their own plugins jail, FreeNAS® PBIs can be installed into it. Installing a PBI this way requires the user to first
-`download the PBI <http://www.freenas.org/downloads/plugins/9/>`_
-for their architecture and version.
-
-.. note:: FreeNAS® PBIs can not be installed inside a standard or ports jail.
-
-To install a FreeNAS® PBI, go to :menuselection:`Jails --> View Jails` and click the plugin jail you wish to install into. An example is seen in Figure 13.4a.
-
-**Figure 13.4a: Select Plugin Jail to Install Into**
-
-|Figure134a_png|
-
-Click the "Upload Plugin" button. When prompted, "Browse" to the location of the downloaded PBI then click the "Upload" button to install the PBI. A
-status bar will indicate the progress of the installation. Once installed, the application will appear under the Plugins entry of the tree. In the example
-shown in Figure 13.4b, the MiniDLNA plugin has been installed.
-
-You can now configure and manage the installed software as described in Installing a FreeNAS® PBI Using Plugins.
-
-**Figure 13.4b: FreeNAS PBI Successfully Installed**
-
-|Figure134b_png|
-
-.. _Installing non-PBI Software:
-
-Installing non-PBI Software
+Installing Software in a FreeBSD Jail
 ---------------------------
 
 If a PBI is not available for the software that you wish to install, you can still install and configure the application from the command line of a plugin,

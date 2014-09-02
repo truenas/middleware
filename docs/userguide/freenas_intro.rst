@@ -177,6 +177,9 @@ issued since FreeBSD 9.3 RELEASE.
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
   
+* The Linux jail templates have been removed as they were too experimental and limited to 32-bit. Instead, use the VirtualBox template, which installs a
+  web-based instance of phpVirtualBox, and use that to install the desired Linux distro or any other operating system.
+  
 * The cruciblewds, s3cmd, and Syncthing plugins have been added.
 
 The GUI has been reorganized as follows:
@@ -274,6 +277,10 @@ The following fields have been added or deleted:
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
 * The "Enable NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
+* The "vanilla" option has been removed from :menuselection:`Jails --> Add Jails` as it was confusing.
+
+* The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
 
 .. _Known Issues:
 
