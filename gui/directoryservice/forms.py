@@ -536,6 +536,10 @@ class KerberosRealmForm(ModelForm):
             krb_realm = krb_realm.upper()
         return krb_realm
 
+    def save(self):
+        super(KerberosRealmForm, self).save()
+        notifier().start("ix-kerberos")
+
 
 class KerberosKeytabForm(ModelForm):
     keytab_file = FileField(
