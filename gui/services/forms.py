@@ -1205,6 +1205,11 @@ class iSCSITargetExtentForm(ModelForm):
                     os.makedirs(dirs)
                 except Exception, e:
                     log.error("Unable to create dirs for extent file: %s", e)
+            if not os.path.exists(path):
+                size = self.cleaned_data["iscsi_target_extent_filesize"]
+                if size.lower().endswith("b"):
+                    size = size[:-1]
+                os.system("truncate -s %s %s" % (size, path))
 
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
