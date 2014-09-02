@@ -607,7 +607,7 @@ def parse_status(name, doc, data):
     Parse the scrub statistics from zpool status
     The scrub is within scan: tag and may have multiple lines
     """
-    scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M|re.S)
+    scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M | re.S)
     scrub = {}
     if scan:
         scan = scan.group(1)
@@ -675,7 +675,7 @@ def parse_status(name, doc, data):
     """
     Parse the resilver statistics from zpool status
     """
-    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M|re.S)
+    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M | re.S)
     resilver = {}
     if scan:
         scan = scan.group(1)
@@ -863,8 +863,6 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
     zfslist = ZFSList()
-    last_dataset = None
-    last_depth = 2
     for line in zfs_output:
         if not line:
             continue
