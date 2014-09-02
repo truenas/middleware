@@ -1700,8 +1700,8 @@ class MountPointAccessForm(Form):
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
         choices=(
-            ('unix', 'Unix'),
-            ('windows', 'Windows / Mac ACL'),
+            ('unix', 'Unix / Mac'),
+            ('windows', 'Windows'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
