@@ -249,7 +249,10 @@ def install_available(request, oid):
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             raise MiddlewareError(_("Failed to download plugin"))
 
-        jail = new_default_plugin_jail(plugin.unixname)
+        try:
+            jail = new_default_plugin_jail(plugin.unixname)
+        except Exception as e:
+            raise MiddlewareError(e)
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
