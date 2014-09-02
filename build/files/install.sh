@@ -248,7 +248,7 @@ install_grub() {
 	_disk="$2"
 
 	# Install grub
-	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/zpool.cache freenas-boot
+	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
 	chroot ${_mnt} /etc/rc.d/ldconfig start
 	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/usr/local/etc/grub.d/10_ktrueos
 	# Having 10_ktruos.bak in place causes grub-mkconfig to
