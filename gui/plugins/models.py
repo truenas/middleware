@@ -112,7 +112,10 @@ class Plugins(Model):
     class Meta:
         verbose_name = _(u"Plugin")
         verbose_name_plural = _(u"Plugins")
-
+    
+    def __unicode__(self):
+        return self.plugin_name
+    
     def _service_control(self, request, action):
         addr = request.META.get("SERVER_ADDR")
         # IPv6
