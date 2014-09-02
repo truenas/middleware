@@ -79,6 +79,7 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.forms import BootEnvAddForm
 from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
@@ -2371,6 +2372,45 @@ class BootEnvResource(DojoResource):
             len(results)
         )
         return response
+
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json')
+        )
+
+        form = BootEnvAddForm(
+            data=deserialized,
+            source=deserialized.get('source'),
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+
+        obj = None
+        for clone in Update.ListClones():
+            if clone['name'] == deserialized.get('name'):
+                obj = BootEnv(**clone)
+                break
+
+        if obj is None:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error_message': 'Boot Evionment not found!',
+                })
+            )
+        bundle = self.full_dehydrate(
+            self.build_bundle(obj=obj, request=request)
+        )
+        return self.create_response(
+            request,
+            bundle,
+            response_class=HttpCreated,
+        )
 
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):

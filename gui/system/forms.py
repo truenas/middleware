@@ -151,7 +151,7 @@ class BootEnvAddForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self._source = kwargs.pop('source')
+        self._source = kwargs.pop('source', None)
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
