@@ -2412,6 +2412,17 @@ class BootEnvResource(DojoResource):
             response_class=HttpCreated,
         )
 
+    def obj_delete(self, bundle, **kwargs):
+        delete = Update.DeleteClone(kwargs.get('pk'))
+        if delete is False:
+            raise ImmediateHttpResponse(
+                response=self.error_response(
+                    bundle.request,
+                    'Failed to delete Boot Environment.',
+                )
+            )
+        return HttpResponse(status=204)
+
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):
             bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
