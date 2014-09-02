@@ -116,7 +116,7 @@ generate_group()
 			sed -e 's/,$//g' | tr -d \\n)"
 		echo -n "${members}"
 		if [ "${bsdgrp_builtin}" = "0" ] ; then
-			if !dirsrv_enabled domaincontroller ; then
+			if ! dirsrv_enabled domaincontroller ; then
 				samba_groupmap "${bsdgrp_group}"
 			fi
 		fi
