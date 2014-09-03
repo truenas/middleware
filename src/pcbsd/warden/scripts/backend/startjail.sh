@@ -226,12 +226,14 @@ start_jail_vimage()
   #
   # Configure ndp entries for all IPv6 interfaces
   #
-  for iface in $(ifconfig -l)
+  for iface in $(ifconfig -l | \
+      sed -E 's#((bridge|epair|ipfw|lo)[0-9]+([^ ]+)?)##g')
   do
      if ifconfig ${iface} inet6|egrep -q inet6 2>/dev/null 2>&1
      then
-         ether="$(ifconfig ${iface} ether|grep ether|awk '{ print $2 }')"
-         for ip6 in $(ifconfig ${iface} inet6|grep inet6|awk '{ print $2 }')
+         ether="$(ifconfig ${iface} ether|grep ether | awk '{ print $2 }')"
+         for ip6 in $(ifconfig ${iface} inet6 | \
+             grep inet6 | grep -v scope | awk '{ print $2 }')
          do
              if [ -n "${ether}" ] ; then
                  warden_print "ndp -s ${ip6} ${ether}"
