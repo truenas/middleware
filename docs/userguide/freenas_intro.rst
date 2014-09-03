@@ -243,8 +243,6 @@ The following fields have been added or deleted:
   :menuselection:`Storage --> Replication Tasks -> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
   can significantly reduce the time needed for the initial replication.
 
-* The "Domain logons" checkbox has been added to :menuselection:`Services --> CIFS`.
-
 * The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Encryption Mode",
   "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`. The
   "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos Realm" drop-down menu.
@@ -264,7 +262,10 @@ The following fields have been added or deleted:
 
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 
-* The "Obey pam restrictions" checkbox and the "Idmap Range Low" and "Idmap Range High" fields have been added to :menuselection:`Services --> CIFS`.
+* The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
+
+* The "Domain logons" and "Obey pam restrictions" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
+  :menuselection:`Services --> CIFS`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
 

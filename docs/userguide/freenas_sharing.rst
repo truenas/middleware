@@ -268,21 +268,28 @@ client application.
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
 Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in :menuselection:`Services --> NFS`, then start NFS in
-:menuselection:` Services --> Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are allowed to
-access the NFS share.
+:menuselection:`Services --> Control Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are
+allowed to access the NFS share.
 
 This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating
 systems, and provides some troubleshooting tips.
 
-To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. Table 10.2a summarizes the
-options in this screen.
+To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. 
 
 **Figure 10.2a: Creating an NFS Share**
 
-|Figure102a_png|
+|nfs2.png|
+
+.. |nfs2.png| image:: images/nfs2.png
+    :width: 6.9252in
+    :height: 4.6055in
 
 Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
+
+Table 10.2a summarizes the options in this screen. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
+Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
 
 **Table 10.2a: NFS Share Options**
 
@@ -296,11 +303,11 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Authorized networks | string         | space delimited list of allowed network addresses in the form 1.2.3.0/24 where the number after the slash is a     |
-|                     |                | CIDR mask                                                                                                          |
+| Authorized networks | string         | only available in "Advanced Mode"; space delimited list of allowed network addresses in the form *1.2.3.0/24*      |
+|                     |                | where the number after the slash is a CIDR mask                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Authorized  IP      | string         | space delimited list of allowed IP addresses or hostnames                                                          |
+| Authorized  IP      | string         | only available in "Advanced Mode"; space delimited list of allowed IP addresses or hostnames                       |
 | addresses or hosts  |                |                                                                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
@@ -310,24 +317,28 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | Read only           | checkbox       | prohibits writing to the share                                                                                     |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Quiet               | checkbox       | inhibits some syslog diagnostics which can be useful to avoid some annoying error messages; see                    |
+| Quiet               | checkbox       | only available in "Advanced Mode"; inhibits some syslog diagnostics which can be useful to avoid some annoying     |
+|                     |                | error messages; see                                                                                                |
 |                     |                | `exports(5) <http://www.freebsd.org/cgi/man.cgi?query=exports>`_                                                   |
 |                     |                | for examples                                                                                                       |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Maproot User        | drop-down menu | if a user is selected, the *root* user is limited to that user's permissions                                       |
+| Maproot User        | drop-down menu | only available in "Advanced Mode"; if a user is selected, the *root* user is limited to that user's permissions    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Maproot Group       | drop-down menu | if a group is selected, the *root* user will also be limited to that group's permissions                           |
+| Maproot Group       | drop-down menu | only available in "Advanced Mode"; if a group is selected, the *root* user will also be limited to that group's    |
+|                     |                | permissions                                                                                                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Mapall User         | drop-down menu | the specified user's permissions are used by all clients                                                           |
+| Mapall User         | drop-down menu | only available in "Advanced Mode"; the specified user's permissions are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Mapall Group        | drop-down menu | the specified group's permission are used by all clients                                                           |
+| Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-
+| Security            | selection      |  only available in "Advanced Mode";                                                                                |
+|                     |                |                                                                                                                    |
++---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
 When creating the NFS share, keep the following points in mind:
 
