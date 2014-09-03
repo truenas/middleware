@@ -215,8 +215,7 @@ start_jail_vimage()
   #
   if [ -n "${GATEWAY6}" ] ; then
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        #warden_print "jexec ${JID} route add -inet6 default ${GATEWAY6}"
-        :
+        jexec ${JID} route add -inet6 default "${GATEWAY6}"
      else
         jexec ${JID} route -A inet6 add default gateway "${GATEWAY6}"
      fi 
@@ -228,8 +227,7 @@ start_jail_vimage()
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        #warden_print "jexec ${JID} route add -inet6 default ${JIP}"
-        :
+        jexec ${JID} route add -inet6 default "${JIP}"
      else
         jexec ${JID} route -A inet6 add default gateway "${JIP}"
      fi
