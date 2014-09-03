@@ -347,6 +347,9 @@ Where possible, avoid using a mix of case in filenames as this may cause confusi
 `Representing and resolving filenames with Samba <http://oreilly.com/openbook/samba/book/ch05_04.html>`_
 explains this in more detail.
 
+If a particular user cannot connect to a CIFS share, double-check that their password does not contain the *?* character. If it does, have the user change
+their password and try again.
+
 If permissions work for Windows users but not for OS X users, try disabling "Unix Extensions" and restarting the CIFS service.
 
 If the CIFS service will not start, run this command from Shell to see if there is an error in the configuration::

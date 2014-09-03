@@ -206,7 +206,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | E-mail                     | string          | email address associated with the account                                                                                                             |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Password                   | string          | mandatory unless check box "Disable password login"                                                                                                   |
+| Password                   | string          | mandatory unless check box "Disable password login"; cannot contain a *?*                                                                             |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
@@ -215,7 +215,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
 |                            |                 | setting, set a password for the user using the "Change Password" button for the user in "View Users";                                                 |
-|                            |                 | checking this box will grey out "Lock user" which is mutually exclusive                                                                               |
+|                            |                 | checking this box will grey out "Lock user" and "Permit Sudo" which are mutually exclusive                                                            |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Lock user                  | checkbox        | a checked box prevents user from logging in until the account is unlocked (box is unchecked); checking this                                           |
