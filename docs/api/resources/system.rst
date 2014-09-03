@@ -158,6 +158,116 @@ List resource
    :statuscode 200: no error
 
 
+BootEnv
+-------
+
+The BootEnv resource represents the interface for the boot environment (beadm).
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/bootenv/
+
+   Returns a list of all boot environments.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/bootenv/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+                "id": "default",
+                "active": "NR",
+                "created": "2014-08-27T08:24:00",
+                "name": "default",
+                "space": "896.5M"
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 30
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/system/bootenv/
+
+   Creates a new object and returns it.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/bootenv/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "name": "pre-changes",
+                "source": "default"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "id": "pre-changes",
+                "active": "-",
+                "created": "2014-08-28T08:24:00",
+                "name": "pre-changes",
+                "space": "896.5M"
+        }
+
+   :json string name: name of the new boot environment
+   :json string source: name of the boot environment to clone from
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/system/bootenv/(int:id)/
+
+   Delete boot environment `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/system/bootenv/pre-changes/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
 Email
 --------
 
