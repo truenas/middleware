@@ -367,7 +367,7 @@ disk_is_freenas()
 	    zpool export freenas-boot
 	    return 1
 	fi
-	if [ !-f /tmp/data_old/grub.cfg ]; then
+	if [ ! -f /tmp/data_old/grub.cfg ]; then
 	    umount /tmp/data_old
 	    rmdir /tmp/data_old
 	    zpool export freenas-boot
