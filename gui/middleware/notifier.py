@@ -1892,42 +1892,6 @@ class notifier:
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
 
-    def __create_ufs_volume(self, volume, swapsize, group):
-        geom_vdev = ""
-        u_name = str(volume.vol_name)
-        # TODO: We do not support multiple GEOM levels for now.
-        geom_type = group['type']
-
-        if geom_type == '':
-            # Grab disk from the group
-            disk = group['disks'][0]
-            self.__gpt_labeldisk(type="freebsd-ufs", devname=disk, swapsize=swapsize)
-            devname = self.part_type_from_device('ufs', disk)
-            # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
-            # generated automatically
-            p1 = self._pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
-            stderr = p1.communicate()[1]
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Volume creation failed: "%s"' % error)
-        else:
-            # Grab all disks from the group
-            for disk in group['disks']:
-                # FIXME: turn into a function
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
-                geom_vdev += " /dev/" + disk
-                # TODO gpt label disks
-            self._system("geom %s load" % (geom_type))
-            p1 = self._pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Volume creation failed: "%s"' % error)
-            ufs_device = "/dev/%s/%s" % (geom_type, volume.vol_name)
-            self._system("newfs -U -L %s %s" % (u_name, ufs_device))
-
     def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
         u_name = str(volume.vol_name)
@@ -1962,11 +1926,8 @@ class notifier:
         """Initialize a volume designated by volume_id"""
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
-        if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
-        elif volume.vol_fstype == 'UFS':
-            self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
+        assert volume.vol_fstype == 'ZFS'
+        self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
