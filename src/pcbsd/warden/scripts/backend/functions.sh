@@ -1854,7 +1854,7 @@ is_linux_jail()
 warden_set_ipv4()
 {
    local newip="${1}"
-   local oldip="$(cat "${JMETADIR}/ipv4")"
+   local oldip="$(cat "${JMETADIR}/ipv4" 2>/dev/null)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
    local tmp="$(mktemp /tmp/.wipXXXXXX)"
@@ -1862,6 +1862,10 @@ warden_set_ipv4()
    get_ip_and_netmask "${newip}"  
    newip="${JIP}"
    newmask="${JMASK}"
+
+   if [ -z "${newip}" ] ; then
+      rm -rf "${JMETADIR}/ipv4"
+   fi
 
    if [ -z "${newmask}" ] ; then
       newmask="24"
@@ -1894,7 +1898,7 @@ warden_set_ipv4()
 warden_set_ipv6()
 {
    local newip="${1}"
-   local oldip="$(cat "${JMETADIR}/ipv6")"
+   local oldip="$(cat "${JMETADIR}/ipv6" 2>/dev/null)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
    local tmp="$(mktemp /tmp/.wipXXXXXX)"
@@ -1902,6 +1906,10 @@ warden_set_ipv6()
    get_ip_and_netmask "${newip}"  
    newip="${JIP}"
    newmask="${JMASK}"
+
+   if [ -z "${newip}" ] ; then
+      rm -rf "${JMETADIR}/ipv6"
+   fi
 
    if [ -z "${newmask}" ] ; then
       newmask="64"
