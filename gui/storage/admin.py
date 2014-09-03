@@ -288,7 +288,6 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Volume Status'),
             func="viewModel",
             icon="zpool_status",
-            fstype="ALL",
         )
         actions['VolLock'] = self._action_builder(
             "volume_lock",
