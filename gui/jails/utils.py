@@ -464,12 +464,12 @@ def guess_ipv6_address():
                 st_ipv6_network.prefix_length
             ))  
 
-        #ipv6_addr = get_available_ipv6(st_ipv6_network_start,
-        #    st_ipv6_network_end,
-        #    get_ipv6_exclude_dict()
-        #)
+        ipv6_addr = get_available_ipv6(st_ipv6_network_start,
+            st_ipv6_network_end,
+            get_ipv6_exclude_dict()
+        )
 
-    return ipv4_addr
+    return ipv6_addr
 
 
 #
@@ -635,19 +635,26 @@ def new_default_plugin_jail(basename):
         raise MiddlewareError(_('Unable to find template!'))
 
     try:
-        w.create(
-            jail=jailname,
-            ipv4=addrs['high_ipv4'],
-            flags=(
+        create_args = {
+            'jail': jailname,
+            'ipv4': addrs['high_ipv4'],
+            'flags': (
                 warden.WARDEN_CREATE_FLAGS_LOGFILE |
                 warden.WARDEN_CREATE_FLAGS_TEMPLATE |
                 warden.WARDEN_CREATE_FLAGS_VANILLA |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
-                warden.WARDEN_CREATE_FLAGS_IPV4
+                warden.WARDEN_CREATE_FLAGS_IPV4 |
+                warden.WARDEN_CREATE_FLAGS_IPV6
             ),
-            template='pluginjail',
-            logfile=logfile,
-        )
+            'template': 'pluginjail',
+            'logfile': logfile
+        }
+
+        if addrs['high_ipv6']:
+            create_args['ipv6'] = addrs['high_ipv6']
+
+        w.create(**create_args)
+
     except Exception, e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
 

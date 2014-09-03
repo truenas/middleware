@@ -104,11 +104,16 @@ start_jail_vimage()
       ifconfig "${EPAIRB}" ether "${MAC}"
     fi
   else  
-    MAC="$(ifconfig "${EPAIRB}"|egrep ether|awk '{ print $2 }')"
+    MAC="$(ifconfig "${EPAIRB}" ether|egrep ether|awk '{ print $2 }')"
     if [ -n "${MAC}" ] ; then
       echo "${MAC}" > "${JMETADIR}/mac"
     fi
   fi
+
+  #
+  # Configure lo0 interface
+  #
+  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
 
   # Set epairb's MTU
   ifconfig ${EPAIRB} mtu ${MTU}
@@ -118,7 +123,7 @@ start_jail_vimage()
 
   # Configure the IPv4 addresses
   if [ -n "${IP4}" ] ; then
-     warden_print "Setting IP4 address: ${IP4}"
+     warden_print "Setting IPv4 address: ${IP4}"
      jexec ${JID} ifconfig ${EPAIRB} inet "${IP4}"
      get_ip_and_netmask "${IP4}"
      arp -s "${JIP}" "${MAC}"
@@ -141,8 +146,15 @@ start_jail_vimage()
 
   # Configure the IPv6 addresses
   if [ -n "${IP6}" ] ; then
-     warden_print "Setting IP6 address: ${IP6}"
+     warden_print "Configuring jail for IPv6"
+
+     sysrc -j ${JID} inet6_enable="YES"
+     sysrc -j ${JID} ip6addrctl_enable="YES"
+     sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
+
+     warden_print "Setting IPv6 address: ${IP6}"
      jexec ${JID} ifconfig "${EPAIRB}" inet6 "${IP6}"
+
   fi
   for ip6 in ${IPS6}
   do
@@ -193,7 +205,7 @@ start_jail_vimage()
   #
   if [ -n "${GATEWAY6}" ] ; then
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet6 default "${GATEWAY6}"
+        echo jexec ${JID} route add -inet6 default "${GATEWAY6}"
      else
         jexec ${JID} route -A inet6 add default gateway "${GATEWAY6}"
      fi 
@@ -205,23 +217,34 @@ start_jail_vimage()
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet6 default "${JIP}"
+        echo jexec ${JID} route add -inet6 default "${JIP}"
      else
         jexec ${JID} route -A inet6 add default gateway "${JIP}"
      fi
   fi
 
   #
-  # Configure lo0 interface
+  # Configure ndp entries for all IPv6 interfaces
   #
-  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
+  for iface in $(ifconfig -l)
+  do
+     if ifconfig ${iface} inet6|egrep -q inet6 2>/dev/null 2>&1
+     then
+         ether="$(ifconfig ${iface} ether|grep ether|awk '{ print $2 }')"
+         for ip6 in $(ifconfig ${iface} inet6|grep inet6|awk '{ print $2 }')
+         do
+             jexec ${JID} ndp -s "${ip6}" "${ether}"
+         done
+     fi
+  done 
 
   #
   # If NAT is not enabled, return now
   #
   if [ "${NATENABLE}" = "NO" ] ; then
      if [ -z "${GATEWAY4}" ] ; then
-        GATEWAY4="$(get_default_route)"
+        GATEWAY4="$(get_default_ipv4_route)"
+        GATEWAY6="$(get_default_ipv6_route)"
      fi 
      if [ -n "${GATEWAY4}" ] ; then 
         local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
@@ -234,6 +257,13 @@ start_jail_vimage()
            get_ip_and_netmask "${GATEWAY4}"
            jexec ${JID} arp -s "${JIP}" "${ether}"
         fi
+     fi
+     if [ -n "${GATEWAY6}" ] ; then 
+        if [ "${LINUXJAIL}" != "YES" ] ; then
+           echo jexec ${JID} route add -inet default "${GATEWAY6}"
+        else
+           jexec ${JID} route add default gateway "${GATEWAY6}"
+        fi 
      fi
 
      return 0
@@ -254,25 +284,10 @@ start_jail_vimage()
      sysctl net.inet6.ip6.forwarding=1
   fi
 
-  firewall_enable=`egrep '^firewall_enable' /etc/rc.conf|cut -f2 -d'='|sed 's|"||g'`
-  firewall_type=`egrep '^firewall_type' /etc/rc.conf|cut -f2 -d'='|sed 's|"||g'`
+  if [ "$(sysrc firewall_enable)" != "YES" -o "$(sysrc firewall_type)" != "open" ] ; then
+     sysrc firewall_enable="YES"
+     sysrc firewall_type="open"
 
-  if [ "${firewall_enable}" != "YES" -o "${firewall_type}" != "open" ] ; then
-     tmp_rcconf=`mktemp /tmp/.wdn.XXXXXX`
-     egrep -v '^firewall_(enable|type)' /etc/rc.conf >> "${tmp_rcconf}"
-
-     cat<<__EOF__>>"${tmp_rcconf}"
-firewall_enable="YES"
-firewall_type="open"
-__EOF__
-
-     if [ -s "${tmp_rcconf}" ] ; then
-        cp /etc/rc.conf /var/tmp/rc.conf.bak
-        mv "${tmp_rcconf}" /etc/rc.conf
-        if [ "$?" != "0" ] ; then
-           mv /var/tmp/rc.conf.bak /etc/rc.conf
-        fi
-     fi
      /sbin/ipfw -f flush 
      warden_run ipfw add allow all from any to any via lo0
   fi
@@ -508,7 +523,7 @@ if is_symlinked_mountpoint "${JAILDIR}/dev"; then
    warden_print "${JAILDIR}/dev has symlink as parent, not mounting"
 else
    mount -t devfs devfs "${JAILDIR}/dev"
-   devfs -m "${JAILDIR}/dev" rule -s 4 applyset
+   #devfs -m "${JAILDIR}/dev" rule -s 4 applyset
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then

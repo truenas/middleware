@@ -649,7 +649,7 @@ get_interface_ipv6_aliases()
    ${jexec} ifconfig "${iface}" | grep -w inet6 | tail -${count} | awk '{ print $2 }'
 }
 
-get_default_route()
+get_default_ipv4_route()
 {
    local iface="${1}"
    local jid="${2}"
@@ -661,6 +661,20 @@ get_default_route()
    fi
 
    ${jexec} netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
+}
+
+get_default_ipv6_route()
+{
+   local iface="${1}"
+   local jid="${2}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   ${jexec} netstat -f inet6 -nr | grep '^default' | awk '{ print $2 }'
 }
 
 get_default_interface()
