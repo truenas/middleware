@@ -1715,7 +1715,7 @@ class CloneSnapshotForm(Form):
         return retval
 
 
-class DiskReplacementForm(Form):
+class ZFSDiskReplacementForm(Form):
 
     replace_disk = forms.ChoiceField(
         choices=(),
@@ -1723,8 +1723,22 @@ class DiskReplacementForm(Form):
         label=_('Member disk'))
 
     def __init__(self, *args, **kwargs):
-        self.disk = kwargs.pop('disk', None)
-        super(DiskReplacementForm, self).__init__(*args, **kwargs)
+        self.volume = kwargs.pop('volume')
+        self.label = kwargs.pop('label')
+        disk = notifier().label_to_disk(self.label)
+        if disk is None:
+            disk = self.label
+        self.disk = disk
+        super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
+        if self.volume.vol_encrypt == 2:
+            self.fields['pass'] = forms.CharField(
+                label=_("Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
+            self.fields['pass2'] = forms.CharField(
+                label=_("Confirm Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
         self.fields['replace_disk'].choices = self._populate_disk_choices()
         self.fields['replace_disk'].choices.sort(
             key=lambda a: float(
@@ -1762,26 +1776,6 @@ class DiskReplacementForm(Form):
         ))
         return choices
 
-
-class ZFSDiskReplacementForm(DiskReplacementForm):
-
-    def __init__(self, *args, **kwargs):
-        self.volume = kwargs.pop('volume')
-        self.label = kwargs.pop('label')
-        disk = notifier().label_to_disk(self.label)
-        if disk is None:
-            disk = self.label
-        kwargs['disk'] = disk
-        super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
-        if self.volume.vol_encrypt == 2:
-            self.fields['pass'] = forms.CharField(
-                label=_("Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
-            self.fields['pass2'] = forms.CharField(
-                label=_("Confirm Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
 
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
