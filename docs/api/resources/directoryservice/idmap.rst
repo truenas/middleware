@@ -99,7 +99,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/ad/(int:id)/
 
-   Update extent `id`.
+   Update idmap ad `id`.
 
    **Example request**:
 
@@ -144,7 +144,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/ad/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap ad `id`.
 
    **Example request**:
 
@@ -212,7 +212,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/adex/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap adex and returns the new object.
 
    **Example request**:
 
@@ -257,7 +257,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/adex/(int:id)/
 
-   Update extent `id`.
+   Update idmap adex `id`.
 
    **Example request**:
 
@@ -300,7 +300,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/adex/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap adex `id`.
 
    **Example request**:
 
@@ -369,7 +369,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/hash/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap hash and returns the new object.
 
    **Example request**:
 
@@ -416,7 +416,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/hash/(int:id)/
 
-   Update extent `id`.
+   Update idmap hash `id`.
 
    **Example request**:
 
@@ -461,7 +461,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/hash/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap hash `id`.
 
    **Example request**:
 
@@ -532,7 +532,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/ldap/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap ldap and returns the new object.
 
    **Example request**:
 
@@ -583,7 +583,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/ldap/(int:id)/
 
-   Update extent `id`.
+   Update idmap ldap `id`.
 
    **Example request**:
 
@@ -632,7 +632,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/ldap/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap ldap `id`.
 
    **Example request**:
 
@@ -700,7 +700,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/nss/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap nss and returns the new object.
 
    **Example request**:
 
@@ -745,7 +745,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/nss/(int:id)/
 
-   Update extent `id`.
+   Update idmap nss `id`.
 
    **Example request**:
 
@@ -788,7 +788,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/nss/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap nss `id`.
 
    **Example request**:
 
@@ -865,7 +865,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/rfc2307/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap rfc2307 and returns the new object.
 
    **Example request**:
 
@@ -928,7 +928,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/rfc2307/(int:id)/
 
-   Update extent `id`.
+   Update idmap rfc2307 `id`.
 
    **Example request**:
 
@@ -988,7 +988,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/rfc2307/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap rfc2307 `id`.
 
    **Example request**:
 
@@ -1056,7 +1056,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/tdb/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap tdb and returns the new object.
 
    **Example request**:
 
@@ -1101,7 +1101,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/tdb/(int:id)/
 
-   Update extent `id`.
+   Update idmap tdb `id`.
 
    **Example request**:
 
@@ -1144,7 +1144,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/tdb/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap tdb `id`.
 
    **Example request**:
 
@@ -1213,7 +1213,7 @@ Create resource
 
 .. http:post:: /api/v1.0/directoryservice/idmap/tdb2/
 
-   Creates a new idmap and returns the new object.
+   Creates a new idmap tdb2 and returns the new object.
 
    **Example request**:
 
@@ -1259,7 +1259,7 @@ Update resource
 
 .. http:put:: /api/v1.0/directoryservice/idmap/tdb2/(int:id)/
 
-   Update extent `id`.
+   Update idmap tdb2 `id`.
 
    **Example request**:
 
@@ -1303,7 +1303,7 @@ Delete resource
 
 .. http:delete:: /api/v1.0/directoryservice/idmap/tdb2/(int:id)/
 
-   Delete extent `id`.
+   Delete idmap tdb2 `id`.
 
    **Example request**:
 
