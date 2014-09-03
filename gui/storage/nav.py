@@ -186,9 +186,6 @@ class Volumes(TreeNode):
             ViewDisks(),
         ])
 
-        if not appPool.hook_feature_disabled('ufs'):
-            self.append_child(AddVolumeUFS())
-
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name=''
         ).exists()
