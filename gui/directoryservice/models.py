@@ -603,8 +603,7 @@ class KerberosRealm(Model):
     krb_kdc = models.CharField(
         verbose_name=_("KDC"),
         max_length=120,
-        help_text=_("KDC for this realm."),
-        blank=True
+        help_text=_("KDC for this realm.")
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
