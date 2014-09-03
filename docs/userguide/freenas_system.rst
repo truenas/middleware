@@ -11,17 +11,21 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`General`: used to general settings such as HTTPS access, the language, and the timezone
 
+* :ref:`Boot`: used to create, rename, and delete boot environments.
+
 * :ref:`Advanced`: used to configure advanced settings such as the serial console, swap, console messages, and other advanced fields
 
 * :ref:`Email`: used to configure the email address to receive notifications
 
 * :ref:`System Dataset`: used to configure the location of the system dataset
 
+* :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
+
+* :ref:`Upgrade`: used to perform upgrades and to check for new updates.
+
 * :ref:`CAs`: used to import or create an internal or intermediate CA (Certificate Authority)
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
-
-* :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
 Each of these is described in more detail in this section.
 
@@ -225,15 +229,20 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 |                     |            |                                                                                                                  |
 +---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 
+.. _Boot:
+
+Boot
+----
+
 .. _Advanced:
 
 Advanced
 --------
 
-:menuselection:`System --> Advanced`, shown in Figure 5.3a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings
-are summarized in Table 5.3a.
+:menuselection:`System --> Advanced`, shown in Figure 5.4a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings
+are summarized in Table 5.4a.
 
-**Figure 5.3a: Advanced Screen**
+**Figure 5.4a: Advanced Screen**
 
 |system3.png|
 
@@ -241,7 +250,7 @@ are summarized in Table 5.3a.
     :width: 11.1in
     :height: 4.4in
 
-**Table 5.3a: Advanced Configuration Settings**
+**Table 5.4a: Advanced Configuration Settings**
 
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Setting                                 | Value                            | Description                                                                  |
@@ -306,8 +315,6 @@ This tab also contains the following buttons:
 
 **Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
 
-**Firmware Update:** used to Upgrade FreeNAS®.
-
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
 
@@ -338,13 +345,13 @@ If you wish to read the script to see which checks are performed, the script is 
 Email
 -----
 
-:menuselection:`System --> Email`, shown in Figure 5.4a, is used to configure the email settings on the FreeNAS® system. Table 5.4a summarizes the settings
+:menuselection:`System --> Email`, shown in Figure 5.5a, is used to configure the email settings on the FreeNAS® system. Table 5.5a summarizes the settings
 that can be configured using the Email tab.
 
 .. note:: it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
    containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure 5.4a: Email Screen**
+**Figure 5.5a: Email Screen**
 
 |system4.png|
 
@@ -352,7 +359,7 @@ that can be configured using the Email tab.
     :width: 4.7in
     :height: 3.7in
 
-**Table 5.4a: Email Configuration Settings**
+**Table 5.5a: Email Configuration Settings**
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
@@ -397,11 +404,11 @@ that can be configured using the Email tab.
 System Dataset
 --------------
 
-:menuselection:`System --> System Dataset`, shown in Figure 5.5a, is used to select the pool which will contain the persistent system dataset. The system
+:menuselection:`System --> System Dataset`, shown in Figure 5.6a, is used to select the pool which will contain the persistent system dataset. The system
 dataset stores debugging core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be
 a Domain Controller, all of the domain controller state is stored there as well, including domain controller users and groups.
 
-**Figure 5.5a: System Dataset Screen**
+**Figure 5.6a: System Dataset Screen**
 
 |system5.png|
 
@@ -419,268 +426,7 @@ To also store the system log on the system dataset, check the "Syslog" box.
 To also store the reporting information, check the "Reporting Database" box.
 
 If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
-location. 
-
-.. _CAs:
-
-CAs
----
-
-Beginning with version 9.3, FreeNAS® can act as a Certificate Authority (CA).
-
-Figure 5.6a shows the initial screen if you click :menuselection:`System --> CAs`.
-
-**Figure 5.6a: Initial CA Screen**
-
-|ca1.png|
-
-To import an existing CA, click the "Import CA" button to open the configuration screen shown in Figure 5.6b. The configurable options are summarized in
-Table 5.6a.
-
-**Figure 5.6b: Importing a CA**
-
-|ca2.png|
-
-**Table 5.6a: Importing a CA Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Certificate          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Private Key          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Serial               | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-To instead create a new CA, decide if it will be for internal use only or if it needs to be part of a chain of trust.
-
-To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.6c. The configurable options are
-described in Table 5.6b.
-
-**Figure 5.6c: Creating an Internal CA**
-
-|ca3.png|
-
-**Table 5.6b: Internal CA Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-To instead create an intermediate CA, click the "Create Intermediate CA" to open the screen shown in Figure 5.6d. The configurable options are
-described in Table 5.6c.
-
-**Figure 5.6d: Creating an Intermediate CA**
-
-|ca4.png|
-
-**Table 5.6c: Intermediate CA Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Signing Certificate  | drop-down menu       |                                                                                                 |
-| Authority            |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-.. _Certificates:
-
-Certificates
-------------
-
-Beginning with version 9.3, FreeNAS® can import existing existing certificates, create new certificates, which can then be self-signed, and certificate
-signing requests so that created certificates can be signed by another CA.
-
-Figure 5.7a shows the initial screen if you click :menuselection:`System --> Certificates`.
-
-**Figure 5.7a: Initial Certificates Screen**
-
-|cert1.png|
-
-To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.7b. The configurable options are
-summarized in Table 5.7a.
-
-**Figure 5.7b: Importing a Certificate**
-
-|cert2.png|
-
-**Table 5.7a: Certificate Import Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Certificate          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Private Key          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-To create a new certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.7c. The configurable options are summarized in
-Table 5.7b.
-
-**Figure 5.7c: Creating a New Certificate**
-
-|cert3.png|
-
-**Table 5.7b: Certificate Creation Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Signing Certificate  | drop-down menu       |                                                                                                 |
-| Authority            |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-
-Once a certificate is created, it can either be self-signed, if you have created a CA, or sent to another CA for signing. Before a certificate can be signed,
-a certificate signing request must be created. To create the certificate signing request, click the "Create Certificate Signing Request" button to open the
-screen shown in Figure 5.7d. The configurable options are summarized in Table 5.7c.
-
-**Figure 5.7d: Creating a Certificate Signing Request**
-
-|cert4.png|
-
-**Table 5.7c: Certificate Signing Request Options**
-
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+location.
 
 .. _Tunables:
 
@@ -719,9 +465,9 @@ automatically loaded, you need to add a loader.
    the FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should
    always test the impact of any changes on a test system first.
 
-To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tunable`, as seen in Figure 5.8a.
+To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tunable`, as seen in Figure 5.7a.
 
-**Figure 5.8a: Adding a Tunable**
+**Figure 5.7a: Adding a Tunable**
 
 |tunable.png|
 
@@ -729,9 +475,9 @@ To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tun
     :width: 2.8in
     :height: 2.4in
 
-Table 5.8a summarizes the options when adding a tunable.
+Table 5.7a summarizes the options when adding a tunable.
 
-**Table 5.8a: Adding a Tunable**
+**Table 5.7a: Adding a Tunable**
 
 +-------------+-------------------+---------------------------------------------------------------------------+
 | **Setting** | **Value**         | **Description**                                                           |
@@ -820,9 +566,9 @@ Recovering From Incorrect Tunables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the
-:kbd:`3` key or the :kbd:`Esc` key to select "3. Escape to loader prompt" when you see the FreeNAS® boot menu shown in Figure 5.8b.
+:kbd:`3` key or the :kbd:`Esc` key to select "3. Escape to loader prompt" when you see the FreeNAS® boot menu shown in Figure 5.7b.
 
-**Figure 5.8b: FreeNAS® Boot Menu**
+**Figure 5.7b: FreeNAS® Boot Menu**
 
 |boot.png|
 
@@ -834,11 +580,11 @@ The boot loader prompt provides a minimal set of commands described in
 `loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the :command:`unset` command to disable a problematic value, the
 :command:`set` command to modify the problematic value, or the :command:`unload` command to prevent the problematic driver from loading.
 
-Example 5.8a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
+Example 5.7a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
 *kern.ipc.nmbclusters* MIB and will fail with a "no such file or directory" error message if a current tunable does not exist to set this value. The second
 command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type :command:`boot` to continue the boot process.
 
-**Example 5.8a: Sample Commands at the Boot Loader Prompt**
+**Example 5.7a: Sample Commands at the Boot Loader Prompt**
 ::
 
  Type '?' for a list of commands, 'help' for more detailed help.
@@ -857,3 +603,271 @@ command disables ACPI. The third command instructs the system not to load the fu
 
 Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in
 :menuselection:`System --> Tunables --> View Tunables` to make your change permanent and to prevent future boot errors.
+
+.. _Upgrade:
+
+Upgrade
+-------
+
+**Firmware Update:** used to Upgrade FreeNAS®.
+
+.. _CAs:
+
+CAs
+---
+
+Beginning with version 9.3, FreeNAS® can act as a Certificate Authority (CA).
+
+Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs`.
+
+**Figure 5.9a: Initial CA Screen**
+
+|ca1.png|
+
+To import an existing CA, click the "Import CA" button to open the configuration screen shown in Figure 5.9b. The configurable options are summarized in
+Table 5.9a.
+
+**Figure 5.9b: Importing a CA**
+
+|ca2.png|
+
+**Table 5.9a: Importing a CA Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Certificate          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Private Key          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Serial               | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+To instead create a new CA, decide if it will be for internal use only or if it needs to be part of a chain of trust.
+
+To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.9c. The configurable options are
+described in Table 5.9b.
+
+**Figure 5.9c: Creating an Internal CA**
+
+|ca3.png|
+
+**Table 5.9b: Internal CA Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Key Length           | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Digest Algorithm     | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Lifetime             | integer              |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Country              | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| State                | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| City                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Organization         | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Email Address        | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Common Name          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+To instead create an intermediate CA, click the "Create Intermediate CA" to open the screen shown in Figure 5.9d. The configurable options are
+described in Table 5.9c.
+
+**Figure 5.9d: Creating an Intermediate CA**
+
+|ca4.png|
+
+**Table 5.9c: Intermediate CA Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Signing Certificate  | drop-down menu       |                                                                                                 |
+| Authority            |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Key Length           | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Digest Algorithm     | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Lifetime             | integer              |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Country              | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| State                | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| City                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Organization         | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Email Address        | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Common Name          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+.. _Certificates:
+
+Certificates
+------------
+
+Beginning with version 9.3, FreeNAS® can import existing existing certificates, create new certificates, which can then be self-signed, and certificate
+signing requests so that created certificates can be signed by another CA.
+
+Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
+
+**Figure 5.10a: Initial Certificates Screen**
+
+|cert1.png|
+
+To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
+summarized in Table 5.10a.
+
+**Figure 5.10b: Importing a Certificate**
+
+|cert2.png|
+
+**Table 5.10a: Certificate Import Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Certificate          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Private Key          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+To create a new certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.10c. The configurable options are summarized
+in Table 5.10b.
+
+**Figure 5.10c: Creating a New Certificate**
+
+|cert3.png|
+
+**Table 5.10b: Certificate Creation Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Signing Certificate  | drop-down menu       |                                                                                                 |
+| Authority            |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Key Length           | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Digest Algorithm     | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Lifetime             | integer              |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Country              | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| State                | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| City                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Organization         | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Email Address        | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Common Name          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+Once a certificate is created, it can either be self-signed, if you have created a CA, or sent to another CA for signing. Before a certificate can be signed,
+a certificate signing request must be created. To create the certificate signing request, click the "Create Certificate Signing Request" button to open the
+screen shown in Figure 5.10d. The configurable options are summarized in Table 5.10c.
+
+**Figure 5.10d: Creating a Certificate Signing Request**
+
+|cert4.png|
+
+**Table 5.10c: Certificate Signing Request Options**
+
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                 |
+|                      |                      |                                                                                                 |
++======================+======================+=================================================================================================+
+| Name                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Key Length           | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Digest Algorithm     | drop-down menu       |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Lifetime             | integer              |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Country              | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| State                | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| City                 | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Organization         | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Email Address        | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Common Name          | string               |                                                                                                 |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+

@@ -144,16 +144,26 @@ start_jail_vimage()
      fi
   done
 
+  # Enable IPv6
+  sysrc -j ${JID} inet6_enable="YES"
+  sysrc -j ${JID} ip6addrctl_enable="YES"
+  sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
+
   # Configure the IPv6 addresses
   if [ -n "${IP6}" ] ; then
      warden_print "Configuring jail for IPv6"
 
-     sysrc -j ${JID} inet6_enable="YES"
-     sysrc -j ${JID} ip6addrctl_enable="YES"
-     sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
+     sysrc -xj ${JID} rtsold_enable
+     sysrc -xj ${JID} "ifconfig_${EPAIRB}_ipv6"
 
      warden_print "Setting IPv6 address: ${IP6}"
      jexec ${JID} ifconfig "${EPAIRB}" inet6 "${IP6}"
+
+  # No IPv6 specified, enable autoconfiguration
+  else 
+     sysrc -j ${JID} rtsold_enable="YES"
+     sysrc -j ${JID} "ifconfig_${EPAIRB}_ipv6"="inet6 accept_rtadv auto_linklocal"
+     jexec ${JID} service rtsold start
 
   fi
   for ip6 in ${IPS6}
@@ -205,7 +215,8 @@ start_jail_vimage()
   #
   if [ -n "${GATEWAY6}" ] ; then
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        warden_print "jexec ${JID} route add -inet6 default ${GATEWAY6}"
+        #warden_print "jexec ${JID} route add -inet6 default ${GATEWAY6}"
+        :
      else
         jexec ${JID} route -A inet6 add default gateway "${GATEWAY6}"
      fi 
@@ -217,7 +228,8 @@ start_jail_vimage()
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        warden_print "jexec ${JID} route add -inet6 default ${JIP}"
+        #warden_print "jexec ${JID} route add -inet6 default ${JIP}"
+        :
      else
         jexec ${JID} route -A inet6 add default gateway "${JIP}"
      fi
@@ -237,7 +249,7 @@ start_jail_vimage()
          do
              if [ -n "${ether}" ] ; then
                  warden_print "ndp -s ${ip6} ${ether}"
-                 jexec ${JID} ndp -s "${ip6}" "${ether}"
+                 jexec ${JID} ndp -s "${ip6}" "${ether}" >/dev/null 2>&1
              fi
          done
      fi

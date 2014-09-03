@@ -16,8 +16,8 @@
    Plugins <freenas_plugins>
    Jails <freenas_jails>
    Reporting <freenas_reporting>
-   Display System Processes <freenas_processes>
    Wizard <freenas_wizard>
+   Display System Processes <freenas_processes>
    Shell <freenas_shell>
    Log Out <freenas_logout>
    Reboot <freenas_reboot>
