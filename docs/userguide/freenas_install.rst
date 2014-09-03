@@ -238,7 +238,7 @@ Once the installation is complete, you should see a message similar to Figure 2.
 
 Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM,
 but leave the thumb drive inserted. Make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from
-it. FreeNAS® should now be able to boot into the Console setup menu described in `Initial Setup`_.
+it. FreeNAS® should now be able to boot into the Console setup menu described in :ref:`Initial Configuration`.
 
 .. _Installation Troubleshooting:
 
@@ -263,125 +263,6 @@ go into the system BIOS and see if there is an onboard device configuration for 
 If the burned image fails to boot and the image was burned using a Windows system, wipe the USB stick before trying a second burn using a utility such as
 `Active@ KillDisk <http://how-to-erase-hard-drive.com/>`_. Otherwise, the second burn attempt will fail as Windows does not understand the partition which was
 written from the image file. Be very careful that you specify the USB stick when using a wipe utility!
-
-.. _Initial Setup:
-
-Initial Setup
--------------
-
-When you boot into FreeNAS®, the Console Setup, shown in Figure 2.5a, will appear at the end of the boot process. If you have access to the the FreeNAS®
-system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
-
-.. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
-   :command:`/etc/netcli` from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in :menuselection:`System --> Advanced`.
-
-**Figure 2.5a: FreeNAS® Console Setup Menu**
-
-|console1.png|
-
-.. |console1.png| image:: images/console1.png
-    :width: 5.8in
-    :height: 2.8in
-
-This menu provides the following options:
-
-**1) Configure Network Interfaces:** provides a configuration wizard to configure the system's network interfaces.
-
-**2) Configure Link Aggregation:** allows you to either create a new link aggregation or to delete an existing link aggregation.
-
-**3) Configure VLAN Interface:** used to create or delete a VLAN interface.
-
-**4) Configure Default Route:** used to set the IPv4 or IPv6 default gateway. When prompted, input the IP address of the default gateway.
-
-**5) Configure Static Routes:** will prompt for the destination network and the gateway IP address. Re-enter this option for each route you need to add.
-
-**6) Configure DNS:** will prompt for the name of the DNS domain then the IP address of the first DNS server. To input multiple DNS servers, press
-:kbd:`Enter` to input the next one. When finished, press :kbd:`Enter` twice to leave this option.
-
-**7) Reset Root Password:** if you are unable to login to the graphical administrative interface, select this option and follow the prompts to set the *root*
-password.
-
-**8) Reset to factory defaults:** if you wish to delete
-**all** of the configuration changes made in the administrative GUI, select this option. Once the configuration is reset, the system will reboot. You will
-need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-import your volume.
-
-**9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
-
-**10) Reboot:** reboots the system.
-
-**11) Shutdown:** halts the system.
-
-During boot, FreeNAS® will automatically try to connect to a DHCP server from all live interfaces. If it successfully receives an IP address, it will display
-the IP address which can be used to access the graphical console. In the example seen in Figure 2.5b, the FreeNAS® system is accessible from
-*http://192.168.1.97*.
-
-If your FreeNAS® server is not connected to a network with a DHCP server, you can use the network configuration wizard to manually configure the interface as
-seen in Example 2.5a. In this example, the FreeNAS® system has one network interface (*em0*).
-
-**Example 2.5a: Manually Setting an IP Address from the Console Menu**
-::
-
- Enter an option from 1-11: 1
- 1) em0
- Select an interface (q to quit): 1
- Delete existing config? (y/n) n
- Configure interface for DHCP? (y/n) n
- Configure IPv4? (y/n) y
- Interface name: (press enter as can be blank)
- Several input formats are supported
- Example 1 CIDR Notation: 192.168.1.1/24
- Example 2 IP and Netmask separate:
- IP: 192.168.1.1
- Netmask: 255.255.255.0, or /24 or 24
- IPv4 Address: 192.168.1.108/24
- Saving interface configuration: Ok
- Configure IPv6? (y/n) n
- Restarting network: ok
- You may try the following URLs to access the web user interface:
- `http://192.168.1.108 <http://192.168.1.108/>`_
-
-.. _Set the Root Password:
-
-Set the Root Password
-~~~~~~~~~~~~~~~~~~~~~
-
-Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
-system. You should be prompted to create a password for the *root* user, as seen in Figure 2.5b.
-
-**Figure 2.5b: Set the Root Password**
-
-|Figure26b_png|
-
-Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
-password. Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 2.5c.
-
-**Figure 2.5c: FreeNAS® Graphical Configuration Menu**
-
-|Figure26c_png|
-
-If you are unable to access the IP address from a browser, check the following:
-
-* Are proxy settings enabled in the browser configuration? If so, disable the settings and try connecting again.
-
-* If the page does not load, make sure that you can :command:`ping` the FreeNAS® system's IP address. If the address is in a private IP address range, you
-  will only be able to access the system from within the private network.
-
-* If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
-  display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
-  `Firefox <http://www.mozilla.com/en-US/firefox/all.html>`_
-  instead.
-
-* If you receive "An error occurred!" messages when attempting to configure an item in the GUI, make sure that the browser is set to allow cookies from
-  the FreeNAS® system.
-
-This
-`blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
-describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
-
-.. _Initial Configuration Wizard:
-
-Initial Configuration Wizard
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _Upgrading:
 
@@ -429,9 +310,9 @@ Insert the prepared media into the system and boot from it. Once the media has f
 default option of "1 Install/Upgrade." The installer will present a screen showing all available drives; select the device FreeNAS® is installed into and
 press :kbd:`Enter`.
 
-The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.6a.
+The installer will recognize that an earlier version of FreeNAS® is installed on the device and will present the message shown in Figure 2.5a.
 
-**Figure 2.6a: Upgrading a FreeNAS® Installation**
+**Figure 2.5a: Upgrading a FreeNAS® Installation**
 
 |upgrade1.png|
 
@@ -443,9 +324,9 @@ The installer will recognize that an earlier version of FreeNAS® is installed o
 
 To perform an upgrade, press :kbd:`Enter` to accept the default of "Upgrade Install". Again, the installer will remind you that the operating system should be
 installed on a thumb drive. Press :kbd:`Enter` to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in
-Figure 2.6b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
+Figure 2.5b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
-**Figure 2.6b: FreeNAS® will Preserve and Migrate Settings**
+**Figure 2.5b: FreeNAS® will Preserve and Migrate Settings**
 
 |upgrade2.png|
 
@@ -453,9 +334,9 @@ Figure 2.6b. The database file that is preserved and migrated contains your Free
     :width: 6.9252in
     :height: 3.8134in
 
-Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.6c.
+Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.5c.
 
-**Figure 2.6c: Upgrade is Complete**
+**Figure 2.5c: Upgrade is Complete**
 
 |upgrade3.png|
 
@@ -475,17 +356,17 @@ Upgrading From the GUI
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
-the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.6d.
+the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.5d.
 
-**Figure 2.6d: Upgrading FreeNAS® From the GUI**
+**Figure 2.5d: Upgrading FreeNAS® From the GUI**
 
 |Figure27d_png|
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
 allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "Apply Update" button to see the screen
-shown in Figure 2.6e.
+shown in Figure 2.5e.
 
-**Figure 2.6e: Step 2 of 2**
+**Figure 2.5e: Step 2 of 2**
 
 |Figure27e_png|
 
@@ -517,10 +398,10 @@ If your disks are encrypted and you have created a passphrase and saved the reco
 to prevent an unauthorized user from using an upgrade procedure to gain access to the data on the encrypted disks. After the upgrade, the locked volumes will
 be unavailable until they are unlocked with the passphrase and recovery key.
 
-To unlock the volume, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the locked volume. As seen in Figure 2.6f, clicking the
+To unlock the volume, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the locked volume. As seen in Figure 2.5f, clicking the
 "Unlock" icon will prompt for the passphrase or recovery key. You can also select which services to start when the volume is unlocked.
 
-**Figure 2.6f: Unlocking an Encrypted Volume**
+**Figure 2.5f: Unlocking an Encrypted Volume**
 
 |Figure27f_png|
 
@@ -579,9 +460,9 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 2.6g.
+"Upgrade" button as seen in Figure 2.5g.
 
-**Figure 2.6g: Upgrading a ZFS Pool**
+**Figure 2.5g: Upgrading a ZFS Pool**
 
 |Figure27g_png|
 
@@ -625,9 +506,9 @@ is an open source virtualization program originally created by Sun Microsystems.
 configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing configurations or learning how to use the
 features provided by FreeNAS®.
 
-To create the virtual machine, start VirtualBox and click the "New" button, seen in Figure 2.7a, to start the new virtual machine wizard.
+To create the virtual machine, start VirtualBox and click the "New" button, seen in Figure 2.6a, to start the new virtual machine wizard.
 
-**Figure 2.7a: Initial VirtualBox Screen**
+**Figure 2.6a: Initial VirtualBox Screen**
 
 |virtualbox1.png|
 
@@ -636,10 +517,10 @@ To create the virtual machine, start VirtualBox and click the "New" button, seen
     :height: 3.6335in
 
 
-Click the "Next" button to see the screen in Figure 2.7b. Enter a name for the virtual machine, click the "Operating System" drop-down menu and select BSD,
+Click the "Next" button to see the screen in Figure 2.6b. Enter a name for the virtual machine, click the "Operating System" drop-down menu and select BSD,
 and select "FreeBSD (64-bit)" from the "Version" dropdown.
 
-**Figure 2.7b: Type in a Name and Select the Operating System for the New Virtual Machine**
+**Figure 2.6b: Type in a Name and Select the Operating System for the New Virtual Machine**
 
 |virtualbox2.png|
 
@@ -647,10 +528,10 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
     :width: 5.4626in
     :height: 3.6665in
 
-Click "Next" to see the screen in Figure 2.7c. The base memory size must be changed to **at least 2048 MB**.
-**If your system has enough memory, select at least 4096 MB so that you can use ZFS**. When finished, click "Next" to see the screen in Figure 2.7d.
+Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 2048 MB**.
+**If your system has enough memory, select at least 4096 MB so that you can use ZFS**. When finished, click "Next" to see the screen in Figure 2.6d.
 
-**Figure 2.7c: Select the Amount of Memory Reserved for the Virtual Machine**
+**Figure 2.6c: Select the Amount of Memory Reserved for the Virtual Machine**
 
 |virtualbox3.png|
 
@@ -658,7 +539,7 @@ Click "Next" to see the screen in Figure 2.7c. The base memory size must be chan
     :width: 5.4626in
     :height: 3.6665in
 
-**Figure 2.7d: Select Whether to Use an Existing or Create a New Virtual Hard Drive**
+**Figure 2.6d: Select Whether to Use an Existing or Create a New Virtual Hard Drive**
 
 |virtualbox4.png|
 
@@ -666,9 +547,9 @@ Click "Next" to see the screen in Figure 2.7c. The base memory size must be chan
     :width: 5.4626in
     :height: 3.6665in
 
-Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 2.7e.
+Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 2.6e.
 
-**Figure 2.7e: Create New Virtual Hard Drive Wizard**
+**Figure 2.6e: Create New Virtual Hard Drive Wizard**
 
 |virtualbox5.png|
 
@@ -676,9 +557,9 @@ Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 
     :width: 6.361in
     :height: 4.1417in
 
-Select "VDI" and click the "Next" button to see the screen in Figure 2.7f.
+Select "VDI" and click the "Next" button to see the screen in Figure 2.6f.
 
-**Figure 2.7f: Select the Storage Type for the Virtual Disk**
+**Figure 2.6f: Select the Storage Type for the Virtual Disk**
 
 |virtualbox6.png|
 
@@ -689,9 +570,9 @@ Select "VDI" and click the "Next" button to see the screen in Figure 2.7f.
 You can now choose whether you want "Dynamically allocated" or "Fixed-size" storage. The first option uses disk space as needed until it reaches the
 maximum size that you will set in the next screen. The second option creates a disk the same size as that specified amount of disk space, whether it is used
 or not. Choose the first option if you are worried about disk space; otherwise, choose the second option as it allows VirtualBox to run slightly faster. Once
-you select "Next", you will see the screen in Figure 2.7g.
+you select "Next", you will see the screen in Figure 2.6g.
 
-**Figure 2.7g: Select the File Name and Size of the Virtual Disk**
+**Figure 2.6g: Select the File Name and Size of the Virtual Disk**
 
 |virtualbox7.png|
 
@@ -704,9 +585,9 @@ directory on disk with sufficient space to hold the virtual machine.
 
 Once you make your selection and press "Next", you will see a summary of your choices. Use the "Back" button to return to a previous screen if you need to
 change any values. Otherwise, click "Finish" to finish using the wizard. The virtual machine will be listed in the left frame, as seen in the example in
-Figure 2.7h.
+Figure 2.6h.
 
-**Figure 2.7h: The New Virtual Machine**
+**Figure 2.6h: The New Virtual Machine**
 
 |virtualbox8.png|
 
@@ -715,9 +596,9 @@ Figure 2.7h.
     :height: 4.8083in
 
 Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyperlink in the right frame to access the storage screen seen in Figure
-2.7i.
+2.6i.
 
-**Figure 2.7i: The Storage Settings of the Virtual Machine**
+**Figure 2.6i: The Storage Settings of the Virtual Machine**
 
 |virtualbox9.png|
 
@@ -730,9 +611,9 @@ Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will 
 it is **at least 4 GB** in size. If you wish to practice RAID configurations, create as many virtual disks as you need. You will be able to create 2 disks on
 the IDE controller. If you need additional disks, click the "Add Controller" button to create another controller to attach disks to.
 
-Next, create the device for the installation media. Highlight the word "Empty", then click the "CD" icon as seen in Figure 2.7j.
+Next, create the device for the installation media. Highlight the word "Empty", then click the "CD" icon as seen in Figure 2.6j.
 
-**Figure 2.7j: Configuring the ISO Installation Media**
+**Figure 2.6j: Configuring the ISO Installation Media**
 
 |virtualbox10.png|
 
@@ -749,8 +630,12 @@ mode" when you try to boot the ISO, your CPU either does not have the required e
 .. note:: if you receive a kernel panic when booting into the ISO, stop the virtual machine. Then, go to System and check the box "Enable IO APIC".
 
 To configure the network adapter, go to :menuselection:`Settings --> Network`. In the "Attached to" drop-down menu select "Bridged Adapter", then select the
-name of the physical interface from the "Name" drop-down menu. In the example shown in Figure 2.7k, the Intel Pro/1000 Ethernet card is attached to the
+name of the physical interface from the "Name" drop-down menu. In the example shown in Figure 2.6k, the Intel Pro/1000 Ethernet card is attached to the
 network and has a device name of *re0*.
+
+**Figure 2.6k: Configuring a Bridged Adapter in VirtualBox**
+
+|virtualbox11.png|
 
 Once your configuration is complete, click the "Start" arrow and install FreeNAS® as described in `Performing the Installation`_. Once FreeNAS® is
 installed, press "F12" to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by removing the
@@ -771,9 +656,9 @@ are available from the
 connect to its IP address. The welcome screen will provide a link to download the VMware vSphere client which is used to create and manage virtual machines.
 
 Once the VMware vSphere client is installed, use it to connect to the ESXi server. To create a new virtual machine, click :menuselection:`File --> New -->
-Virtual Machine`. The New Virtual Machine Wizard will launch as seen in Figure 2.2k.
+Virtual Machine`. The New Virtual Machine Wizard will launch as seen in Figure 2.6l.
 
-**Figure 2.2k: New Virtual Machine Wizard**
+**Figure 2.6l: New Virtual Machine Wizard**
 
 |esxi1.png|
 
@@ -781,10 +666,10 @@ Virtual Machine`. The New Virtual Machine Wizard will launch as seen in Figure 2
     :width: 6.9252in
     :height: 4.1in
 
-Click "Next" and input a name for the virtual machine. Click "Next" and highlight a datastore. An example is shown in Figure 2.2l. Click "Next". In the screen
-shown in Figure 2.2m, click "Other" then select a FreeBSD architecture that matches the FreeNAS® architecture.
+Click "Next" and input a name for the virtual machine. Click "Next" and highlight a datastore. An example is shown in Figure 2.6m. Click "Next". In the screen
+shown in Figure 2.6n, click "Other" then select a FreeBSD architecture that matches the FreeNAS® architecture.
 
-**Figure 2.2l: Select a Datastore**
+**Figure 2.6m: Select a Datastore**
 
 |esxi2.png|
 
@@ -792,7 +677,7 @@ shown in Figure 2.2m, click "Other" then select a FreeBSD architecture that matc
     :width: 6.9252in
     :height: 4.1in
 
-**Figure 2.2m: Select the Operating System**
+**Figure 2.6n: Select the Operating System**
 
 |esxi3.png|
 
@@ -800,9 +685,9 @@ shown in Figure 2.2m, click "Other" then select a FreeBSD architecture that matc
     :width: 6.9252in
     :height: 4.1in
 
-Click "Next" and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.2n.
+Click "Next" and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.6o.
 
-**Figure 2.2n: Create a Disk for the Operating System**
+**Figure 2.6o: Create a Disk for the Operating System**
 
 |esxi4.png|
 
@@ -811,9 +696,9 @@ Click "Next" and create a virtual disk file of **2 GB** to hold the FreeNAS® op
     :height: 3.8472in
 
 Click "Next" then "Finish". Your virtual machine will be listed in the left frame. Right-click the virtual machine and select "Edit Settings" to access the
-screen shown in Figure 2.2o.
+screen shown in Figure 2.6p.
 
-**Figure 2.2o: Virtual Machine's Settings**
+**Figure 2.6p: Virtual Machine's Settings**
 
 |esxi5.png|
 
@@ -826,11 +711,11 @@ Increase the "Memory Configuration" to **at least 2048 MB**.
 Under "CPUs", make sure that only 1 virtual processor is listed, otherwise you will be unable to start any FreeNAS® services.
 
 To create a storage disk, click :menuselection:`Hard disk 1 --> Add`. In the "Device Type" menu, highlight "Hard Disk" and click "Next". Select "Create a new
-virtual disk" and click "Next". In the screen shown in Figure 2.2p, select the size of the disk. If you would like the size to be dynamically allocated as
+virtual disk" and click "Next". In the screen shown in Figure 2.6q, select the size of the disk. If you would like the size to be dynamically allocated as
 needed, check the box "Allocate and commit space on demand (Thin Provisioning)". Click "Next", then "Next", then "Finish" to create the disk. Repeat to create
 the amount of storage disks needed to meet your requirements.
 
-**Figure 2.2p: Creating a Storage Disk**
+**Figure 2.6q: Creating a Storage Disk**
 
 |esxi6.png|
 
