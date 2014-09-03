@@ -89,10 +89,8 @@ class VolumeFAdmin(BaseFreeAdmin):
     def get_datagrid_context(self, request):
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name='').exists()
-        ufs_disabled = appPool.hook_feature_disabled('ufs')
         return {
             'has_multipath': has_multipath,
-            'ufs_disabled': ufs_disabled,
         }
 
     def get_datagrid_columns(self):
