@@ -60,7 +60,7 @@ def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
         req = urllib2.Request(url)
         req.add_header(FREENAS_VERSION, current_version)
         # Hack for debugging
-        req.add_header("User-Agent", FREENAS_VERSION + "=" + current_version)
+        req.add_header("User-Agent", "%s=%s" % (FREENAS_VERSION, current_version))
         furl = urllib2.urlopen(req, timeout=5)
     except:
         log.warn("Unable to load %s", url)
@@ -559,6 +559,20 @@ class Configuration(object):
     def CreateTemporaryFile(self):
         return tempfile.TemporaryFile(dir = self._temp)
 
+    def PackagePath(self, pkg):
+        if self._package_dir:
+            return "%s/%s" % (self._package_dir, pkg.FileName())
+        else:
+            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName())
+
+    def PackageUpdatePath(self, pkg, old_version):
+        # Do we need this?  If we're given a package directory,
+        # then we won't have updates.
+        if self._package_dir:
+            return "%s/%s" % (self._package_dir, pkg.FileName(old_version))
+        else:
+            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName(old_version))
+
     def SearchForFile(self, path, handler=None):
         # Iterate through the search locations,
         # looking for $loc/$path.
@@ -636,23 +650,28 @@ class Configuration(object):
         return file_ref
 
     def FindLatestManifest(self, train = None):
-        # Finds the latest (largest sequence number)
-        # manifest for a given train, iterating through
-        # the search locations.
+        # Gets <UPDATE_SERVER>/<train>/LATEST
         # Returns a manifest, or None.
         rv = None
+        current_version = None
+        temp_mani = self.SystemManifest()
+        if temp_mani:
+            current_version = temp_mani.Sequence()
+
         if train is None:
-            temp_mani = self.SystemManifest()
             if temp_mani is None:
                 # I give up
                 raise Exceptions.ConfigurationInvalidException
             train = temp_mani.Train()
-        for file in self.SearchForFile(train + "/LATEST"):
-            temp_mani = Manifest.Manifest(self)
-            temp_mani.LoadFile(file)
-            if rv is None or temp_mani.Sequence() > rv.Sequence():
-                rv = temp_mani
-
+        file = TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
+                                 self._temp,
+                                 current_version,
+                                 )
+        if file is None:
+            log.debug("Could not get latest manifest file for train %s" % train)
+        else:
+            rv = Manifest.Manifest(self)
+            rv.LoadFile(file)
         return rv
 
     def FindPackageFile(self, package, upgrade_from=None, handler=None):
@@ -670,6 +689,28 @@ class Configuration(object):
         # we'll only go by name.
         # If it can't find one, it returns None
         rv = None
+        # First thing:  if we were given a package path, we use that,
+        # and that only, and delta packages don't matter.
+        if self._package_dir:
+            try:
+                file = open(self.PackagePath(package))
+            except:
+                return None
+            else:
+                if package.Checksum():
+                    h = ChecksumFile(file)
+                    if h != package.Checksum():
+                        return None
+                return file
+
+        # If we got here, then we are using the network to get the
+        # requested package.  In that case, if possible, we want to
+        # try to get a delta package, both to lower network bandwidth,
+        # and to improve speed.  And writes to the filesystem.
+        # So first we see if we can upgrade.
+
+        # If upgrade_from was explicitly given, we'll use that.
+        # Otherwise, we check the packagedb.
         # If we don't have a packagedb on the system,
         # that's not fatal -- it just means we can't do an upgrade.
         curVers = None
@@ -710,35 +751,37 @@ class Configuration(object):
                     break
                     
             # If we have an old version, look for that.
-            if o is not None:
-                # Figure out the name.
-                upgrade_name = package.FileName(curVers)
-                for file in self.SearchForFile(
-                    "Packages/%s" % upgrade_name,
-                    handler=handler,
-                ):
-                    if h is not None:
-                        hash = ChecksumFile(file)
-                        if hash == h:
-                            return file
-                    else:
-                        return file
-        # All that, and now we do much of it again with the full version
-        new_name = package.FileName()
-        for file in self.SearchForFile(
-            "Packages/%s" % new_name,
-            handler=handler,
-        ):
-            if package.Checksum() is not None:
-                hash = ChecksumFile(file)
-                if hash == package.Checksum():
-                    return file
-            else:
-                # If there's no checksum, and we found something with the
-                # right name, return that.
+            # o is eiter curVers, or a version found in
+            # the Package object.
+            # Figure out the name.
+            upgrade_name = package.FileName(curVers)
+            file = TryGetNetworkFile(
+                self.PackageUpdatePath(package, curVers),
+                handler = handler,
+                )
+            if h is None:
+                # No checksum, so just accept the file
                 return file
-
-        return rv
+            else:
+                hash = ChecksumFile(file)
+                if hash == h:
+                    return file
+        # All that, and now we do much of it again with the full version
+        file = TryGetNetworkFile(
+            self.PackagePath(package),
+            handler = handler,
+            )
+        if package.Checksum() is None:
+            # No checksum, so we just go wit hthe match
+            return file
+        else:
+            hash = ChecksumFile(file)
+            if hash == package.Checksum():
+                return file
+            else:
+                # No match
+                return None
+        raise Exception("This should not be reached")
 
 
 if __name__ == "__main__":

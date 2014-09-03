@@ -59,7 +59,7 @@ if __name__ == "__main__":
         elif o == "-T":
             trainname = a
         elif o == "-S":
-            sequencenum = int(a)
+            sequence = a
         elif o == "-q":
             quiet = True
         elif o == "-v":
@@ -73,9 +73,9 @@ if __name__ == "__main__":
 
     pkgs = args
     
-    if sequencenum == 0:
+    if sequence is None:
         # Use time
-        sequencenum = int(time.time())
+        sequence = int(time.time())
         
     if (trainname is None) or len(pkgs) == 0:
         usage()
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     conf = Configuration.Configuration(file = config_file)
     mani = Manifest.Manifest(conf)
     mani.SetTrain(trainname)
-    mani.SetSequence(sequencenum)
+    mani.SetSequence(sequence)
     if releasename is not None: mani.SetVersion(releasename)
     if notesfile is not None:
         notes = []
@@ -94,14 +94,7 @@ if __name__ == "__main__":
         mani.SetNotes(notes)
             
 
-    # Small hack to make the package_dir option
-    # make sense.
     if package_dir is not None:
-        if package_dir.endswith("Packages"):
-            package_dir = package_dir[:-len("Packages")]
-        elif package_dir.endswith("Packages/"):
-            package_dir = package_dir[:-len("Packages/")]
-
         conf.SetPackageDir(package_dir)
         
     for P in pkgs:

@@ -74,11 +74,11 @@ standard_upgrade()
 	fi
 	mount -t nullfs /boot/grub ${dest}/boot/grub
 	/usr/local/bin/freenas-install -M ${UPGRADE_DIR}/FreeNAS-MANIFEST \
-	    -P ${UPGRADE_DIR} ${dest}
+	    -P ${UPGRADE_DIR}/Packages ${dest}
 	rv=$?
 	umount ${dest}/boot/grub
 	beadm unmount ${NEW_VERSION}
-	if [ $? -ne 0 ]; then
+	if [ $rv -ne 0 ]; then
 	    beadm destroy -F ${NEW_VERSION}
 	    upgrade_fail "Could not install new version"
 	else
