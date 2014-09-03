@@ -76,9 +76,9 @@ rather than learning how to use a translation submission tool.
 
 To see the status of a localization, open
 `pootle.freenas.org <http://pootle.freenas.org/>`_
-in your browser, as seen in Figure 24.2a:
+in your browser, as seen in Figure 25.2a:
 
-**Figure 24.2a: FreeNAS® Localization System**
+**Figure 25.2a: FreeNAS® Localization System**
 
 |10000000000003E0000002624E582DF2_png|
 
@@ -103,9 +103,9 @@ The first time you log into the FreeNAS® Pootle interface, you will be prompted
 whenever you login. Alternately, you can click the "Home" link to see the status of all of the languages. To work on a translation, click the link for the
 language, click the FreeNAS® link for the project, click the link for "LC_MESSAGES", and click the link for "django.po". Every text line available in the GUI
 menu screens has been assigned a string number. If you click the number, an editor will open where you can translate the text. In the example shown in Figure
-24.2b, a user has selected string number 46 in the German translation; the other strings in the screenshot have already been translated:
+25.2b, a user has selected string number 46 in the German translation; the other strings in the screenshot have already been translated:
 
-**Figure 24.2b: Using the Pootle Interface to Edit a Translation String**
+**Figure 25.2b: Using the Pootle Interface to Edit a Translation String**
 
 |100000000000047B00000232CA1DFA0A_png|
 

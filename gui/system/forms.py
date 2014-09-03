@@ -2133,29 +2133,14 @@ class CertificateForm(ModelForm):
         notifier().start("ix-ssl") 
 
 
-class CertificateEditForm(ModelForm):
-    cert_name = forms.CharField(
-        label=_("Name"),
-        required=True,
-        help_text=_("Descriptive Name")
-    )
-    cert_certificate = forms.CharField(
-        label=_("Certificate"),
-        widget=forms.Textarea(),
-        required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
-    )
+class CertificateViewForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(CertificateEditForm, self).__init__(*args, **kwargs)
+        super(CertificateViewForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
-
-    def save(self):
-        super(CertificateEditForm, self).save()
-        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [

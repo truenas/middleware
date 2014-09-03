@@ -665,7 +665,7 @@ class NT4(DirectoryServiceBase):
     nt4_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
-        help_text=_("Hostname of the domain controller to use."),
+        help_text=_("FQDN of the domain controller to use."),
     )
     nt4_netbiosname = models.CharField(
         verbose_name=_("NetBIOS Name"),
@@ -803,13 +803,13 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
-        help_text=_("Hostname of the domain controller to use."),
+        help_text=_("FQDN of the domain controller to use."),
         blank=True
     )
     ad_gcname = models.CharField(
         verbose_name=_("Global Catalog Server"),
         max_length=120,
-        help_text=_("Hostname of the global catalog server to use."),
+        help_text=_("FQDN of the global catalog server to use."),
         blank=True
     )
     ad_kerberos_realm = models.ForeignKey(

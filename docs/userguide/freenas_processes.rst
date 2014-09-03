@@ -6,9 +6,9 @@ Display System Processes
 ========================
 
 If you click "Display System Processes", a screen will open showing the output of
-`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 15a.
+`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 16a.
 
-**Figure 15a: System Processes Running on FreeNAS®**
+**Figure 16a: System Processes Running on FreeNAS®**
 
 |process.png|
 
