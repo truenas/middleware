@@ -210,29 +210,6 @@ def volumemanager(request):
     })
 
 
-def volumemanager_ufs(request):
-
-    if request.method == "POST":
-
-        form = forms.VolumeManagerUFSForm(request.POST)
-        if form.is_valid():
-            form.done(request)
-            return JsonResp(request, message=_("Volume successfully added."))
-        else:
-            if 'volume_disks' in request.POST:
-                disks = request.POST.getlist('volume_disks')
-            else:
-                disks = None
-
-    else:
-        form = forms.VolumeManagerUFSForm()
-        disks = []
-    return render(request, 'storage/wizard.html', {
-        'form': form,
-        'disks': disks,
-    })
-
-
 def volumemanager_progress(request):
     from freenasUI.middleware import encryption
     if encryption.PROGRESS > 0:
