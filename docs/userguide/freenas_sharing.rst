@@ -61,20 +61,24 @@ volume/dataset permissions, create the AFP share(s), configure the AFP service, 
 This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring
 Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a. Some settings are only
-available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by
-checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a.
 
-Table 10.1a summarizes the available options when creating an AFP share. Refer to
+**Figure 10.1a: Creating an AFP Share**
+
+|afp2.png|
+
+.. |afp2.png| image:: images/afp2.png
+    :width: 3.8in
+    :height: 3.4in
+
+Table 10.1a summarizes the available options when creating an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
+click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`. Refer to
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
 for a more detailed explanation of the available options.
 
 Once you press the "OK" button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the AFP service successfully started.
-
-**Figure 10.1a: Creating an AFP Share**
-
-|Figure101a_png|
 
 **Table 10.1a: AFP Share Configuration Options**
 
@@ -90,43 +94,50 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               | and can not contain a period                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Share Comment                | string        | optional                                                                                                    |
+| Share Comment                | string        | only available in "Advanced Mode"; optional                                                                 |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Allow List                   | string        | comma delimited list of allowed users and/or groups where groupname begins with a @                         |
+| Allow List                   | string        | only available in "Advanced Mode"; comma delimited list of allowed users and/or groups where groupname      |
+|                              |               | begins with a *@*                                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Deny List                    | string        | comma delimited list of denied users and/or groups where groupname begins with a @                          |
+| Deny List                    | string        | only available in "Advanced Mode"; comma delimited list of denied users and/or groups where groupname       |
+|                              |               | begins with a *@*                                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Read-only Access             | string        | comma delimited list of users and/or groups who only have read access where groupname begins with a @       |
+| Read-only Access             | string        | only available in "Advanced Mode"; comma delimited list of users and/or groups who only have read access    |
+|                              |               | where groupname begins with a *@*                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Read-write Access            | string        | comma delimited list of users and/or groups who have read and write access where groupname begins with a @  |
+| Read-write Access            | string        | only available in "Advanced Mode"; comma delimited list of users and/or groups who have read and write      |
+|                              |               | access where groupname begins with a @                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Time Machine                 | checkbox      | due to a limitation in how Mac deals with low-diskspace issues when multiple Mac's share the same volume,   |
 |                              |               | checking "Time Machine" on multiple shares may result in intermittent failed backups                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Zero Device Numbers          | checkbox      | only available in Advanced Mode; enable when the device number is not constant across a reboot              |
+| Zero Device Numbers          | checkbox      | only available in "Advanced Mode"; enable when the device number is not constant across a reboot            |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| No Stat                      | checkbox      | only available in Advanced Mode; if checked, AFP won't stat the volume path when enumerating the volumes    |
+| No Stat                      | checkbox      | only available in "Advanced Mode"; if checked, AFP won't stat the volume path when enumerating the volumes  |
 |                              |               | list; useful for automounting or volumes created by a preexec script                                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| AFP3 UNIX Privs              | checkbox      | enables Unix privileges supported by OSX 10.5 and higher; do not enable if the network contains Mac OS X    |
-|                              |               | 10.4 clients or lower as they do not support these                                                          |
+| AFP3 UNIX Privs              | checkbox      | only available in "Advanced Mode"; enables Unix privileges supported by OSX 10.5 and higher; do not enable  |
+|                              |               | if the network contains Mac OS X 10.4 clients or lower as they do not support these                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default file permission      | checkboxes    | only works with Unix ACLs; new files created on the share are set with the selected permissions             |
+| Default file permission      | checkboxes    | only available in "Advanced Mode"; only works with Unix ACLs; new files created on the share are set with   |
+|                              |               | the selected permissions                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default directory permission | checkboxes    | only works with Unix ACLs; new directories created on the share are set with the selected permissions       |
+| Default directory permission | checkboxes    | only available in "Advanced Mode"; only works with Unix ACLs; new directories created on the share are set  |
+|                              |               | with the selected permissions                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default umask                | integer       | umask for newly created files, default is *000* (anyone can read, write, and execute)                       |
+| Default umask                | integer       | only available in "Advanced Mode"; umask for newly created files, default is *000* (anyone can read, write, |
+|                              |               | and execute)                                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
