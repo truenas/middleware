@@ -4014,50 +4014,6 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
-    def geom_disk_replace(self, volume, to_disk):
-        """Replace disk in ``volume`` for ``to_disk``
-
-        Raises:
-            ValueError: Volume not found
-
-        Returns:
-            0 if the disk was replaced, > 0 otherwise
-        """
-
-        assert volume.vol_fstype == 'UFS'
-
-        provider = self.get_label_consumer('ufs', volume.vol_name)
-        if provider is None:
-            raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
-        class_name = provider.xpath("../../name")[0].text
-        geom_name = provider.xpath("../name")[0].text
-
-        if class_name == "MIRROR":
-            rv = self._system_nolog("geom mirror forget %s" % (geom_name,))
-            if rv != 0:
-                return rv
-            p1 = self._pipeopen("geom mirror insert %s /dev/%s" % (str(geom_name), str(to_disk),))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Replacement failed: "%s"' % error)
-            return 0
-
-        elif class_name == "RAID3":
-            numbers = provider.xpath("../consumer/config/Number")
-            ncomponents = int(provider.xpath("../config/Components")[0].text)
-            numbers = [int(node.text) for node in numbers]
-            lacking = [x for x in xrange(ncomponents) if x not in numbers][0]
-            p1 = self._pipeopen("geom raid3 insert -n %d %s %s" %
-                                        (lacking, str(geom_name), str(to_disk),))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Replacement failed: "%s"' % error)
-            return 0
-
-        return 1
-
     def iface_destroy(self, name):
         self._system("ifconfig %s destroy" % name)
 
@@ -4603,53 +4559,6 @@ class notifier:
             for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
                 if ed.encrypted_provider not in provs:
                     ed.delete()
-
-    def geom_disks_dump(self, volume):
-        """
-        Raises:
-            ValueError: UFS volume not found
-        """
-        provider = self.get_label_consumer('ufs', volume.vol_name)
-        if provider is None:
-            raise ValueError("UFS Volume %s not found" % (volume,))
-        class_name = provider.xpath("../../name")[0].text
-
-        items = []
-        if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
-            if class_name == 'STRIPE':
-                statepath = "../config/State"
-                status = provider.xpath("../config/Status")[0].text
-                ncomponents = int(re.search(r'Total=(?P<total>\d+)', status).group("total"))
-            else:
-                statepath = "./config/State"
-                ncomponents = int(provider.xpath("../config/Components")[0].text)
-            consumers = provider.xpath("../consumer")
-            doc = self._geom_confxml()
-            for consumer in consumers:
-                provid = consumer.xpath("./provider/@ref")[0]
-                status = consumer.xpath(statepath)[0].text
-                name = doc.xpath("//provider[@id = '%s']/../name" % provid)[0].text
-                items.append({
-                    'type': 'dev',
-                    'diskname': name,
-                    'name': name,
-                    'status': status,
-                })
-            for i in xrange(len(consumers), ncomponents):
-                items.append({
-                    'type': 'dev',
-                    'name': 'UNAVAIL',
-                    'status': 'UNAVAIL',
-                })
-        elif class_name == 'PART':
-            name = provider.xpath("../name")[0].text
-            items.append({
-                'type': 'dev',
-                'diskname': name,
-                'name': name,
-                'status': 'ONLINE',
-            })
-        return items
 
     def multipath_all(self):
         """

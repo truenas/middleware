@@ -54,7 +54,7 @@ from freenasUI.storage import forms, models
 log = logging.getLogger('storage.views')
 
 
-#FIXME: Move to a utils module
+# FIXME: Move to a utils module
 def _diskcmp(a, b):
     rega = re.search(r'^([a-z/]+)(\d+)$', a[1])
     regb = re.search(r'^([a-z/]+)(\d+)$', b[1])
@@ -241,8 +241,9 @@ def volumemanager_zfs(request):
                 disks = None
             zpoolfields = re.compile(r'zpool_(.+)')
             zfsextra = [
-                (zpoolfields.search(i).group(1), i, request.POST.get(i)) \
-                        for i in request.POST.keys() if zpoolfields.match(i)]
+                (zpoolfields.search(i).group(1), i, request.POST.get(i))
+                for i in request.POST.keys() if zpoolfields.match(i)
+            ]
 
     else:
         form = forms.ZFSVolumeWizardForm()
@@ -293,7 +294,9 @@ def dataset_create(request, fs):
             dataset_share_type = cleaned_data.get('dataset_share_type')
             if dataset_share_type == "windows":
                 props['aclmode'] = 'restricted'
-            props['casesensitivity'] = cleaned_data.get('dataset_case_sensitivity')
+            props['casesensitivity'] = cleaned_data.get(
+                'dataset_case_sensitivity'
+            )
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
@@ -513,7 +516,7 @@ def zfsvolume_edit(request, object_id):
 
 def mp_permission(request, path):
     path = urllib.unquote_plus(path)
-    #FIXME: dojo cannot handle urls partially urlencoded %2F => /
+    # FIXME: dojo cannot handle urls partially urlencoded %2F => /
     if not path.startswith('/'):
         path = '/' + path
     if request.method == 'POST':
@@ -640,30 +643,6 @@ def clonesnap(request, snapshot):
     })
 
 
-def geom_disk_replace(request, vname):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    if request.method == "POST":
-        form = forms.UFSDiskReplacementForm(request.POST)
-        if form.is_valid():
-            if form.done(volume):
-                return JsonResp(
-                    request,
-                    message=_("Disk replacement has been initiated."))
-            else:
-                return JsonResp(
-                    request,
-                    error=True,
-                    message=_("An error occurred."))
-
-    else:
-        form = forms.UFSDiskReplacementForm()
-    return render(request, 'storage/geom_disk_replace.html', {
-        'form': form,
-        'vname': vname,
-    })
-
-
 def disk_detach(request, vname, label):
 
     volume = models.Volume.objects.get(vol_name=vname)
@@ -760,7 +739,10 @@ def zpool_scrub(request, vid):
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            return JsonResp(request, message=_("The scrub process has stopped"))
+            return JsonResp(
+                request,
+                message=_("The scrub process has stopped"),
+            )
         else:
             notifier().zfs_scrub(str(volume.vol_name))
             return JsonResp(request, message=_("The scrub process has begun"))
@@ -861,7 +843,7 @@ def disk_wipe(request, devname):
                 form._errors['__all__'] = form.error_class([
                     "Umount the following mount points before proceeding:"
                     "<br /> %s" % (
-                    '<br /> '.join(mounted),
+                        '<br /> '.join(mounted),
                     )
                 ])
             else:
@@ -959,6 +941,7 @@ def volume_lock(request, object_id):
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
+
 
 def volume_unlock(request, object_id):
 
