@@ -1546,7 +1546,6 @@ class notifier:
         Get all unused geli providers
 
         It might be an entire disk or a partition of type freebsd-zfs
-        (GELI on UFS not supported yet)
         """
         providers = []
         doc = self._geom_confxml()

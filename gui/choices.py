@@ -162,9 +162,8 @@ WEEKDAYS_CHOICES = (
         )
 
 VolumeType_Choices = (
-        ('UFS', 'UFS'),
-        ('ZFS', 'ZFS'),
-        )
+    ('ZFS', 'ZFS'),
+)
 
 VolumeEncrypt_Choices = (
         (0, _('Unencrypted')),

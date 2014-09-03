@@ -524,7 +524,7 @@ class DojoFileStore(object):
             self.mp = [
                 os.path.abspath(mp.mp_path.encode('utf8'))
                 for mp in MountPoint.objects.filter(
-                    mp_volume__vol_fstype__in=('ZFS', 'UFS')
+                    mp_volume__vol_fstype='ZFS'
                 )
             ]
 
