@@ -230,6 +230,8 @@ The following fields have been added or deleted:
 
 * A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
 
+* The "Case Sensitivity" drop-down menu has been added to :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
   you no longer need to upgrade a ZFS pool from the command line.
   

@@ -792,6 +792,11 @@ click the "Advanced Mode" button or configure the system to always display these
 |                          |                     | *Mac* for an AFP share                                                                                    |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
+| Case Sensitivity         | drop-down menu      | choices are *sensitive* (default, assumes filenames are case sensitive),                                  |
+|                          |                     | *insensitive* (assumes filenames are not case sensitive), or                                              |
+|                          |                     | *mixed* (understands both types of filenames)                                                             |
+|                          |                     |                                                                                                           |
++--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Enable atime             | Inherit, On, or Off | controls whether the access time for files is updated when they are read; setting this property to *Off*  |
 |                          |                     | avoids producing log traffic when reading files and can result in significant performance gains           |
 |                          |                     |                                                                                                           |
