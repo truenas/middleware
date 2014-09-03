@@ -547,7 +547,7 @@ menu_install()
 	    fi
 
 	    eval "dialog --title 'Choose destination media' \
-	      --checklist 'Select the drive where $AVATAR_PROJECT should be installed.' \
+	      --checklist 'Select one or more drives where $AVATAR_PROJECT should be installed.' \
 	      ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
 	    [ $? -eq 0 ] || exit 1
 	fi
