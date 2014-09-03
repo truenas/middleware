@@ -356,7 +356,7 @@ Upgrading From the GUI
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
-the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Advanced --> Firmware Update` as shown in Figure 2.5d.
+the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Upgrade` as shown in Figure 2.5d.
 
 **Figure 2.5d: Upgrading FreeNAS® From the GUI**
 

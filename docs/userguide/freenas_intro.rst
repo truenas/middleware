@@ -162,6 +162,10 @@ issued since FreeBSD 9.3 RELEASE.
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
 
+* The ability to manage boot environments has been added to :menuselection:`System --> Boot`.
+
+* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
+
 * The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`.
 
 * The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`.
@@ -218,6 +222,8 @@ The following fields have been added or deleted:
   :menuselection:`System --> System Dataset`.
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
+
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` to :menuselection:`System --> Upgrade`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
