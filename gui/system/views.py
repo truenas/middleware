@@ -1193,23 +1193,23 @@ def certificate_create_CSR(request):
     })
 
 
-def certificate_edit(request, id):
+def certificate_view(request, id):
 
     cert = models.Certificate.objects.get(pk=id)
 
     if request.method == "POST":
-        form = forms.CertificateEditForm(request.POST, instance=cert)
+        form = forms.CertificateViewForm(request.POST, instance=cert)
         if form.is_valid():
-            form.save()
+            #form.save()
             return JsonResp(
                 request,
-                message=_("Internal Certificate successfully edited.")
+                message=_("Internal Certificate Viewed.")
             )
 
     else:
-        form = forms.CertificateEditForm(instance=cert)
+        form = forms.CertificateViewForm(instance=cert)
 
-    return render(request, "system/certificate/certificate_edit.html", {
+    return render(request, "system/certificate/certificate_view.html", {
         'form': form
     })
 
