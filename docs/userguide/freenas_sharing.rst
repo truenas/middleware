@@ -281,8 +281,8 @@ To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> 
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 6.9252in
-    :height: 4.6055in
+    :width: 4.4in
+    :height: 3.9in
 
 Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
@@ -578,20 +578,24 @@ This section will demonstrate some common configuration scenarios:
 
 * If you are having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
 
-Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`. Some
-settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these
-settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
-Table 10.3a summarizes the options when creating a CIFS share.
+**Figure 10.3a: Adding a CIFS Share**
+
+|cifs2.png|
+
+.. |cifs2.png| image:: images/cifs2.png
+    :width: 5.4in
+    :height: 3.5in
+
+Table 10.3a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
+"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
 
 `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
 provides more details for each configurable option. Once you press the "OK" button when creating the CIFS share, a pop-up menu will ask "Would you like to
 enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
 started.
-
-**Figure 10.3a: Adding a CIFS Share**
-
-|Figure103a_png|
 
 **Table 10.3a: Options for a CIFS Share**
 
@@ -605,30 +609,34 @@ started.
 | Name                         | string        | mandatory; name of share                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Comment                      | string        | optional description                                                                                        |
+| Comment                      | string        | only available in "Advanced Mode";  optional description                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when   |
 |                              |               | creating a share on a system that already has custom ACLs set                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Export Read Only             | checkbox      | prohibits write access to the share                                                                         |
+| Export Read Only             | checkbox      | only available in "Advanced Mode"; prohibits write access to the share                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Browsable to Network Clients | checkbox      | enables Windows clients to browse the shared directory using Windows Explorer                               |
+| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; enables Windows clients to browse the shared directory using Windows     |
+|                              |               | Explorer                                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Export Recycle Bin           | checkbox      | deleted files are instead moved to a hidden :file:`.recycle` directory in the root folder of the share      |
+| Export Recycle Bin           | checkbox      | only available in "Advanced Mode"; deleted files are instead moved to a hidden :file:`.recycle` directory   |
+|                              |               | in the root folder of the share                                                                             |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Show Hidden Files            | checkbox      | if enabled, will display filenames that begin with a dot (Unix hidden files)                                |
+| Show Hidden Files            | checkbox      | only available in "Advanced Mode"; if enabled, will display filenames that begin with a dot (Unix hidden    |
+|                              |               | files)                                                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
 |                              |               | guest user defined in the CIFS service                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Only Allow Guest Access      | checkbox      | requires "Allow guest access" to also be checked; forces guest access for all connections                   |
+| Only Allow Guest Access      | checkbox      | only available in "Advanced Mode"; requires "Allow guest access" to also be checked; forces guest access    |
+|                              |               | for all connections                                                                                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
