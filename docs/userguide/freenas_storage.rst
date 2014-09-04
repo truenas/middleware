@@ -25,11 +25,9 @@ Volumes
 -------
 
 Since the storage disks are separate from the FreeNAS® operating system, you do not actually have a NAS (network-attached storage) system until you configure
-your disks into at least one volume. The FreeNAS® graphical interface supports the creation of both
-`UFS <http://en.wikipedia.org/wiki/Unix_File_System>`_
-and
+your disks into at least one volume. The FreeNAS® graphical interface supports the creation of
 `ZFS <http://en.wikipedia.org/wiki/Zfs>`_
-volumes. ZFS volumes are recommended to get the most out of your FreeNAS® system.
+volumes.
 
 .. note:: in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. When configuring the ZFS pool using the FreeNAS® graphical
    interface, the term volume is used to refer to either a UFS volume or a ZFS pool.
@@ -136,69 +134,15 @@ Before importing a disk, be aware of the following caveats:
 * if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
   drive.
 
-.. _UFS Volume Manager:
-
-UFS Volume Manager
-~~~~~~~~~~~~~~~~~~
-
-While the UFS filesystem is supported, it is not recommended as it does not provide any ZFS features such as compression, encryption, deduplication,
-copy-on-write, lightweight snapshots, or the ability to provide early detection and correction of corrupt data. If you are using UFS as a temporary solution
-until you can afford better hardware, note that you will have to destroy your existing UFS volume in order to create a ZFS pool, then restore your data from
-backup.
-
-.. note:: it is not recommended to create a UFS volume larger than 5TB as it will be inefficient to
-   :command:`fsck`, causing long delays at system boot if the system was not shutdown cleanly.
-
-To format your disks with UFS, go to :menuselection:`Storage --> Volumes --> UFS Volume Manager (legacy)` which will open the screen shown in Figure 8.1e.
-
-**Figure 8.1e: Creating a UFS Volume**
-
-|ufs.png|
-
-.. |ufs.png| image:: images/ufs.png
-    :width: 3.1in
-    :height: 2.5in
-
-Table 8.1a summarizes the available options.
-
-**Table 8.1a: Options When Creating a UFS Volume**
-
-+---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| **Setting**         | **Value** | **Description**                                                                                                          |
-|                     |           |                                                                                                                          |
-|                     |           |                                                                                                                          |
-+=====================+===========+==========================================================================================================================+
-| Volume name         | string    | mandatory; it is recommended to choose a name that will stick out in the logs (e.g. **not** :file:`data` or              |
-|                     |           | :file:`freenas`)                                                                                                         |
-|                     |           |                                                                                                                          |
-+---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Member disks        | selection | use the mouse to select the disk(s) to be used; to select multiple disks, highlight the first disk, then hold the        |
-|                     |           | :kbd:`Shift` key as you highlight the last disk.                                                                         |
-|                     |           |                                                                                                                          |
-+---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Specify custom path | checkbox  | optional; useful for creating a :file:`/var` for persistent log storage                                                  |
-|                     |           |                                                                                                                          |
-+---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Path                | string    | only available when "Specify custom path" is checked; must be full name of volume (e.g.                                  |
-|                     |           | :file:`/mnt/var`) and if no path is provided, it will append the "Volume name" to :file:`/mnt`                           |
-|                     |           |                                                                                                                          |
-+---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-
-
-The "Add Volume" button warns that **creating a volume destroys all existing data on selected disk(s).** In other words, creating storage using UFS Volume
-Manager is a destructive action that reformats the selected disks. If your intent is to not overwrite the data on an existing volume, see if the volume format
-is supported by the auto-import or import actions. If so, perform the supported action instead. If the current storage format is not supported, you will need
-to backup the data to an external media, format the disks, then restore the data to the new volume.
-
 .. _View Disks:
 
 View Disks
 ~~~~~~~~~~
 
 :menuselection:`Storage --> Volumes --> View Disks` allows you to view all of the disks recognized by the FreeNAS® system. An example is shown in Figure
-8.1f.
+8.1e.
 
-**Figure 8.1f: Viewing Disks**
+**Figure 8.1e: Viewing Disks**
 
 |view.png|
 
@@ -207,9 +151,9 @@ View Disks
     :height: 4.5in
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
-are described in Table 8.1b.
+are described in Table 8.1a.
 
-**Table 8.1b: Disk Options**
+**Table 8.1a: Disk Options**
 
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | **Setting**                                            | **Value**      | **Description**                                                                                                      |
@@ -258,12 +202,12 @@ View Volumes
 ~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing volumes, ZFS datasets, and zvols. The example
-shown in Figure 8.1g demonstrates one ZFS volume with two datasets and one zvol.
+shown in Figure 8.1f demonstrates one ZFS volume with two datasets and one zvol.
 
-Buttons are provided to provide quick access to "ZFS Volume Manager", "UFS Volume Manager", "Import Volume", "Auto Import Volume", and "View Disks". If the
-system has multipath-capable hardware, an extra button will be added to "View Multipaths".
+Buttons are provided to provide quick access to "Volume Manager", "Import Volume", "Auto Import Volume", and "View Disks". If the system has multipath-capable
+hardware, an extra button will be added to "View Multipaths".
 
-**Figure 8.1g: Viewing Volumes**
+**Figure 8.1f: Viewing Volumes**
 
 |volume1.png|
 
@@ -274,7 +218,7 @@ system has multipath-capable hardware, an extra button will be added to "View Mu
 If you click the entry for a ZFS volume, nine icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
 #.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
-    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1h, will show the
+    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1g, will show the
     current used space, provide the checkbox "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
     volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
     will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported (ZFS volumes only).** This means that
@@ -302,13 +246,13 @@ If you click the entry for a ZFS volume, nine icons will appear at the bottom of
 #.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
     wish to schedule the regular creation of snapshots, instead use :ref:`Periodic Snapshot Tasks`.
 
-#.  **Volume Status:** as seen in the example in Figure 8.1i, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
+#.  **Volume Status:** as seen in the example in Figure 8.1h, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
-    device's options (shown in Figure 8.1j), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+    device's options (shown in Figure 8.1i), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 #.  **Upgrade:** used to upgrade the ZFS version, as described in :ref:`Upgrading a ZFS Pool`.
 
-**Figure 8.1h: Detaching or Deleting a Volume**
+**Figure 8.1g: Detaching or Deleting a Volume**
 
 |detach.png|
 
@@ -316,7 +260,7 @@ If you click the entry for a ZFS volume, nine icons will appear at the bottom of
     :width: 5.3in
     :height: 4.5in
 
-**Figure 8.1i: Volume Status**
+**Figure 8.1h: Volume Status**
 
 |volume2.png|
 
@@ -327,7 +271,7 @@ If you click the entry for a ZFS volume, nine icons will appear at the bottom of
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1j. Table 8.1b summarizes the
 configurable options.
 
-**Figure 8.1j: Editing a Disk**
+**Figure 8.1i: Editing a Disk**
 
 |disk.png|
 
@@ -357,10 +301,10 @@ Multipath hardware adds fault tolerance to a NAS as the data is still available 
 
 FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in
 multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`, as seen in
-the example in Figure 8.1k. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
+the example in Figure 8.1j. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
 multipath-capable hardware.
 
-**Figure 8.1k: Viewing Multipaths**
+**Figure 8.1j: Viewing Multipaths**
 
 |multipath.png|
 
@@ -368,7 +312,7 @@ multipath-capable hardware.
     :width: 6.9252in
     :height: 1.6736in
 
-Figure 6.3q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
+Figure 8.1j provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.
 
 .. _ZFS Volume Manager:
@@ -381,9 +325,9 @@ pool.
 
 If you are new to how ZFS handles redundancy, skim through the :ref:`ZFS Primer` before using ZFS Volume Manager.
 
-If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you will see a screen similar to the example shown in Figure 8.1l.
+If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you will see a screen similar to the example shown in Figure 8.1k.
 
-**Figure 8.1l: Creating a ZFS Pool Using Volume Manager**
+**Figure 8.1k: Creating a ZFS Pool Using Volume Manager**
 
 |zfs1.png|
 
@@ -391,9 +335,9 @@ If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you
     :width: 4.5in
     :height: 3.6in
 
-Table 8.1c summarizes the configuration options of this screen.
+Table 8.1b summarizes the configuration options of this screen.
 
-**Table 8.1c: Options When Creating a ZFS Volume**
+**Table 8.1b: Options When Creating a ZFS Volume**
 
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | **Setting**      | **Value**      | **Description**                                                                            |
@@ -545,9 +489,9 @@ Key Management
 ''''''''''''''
 
 If you check the "Enable full disk encryption" box during the creation of a ZFS volume, five encryption icons will be added to the icons that are
-typically seen when Viewing Volumes. An example is seen in Figure 8.1m.
+typically seen when Viewing Volumes. An example is seen in Figure 8.1l.
 
-**Figure 8.1m: Encryption Icons Associated with an Encrypted ZFS Volume**
+**Figure 8.1l: Encryption Icons Associated with an Encrypted ZFS Volume**
 
 |encrypt.png|
 
@@ -587,16 +531,16 @@ Each of these icons will prompt for the password used to access the FreeNAS® ad
 Manual Volume Creation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The "Manual Setup" button shown in Figure 8.1l can be used to create a non-optimal ZFS volume. While this is **not** recommended, it can, for example, be used
+The "Manual Setup" button shown in Figure 8.1k can be used to create a non-optimal ZFS volume. While this is **not** recommended, it can, for example, be used
 to create a volume containing disks of different sizes or to put more than the recommended number of disks into a vdev.
 
 .. note:: when using disks of differing sizes, the volume is limited by the size of the smallest disk. When using more disks than are recommended for a vdev,
    you increase resilvering time and the risk that more than the allowable number of disks will fail before a resilver completes. For these reasons, it is
    recommended to instead let the ZFS Volume Manager create an optimal pool for you, as described in ZFS Volume Manager, using same-size disks.
 
-Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the available options.
+Figure 8.1m shows the "Manual Setup" screen and Table 8.1c summarizes the available options.
 
-**Figure 8.1n: Creating a Non-Optimal ZFS Volume**
+**Figure 8.1m: Creating a Non-Optimal ZFS Volume**
 
 |manual.png|
 
@@ -604,7 +548,7 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
     :width: 4.1in
     :height: 3.3in
 
-**Table 8.1d: Manual Setup Options**
+**Table 8.1c: Manual Setup Options**
 
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | **Setting**   | **Value**        | **Description**                                                                                |
@@ -637,10 +581,10 @@ Figure 8.1n shows the "Manual Setup" screen and Table 8.1d summarizes the availa
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, shown in Figure 8.1o, can be used to add additional
+The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, shown in Figure 8.1n, can be used to add additional
 disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
 
-**Figure 8.1o: Volume to Extend Field**
+**Figure 8.1n: Volume to Extend Field**
 
 |volume3.png|
 
@@ -691,9 +635,9 @@ The chapter on Sharing contains configuration examples for several types of perm
 permissions.
 
 Once a volume or dataset is created, it will be listed by its mount point name in :menuselection:`Storage --> Volumes --> View Volumes`. If you click the
-"Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1p. Table 8.1e summarizes the options in this screen.
+"Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1o. Table 8.1d summarizes the options in this screen.
 
-**Figure 8.1p: Changing Permissions on a Volume or Dataset**
+**Figure 8.1o: Changing Permissions on a Volume or Dataset**
 
 |perms1.png|
 
@@ -701,7 +645,7 @@ Once a volume or dataset is created, it will be listed by its mount point name i
     :width: 3.4in
     :height: 3.3in
 
-**Table 8.1e: Options When Changing Permissions**
+**Table 8.1d: Options When Changing Permissions**
 
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | **Setting**                | **Value**        | **Description**                                                                                            |
@@ -756,14 +700,14 @@ you can set properties such as quotas and compression as well as create snapshot
 
 .. note:: ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
-If you select an existing :menuselection:`ZFS volume --> Create ZFS Dataset`, you will see the screen shown in Figure 8.1q.
+If you select an existing :menuselection:`ZFS volume --> Create ZFS Dataset`, you will see the screen shown in Figure 8.1p.
 
 Once a dataset is created, you can click on that dataset and select "Create ZFS Dataset", thus creating a nested dataset, or a dataset within a dataset. You
 can also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create ZFS Dataset" option for the intended volume or
 dataset. If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create ZFS Dataset" will be for
 the volume.
 
-**Figure 8.1q: Creating a ZFS Dataset**
+**Figure 8.1p: Creating a ZFS Dataset**
 
 |dataset.png|
 
@@ -771,11 +715,11 @@ the volume.
     :width: 4.6in
     :height: 3.1in
 
-Table 8.1f summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
+Table 8.1e summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`. These attributes can also be changed after dataset creation in :menuselection:`Storage --> Volumes --> View Volumes`.
 
-**Table 8.1f: ZFS Dataset Options**
+**Table 8.1e: ZFS Dataset Options**
 
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | **Setting**              | **Value**           | **Description**                                                                                           |
@@ -882,13 +826,13 @@ Create zvol
 
 A zvol is a feature of ZFS that creates a block device over ZFS. This allows you to use a zvol as an iSCSI device extent.
 
-To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> Create zvol` which will open the screen shown in Figure 8.1r.
+To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> Create zvol` which will open the screen shown in Figure 8.1q.
 
-The configuration options are described in Table 8.1g. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
+The configuration options are described in Table 8.1f. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`.
 
-**Figure 8.1r: Creating a zvol**
+**Figure 8.1q: Creating a zvol**
 
 |zvol.png|
 
@@ -896,7 +840,7 @@ Mode" button or configure the system to always display these settings by checkin
     :width: 3.2in
     :height: 2.2in
 
-**Table 8.1g: zvol Configuration Options**
+**Table 8.1f: zvol Configuration Options**
 
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | **Setting**        | **Value**      | **Description**                                                                                                      |
@@ -949,9 +893,9 @@ you have located the failed device in the GUI, perform the following steps:
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
+In the example shown in Figure 8.1r, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
-**Figure 8.1s: Replacing a Failed Disk**
+**Figure 8.1r: Replacing a Failed Disk**
 
 |replace.png|
 
@@ -959,10 +903,10 @@ In the example shown in Figure 8.1s, a failed disk is being replaced by disk *ad
     :width: 4.9in
     :height: 4.5in
 
-Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1t indicates that the
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1s indicates that the
 disk replacement was successful for this example.
 
-**Figure 8.1t: Disk Replacement is Complete**
+**Figure 8.1s: Disk Replacement is Complete**
 
 |replace2.png|
 

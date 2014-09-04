@@ -486,7 +486,7 @@ as it contains useful guidelines for minimizing the risk of losing your data.
 
 In order to install or run FreeNAS® within a virtual environment, you will need to create a virtual machine that meets the following minimum requirements:
 
-* **at least** 2048 MB base memory size (UFS) or 4096 MB (ZFS)
+* **at least** 4096 MB base memory size
 
 * a virtual disk **at least 2 GB in size** to hold the operating system and swap
 
@@ -528,8 +528,8 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
     :width: 5.4626in
     :height: 3.6665in
 
-Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 2048 MB**.
-**If your system has enough memory, select at least 4096 MB so that you can use ZFS**. When finished, click "Next" to see the screen in Figure 2.6d.
+Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 4096 MB**. When finished, click "Next" to see the screen in
+Figure 2.6d.
 
 **Figure 2.6c: Select the Amount of Memory Reserved for the Virtual Machine**
 

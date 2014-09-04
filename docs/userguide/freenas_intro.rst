@@ -111,11 +111,9 @@ Notable features in FreeNAS® include:
 
 * supports Active Directory or LDAP for user authentication as well as manual user and group creation
 
-* supports the creation and import of UFS2 based volumes, including gmirror, gstripe, and graid3
-
 * supports the creation and import of
   `ZFS <http://en.wikipedia.org/wiki/ZFS>`_
-  pools, enabling many features not available in UFS2 such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
+  pools, enabling many features such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
 
 * upgrade procedure saves the current operating system to an inactive partition, allowing for an easy reversal of an undesirable upgrade
 
@@ -151,6 +149,10 @@ It is based on the stable version of FreeBSD 9.3 which adds
 issued since FreeBSD 9.3 RELEASE.
 
 * FreeNAS® is now 64-bit only.
+
+* FreeNAS® is now ZFS only. This means that the "UFS Volume Manager" has been removed and disks can no longer be formatted with UFS. However, for backwards
+  compatibility, existing UFS-formatted disks can still be imported using "Import Volume" and UFS software RAID volumes can be imported using "Auto Import
+  Volume".
 
 * There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
   file as new versions of FreeNAS® must be installed using a menu-driven installer.
@@ -352,9 +354,6 @@ recommended minimum. If performance is inadequate, consider adding more RAM as a
 of RAM. While it is possible to use ZFS on systems with less than 8 GB of RAM, performance will be substantially reduced. The ZFS filesystem will
 automatically disable pre-fetching (caching) on systems where it is not able to use at least 4 GB of memory for its cache and data structures.
 
-.. note:: if your RAM is limited, you can consider using the UFS filesystem until you can afford better hardware. However, many of the compelling features of
-   FreeNAS® are not available with UFS.
-
 If your system supports it and your budget allows for it, install ECC RAM. While more expensive, ECC RAM is highly recommended as it prevents in-flight
 corruption of data before the error-correcting properties of ZFS come into play, thus providing consistency for the checksumming and parity calculations
 performed by ZFS. If you consider your data to be important, use ECC RAM. This 
@@ -366,10 +365,10 @@ If you use Active Directory with FreeNAS®, add an additional 2 GB of RAM for wi
 
 If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
-If you don't have at least 8GB of RAM with ZFS or 2GB of RAM with UFS, you should consider getting more powerful hardware before using FreeNAS® to store your
-data. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
-bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
-IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
+If you don't have at least 8GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
+FreeNAS® to function with less than these requirements, just at reduced performance.  The bottom line is that these minimums are based on the feedback of
+many users. Users that do not meet these requirements and who ask for help in the forums or IRC will likely be ignored because of the abundance of information
+that FreeNAS® may not behave properly with less than 8GB of RAM.
 
 .. _Compact or USB Flash:
 
