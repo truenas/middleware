@@ -861,6 +861,8 @@ require([
         // do noting
       } else if(acl.get('value') == 'unix') {
         mode.set('disabled', false);
+      } else if(acl.get('value') == 'mac') {
+        mode.set('disabled', false);
       } else {
         mode.set('disabled', true);
       }
