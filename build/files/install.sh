@@ -692,8 +692,8 @@ menu_install()
 	chown -R www:www /tmp/data/data
     fi
     
-    # Tell it to look in /.mount (with an implied /Packages) for the packages.
-    /usr/local/bin/freenas-install -P /.mount/FreeNAS -M /.mount/FreeNAS-MANIFEST /tmp/data
+    # Tell it to look in /.mount for the packages.
+    /usr/local/bin/freenas-install -P /.mount/FreeNAS/Packages -M /.mount/FreeNAS-MANIFEST /tmp/data
     
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
