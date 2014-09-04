@@ -78,6 +78,7 @@ def main():
                 cf_contents.append("\tdirectory perm = %s\n" % share.afp_dperm)
             if share.afp_umask:
                 cf_contents.append("\tumask = %s\n" % share.afp_umask)
+        cf_contents.append("\tveto files = .windows/.mac/\n")
 
     with open(afp_config, "w") as fh:
         for line in cf_contents:

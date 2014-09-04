@@ -796,7 +796,7 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
         confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
         confset1(smb4_shares, "printable = no")
-        confset1(smb4_shares, "veto files = /.snapshot/.windows/.zfs/")
+        confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
         confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
         confset2(smb4_shares, "writeable = %s",
             "no" if share.cifs_ro else "yes")

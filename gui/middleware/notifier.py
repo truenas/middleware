@@ -80,7 +80,7 @@ cache.get_apps()
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
+from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE, ACL_MAC_FILE
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
@@ -2574,13 +2574,25 @@ class notifier:
             path = path.encode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
-        if acl == 'windows' and not winexists:
-            open(winacl, 'a').close()
-            winexists = True
-        elif acl == 'unix' and winexists:
-            os.unlink(winacl)
-            winexists = False
+        if acl == 'windows':
+            if not winexists:
+                open(winacl, 'a').close()
+                winexists = True
+            if os.path.isfile(macacl):
+                os.unlink(macacl)
+        elif acl == 'mac':
+            if winexists:
+                os.unlink(winacl)
+            if not os.path.isfile(macacl):
+                open(macacl, 'a').close()
+        elif acl == 'unix':
+            if winexists:
+                os.unlink(winacl)
+                winexists = False
+            if os.path.isfile(macacl):
+                os.unlink(macacl)
 
         if winexists:
             if not mode:

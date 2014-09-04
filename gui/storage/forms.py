@@ -1517,7 +1517,8 @@ class MountPointAccessForm(Form):
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
         choices=(
-            ('unix', 'Unix / Mac'),
+            ('unix', 'Unix'),
+            ('mac', 'Mac'),
             ('windows', 'Windows'),
         ),
         initial='unix',
@@ -1537,6 +1538,8 @@ class MountPointAccessForm(Form):
             if os.path.exists(os.path.join(path, ".windows")):
                 self.fields['mp_acl'].initial = 'windows'
                 self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+            elif os.path.exists(os.path.join(path, ".mac")):
+                self.fields['mp_acl'].initial = 'mac'
             else:
                 self.fields['mp_acl'].initial = 'unix'
             user, group = notifier().mp_get_owner(path)
@@ -1549,7 +1552,8 @@ class MountPointAccessForm(Form):
 
     def clean(self):
         if (
-            self.cleaned_data.get("mp_acl") == "unix"
+            (self.cleaned_data.get("mp_acl") == "unix" or
+                self.cleaned_data.get("mp_acl") == "mac")
             and
             not self.cleaned_data.get("mp_mode")
         ):
