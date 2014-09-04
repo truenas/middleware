@@ -242,7 +242,11 @@ The following fields have been added or deleted:
 
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
   you no longer need to upgrade a ZFS pool from the command line.
-  
+
+* The "Change Permissions" screen for a volume or dataset now has three "Permission Type"s: *Unix*, 
+  *Mac*, and
+  *Windows*.
+
 * The "Volume Status" screen now shows the status of the latest ZFS scrub, the number of errors, number of repaired blocks, and the date of the last scrub.
 
 * The "Volume Status" screen now shows the resilvering status when a disk is replaced.

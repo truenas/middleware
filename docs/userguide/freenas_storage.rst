@@ -643,7 +643,7 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 
 .. |perms1.png| image:: images/perms1.png
     :width: 3.4in
-    :height: 3.3in
+    :height: 3.6in
 
 **Table 8.1d: Options When Changing Permissions**
 
@@ -661,13 +661,14 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Mode                       | checkboxes       | only applies to the *Unix* "Permission Type" so will be greyed out if                                      |
-|                            |                  | *Windows/Mac ACL* is selected                                                                              |
+|                            |                  | *Mac* or                                                                                                   |
+|                            |                  | *Windows* is selected                                                                                      |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Permission Type            | bullet selection | *Unix* and                                                                                                 |
-|                            |                  | *Windows/Mac ACL* are mutually exclusive, this means that                                                  |
-|                            |                  | **you must select the correct permission type for the share**; see the paragraphs below this Table for     |
-|                            |                  | more details                                                                                               |
+| Permission Type            | bullet selection | choices are *Unix*,                                                                                        |
+|                            |                  | *Mac* or                                                                                                   |
+|                            |                  | *Windows*; see the paragraphs below this Table for                                                         |
+|                            |                  | more details about which "Permission Type" to choose                                                       |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume or dataset; if data already exists |
@@ -676,7 +677,7 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 
 
-When in doubt, or if you have a mix of operating systems in your network, select the *Unix* "Permission Type" as all clients understand them. 
+When in doubt, or if you have a mix of operating systems in your network, select the *Unix* "Permission Type" as all clients understand them.
 *Windows/Mac ACLs* add a superset of permissions that augment those provided by
 *Unix* and are the preferred option within an Active Directory domain. While Windows and Mac clients also understand
 *Unix* permissions, they won't benefit from the extra permissions provided by Active Directory and ACLs when
