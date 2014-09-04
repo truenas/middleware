@@ -6,3 +6,6 @@ o Fix bug where use of NONE cipher in replication erroneously reported an
 o Don't enable lz4 compression on replication by default if upgrading from
   a pre-9.2.1.7 release.
 
+o Multiple kernel iSCSI / CTL improvements.  This includes VMWare VAAI and
+  Microsoft ODX acceleration support, improved performance and fixes for
+  number of bugs.
