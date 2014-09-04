@@ -446,7 +446,7 @@ def guess_ipv4_address():
 # address, fill them in, then probe the range for first available address.
 #
 def guess_ipv6_address():
-    ipv4_addr = None
+    ipv6_addr = None
 
     st_ipv6_network = get_jail_ipv6_network()
     if st_ipv6_network:
