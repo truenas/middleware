@@ -666,10 +666,6 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | variables                                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS use implicit SSL                                         | checkbox       | only available in "Advanced "; if checked, will break clients that expect           |
-|                                                              |                | explicit connections                                                                |
-|                                                              |                |                                                                                     |
-+--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS DNS name required                                        | checkbox       | only available in "Advanced Mode"; if checked, the client's DNS name must           |
 |                                                              |                | resolve to its IP address and the cert must contain the same DNS name               |
 |                                                              |                |                                                                                     |
@@ -678,11 +674,11 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | contain the IP address that matches the IP address of the client                    |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Certificate and private key                                  | string         | only available in "Advanced Mode"; the SSL certificate and private key to be        |
-|                                                              |                | used for TLS FTP connections                                                        |
+| Certificate                                                  | drop-down menu | the SSL certificate to be used for TLS FTP connections; to create a certificate,    |
+|                                                              |                | use `System --> Certificates`                                                       |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Auxiliary parameters                                         | string         | only available in "Advanced Mode";                                  include         |
+| Auxiliary parameters                                         | string         | only available in "Advanced Mode"; used to add                                      |
 |                                                              |                | `proftpd(8) <http://linux.die.net/man/8/proftpd>`_                                  |
 |                                                              |                | parameters not covered elsewhere in this screen                                     |
 |                                                              |                |                                                                                     |

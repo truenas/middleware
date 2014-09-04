@@ -281,6 +281,9 @@ The following fields have been added or deleted:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
+* The "TLS use implicit SSL" checkbox has been removed from `Services --> FTP` as this feature is deprecated. The "Certificate and private key" field has
+  been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own certificates.
+
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
 * :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to three configuration options used by kernel iSCSI.
