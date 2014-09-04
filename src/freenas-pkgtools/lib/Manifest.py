@@ -168,11 +168,11 @@ class Manifest(object):
         # and some number of packages.  If there is a signature,
         # it needs to match the computed signature.
         if self._sequence is None:
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("Sequence is not set")
         if self._train is None:
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("Train is not set")
         if self._packages is None or len(self._packages) == 0:
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("No packages")
         if self._signature is not None:
             temp = self.dict()
             if SIGNATURE_KEY in temp:  temp.pop(SIGNATURE_KEY)
@@ -205,7 +205,8 @@ class Manifest(object):
         return
 
     def Train(self):
-        if self._train is None:  raise ManifestInvalidException
+        if self._train is None:
+            raise Exceptions.ManifestInvalidException("Invalid train")
         return self._train
 
     def SetTrain(self, train):
@@ -223,6 +224,10 @@ class Manifest(object):
     def AddPackages(self, list):
         if self._packages is None: self._packages = []
         self._packages.append(list)
+        return
+
+    def SetPackages(self, list):
+        self._packages = list
         return
 
     def VerifySignature(self):

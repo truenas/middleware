@@ -10,7 +10,8 @@ SUBDIR= create_manifest \
 	lib \
 	manifest_util \
 	pkgify \
-	freenas-update
+	freenas-update \
+	add_release
 
 beforeinstall:
 	${INSTALL} -d ${DESTDIR}${BINDIR}
@@ -50,6 +51,10 @@ ROOTDIR= ${DESTDIR}${BINDIR:S/usr\/local\/bin//}
 .if !defined(PACKAGE_DIR)
 PACKAGE_DIR=	/tmp/Packages
 .endif
+
+# This creates a package to be installed
+# on FreeNAS.  "make install" will add more
+# files.
 
 package: install
 	mkdir -p ${PACKAGE_DIR}

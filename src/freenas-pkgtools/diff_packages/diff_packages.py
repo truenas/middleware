@@ -16,6 +16,9 @@ kPkgDeltaKey = "delta-version"
 kPkgFlatSizeKey = "flatsize"
 kPkgDeltaStyleKey = "style"
 
+class DiffException(Exception):
+    pass
+
 def PackageName(m):
     return m[kPkgNameKey] if kPkgNameKey in m else None
 
@@ -107,21 +110,7 @@ def usage():
     print >> sys.stderr, "\tOutput file defaults to <pkg_name>-<old_version>-<new_version>.tgz"
     sys.exit(1)
 
-def main():
-    # No options I can think of, yet anyway
-    args = sys.argv[1:]
-
-    if len(args) < 2 or len(args) > 4:
-        usage()
-
-    pkg1 = args[0]
-    pkg2 = args[1]
-                           
-    if len(args) == 3:
-        output_file = args[2]
-    else:
-        output_file = None
-
+def DiffPackageFiles(pkg1, pkg2, output_file = None):
     pkg1_tarfile = tarfile.open(pkg1, "r")
     (pkg1_manifest, dc) = FindManifest(pkg1_tarfile)
 
@@ -131,12 +120,13 @@ def main():
     if PackageName(pkg1_manifest) != PackageName(pkg2_manifest):
         print >> sys.stderr, "Cannot diff different packages:  %s is not %s" % (
             PackageName(pkg1_manifest), PackageName(pkg2_manifest))
-        sys.exit(0)
+        raise DiffException("Cannot diff different packages" % (
+            PackageName(pkg1_manifest), PackageName(pkg2_manifest)))
 
     if PackageVersion(pkg1_manifest) == PackageVersion(pkg2_manifest):
         print >> sys.stderr, "Both %s packages are version %s" % (
             PackageName(pkg1_manifest), PackageVersion(pkg1_manifest))
-        sys.exit(0)
+        return None
 
     # Everything in the p2 goes into new.
     # Except for the files and directories keys.
@@ -169,9 +159,8 @@ def main():
     if empty is True:
         print >> sys.stderr, "No diffs between package version %s and %s; no file created" \
             % (PackageName(pkg1_manifest), PackageVersion(pkg1_manifest), PackageVersion(pkg1_manifest))
-        return 0
+        return None
 
-#    print "\nPackage diffs = %s\n" % diffs
     new_manifest_string = json.dumps(new_manifest, sort_keys=True,
                                  indent=4, separators=(',', ': '))
 
@@ -213,6 +202,30 @@ def main():
                 break
         member = pkg2_tarfile.next()
     new_tf.close()
+    return output_file
+
+def main():
+    # No options I can think of, yet anyway
+    args = sys.argv[1:]
+
+    if len(args) < 2 or len(args) > 4:
+        usage()
+
+    pkg1 = args[0]
+    pkg2 = args[1]
+                           
+    if len(args) == 3:
+        output_file = args[2]
+    else:
+        output_file = None
+
+    try:
+        f = DiffPackageFiles(pkg1, pkg2, output_file)
+        if f:
+            print f
+    except:
+        sys.exit(1)
+
     return 0
 
             

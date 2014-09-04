@@ -11,6 +11,7 @@ FILES=	Configuration.py \
 	Package.py \
 	Train.py \
 	Update.py \
+	PackageFile.py \
 	__init__.py
 
 beforeinstall:
