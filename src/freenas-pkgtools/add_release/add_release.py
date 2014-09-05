@@ -62,24 +62,270 @@ class ReleaseDB(object):
         pass
 
     def PackageForSequence(self, sequence, name = None):
+        """
+        Return the package for the given sequence.  If
+        name is None, it will return all packages for the
+        sequence as an array; otherwise, it returns a single
+        object.  The return objects are freenasOS.Package
+        (responding to Name() and Version() methods).
+        """
         return None
 
     def TrainForSequence(self, sequence):
+        """
+        Return the train (as a string) for a given sequence.
+        """
         return None
 
     def RecentSequencesForTrain(self, train, count = 5):
+        """
+        Return the last <count> sequences for the given train.
+        If count is 0, it returns them all.  Returns an
+        empty array if no match.
+        """
         if debug:  print >> sys.stderr, "ReleaseDB::RecentSequencesForTrain(%s, %d)" % (train, count)
         return []
 
     def AddPakageUpdate(self, Pkg, OldPkg, DeltaChecksum = None):
+        """
+        Add an update, with optional checksum, for Pkg.
+        """
         pass
 
     def UpdatesForPackage(self, Pkg, count = 5):
+        """
+        Return an array of updates for the given package.
+        If count is 0, it returns all known updates.
+        The return objects are tuples of (version, checksum).
+        checksum may be None.
+        """
         return []
+
+class PyReleaseDB(ReleaseDB):
+    """
+    Database as a json file.
+    __init__ loads the json file and converts it to
+    a python object; close writes it out.
+    The layout of the object is:
+    PACKAGES_KEY:	Dictionary, key is package name.
+			Value is an array of tuples.  Item 0 is the version;
+    			item 1 is a dictionary, with the keys being:
+			CHECKSUM_KEY	-- checksum for this package version
+			UPDATES_KEY	-- An array of tuples, item 0 being
+					version, and item 1 being a checksum
+					(may be None)
+    SEQUENCES_KEY:	An array of sequences.  Each element is a tuple,
+			with item 0 being the sequence name, and item 1 being
+			a dictionary.  The keys are:
+			PACKAGES_KEY	-- An array of packages.  Each package
+    					is a tuple (PackageName, Package Version)
+					that references the PACKAGES_KEY for the
+    					db object.
+			RELNAME_KEY	-- A string indicating the release name.
+			RELNOTES_KEY	-- An array of unknown at this time.
+			TRAINS_KEY	-- The name of the train for this sequence.
+    TRAINS_KEY:		A dictionary.  Key is the name of the train,
+			value is an array of sequences.
+    
+    """
+    global debug, verbose
+    PACKAGES_KEY = "kPackages"
+    SEQUENCES_KEY = "kSequences"
+    RELNAME_KEY = "kReleaseName"
+    RELNOTES_KEY = "kReleaseNotes"
+    CHECKSUM_KEY = "kChecksum"
+    TRAINS_KEY = "kTrains"
+    UPDATES_KEY = "kUpdates"
+
+    def __init__(self, use_transactions = False, dbfile = None):
+        import json
+
+        super(PyReleaseDB, self).__init__(use_transactions)
+        self._dbfile = dbfile
+        try:
+            with open(self._dbfile, "r") as f:
+                self._db = json.load(f)
+        except:
+            # Just assume an empty database for now
+            self._db = {}
+
+    def commit(self):
+        # Write the file out
+        import json
+
+        if debug: print >> sys.stderr, "PYReleaseDB::commit"
+        with open(self._dbfile, "w") as f:
+            json.dump(self._db, f, sort_keys=True,
+                      indent=4, separators=(',', ': '))
+
+    def close(self):
+        # Just write it out.
+        self.commit()
+
+    def abort(self):
+        # Reload the object
+        self._db = {}
+        try:
+            with open(self._dbfile, "r") as f:
+                self._db = json.load(f)
+        except:
+            pass
+
+    def _sequences(self):
+        if self.SEQUENCES_KEY not in self._db:
+            self._db[self.SEQUENCES_KEY] = []
+        return self._db[self.SEQUENCES_KEY]
+
+    def _packages(self):
+        if self.PACKAGES_KEY not in self._db:
+            self._db[self.PACKAGES_KEY] = {}
+        return self._db[self.PACKAGES_KEY]
+
+    def _trains(self):
+        if self.TRAINS_KEY not in self._db:
+            self._db[self.TRAINS_KEY] = {}
+        return self._db[self.TRAINS_KEY]
+
+    def _find_sequence(self, sequence):
+        seqs = self._sequences()
+        for s in seqs:
+            if s == sequence:
+                return s
+        return None
+
+    def AddRelease(self, sequence, train, packages, name = None, notes = None):
+        # Add the sequence, train, packages, name
+
+        if self._find_sequence(sequence):
+            raise Exception("Duplicate sequence %s" % sequence)
+        pkg_list = []
+        for pkg in packages:
+            # See if this package/version is in the db's package list.
+            pkgs = self._packages()
+            if pkg.Name() not in pkgs:
+                pkgs[pkg.Name()] = []
+            
+            version_array = pkgs[pkg.Name()]
+            if pkg.Version() not in version_array:
+                version_array.append(
+                    (
+                        pkg.Version(),
+                        {
+                            self.CHECKSUM_KEY : pkg.Checksum(),
+                            self.UPDATES_KEY : [],
+                        }
+                        )
+                    )
+                pkg_list.append((pkg.Name(), pkg.Version()))
+        # Now add pkg_list to the list of sequences
+        elem = (
+            sequence,
+            {
+                self.PACKAGES_KEY : pkg_list,
+                self.RELNAME_KEY : name,
+                self.RELNOTES_KEY : [],
+                self.TRAINS_KEY : train,
+            }
+        )
+        self._sequences().append(elem)
+        if train not in self._trains():
+            self._trains()[train] = []
+        self._trains()[train].append(sequence)
+        self.commit()
+
+    def PackageForSequence(self, sequence, name = None):
+        """
+        For a given sequence, return the packages for it.
+        If name is None, then return all of the packages
+        for that sequence.
+        The return objects are Package objects
+        """
+        rv = []
+        for seq in self._sequences():
+            if seq[0] == sequence:
+                break
+        for pkg in seq[1][self.PACKAGES_KEY]:
+            if name is None or name == pkg[0]:
+                (n, v) = pkg
+                rv.append(self._find_package(n, v))
+                if name: break
+
+        if rv and name:
+            return rv[0]
+        return rv
+
+    def TrainForSequence(self, sequence):
+        """
+        Return the name of the train for a given sequence.
+        """
+        for seq in self._sequences():
+            if seq[0] == sequence:
+                return seq[1][self.TRAINS_KEY]
+
+    def RecentSequencesForTrain(self, train, count = 5):
+        """
+        Get the count-most recent sequences for a given train
+        """
+        if debug:  print >> sys.stderr, "RecentSequencesForTrain(%s, %d)" % (train, count)
+        rv = []
+        if debug:  print >> sys.stderr, "\ttarins = %s" % self._trains()
+        if train in self._trains():
+            sequences = self._trains()[train]
+            if debug:  print >> sys.stderr, "\tsequences = %s" % sequences
+            rev_sequences = sequences[::-1]
+            if rev_sequences:
+                rv = rev_sequences[0:count]
+        if debug: print >> sys.stderr, "\trv = %s" % rv
+        return rv
+
+    def AddPackageUpdate(self, Pkg, OldVersion, DeltaChecksum = None):
+        """
+        Add an update for Pkg.
+        """
+        pkg_array = self._packages()[Pkg.Name()]
+        for p in pkg_array:
+            if p[0] == Pkg.Version():
+                p_dict = p[1]
+                updates = p_dict[self.UPDATES_KEY]
+                updates.append((OldVersion, DeltaChecksum))
+                self.commit()
+                return
+        raise Exception("Should not have reached this point")
+
+    def UpdatesForPackage(self, Pkg, count = 5):
+        """
+        Return an array of updates for the package, most
+        recent first
+        """
+        p_array = self._packages()[Pkg.Name()]
+        for p in p_array:
+            if p[0] == Pkg.Version():
+                rv = []
+                for upd in p[1][UPDATES_KEY]:
+                    rv.append((upd[0], upd[1]))
+                if count == 0:
+                    return rv
+                else:
+                    return rv[0 : count]
+        return []
+
+    def _find_package(self, name, version):
+        pkg = self._packages()[name]
+        for p in pkg:
+            if p[0] == version:
+                P = Package.Package(name, version, p[1][self.CHECKSUM_KEY])
+                for upd in p[1][self.UPDATES_KEY]:
+                    P.AddUpdate(upd[0], upd[1])
+                return P
 
 class FSReleaseDB(ReleaseDB):
     """
     Filesystem as database.
+    This is a dumb idea, it's mainly because it's fairly simple,
+    light-weight, and quick.
+    Too quick, in fact, since the normal unix file time resolution
+    is 1 second, and that makes it not possible to determine order
+    properly.
     """
 
     global debug, verbose
@@ -210,10 +456,10 @@ class FSReleaseDB(ReleaseDB):
         """
         Note the existence of a delta update from OldVersion to Pkg.Version.
         With FSReleaseDB, we do this by creating a file
-        _dbpath/packages/$package/Updates/$OldVersion, with the
+        _dbpath/packages/$package/Updates/$Pkg.Version()/$OldVersion, with the
         contents being DeltaChecksum.
         """
-        dirname = "%s/packages/%s/Updates" % (self._dbpath, Pkg.Name())
+        dirname = "%s/packages/%s/Updates/%s" % (self._dbpath, Pkg.Name(), Pkg.Version())
         if not self.SafeMakedir(dirname):
             raise Exception("Could not create database directory %s" % dirname)
         ufile = "%s/%s" % (dirname, OldVersion)
@@ -221,6 +467,36 @@ class FSReleaseDB(ReleaseDB):
             with open(ufile, "w") as f:
                 if DeltaChecksum:
                     f.write(DeltaChecksum)
+
+    def UpdatesForPackage(self, Pkg, count = 5):
+        # Return an array of package update for Pkg.
+        import errno
+        import operator
+
+        dirname = "%s/packages/%s/Updates/%s" % (self._dbpath, Pkg.Name(), Pkg.Version())
+        updates = {}
+        try:
+            for entry in os.listdir(dirname):
+                updates[entry] = os.lstat("%s/%s" % (dirname, entry)).st_ctime
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                return []
+            else:
+                raise e
+        sorted_updates = sorted(updates.iteritems(),
+                                key = operator.itemgetter(1))[::-1]
+
+        rv = []
+        for u, t in sorted_updates:
+            with open("%s/%s" % (dirname, u), "r") as f:
+                cksum = f.read()
+                if not cksum:
+                    cksum = None
+                rv.append((u, cksum))
+        if count == 0 or len(rv) == 0:
+            return rv
+        else:
+            return rv[0 : count]
 
 class SQLiteReleaseDB(ReleaseDB):
     """
@@ -484,8 +760,7 @@ class SQLiteReleaseDB(ReleaseDB):
         rv = []
         for pkgRow in rows:
             if debug:  print >> sys.stderr, "Found Update %s for package %s-%s" % (pkgRow["PkgOldVersion"], Pkg.Name(), Pkg.Version())
-            p = { Package.VERSION_KEY : pkgRow['PkgOldVersion'],
-                 Package.CHECKSUM_KEY : pkgRow['Checksum'] }
+            p = ( pkgRow['PkgOldVersion'] ,  pkgRow['Checksum'] )
             rv.append(p)
         return rv
 
@@ -522,6 +797,9 @@ def Process(source, archive, db = None, sign = False):
 
     if debug:  print >> sys.stderr, "Process(%s, %s, %s, %s)" % (source, archive, db, sign)
 
+    if db is None:
+        raise Exception("Invalid db")
+
     pkg_source_dir = "%s/Packages" % source
     pkg_dest_dir = "%s/Packages" % archive
 
@@ -536,11 +814,7 @@ def Process(source, archive, db = None, sign = False):
     manifest.LoadPath(source + "/FreeNAS-MANIFEST")
 
     # Okay, let's see if this train has any prior entries in the database
-    previous_sequences = []
-    if db:
-        previous_sequences = db.RecentSequencesForTrain(manifest.Train())
-    else:
-        print >> sys.stderr, "***********************"
+    previous_sequences = db.RecentSequencesForTrain(manifest.Train())
 
     pkg_list = []
     for pkg in manifest.Packages():
@@ -590,11 +864,13 @@ def Process(source, archive, db = None, sign = False):
                 if not os.path.exists(delta_pkg):
                     x = PackageFile.DiffPackageFiles(pkg1, pkg2, delta_pkg)
                     if x is None:
-                        print >> sys.stderr, "No diffs between package versions"
-                        print >> sys.stderr, "Need to do something about this"
-                        # What we should do is set the version to the old
-                        # version, and then remove it.  But other versions
-                        # might be using it, so we can't do that just yet.
+                        if debug or verbose:
+                            print >> sys.stderr, "%s:  no diffs between versions %s and %s" % (
+                                pkg.Name(), old_pkg.Version(), pkg.Version()
+                                )
+                        # We set the version to the old version, and then remove it.
+                        # But other versions might be using it, so we can't do that
+                        # just yet.
                         # Note to self:  need garbage collection run over
                         # archive.
                         # XXX - We can look to see if any other releaes are
@@ -683,6 +959,8 @@ def main():
             db = SQLiteReleaseDB(dbfile = Database[len("sqlite:"):])
         elif Database.startswith("fs:"):
             db = FSReleaseDB(dbpath = Database[len("fs:"):])
+        elif Database.startswith("py:"):
+            db = PyReleaseDB(dbfile = Database[len("py:"):])
 
     for source in args:
         Process(source, OutputDirectory, db)
