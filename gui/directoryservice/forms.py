@@ -334,8 +334,6 @@ class ActiveDirectoryForm(ModelForm):
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
 
-              
-
         ssl = cdata.get("ad_ssl")
         if ssl in ("off", None):
             return cdata
@@ -442,12 +440,19 @@ class LDAPForm(ModelForm):
 
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
+        basedn = cdata.get("ldap_basedn")
         hostname = cdata.get("ldap_hostname")
-
         errors = []
 
+        certfile = None
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ('start_tls', 'on'):
+            certificate = cdata["ldap_certificate"]
+            certfile = get_certificateauthority_path(certificate)
+
         ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw, errors=errors
+            hostname, binddn=binddn, bindpw=bindpw, basedn=basedn,
+            certfile=certfile, ssl=ssl, errors=errors
         )
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])

@@ -90,11 +90,12 @@ class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
 
 class FreeNAS_LDAP_Directory(object):
     @staticmethod
-    def validate_credentials(hostname, port=389, binddn=None, bindpw=None, errors=[]):
+    def validate_credentials(hostname, port=389, basedn=None,
+        binddn=None, bindpw=None, ssl='off', certfile=None, errors=[]):
         ret = None
-        f = FreeNAS_LDAP(host=hostname, port=port,
-            binddn=binddn, bindpw=bindpw)
 
+        f = FreeNAS_LDAP(host=hostname, port=port, binddn=binddn,
+            bindpw=bindpw, basedn=basedn, certfile=certfile, ssl=ssl)
         try:
             f.open()
             ret = True
@@ -242,7 +243,7 @@ class FreeNAS_LDAP_Directory(object):
 
                 except ldap.LDAPError as e:
                     log.debug("FreeNAS_LDAP_Directory.open: "
-                        "coud not bind to %s:%d (%s)",
+                        "could not bind to %s:%d (%s)",
                         self.host, self.port, e)
                     self._logex(e)
                     res = None
@@ -257,7 +258,7 @@ class FreeNAS_LDAP_Directory(object):
 
                 except ldap.LDAPError as e:
                     log.debug("FreeNAS_LDAP_Directory.open: "
-                        "coud not bind to %s:%d", self.host, self.port)
+                        "could not bind to %s:%d", self.host, self.port)
 
                     self._logex(e)
                     res = None
