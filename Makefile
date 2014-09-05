@@ -4,7 +4,7 @@
 
 NANO_LABEL?=FreeNAS
 VERSION?=9.3-M3
-TRAIN?=FreeNAS-ALPHA
+TRAIN?=FreeNAS-9.3-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 
