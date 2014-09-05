@@ -15,10 +15,10 @@ setup_linux_jail()
   mkdir -p "${JMETADIR}" >/dev/null 2>&1
   echo "${HOST}" > "${JMETADIR}/host"
 
-  if [ "${IP4}" != "OFF" ] ; then
+  if [ "${IP4}" != "OFF" -a "${IP4}" != "dhcp" ] ; then
     echo "${IP4}/${MASK4}" > "${JMETADIR}/ipv4"
   fi
-  if [ "${IP6}" != "OFF" ] ; then
+  if [ "${IP6}" != "OFF" -1 "${IP6}" != "autoconf" ] ; then
     echo "${IP6}/${MASK6}" > "${JMETADIR}/ipv6"
   fi
 
@@ -167,19 +167,20 @@ else
    WORLDCHROOT="$ARCHIVEFILE"
 fi
 
-if [ "${IP4}" != "OFF" ] ; then
+if [ "${IP4}" != "OFF" -a "${IP4}" != "dhcp" ] ; then
   get_ip_and_netmask "${IP4}"
   IP4="${JIP}"
   MASK4="${JMASK}"
   if [ -z "$MASK4" ] ; then MASK4="24"; fi
 fi
 
-if [ "${IP6}" != "OFF" ] ; then
+if [ "${IP6}" != "OFF" -a "${IP6}" != "autoconf" ] ; then
   get_ip_and_netmask "${IP6}"
   IP6="${JIP}"
   MASK6="${JMASK}"
   if [ -z "$MASK6" ] ; then MASK6="64"; fi
 fi
+exit 1
 
 if [ -z "$HOST" ] ; then
    warden_error "ERROR: Missing hostname!"
@@ -348,10 +349,10 @@ cat<<__EOF__>"${JAILDIR}/etc/hosts"
 127.0.0.1               localhost localhost.localdomain ${HOST}
 __EOF__
 
-if [ "${IP4}" != "OFF" ] ; then
+if [ "${IP4}" != "OFF" -a "${IP4}" != "dhcp" ] ; then
   echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
 fi
-if [ "${IP6}" != "OFF" ] ; then
+if [ "${IP6}" != "OFF" -a "${IP6}" != "autoconf" ] ; then
   echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
   sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
 fi

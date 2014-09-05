@@ -46,13 +46,12 @@ cd "${JAILDIR}"
 # Get the Hostname
 HOST="`cat "${JMETADIR}/host"`"
 
-IP4="`cat "${JMETADIR}/ipv4" 2>/dev/null`"
-IP6="`cat "${JMETADIR}/ipv6" 2>/dev/null`"
-
+IP4="$(warden_get_ipv4)"
 get_ip_and_netmask "${IP4}"
 IP4="${JIP}"
 MASK4="${JMASK}"
 
+IP6="$(warden_get_ipv6)"
 get_ip_and_netmask "${IP6}"
 IP6="${JIP}"
 MASK6="${JMASK}"

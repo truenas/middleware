@@ -88,8 +88,8 @@ start_jail_vimage()
   fi
 
   # Start the jail now
-  warden_print "jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet"
-  jail -c path="${JAILDIR}" name="${HOST}" host.hostname="${HOST}" ${jFlags} persist vnet
+  warden_print "jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet=new"
+  jail -c path="${JAILDIR}" name="${HOST}" host.hostname="${HOST}" ${jFlags} persist vnet=new
   if [ $? -ne 0 ] ; then
      echo "ERROR: Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"
@@ -122,7 +122,17 @@ start_jail_vimage()
   ifconfig "${EPAIRB}" vnet ${JID}
 
   # Configure the IPv4 addresses
-  if [ -n "${IP4}" ] ; then
+  if [ "${IP4}" = "dhcp" ] ; then
+     local ipv4=
+
+     warden_print "Getting IPv4 address from DHCP"
+     jexec ${JID} dhclient ${EPAIRB}
+
+     ipv4="$(jexec ${JID} ifconfig ${EPAIRB} inet | \
+         grep -w inet|awk '{ print $2 }')"
+     arp -s "${ipv4}" "${MAC}"
+
+  elif [ -n "${IP4}" ] ; then
      warden_print "Setting IPv4 address: ${IP4}"
      jexec ${JID} ifconfig ${EPAIRB} inet "${IP4}"
      get_ip_and_netmask "${IP4}"
@@ -150,7 +160,12 @@ start_jail_vimage()
   sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
 
   # Configure the IPv6 addresses
-  if [ -n "${IP6}" ] ; then
+  if [ "${IP6}" = "autoconf" ] ; then
+     sysrc -j ${JID} rtsold_enable="YES"
+     sysrc -j ${JID} "ifconfig_${EPAIRB}_ipv6"="inet6 accept_rtadv auto_linklocal"
+     jexec ${JID} service rtsold start
+
+  elif [ -n "${IP6}" ] ; then
      warden_print "Configuring jail for IPv6"
 
      sysrc -xj ${JID} rtsold_enable
@@ -158,13 +173,6 @@ start_jail_vimage()
 
      warden_print "Setting IPv6 address: ${IP6}"
      jexec ${JID} ifconfig "${EPAIRB}" inet6 "${IP6}"
-
-  # No IPv6 specified, enable autoconfiguration
-  else 
-     sysrc -j ${JID} rtsold_enable="YES"
-     sysrc -j ${JID} "ifconfig_${EPAIRB}_ipv6"="inet6 accept_rtadv auto_linklocal"
-     jexec ${JID} service rtsold start
-
   fi
   for ip6 in ${IPS6}
   do
@@ -184,7 +192,7 @@ start_jail_vimage()
   if [ -n "${GATEWAY4}" ] ; then
      local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet default "${GATEWAY4}"
+        jexec ${JID} route add default "${GATEWAY4}"
      else
         jexec ${JID} route add default gateway "${GATEWAY4}"
      fi  
@@ -200,7 +208,7 @@ start_jail_vimage()
      local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
      get_ip_and_netmask "${BRIDGEIP4}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
-        jexec ${JID} route add -inet default "${JIP}"
+        jexec ${JID} route add default "${JIP}"
      else
         jexec ${JID} route add default gateway "${JIP}"
      fi
@@ -215,6 +223,7 @@ start_jail_vimage()
   #
   if [ -n "${GATEWAY6}" ] ; then
      if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route delete -inet6 default >/dev/null 2>&1
         jexec ${JID} route add -inet6 default "${GATEWAY6}"
      else
         jexec ${JID} route -A inet6 add default gateway "${GATEWAY6}"
@@ -227,6 +236,7 @@ start_jail_vimage()
   elif [ -n "${BRIDGEIP6}" ] ; then
      get_ip_and_netmask "${BRIDGEIP6}"
      if [ "${LINUXJAIL}" != "YES" ] ; then
+        jexec ${JID} route delete -inet6 default >/dev/null 2>&1
         jexec ${JID} route add -inet6 default "${JIP}"
      else
         jexec ${JID} route -A inet6 add default gateway "${JIP}"
@@ -236,22 +246,7 @@ start_jail_vimage()
   #
   # Configure ndp entries for all IPv6 interfaces
   #
-  for iface in $(ifconfig -l | \
-      sed -E 's#((bridge|epair|ipfw|lo)[0-9]+([^ ]+)?)##g')
-  do
-     if ifconfig ${iface} inet6|egrep -q inet6 2>/dev/null 2>&1
-     then
-         ether="$(ifconfig ${iface} ether|grep ether | awk '{ print $2 }')"
-         for ip6 in $(ifconfig ${iface} inet6 | \
-             grep inet6 | grep -v scope | awk '{ print $2 }')
-         do
-             if [ -n "${ether}" ] ; then
-                 warden_print "ndp -s ${ip6} ${ether}"
-                 jexec ${JID} ndp -s "${ip6}" "${ether}" >/dev/null 2>&1
-             fi
-         done
-     fi
-  done 
+  warden_add_ndp_entries "${JID}"
 
   #
   # If NAT is not enabled, return now
@@ -264,7 +259,7 @@ start_jail_vimage()
      if [ -n "${GATEWAY4}" ] ; then 
         local ether="$(arp -na|grep -w "${GATEWAY4}"|awk '{ print $4 }')"
         if [ "${LINUXJAIL}" != "YES" ] ; then
-           jexec ${JID} route add -inet default "${GATEWAY4}"
+           jexec ${JID} route add default "${GATEWAY4}"
         else
            jexec ${JID} route add default gateway "${GATEWAY4}"
         fi 
@@ -275,7 +270,7 @@ start_jail_vimage()
      fi
      if [ -n "${GATEWAY6}" ] ; then 
         if [ "${LINUXJAIL}" != "YES" ] ; then
-           echo jexec ${JID} route add -inet default "${GATEWAY6}"
+           echo jexec ${JID} route add default "${GATEWAY6}"
         else
            jexec ${JID} route add default gateway "${GATEWAY6}"
         fi 
@@ -479,40 +474,14 @@ fi
 
 MTU=`ifconfig "${IFACE}" | head -1 | sed -E 's/.*mtu ([0-9]+)/\1/g'`
 
-GATEWAY4=
-if [ -e "${JMETADIR}/defaultrouter-ipv4" ] ; then
-  GATEWAY4="`cat "${JMETADIR}/defaultrouter-ipv4"`"
-fi
-GATEWAY6=
-if [ -e "${JMETADIR}/defaultrouter-ipv6" ] ; then
-  GATEWAY6="`cat "${JMETADIR}/defaultrouter-ipv6"`"
-fi
+GATEWAY4="$(warden_get_ipv4_defaultrouter)"
+GATEWAY6="$(warden_get_ipv6_defaultrouter)"
 
-BRIDGEIP4=
-if [ -e "${JMETADIR}/bridge-ipv4" ] ; then
-  BRIDGEIP4="`cat "${JMETADIR}/bridge-ipv4"`"
-fi
+BRIDGEIP4="$(warden_get_ipv4_bridge)"
+BRIDGEIPS4="$(warden_get_ipv4_bridge_aliases)"
 
-BRIDGEIPS4=
-if [ -e "${JMETADIR}/alias-bridge-ipv4" ] ; then
-  while read line
-  do
-    BRIDGEIPS4="${BRIDGEIPS4} $line" 
-  done < "${JMETADIR}/alias-bridge-ipv4"
-fi
-
-BRIDGEIP6=
-if [ -e "${JMETADIR}/bridge-ipv6" ] ; then
-  BRIDGEIP6="`cat "${JMETADIR}/bridge-ipv6"`"
-fi
-
-BRIDGEIPS6=
-if [ -e "${JMETADIR}/alias-bridge-ipv6" ] ; then
-  while read line
-  do
-    BRIDGEIPS6="${BRIDGEIPS6} $line" 
-  done < "${JMETADIR}/alias-bridge-ipv6"
-fi
+BRIDGEIP6="$(warden_get_ipv6_bridge)"
+BRIDGEIPS6="$(warden_get_ipv6_bridge_aliases)"
 
 # Check if we need to enable vnet
 VIMAGEENABLE="NO"
@@ -589,43 +558,23 @@ if [ -e "${JMETADIR}/fstab" ] ; then
    rm /tmp/.wardenfstab.$$
 fi
 
-IP4=
-if [ -e "${JMETADIR}/ipv4" ] ; then
-  IP4=`cat "${JMETADIR}/ipv4"`
-
-  # Check if somebody snuck in a IP without / on it
-  echo $IP4 | grep -q '/'
-  if [ $? -ne 0 ] ; then
-     IP4="${IP4}/24"
-  fi
+IP4="$(warden_get_ipv4)"
+# Check if somebody snuck in a IP without / on it
+echo $IP4 | grep -q '/'
+if [ $? -ne 0 -a "${IP4}" != "dhcp" ] ; then
+   IP4="${IP4}/24"
 fi
 
-IPS4=
-if [ -e "${JMETADIR}/alias-ipv4" ] ; then
-  while read line
-  do
-    IPS4="${IPS4} $line" 
-  done < "${JMETADIR}/alias-ipv4"
+IPS4="$(warden_get_ipv4_aliases)"
+
+IP6="$(warden_get_ipv6)"
+# Check if somebody snuck in a IP without / on it
+echo $IP6 | grep -q '/'
+if [ $? -ne 0 -a "${IP6}" != "autoconf" ] ; then
+   IP6="${IP6}/64"
 fi
 
-IP6=
-if [ -e "${JMETADIR}/ipv6" ] ; then
-  IP6=`cat "${JMETADIR}/ipv6"`
-
-  # Check if somebody snuck in a IP without / on it
-  echo $IP6 | grep -q '/'
-  if [ $? -ne 0 ] ; then
-     IP6="${IP6}/64"
-  fi
-fi
-
-IPS6=
-if [ -e "${JMETADIR}/alias-ipv6" ] ; then
-  while read line
-  do
-    IPS6="${IPS6} $line" 
-  done < "${JMETADIR}/alias-ipv6"
-fi
+IPS6="$(warden_get_ipv6_aliases)"
 
 jFlags=""
 # Grab any additional jail flags
@@ -633,13 +582,13 @@ if [ -e "${JMETADIR}/jail-flags" ] ; then
   jFlags=`cat "${JMETADIR}/jail-flags"`
 fi
 
+checkpbiscripts "${JAILDIR}"
+
 # Are we using VIMAGE, if so start it up!
 if [ "$VIMAGEENABLE" = "YES" ] ; then
-  checkpbiscripts "${JAILDIR}"
   start_jail_vimage
 else
   # Using a standard jail configuration
-  checkpbiscripts "${JAILDIR}"
   start_jail_standard
 fi
 
@@ -667,6 +616,12 @@ else
     warden_print "Starting jail with: /etc/rc"
     jexec ${JID} /bin/sh /etc/rc > /dev/null 2>&1
   fi
+fi
+
+# Hack. rtsold needs an extra kick for some reason. fukifinoy.
+if [ "$VIMAGEENABLE" = "YES" -a "${IP6}" = "autoconf" ] ; then
+   jexec ${JID} service rtsold restart
+   warden_add_ndp_entries "${JID}"
 fi
 
 # post-start hooks

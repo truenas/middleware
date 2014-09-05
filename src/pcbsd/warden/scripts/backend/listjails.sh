@@ -70,6 +70,8 @@ do
   jail="$(eval "echo ${var} 2>/dev/null")"
   : $(( i += 1 ))
 
+  jailfp="$(realpath "${jail}")"
+
   AUTO="Disabled" 
   STATUS="<unknown>"
 
@@ -87,80 +89,72 @@ do
      echo "$META_ID" > ${jail}/id
   fi
 
-  ID="`cat "${jail}/id" 2>/dev/null`"
+  ID="$(warden_get_id "${jailfp}")"
   if [ -z "${ID}" ]
   then
     continue
   fi  
 
-  HOST="`cat "${jail}/host" 2>/dev/null`"
-  if [ -e "${jail}/vnet" ] ; then
+  HOST="$(warden_get_host "${jailfp}")"
+  JAILNAME=`echo ${jail}|sed 's|.meta$||'|sed 's|^.||'`
+
+  if warden_vnet_enabled "${jailfp}" ; then
     VNET="Enabled"
   else
     VNET="Disabled"
   fi
 
-  IFACE="`cat "${jail}/iface" 2>/dev/null`"
+  IFACE="$(warden_get_iface "${jailfp}")"
 
-  if [ -e "${jail}/nat" ] ; then
+  if warden_nat_enabled "${jailfp}" ; then
     NAT="Enabled"
   else
     NAT="Disabled"
   fi
 
-  MAC=
-  if [ -e "${jail}/mac" ] ; then
-     MAC="`cat "${jail}/mac"`"
-  fi 
+  MAC="$(warden_get_mac "${jailfp}")"
 
   #
   # IPv4 networking
   # 
-  IPS4=
-  IP4=`cat "${jail}/ipv4" 2>/dev/null`
-  if [ -e "${jail}/alias-ipv4" ] ; then
-    while read line
-    do
-      IPS4="${IPS4} ${line}" 
-    done < "${jail}/alias-ipv4"
-  fi
+  IP4="$(warden_get_ipv4 "${jailfp}")"
+  IPS4="$(warden_get_ipv4_aliases "${jailfp}")"
+  BRIDGEIP4="$(warden_get_ipv4_bridge "${jailfp}")"
+  BRIDGEIPS4="$(warden_get_ipv4_bridge_aliases "${jailfp}")"
+  GATEWAY4="$(warden_get_ipv4_defaultrouter "${jailfp}")"
 
-  BRIDGEIPS4=
-  BRIDGEIP4=`cat "${jail}/bridge-ipv4" 2>/dev/null`
-  if [ -e "${jail}/alias-bridge-ipv4" ] ; then
-    while read line
-    do
-      BRIDGEIPS4="${BRIDGEIPS4} ${line}" 
-    done < "${jail}/alias-bridge-ipv4"
-  fi
+  if [ "${IP4}" = "dhcp" ] && warden_jail_isrunning "${JAILNAME}" ; then
+     JID="$(warden_get_jailid "${JAILNAME}")"
+     IFACE="$(get_default_ipv4_interface "${JID}")"
 
-  GATEWAY4=`cat "${jail}/defaultrouter-ipv4" 2>/dev/null`
+     IP4="dhcp:$(get_interface_ipv4_address "${IFACE}" "${JID}")"
+
+     if [ -z "${GATEWAY4}" ] ; then
+        GATEWAY4="dhcp:$(get_default_ipv4_route "${JID}")"
+     fi
+  fi 
 
   #
   # IPv6 networking
   # 
-  IPS6=
-  IP6=`cat "${jail}/ipv6" 2>/dev/null`
-  if [ -e "${jail}/alias-ipv6" ] ; then
-    while read line
-    do
-      IPS6="${IPS6} ${line}" 
-    done < "${jail}/alias-ipv6"
-  fi
+  IP6="$(warden_get_ipv6 "${jailfp}")"
+  IPS6="$(warden_get_ipv6_aliases "${jailfp}")"
+  BRIDGEIP6="$(warden_get_ipv6_bridge "${jailfp}")"
+  BRIDGEIPS6="$(warden_get_ipv6_bridge_aliases "${jailfp}")"
+  GATEWAY6="$(warden_get_ipv6_defaultrouter "${jailfp}")"
 
-  BRIDGEIPS6=
-  BRIDGEIP6=`cat "${jail}/bridge-ipv6" 2>/dev/null`
-  if [ -e "${jail}/alias-bridge-ipv6" ] ; then
-    while read line
-    do
-      BRIDGEIPS6="${BRIDGEIPS6} ${line}" 
-    done < "${jail}/alias-bridge-ipv6"
-  fi
+  if [ "${IP6}" = "autoconf" ] && warden_jail_isrunning "${JAILNAME}" ; then
+     JID="$(warden_get_jailid "${JAILNAME}")"
+     IFACE="$(get_default_ipv6_interface "${JID}")"
+     IP6="autoconf:$(get_interface_ipv6_address "${IFACE}" "${JID}")"
 
-  GATEWAY6=`cat "${jail}/defaultrouter-ipv6" 2>/dev/null`
+     if [ -z "${GATEWAY6}" ] ; then
+        GATEWAY6="autoconf:$(get_default_ipv6_route "${JID}")"
+     fi
+  fi 
 
   # Check if we are autostarting this jail
-  if [ -e "${jail}/autostart" ] ; then
+  if warden_autostart_enabled "${jailfp}" ; then
     AUTO="Enabled"
   fi
  
@@ -180,13 +174,11 @@ do
     rm -f "${jail}/jail-linux"
   fi
 
-  TYPE="$(cat "${jail}/jailtype")"
+  TYPE="$(warden_get_jailtype "${jailfp}")"
   if [ -z "${TYPE}" ] ; then 
     TYPE="standard"
     echo "${TYPE}" > "${jail}/jailtype"
   fi
-
-  JAILNAME=`echo ${jail}|sed 's|.meta$||'|sed 's|^.||'`
 
   ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" 2>/dev/null
   if [ "$?" = "0" ]
@@ -196,11 +188,7 @@ do
     STATUS="Stopped"
   fi
 
-  FLAGS=
-  if [ -s "${jail}/jail-flags" ]
-  then
-    FLAGS="$(cat "${jail}/jail-flags"|tr ' ' ',')"
-  fi
+  FLAGS="$(warden_get_jailflags "${jailfp}")"
 
   if [ "${VERBOSE}" = "YES" ] ; then
     out="$(mktemp  /tmp/.wjvXXXXXX)"

@@ -646,8 +646,8 @@ Creates a new jail, with options for system source, ports and autostarting.
 
 Available Flags:
   -32                          (Create 32bit jail on 64bit system)
-  --ipv4 <ip/mask>             (Set primary IPv4 address for jail)
-  --ipv6 <ip/mask>             (Set primary IPv6 address for jail)
+  --ipv4 <ip/mask|dhcp>        (Set primary IPv4 address for jail)
+  --ipv6 <ip/mask|autoconf>    (Set primary IPv6 address for jail)
   --src                        (Includes /usr/src system source)
   --ports                      (Includes the ports tree)
   --vanilla                    (Don't install PC-BSD pkgng repo and utilities)
@@ -1159,11 +1159,11 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
            case $1 in
              --ipv4) shift
 			  if [ -z "$1" ] ; then warden_exit "No IPv4 address specified!"; fi
-                          IP4="${1}"
+                          IP4="$(echo "${1}"|tr A-Z a-z)"
                           ;;
              --ipv6) shift
 			  if [ -z "$1" ] ; then warden_exit "No IPv6 address specified!"; fi
-                          IP6="${1}"
+                          IP6="$(echo "${1}"|tr A-Z a-z)"
                           ;;
 
              --src) SRC="YES" ;;
