@@ -1046,13 +1046,14 @@ class LDAP(DirectoryServiceBase):
         null=True
     )
     ldap_idmap_backend = models.CharField(
-        verbose_name=_("Idmap backend"),
+        verbose_name=_("Idmap Backend"),
         choices=choices.IDMAP_CHOICES,
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
     )
     ldap_has_samba_schema = models.BooleanField(
+        verbose_name=_("Samba Schema"),
         default=False
     )
     ldap_enable = models.BooleanField(

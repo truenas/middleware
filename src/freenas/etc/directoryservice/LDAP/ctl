@@ -55,10 +55,7 @@ cifs_enabled()
 
 cifs_start()
 {
-	if LDAP_has_samba_schema
-	then
-		ldapctl_cmd ${python} ${notifier} start cifs
-	fi
+	ldapctl_cmd ${python} ${notifier} start cifs
 	return $?
 }
 
@@ -67,15 +64,12 @@ cifs_stop()
 	local val="${1}"
 	local res=0
 
-	if LDAP_has_samba_schema
-	then
-		ldapctl_cmd ${python} ${notifier} stop cifs
-		res=$?
+	ldapctl_cmd ${python} ${notifier} stop cifs
+	res=$?
 
-		if [ -n "${val}" ]
-		then
-			srv_set cifs "${val}"
-		fi
+	if [ -n "${val}" ]
+	then
+		srv_set cifs "${val}"
 	fi
 
 	return ${res}

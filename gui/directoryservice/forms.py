@@ -413,14 +413,14 @@ class LDAPForm(ModelForm):
         'ldap_kerberos_keytab',
         'ldap_ssl',
         'ldap_certificate',
-        'ldap_idmap_backend'
+        'ldap_idmap_backend',
+        'ldap_has_samba_schema' 
     ]
 
     class Meta:
         fields = '__all__'
         exclude = [
-            'ldap_idmap_backend_type',
-            'ldap_has_samba_schema'
+            'ldap_idmap_backend_type'
         ]
         model = models.LDAP
         widgets = {
@@ -490,7 +490,7 @@ class LDAPForm(ModelForm):
         cdata = self.cleaned_data
         ssl = cdata.get("ldap_ssl")
         if ssl in ("off", None):
-            self.check_for_samba_schema()
+            #self.check_for_samba_schema()
             return cdata
 
         certificate = cdata["ldap_certificate"]
@@ -498,7 +498,7 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError(
                 "SSL/TLS specified without certificate")
 
-        self.check_for_samba_schema()
+        #self.check_for_samba_schema()
         return cdata
 
     def save(self):
