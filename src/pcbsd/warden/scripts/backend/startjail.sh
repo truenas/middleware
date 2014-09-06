@@ -619,8 +619,13 @@ else
 fi
 
 # Hack. rtsold needs an extra kick for some reason. fukifinoy.
-if [ "$VIMAGEENABLE" = "YES" -a "${IP6}" = "autoconf" ] ; then
+if [ "${VIMAGEENABLE}" = "YES" -a "${IP6}" = "autoconf" ] ; then
    jexec ${JID} service rtsold restart
+   warden_add_ndp_entries "${JID}"
+
+elif [ "${VIMAGEENABLE}" = "YES" -a -n "${IP6}" -a -n "${GATEWAY6}" ] ; then
+   jexec ${JID} route delete -inet6 default >/dev/null 2>&1
+   jexec ${JID} route add -inet6 default "${GATEWAY6}"
    warden_add_ndp_entries "${JID}"
 fi
 
