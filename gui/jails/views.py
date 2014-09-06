@@ -480,3 +480,42 @@ def jail_template_info(request, name):
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
+
+
+def jail_template_create(request):
+    if request.method == "POST":
+        form = forms.JailTemplateCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail Template successfully created.")
+            )
+
+    else:
+        form = forms.JailTemplateCreateForm()
+
+    return render(request, "jails/jail_template_create.html", {
+        'form': form
+    })
+
+
+def jail_template_edit(request, id):
+    jt = models.JailTemplate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.JailTemplateEditForm(request.POST, instance=jt)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail Template successfully edited.")
+            )
+
+    else:
+        form = forms.JailTemplateEditForm(instance=jt)
+
+    return render(request, "jails/jail_template_edit.html", {
+        'form': form
+    })
+

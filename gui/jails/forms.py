@@ -748,14 +748,30 @@ class JailsEditForm(ModelForm):
                 Warden().set(**args)
 
 
-class JailTemplateForm(ModelForm):
+class JailTemplateCreateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = [ 'jt_system' ]
         model = JailTemplate
 
+
+class JailTemplateEditForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        exclude = [ 'jt_system', 'jt_readonly' ]
+        model = JailTemplate
+
+    def __ro(self, field):
+        self.fields[field].widget.attrs['readOnly'] = True
+        self.fields[field].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled '
+            'dijitValidationTextBoxDisabled'
+        )
+
     def __init__(self, *args, **kwargs):
-        super(JailTemplateForm, self).__init__(*args, **kwargs)
+        super(JailTemplateEditForm, self).__init__(*args, **kwargs)
 
         if not self.instance.id:
             self.fields['jt_os'].widget.attrs['onChange'] = (
@@ -765,22 +781,22 @@ class JailTemplateForm(ModelForm):
             obj = self.save(commit=False)
             ninstances = int(obj.jt_instances)
             if ninstances > 0:
-                self.fields['jt_name'].widget.attrs['readonly'] = True
-                self.fields['jt_arch'].widget.attrs['readonly'] = True
-                self.fields['jt_os'].widget.attrs['readonly'] = True
-                self.fields['jt_name'].widget.attrs['class'] = (
-                    'dijitDisabled dijitTextBoxDisabled '
-                    'dijitValidationTextBoxDisabled'
-                )
+                self.__ro('jt_name')
+                self.__ro('jt_arch')
+                self.__ro('jt_os')
+      
             else:
                 self.fields['jt_os'].widget.attrs['onChange'] = (
                     'jailtemplate_os(this);'
                 )
             if self.instance.jt_os == 'Linux':
-                self.fields['jt_arch'].widget.attrs['readOnly'] = 'readOnly'
-                self.fields['jt_arch'].widget.attrs['class'] = (
-                    'dijitDisabled dijitSelectDisabled'
-                )
+                self.__ro('jt_arch')
+
+            if self.instance.jt_readonly == True:
+                self.__ro('jt_name')
+                self.__ro('jt_arch')
+                self.__ro('jt_os')
+                self.__ro('jt_url')
 
 
 class JailMountPointForm(ModelForm):

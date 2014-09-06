@@ -1795,8 +1795,15 @@ class JailTemplateResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
         bundle.data['jt_instances'] = bundle.obj.jt_instances
-        return bundle
 
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse('jail_template_edit',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+
+        return bundle
 
 class PluginsResourceMixin(NestedMixin):
 

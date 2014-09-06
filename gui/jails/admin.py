@@ -28,6 +28,7 @@ from collections import OrderedDict
 import logging
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
@@ -311,8 +312,11 @@ class JailTemplateFAdmin(BaseFreeAdmin):
             function(evt, actionName, action) {
                 for (var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if (row.data.jt_instances > 0 && actionName == 'Delete') {
-                        query(".grid" + actionName).forEach(function(item, idx) {
+                    if ((row.data.jt_instances > 0 || \
+                        row.data.jt_readonly) \
+                        && actionName == 'Delete') {
+                        query(".grid" + actionName).forEach(
+                            function(item, idx) {
                             domStyle.set(item, "display", "none");
                         });
                     }
@@ -323,6 +327,12 @@ class JailTemplateFAdmin(BaseFreeAdmin):
         actions['Delete']['on_select_after'] = on_select_after
 
         return actions
+
+    def get_datagrid_context(self, request):
+        context = super(JailTemplateFAdmin, self).get_datagrid_context(request)
+        context.update({'add_url': reverse('jail_template_create')})
+        return context
+
 
 
 class JailMountPointFAdmin(BaseFreeAdmin):

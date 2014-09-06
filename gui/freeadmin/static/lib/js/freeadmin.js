@@ -502,7 +502,7 @@ require([
         }
 
         var is_linuxjail = false;
-        xhr.get('/jails/template_info/' + jail_type + '/', {
+        xhr.get('/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);
@@ -526,7 +526,7 @@ require([
         }
 
         var is_x86 = false;
-        xhr.get('/jails/template_info/' + jail_type + '/', {
+        xhr.get('/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);

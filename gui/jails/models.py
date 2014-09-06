@@ -442,6 +442,10 @@ class JailTemplate(Model):
         default=False
     )
 
+    jt_readonly = models.BooleanField(
+        default=False
+    )
+
     @property
     def jt_instances(self):
         template = self.jt_name
