@@ -260,12 +260,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
         actions['Options'] = self._action_builder(
             'options',
-            label=_('Edit ZFS Options'),
+            label=_('Edit Options'),
             icon="settings",
         )
         actions['NewDataset'] = self._action_builder(
             'add_dataset',
-            label=_('Create ZFS Dataset'),
+            label=_('Create Dataset'),
         )
         actions['NewVolume'] = self._action_builder(
             'add_zfs_volume',
@@ -358,13 +358,13 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
         actions['DatasetEdit'] = self._action_builder(
             "dataset_edit",
-            label=_('Edit ZFS Options'),
+            label=_('Edit Options'),
             icon="settings",
             show="DATASET",
         )
         actions['DatasetCreate'] = self._action_builder(
             "dataset_create",
-            label=_('Create ZFS Dataset'),
+            label=_('Create Dataset'),
             icon="add_dataset",
             show="DATASET",
         )
