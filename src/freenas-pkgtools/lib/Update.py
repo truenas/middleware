@@ -65,7 +65,6 @@ def ListClones():
         return None
 
     for line in stdout.strip('\n').split('\n'):
-        log.error("line: %r", line)
         fields = line.split('\t')
         rv.append({
             'name': fields[0],
