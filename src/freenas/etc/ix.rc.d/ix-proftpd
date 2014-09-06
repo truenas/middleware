@@ -207,7 +207,7 @@ $(bool_on ${ftp_resume} "  AllowRetrieveRestart on")
 $(bool_on ${ftp_resume} "  AllowStoreRestart on")
   DeleteAbortedStores ${proftpd_deleteabortedstores}
   $(ifnz ${ftp_localuserbw} "TransferRate STOR ${ftp_localuserbw}")
-  $(ifnz ${ftp_localuserbw} "TransferRate RETR ${ftp_localuserdlbw}")
+  $(ifnz ${ftp_localuserdlbw} "TransferRate RETR ${ftp_localuserdlbw}")
   TimesGMT ${proftpd_timesgmt}
 </Global>
 EOF
