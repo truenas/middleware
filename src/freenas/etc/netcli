@@ -1074,6 +1074,11 @@ def main_menu():
     for item in menu:
         menu_max = menu_max + 1
         menu_map[menu_max] = item
+        # If this was requested on the command line, then we just call it
+        if len(sys.argv) > 1:
+            if globals()[sys.argv[1]] == item[1]:
+                item[1]()
+                sys.exit(0)
 
     while True:
         print
@@ -1106,5 +1111,7 @@ if __name__ == '__main__':
     while True:
         try:
             main_menu()
+        except SystemExit as e:
+            sys.exit(e.code)
         except:
             exit(1)

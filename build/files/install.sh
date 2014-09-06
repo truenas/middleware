@@ -753,6 +753,9 @@ menu_install()
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${interactive} && dialog --msgbox "The installer has preserved your database file.
 $AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+    elif [ "${_do_upgrade}" -eq 0 ]; then
+	# Set the root password
+	chroot /tmp/data /etc/netcli reset_root_pw
     fi
     umount /tmp/data/boot/grub
     umount /tmp/data/dev
