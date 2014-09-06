@@ -2668,7 +2668,7 @@ class notifier:
 
     def create_upload_location(self):
         """
-        Create a temporary location for firmware upgrade
+        Create a temporary location for manual update
         over a memory device (mdconfig) using UFS
 
         Raises:
@@ -2707,7 +2707,7 @@ class notifier:
 
     def destroy_upload_location(self):
         """
-        Destroy a temporary location for firmware upgrade
+        Destroy a temporary location for manual update
         over a memory device (mdconfig) using UFS
 
         Raises:

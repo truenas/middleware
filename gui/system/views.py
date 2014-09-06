@@ -631,7 +631,7 @@ def file_browser(request, path='/'):
     return HttpResponse(content, content_type='application/json')
 
 
-def firmware_progress(request):
+def manualupdate_progress(request):
 
     data = {}
     if os.path.exists(PGFILE):

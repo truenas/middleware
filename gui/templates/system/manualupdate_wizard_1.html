@@ -6,11 +6,11 @@ doSubmit({
   url: '{{ request.path }}',
   progressbar: {
     steps: [
-      {"label": "Uploading firmware"},
-      {"label": "Extracting firmware"},
-      {"label": "Writing new firmware"}
+      {"label": "Uploading update"},
+      {"label": "Extracting update"},
+      {"label": "Applying update"}
     ],
-    poolUrl: '{% url "system_firmware_progress" %}'
+    poolUrl: '{% url "system_manualupdate_progress" %}'
   }
 });
 {% endblock %}

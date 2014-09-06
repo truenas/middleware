@@ -27,9 +27,9 @@
 
 from django.conf.urls import patterns, url
 from freenasUI.system.forms import (
-    FirmwareWizard,
-    FirmwareTemporaryLocationForm,
-    FirmwareUploadForm,
+    ManualUpdateWizard,
+    ManualUpdateTemporaryLocationForm,
+    ManualUpdateUploadForm,
     InitialWizard,
     InitialWizardConfirmForm,
     InitialWizardDSForm,
@@ -63,10 +63,10 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^shutdown/run/$', 'shutdown_run', name="system_shutdown_run"),
     url(r'^reporting/$', 'reporting', name="system_reporting"),
     url(r'^info/$', 'system_info', name="system_info"),
-    url(r'^firmwizard/$', FirmwareWizard.as_view(
-        [FirmwareTemporaryLocationForm, FirmwareUploadForm]
-    ), name='system_firmwizard'),
-    url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
+    url(r'^manualupdate/$', ManualUpdateWizard.as_view(
+        [ManualUpdateTemporaryLocationForm, ManualUpdateUploadForm]
+    ), name='system_manualupdate'),
+    url(r'^manualupdate/progress/$', "manualupdate_progress", name="system_manualupdate_progress"),
     url(r'^bootenv/activate/(?P<name>[^/]+)/$', 'bootenv_activate', name='system_bootenv_activate'),
     url(r'^bootenv/add/$', 'bootenv_add', name='system_bootenv_add'),
     url(r'^bootenv/add/(?P<source>[^/]+)/$', 'bootenv_add', name='system_bootenv_add'),

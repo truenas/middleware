@@ -682,24 +682,24 @@ class InitialWizard(CommonWizard):
         )
 
 
-class FirmwareWizard(FileWizard):
+class ManualUpdateWizard(FileWizard):
 
     def get_template_names(self):
         return [
-            'system/firmware_wizard_%s.html' % self.get_step_index(),
+            'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        firmware = cleaned_data.get('firmware')
-        path = self.file_storage.path(firmware.file.name)
+        updatefile = cleaned_data.get('updatefile')
+        path = self.file_storage.path(updatefile.file.name)
 
         # Verify integrity of uploaded image.
         assert ('sha256' in cleaned_data)
         checksum = notifier().checksum(path)
         if checksum != str(cleaned_data['sha256']).lower().strip():
-            self.file_storage.delete(firmware.name)
-            raise MiddlewareError("Invalid firmware, wrong checksum")
+            self.file_storage.delete(updatefile.name)
+            raise MiddlewareError("Invalid update file, wrong checksum")
 
         # Validate that the image would pass all pre-install
         # requirements.
@@ -710,12 +710,12 @@ class FirmwareWizard(FileWizard):
         try:
             retval = notifier().validate_update(path)
         except:
-            self.file_storage.delete(firmware.name)
+            self.file_storage.delete(updatefile.name)
             raise
 
         if not retval:
-            self.file_storage.delete(firmware.name)
-            raise MiddlewareError("Invalid firmware")
+            self.file_storage.delete(updatefile.name)
+            raise MiddlewareError("Invalid update file")
 
         notifier().apply_update(path)
         try:
@@ -1023,12 +1023,12 @@ class EmailForm(ModelForm):
         return email
 
 
-class FirmwareTemporaryLocationForm(Form):
+class ManualUpdateTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(
-        label=_("Place to temporarily place firmware file"),
+        label=_("Place to temporarily place update file"),
         help_text=_(
             "The system will use this place to temporarily store the "
-            "firmware file before it's being applied."),
+            "update file before it's being applied."),
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
     )
@@ -1041,7 +1041,7 @@ class FirmwareTemporaryLocationForm(Form):
         return mp
 
     def __init__(self, *args, **kwargs):
-        super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
+        super(ManualUpdateTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [
             (x.mp_path, x.mp_path)
             for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')
@@ -1058,8 +1058,8 @@ class FirmwareTemporaryLocationForm(Form):
             notifier().change_upload_location(mp)
 
 
-class FirmwareUploadForm(Form):
-    firmware = FileField(label=_("New image to be installed"), required=True)
+class ManualUpdateUploadForm(Form):
+    updatefile = FileField(label=_("Update file to be installed"), required=True)
     sha256 = forms.CharField(
         label=_("SHA256 sum for the image"),
         required=True
