@@ -155,9 +155,12 @@ class BootEnvAddForm(Form):
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        kwargs = {}
+        if self._source:
+            kwargs['bename'] = self._source
         clone = Update.CreateClone(
             self.cleaned_data.get('name'),
-            bename=self._source,
+            **kwargs
         )
         if clone is False:
             raise MiddlewareError(_('Failed to create a new Boot.'))

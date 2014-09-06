@@ -1,3 +1,13 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 
-{% block actions_static_pane %}{% endblock %}
+{% block actions_static_buttons %}
+{{ block.super }}
+    <div class="gridAdd left">
+      <button id="datagridBtn_Boot_Add" data-dojo-type="dijit.form.Button" type="button">
+          {% blocktrans with name=verbose_name %}Create{% endblocktrans %}
+      <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+          editObject('{% trans "Create Boot"|escapejs %}', '{% url "system_bootenv_add" %}', [this,]);
+      </script>
+      </button>
+    </div>
+{% endblock %}

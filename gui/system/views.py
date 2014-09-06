@@ -215,7 +215,7 @@ def bootenv_activate(request, name):
     })
 
 
-def bootenv_add(request, source):
+def bootenv_add(request, source=None):
     if request.method == 'POST':
         form = forms.BootEnvAddForm(request.POST, source=source)
         if form.is_valid():
