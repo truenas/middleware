@@ -180,7 +180,6 @@ if [ "${IP6}" != "OFF" -a "${IP6}" != "autoconf" ] ; then
   MASK6="${JMASK}"
   if [ -z "$MASK6" ] ; then MASK6="64"; fi
 fi
-exit 1
 
 if [ -z "$HOST" ] ; then
    warden_error "ERROR: Missing hostname!"
