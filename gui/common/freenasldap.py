@@ -905,7 +905,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         return kpws
 
     @staticmethod
-    def validate_credentials(domain, site=None, binddn=None, bindpw=None, errors=[]):
+    def validate_credentials(domain, site=None,
+        binddn=None, bindpw=None, ssl='off', certfile=None, errors=[]):
         ret = None
         best_host = None 
 
@@ -918,8 +919,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         if best_host:
             (dchost, dcport) = best_host
             f = FreeNAS_LDAP(host=dchost, port=dcport,
-                binddn=binddn, bindpw=bindpw)
-
+                binddn=binddn, bindpw=bindpw, ssl=ssl, certfile=certfile)
             try:
                 f.open()
                 ret = True
@@ -929,6 +929,22 @@ class FreeNAS_ActiveDirectory_Base(object):
                     errors.append(error['desc'])
                 ret = False
 
+        return ret
+
+    @staticmethod
+    def port_is_listening(host, port, errors=[]):
+        ret = False
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((host, port)) 
+            ret = True
+
+        except Exception as e:
+            errors.append(e)
+            ret = False
+
+        s.close()
         return ret
 
     @staticmethod

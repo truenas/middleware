@@ -313,6 +313,62 @@ class ActiveDirectoryForm(ModelForm):
             "activedirectory_mutex_toggle();"
         )
 
+    def clean_ad_dcname(self):
+        ad_dcname = self.cleaned_data.get('ad_dcname')
+        ad_dcport = 389 
+
+        if not ad_dcname:
+            return None
+
+        parts = ad_dcname.split(':')
+        ad_dcname = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_dcport = long(parts[1])
+
+        errors = []
+        try:
+            ret = FreeNAS_ActiveDirectory.port_is_listening(
+                host=ad_dcname, port=ad_dcport, errors=errors
+            )
+     
+            if ret is False:
+                raise Exception(
+                    'Invalid Host/Port: %s' % errors[0]
+                )
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_dcname')
+    
+    def clean_ad_gcname(self):
+        ad_gcname = self.cleaned_data.get('ad_gcname')
+        ad_gcport = 3268
+
+        if not ad_gcname:
+            return None
+
+        parts = ad_gcname.split(':')
+        ad_gcname = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_gcport = long(parts[1])
+
+        errors = []
+        try:
+            ret = FreeNAS_ActiveDirectory.port_is_listening(
+                host=ad_gcname, port=ad_gcport, errors=errors
+            )
+     
+            if ret is False:
+                raise Exception(
+                    'Invalid Host/Port: %s' % errors[0]
+                )
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_gcname')
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ad_bindpw"):
