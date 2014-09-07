@@ -34,7 +34,7 @@ active_directory_func()
 {
 	local workgroup
 	local netbiosname
-	local adminname
+	local bindname
 	local domainname
 	local dcname
 	local pamfiles
@@ -68,12 +68,12 @@ active_directory_func()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read workgroup netbiosname adminname domainname dcname unix trusted <<-__AD__
+	read workgroup netbiosname bindname domainname dcname unix trusted <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_workgroup,
 		ad_netbiosname,
-		ad_adminname,
+		ad_bindname,
 		ad_domainname,
 		ad_dcname,
 		ad_unix_extensions,
@@ -96,7 +96,7 @@ __AD__
 	cat<<-__EOF__
 	Workgroup:              ${workgroup}
 	Netbios name:           ${netbiosname}
-	Administrator:          ${adminname}
+	Administrator:          ${bindname}
 	Domain name:            ${domainname}
 	Domain controller:      ${dcname}
 	UNIX extensions:        ${unix}
