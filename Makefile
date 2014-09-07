@@ -90,7 +90,7 @@ release: git-verify
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	sh build/post-to-download.sh "${IX_INTERNAL_PATH}/${STAGEDIR}" "${NANO_LABEL}" "${BUILD_TIMESTAMP}"
+	sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}" "${BUILD_TIMESTAMP}"
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
