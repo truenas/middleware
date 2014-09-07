@@ -7,6 +7,7 @@ VERSION?=9.3-M3
 TRAIN?=FreeNAS-9.3-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
+STAGEDIR="objs/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -82,6 +83,8 @@ release: git-verify
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
+	sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < build/README > "${STAGEDIR}/README"
+	cp FreeBSD/repo-manifest "${STAGEDIR}/MANIFEST"
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
