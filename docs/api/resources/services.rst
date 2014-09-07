@@ -130,7 +130,7 @@ List resource
                 "ad_use_default_domain": true,
                 "ad_workgroup": "",
                 "ad_dcname": "",
-                "ad_adminname": "",
+                "ad_bindname": "",
                 "ad_unix_extensions": false,
                 "ad_timeout": 10,
                 "ad_domainname": "",
@@ -138,7 +138,7 @@ List resource
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "",
+                "ad_bindpw": "",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "NAS"
@@ -166,8 +166,8 @@ Update resource
                 "ad_netbiosname": "mynas",
                 "ad_domainname": "mydomain",
                 "ad_workgroup": "WORKGROUP",
-                "ad_adminname": "admin",
-                "ad_adminpw": "mypw"
+                "ad_bindname": "admin",
+                "ad_bindpw": "mypw"
         }
 
    **Example response**:
@@ -185,7 +185,7 @@ Update resource
                 "ad_use_default_domain": true,
                 "ad_workgroup": "WORKGROUP",
                 "ad_dcname": "",
-                "ad_adminname": "admin",
+                "ad_bindname": "admin",
                 "ad_unix_extensions": false,
                 "ad_timeout": 10,
                 "svc": "activedirectory",
@@ -194,7 +194,7 @@ Update resource
                 "ad_kpwdname": "",
                 "ad_krbname": "",
                 "ad_dns_timeout": 10,
-                "ad_adminpw": "mypw",
+                "ad_bindpw": "mypw",
                 "ad_verbose_logging": false,
                 "ad_allow_trusted_doms": false,
                 "ad_netbiosname": "mynas"
@@ -203,8 +203,8 @@ Update resource
    :json string ad_domainname: domain name
    :json string ad_netbiosname: system hostname
    :json string ad_workgroup: workgroup or domain name in old format
-   :json string ad_adminname: domain Administrator account nam
-   :json string ad_adminpw: domain Administrator account password
+   :json string ad_bindname: domain Administrator account name
+   :json string ad_bindpw: domain Administrator account password
    :json string ad_dcname: hostname of the domain controller to use
    :json string ad_gcname: hostname of the global catalog server to use
    :json string ad_keytab: kerberos keytab file
