@@ -7,7 +7,8 @@ VERSION?=9.3-M3
 TRAIN?=FreeNAS-9.3-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
-STAGEDIR="objs/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
+STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
+IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -83,8 +84,13 @@ release: git-verify
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
-	sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < build/README > "${STAGEDIR}/README"
-	cp FreeBSD/repo-manifest "${STAGEDIR}/MANIFEST"
+	sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < build/README > "objs/${STAGEDIR}/README"
+	cp FreeBSD/repo-manifest "objs/${STAGEDIR}/MANIFEST"
+
+release-push: release
+	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	sh build/post-to-download.sh "${NANO_LABEL}" "${BUILD_TIMESTAMP}"
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
