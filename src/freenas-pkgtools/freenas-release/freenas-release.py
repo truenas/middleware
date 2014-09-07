@@ -101,6 +101,13 @@ class ReleaseDB(object):
         """
         return []
 
+    def Trains(self):
+        """
+        Return a list of trains.  This an array of strings.
+        Order of the list is undefined.
+        """
+        return []
+
 class PyReleaseDB(ReleaseDB):
     """
     Database as a json file.
@@ -318,6 +325,13 @@ class PyReleaseDB(ReleaseDB):
                     P.AddUpdate(upd[0], upd[1])
                 return P
 
+    def Trains(self):
+        rv = []
+        for t in self._trains().keys():
+            rv.append(t)
+
+        return rv
+
 class FSReleaseDB(ReleaseDB):
     """
     Filesystem as database.
@@ -326,6 +340,16 @@ class FSReleaseDB(ReleaseDB):
     Too quick, in fact, since the normal unix file time resolution
     is 1 second, and that makes it not possible to determine order
     properly.
+    The layout is:
+    <dbpath>
+	packages
+		<pkgname>
+			<pkgversion> -- file
+	sequences
+		<sequence name>	-- symlink to ../<train name>/<sequence name>
+	<train name>
+		<sequence name>
+			<pkg name> -- symlink to ../../packages/<pkgname>/<pkg version>
     """
 
     global debug, verbose
@@ -498,6 +522,19 @@ class FSReleaseDB(ReleaseDB):
         else:
             return rv[0 : count]
 
+    def Trains(self):
+        """
+        For the FS database, trains are everything in self._dbpath
+        except for "sequences" and "packages"
+        """
+        rv = []
+        for t in os.listdir(self._dbpath):
+            if t == "packages" or t == "sequences":
+                continue
+            if os.path.isdir("%s/%s" % (self._dbpath, t)):
+                rv.append(t)
+        return rv
+
 class SQLiteReleaseDB(ReleaseDB):
     """
     SQLite subclass for ReleaseDB
@@ -524,21 +561,31 @@ class SQLiteReleaseDB(ReleaseDB):
         # key to create the Releases table below.
         self._cursor.execute("CREATE TABLE IF NOT EXISTS Packages(PkgName TEXT NOT NULL, PkgVersion TEXT NOT NULL, Checksum TEXT, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT pkg_constraint UNIQUE (PkgName, PkgVersion) ON CONFLICT IGNORE)")
 
-        # The Trains table consists solely of the train name, a sequence value,
+        # The Trains table consists solely of the train name, and an indx value to determine which ones
+        # are newer.  (I don't think that's used for anything, however.)
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS Trains(TrainName TEXT NOT NULL UNIQUE ON CONFLICT IGNORE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT)")
+
+        # The Sequences table consists of sequences, a reference to a train name,
         # and an indx value to determine which ones are newer.  Sequence is used as a foreign key
         # in several other tables.
-        self._cursor.execute("CREATE TABLE IF NOT EXISTS Trains(TrainName TEXT NOT NULL, Sequence TEXT NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT)")
+        self._cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Sequences(Sequence TEXT NOT NULL UNIQUE,
+        Train NOT NULL,
+        indx INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+        CONSTRAINT sequence_constraint FOREIGN KEY(Train) REFERENCES Trains(indx))
+        """)
 
         # The ReleaseNotes table consists of notes, and which sequences use them.
-        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNotes(Note TEXT NOT NULL, Sequence TEXT NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relnote_constraint FOREIGN KEY(Sequence) REFERENCES Trains(Sequence))")
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNotes(Note TEXT NOT NULL, Sequence TEXT NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relnote_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(Sequence))")
 
         # The ReleaseNames table consists of release names, and which sequences use them.
-        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNames(Name TEXT NOT NULL, Sequence TEXT NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relname_constrant FOREIGN KEY(Sequence) REFERENCES Trains(Sequence))")
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNames(Name TEXT NOT NULL, Sequence NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relname_constrant FOREIGN KEY(Sequence) REFERENCES Sequences(indx))")
 
-        # The Releases table.
-        # Releases consists of a reference to an entry in Trains for thesequence number,
-        # and a package reference.
-        self._cursor.execute("CREATE TABLE IF NOT EXISTS Releases(Sequence NOT NULL, Pkg NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT releases_seq_constraint FOREIGN KEY(Sequence) REFERENCES Trains(Sequence), CONSTRAINT releases_pkg_constraint FOREIGN KEY(Pkg) REFERENCES Packages(indx))")
+        # The Manifests table.
+        # A manifest consists of a reference to an entry in Sequences for the sequence number,
+        # and a package reference.  A manifest file is built by selecting the packages for
+        # the given sequence, in order.
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS Manifests(Sequence NOT NULL, Pkg NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT releases_seq_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(indx), CONSTRAINT releases_pkg_constraint FOREIGN KEY(Pkg) REFERENCES Packages(indx))")
 
         # A table for keeping track of delta packages.
         # We ignore duplicates, but this could be a problem
@@ -594,8 +641,21 @@ class SQLiteReleaseDB(ReleaseDB):
             self._in_transaction = True
 
 
-        # First get the sequence into the Trains database
-        self.cursor().execute("INSERT INTO Trains(TrainName, Sequence) VALUES(?, ?)", (train, sequence))
+        # First, make sure the train name is in the database
+        # The "ON CONFLICT IGNORE" ensures it won't cause a problem if it's already in there.
+        self.cursor().execute("INSERT INTO Trains(TrainName) VALUES(?)", (train,))
+
+        # Next, insert the sequence into the database, referring the train name
+        sql = """
+        INSERT INTO Sequences(Sequence, Train)
+        SELECT ?, Trains.indx
+        FROM Trains
+        WHERE Trains.TrainName = ?
+        """
+        parms = (sequence, train)
+        if debug:  print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+
+        self.cursor().execute(sql, parms)
 
         # Next, the packages.
         for pkg in packages:
@@ -607,10 +667,10 @@ class SQLiteReleaseDB(ReleaseDB):
                                   (pkg.Name(), pkg.Version(), pkg.Checksum()))
 
             self.cursor().execute("""
-            INSERT INTO Releases(Sequence, Pkg)
-            SELECT Trains.Sequence, Packages.indx
-            FROM Trains JOIN Packages
-            WHERE Trains.Sequence = ?
+            INSERT INTO Manifests(Sequence, Pkg)
+            SELECT Sequences.indx, Packages.indx
+            FROM Sequences JOIN Packages
+            WHERE Sequences.Sequence = ?
             AND (Packages.PkgName = ? AND Packages.PkgVersion = ?)
             """, (sequence, pkg.Name(), pkg.Version()))
 
@@ -648,10 +708,12 @@ class SQLiteReleaseDB(ReleaseDB):
 
         sql = """
         SELECT PkgName, PkgVersion, Checksum
-        FROM Releases
+        FROM Manifests
         JOIN Packages
-        WHERE Releases.Sequence = ?
-        AND Releases.Pkg = Packages.indx
+        JOIN Sequences
+        WHERE Sequences.Sequence = ?
+        AND Manifests.Sequence = Sequences.indx
+        AND Manifests.Pkg = Packages.indx
         %s
         ORDER BY Packages.indx ASC
         """ % ("AND Packages.PkgName = ?" if name else "")
@@ -679,7 +741,16 @@ class SQLiteReleaseDB(ReleaseDB):
         """
         Return the name of the train for the given sequence.
         """
-        self.cursor().execute("SELECT Train FROM Releases WHERE Sequence = ? ORDER BY indx", (sequence,))
+        sql = """
+        SELECT Train.TrainName AS Train
+        FROM Trains
+        JOIN Sequences
+        WHERE Sequences.Sequence = ?
+        AND Trains.Sequence = Sequence.indx
+        """
+        parms = (sequence,)
+
+        self.cursor().execute(sql, parms)
         seq = self.cursor().fetchone()
         if seq is None:
             return None
@@ -691,9 +762,21 @@ class SQLiteReleaseDB(ReleaseDB):
         sequences for the given train.
         """
         if debug:  print >> sys.stderr, "SQLiteReleaseDB::RecentSequencesForTrain(%s, %d)" % (train, count)
-        sql = "SELECT Sequence FROM Trains WHERE TrainName = ? ORDER BY indx DESC LIMIT ?"
+        sql = """
+        SELECT Sequences.Sequence AS Sequence
+        FROM Sequences
+        JOIN Trains
+        WHERE Trains.TrainName = ?
+        AND Sequences.Train = Trains.indx
+        ORDER BY Sequences.indx DESC
+        """
+        if count:
+            sql += "LIMIT ?"
+            parms = (train, count)
+        else:
+            parms = (train,)
         if debug:  print >> sys.stderr, "\tsql = %s" % sql
-        self.cursor().execute(sql, (train, count))
+        self.cursor().execute(sql, parms)
         rv = []
         for entry in self.cursor():
             if debug:  print >> sys.stderr, "\t%s" % entry['Sequence']
@@ -732,15 +815,6 @@ class SQLiteReleaseDB(ReleaseDB):
         # Pkg is the new version, it returns the PkgBase
         # and Checksum fields.
         sql = """
-        SELECT PackageUpdates.PkgOldVersion AS PkgOldVersion, PackageUpdates.Checksum AS Checksum
-        FROM PackageUpdates
-        JOIN Packages
-        WHERE PackageUpdates.Pkg = Packages.indx
-        AND Packages.PkgName = ?
-        AND Packages.PkgVersion = ?
-        ORDER BY PackageUpdates.indx DESC
-        """
-        sql = """
         SELECT Packages.PkgVersion AS PkgOldVersion, PackageUpdates.Checksum AS Checksum
         FROM PackageUpdates
         JOIN Packages
@@ -764,6 +838,16 @@ class SQLiteReleaseDB(ReleaseDB):
             rv.append(p)
         return rv
 
+    def Trains(self):
+        rv = []
+        cur = self.cursor()
+        cur.execute("SELECT DISTINCT TrainName FROM TRAINS")
+        trains = cur.fetchall()
+        for t in trains:
+            rv.append(t["TrainName"])
+
+        return rv
+
 def ChecksumFile(path):
     import hashlib
     global debug, verbose
@@ -784,10 +868,14 @@ def ChecksumFile(path):
     return sum.hexdigest()
 
 def usage():
-    print >> sys.stderr,"Usage: %s [--database|-D db] [--debug|-d] [--verbose|-v] --output|--destination|-o dest_directory input_dir [...]" % sys.argv[0]
+    print >> sys.stderr, """Usage: %s [--database|-D db] [--debug|-d] [--verbose|-v] --archive|--destination|-a archive_directory <cmd> [args]
+    Command is:
+	add	Add the build-output directories (args) to the archive and database
+	check	Check the archive for self-consistency.
+""" % sys.argv[0]
     sys.exit(1)
 
-def Process(source, archive, db = None, sign = False):
+def ProcessRelease(source, archive, db = None, sign = False):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/FreeNAS-MANIFEST, which will tell us
@@ -795,7 +883,7 @@ def Process(source, archive, db = None, sign = False):
     """
     global debug, verbose
 
-    if debug:  print >> sys.stderr, "Process(%s, %s, %s, %s)" % (source, archive, db, sign)
+    if debug:  print >> sys.stderr, "Processelease(%s, %s, %s, %s)" % (source, archive, db, sign)
 
     if db is None:
         raise Exception("Invalid db")
@@ -806,7 +894,7 @@ def Process(source, archive, db = None, sign = False):
     if not os.path.isdir(pkg_source_dir):
         raise Exception("Source package directory %s is not a directory!" % pkg_source_dir)
     if not os.path.isdir(pkg_dest_dir):
-        raise Exception("Archive package directory %s is not a directory!" % pkg_dest_dir)
+        os.makedirs(pkg_dest_dir)
 
     manifest = Manifest.Manifest()
     if manifest is None:
@@ -821,6 +909,7 @@ def Process(source, archive, db = None, sign = False):
         if verbose or debug:
             print "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
 
+        copied = False
         pkg_path = "%s/%s" % (pkg_source_dir, pkg.FileName())
         hash = ChecksumFile(pkg_path)
         if debug:  print >> sys.stderr, "%s (computed)\n%s (manifest)" % (hash, pkg.Checksum())
@@ -843,6 +932,7 @@ def Process(source, archive, db = None, sign = False):
         else:
             import shutil
             shutil.copyfile(pkg_path, pkg_dest)
+            copied = True
             if verbose or debug:
                 print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
 
@@ -865,7 +955,7 @@ def Process(source, archive, db = None, sign = False):
                     x = PackageFile.DiffPackageFiles(pkg1, pkg2, delta_pkg)
                     if x is None:
                         if debug or verbose:
-                            print >> sys.stderr, "%s:  no diffs between versions %s and %s" % (
+                            print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
                                 pkg.Name(), old_pkg.Version(), pkg.Version()
                                 )
                         # We set the version to the old version, and then remove it.
@@ -876,8 +966,16 @@ def Process(source, archive, db = None, sign = False):
                         # XXX - We can look to see if any other releaes are
                         # using this package version, and if not, remove the
                         # file.
-                        pkg.SetVersion(old_pkg.Version())
-                        pkg.SetChecksum(pkg1)
+                        
+                        for upd in db.UpdatesForPackage(old_pkg):
+                            old_pkg.AddUpdate(upd[0], upd[1])
+                        old_pkg.SetChecksum(ChecksumFile(pkg1))
+                        pkg = old_pkg
+                        # Should I instead verify through the db
+                        # that nobody else is using this package?
+                        if copied:
+                            os.unlink(pkg_dest)
+
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
                         cksum = ChecksumFile(x)
@@ -911,19 +1009,157 @@ def Process(source, archive, db = None, sign = False):
                 o_cksm = upd[Package.CHECKSUM_KEY]
                 db.AddPackageUpdate(pkg, o_vers, o_cksm)
 
+def Check(archive, db):
+    """
+    Given an archive location -- the target of ProcessRelease -- compare
+    the database contents with the filesystem layout.  We're looking for
+    missing files/directories, package files with mismatched checksums,
+    and orphaned files/directories.
+    """
+    global verbose, debug
+    # First, let's get the list of trains.
+    trains = db.Trains()
+    # Now let's collect the set of sequences
+    # This will be a dictionary, key is train name,
+    # value is an array of sequences.  We'll also add
+    # "LATEST" to it.
+    sequences = {}
+    for t in trains:
+        s = db.RecentSequencesForTrain(t, 0)
+        s.append("LATEST")
+        sequences[t] = s
+
+    # First check is we make sure all of the sequence
+    # files are there, as expected.  And that nothing
+    # unexpected is there.
+    # The firsrt step of that is to read the contents
+    # of the archive directory.  The only entries in it
+    # should be the list of train names, and Packages.
+    # Each entry should be a directory.
+    expected_contents = { "Packages" : True }
+    for t in trains:
+        expected_contents[t] = True
+
+    found_contents = {}
+    for entry in os.listdir(archive):
+        if not os.path.isdir(archive + "/" + entry):
+            print >> sys.stderr, "%s/%s is not a directory" % (archive, entry)
+        else:
+            found_contents[entry] = True
+
+    if expected_contents != found_contents:
+        print >> sys.stderr, "Archive top-level directory does not match expectations"
+        for expected in expected_contents.keys():
+            if expected in found_contents:
+                found_contents.pop(expected)
+            else:
+                print >> sys.stderr, "Missing Archive top-level entry %s" % expected
+        for found in found_contents.keys():
+            print >> sys.stderr, "Unexpected archive top-level entry %s" % found
+
+    # Now we want to check that each train has only the sequences
+    # expected.  Along the way, we'll also start loading the
+    # expected_packages.
+    expected_packages = {}
+    for t in sequences.keys():
+        t_dir = "%s/%s" % (archive, t)
+        expected_contents = {}
+        found_contents = {}
+        for entry in os.listdir(t_dir):
+            found_contents[entry] = True
+
+        if debug:  print >> sys.stderr, "Directory entries for Train %s:  %s" % (t, found_contents.keys())
+        # Go thorugh the manifest files for this train.
+        # Load each manifest, and get the set of packages from it.
+        # Figure out the path for each package, and update, and add
+        # those to expected_packages.
+        for sequence_file in sequences[t]:
+            if sequence_file != "LATEST":
+                mani_path = "%s/FreeNAS-%s" % (t_dir, sequence_file)
+                expected_contents["FreeNAS-%s" % sequence_file] = True
+            else:
+                mani_path = "%s/%s" % (t_dir, sequence_file)
+                expected_contents[sequence_file] = True
+
+            temp_mani = Manifest.Manifest()
+            temp_mani.LoadPath(mani_path)
+            for pkg in temp_mani.Packages():
+                if pkg.FileName() in expected_packages:
+                    if expected_packages[pkg.FileName()] != pkg.Checksum():
+                        print >> sys.stderr, "Package %s, version %s, already found with different checksum" \
+                            % (pkg.Name(), pkg.Version())
+                        print >> sys.stderr, "Found again in sequence %s in train %s" % (sequence_file, t)
+                        continue
+                else:
+                    expected_packages[pkg.FileName()] = pkg.Checksum()
+                    if debug:  print >> sys.stderr, "%s/%s:  %s: %s" % (t, sequence_file, pkg.FileName(), pkg.Checksum())
+                # Now check each of the updates for it.
+                for upd in pkg.Updates():
+                    o_vers = pkg.FileName(upd[Package.VERSION_KEY])
+                    o_sum = upd[Package.CHECKSUM_KEY]
+                    if o_vers in expected_packages:
+                        if expected_packages[o_vers] != o_sum:
+                            print >> sys.stderr, "Package update %s %s->%s, already found with different checksum" \
+                                % (pkg.Name(), upd[Package.VERSION_KEY], Pkg.Version())
+                            print >> sys.stderr, "Found again in sequence %s in train %s" % (sequence_File, t)
+                            contnue
+                    else:
+                        expected_packages[o_vers] = o_sum
+
+        # Now let's check the found_contents and expected_contents dictionaries
+        if expected_contents != found_contents:
+            print >> sys.stderr, "Sequences for train %s inconsistency found" % t
+            if debug:
+                print >> sys.stderr, "Expected:  %s" % expected_contents
+                print >> sys.stderr, "Found   :  %s" % found_contents
+            for seq in expected_contents.keys():
+                if seq in found_contents:
+                    found_contents.pop(seq)
+                else:
+                    print >> sys.stderr, "Expected sequence file %s not found in train %s" % (seq, t)
+            for found in found_contents.keys():
+                print >> sys.stderr, "Unexpected entry in train %s: %s" % (t, found)
+
+    # Now we've got all of the package filenames, so let's start checking
+    # the actual packages directory
+    p_dir = "%s/Packages" % archive
+    found_packages = {}
+    for pkgEntry in os.listdir(p_dir):
+        full_path = p_dir + "/" + pkgEntry
+        if not os.path.isfile(full_path):
+            print >> sys.stderr, "Entry in Packages directory, %s, is not a file" % pkgEntry
+            contnue
+        cksum = ChecksumFile(full_path)
+        found_packages[pkgEntry] = cksum
+
+    if expected_packages != found_packages:
+        print >> sys.stderr, "Packages directory does not match expecations"
+        for expected in expected_packages.keys():
+            if expected in found_packages:
+                if expected_packages[expected] != found_packages[expected]:
+                    print >> sys.stderr, "Package %s has a different checksum than expected" % expected
+                    if debug or verbsoe:
+                        print >> sys.stderr, "%s (expected)\n%s (found)" % (expected_packages[expected], found_packages[expected])
+                found_packages.pop(expected)
+            else:
+                print >> sys.stderr, "Did not find expected package file %s" % expected
+        for found in found_packages.keys():
+            print >> sys.stderr, "Unexpected package file %s" % found
+
+                       
 def main():
     global debug, verbose
     # Variables set via getopt
     # It may be possible to have reasonable defaults for these.
-    OutputDirectory = None
+    archive = None
     # Work on this
     Database = None
 
     # Locabl variables
     db = None
 
-    options = "o:D:dv"
-    long_options = ["--output=", "--destination=",
+    options = "a:D:dv"
+    long_options = ["--archive=", "--destination=",
                  "--database=",
                  "--debug", "--verbose",
                     ]
@@ -935,8 +1171,8 @@ def main():
         usage()
 
     for o, a in opts:
-        if o in ('-o', '--output', '--destination'):
-            OutputDirectory = a
+        if o in ('-a', '--archive', '--destination'):
+            archive = a
         elif o in ('--database', '-D'):
             Database = a
         elif o in ('-d', '--debug'):
@@ -946,12 +1182,12 @@ def main():
         else:
             usage()
 
-    if OutputDirectory is None:
-        print >> sys.stderr, "For now, output directory must be specified"
+    if archive is None:
+        print >> sys.stderr, "For now, archive directory must be specified"
         usage()
 
     if len(args) == 0:
-        print >> sys.stderr, "No sources specified"
+        print >> sys.stderr, "No command specified"
         usage()
 
     if Database is not None:
@@ -962,9 +1198,20 @@ def main():
         elif Database.startswith("py:"):
             db = PyReleaseDB(dbfile = Database[len("py:"):])
 
-    for source in args:
-        Process(source, OutputDirectory, db)
-    
+    cmd = args[0]
+    args = args[1:]
+
+    if cmd == "add":
+        if len(args) == 0:
+            print >> sys.stderr, "No source directories specified"
+            usage()
+        for source in args:
+            ProcessRelease(source, archive, db)
+    elif cmd == "check":
+        Check(archive, db)
+    else:
+        print >> sys.stderr, "Unknown command %s" % cmd
+        usage()
 
 if __name__ == "__main__":
     main()

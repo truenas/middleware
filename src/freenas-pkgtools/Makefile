@@ -11,7 +11,7 @@ SUBDIR= create_manifest \
 	manifest_util \
 	pkgify \
 	freenas-update \
-	add_release
+	freenas-release
 
 beforeinstall:
 	${INSTALL} -d ${DESTDIR}${BINDIR}

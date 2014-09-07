@@ -2,6 +2,6 @@
 
 MK_MAN= no
 
-SCRIPTS=	add_release.py
+SCRIPTS=	freenas-release.py
 
 .include <bsd.prog.mk>
