@@ -1,20 +1,22 @@
 #!/bin/sh
 
 set -e
-STAGE=/freenas/Dev/releng/FreeNAS/jkh-nightlies/
 PUSHIT=9.3
 ID=`id -un`
+
 if [ "$ID" = "root" ]; then	
 	ID="jkh"
 fi
 
-if [ $# -lt 2 ]; then
-	echo Usage: $0 FreeNAS-version datestamp
-	echo Usage: e.g. $0 FreeNAS-9.2.1-BETA 20131225
+if [ $# -lt 3 ]; then
+	echo Usage: $0 stagedir FreeNAS-version datestamp
+	echo Usage: e.g. $0 stagedir FreeNAS-9.2.1-BETA 20131225
 	exit 1
 fi
-VERSION=$1
-DATE=$2
+
+STAGE=$1
+VERSION=$2
+DATE=$3
 
 if [ ! -d ${STAGE}/$VERSION-$DATE ]; then
 	echo ${STAGE}/$VERSION-$DATE not found
