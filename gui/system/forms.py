@@ -255,6 +255,7 @@ class InitialWizard(CommonWizard):
 
     def done(self, form_list, **kwargs):
 
+        events = []
         curstep = 0
         progress = {
             'step': curstep,
@@ -274,6 +275,7 @@ class InitialWizard(CommonWizard):
         volume_form = form_list.get('volume')
         volume_import = form_list.get('import')
         ds_form = form_list.get('ds')
+        sys_form = form_list.get('system')
 
         with transaction.atomic():
             _n = notifier()
@@ -506,6 +508,25 @@ class InitialWizard(CommonWizard):
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
 
+            console = cleaned_data.get('sys_console')
+            adv = models.Advanced.objects.order_by('-id')[0]
+            advdata = dict(adv.__dict__)
+            advdata['adv_consolemsg'] = console
+            advdata.pop('_state', None)
+            advform = AdvancedForm(
+                advdata,
+                instance=adv,
+            )
+            if advform.is_valid():
+                advform.save()
+                advform.done(self.request, events)
+
+            # Set administrative email to receive alerts
+            if cleaned_data.get('sys_email'):
+                bsdUsers.objects.filter(bsdusr_uid=0).update(
+                    bsdusr_email=cleaned_data.get('sys_email'),
+                )
+
         if ds_form:
 
             curstep += 1
@@ -678,7 +699,8 @@ class InitialWizard(CommonWizard):
 
         return JsonResp(
             self.request,
-            message=__('Initial configuration succeeded.')
+            message=__('Initial configuration succeeded.'),
+            events=events,
         )
 
 
