@@ -194,9 +194,14 @@ disk_is_mounted()
 {
     local _dev
 
-    _dev="/dev/$1"
-    mount -v|grep -qE "^${_dev}[sp][0-9]+"
-    return $?
+    for _dev
+    do
+	if mount -v | grep -qE "^/dev/${_dev}[sp][0-9]+"
+	then
+	    return 0
+	fi
+    done
+    return 1
 }
 
 
@@ -285,6 +290,7 @@ mount_disk() {
 	
 partition_disk() {
 	local _disks _disksparts
+	local _mirror
 
 	_disks=$*
 
@@ -313,10 +319,11 @@ partition_disk() {
 	
 
 	if [ $# -gt 1 ]; then
-	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot mirror ${_disksparts}
+	    _mirror="mirror"
 	else
-	    zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_disksparts}
+	    _mirror=""
 	fi
+	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_mirror} ${_disksparts}
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
 	zfs create -o mountpoint=legacy freenas-boot/grub
@@ -509,7 +516,7 @@ menu_install()
     TMPFILE=$_tmpfile
 
     if [ $# -gt 1 ]; then
-	_disks="$*"
+	_disks="$@"
 	interactive=false
     else
 	interactive=true
@@ -563,14 +570,23 @@ menu_install()
 	exit 1
     fi
 
-    # Debugging seatbelts
-    if disk_is_mounted "${_disk}" ; then
+    if disk_is_mounted ${_disks} ; then
         ${interactive} && dialog --msgbox "The destination drive is already in use!" 6 74
         exit 1
     fi
 
     _do_upgrade=0
     _action="installation"
+    # This needs to be re-done.
+    # If we're not interactive, then we have
+    # to assume _disks is correct.
+    # If we do have more than one disk given,
+    # we should also do something if they're all
+    # freenas disks.  But how do we figure out which
+    # one to use?  The current code in disk_is_freenas
+    # is very, very heavy -- it actually backs up the
+    # data from a freenas installation.  It also does
+    # a zpool import.
     for _disk in ${_disks}; do
     if disk_is_freenas ${_disk} ; then
         if ${interactive}; then
