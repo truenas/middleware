@@ -609,7 +609,7 @@ Any changes made at the boot loader prompt only effect the current boot. This me
 Upgrade
 -------
 
-**Firmware Update:** used to Upgrade FreeNAS®.
+**Manual Update:** used to Upgrade FreeNAS®.
 
 .. _CAs:
 

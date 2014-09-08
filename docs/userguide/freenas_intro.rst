@@ -225,7 +225,7 @@ The following fields have been added or deleted:
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
 
-* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` to :menuselection:`System --> Upgrade`.
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade -> Manual Update`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
