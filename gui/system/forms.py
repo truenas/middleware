@@ -1814,6 +1814,20 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
         return len(cls._populate_disk_choices()) > 0
 
 
+class InitialWizardSystemForm(Form):
+
+    sys_email = forms.EmailField(
+        label=_('E-mail'),
+        help_text=_('Administrative email address used for alerts.'),
+        required=False,
+    )
+    sys_console = forms.BooleanField(
+        label=_('Console messages'),
+        help_text=_('Show console messages in the footer.'),
+        required=False,
+    )
+
+
 class InitialWizardConfirmForm(Form):
     pass
 
@@ -1923,10 +1937,10 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -1942,7 +1956,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2017,10 +2031,10 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -2036,7 +2050,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2133,7 +2147,7 @@ class CertificateForm(ModelForm):
 
     def save(self):
         super(CertificateForm, self).save()
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
 
 class CertificateViewForm(ModelForm):
@@ -2181,7 +2195,7 @@ class CertificateCSREditForm(ModelForm):
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2208,7 +2222,7 @@ class CertificateImportForm(ModelForm):
         label=_("Private Key"),
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your private key here"), 
+        help_text=_("Cut and paste the contents of your private key here"),
     )
 
     def save(self):
@@ -2225,7 +2239,7 @@ class CertificateImportForm(ModelForm):
 
         super(CertificateImportForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2248,10 +2262,10 @@ class CertificateCreateInternalForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -2267,7 +2281,7 @@ class CertificateCreateInternalForm(ModelForm):
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2338,7 +2352,7 @@ class CertificateCreateInternalForm(ModelForm):
 
         super(CertificateCreateInternalForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2369,10 +2383,10 @@ class CertificateCreateCSRForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_country = forms.CharField(
@@ -2383,7 +2397,7 @@ class CertificateCreateCSRForm(ModelForm):
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2425,7 +2439,7 @@ class CertificateCreateCSRForm(ModelForm):
 
         super(CertificateCreateCSRForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
