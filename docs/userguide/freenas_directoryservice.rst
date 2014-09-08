@@ -271,7 +271,11 @@ Figure 9.2a shows the LDAP Configuration screen that is seen when you click :men
 
 |Figure92a_png|
 
-Table 9.2a summarizes the available configuration options. If you are new to LDAP terminology, skim through the
+Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
+"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
+
+If you are new to LDAP terminology, skim through the
 `OpenLDAP Software 2.4 Administrator's Guide <http://www.openldap.org/doc/admin24/>`_.
 
 **Table 9.2a: LDAP Configuration Options**
@@ -293,40 +297,51 @@ Table 9.2a summarizes the available configuration options. If you are new to LDA
 | Bind password           | string         | password for "Root bind DN"                                                                           |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | instructs LDAP server to not provide authentication and to allow read and write access to any client  |
-| Binding                 |                |                                                                                                       |
+| Allow Anonymous         | checkbox       | only available in "Advanced Mode"; instructs LDAP server to not provide authentication and to allow   |
+| Binding                 |                | read and write access to any client                                                                   |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| User Suffix             | string         | optional, can be added to name when user account added to LDAP directory (e.g. dept. or company name) |
+| User Suffix             | string         | only available in "Advanced Mode" and optional; can be added to name when user account added to LDAP  |
+|                         |                | directory (e.g. dept. or company name)                                                                |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Group Suffix            | string         | optional, can be added to name when group added to LDAP directory (e.g. dept. or company name)        |
+| Group Suffix            | string         | only available in "Advanced Mode" and optional; can be added to name when group added to LDAP         |
+|                         |                | directory (e.g. dept. or company name)                                                                |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Password Suffix         | string         | optional, can be added to password when password added to LDAP directory                              |
+| Password Suffix         | string         | only available in "Advanced Mode" and optional; can be added to password when password added to       |
+|                         |                | LDAP directory                                                                                        |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Machine Suffix          | string         | optional, can be added to name when system added to LDAP directory (e.g. server, accounting)          |
+| Machine Suffix          | string         | only available in "Advanced Mode" and optional; can be added to name when system added to LDAP        |
+|                         |                | directory (e.g. server, accounting)                                                                   |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use default domain      | checkbox       |                                                                                                       |
+| SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Kerberos Realm          | drop-down menu |                                                                                                       |
+| Use default domain      | checkbox       | only available in "Advanced Mode";                                                                    |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Kerberos Keytab         | drop-down menu |                                                                                                       |
+| Kerberos Realm          | drop-down menu | only available in "Advanced Mode";                                                                    |
 |                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------|
-| Encryption Mode         | drop-down menu | choices are *Off*,                                                                                    |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Kerberos Keytab         | drop-down menu | only available in "Advanced Mode";                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Encryption Mode         | drop-down menu | only available in "Advanced Mode"; choices are *Off*,                                                 |
 |                         |                | *SSL*, or                                                                                             |
 |                         |                | *TLS*                                                                                                 |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Certificate             | browse button  | browse to the location of the certificate of the LDAP server if SSL connections are used              |
+| Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if    |
+|                         |                | SSL connections are used                                                                              |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap backend           | drop-down menu |                                                                                                       |
+| Idmap backend           | drop-down menu | only available in "Advanced Mode";                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Samba Schema            | checkbox       | only available in "Advanced Mode";                                                                    |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                              |

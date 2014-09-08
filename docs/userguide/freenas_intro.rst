@@ -259,8 +259,8 @@ The following fields have been added or deleted:
   "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`. The
   "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos Realm" drop-down menu.
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP` and the "Enable" checkbox, "Use
-  default domain" field and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP`. The "Enable" and "Samba Schema"
+  checkboxes, "SUDO Suffix" and "Use default domain" fields, and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
 
 * The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
 
