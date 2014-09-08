@@ -279,8 +279,9 @@ for replication in replication_tasks:
                 else:
                     log.warn("Can not locate a proper local snapshot for %s" % (localfs))
                     # Can NOT proceed any further.  Report this situation.
-                    error, errmsg = send_mail(subject="Replication failed!", text=\
-                        """
+                    error, errmsg = send_mail(
+                        subject="Replication failed! (%s)" % remote,
+                        text="""
 Hello,
     The replication failed for the local ZFS %s because the remote system
     has diverged snapshots with us.
