@@ -363,8 +363,8 @@ class Scrub(Model):
     )
 
     class Meta:
-        verbose_name = _("ZFS Scrub")
-        verbose_name_plural = _("ZFS Scrubs")
+        verbose_name = _("Scrub")
+        verbose_name_plural = _("Scrubs")
         ordering = ["scrub_volume__vol_name"]
 
     def __unicode__(self):

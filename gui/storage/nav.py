@@ -33,7 +33,7 @@ class ViewScrub(TreeNode):
 class ViewSnap(TreeNode):
 
     gname = 'Snapshots.View'
-    name = _(u'ZFS Snapshots')
+    name = _(u'Snapshots')
     type = 'openstorage'
     icon = u'ViewAllPeriodicSnapIcon'
 
@@ -150,7 +150,7 @@ class Volumes(TreeNode):
         nav.icon = u'VolumesIcon'
 
         ds = TreeNode('Dataset')
-        ds.name = _(u'Create ZFS Dataset')
+        ds.name = _(u'Create Dataset')
         ds.view = 'storage_dataset'
         ds.icon = u'AddDatasetIcon'
         ds.type = 'object'
@@ -203,7 +203,7 @@ class Volumes(TreeNode):
 
             if i.mp_volume.vol_fstype == 'ZFS':
                 ds = TreeNode('Dataset')
-                ds.name = _(u'Create ZFS Dataset')
+                ds.name = _(u'Create Dataset')
                 ds.view = 'storage_dataset'
                 ds.icon = u'AddDatasetIcon'
                 ds.type = 'object'
