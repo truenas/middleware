@@ -50,10 +50,10 @@ class AddVolume(TreeNode):
     skip = True
 
 
-class ImportVolume(TreeNode):
+class ImportDisk(TreeNode):
 
     gname = 'Import'
-    name = _(u'Import Volume')
+    name = _(u'Import Disk')
     view = 'storage_import'
     type = 'volumewizard'
     icon = u'ImportVolumeIcon'
@@ -86,10 +86,10 @@ class ViewMultipaths(TreeNode):
     skip = True
 
 
-class AutoImportVolume(TreeNode):
+class ImportVolume(TreeNode):
 
-    gname = 'AutoImport'
-    name = _(u'Auto Import Volume')
+    gname = 'ImportVolume'
+    name = _(u'Import Volume')
     view = 'storage_autoimport'
     type = 'volumewizard'
     icon = u'ImportVolumeIcon'
@@ -180,8 +180,8 @@ class Volumes(TreeNode):
         super(Volumes, self).__init__(*args, **kwargs)
         self.append_children([
             AddVolume(),
+            ImportDisk(),
             ImportVolume(),
-            AutoImportVolume(),
             ViewVolumes(),
             ViewDisks(),
         ])

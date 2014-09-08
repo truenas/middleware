@@ -13,17 +13,17 @@
     </script>
     </button>
 
-    <button id="importVolBtn" data-dojo-type="dijit.form.Button" type="button">
-        <p>{% trans "Import Volume" %}</p>
+    <button id="ImportDiskBtn" data-dojo-type="dijit.form.Button" type="button">
+        <p>{% trans "Import Disk" %}</p>
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            volumeWizard('{% trans "Import Volume"|force_escape|force_escape %}', '{% url "storage_import" %}', [this,]);
+            volumeWizard('{% trans "Import Disk"|escapejs %}', '{% url "storage_import" %}', [this,]);
         </script>
     </button>
 
-    <button id="autoImportVolBtn" data-dojo-type="dijit.form.Button">
-        <p>{% trans "Auto Import Volume" %}</p>
+    <button id="ImportVolBtn" data-dojo-type="dijit.form.Button">
+        <p>{% trans "Import Volume" %}</p>
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            volumeWizard('{% trans "Auto Import Volume"|force_escape|force_escape %}', '{% url "storage_autoimport" %}', [this,]);
+            volumeWizard('{% trans "Import Volume"|escapejs %}', '{% url "storage_autoimport" %}', [this,]);
         </script>
     </button>
 
