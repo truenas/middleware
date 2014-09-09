@@ -199,8 +199,9 @@ virtual disk to hold the operating system.
     :width: 5.8228in
     :height: 3.0335in
 
-Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, then tab to "OK" and press :kbd:`Enter`. FreeNAS® will issue
-the warning seen in Figure 2.3d, reminding you not to install onto a storage drive. Press :kbd:`Enter` to start the installation.
+Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, press the :kbd:`spacebar` to select it, then press
+:kbd:`Enter`. FreeNAS® will issue the warning seen in Figure 2.3d, reminding you not to install onto a storage drive. Press :kbd:`Enter` to start the
+installation.
 
 **Figure 2.3d: FreeNAS® Installation Warning**
 
@@ -226,7 +227,18 @@ overwrite the existing installation, arrow over to "Fresh Install" and press :kb
     :width: 5.9327in
     :height: 3.1917in
 
-Once the installation is complete, you should see a message similar to Figure 2.3f.
+Towards the end of the installation, it will prompt you to enter the password for the *root* user account. Setting a password is mandatory and the password
+can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess password.
+::
+ Changing password for root
+ Password: input_password_here
+ Retype password: reinput_password_here
+
+.. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
+   *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
+   be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
+
+Once the password has been input and confirmed, , you should see a message similar to Figure 2.3f.
 
 **Figure 2.3f: FreeNAS® Installation Complete**
 

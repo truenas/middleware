@@ -4,7 +4,7 @@
 
    Introduction <freenas_intro>
    Installing and Upgrading FreeNAS® <freenas_install>
-   Initial Configuration <freenas_quick>
+   Booting Into FreeNAS® <freenas_quick>
    Account <freenas_account>
    System <freenas_system>
    Tasks <freenas_tasks>

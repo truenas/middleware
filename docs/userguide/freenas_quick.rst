@@ -1,9 +1,9 @@
 :orphan:
 
-.. _Initial Configuration:
+.. _Booting Into FreeNAS®:
 
-Initial Configuration
----------------------
+Booting Into FreeNAS®
+----------------------
 
 When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the the FreeNAS®
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
@@ -76,26 +76,14 @@ seen in Example 3a. In this example, the FreeNAS® system has one network interf
  You may try the following URLs to access the web user interface:
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
-.. _Set the Root Password:
-
-Set the Root Password
-~~~~~~~~~~~~~~~~~~~~~
-
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
-system. You should be prompted to create a password for the *root* user, as seen in Figure 3.1a.
+system. You should be prompted to input the password for the root user, as seen in Figure 3.1a.
 
-**Figure 3.1a: Set the Root Password**
+**Figure 3.1a: Input the Root Password**
 
 |Figure26b_png|
 
-Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
-password. 
-
-.. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
-   *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
-   be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
-
-Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 3.1b.
+Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3.1b.
 
 **Figure 3.1b: FreeNAS® Graphical Configuration Menu**
 
@@ -120,10 +108,10 @@ This
 `blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
 describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
 
-.. _Initial Wizard:
+.. _Initial Configuration Wizard:
 
-Initial Wizard
-~~~~~~~~~~~~~~
+Initial Configuration Wizard
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ADD SCREENSHOTS AND CLEAN UP PLACEHOLDER DESCRIPTIONS ONCE WIZARD IS FINALIZED
 
