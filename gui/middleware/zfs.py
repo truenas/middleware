@@ -469,13 +469,19 @@ class ZFSDataset(object):
     path = None
     pool = None
     used = None
+    usedsnap = None
+    usedds = None
+    usedrefreserv = None
+    usedchild = None
     avail = None
     refer = None
     mountpoint = None
     parent = None
     children = None
 
-    def __init__(self, path=None, used=None, avail=None, refer=None, mountpoint=None):
+    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
+                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
+                 mountpoint=None):
         self.path = path
         if path:
             if '/' in path:
@@ -484,6 +490,10 @@ class ZFSDataset(object):
                 self.pool = ''
                 self.name = path
         self.used = used
+        self.usedsnap = usedsnap
+        self.usedds = usedds
+        self.usedrefreserv = usedrefreserv
+        self.usedchild = usedchild
         self.avail = avail
         self.refer = refer
         self.mountpoint = mountpoint
@@ -503,54 +513,24 @@ class ZFSDataset(object):
         child.parent = self
         self.children.append(child)
 
-    #TODO copied from MountPoint
-    #Move this to a common place
-    def _get__vfs(self):
-        if not hasattr(self, '__vfs'):
-            try:
-                self.__vfs = os.statvfs(self.mountpoint)
-            except:
-                self.__vfs = None
-        return self.__vfs
-
     def _get_total_si(self):
         try:
-            totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
-            return u"%s" % (humanize_size(totalbytes))
+            return self.avail + self.used
         except:
             return _(u"Error getting total space")
 
     def _get_avail_si(self):
-        try:
-            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
-            return u"%s" % (humanize_size(availbytes))
-        except:
-            return _(u"Error getting available space")
-
-    def _get_used_bytes(self):
-        try:
-            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                self._vfs.f_frsize
-        except:
-            return 0
+        return self.avail
 
     def _get_used_si(self):
-        try:
-            usedbytes = self._get_used_bytes()
-            return u"%s" % (humanize_size(usedbytes))
-        except:
-            return _(u"Error getting used space")
+        return self.used
 
     def _get_used_pct(self):
         try:
-            availpct = 100 * (
-                self._vfs.f_blocks - self._vfs.f_bavail
-            ) / self._vfs.f_blocks
-            return u"%d%%" % (availpct)
+            return int((float(self.used) / float(self.avail)) * 100.0)
         except:
             return _(u"Error")
 
-    _vfs = property(_get__vfs)
     total_si = property(_get_total_si)
     avail_si = property(_get_avail_si)
     used_pct = property(_get_used_pct)
@@ -848,6 +828,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "-p",
         "-H",
         "-s", "name",
+        "-o", "space,refer,mountpoint",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -878,10 +859,14 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             continue
         dataset = ZFSDataset(
             path=data[0],
-            used=data[1],
-            avail=data[2],
-            refer=data[3],
-            mountpoint=data[4],
+            avail=int(data[1]) if data[1].isdigit() else None,
+            used=int(data[2]) if data[2].isdigit() else None,
+            usedsnap=int(data[3]) if data[3].isdigit() else None,
+            usedds=int(data[4]) if data[4].isdigit() else None,
+            usedrefreserv=int(data[5]) if data[5].isdigit() else None,
+            usedchild=int(data[6]) if data[6].isdigit() else None,
+            refer=int(data[7]) if data[7].isdigit() else None,
+            mountpoint=data[8],
         )
         if not hierarchical:
             zfslist.append(dataset)

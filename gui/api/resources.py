@@ -698,6 +698,9 @@ class VolumeResourceMixin(NestedMixin):
                 'mountpoint': dataset.mountpoint,
                 'path': dataset.path,
             }
+            for attr in attr_fields:
+                data[attr] = getattr(dataset, attr)
+
             if self.is_webclient(bundle.request):
                 data['compression'] = self.__zfsopts.get(
                     dataset.path,
@@ -707,13 +710,13 @@ class VolumeResourceMixin(NestedMixin):
                     dataset.path,
                     {},
                 ).get('compressratio', '-')
-            for attr in attr_fields:
-                data[attr] = getattr(dataset, attr)
 
-            data['used'] = "%s (%s)" % (
-                data['used_si'],
-                data['used_pct'],
-            )
+                data['used'] = "%s (%s%%)" % (
+                    humanize_size(data['used_si']),
+                    data['used_pct'],
+                )
+                data['avail_si'] = humanize_size(data['avail_si'])
+                data['total_si'] = humanize_size(data['total_si'])
 
             if self.is_webclient(bundle.request):
                 data['_dataset_delete_url'] = reverse(
