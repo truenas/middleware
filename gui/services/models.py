@@ -249,6 +249,15 @@ class CIFS(Model):
                 "thus re-establishing the behaviour of Samba 3.6 ")
            )
 
+    cifs_srv_bindip = models.CharField(
+           verbose_name=_("Bind IP Addresses"),
+           help_text=_("IP address(es) to bind to. If none specified, all"
+               "available interfaces that are up will be listened on."),
+           max_length=250,
+           blank=True,
+           null=True
+           )
+
     class Meta:
         verbose_name = _(u"CIFS")
         verbose_name_plural = _(u"CIFS")
