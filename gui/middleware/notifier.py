@@ -4037,7 +4037,7 @@ class notifier:
     def interface_mtu(self, iface, mtu):
         self._system("ifconfig %s mtu %s" % (iface, mtu))
 
-    def guess_default_ipv4_interface(self):
+    def get_default_ipv4_interface(self):
         p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
         iface = p1.communicate()
         if p1.returncode != 0:
@@ -4048,7 +4048,7 @@ class notifier:
             pass
         return iface
 
-    def guess_default_ipv6_interface(self):
+    def get_default_ipv6_interface(self):
         p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
         iface = p1.communicate()
         if p1.returncode != 0:
@@ -4059,7 +4059,7 @@ class notifier:
             pass
         return iface
 
-    def guess_default_interface(self, ip_protocol='ipv4'):
+    def get_default_interface(self, ip_protocol='ipv4'):
         iface = None 
 
         if ip_protocol == 'ipv4':
