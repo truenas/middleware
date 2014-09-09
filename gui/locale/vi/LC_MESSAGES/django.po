@@ -9944,3 +9944,616 @@ msgstr ""
 #: templates/system/initialwizard_import.html:31
 msgid "Skip"
 msgstr ""
+
+#: choices.py:43
+#, fuzzy
+msgid "Basic Authentication"
+msgstr "Xác thực"
+
+#: choices.py:44
+#, fuzzy
+msgid "Digest Authentication"
+msgstr "Xác thực"
+
+#: choices.py:799
+msgid "adex"
+msgstr ""
+
+#: choices.py:811
+msgid "Import an existing Certificate Authority"
+msgstr ""
+
+#: choices.py:812
+msgid "Create an internal Certificate Authority"
+msgstr ""
+
+#: choices.py:813
+msgid "Create an intermediate Certificate Authority"
+msgstr ""
+
+#: choices.py:817
+msgid "Import an existing Certificate"
+msgstr ""
+
+#: choices.py:818
+msgid "Create an internal Certificate"
+msgstr ""
+
+#: choices.py:819
+msgid "Create a Certificate Signing Request"
+msgstr ""
+
+#: choices.py:823
+msgid "512"
+msgstr ""
+
+#: choices.py:824
+msgid "1024"
+msgstr ""
+
+#: choices.py:825
+msgid "2048"
+msgstr ""
+
+#: choices.py:826
+msgid "4096"
+msgstr ""
+
+#: choices.py:830
+msgid "SHA1"
+msgstr ""
+
+#: choices.py:831
+msgid "SHA224"
+msgstr ""
+
+#: choices.py:832
+msgid "SHA256"
+msgstr ""
+
+#: choices.py:833
+msgid "SHA384"
+msgstr ""
+
+#: choices.py:834
+msgid "SHA512"
+msgstr ""
+
+#: directoryservice/forms.py:406
+#, fuzzy
+msgid "NIS failed to reload."
+msgstr "Khởi động lại dịch vụ đã không thành công."
+
+#: api/resources.py:2488
+#, fuzzy
+msgid "On Reboot"
+msgstr "Khởi động lại"
+
+#: directoryservice/models.py:228
+#: directoryservice/models.py:229
+msgid "ADEX Idmap"
+msgstr ""
+
+#: api/resources.py:2490
+msgid "Now"
+msgstr ""
+
+#: directoryservice/models.py:637
+#, fuzzy
+msgid "Descriptive Name."
+msgstr "Miêu tả"
+
+#: directoryservice/models.py:668
+#: directoryservice/models.py:806
+msgid "FQDN of the domain controller to use."
+msgstr ""
+
+#: directoryservice/models.py:812
+msgid "FQDN of the global catalog server to use."
+msgstr ""
+
+#: directoryservice/models.py:993
+msgid "SUDO Suffix"
+msgstr ""
+
+#: directoryservice/models.py:996
+msgid ""
+"This parameter specifies the suffix that is used for the SUDO configuration "
+"in the LDAP directory, e.g. ou=SUDOers"
+msgstr ""
+
+#: directoryservice/models.py:1049
+msgid "Idmap Backend"
+msgstr ""
+
+#: directoryservice/models.py:1056
+msgid "Samba Schema"
+msgstr ""
+
+#: jails/forms.py:92
+#, fuzzy
+msgid "Template"
+msgstr "địa chỉ IPv4"
+
+#: jails/utils.py:706
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: jails/views.py:492
+#, fuzzy
+msgid "Jail Template successfully created."
+msgstr "%s đã cập nhật thành công."
+
+#: jails/views.py:512
+#, fuzzy
+msgid "Jail Template successfully edited."
+msgstr "%s đã cập nhật thành công."
+
+#: services/forms.py:1541
+#, fuzzy
+msgid "Confirm WebDAV Password"
+msgstr "Thay đổi mật khẩu"
+
+#: services/forms.py:1607
+msgid "The HTTP and HTTPS ports cannot be the same!"
+msgstr ""
+
+#: services/forms.py:1628
+#, fuzzy
+msgid "The WebDAV service failed to reload."
+msgstr "Khởi động lại dịch vụ đã không thành công."
+
+#: services/models.py:325
+msgid "Global auxiliary parameters"
+msgstr ""
+
+#: services/models.py:328
+msgid "These parameters are added to [Global] section of afp.conf"
+msgstr ""
+
+#: services/models.py:1728
+#, fuzzy
+msgid "HTTP Port"
+msgstr "HTTP"
+
+#: services/models.py:1731
+msgid ""
+"This is the port at which WebDAV will run on.<br />Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1736
+#, fuzzy
+msgid "HTTPS Port"
+msgstr "HTTPS"
+
+#: services/models.py:1739
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br />Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1745
+#, fuzzy
+msgid "Webdav Password"
+msgstr "Mật khẩu mới"
+
+#: services/models.py:1747
+msgid "The Default Password is: davtest"
+msgstr ""
+
+#: services/models.py:1752
+#, fuzzy
+msgid "HTTP Authentication"
+msgstr "Xác thực"
+
+#: services/models.py:1755
+msgid ""
+"Type of HTTP Authentication for WebDAV<br />Basic Auth: Password is sent "
+"over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
+"Hash of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1761
+#: services/models.py:1762
+#: templates/services/core.html:164
+#: templates/sharing/index.html:21
+msgid "WebDAV"
+msgstr ""
+
+#: sharing/models.py:335
+#, fuzzy
+msgid "Share Path Name"
+msgstr "Tên đầy đủ"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
+"freenas-machine:webdav_port/this_path_name"
+msgstr ""
+
+#: sharing/models.py:357
+msgid "Change User & Group Ownership"
+msgstr ""
+
+#: sharing/models.py:358
+msgid ""
+"Changes the user & group of the shared folder to 'webdav:webdav' recursively "
+"(including all subdirectories)<br />If disabled, you will need to manually<"
+"br />add the 'webdav' user & group to the share."
+msgstr ""
+
+#: sharing/models.py:374
+msgid "WebDAV Share"
+msgstr ""
+
+#: sharing/models.py:375
+msgid "WebDAV Shares"
+msgstr ""
+
+#: storage/admin.py:263
+#: storage/admin.py:361
+#, fuzzy
+msgid "Edit Options"
+msgstr "Các tùy chọn"
+
+#: storage/admin.py:268
+#: storage/admin.py:367
+msgid "Create Dataset"
+msgstr ""
+
+#: storage/forms.py:1439
+msgid "Case Sensitivity"
+msgstr ""
+
+#: system/admin.py:49
+#, fuzzy
+msgid "Internal"
+msgstr "giao diện"
+
+#: system/admin.py:54
+#: system/admin.py:148
+msgid "Issuer"
+msgstr ""
+
+#: system/admin.py:59
+#: system/nav.py:91
+#: templates/system/index.html:27
+msgid "Certificates"
+msgstr ""
+
+#: system/admin.py:64
+#: system/admin.py:153
+msgid "Distinguished Name"
+msgstr ""
+
+#: system/admin.py:74
+#: system/admin.py:163
+msgid "Until"
+msgstr ""
+
+#: system/forms.py:163
+#, fuzzy
+msgid "Failed to create a new Boot."
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: system/forms.py:183
+#, fuzzy
+msgid "Failed to rename Boot Environment."
+msgstr "Không thể đọc %(url)s: %(error)s"
+
+#: system/forms.py:1028
+msgid "Place to temporarily place update file"
+msgstr ""
+
+#: system/forms.py:1030
+msgid ""
+"The system will use this place to temporarily store the update file before "
+"it's being applied."
+msgstr ""
+
+#: system/forms.py:1062
+msgid "Update file to be installed"
+msgstr ""
+
+#: system/forms.py:1924
+#: system/forms.py:1952
+#: system/forms.py:1994
+#: system/forms.py:2086
+#: system/forms.py:2208
+#: system/forms.py:2237
+#: system/forms.py:2279
+#: system/forms.py:2395
+#, fuzzy
+msgid "Descriptive Name"
+msgstr "Miêu tả"
+
+#: system/forms.py:1930
+#: system/forms.py:1958
+#: system/forms.py:2214
+#: system/forms.py:2243
+#: system/models.py:589
+msgid "Cut and paste the contents of your certificate here"
+msgstr ""
+
+#: system/forms.py:1935
+#: system/forms.py:1963
+msgid "Serial for next Certificate"
+msgstr ""
+
+#: system/forms.py:1997
+#: system/forms.py:2089
+#: system/forms.py:2282
+#: system/forms.py:2398
+msgid "Key Length"
+msgstr ""
+
+#: system/forms.py:2003
+#: system/forms.py:2095
+#: system/forms.py:2288
+#: system/forms.py:2404
+#: system/models.py:613
+msgid "Digest Algorithm"
+msgstr ""
+
+#: system/forms.py:2009
+#: system/forms.py:2101
+#: system/forms.py:2294
+#: system/models.py:619
+msgid "Lifetime"
+msgstr ""
+
+#: system/forms.py:2246
+#: system/models.py:594
+msgid "Private Key"
+msgstr ""
+
+#: system/forms.py:2242
+msgid "Certificate Signing Request"
+msgstr ""
+
+#: system/forms.py:2249
+#: system/models.py:595
+msgid "Cut and paste the contents of your private key here"
+msgstr ""
+
+#: system/models.py:550
+msgid "Check Automatically For Updates"
+msgstr ""
+
+#: system/utils.py:82
+msgid "Downloading"
+msgstr ""
+
+#: system/utils.py:103
+msgid "Installing"
+msgstr ""
+
+#: system/nav.py:32
+#: templates/system/index.html:9
+msgid "Boot"
+msgstr ""
+
+#: system/models.py:583
+#, fuzzy
+msgid "Descriptive Name)"
+msgstr "Miêu tả"
+
+#: system/models.py:600
+msgid "Signing Request"
+msgstr ""
+
+#: system/models.py:601
+msgid "Cut and paste the contents of your CSR here"
+msgstr ""
+
+#: system/models.py:606
+msgid "Key length"
+msgstr ""
+
+#: system/models.py:669
+msgid "Serial for next certificate"
+msgstr ""
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Create"
+msgstr ""
+
+#: system/models.py:675
+msgid "Signing Certificate Authority"
+msgstr ""
+
+#: system/views.py:171
+#: system/views.py:172
+#: system/views.py:176
+msgid "Activate"
+msgstr ""
+
+#: system/models.py:794
+msgid "Certificate Authority"
+msgstr ""
+
+#: system/views.py:189
+#, fuzzy
+msgid "Created"
+msgstr "Chấp nhận"
+
+#: system/views.py:203
+#, fuzzy
+msgid "Boot Environment successfully activated."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:207
+msgid "Failed to activate Boot Environment."
+msgstr ""
+
+#: system/views.py:221
+#, fuzzy
+msgid "Boot Environment successfully added."
+msgstr "%s đã thêm vào hệ thống thành công."
+
+#: system/views.py:178
+#: system/views.py:179
+#: system/views.py:180
+#, fuzzy
+msgid "Rename"
+msgstr "Tên đăng nhập"
+
+#: system/nav.py:83
+#: templates/system/index.html:24
+msgid "CAs"
+msgstr ""
+
+#: system/views.py:238
+#, fuzzy
+msgid "Boot Environment successfully deleted."
+msgstr "%s đã xóa thành công."
+
+#: system/views.py:242
+msgid "Failed to delete Boot Environment."
+msgstr ""
+
+#: system/views.py:260
+#, fuzzy
+msgid "Boot Environment successfully renamed."
+msgstr "%s đã thêm vào hệ thống thành công."
+
+#: system/views.py:896
+#, fuzzy
+msgid "Certificate Authority successfully imported."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:915
+#, fuzzy
+msgid "Internal Certificate Authority successfully created."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:934
+msgid "Intermediate Certificate Authority successfully created."
+msgstr ""
+
+#: system/views.py:1206
+#, fuzzy
+msgid "Internal Certificate Viewed."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:955
+#, fuzzy
+msgid "Certificate Authority successfully edited."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:1003
+#, fuzzy
+msgid "Certificate successfully imported."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:1022
+#, fuzzy
+msgid "Internal Certificate successfully created."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:1041
+#, fuzzy
+msgid "Certificate CSR successfully created."
+msgstr "%s đã cập nhật thành công."
+
+#: system/views.py:1083
+#, fuzzy
+msgid "CSR successfully edited."
+msgstr "%s đã cập nhật thành công."
+
+#: templates/freeadmin/generic_model_delete.html:31
+msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
+msgstr ""
+
+#: templates/services/core.html:170
+#, fuzzy
+msgid "WebDAV Settings"
+msgstr "Thiết lập LDAP"
+
+#: templates/storage/index.html:24
+#, fuzzy
+msgid "Scrubs"
+msgstr "Thiết lập NFS"
+
+#: templates/storage/index.html:31
+#, fuzzy
+msgid "Snapshots"
+msgstr "Xem tất cả %s"
+
+#: templates/system/upgrade.html:22
+msgid "You're about to upgrade. The following packages will be changed:"
+msgstr ""
+
+#: templates/system/upgrade.html:24
+msgid "Are you sure you want to continue?"
+msgstr ""
+
+#: templates/system/upgrade.html:26
+msgid "No updates available"
+msgstr ""
+
+#: templates/system/upgrade.html:41
+msgid "Close"
+msgstr ""
+
+#: templates/system/upgrade_edit.html:7
+#: templates/system/upgrade_edit.html:9
+msgid "Check for Updates"
+msgstr ""
+
+#: templates/system/certificate_datagrid.html:4
+msgid "Import Certificate"
+msgstr ""
+
+#: templates/system/bootenv_activate.html:4
+msgid "Activate boot environment %(name)s"
+msgstr ""
+
+#: templates/system/certificate_datagrid.html:11
+#: templates/system/certificate_datagrid.html:13
+msgid "Create Internal Certificate"
+msgstr ""
+
+#: templates/system/bootenv_add.html:4
+msgid "Create boot environment from %(source)s"
+msgstr ""
+
+#: templates/system/certificate_datagrid.html:18
+#: templates/system/certificate_datagrid.html:20
+msgid "Create Certificate Signing Request"
+msgstr ""
+
+#: templates/system/bootenv_delete.html:4
+msgid "Are you sure you want to delete %(name)s?"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:9
+#, fuzzy
+msgid "Create Boot"
+msgstr "Chấp nhận"
+
+#: templates/system/certificateauthority_datagrid.html:4
+msgid "Import CA"
+msgstr ""
+
+#: templates/system/certificateauthority_datagrid.html:11
+#: templates/system/certificateauthority_datagrid.html:13
+msgid "Create Internal CA"
+msgstr ""
+
+#: templates/system/certificateauthority_datagrid.html:18
+#: templates/system/certificateauthority_datagrid.html:20
+msgid "Create Intermediate CA"
+msgstr ""
+
+#: templates/system/bootenv_rename.html:4
+msgid "Rename boot environment %(name)s"
+msgstr ""
+
+#: templates/system/upgrade_edit.html:13
+#: templates/system/upgrade_edit.html:15
+msgid "Manual Update"
+msgstr ""
