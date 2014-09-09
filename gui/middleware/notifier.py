@@ -4037,8 +4037,8 @@ class notifier:
     def interface_mtu(self, iface, mtu):
         self._system("ifconfig %s mtu %s" % (iface, mtu))
 
-    def guess_default_interface(self):
-        p1 = self._pipeopen("route get default | grep 'interface:' | awk '{ print $2 }'")
+    def guess_default_ipv4_interface(self):
+        p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
         iface = p1.communicate()
         if p1.returncode != 0:
             iface = None
@@ -4047,6 +4047,87 @@ class notifier:
         except:
             pass
         return iface
+
+    def guess_default_ipv6_interface(self):
+        p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
+        iface = p1.communicate()
+        if p1.returncode != 0:
+            iface = None
+        try:
+            iface = iface[0].strip()
+        except:
+            pass
+        return iface
+
+    def guess_default_interface(self, ip_protocol='ipv4'):
+        iface = None 
+
+        if ip_protocol == 'ipv4':
+            iface = self.get_default_ipv4_interface()
+        elif ip_protocol == 'ipv6':
+            iface = self.get_default_ipv6_interface()
+
+        return iface
+
+    def get_interface_info(self, iface):
+        if not iface:
+            return None
+
+        iface_info = { 'ether': None, 'ipv4': None, 'ipv6': None, 'status': None }
+        p = self._pipeopen("ifconfig '%s' ether|grep -w ether" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            out = out[0].strip()
+            m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out)
+            if m != None:
+                iface_info['ether'] = m.group(1)
+
+        p = self._pipeopen("ifconfig '%s' inet|grep -w inet" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            lines = out[0].splitlines()
+            for line in lines:
+                line = line.lstrip().rstrip()
+                m = re.search('inet (([0-9]{1,3}\.){3}[0-9]{1,3})' +
+                    ' +netmask (0x[0-9a-fA-F]{8})' +
+                    ' +broadcast (([0-9]{1,3}\.){3}[0-9]{1,3})',
+                    line
+                )
+
+                if m != None:
+                    if iface_info['ipv4'] == None:
+                        iface_info['ipv4'] = []
+
+                    iface_info['ipv4'].append({
+                        'inet': m.group(1),
+                        'netmask': m.group(3),
+                        'broadcast': m.group(4)
+                    })
+
+        p = self._pipeopen("ifconfig '%s' inet6|grep -w inet6|grep -v scopeid" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            lines = out[0].splitlines()
+            for line in lines:
+                line = line.lstrip().rstrip()
+                m = re.search('inet6 ([0-9a-fA-F:]+) +prefixlen ([0-9]+)', line)
+                if m != None:
+                    if iface_info['ipv6'] == None:
+                        iface_info['ipv6'] = []
+
+                    iface_info['ipv6'].append({
+                        'inet6': m.group(1),
+                        'prefixlen': m.group(2)
+                    })
+        p = self._pipeopen("ifconfig '%s'|grep -w status" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            out = out[0].strip()
+            parts = out.split(':') 
+            iface_info['status'] = parts[1].strip()
+
+        print iface_info
+        return iface_info
 
     def lagg_remove_port(self, lagg, iface):
         return self._system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
