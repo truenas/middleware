@@ -1617,24 +1617,28 @@ class ActiveDirectory(Model):
     ad_dcname = models.CharField(
             max_length=120,
             blank=True,
+            null=True,
             verbose_name=_("Domain Controller"),
             help_text=_("Hostname of the domain controller to use."),
             )
     ad_gcname = models.CharField(
             max_length=120,
             blank=True,
+            null=True,
             verbose_name=_("Global Catalog Server"),
             help_text=_("Hostname of the global catalog server to use."),
             )
     ad_krbname = models.CharField(
             max_length=120,
             blank=True,
+            null=True,
             verbose_name=_("Kerberos Server"),
             help_text=_("Hostname of the kerberos server to use."),
             )
     ad_kpwdname = models.CharField(
             max_length=120,
             blank=True,
+            null=True,
             verbose_name=_("Kerberos Password Server"),
             help_text=_("Hostname of the kerberos password server to use."),
             )
