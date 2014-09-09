@@ -133,10 +133,35 @@ class servicesForm(ModelForm):
 
 class CIFSForm(ModelForm):
 
+    cifs_srv_bindip = forms.MultipleChoiceField(
+        label=models.CIFS._meta.get_field('cifs_srv_bindip').verbose_name,
+        help_text=models.CIFS._meta.get_field('cifs_srv_bindip').help_text,
+        required=False,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
+
     class Meta:
         fields = '__all__'
-        exclude = [ 'cifs_SID' ]
+        exclude = [ 'cifs_SID', 'cifs_srv_bindip' ]
         model = models.CIFS
+
+    def __init__(self, *args, **kwargs): 
+        super(CIFSForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('cifs_srv_bindip'):
+            if ',' in self.data['cifs_srv_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'cifs_srv_bindip',
+                    self.data['cifs_srv_bindip'].split(',')
+                )
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].initial = (
+            self.instance.cifs_srv_bindip.encode('utf-8').split(',')
+            if self.instance.id and self.instance.cifs_srv_bindip
+            else ''
+        )
+        self.fields.keyOrder.remove('cifs_srv_bindip')
+        self.fields.keyOrder.insert(2, 'cifs_srv_bindip')
 
     def __check_octet(self, v):
         try:
@@ -162,6 +187,21 @@ class CIFSForm(ModelForm):
         self.__check_octet(v)
         return v
 
+    def clean_cifs_srv_bindip(self):
+        ips = self.cleaned_data.get("cifs_srv_bindip")
+        if not ips:
+            return ''
+        bind = []
+        for ip in ips:
+            try:
+                IPAddress(ip.encode('utf-8'))
+            except:
+                raise forms.ValidationError(
+                    "This is not a valid IP: %s" % (ip, )
+                )
+            bind.append(ip)
+        return ','.join(bind)
+
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
@@ -183,7 +223,10 @@ class CIFSForm(ModelForm):
         return cleaned_data
 
     def save(self):
-        super(CIFSForm, self).save()
+        obj = super(CIFSForm, self).save(commit=False)
+        obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
+        obj.save()
+
         started = notifier().restart("cifs")
         if (
             started is False

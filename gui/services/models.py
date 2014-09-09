@@ -263,6 +263,14 @@ class CIFS(Model):
            help_text=_("this parameter controls whether or not Samba"
                "should obey PAM's account and session management directives")
            )
+    cifs_srv_bindip = models.CharField(
+           verbose_name=_("Bind IP Addresses"),
+           help_text=_("IP address(es) to bind to. If none specified, all"
+               "available interfaces that are up will be listened on."),
+           max_length=250,
+           blank=True,
+           null=True
+           )
     cifs_SID = models.CharField(
            max_length=120,
            blank=True,
