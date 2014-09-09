@@ -718,6 +718,11 @@ class VolumeResourceMixin(NestedMixin):
                 data['avail'] = humanize_size(data['avail'])
 
             if self.is_webclient(bundle.request):
+                data['_add_zfs_volume_url'] = reverse(
+                    'storage_zvol',
+                    kwargs={
+                        'parent': dataset.path,
+                    })
                 data['_dataset_delete_url'] = reverse(
                     'storage_dataset_delete',
                     kwargs={
@@ -794,14 +799,8 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle.data['name'] = bundle.obj.vol_name
         if self.is_webclient(bundle.request):
-            bundle.data['compression'] = self.__zfsopts.get(
-                bundle.obj.vol_name,
-                {},
-            ).get('compression', '-')
-            bundle.data['compressratio'] = self.__zfsopts.get(
-                bundle.obj.vol_name,
-                {},
-            ).get('compressratio', '-')
+            bundle.data['compression'] = '-'
+            bundle.data['compressratio'] = '-'
 
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
@@ -813,11 +812,6 @@ class VolumeResourceMixin(NestedMixin):
                 kwargs={
                     'vid': bundle.obj.id,
                 })
-            bundle.data['_permissions_url'] = reverse(
-                'storage_mp_permission',
-                kwargs={
-                    'path': urllib.quote_plus(mp.mp_path),
-                })
             bundle.data['_status_url'] = "%s?id=%d" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
                 bundle.obj.id,
@@ -828,26 +822,6 @@ class VolumeResourceMixin(NestedMixin):
                     'storage_scrub',
                     kwargs={
                         'vid': bundle.obj.id,
-                    })
-                bundle.data['_options_url'] = reverse(
-                    'storage_volume_edit',
-                    kwargs={
-                        'object_id': mp.id,
-                    })
-                bundle.data['_add_dataset_url'] = reverse(
-                    'storage_dataset',
-                    kwargs={
-                        'fs': bundle.obj.vol_name,
-                    })
-                bundle.data['_add_zfs_volume_url'] = reverse(
-                    'storage_zvol',
-                    kwargs={
-                        'parent': bundle.obj.vol_name,
-                    })
-                bundle.data['_manual_snapshot_url'] = reverse(
-                    'storage_manualsnap',
-                    kwargs={
-                        'fs': bundle.obj.vol_name,
                     })
                 bundle.data['_upgrade_url'] = reverse(
                     'storage_volume_upgrade',
