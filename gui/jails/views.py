@@ -49,7 +49,7 @@ log = logging.getLogger("jails.views")
 
 
 def jails_home(request):
-    default_iface = notifier().guess_default_interface()
+    default_iface = notifier().get_default_interface()
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]

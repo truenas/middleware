@@ -69,7 +69,7 @@ log = logging.getLogger('plugins.views')
 
 
 def home(request):
-    default_iface = notifier().guess_default_interface()
+    default_iface = notifier().get_default_interface()
 
     conf = models.Configuration.objects.latest('id')
     return render(request, "plugins/index.html", {

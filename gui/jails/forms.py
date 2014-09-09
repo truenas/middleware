@@ -389,6 +389,9 @@ class JailCreateForm(ModelForm):
 class JailsConfigurationForm(ModelForm):
 
     advanced_fields = [
+        'jc_ipv4_network',
+        'jc_ipv4_network_start',
+        'jc_ipv4_network_end',
         'jc_ipv6_network',
         'jc_ipv6_network_start',
         'jc_ipv6_network_end',

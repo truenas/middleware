@@ -484,7 +484,7 @@ def get_host_ipv4_network():
     st_host_ipv4_network = None
 
     try:
-        iface = notifier().guess_default_interface()
+        iface = notifier().get_default_ipv4_interface()
         st_ha = sipcalc_type(iface=iface)
         if not st_ha.is_ipv4():
             st_host_ipv4_network = None
@@ -510,7 +510,7 @@ def get_host_ipv6_network():
     st_host_ipv6_network = None
 
     try:
-        iface = notifier().guess_default_interface()
+        iface = notifier().get_default_ipv6_interface()
         st_ha = sipcalc_type(iface=iface)
         if not st_ha.is_ipv6():
             st_host_ipv6_network = None

@@ -386,11 +386,11 @@ class JailsConfiguration(Model):
 
     def __init__(self, *args, **kwargs):
         super(JailsConfiguration, self).__init__(*args, **kwargs)
-        iface = notifier().guess_default_interface()
-        if not iface:
+        ipv4_iface = notifier().get_default_ipv4_interface()
+        if not ipv4_iface:
             return
 
-        st = sipcalc_type(iface=iface)
+        st = sipcalc_type(iface=ipv4_iface)
         if not st:
             return
 
@@ -411,6 +411,54 @@ class JailsConfiguration(Model):
             self.jc_ipv4_network_end = str(st.usable_range[1]).split('/')[0]
         else:
             self.jc_ipv4_network_end = self.jc_ipv4_network_end.split('/')[0]
+
+        ipv6_iface = notifier().get_default_ipv6_interface()
+        if ipv6_iface == None:
+            return
+
+        iface_info = notifier().get_interface_info(ipv6_iface)
+        if iface_info['ipv6'] == None:
+            return
+
+        ipv6_addr = iface_info['ipv6'][0]['inet6']
+        if ipv6_addr == None:
+            return
+
+        ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
+        if ipv6_prefix == None:
+            return
+
+        st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))
+        if not st:
+            return
+
+        if not st.is_ipv6():
+            return
+
+        st2 = sipcalc_type(st.subnet_prefix_masked)
+        if not st:
+            return
+
+        if not st.is_ipv6():
+            return
+
+        if not self.jc_ipv6_network:
+            self.jc_ipv6_network = "%s/%d" % (
+                st2.compressed_address, st.prefix_length
+            )
+
+        if not self.jc_ipv6_network_start:
+            st2 = sipcalc_type(st.network_range[0])
+
+            self.jc_ipv6_network_start = str(st2.compressed_address).split('/')[0]
+        else:
+            self.jc_ipv6_network_start = self.jc_ipv6_network_start.split('/')[0]
+
+        if not self.jc_ipv6_network_end:
+            st2 = sipcalc_type(st.network_range[1])
+            self.jc_ipv6_network_end = str(st2.compressed_address).split('/')[0]
+        else:
+            self.jc_ipv6_network_end = self.jc_ipv6_network_end.split('/')[0]
 
 
 class JailTemplate(Model):
