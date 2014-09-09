@@ -804,13 +804,15 @@ class ActiveDirectory(DirectoryServiceBase):
         verbose_name=_("Domain Controller"),
         max_length=120,
         help_text=_("FQDN of the domain controller to use."),
-        blank=True
+        blank=True,
+        null=True
     )
     ad_gcname = models.CharField(
         verbose_name=_("Global Catalog Server"),
         max_length=120,
         help_text=_("FQDN of the global catalog server to use."),
-        blank=True
+        blank=True,
+        null=True
     )
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
