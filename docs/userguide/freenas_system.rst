@@ -241,8 +241,7 @@ Figure 5.3c shows the boot menu with our example boot environment added.
 Advanced
 --------
 
-:menuselection:`System --> Advanced`, shown in Figure 5.4a, allows you to set some miscellaneous settings on the FreeNAS® system. The configurable settings
-are summarized in Table 5.4a.
+:menuselection:`System --> Advanced` is shown in Figure 5.4a. The configurable settings are summarized in Table 5.4a.
 
 **Figure 5.4a: Advanced Screen**
 
@@ -382,7 +381,6 @@ that can be configured using the Email tab.
 |                      |                      | *SSL*, or                                                                                       |
 |                      |                      | *TLS*                                                                                           |
 |                      |                      |                                                                                                 |
-|                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Use                  | checkbox             | enables/disables                                                                                |
 | SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
@@ -395,11 +393,9 @@ that can be configured using the Email tab.
 | Password             | string               | used to authenticate with SMTP server                                                           |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Send Test Mail       | button               | click to check that configured email settings are working; this will fail if you do not set the |
-|                      |                      | **to** email address by clicking the "Change E-mail" button for the                             |
-|                      |                      | *root* account in "View Users"                                                                  |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+
+Click the "Send Test Mail" button to verify that the configured email settings are working. If the test email fails, double-check the email address to send
+emails to by clicking the "Change E-mail" button for the *root* account in :menuselection:`Account --> Users --> View Users`.
 
 .. _System Dataset:
 
@@ -418,14 +414,17 @@ a Domain Controller, all of the domain controller state is stored there as well,
     :width: 3.8in
     :height: 2.0in
 
-The system dataset can optionally be configured to also store the system log and the Reporting information. If there are lots of log entries or reporting
-information, moving these to the system dataset will prevent :file:`/var/` from filling up as :file:`/var/` has limited space. 
+The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
+information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
+limited space. 
 
 Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset.
 
-To also store the system log on the system dataset, check the "Syslog" box.
+To store the system log on the system dataset, check the "Syslog" box.
 
-To also store the reporting information, check the "Reporting Database" box.
+To store the reporting information on the system dataset, check the "Reporting Database" box.
+
+If you make any changes, click the "Save" button to save them.
 
 If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
 location.
@@ -435,39 +434,22 @@ location.
 Tunables
 --------
 
-This section of the administrative GUI can be used to either set a FreeBSD sysctl or loader value. A
-`sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_
-makes changes to the FreeBSD kernel running on a FreeNAS® system and can be used to tune the system. Over five hundred system variables can be set using
-sysctl(8). Each variable is known as a MIB as it is comprised of a dotted set of components. Since these MIBs are specific to the kernel feature that is being
-tuned, descriptions can be found in many FreeBSD man pages (e.g.
-`sysctl(3) <http://www.freebsd.org/cgi/man.cgi?query=sysctl&sektion=3>`_,
-`tcp(4) <http://www.freebsd.org/cgi/man.cgi?query=tcp>`_
-and
-`tuning(7) <http://www.freebsd.org/cgi/man.cgi?query=tuning>`_
-) and in many sections of the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_. 
+:menuselection:`System --> Tunables` can be used to either set a FreeBSD
+`sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_ or loader. A sysctl makes changes to the FreeBSD kernel running on a FreeNAS® system and can
+be used to tune the system. A loader is only loaded when a FreeBSD-based system boots and can be used to pass a parameter to the kernel or to load an
+additional kernel module such as a FreeBSD hardware driver.
 
-.. warning:: changing the value of a sysctl MIB is an advanced feature that immediately affects the kernel of the FreeNAS® system.
-   **Do not change a MIB on a production system unless you understand the ramifications of that change.** A badly configured MIB could cause the system to
-   become unbootable, unreachable via the network, or can cause the system to panic under load. Certain changes may break assumptions made by the FreeNAS®
-   software. This means that you should always test the impact of any changes on a test system first.
+.. warning:: setting a sysctl or a loader is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a loader could
+   adversely affect the ability of the FreeNAS® system to successfully boot.
+   **Do not create a tunable on a production system unless you understand the ramifications of that change.** This means that you should
+   always test the impact of any changes on a test system first. It is also recommended to create a boot environment using the instructions in `Boot`_
+   **before** creating a tunable so that the system can reboot into the previous boot environment should the tunable prevent the system from booting.
 
-A loader is only loaded when a FreeBSD-based system boots, as
-`loader.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=loader.conf>`_
-is read to determine if any parameters should be passed to the kernel or if any additional kernel modules (such as drivers) should be loaded. Since loader
-values are specific to the kernel parameter or driver to be loaded, descriptions can be found in the man page for the specified driver and in many sections of
-the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_. A typical usage would be to load a FreeBSD hardware driver that does not automatically load after a
-FreeNAS® installation. The default FreeNAS® image does not load every possible hardware driver. This is a necessary evil as some drivers conflict with one
-another or cause stability issues, some are rarely used, and some drivers just don't belong on a standard NAS system. If you need a driver that is not
-automatically loaded, you need to add a loader.
+Since sysctl and loader values are specific to the kernel parameter to be tuned or driver to be loaded, descriptions and suggested values can be found in the
+man page for the specific driver and in many sections of the
+`FreeBSD Handbook <http://www.freebsd.org/handbook>`_.
 
-.. warning:: adding a loader is an advanced feature that could adversely effect the ability of the FreeNAS® system to successfully boot. It is
-   **very important** that you do not have a typo when adding a loader as this could halt the boot process. Fixing this problem requires physical access to
-   the FreeNAS® system and knowledge of how to use the boot loader prompt as described in Recovering From Incorrect Tunables. This means that you should
-   always test the impact of any changes on a test system first.
-
-To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tunable`, as seen in Figure 5.7a.
+To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
 
 **Figure 5.7a: Adding a Tunable**
 
@@ -504,19 +486,20 @@ Table 5.7a summarizes the options when adding a tunable.
 |             |                   |                                                                           |
 +-------------+-------------------+---------------------------------------------------------------------------+
 
-.. note:: as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the sysctl exists, that
-   value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is rebooted
-   as loaders are only read when the kernel is loaded at boot time. As long as the loader exists, your changes will persist at each boot and across upgrades.
+.. note:: as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the *Sysctl* is enabled,
+   its value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is
+   rebooted as loaders are only read when the kernel is loaded at boot time. As long as the *Loader* is enabled, your changes will persist at each boot and
+   across upgrades.
 
-Any sysctls or loaders that you add will be listed alphabetically in :menuselection:`System --> Tunables`. To change the value of an existing tunable, click
-its "Edit" button. To remove a tunable, click its "Delete" button.
+Any tunables that you add will be listed in :menuselection:`System --> Tunables`. To change the value of an existing tunable, click its "Edit" button. To
+remove a tunable, click its "Delete" button.
 
-Some sysctls are read-only will require a reboot to enable the setting change. You can verify if a sysctl is read-only by first attempting to change it from
-Shell. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value
-is read-only, an error message will indicate that the setting is read-only. If you do not get an error, the setting is now applied. However, for the setting
-to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
+Some sysctls are read-only, meaning that they require a reboot in order to enable their setting. You can verify if a sysctl is read-only by first attempting
+to change it from :ref:`Shell`. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command
+:command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
+an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
 
-At this time, the GUI does not display the sysctl MIBs that are pre-set in the installation image. 9.3 ships with the following MIBs set::
+At this time, the GUI does not display the sysctls that are pre-set when FreeNAS® is installed. 9.3 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -526,9 +509,9 @@ At this time, the GUI does not display the sysctl MIBs that are pre-set in the i
  net.inet.tcp.delayed_ack=0
 
 
-**Do not add or edit the default MIBS as sysctls** as doing so will overwrite the default values which may render the system unusable.
+**Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-At this time, the GUI does not display the loaders that are pre-set in the installation image. 9.3 ships with the following loaders set::
+At this time, the GUI does not display the loaders that are pre-set when FreeNAS® is installed. 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas"
@@ -540,6 +523,7 @@ At this time, the GUI does not display the loaders that are pre-set in the insta
  hw.hptrr.attach_generic=0
  kern.ipc.nmbclusters="262144"
  vfs.mountroot.timeout="30"
+ ispfw_load="YES"
  hint.isp.0.role=2
  hint.isp.1.role=2
  hint.isp.2.role=2
@@ -548,9 +532,9 @@ At this time, the GUI does not display the loaders that are pre-set in the insta
  net.inet6.ip6.auto_linklocal="0"
  vfs.zfs.vol.mode=2
 
-**Do not add or edit the default tunables** as doing so will overwrite the default values which may render the system unusable.
+**Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3 deprecates the following loaders::
+The ZFS version used in 9.3 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -560,51 +544,7 @@ The ZFS version used in 9.3 deprecates the following loaders::
  vfs.zfs.no_write_throttle
 
 If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
-loaders back.
-
-.. _Recovering From Incorrect Tunables:
-
-Recovering From Incorrect Tunables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If a tunable is preventing the system from booting, you will need physical access to the FreeNAS® system. Watch the boot messages and press the
-:kbd:`3` key or the :kbd:`Esc` key to select "3. Escape to loader prompt" when you see the FreeNAS® boot menu shown in Figure 5.7b.
-
-**Figure 5.7b: FreeNAS® Boot Menu**
-
-|boot.png|
-
-.. |boot.png| image:: images/boot.png
-    :width: 6.0583in
-    :height: 3.3252in
-
-The boot loader prompt provides a minimal set of commands described in
-`loader(8) <http://www.freebsd.org/cgi/man.cgi?query=loader>`_. Once at the prompt, use the :command:`unset` command to disable a problematic value, the
-:command:`set` command to modify the problematic value, or the :command:`unload` command to prevent the problematic driver from loading.
-
-Example 5.7a demonstrates several examples using these commands at the boot loader prompt. The first command disables the current value associated with the
-*kern.ipc.nmbclusters* MIB and will fail with a "no such file or directory" error message if a current tunable does not exist to set this value. The second
-command disables ACPI. The third command instructs the system not to load the fuse driver. When finished, type :command:`boot` to continue the boot process.
-
-**Example 5.7a: Sample Commands at the Boot Loader Prompt**
-::
-
- Type '?' for a list of commands, 'help' for more detailed help.
- OK
- 
- unset kern.ipc.nmbclusters
- OK
-
- set hint.acpi.0.disabled=1
- OK
-
- unload fuse
- OK
-
- boot
-
-Any changes made at the boot loader prompt only effect the current boot. This means that you need to edit or remove the problematic tunable in
-:menuselection:`System --> Tunables --> View Tunables` to make your change permanent and to prevent future boot errors.
+tunables back.
 
 .. _Upgrade:
 
