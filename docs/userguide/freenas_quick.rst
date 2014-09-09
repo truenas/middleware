@@ -113,12 +113,142 @@ describes some applications which can be used to access the FreeNAS® system fro
 Initial Configuration Wizard
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ADD SCREENSHOTS AND CLEAN UP PLACEHOLDER DESCRIPTIONS ONCE WIZARD IS FINALIZED
+Beginning with FreeNAS® 9.3, a configuration wizard automatically starts the first time the FreeNAS® GUI is accessed. This wizard walks you through the
+steps needed to quickly configure FreeNAS® to start serving data over a network. This section describes these configuration steps. If you wish to use the
+wizard again after the initial configuration, click the "Wizard" icon.
 
-.. note:: it is important to use the GUI (or the console) for all configuration changes. FreeNAS® uses a configuration database to store its settings. While
-   you can use the command line to modify your configuration, changes made at the command line are not written to the configuration database. This means that
-   any changes made at the command line will not persist after a reboot and will be overwritten by the values in the configuration database during an upgrade.
+Figure 3.1a shows the initial wizard configuration screen that appears if the storage disks have not yet been formatted.
 
+**Figure 3.1a: Initial Configuration Wizard**
+
+|wizard1.png|
+
+Input a name for the ZFS pool that conforms to these
+`naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
+**not** :file:`data` or :file:`freenas`.
+
+Next, decide if the pool should provide disk redundancy, and if so, which type. The following types are available:
+
+* **Automatic:**
+
+* **RAID 10:**
+
+* **RAIDZ2:**
+
+* **RAIDZ1:**
+
+* **Stripe:**
+
+Once you have made your selection, click "Next" to continue.
+
+If the disks have already been formatted with UFS or ZFS, the initial wizard screen will instead prompt to import the volume, as seen in Figure 3.1b.
+
+**Figure 3.1b: Volume Import Screen**
+
+|wizard2.png|
+
+Select the existing volume from the drop-down menu and click "Next" to continue.
+
+.. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart
+   the wizard again by clicking the "Wizard" icon. Alternately, you can use the FreeNAS® GUI to configure the system, as described in the rest of this Guide.
+
+The next screen in the wizard is shown in Figure 3.1c.
+
+**Figure 3.1c: Directory Service Selection**
+
+|wizard3.png|
+
+If the FreeNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
+
+However, if the FreeNAS® system is on a network containing an Active Directory, LDAP, NIS, or NT4 server and you wish to import the users and groups from
+that server, select the type of directory service in the "Directory Service" drop-down menu. The rest of the fields in this screen will vary, depending upon
+which directory service is selected. Tables 3.1a to 3.1d summarize the available configuration options for each directory service.
+
+.. note:: additional configuration options are available. The wizard can be used to set the initial values required to connect to that directory service. You
+   can then review the other available options in :ref:`Directory Service` to determine if additional configuration is required.
+
+**Table 3.1a: Active Directory Options**
+
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**              | **Value**     | **Description**                                                                                       |
+|                          |               |                                                                                                       |
++==========================+===============+=======================================================================================================+
+| Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                            |
+|                          |               | *sales.example.com*)                                                                                  |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| Domain Account Name      | string        | name of the Active Directory administrator account                                                    |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| Domain Account Password  | string        | password for the Active Directory administrator account                                               |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+
+**Table 3.1b: LDAP Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| Hostname                | string         | hostname or IP address of LDAP server                                                                 |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Base DN                 | string         | top level of the LDAP directory tree to be used when searching for resources (e.g.                    |
+|                         |                | *dc=test,dc=org*)                                                                                     |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Base password           | string         | password for                                                                                          |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+
+**Table 3.1c: NIS Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| NIS domain              | string         | name of NIS domain                                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NIS servers             | string         | comma delimited list of hostnames or IP addresses                                                     |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Secure mode             | checkbox       | if checked,                                                                                           |
+|                         |                | `ypbind(8) <http://www.freebsd.org/cgi/man.cgi?query=ypbind>`_                                        |
+|                         |                | will refuse to bind to any NIS server that is not running as root on a TCP port number over 1024      |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Manycast                | checkbox       | if checked, ypbind will bind to the server that responds the fastest; this is useful when no local    |
+|                         |                | NIS server is available on the same subnet                                                            |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+
+**Table 3.1d: NT4 Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| Domain Controller       | string         | hostname of domain controller                                                                         |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NetBIOS Name            | string         | hostname of FreeNAS system                                                                            |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Workgroup Name          | string         | name of Windows server's workgroup                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Administrator Name      | string         | name of the domain administrator account                                                              |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Administrator Password  | string         | input and confirm the password for the domain administrator account                                   |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 #. Set the Email Address: FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative
    attention. The alert system automatically emails the *root* user account whenever an alert is issued.
@@ -130,21 +260,6 @@ ADD SCREENSHOTS AND CLEAN UP PLACEHOLDER DESCRIPTIONS ONCE WIZARD IS FINALIZED
    "Show console messages in the footer" and click "Save". The output of :command:`tail -f /var/log/messages` will now be displayed at the bottom of the
    screen. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
 
-#. Create Storage: When creating a volume, you have several choices depending upon your storage requirements and whether or not data already exists on the
-   disk(s). The following options are available:
-
-   * Auto-import an existing UFS disk, gstripe (RAID0), gmirror (RAID1), or graid3 (RAID3) in :menuselection:`Storage --> Volumes --> Auto Import Volume`.
-
-   * Auto-import an existing ZFS disk, stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in :menuselection:`Storage --> Volumes --> Auto Import Volume`.
-
-   * Import a disk that is formatted with UFS, NTFS, MSDOS, or EXT2 in :menuselection:`Storage --> Volumes --> Import Volume`.
-
-   * Format disk(s) with ZFS and optionally create a stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in :menuselection:`Storage -->Volumes --> ZFS Volume Manager`.
-
-   * Divide the ZFS pool into datasets to provide more flexibility when configuring user access to data.
-
-   * Create a Zvol to be used when configuring an iSCSI device extent.
-
 #. Create Users/Groups: FreeNAS® supports a variety of user access scenarios:
 
    * the use of an anonymous or guest account that everyone in the network uses to access the stored data
@@ -154,15 +269,6 @@ ADD SCREENSHOTS AND CLEAN UP PLACEHOLDER DESCRIPTIONS ONCE WIZARD IS FINALIZED
    * the addition of individual user accounts to groups where each group has access to their own volume or ZFS dataset
 
    * the import of existing accounts from an OpenLDAP or Active Directory server
-
-   When configuring your FreeNAS® system, **select one of the following,** depending upon whether or not the network has an existing OpenLDAP or Active
-   Directory domain. OpenLDAP and Active Directory are mutually exclusive, meaning that you can not use both but must choose one or the other.
-
-   * Manually create users and groups. User management is described in Users and group management is described in Groups.
-
-   * Import existing Active Directory account information using the instructions in Active Directory.
-
-   * Import existing OpenLDAP account information using the instructions in LDAP.
 
 #. Configure Permissions: Setting permissions is an important aspect of configuring access to storage data. The graphical administrative interface is meant to
    set the **initial** permissions in order to make a volume or dataset accessible as a share. Once a share is available, the client operating system should
@@ -210,3 +316,10 @@ ADD SCREENSHOTS AND CLEAN UP PLACEHOLDER DESCRIPTIONS ONCE WIZARD IS FINALIZED
 #. Backup Configuration: Once you have tested your configuration, be sure to back it up. Go to :menuselection:`System --> General` and click the "Save Config"
    button. Your browser will provide an option to save a copy of the configuration database. You should
    **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
+
+The rest of this Guide
+
+.. note:: it is important to use the GUI (or the Console Setup menu) for all configuration changes. FreeNAS® uses a configuration database to store its
+   settings. While it is possible to use the command line to modify your configuration, changes made at the command line are not written to the configuration
+   database. This means that any changes made at the command line will not persist after a reboot and will be overwritten by the values in the configuration
+   database during an upgrade.
