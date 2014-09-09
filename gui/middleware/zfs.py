@@ -449,6 +449,28 @@ class ZFSList(SortedDict):
             self.pools[new.pool] = [new]
         self[new.path] = new
 
+    def find(self, names, root=False):
+        if not root:
+            search = '/'.join(names[0:2])
+            names = names[2:]
+        else:
+            search = names[0]
+            names = names[1:]
+        dataset = self.get(search, None)
+        if dataset:
+            while names:
+                found = False
+                search = names[0]
+                names = names[1:]
+                for child in dataset.children:
+                    if child.name == search:
+                        dataset = child
+                        found = True
+                        break
+                if not found:
+                    break
+        return dataset
+
     def __getitem__(self, item):
         if isinstance(item, slice):
             zlist = []
@@ -860,7 +882,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             zfslist.append(dataset)
             continue
 
-        parentds = zfslist.get('/'.join(names[:-1]))
+        parentds = zfslist.find(names, root=include_root)
         if parentds:
             parentds.append(dataset)
         else:
