@@ -4126,7 +4126,6 @@ class notifier:
             parts = out.split(':') 
             iface_info['status'] = parts[1].strip()
 
-        print iface_info
         return iface_info
 
     def lagg_remove_port(self, lagg, iface):
