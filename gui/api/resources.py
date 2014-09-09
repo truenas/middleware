@@ -685,7 +685,7 @@ class VolumeResourceMixin(NestedMixin):
 
     def _get_datasets(self, bundle, vol, datasets, uid):
         children = []
-        attr_fields = ('total', 'avail', 'used', 'used_pct')
+        attr_fields = ('avail', 'used', 'used_pct')
         for path, dataset in datasets.items():
             if dataset.name.startswith('.'):
                 continue
@@ -716,7 +716,6 @@ class VolumeResourceMixin(NestedMixin):
                     data['used_pct'],
                 )
                 data['avail'] = humanize_size(data['avail'])
-                data['total'] = humanize_size(data['total'])
 
             if self.is_webclient(bundle.request):
                 data['_dataset_delete_url'] = reverse(
@@ -887,7 +886,7 @@ class VolumeResourceMixin(NestedMixin):
                         'storage_volume_lock',
                         kwargs={'object_id': bundle.obj.id})
 
-        attr_fields = ('total', 'avail', 'used', 'used_pct')
+        attr_fields = ('avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)
 
@@ -920,7 +919,7 @@ class VolumeResourceMixin(NestedMixin):
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
-                    'total': humanize_size(zvol['volsize']),
+                    'used': humanize_size(zvol['volsize']),
                     'avail': '-',
                     'used': humanize_size(zvol['refer']),
                     'compression': zvol['compression'],

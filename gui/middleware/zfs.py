@@ -513,12 +513,6 @@ class ZFSDataset(object):
         child.parent = self
         self.children.append(child)
 
-    def _get_total(self):
-        try:
-            return self.avail + self.used
-        except:
-            return _(u"Error getting total space")
-
     def _get_avail(self):
         return self.avail
 
@@ -528,7 +522,6 @@ class ZFSDataset(object):
         except:
             return _(u"Error")
 
-    total = property(_get_total)
     used_pct = property(_get_used_pct)
 
 
