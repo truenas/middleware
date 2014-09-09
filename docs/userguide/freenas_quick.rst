@@ -77,15 +77,15 @@ seen in Example 3a. In this example, the FreeNAS® system has one network interf
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
-system. You should be prompted to input the password for the root user, as seen in Figure 3.1a.
+system. You should be prompted to input the password for the root user, as seen in Figure 3b.
 
-**Figure 3.1a: Input the Root Password**
+**Figure 3b: Input the Root Password**
 
 |Figure26b_png|
 
-Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3.1b.
+Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
-**Figure 3.1b: FreeNAS® Graphical Configuration Menu**
+**Figure 3c: FreeNAS® Graphical Configuration Menu**
 
 |Figure26c_png|
 
@@ -250,6 +250,35 @@ which directory service is selected. Tables 3.1a to 3.1d summarize the available
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
+The next configuration screen, shown in Figure 3.1d, can be used to create the network shares.
+
+**Figure 3.1d: Share Creation**
+
+|wizard4.png|
+
+FreeNAS® supports several types of shares for providing storage data to the clients in a network. To create a share, input a name, then select the "Purpose"
+of the share:
+
+* **Windows (CIFS):** this type of share can be accessed by any operating system using a CIFS client. Check the box for "Allow Guest" if users should not be
+  prompted for a password in order to access the share.
+
+* **Mac OS X (AFP):** this type of share can be accessed by Mac OS X users. Check the box for "Time Machine" if Mac users will be using the FreeNAS® system
+  as a backup device.
+
+* **Generic Unix (UFS):** this type of share can be accessed by any operating system using a NFS client.
+
+* **Block Storage (iSCSI):** this type of share can be accessed by any operating system using iSCSI initiator software. Input the size of the block storage to
+  create in the format *20GiB* (for 20 GB).
+
+After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 3.1e.
+
+**Figure 3.1e: Share Permissions**
+
+|wizard5.png|
+
+The default permissions for the share will be displayed. To create a user and/or group to customize the permissions, check the appropriate box.
+
+
 #. Set the Email Address: FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative
    attention. The alert system automatically emails the *root* user account whenever an alert is issued.
 
@@ -260,48 +289,12 @@ which directory service is selected. Tables 3.1a to 3.1d summarize the available
    "Show console messages in the footer" and click "Save". The output of :command:`tail -f /var/log/messages` will now be displayed at the bottom of the
    screen. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
 
-#. Create Users/Groups: FreeNAS® supports a variety of user access scenarios:
-
-   * the use of an anonymous or guest account that everyone in the network uses to access the stored data
-
-   * the creation of individual user accounts where each user has access to their own ZFS dataset
-
-   * the addition of individual user accounts to groups where each group has access to their own volume or ZFS dataset
-
-   * the import of existing accounts from an OpenLDAP or Active Directory server
-
 #. Configure Permissions: Setting permissions is an important aspect of configuring access to storage data. The graphical administrative interface is meant to
    set the **initial** permissions in order to make a volume or dataset accessible as a share. Once a share is available, the client operating system should
    be used to fine-tune the permissions of the files and directories that are created by the client.
 
-   Configured volumes and datasets will appear in :menuselection:`Storage --> Volumes`. Each volume and dataset will have its own "Change Permissions" option,
-   allowing for greater flexibility when providing access to data.
-
-   Before creating your shares, determine which users should have access to which data. This will help you to determine if multiple volumes, datasets, and/or
+   Determine which users should have access to which data. This will help you to determine if multiple
    shares should be created to meet the permissions needs of your environment.
-
-#. Configure Sharing: Once your volumes have been configured with permissions, you are ready to configure the type of share or service that you determine is
-   suitable for your network. FreeNAS® supports several types of shares and sharing services for providing storage data to the clients in a network. It is
-   recommended that you **select only one type of share per volume or dataset** in order to prevent possible conflicts between different types of shares. The
-   type of share you create depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer
-   speeds. The following types of shares and services are available:
-
-   * **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
-     Mac OS X.
-
-   * **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
-     are many different operating systems in your network.
-
-   * **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
-     computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice.
-
-   * **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
-     FreeNAS® supports encryption and chroot for FTP.
-
-   * **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
-     Windows clients.
-
-   * **iSCSI:** FreeNAS® supports the export of virtual disk drives that are accessible to clients running iSCSI initiator software.
 
 #. Start Service(s): Once you have configured your share or service, you will need to start its associated service(s) in order to implement the configuration.
    By default, all services are off until you start them. The status of services is managed using :menuselection:`Services --> Control Services`. To start a
@@ -317,7 +310,7 @@ which directory service is selected. Tables 3.1a to 3.1d summarize the available
    button. Your browser will provide an option to save a copy of the configuration database. You should
    **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
 
-The rest of this Guide
+The rest of this Guide,
 
 .. note:: it is important to use the GUI (or the Console Setup menu) for all configuration changes. FreeNAS® uses a configuration database to store its
    settings. While it is possible to use the command line to modify your configuration, changes made at the command line are not written to the configuration
