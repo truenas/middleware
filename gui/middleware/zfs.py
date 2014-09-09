@@ -836,8 +836,8 @@ def parse_status(name, doc, data):
     return pool
 
 
-def list_datasets(path="", recursive=False, hierarchical=False,
-                  include_root=False):
+def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
+             types=None):
     """
     Return a dictionary that contains all ZFS dataset list and their
     mountpoints
@@ -847,11 +847,15 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         "list",
         "-p",
         "-H",
-        "-t", "filesystem",
         "-s", "name",
     ]
     if recursive:
         args.insert(3, "-r")
+
+    if types:
+        args.insert(4, "-t")
+        args.insert(5, ",".join(types))
+
     if path:
         args.append(path)
 
@@ -890,3 +894,14 @@ def list_datasets(path="", recursive=False, hierarchical=False,
             zfslist.append(dataset)
 
     return zfslist
+
+
+def list_datasets(path="", recursive=False, hierarchical=False,
+                  include_root=False):
+    return zfs_list(
+        path=path,
+        recursive=recursive,
+        hierarchical=hierarchical,
+        include_root=include_root,
+        types=["filesystem"],
+    )
