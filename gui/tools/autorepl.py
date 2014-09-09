@@ -337,14 +337,17 @@ Hello,
         # subprocess.Popen does not handle large stream of data between
         # processes very well, do it on our own
         readfd, writefd = os.pipe()
-        if os.fork() == 0:
-            with open(progressfile, 'w') as f2:
-                f2.write(str(os.getpid()))
+        zproc_pid = os.fork()
+        if zproc_pid == 0:
             os.close(readfd)
             os.dup2(writefd, 1)
             os.close(writefd)
             os.execv('/sbin/zfs', cmd)
-        os.close(writefd)
+            # NOTREACHED
+        else:
+            with open(progressfile, 'w') as f2:
+                f2.write(str(zproc_pid))
+            os.close(writefd)
 
         if compression == 'pigz':
             compress = '/usr/local/bin/pigz | '
@@ -359,7 +362,6 @@ Hello,
             compress = ''
             decompress = ''
 
-
         replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s -p %d %s "%s/sbin/zfs receive -F -d %s && echo Succeeded"' % (compress, limit, sshcmd, remote_port, remote, decompress, remotefs)
         with open(templog, 'w+') as f:
             readobj = os.fdopen(readfd, 'r', 0)
@@ -371,6 +373,7 @@ Hello,
                 stderr=subprocess.STDOUT,
             )
             proc.wait()
+            os.waitpid(zproc_pid, os.WNOHANG)
             readobj.close()
             os.remove(progressfile)
             f.seek(0)
