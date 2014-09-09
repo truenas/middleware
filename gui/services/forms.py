@@ -160,8 +160,6 @@ class CIFSForm(ModelForm):
             if self.instance.id and self.instance.cifs_srv_bindip
             else ''
         )
-        self.fields.keyOrder.remove('cifs_srv_bindip')
-        self.fields.keyOrder.insert(2, 'cifs_srv_bindip')
 
     def __check_octet(self, v):
         try:
