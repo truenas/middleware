@@ -10,3 +10,7 @@ UI screen provided to create, delete and select default boot environments.
 WebDAV file sharing is now supported
 
 Samba upgraded to 4.1.12
+
+NFSv4 support added, including kerberized NFS.
+
+Kernel iSCSI target with support for VMWare VAAI, MS ODX and Windows 2012 Clustering.
