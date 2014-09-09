@@ -694,7 +694,7 @@ class VolumeResourceMixin(NestedMixin):
                 'id': uid.next(),
                 'name': dataset.name,
                 'type': 'dataset',
-                'status': vol.status,
+                'status': '-',
                 'mountpoint': dataset.mountpoint,
                 'path': dataset.path,
             }
@@ -908,7 +908,7 @@ class VolumeResourceMixin(NestedMixin):
             children = self._get_datasets(
                 bundle,
                 bundle.obj,
-                bundle.obj.get_datasets(hierarchical=True),
+                bundle.obj.get_datasets(hierarchical=True, include_root=True),
                 uid=uid,
             )
 
@@ -917,7 +917,7 @@ class VolumeResourceMixin(NestedMixin):
                 data = {
                     'id': uid.next(),
                     'name': name,
-                    'status': mp.status,
+                    'status': '-',
                     'type': 'zvol',
                     'used': humanize_size(zvol['volsize']),
                     'avail': '-',
