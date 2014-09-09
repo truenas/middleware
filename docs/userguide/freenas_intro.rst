@@ -218,7 +218,7 @@ The following fields have been added or deleted:
 
 * The "Reset WebGUI login credentials" entry in the "Console setup" menu has been renamed to "Reset Root Password".
 
-* The "WebGUI -> HTTPS Port" field has been added to :menuselection:`System --> General`.
+* The "Certificate" drop-down menu and "WebGUI -> HTTPS Port" field have been added to :menuselection:`System --> General`.
 
 * The "System dataset pool" and "Use system dataset for syslog" fields have been removed from :menuselection:`System --> Advanced` as these are now set in
   :menuselection:`System --> System Dataset`.

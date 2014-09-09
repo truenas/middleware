@@ -22,7 +22,7 @@ Groups
 The Groups interface allows you to manage UNIX-style groups on the FreeNAS® system.
 
 .. note:: if Active Directory or OpenLDAP is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS® using :menuselection:`Directory Services --> Active Directory` or :menuselection:`Directory Services --> LDAP`.
+   account information into FreeNAS® using :menuselection:`Directory Service --> Active Directory` or :menuselection:`Directory Service --> LDAP`.
 
 This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
 
@@ -74,8 +74,8 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 
 
-Once the group and users are created, you can assign users as members of a group. Click on "View Groups" then the "Members" button for the group you wish to
-assign users to. Highlight the user in the "Member users" list (which shows all user accounts on the system) and click the ">>" to move that user to the right
+Once the group and users are created, you can assign users as members of a group. Highlight the group you wish to assign users to, then click the "Members"
+button. Highlight the user in the "Member users" list (which shows all user accounts on the system) and click the ">>" to move that user to the right
 frame. The user accounts which appear in the right frame will be added as members of that group.
 
 In the example shown in Figure 4.1c, the *data1* group has been created and the
@@ -110,7 +110,7 @@ to assign permissions which will be used by shares, you will need to do **one of
     *bobsmith* on FreeNAS®. If your intent is to assign groups of users different permissions to shares, you will need to also create groups and assign users
     to the groups.
 
-#.  If your network uses Active Directory to manage user accounts and permissions, enable the Active Directory_service.
+#.  If your network uses Active Directory to manage user accounts and permissions, enable the Active Directory service.
 
 #.  If your network uses an OpenLDAP server to manage user accounts and permissions, enable the LDAP service.
 
@@ -118,7 +118,7 @@ User accounts can be given permissions to volumes or datasets. If you wish to us
 then assign the accounts as members of the groups. This section demonstrates how to create a user account.
 
 .. note:: if Active Directory or OpenLDAP is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS® using :menuselection:`Services --> Active Directory` or :menuselection:`Services --> LDAP`.
+   account information into FreeNAS® using :menuselection:`Directory Service --> Active Directory` or :menuselection:`Directory Service --> LDAP`.
 
 :menuselection:`Account --> Users --> View Users` provides a listing of all of the system accounts that were installed with the FreeNAS® operating system, as
 shown in Figure 4.2a.
@@ -151,7 +151,7 @@ should not be available for use as a login account. For this reason, the default
 `nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_. For security reasons, and to prevent breakage of system services, you should not modify the
 system accounts.
 
-To create a user account, click the "Add New User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
+To create a user account, click the "Add User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
 these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
 default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
 

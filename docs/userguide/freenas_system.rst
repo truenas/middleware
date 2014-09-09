@@ -70,8 +70,11 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +======================+================+================================================================================================================================+
 | Protocol             | drop-down menu | protocol to use when connecting to the administrative GUI from a browser; if you change the default of *HTTP* to               |
-|                      |                | *HTTPS*, an unsigned certificate and RSA key will be generated and you will be logged out in order to accept the               |
-|                      |                | certificate                                                                                                                    |
+|                      |                | *HTTPS*, select the certificate to use in "Certificate"; if you do not have a certificate, first create a CA (in `CAs`_)       |
+|                      |                | then the certificate (in `Certificates`_)                                                                                      |
+|                      |                |                                                                                                                                |
++----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Certificate          | drop-down menu | required for *HTTPS*; browse to the location of the certificate to use for encrypted connections                               |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | WebGUI IPv4 Address  | drop-down menu | choose from a list of recent IP addresses to limit the one to use when accessing the administrative GUI; the                   |
@@ -139,13 +142,6 @@ shown in Figure 5.2b. Table 5.2b summarizes the options when adding an NTP serve
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Set SSL Certificate:** If you change the "Protocol" value to "HTTPS" or "HTTP+HTTPS", an unsigned RSA certificate and key are auto-generated. To view or
-edit the certificate and key, click the "Set SSL Certificate" button and review the contents of the "SSL Certificate" field shown in Figure 5.2.c. If you
-already have a signed certificate that you wish to use for SSL/TLS connections, replace the values in the "SSL certificate" field with a copy/paste of your
-own key and certificate. Table 5.2c summarizes the settings that can be configured using the SSL tab. This
-`howto <http://www.akadia.com/services/ssh_test_certificate.html>`_
-shows how to manually generate your own certificate using OpenSSL and provides some examples for the values shown in Table 5.2c.
-
 **Figure 5.2b: Add a NTP Server**
 
 |ntp1.png|
@@ -186,53 +182,59 @@ shows how to manually generate your own certificate using OpenSSL and provides s
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
-**Figure 5.2c: Set SSL Certificate**
-
-|ssl1.png|
-
-.. |ssl1.png| image:: images/ssl1.png
-    :width: 4.2in
-    :height: 4.4in
-
-**Table 5.2c: SSL Certificate Configuration Settings**
-
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| **Setting**         | **Value**  | **Description**                                                                                                  |
-|                     |            |                                                                                                                  |
-+=====================+============+==================================================================================================================+
-| Organization        | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Organizational Unit | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Email Address       | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Locality            | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| State               | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Country             | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Common Name         | string     | optional                                                                                                         |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| Passphrase          | string     | if the certificate was created with a passphrase, input and confirm it; the value will appear as dots in the GUI |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
-| SSL Certificate     | string     | paste the private key and certificate into the box; the validity of the certificate and key will be checked and  |
-|                     |            | the system will fallback to HTTP if either appears to be invalid                                                 |
-|                     |            |                                                                                                                  |
-+---------------------+------------+------------------------------------------------------------------------------------------------------------------+
 
 .. _Boot:
 
 Boot
 ----
+
+Beginning with version 9.3, FreeNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
+the operating system or testing configuration changes becomes a low-risk operation as you can create a snapshot of your current boot environment before
+upgrading or making configuration changes to the system. When a boot environment is created, an entry is added to the boot menu. If the upgrade or
+configuration change fails, simply reboot the system and select that boot environment from the boot menu to instruct the system to go back to that system
+state.
+
+As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed.
+
+**Figure 5.3a: Default Boot Environment**
+
+|be1.png|
+
+To create a boot environment, click the "Create" button, input a name for the boot environment, and click "OK". In the example shown in Figure 5.3b, a boot
+environment named *working_config* was created in preparation before making testing changes to a known working configuration.
+
+**Figure 5.3b: Viewing Boot Environments**
+
+|be2.png|
+
+Highlight an entry to view its configuration buttons. Each entry contains the following information:
+
+* **Name:** the name of the boot entry which will appear in the boot menu.
+
+* **Active:** indicates which entry will boot by default if the user does not select another entry in the boot menu.
+
+* **Created:** indicates the date and time the boot entry was created.
+
+The following configuration buttons are available:
+
+* **Rename:** used to change the name of the boot environment.
+
+* **Create:**
+
+* **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
+  status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
+  but won't be used on the next boot.
+
+* **Delete:** used to delete that entry, which also removes it from the boot menu. You
+  **can not** delete the
+  *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
+  entry, which will clear the *On reboot* field of the currently activated entry.
+
+Figure 5.3c shows the boot menu with our example boot environment added.
+
+**Figure 5.3c: Boot Environments in Boot Menu**
+
+|be3.png|
 
 .. _Advanced:
 
