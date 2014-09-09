@@ -45,6 +45,11 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP,
+    FreeNAS_ActiveDirectory_Exception
+)
 from freenasUI.common.samba import (
     SAMBA_PROVISIONED_FILE,
     Samba4
@@ -839,6 +844,98 @@ class ActiveDirectoryForm(ModelForm):
             self.instance.ad_keytab = filename
 
         return filename
+
+    def __port_is_listening(self, host, port=None):
+        if not host:
+            return None
+
+        parts = host.split(':')
+        host = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            port = long(parts[1])
+
+        errors = []
+        ret = FreeNAS_ActiveDirectory.port_is_listening(
+            host=host, port=port, errors=errors
+        )
+
+        if ret is False:
+            raise Exception('Invalid Host/Port: %s' % errors[0])
+
+    def __host_is_resolvable(self, host, port=None):
+        if not host:
+            return None
+
+        parts = host.split(':')
+        host = parts[0]
+
+        errors = []
+        ret = FreeNAS_ActiveDirectory.host_is_resolvable(
+            host=host, errors=errors
+        )
+
+        if ret is False:
+            raise Exception('Invalid Host: %s' % errors[0])
+
+    def clean_ad_dcname(self):
+        ad_dcname = self.cleaned_data.get('ad_dcname')
+        ad_dcport = 389
+
+        if not ad_dcname:
+            return None
+
+        try:
+            self.__port_is_listening(ad_dcname, ad_dcport) 
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_dcname')
+
+    def clean_ad_gcname(self):
+        ad_gcname = self.cleaned_data.get('ad_gcname')
+        ad_gcport = 3268
+
+        if not ad_gcname:
+            return None
+
+        try:
+            self.__port_is_listening(ad_gcname, ad_gcport) 
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_gcname')
+
+    def clean_ad_krbname(self):
+        ad_krbname = self.cleaned_data.get('ad_krbname')
+        ad_krbport = 88
+
+        if not ad_krbname:
+            return None
+
+        try:
+            self.__host_is_resolvable(ad_krbname, ad_krbport) 
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_krbname')
+
+    def clean_ad_kpwdname(self):
+        ad_kpwdname = self.cleaned_data.get('ad_kpwdname')
+        ad_kpwdport = 464
+
+        if not ad_kpwdname:
+            return None
+
+        try:
+            self.__host_is_resolvable(ad_kpwdname, ad_kpwdport) 
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_kpwdname')
 
     def clean(self):
         cdata = self.cleaned_data

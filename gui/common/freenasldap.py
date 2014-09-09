@@ -30,6 +30,7 @@ import ldap
 import logging
 import os
 import pwd
+import socket
 import sqlite3
 import types
 
@@ -742,6 +743,40 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 "unable to connect to a domain controller")
 
         log.debug("FreeNAS_ActiveDirectory_Base.dc_connect: leave")
+        return ret
+
+    @staticmethod
+    def port_is_listening(host, port, errors=[]):
+        ret = False
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((host, port)) 
+            ret = True
+
+        except Exception as e:
+            errors.append(e)
+            ret = False
+
+        s.close()
+        return ret
+
+    @staticmethod
+    def host_is_resolvable(host, errors=[]): 
+        ret = False
+
+        try:
+            answers = resolver.query(host, 'A')
+            ret = True 
+
+        except resolver.NXDOMAIN: 
+            errors.append('Unable to resolve hostname')
+            ret = False
+
+        except Exception as e: 
+            errors.append(e)
+            ret = False
+
         return ret
 
     @staticmethod
