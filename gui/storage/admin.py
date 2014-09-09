@@ -195,7 +195,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
   for(var i=0;i < evt.rows.length;i++) {
     var row = evt.rows[i];
-    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
+    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s) || !%(hide_url)s) {
       query(".grid" + actionName).forEach(function(item, idx) {
         domStyle.set(item, "display", "none");
       });
@@ -208,6 +208,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'hide_enc': hide_enc,
             'hide_hasenc': hide_hasenc,
             'hide_unknown': hide_unknown,
+            'hide_url': 'row.data.%s' % url,
             }
 
         on_click = """function() {
