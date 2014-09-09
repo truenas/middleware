@@ -728,7 +728,7 @@ class MountPoint(Model):
                 self.__vfs = None
         return self.__vfs
 
-    def _get_total_si(self):
+    def _get_total(self):
         try:
             totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
             return u"%s" % (humanize_size(totalbytes))
@@ -738,10 +738,9 @@ class MountPoint(Model):
             else:
                 return _("Locked")
 
-    def _get_avail_si(self):
+    def _get_avail(self):
         try:
-            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
-            return u"%s" % (humanize_size(availbytes))
+            return self._vfs.f_bavail * self._vfs.f_frsize
         except:
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting available space")
@@ -755,10 +754,9 @@ class MountPoint(Model):
         except:
             return 0
 
-    def _get_used_si(self):
+    def _get_used(self):
         try:
-            usedbytes = self._get_used_bytes()
-            return u"%s" % (humanize_size(usedbytes))
+            return self._get_used_bytes()
         except:
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting used space")
@@ -782,10 +780,10 @@ class MountPoint(Model):
             return _(u"Error")
 
     _vfs = property(_get__vfs)
-    total_si = property(_get_total_si)
-    avail_si = property(_get_avail_si)
+    total = property(_get_total)
+    avail = property(_get_avail)
     used_pct = property(_get_used_pct)
-    used_si = property(_get_used_si)
+    used = property(_get_used)
     status = property(_get_status)
 
 

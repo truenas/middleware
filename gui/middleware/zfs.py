@@ -513,17 +513,14 @@ class ZFSDataset(object):
         child.parent = self
         self.children.append(child)
 
-    def _get_total_si(self):
+    def _get_total(self):
         try:
             return self.avail + self.used
         except:
             return _(u"Error getting total space")
 
-    def _get_avail_si(self):
+    def _get_avail(self):
         return self.avail
-
-    def _get_used_si(self):
-        return self.used
 
     def _get_used_pct(self):
         try:
@@ -531,10 +528,8 @@ class ZFSDataset(object):
         except:
             return _(u"Error")
 
-    total_si = property(_get_total_si)
-    avail_si = property(_get_avail_si)
+    total = property(_get_total)
     used_pct = property(_get_used_pct)
-    used_si = property(_get_used_si)
 
 
 class Snapshot(object):

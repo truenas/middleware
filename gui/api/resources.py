@@ -685,7 +685,7 @@ class VolumeResourceMixin(NestedMixin):
 
     def _get_datasets(self, bundle, vol, datasets, uid):
         children = []
-        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
+        attr_fields = ('total', 'avail', 'used', 'used_pct')
         for path, dataset in datasets.items():
             if dataset.name.startswith('.'):
                 continue
@@ -712,11 +712,11 @@ class VolumeResourceMixin(NestedMixin):
                 ).get('compressratio', '-')
 
                 data['used'] = "%s (%s%%)" % (
-                    humanize_size(data['used_si']),
+                    humanize_size(data['used']),
                     data['used_pct'],
                 )
-                data['avail_si'] = humanize_size(data['avail_si'])
-                data['total_si'] = humanize_size(data['total_si'])
+                data['avail'] = humanize_size(data['avail'])
+                data['total'] = humanize_size(data['total'])
 
             if self.is_webclient(bundle.request):
                 data['_dataset_delete_url'] = reverse(
@@ -887,15 +887,17 @@ class VolumeResourceMixin(NestedMixin):
                         'storage_volume_lock',
                         kwargs={'object_id': bundle.obj.id})
 
-        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
+        attr_fields = ('total', 'avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)
 
         if is_decrypted:
-            bundle.data['used'] = "%s (%s)" % (
-                bundle.data['used_si'],
-                bundle.data['used_pct'],
-            )
+            if self.is_webclient(bundle.request):
+                bundle.data['used'] = "%s (%s)" % (
+                    humanize_size(bundle.data['used']),
+                    bundle.data['used_pct'],
+                )
+                bundle.data['avail'] = humanize_size(bundle.data['avail'])
         else:
             bundle.data['used'] = _("Locked")
 
@@ -918,8 +920,8 @@ class VolumeResourceMixin(NestedMixin):
                     'name': name,
                     'status': mp.status,
                     'type': 'zvol',
-                    'total_si': humanize_size(zvol['volsize']),
-                    'avail_si': '-',
+                    'total': humanize_size(zvol['volsize']),
+                    'avail': '-',
                     'used': humanize_size(zvol['refer']),
                     'compression': zvol['compression'],
                     'compressratio': zvol['compressratio'],

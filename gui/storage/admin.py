@@ -112,13 +112,13 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
-            'name': 'avail_si',
+            'name': 'avail',
             'label': _('Available'),
             'sortable': False,
         })
 
         columns.append({
-            'name': 'total_si',
+            'name': 'total',
             'label': _('Size'),
             'sortable': False,
         })
