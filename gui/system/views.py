@@ -160,9 +160,9 @@ def bootenv_datagrid_actions(request):
      }
 }'''
     actions = {
-        _('Create'): {
-            'on_click': onclick % (_('Create'), '_add_url'),
-            'button_name': _('Create'),
+        _('Clone'): {
+            'on_click': onclick % (_('Clone'), '_add_url'),
+            'button_name': _('Clone'),
         },
         _('Delete'): {
             'on_click': onclick % (_('Delete'), '_delete_url'),
