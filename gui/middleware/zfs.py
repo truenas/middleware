@@ -947,3 +947,30 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         include_root=include_root,
         types=["filesystem"],
     )
+
+
+def zpool_list():
+    zfsproc = subprocess.Popen([
+        'zpool',
+        'list',
+        '-o', 'name,size,alloc,free,cap',
+        '-p',
+        '-H',
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    output = zfsproc.communicate()[0].strip('\n')
+    if zfsproc.returncode != 0:
+        raise SystemError('zpool list failed')
+
+    rv = {}
+    for line in output.split('\n'):
+        data = line.split('\t')
+        attrs = {
+            'name': data[0],
+            'size': int(data[1]),
+            'alloc': int(data[2]),
+            'free': int(data[3]),
+            'capacity': int(data[4]),
+        }
+        rv[attrs['name']] = attrs
+    return rv
