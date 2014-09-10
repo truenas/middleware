@@ -1839,7 +1839,17 @@ class SnapshotResource(DojoResource):
         # transfered already or not
         repli = {}
         for repl in Replication.objects.all():
-            repli[repl] = notifier().repl_remote_snapshots(repl)
+            found = False
+            for _repl, snaps in repli.items():
+                if _repl.repl_remote.ssh_remote_hostname == \
+                    repl.repl_remote.ssh_remote_hostname and \
+                    _repl.repl_remote.ssh_remote_port == \
+                    repl.repl_remote.ssh_remote_port:
+                    found = True
+                    repli[repl] = snaps
+                    break
+            if found is False:
+                repli[repl] = notifier().repl_remote_snapshots(repl)
 
         snapshots = notifier().zfs_snapshot_list(replications=repli)
 
