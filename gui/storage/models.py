@@ -732,7 +732,6 @@ class MountPoint(Model):
         if not hasattr(self, '__zplist'):
             try:
                 self.__zplist = zfs.zpool_list().get(self.mp_volume.vol_name)
-                log.error("zplist %r", zfs.zpool_list())
             except SystemError:
                 self.__zplist = None
         return self.__zplist
