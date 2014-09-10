@@ -764,11 +764,13 @@ menu_install()
     
 #    set +x
     if [ -d /tmp/data_preserved ]; then
+	# Instead of sentinel files, let's just migrate!
+	chroot /tmp/data /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all
 	# Create upgrade sentinel files
-	: > /tmp/data/${CD_UPGRADE_SENTINEL}
-	: > /tmp/data/${NEED_UPDATE_SENTINEL}
-	${interactive} && dialog --msgbox "The installer has preserved your database file.
-$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
+#	: > /tmp/data/${CD_UPGRADE_SENTINEL}
+#	: > /tmp/data/${NEED_UPDATE_SENTINEL}
+#	${interactive} && dialog --msgbox "The installer has preserved your database file.
+#$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	# Set the root password
 	chroot /tmp/data /etc/netcli reset_root_pw

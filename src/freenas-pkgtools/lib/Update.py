@@ -213,8 +213,8 @@ def CheckForUpdates(root = None, handler = None):
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
     m = conf.FindLatestManifest()
-    log.debug("Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
-                                                                             if m is not None else 0))
+    log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
+                                                                             if m is not None else "None"))
     if m is None:
         raise ValueError("Manifest could not be found!")
     diffs = Manifest.CompareManifests(cur, m)
@@ -273,7 +273,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     if root is None:
         # We clone the existing boot environment to
         # "FreeNAS-<sequence>"
-        clone_name = "FreeNAS-%d" % new_man.Sequence()
+        clone_name = "FreeNAS-%s" % new_man.Sequence()
         if CreateClone(clone_name) is False:
             log.error("Unable to create boot-environment %s" % clone_name)
             raise Exception("Unable to create new boot-environment %s" % clone_name)
