@@ -1868,8 +1868,6 @@ class SnapshotResource(DojoResource):
         for snaps in snapshots.values():
             results.extend(snaps)
         FIELD_MAP = {
-            'used': 'used_bytes',
-            'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
 
@@ -1988,6 +1986,8 @@ class SnapshotResource(DojoResource):
 
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):
+            bundle.data['used'] = humanize_size(bundle.data['used'])
+            bundle.data['refer'] = humanize_size(bundle.data['refer'])
             bundle.data['extra'] = {
                 'clone_url': reverse(
                     'storage_clonesnap',
