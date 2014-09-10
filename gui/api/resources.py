@@ -1839,6 +1839,11 @@ class SnapshotResource(DojoResource):
         # transfered already or not
         repli = {}
         for repl in Replication.objects.all():
+            """
+            Multiple replications tasks can have the same remote host.
+            We can't get the list of snapshots on the remote side multiple
+            times, make sure we don't do that.
+            """
             found = False
             for _repl, snaps in repli.items():
                 if _repl.repl_remote.ssh_remote_hostname == \
