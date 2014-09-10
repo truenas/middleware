@@ -3789,11 +3789,10 @@ class notifier:
                 replication = None
                 if replications:
                     for repl, snaps in replications.iteritems():
+                        if fs != repl.repl_filesystem:
+                            break
                         remotename = '%s@%s' % (
-                            fs.replace(
-                                repl.repl_filesystem + '@',
-                                repl.repl_zfs + '@',
-                            ),
+                            repl.repl_zfs,
                             name,
                         )
                         if remotename in snaps:
