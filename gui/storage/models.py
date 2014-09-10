@@ -38,7 +38,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common import humanize_size
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
@@ -729,6 +728,18 @@ class MountPoint(Model):
     def __unicode__(self):
         return self.mp_path
 
+    def _get__zplist(self):
+        if not hasattr(self, '__zplist'):
+            try:
+                self.__zplist = zfs.zpool_list().get(self.mp_volume.vol_name)
+                log.error("zplist %r", zfs.zpool_list())
+            except SystemError:
+                self.__zplist = None
+        return self.__zplist
+
+    def _set__zplist(self, value):
+        self.__zplist = value
+
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
             try:
@@ -739,8 +750,12 @@ class MountPoint(Model):
 
     def _get_avail(self):
         try:
-            return self._vfs.f_bavail * self._vfs.f_frsize
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return self._zplist['free']
+            else:
+                return self._vfs.f_bavail * self._vfs.f_frsize
         except:
+            raise
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting available space")
             else:
@@ -748,8 +763,11 @@ class MountPoint(Model):
 
     def _get_used_bytes(self):
         try:
-            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                self._vfs.f_frsize
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return self._zplist['alloc']
+            else:
+                return (self._vfs.f_blocks - self._vfs.f_bfree) * \
+                    self._vfs.f_frsize
         except:
             return 0
 
@@ -764,9 +782,12 @@ class MountPoint(Model):
 
     def _get_used_pct(self):
         try:
-            availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
-                self._vfs.f_blocks
-            return u"%d%%" % (availpct)
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return "%d%%" % self._zplist['capacity']
+            else:
+                availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
+                    self._vfs.f_blocks
+            return u"%d%%" % availpct
         except:
             return _(u"Error")
 
@@ -779,6 +800,7 @@ class MountPoint(Model):
             return _(u"Error")
 
     _vfs = property(_get__vfs)
+    _zplist = property(_get__zplist, _set__zplist)
     avail = property(_get_avail)
     used_pct = property(_get_used_pct)
     used = property(_get_used)
