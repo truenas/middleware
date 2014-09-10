@@ -93,7 +93,7 @@ release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
-	${ENV_SETUP} sh build/post-to-upgrade.sh objs/${TRAIN}-${SEQUENCE}
+	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
 	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
