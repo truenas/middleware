@@ -683,31 +683,32 @@ class VolumeResourceMixin(NestedMixin):
         child_resource = DatasetResource()
         return child_resource.dispatch_detail(request, pk=pk, parent=obj)
 
-    def _get_datasets(self, bundle, vol, datasets, uid):
-        children = []
+    def _get_children(self, bundle, vol, children, uid):
+        rv = []
         attr_fields = ('avail', 'used', 'used_pct')
-        for path, dataset in datasets.items():
-            if dataset.name.startswith('.'):
+        for path, child in children.items():
+            if child.name.startswith('.'):
                 continue
 
             data = {
                 'id': uid.next(),
-                'name': dataset.name,
-                'type': 'dataset',
+                'name': child.name,
+                'type': 'dataset' if child.category == 'filesystem' else 'zvol',
                 'status': '-',
-                'mountpoint': dataset.mountpoint,
-                'path': dataset.path,
+                'path': child.path,
             }
+            if child.category == 'filesystem':
+                data['mountpoint'] = child.mountpoint
             for attr in attr_fields:
-                data[attr] = getattr(dataset, attr)
+                data[attr] = getattr(child, attr)
 
             if self.is_webclient(bundle.request):
                 data['compression'] = self.__zfsopts.get(
-                    dataset.path,
+                    child.path,
                     {},
                 ).get('compression', '-')
                 data['compressratio'] = self.__zfsopts.get(
-                    dataset.path,
+                    child.path,
                     {},
                 ).get('compressratio', '-')
 
@@ -721,48 +722,55 @@ class VolumeResourceMixin(NestedMixin):
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol',
                     kwargs={
-                        'parent': dataset.path,
+                        'parent': child.path,
                     })
-                data['_dataset_delete_url'] = reverse(
-                    'storage_dataset_delete',
-                    kwargs={
-                        'name': dataset.path,
-                    })
-                data['_dataset_edit_url'] = reverse(
-                    'storage_dataset_edit',
-                    kwargs={
-                        'dataset_name': dataset.path,
-                    })
-                data['_dataset_create_url'] = reverse(
-                    'storage_dataset',
-                    kwargs={
-                        'fs': dataset.path,
-                    })
-                data['_permissions_url'] = reverse(
-                    'storage_mp_permission',
-                    kwargs={
-                        'path': dataset.mountpoint,
-                    })
+                if child.category == 'filesystem':
+                    data['_dataset_delete_url'] = reverse(
+                        'storage_dataset_delete',
+                        kwargs={
+                            'name': child.path,
+                        })
+                    data['_dataset_edit_url'] = reverse(
+                        'storage_dataset_edit',
+                        kwargs={
+                            'dataset_name': child.path,
+                        })
+                    data['_dataset_create_url'] = reverse(
+                        'storage_dataset',
+                        kwargs={
+                            'fs': child.path,
+                        })
+                    data['_permissions_url'] = reverse(
+                        'storage_mp_permission',
+                        kwargs={
+                            'path': child.mountpoint,
+                        })
+                elif child.category == 'volume':
+                    data['_zvol_delete_url'] = reverse(
+                        'storage_zvol_delete',
+                        kwargs={
+                            'name': child.path,
+                        })
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol', kwargs={
-                        'parent': dataset.path,
+                        'parent': child.path,
                     })
                 data['_manual_snapshot_url'] = reverse(
                     'storage_manualsnap',
                     kwargs={
-                        'fs': dataset.path,
+                        'fs': child.path,
                     })
 
-            if dataset.children:
-                _datasets = SortedDict()
-                for child in dataset.children:
-                    _datasets[child.name] = child
-                data['children'] = self._get_datasets(
-                    bundle, vol, _datasets, uid
+            if child.children:
+                _children = SortedDict()
+                for child in child.children:
+                    _children[child.name] = child
+                data['children'] = self._get_children(
+                    bundle, vol, _children, uid
                 )
 
-            children.append(data)
-        return children
+            rv.append(data)
+        return rv
 
     def hydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).hydrate(bundle)
@@ -879,42 +887,13 @@ class VolumeResourceMixin(NestedMixin):
         if bundle.obj.vol_fstype == 'ZFS':
             uid = Uid(bundle.obj.id * 100)
 
-            children = self._get_datasets(
+            bundle.data['children'] = self._get_children(
                 bundle,
                 bundle.obj,
-                bundle.obj.get_datasets(hierarchical=True, include_root=True),
+                bundle.obj.get_children(),
                 uid=uid,
             )
 
-            zvols = bundle.obj.get_zvols() or {}
-            for name, zvol in zvols.items():
-                data = {
-                    'id': uid.next(),
-                    'name': name,
-                    'status': '-',
-                    'type': 'zvol',
-                    'used': humanize_size(zvol['volsize']),
-                    'avail': '-',
-                    'used': humanize_size(zvol['refer']),
-                    'compression': zvol['compression'],
-                    'compressratio': zvol['compressratio'],
-                }
-
-                if self.is_webclient(bundle.request):
-                    data['_zvol_delete_url'] = reverse(
-                        'storage_zvol_delete',
-                        kwargs={
-                            'name': name,
-                        })
-                    data['_manual_snapshot_url'] = reverse(
-                        'storage_manualsnap',
-                        kwargs={
-                            'fs': name,
-                        })
-
-                children.append(data)
-
-            bundle.data['children'] = children
         return bundle
 
 
