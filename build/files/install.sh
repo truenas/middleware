@@ -308,7 +308,7 @@ partition_disk() {
 	    # If we're truenas, add swap
 	    if is_truenas; then
 	        # Is this correct?
-	        gpart add -t swap -i 3 -s 16g ${_disk} >&2
+	        gpart add -t freebsd-swap -i 3 -s 16g ${_disk} >&2
 	    fi
 	    # The rest of the disk
 	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk} >&2
