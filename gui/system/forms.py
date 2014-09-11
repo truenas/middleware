@@ -26,6 +26,7 @@
 #####################################################################
 
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 import cPickle as pickle
 import json
 import logging
@@ -695,6 +696,10 @@ class InitialWizard(CommonWizard):
 
         for service in services_restart:
             _n.restart(service)
+
+        Update.CreateClone('Wizard-%s' % (
+            datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        ))
 
         progress['percent'] = 100
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
