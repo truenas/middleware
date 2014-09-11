@@ -482,18 +482,32 @@ def testmail(request):
         kwargs = dict(instance=models.Email.objects.order_by('-id')[0])
     except IndexError:
         kwargs = {}
-    form = forms.EmailForm(request.POST, **kwargs)
+
+    fromwizard = False
+    data = request.POST.copy()
+    for key, value in data.items():
+        if key.startswith('system-'):
+            fromwizard = True
+            data[key.replace('system-', '')] = value
+
+    form = forms.EmailForm(data, **kwargs)
     if not form.is_valid():
         return JsonResp(request, form=form)
 
+    if fromwizard:
+        allfield = 'system-__all__'
+    else:
+        allfield = '__all__'
+
     email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
     if not email:
+        form.errors[allfield] = form.error_class([
+            "You must configure the root email (Accounts->Users->root)"
+        ])
+
         return JsonResp(
             request,
-            error=True,
-            message=_(
-                "You must configure the root email (Accounts->Users->root)"
-            ),
+            form=form,
         )
 
     sid = transaction.savepoint()
@@ -512,7 +526,11 @@ def testmail(request):
         errmsg = _('Your test email has been sent!')
     transaction.savepoint_rollback(sid)
 
-    return JsonResp(request, error=error, message=errmsg)
+    form.errors[allfield] = form.error_class([errmsg])
+    return JsonResp(
+        request,
+        form=form,
+    )
 
 
 class DojoFileStore(object):
