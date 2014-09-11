@@ -1856,8 +1856,10 @@ class InitialWizardSystemForm(Form):
 
     def __init__(self, *args, **kwargs):
         super(InitialWizardSystemForm, self).__init__(*args, **kwargs)
-        for fname, field in EmailForm().fields.items():
+        self._instance = models.Email.objects.order_by('-id')[0]
+        for fname, field in EmailForm(instance=self._instance).fields.items():
             self.fields[fname] = field
+            field.initial = getattr(self._instance, fname, None)
             field.required = False
         self.fields['em_smtp'].widget.attrs['onChange'] = (
             'toggleGeneric("id_system-em_smtp", ["id_system-em_pass1", '
@@ -1865,8 +1867,7 @@ class InitialWizardSystemForm(Form):
         )
 
     def clean(self):
-        instance = models.Email.objects.order_by('-id')[0]
-        em = EmailForm(self.cleaned_data, instance=instance)
+        em = EmailForm(self.cleaned_data, instance=self._instance)
         if self.cleaned_data.get('em_fromemail') and not em.is_valid():
             for fname, errors in em._errors.items():
                 self._errors[fname] = errors
