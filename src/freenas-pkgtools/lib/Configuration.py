@@ -416,6 +416,74 @@ class Configuration(object):
         if os.path.islink(self._system_pool_link):
             self._temp = os.readlink(self._system_pool_link)
 
+    # Load the list of currently-watched trains.
+    # The file is a JSON file.
+    # This sets self._trains as a dictionary of
+    # Train objects (key being the train name).
+    def LoadTrainsConfig(self):
+        import json
+        if self._temp is None:
+            if not os.path.islink(self._system_pool_link):
+                log.error("No system pool, cannot load trains configuration")
+            else:
+                self._temp = os.readlink(self._system_pool_link)
+        self._trains = {}
+        if self._temp:
+            train_path = self._temp + "/Trains.json"
+            try:
+                with open(train_path, "r") as f:
+                    trains = json.load(f)
+                for train_name in trains.keys():
+                    temp = Train.Train(train_name)
+                    if TRAIN_DESC_KEY in trains[train_name]:
+                        temp.SetDescription(trains[train_name][TRAIN_DESC_KEY])
+                    if TRAIN_SEQ_KEY in trains[train_name]:
+                        temp.SetSequence(trains[train_name][TRAIN_SEQ_KEY])
+                    if TRAIN_CHECKED_KEY in trains[train_name]:
+                        temp.SetLastCheckedTime(trains[train_name][TRAIN_CHECKED_KEY])
+                    self._trains[train_name] = temp
+            except:
+                pass
+        sys_mani = self.SystemManifest()
+        if sys_mani.Train() not in self._trains:
+            temp = Train.Train(sys_mani.Train(), "Installed OS", sys_mani.Sequence())
+            self._trains[temp.Name()] = temp
+        return
+
+    # Save the list of currently-watched trains.
+    def SaveTrainsConfig(self):
+        import json
+        sys_mani = self.SystemManifest()
+        current_train = sys_mani.Train()
+        if self._trains is None: self._trains = {}
+        if current_train not in self._trains:
+            self._trains[current_train] = Train.Train(current_train, "Installed OS", sys_mani.Sequence())
+        if self._temp is None:
+            if not os.path.islink(self._system_pool_link):
+                log.error("No system pool, cannot load trains configuration")
+            else:
+                self._temp = os.readlink(self._system_pool_link)
+        if self._temp:
+            obj = {}
+            for train_name in self._trains.keys():
+                train = self._trains[train_name]
+                temp = {}
+                if train.Description():
+                    temp[TRAIN_DESC_KEY] = train.Description()
+                if train.Sequence():
+                    temp[TRAIN_SEQ_KEY] = train.Sequence()
+                if train.LastCheckedTime():
+                    temp[TRAIN_CHECKED_KEY] = train.LastCheckedTime()
+                obj[train_name] = temp
+            train_path = self._temp + "/Trains.json"
+            try:
+                with open(train_path, "w") as f:
+                    json.dump(obj, f, sort_keys=True,
+                              indent=4, separators=(',', ': '))
+            except OSError as e:
+                log.error("Could not write out trains:  %s" % str(e))
+        return
+
     def SystemManifest(self):
         man = Manifest.Manifest(self)
         try:
@@ -555,11 +623,26 @@ class Configuration(object):
 
         return rv if len(rv) > 0 else None
 
-    def Trains(self):
+    def WatchedTrains(self):
+        if self._trains is None:
+            self._trains = self.LoadTrainsConfig()
         return self._trains
 
-    def SetTrains(self, list):
-        self._trains = list
+    def WatchTrain(self, train):
+        """
+        Add a train to the local set to be watched.
+        A watched train is checked for updates.
+        If the train is already watched, this does nothing.
+        train is a Train object.
+        """
+        if self._trains is None:
+            self._trains = {}
+        if train.Name() not in self._trains:
+            self._trains[train.Name()] = train
+        return
+
+    def SetTrains(self, tlist):
+        self._trains = tlist
         return
 
     def TemporaryDirectory(self):
