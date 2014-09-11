@@ -42,9 +42,6 @@ if is_truenas; then
 	if [ -d ${GIT_ZFSD_CHECKOUT_PATH} ]; then
 		cp -a ${GIT_ZFSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
 	fi
-	if [ -d ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/build/licensor ]; then
-		cp -a ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/build/licensor ${NANO_OBJ}/_.j/usr/nas_source
-	fi
 	if [ -d ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/gui ]; then
 		cp -a ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/gui/ ${NANO_OBJ}/_.j/usr/freenasUI
 	fi

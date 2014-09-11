@@ -30,9 +30,6 @@
 
 if is_truenas ; then
 	add_port truenas/zfsd
-	add_port truenas/licensor PRODUCT_VERSION=${VERSION} \
-                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
-                            REVISION=${SVNREVISION}
 fi
 
 add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
