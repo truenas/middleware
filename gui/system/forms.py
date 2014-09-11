@@ -527,6 +527,11 @@ class InitialWizard(CommonWizard):
                     bsdusr_email=cleaned_data.get('sys_email'),
                 )
 
+            email = models.Email.objects.order_by('-id')[0]
+            em = EmailForm(cleaned_data, instance=email)
+            if em.is_valid():
+                em.save()
+
         if ds_form:
 
             curstep += 1
