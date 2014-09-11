@@ -5,7 +5,7 @@
 Tasks
 =====
 
-The Tasks section of the administrative GUI can be used to perform the following tasks:
+The Tasks section of the administrative GUI can be used to configure the following:
 
 * :ref:`Cron Jobs`: provides a graphical front-end to
   `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_

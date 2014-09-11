@@ -30,19 +30,16 @@ Global Configuration
 
 :menuselection:`Network --> Global Configuration`, shown in Figure 7.1a, allows you to set non-interface specific network settings.
 
-Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
-Figure 7.1a, but can be changed to meet the local network's requirements.
-
-If you will be using Active Directory, set the IP address of the DNS server used in the realm.
-
-If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or timeout errors, add an entry for the IP address of
-the FreeNAS® system in the "Host name database" field.
-
-.. note:: if you add a gateway to the Internet, make sure that the FreeNAS® system is protected by a properly configured firewall.
-
 **Figure 7.1a: Global Configuration**
 
-|Figure71a_png|
+|network1.png|
+
+.. |network1.png| image:: images/network1.png
+    :width: 9.7in
+    :height: 3.2in
+
+Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
+Figure 7.1a, but can be changed to meet the local network's requirements.
 
 **Table 7.1a: Global Configuration Settings**
 
@@ -87,12 +84,17 @@ the FreeNAS® system in the "Host name database" field.
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 
+If you will be using Active Directory, set the IP address of the DNS server used in the realm.
+
+If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or timeout errors, add an entry for the IP address of
+the FreeNAS® system in the "Host name database" field.
 
 .. note:: in many cases, a FreeNAS® configuration will deliberately exclude default gateway information as a way to make it more difficult for a remote
    attacker to communicate with the server. While this is a reasonable precaution, such a configuration does **not** restrict inbound traffic from sources
    within the local network. However, omitting a default gateway will prevent the FreeNAS® system from communicating with DNS servers, time servers, and mail
-   servers that are located outside of the local network. In this case, it is recommended that Static Routes be added in order to reach external DNS, NTP, and
-   mail servers which are configured with static IP addresses.
+   servers that are located outside of the local network. In this case, it is recommended to add :ref:`Static Routes` in order to reach external DNS, NTP, and
+   mail servers which are configured with static IP addresses. If you add a gateway to the Internet, make sure that the FreeNAS® system is protected by a
+   properly configured firewall.
 
 .. _Interfaces:
 
@@ -179,6 +181,10 @@ another person remote access to the system in order to assist with a configurati
 management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
 be a dedicated IPMI interface.
 
+.. warning:: it is recommended to first ensure that the IPMI has been patched against the Remote Management Vulnerability before enabling IPMI. This
+   `article <http://www.ixsystems.com/whats-new/how-to-fix-the-ipmi-remote-management-vulnerability/>`_ provides more information about the vulnerability and
+   how to fix it.
+
 Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*, a "Type" of
 *Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
@@ -186,8 +192,9 @@ Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*,
 
  kldload ipmi
 
-Once the module is loaded, IPMI should be configured from :menuselection:`Network --> IPMI`. Figure 7.3a shows the configuration screen and Table 7.3a
-summarizes the options when configuring IPMI.
+Once the module is loaded, IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.3a, provides a
+shortcut to the most basic IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.3a summarizes the
+options when configuring IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
@@ -302,7 +309,7 @@ many clients.
 Creating a Link Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before creating a link aggregation, double-check that no interfaces have been manually configured in
+**Before** creating a link aggregation, double-check that no interfaces have been manually configured in
 :menuselection:`Network --> Interfaces --> View Interfaces`. If any configured interfaces exist, delete them as lagg creation will fail if any interfaces are
 manually configured.
 
@@ -317,7 +324,7 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
     :height: 3.25in
 
 .. note:: if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
-   `here <http://www.freebsd.org/releases/9.2R/hardware.html#ETHERNET>`_.
+   `here <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_.
 
 Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 

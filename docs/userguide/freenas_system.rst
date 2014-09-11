@@ -219,7 +219,7 @@ The following configuration buttons are available:
 
 * **Rename:** used to change the name of the boot environment.
 
-* **Create:**
+* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
@@ -745,9 +745,6 @@ in Table 5.10b.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Country              | string               |                                                                                                 |
