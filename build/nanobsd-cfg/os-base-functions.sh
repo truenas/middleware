@@ -50,16 +50,6 @@ write_version_file ( )
 	fi
 }
 
-add_truenas_gui()
-{
-	local gui dst dstCR
-	gui=${AVATAR_ROOT}/gui
-	dstCR=/usr/local/www/freenasUI
-	dst=${NANO_WORLDDIR}${dstCR}
-
-	add_gui_encrypted "$gui" "$dst" "$dstCR"
-}
-
 # Move the $world/data to the /data partion
 move_data()
 {
