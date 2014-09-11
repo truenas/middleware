@@ -1838,16 +1838,34 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
 
 class InitialWizardSystemForm(Form):
 
-    sys_email = forms.EmailField(
-        label=_('E-mail'),
-        help_text=_('Administrative email address used for alerts.'),
-        required=False,
-    )
     sys_console = forms.BooleanField(
         label=_('Console messages'),
         help_text=_('Show console messages in the footer.'),
         required=False,
     )
+    sys_email = forms.EmailField(
+        label=_('Root E-mail'),
+        help_text=_('Administrative email address used for alerts.'),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardSystemForm, self).__init__(*args, **kwargs)
+        for fname, field in EmailForm().fields.items():
+            self.fields[fname] = field
+            field.required = False
+        self.fields['em_smtp'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_system-em_smtp", ["id_system-em_pass1", '
+            '"id_system-em_pass2", "id_system-em_user"], true);'
+        )
+
+    def clean(self):
+        instance = models.Email.objects.order_by('-id')[0]
+        em = EmailForm(self.cleaned_data, instance=instance)
+        if self.cleaned_data.get('em_fromemail') and not em.is_valid():
+            for fname, errors in em._errors.items():
+                self._errors[fname] = errors
+        return self.cleaned_data
 
 
 class InitialWizardConfirmForm(Form):
