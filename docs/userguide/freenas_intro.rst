@@ -204,7 +204,7 @@ The GUI has been reorganized as follows:
   
 * A new :ref:`Tasks` menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
 
-* A :ref:`ZFS Snapshots` menu has been added to Storage.
+* A :ref:`Snapshots` menu has been added to Storage.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -237,6 +237,9 @@ The following fields have been added or deleted:
 * The "HTTP Proxy" field has been added to :menuselection:`Network --> Global Configuration`.
 
 * A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
+
+* The icons in Storage have been renamed to clarify their purpose. "Auto Import Volume" is now "Import Volume", "Import Volume" is now "Import Disk", "ZFS
+  Volume Manager" is now "Volume Manager", and "ZFS Scrubs" are now "Scrubs".
 
 * The "Case Sensitivity" drop-down menu has been added to :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
 

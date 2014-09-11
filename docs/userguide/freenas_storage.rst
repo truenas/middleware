@@ -13,9 +13,9 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Replication Tasks`: used to schedule the replication of snapshots over an encrypted connection.
 
-* :ref:`ZFS Scrubs`: used to schedule ZFS scrubs as part of ongoing disk maintenance.
+* :ref:`Scrubs`: used to schedule ZFS scrubs as part of ongoing disk maintenance.
 
-* :ref:`ZFS Snapshots`:
+* :ref:`Snapshots`:
 
 These configurations are described in more detail in this section.
 
@@ -27,7 +27,7 @@ Volumes
 Since the storage disks are separate from the FreeNAS® operating system, you do not actually have a NAS (network-attached storage) system until you configure
 your disks into at least one volume. The FreeNAS® graphical interface supports the creation of
 `ZFS <http://en.wikipedia.org/wiki/Zfs>`_
-volumes.
+pools.
 
 .. note:: in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. When configuring the ZFS pool using the FreeNAS® graphical
    interface, the term volume is used to refer to either a UFS volume or a ZFS pool.
@@ -35,12 +35,12 @@ volumes.
 Proper storage design is important for any NAS.
 **It is recommended that you read through this entire chapter first, before configuring your storage disks, so that you are aware of all of the possible features, know which ones will benefit your setup most, and are aware of any caveats or hardware restrictions.**
 
-.. _Auto Import Volume:
+.. _Import Volume:
 
-Auto Import Volume
-~~~~~~~~~~~~~~~~~~
+Import Volume
+~~~~~~~~~~~~~
 
-If you click :menuselection:`Storage --> Volumes --> Auto Import Volume`, you can configure FreeNAS® to use an
+If you click :menuselection:`Storage --> Volumes --> Import Volume`, you can configure FreeNAS® to use an
 **existing** software UFS or ZFS RAID volume. This action is typically performed when an existing FreeNAS® system is re-installed (rather than upgraded).
 Since the operating system is separate from the disks, a new installation does not affect the data on the disks; however, the new operating system needs to be
 configured to use the existing volume.
@@ -51,9 +51,9 @@ an unmaintained summer of code project which was never integrated into FreeBSD.
 Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported. However, the pool must be decrypted before it can be
 imported.
 
-Figure 8.1a shows the initial pop-up window that appears when you select to auto import a volume.
+Figure 8.1a shows the initial pop-up window that appears when you select to import a volume.
 
-**Figure 8.1a: Initial Auto Import Volume Screen**
+**Figure 8.1a: Initial Import Volume Screen**
 
 |auto1.png|
 
@@ -63,7 +63,7 @@ Figure 8.1a shows the initial pop-up window that appears when you select to auto
 
 If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No: Skip to import" to access the screen shown in Figure 8.1b.
 
-**Figure 8.1b: Auto Importing a Non-Encrypted Volume**
+**Figure 8.1b: Importing a Non-Encrypted Volume**
 
 |auto2.png|
 
@@ -84,10 +84,10 @@ machine" error during the import.
 If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from Shell. If the disk does not appear in the output, check to see
 if the controller driver is supported or if it needs to be loaded by creating a Tunable.
 
-.. _Auto Importing an Encrypted Pool:
+.. _Importing an Encrypted Pool:
 
-Auto Importing an Encrypted Pool
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Importing an Encrypted Pool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1a, select "Yes: Decrypt disks" to
 access the screen shown in Figure 8.1c.
@@ -105,16 +105,16 @@ decrypt the disks.
 
 Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1b. Click the "OK" button to finish the volume import.
 
-.. _Import Volume:
+.. _Import Disk:
 
-Import Volume
+Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Volume` screen, shown in Figure 8.1d, is used to import a single disk or partition that has been formatted with a
+The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1d, is used to import a single disk or partition that has been formatted with a
 supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
 measure in order to copy the data from a disk to a volume. Only one disk can be imported at a time.
 
-**Figure 8.1d: Importing a Volume**
+**Figure 8.1d: Importing a Disk**
 
 |import.png|
 
@@ -201,10 +201,10 @@ option before discarding a disk.
 View Volumes
 ~~~~~~~~~~~
 
-If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing volumes, ZFS datasets, and zvols. The example
-shown in Figure 8.1f demonstrates one ZFS volume with two datasets and one zvol.
+If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
+shown in Figure 8.1f demonstrates one ZFS pool with two datasets and one zvol.
 
-Buttons are provided to provide quick access to "Volume Manager", "Import Volume", "Auto Import Volume", and "View Disks". If the system has multipath-capable
+Buttons are provided to provide quick access to "Volume Manager", "Import Volume", "Import Disk", and "View Disks". If the system has multipath-capable
 hardware, an extra button will be added to "View Multipaths".
 
 **Figure 8.1f: Viewing Volumes**
@@ -215,7 +215,7 @@ hardware, an extra button will be added to "View Multipaths".
     :width: 5.3in
     :height: 4.5in
 
-If you click the entry for a ZFS volume, nine icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
+If you click the entry for a volume, nine icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
 #.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
     volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1g, will show the
@@ -228,9 +228,10 @@ If you click the entry for a ZFS volume, nine icons will appear at the bottom of
     the pool from the system.
     **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state.**
 
-#.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in ZFS Scrubs. This button allows you to manually initiate a scrub. A
-    scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A "cancel" button is
-    provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off.
+#.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub.
+    A scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A "cancel" button is
+    provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub
+    left off.
 
 #.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
     newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
@@ -315,10 +316,10 @@ multipath-capable hardware.
 Figure 8.1j provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.
 
-.. _ZFS Volume Manager:
+.. _Volume Manager:
 
-ZFS Volume Manager
-~~~~~~~~~~~~~~~~~~
+Volume Manager
+~~~~~~~~~~~~~~
 
 If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS
 pool.
@@ -1541,12 +1542,12 @@ command::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
  
-.. _ZFS Scrubs:
+.. _Scrubs:
 
-ZFS Scrubs
+Scrubs
 ----------
 
-:menuselection:`Storage --> ZFS Scrubs` allows you to schedule and manage scrubs on a ZFS volume. Performing a ZFS scrub on a regular basis helps to identify
+:menuselection:`Storage --> Scrubs` allows you to schedule and manage scrubs on a ZFS volume. Performing a ZFS scrub on a regular basis helps to identify
 data integrity problems, detects silent data corruptions caused by transient hardware issues, and provides early alerts to disk failures. If you have
 consumer-quality drives, consider a weekly scrubbing schedule. If you have datacenter-quality drives, consider a monthly scrubbing schedule.
 
@@ -1557,7 +1558,7 @@ A ZFS scrub only checks used disk space. To check unused disk space, schedule :r
 month.
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
-:menuselection:`Storage --> ZFS Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> ZFS Scrubs --> View ZFS Scrubs`. Figure 8.4a
+:menuselection:`Storage --> Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> Scrubs --> View Scrubs`. Figure 8.4a
 displays the default settings for the volume named :file:`volume1`. In this example, the entry has been highlighted and the "Edit" button clicked in order to
 display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
@@ -1616,7 +1617,7 @@ While a "Delete" button is provided,
 **deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
 too intensive for your hardware, consider unchecking the "Enabled" button for the scrub as a temporary measure until the hardware can be upgraded.
 
-.. _ZFS Snapshots:
+.. _Snapshots:
 
-ZFS Snapshots
+Snapshots
 -------------

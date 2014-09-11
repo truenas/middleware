@@ -490,12 +490,14 @@ FreeNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan
 interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different
-tags. If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the screen shown in Figure 7.7a.
+tags.
 
 .. note:: VLAN tagging is the only 802.1q feature that is implemented. Additionally, not all Ethernet interfaces support full VLAN processing–see the
    HARDWARE section of
    `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
    for details.
+
+If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the screen shown in Figure 7.7a.
 
 **Figure 7.7a: Adding a VLAN**
 
