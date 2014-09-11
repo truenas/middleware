@@ -11,6 +11,17 @@ log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
+# The keys are as follows:
+# SEQUENCE_KEY:  A string, uniquely identifying this manifest.
+# PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.
+# SIGNATURE_KEY:  A string for the signed value of the manifest.  Not yet implemented.
+# NOTES_KEY:  An array of name, URL pairs.  Typical names are "README" and "Release Notes".
+# TRAIN_KEY:  A string identifying the train for this maifest.
+# VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
+# SCHEME_KEY:  A string, identifying the layout version.  Only one value for now.
+# NOTICE_KEY:  A string, identifying a message to be displayed before installing this manifest.
+# The latter is mainly intended to be used to indicate a particular train is ended.
+
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
 SIGNATURE_KEY = "Signature"
@@ -18,6 +29,7 @@ NOTES_KEY = "Notes"
 TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
 SCHEME_KEY = "Scheme"
+NOTICE_KEY = "Notice"
 
 # SCHEME_V1 is the first scheme for packaging and manifests.
 # Manifest is at <location>/FreeNAS/<train_name>/LATEST,
@@ -83,6 +95,7 @@ class Manifest(object):
     _signature = None
     _version = None
     _scheme = SCHEME_V1
+    _notice = None
 
     def __init__(self, configuration = None):
         if configuration is None:
@@ -97,6 +110,7 @@ class Manifest(object):
         if self._notes is not None: retval[NOTES_KEY] = self._notes
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
+        if self._notice is not None:  retval[NOTICE_KEY] = self._notice
 #        retval[SCHEME_KEY] = self._scheme
         return retval
 
@@ -136,6 +150,8 @@ class Manifest(object):
                 self.SetVersion(tdict[key])
             elif key == SCHEME_KEY:
                 self.SetScheme(tdict[key])
+            elif key == NOTICE_KEY:
+                self.SetNotice(tdict[key])
             else:
                 log.debug("Unknown key %s" % key)
         self.Validate()
@@ -182,6 +198,13 @@ class Manifest(object):
             if thash != self._signature:
                 raise ChecksumFailException
         return True
+
+    def Notice(self):
+        return self._notice
+
+    def SetNotice(self, n):
+        self._notice = n
+        return
 
     def Scheme(self):
         return self._scheme

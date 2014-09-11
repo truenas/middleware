@@ -7,6 +7,7 @@ import tempfile
 import time
 import urllib2
 
+from . import Avatar
 import Exceptions
 import Installer
 import Train
@@ -25,9 +26,10 @@ log = logging.getLogger('freenasOS.Configuration')
 # Change this for release
 # Need to change search code since it isn't really
 # searching any longer.
-# All of this needs to be changed for TrueNAS
-UPDATE_SERVER = "http://beta-update.freenas.org/FreeNAS"
-SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/FreeNAS" ]
+# We may want to use a different update server for
+# TrueNAS.
+UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
+SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/" + Avatar() ]
 
 # List of trains
 TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
@@ -55,12 +57,12 @@ def TryOpenFile(path):
         return f
 
 def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
-    FREENAS_VERSION = "X-FreeNAS-Manifest-Version"
+    AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
     try:
         req = urllib2.Request(url)
-        req.add_header(FREENAS_VERSION, current_version)
+        req.add_header(AVATAR_VERSION, current_version)
         # Hack for debugging
-        req.add_header("User-Agent", "%s=%s" % (FREENAS_VERSION, current_version))
+        req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
         furl = urllib2.urlopen(req, timeout=5)
     except:
         log.warn("Unable to load %s", url)
@@ -502,6 +504,17 @@ class Configuration(object):
         self._trains.append(train)
         return
 
+    def CurrentTrain(self):
+        """
+        Returns the name of the train of the current
+        system.  It may return None, but that's for edge cases
+        generally related to installation and build environments.
+        """
+        sys_mani = self.SystemManifest()
+        if sys_mani:
+           return sys_mani.Train()
+        return None
+
     def AvailableTrains(self):
         """
         Returns the set of available trains from
@@ -640,7 +653,7 @@ class Configuration(object):
             ManifestFile = "/%s/LATEST" % train
         else:
             # This needs to change for TrueNAS, doesn't it?
-            ManifestFile = "/%s/FreeNAS-%s" % (train, sequence)
+            ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
 
         file_ref = TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
                                      self._temp,
