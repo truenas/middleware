@@ -11150,3 +11150,40 @@ msgstr "在%(name)s 建立ZFS 磁區"
 #, fuzzy
 msgid "Manual Update"
 msgstr "套用更新"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "匯入磁區"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "電子郵件"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr ""
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr ""
+
+#: system/forms.py:1848
+#, fuzzy
+msgid "Show console messages in the footer."
+msgstr "將控制訊息顯示在頁尾 (需重新讀取使用介面)"
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""

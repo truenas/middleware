@@ -260,13 +260,13 @@ class CIFS(Model):
     cifs_srv_obey_pam_restrictions = models.BooleanField(
            verbose_name=_("Obey pam restrictions"),
            default=True,
-           help_text=_("this parameter controls whether or not Samba"
-               "should obey PAM's account and session management directives")
+           help_text=_("This parameter controls whether or not Samba"
+               " should obey PAM's account and session management directives")
            )
     cifs_srv_bindip = models.CharField(
            verbose_name=_("Bind IP Addresses"),
            help_text=_("IP address(es) to bind to. If none specified, all"
-               "available interfaces that are up will be listened on."),
+               " available interfaces that are up will be listened on."),
            max_length=250,
            blank=True,
            null=True

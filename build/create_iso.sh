@@ -85,9 +85,9 @@ main()
 # Build packages here.
 
 	if [ -d ${NANO_OBJ}/_.packages/Packages ]; then
-	    mkdir -p ${NANO_OBJ}/_.isodir/FreeNAS
-	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/FreeNAS
-	    cp ${NANO_OBJ}/_.packages/FreeNAS-MANIFEST ${NANO_OBJ}/_.isodir/FreeNAS-MANIFEST
+	    mkdir -p ${NANO_OBJ}/_.isodir/${NANO_LABEL}
+	    cp -R ${NANO_OBJ}/_.packages/Packages ${NANO_OBJ}/_.isodir/${NANO_LABEL}
+	    cp ${NANO_OBJ}/_.packages/${NANO_LABEL}-MANIFEST ${NANO_OBJ}/_.isodir/${NANO_LABEL}-MANIFEST
 	else
 		echo "Hey, where are the install filess?"
 	fi

@@ -11031,3 +11031,41 @@ msgstr "%(name)s üzerinde ZFS birimi oluştur"
 #, fuzzy
 msgid "Manual Update"
 msgstr "Güncellemeyi Uygula"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "Birim Al"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "E-Posta"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr ""
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr ""
+
+#: system/forms.py:1848
+#, fuzzy
+msgid "Show console messages in the footer."
+msgstr ""
+"Alt bilgide konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""
