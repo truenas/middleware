@@ -628,7 +628,7 @@ class Configuration(object):
             self._trains = self.LoadTrainsConfig()
         return self._trains
 
-    def WatchTrain(self, train, stop = False):
+    def WatchTrain(self, train, watch = True):
         """
         Add a train to the local set to be watched.
         A watched train is checked for updates.
@@ -639,12 +639,12 @@ class Configuration(object):
         """
         if self._trains is None:
             self._trains = {}
-        if stop:
-            if train.Name() in self._trains:
-                self._trains.pop(train.Name())
-        else:
+        if watch:
             if train.Name() not in self._trains:
                 self._trains[train.Name()] = train
+        else:
+            if train.Name() in self._trains:
+                self._trains.pop(train.Name())
         return
 
     def SetTrains(self, tlist):
