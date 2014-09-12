@@ -226,6 +226,7 @@ def add_ldap_conf(smb4_conf):
 
     confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
     confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
+    confset1(smb4_conf, "domain logons = yes")
 
 
 def add_activedirectory_conf(smb4_conf):
