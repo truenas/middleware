@@ -20,7 +20,12 @@ SYSTEM_MANIFEST_FILE = "/data/manifest"
 # VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
 # SCHEME_KEY:  A string, identifying the layout version.  Only one value for now.
 # NOTICE_KEY:  A string, identifying a message to be displayed before installing this manifest.
-# The latter is mainly intended to be used to indicate a particular train is ended.
+# 	This is mainly intended to be used to indicate a particular train is ended.
+#	A notice is something more important than a release note, and is included in
+#	the manifest, rather than relying on a URL.
+# SWITCH_KEY:  A string, identifying the train that should be used instead.
+# 	This will cause Configuraiton.FindLatestManifest() to use that value instead, so
+#	it should only be used when a particular train is end-of-life'd.
 
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
@@ -30,6 +35,7 @@ TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
 SCHEME_KEY = "Scheme"
 NOTICE_KEY = "Notice"
+SWITCH_KEY = "NewTrainName"
 
 # SCHEME_V1 is the first scheme for packaging and manifests.
 # Manifest is at <location>/FreeNAS/<train_name>/LATEST,
@@ -96,6 +102,7 @@ class Manifest(object):
     _version = None
     _scheme = SCHEME_V1
     _notice = None
+    _switch = None
 
     def __init__(self, configuration = None):
         if configuration is None:
@@ -111,7 +118,8 @@ class Manifest(object):
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
         if self._notice is not None:  retval[NOTICE_KEY] = self._notice
-#        retval[SCHEME_KEY] = self._scheme
+        if self._switch is not None:  retval[SWITCH_KEY] = self._switch
+        retval[SCHEME_KEY] = self._scheme
         return retval
 
     def String(self):
@@ -129,6 +137,8 @@ class Manifest(object):
         self._packages = None
         self._signature = None
         self._version = None
+        self._notice = None
+        self._switch = None
 
         for key in tdict.keys():
             if key == SEQUENCE_KEY:
@@ -152,6 +162,9 @@ class Manifest(object):
                 self.SetScheme(tdict[key])
             elif key == NOTICE_KEY:
                 self.SetNotice(tdict[key])
+            elif key == SWITCH_KEY:
+                # Deliberately not a method to set this one
+                self._switch = tdict[key]
             else:
                 log.debug("Unknown key %s" % key)
         self.Validate()
@@ -200,6 +213,10 @@ class Manifest(object):
         return True
 
     def Notice(self):
+        if not self._notice and self._switch:
+            # If there's no notice, but there is a train-switch directive,
+            # then make up a notice about it.
+            return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
         return self._notice
 
     def SetNotice(self, n):
@@ -276,3 +293,6 @@ class Manifest(object):
     def SetVersion(self, version):
         self._version = version
         return
+
+    def NewTrain(self):
+        return self._switch

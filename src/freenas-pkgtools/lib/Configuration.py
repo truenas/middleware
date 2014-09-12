@@ -628,17 +628,23 @@ class Configuration(object):
             self._trains = self.LoadTrainsConfig()
         return self._trains
 
-    def WatchTrain(self, train):
+    def WatchTrain(self, train, stop = False):
         """
         Add a train to the local set to be watched.
         A watched train is checked for updates.
         If the train is already watched, this does nothing.
         train is a Train object.
+        If stop is True, then this is used to stop watching
+        this particular train.
         """
         if self._trains is None:
             self._trains = {}
-        if train.Name() not in self._trains:
-            self._trains[train.Name()] = train
+        if stop:
+            if train.Name() in self._trains:
+                self._trains.pop(train.Name())
+        else:
+            if train.Name() not in self._trains:
+                self._trains[train.Name()] = train
         return
 
     def SetTrains(self, tlist):
@@ -758,7 +764,12 @@ class Configuration(object):
             if temp_mani is None:
                 # I give up
                 raise Exceptions.ConfigurationInvalidException
-            train = temp_mani.Train()
+            if temp_mani.NewTrain():
+                # If we're redirected to a new train, use that.
+                train = temp_mani.NewTrain()
+            else:
+                train = temp_mani.Train()
+
         file = TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
                                  self._temp,
                                  current_version,

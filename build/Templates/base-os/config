@@ -1,6 +1,6 @@
 [Package]
 
-name = freenas
+name = base-os
 comment = "FreeNAS OS"
 desc = "FreeNAS OS (derived from FreeBSD)"
 www = http://www.freenas.org/
