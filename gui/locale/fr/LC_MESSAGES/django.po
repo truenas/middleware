@@ -11299,3 +11299,41 @@ msgstr "Créer un volume ZFS sur %(name)s"
 #, fuzzy
 msgid "Manual Update"
 msgstr "Appliquer la mise à jour"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "Importer"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "Adresse e-mail"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr ""
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr ""
+
+# Meilleur terme pour "reload" que "recharger" ?
+#: system/forms.py:1848
+#, fuzzy
+msgid "Show console messages in the footer."
+msgstr "Afficher les messages de la console en pied de page"
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""

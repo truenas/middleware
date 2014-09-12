@@ -10864,3 +10864,39 @@ msgstr "ZFS kötet létrehozása a következőn: %(name)"
 #, fuzzy
 msgid "Manual Update"
 msgstr "Frissítés érvényesítése"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "Kötet importálása"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "E-levél"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr ""
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr ""
+
+#: system/forms.py:1848
+msgid "Show console messages in the footer."
+msgstr ""
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""

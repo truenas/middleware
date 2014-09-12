@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-09-08 01:32+0000\n"
+"PO-Revision-Date: 2014-09-11 09:36+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1410139951.0\n"
+"X-POOTLE-MTIME: 1410428172.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "gewoon"
+msgstr "Normaal"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -98,11 +98,11 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s"
+msgstr "SATA 1,5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3.0Gbit/s"
+msgstr "SATA 3,0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
@@ -138,7 +138,7 @@ msgstr "Niveau 254 - Maximale prestaties, maximaal energieverbruik"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr "Minimumwaarde"
+msgstr "Minimaal"
 
 #: choices.py:97
 msgid "Medium"
@@ -249,11 +249,11 @@ msgstr "Foutopsporing"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr "Tijdmachine"
+msgstr "Time Machine"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "Geen omzetting naar hoofd- of kleine letters"
+msgstr "Geen omzetting naar kleine en hoofdletters"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -282,15 +282,15 @@ msgstr "ZFS-volume"
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr "Harde schijf"
+msgstr "Schijf"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "Lezen en schrijven"
+msgstr "lezen-schrijven"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "alleen lezen"
+msgstr "alleen-lezen"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -320,7 +320,7 @@ msgstr "Voorkeur"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr "Toegestaan"
+msgstr "Getolereerd"
 
 #: choices.py:257
 msgid "Required"
@@ -328,7 +328,7 @@ msgstr "Vereist"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr "Erven"
+msgstr "Overnemen"
 
 #: choices.py:285
 msgid "On"
@@ -347,7 +347,7 @@ msgstr "gzip (standaardniveau, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
-msgstr "gzip (snelste)"
+msgstr "gzip (snelst)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
@@ -355,7 +355,7 @@ msgstr "gzip (maximaal, traag)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr "U(u)r(en)"
+msgstr "Uur"
 
 #: choices.py:490
 msgid "Day(s)"
@@ -363,7 +363,7 @@ msgstr "Dag(en)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr "We(e)k(en)"
+msgstr "Weken"
 
 #: choices.py:492
 msgid "Month(s)"
@@ -371,7 +371,7 @@ msgstr "Maand(en)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr "Ja(a)r(en)"
+msgstr "Jaar"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
@@ -398,46 +398,46 @@ msgstr "Lezen en schrijven"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minuut)en minuten"
+msgstr "%(minutes)s minuten"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(uur)en uur"
+msgstr "%(hour)s uur"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(uur)en uur"
+msgstr "%(hours)s uur"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(dag)en dag"
+msgstr "%(day)s dag"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week)en week"
+msgstr "%(week)s week"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nooit - Controleer het apparaat ongeacht de energiemodus"
+msgstr "Nooit - Het apparaat controleren, ongeacht de energiemodus"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Slaap - Controleer het apparaat, tenzij het in SLAAP-stand staat"
+msgstr "Slaap - Het apparaat controleren, tenzij het in SLAAP-stand staat"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Stand-by - Controleer het apparaat, tenzij het in SLAAP- of STAND-BY-stand "
+"Stand-by - Het apparaat controleren, tenzij het in SLAAP- of STAND-BY-stand "
 "staat"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Niet-actief - Controleer het apparaat, tenzij het in SLAAP-, STAND-BY- of "
+"Niet-actief - Het apparaat controleren, tenzij het in SLAAP-, STAND-BY- of "
 "NIET-ACTIEF-stand staat"
 
 #: choices.py:530
@@ -450,7 +450,7 @@ msgstr "Korte zelftest"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Transport zelftest (Alleen ATA)"
+msgstr "Transport-zelftest (Alleen ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -466,11 +466,11 @@ msgstr "Rsync over SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr "Duwen"
+msgstr "Push"
 
 #: choices.py:568
 msgid "Pull"
-msgstr "Binnen halen"
+msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -8098,7 +8098,7 @@ msgstr "Standaarddomein gebruiken"
 
 #: services/models.py:1538
 msgid "Global Catalog Server"
-msgstr "Globale catalogusserver"
+msgstr "Globalecatalogusserver"
 
 #: services/models.py:1551
 msgid "Hostname of the kerberos password server to use."
@@ -8714,7 +8714,7 @@ msgstr ""
 
 #: services/models.py:1539
 msgid "Hostname of the global catalog server to use."
-msgstr "Hostnaam van de te gebruiken globale catalogusserver."
+msgstr "Hostnaam van de te gebruiken globalecatalogusserver."
 
 #: sharing/forms.py:118
 msgid "Delete password"
@@ -8956,7 +8956,7 @@ msgstr "lz4 (snelst)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr "pigz (all rounder)"
+msgstr "pigz (alleskunner)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -9891,7 +9891,7 @@ msgstr "sfu20"
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr "AD-Idmap"
+msgstr "AD-idmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
@@ -10441,11 +10441,11 @@ msgstr "Overslaan"
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "Standaard authenticatie"
+msgstr "Basisauthenticatie"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "Verificatiesamenvatting"
+msgstr "Digest-authenticatie"
 
 #: choices.py:799
 msgid "adex"
@@ -10516,60 +10516,50 @@ msgid "NIS failed to reload."
 msgstr "Opnieuw laden van NIS is mislukt."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Herstarten"
+msgstr "Bij herstarten"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
-#, fuzzy
 msgid "ADEX Idmap"
-msgstr "AD-Idmap"
+msgstr "ADEX-idmap"
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Nee"
+msgstr "Nu"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Beschrijving"
+msgstr "Beschrijvende naam"
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "FQDN of the domain controller to use."
-msgstr "Hostnaam van de te gebruiken domeincontroller."
+msgstr "FQDN van de te gebruiken domeincontroller."
 
 #: directoryservice/models.py:812
-#, fuzzy
 msgid "FQDN of the global catalog server to use."
-msgstr "Hostnaam van de te gebruiken globale catalogusserver."
+msgstr "FQDN van de te gebruiken globalecatalogusserver."
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Gebruikersachtervoegsel"
+msgstr "SUDO-achtervoegsel"
 
 #: directoryservice/models.py:996
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor "
-"gebruikers wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. "
-"ou=Users"
+"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor de "
+"SUDO-configuratie in de LDAP-adreslijst, bv. ou=SUDOers"
 
 #: directoryservice/models.py:1049
-#, fuzzy
 msgid "Idmap Backend"
 msgstr "Idmap-back-end"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Samba-schema"
 
 #: jails/forms.py:92
 msgid "Template"
@@ -10589,58 +10579,55 @@ msgstr "Bevestig WebDAV-wachtwoord"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
-msgstr ""
+msgstr "De HTTP- en HTTPS-poorten kunnen niet hetzelfde zijn!"
 
 #: services/forms.py:1628
-#, fuzzy
 msgid "The WebDAV service failed to reload."
-msgstr "Opnieuw laden van de AFP-service is mislukt."
+msgstr "Opnieuw laden van de WebDAV-service is mislukt."
 
 #: services/models.py:325
-#, fuzzy
 msgid "Global auxiliary parameters"
-msgstr "Hulpparameters voor basismappen"
+msgstr "Globale hulpparameters"
 
 #: services/models.py:328
-#, fuzzy
 msgid "These parameters are added to [Global] section of afp.conf"
-msgstr "Deze parameters worden aan de sectie [global] van smb.conf toegevoegd"
+msgstr "Deze parameters worden aan de sectie [global] van afp.conf toegevoegd"
 
 #: services/models.py:1728
-#, fuzzy
 msgid "HTTP Port"
-msgstr "TCP-poort"
+msgstr "HTTP-poort"
 
 #: services/models.py:1731
 msgid ""
 "This is the port at which WebDAV will run on.<br />Do not use a port that is "
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Dit is de poort waarop WebDAV zal werken.<br />Gebruik geen poort die al "
+"door een andere service in gebruik is (bv. 22 voor SSH)."
 
 #: services/models.py:1736
-#, fuzzy
 msgid "HTTPS Port"
-msgstr "TCP-poort"
+msgstr "HTTPS-poort"
 
 #: services/models.py:1739
 msgid ""
 "This is the port at which Secure WebDAV will run on.<br />Do not use a port "
 "that is already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Dit is de poort waarop Beveiligde WebDAV zal werken.<br />Gebruik geen poort "
+"die al door een andere service in gebruik is (bv. 22 voor SSH)."
 
 #: services/models.py:1745
-#, fuzzy
 msgid "Webdav Password"
-msgstr "Nieuw wachtwoord"
+msgstr "Webdav-wachtwoord"
 
 #: services/models.py:1747
 msgid "The Default Password is: davtest"
-msgstr ""
+msgstr "Het standaardwachtwoord is: davtest"
 
 #: services/models.py:1752
-#, fuzzy
 msgid "HTTP Authentication"
-msgstr "Authentificatie"
+msgstr "HTTP-authenticatie"
 
 #: services/models.py:1755
 msgid ""
@@ -10648,28 +10635,33 @@ msgid ""
 "over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
 "Hash of the password is sent over the network (more secure)"
 msgstr ""
+"Type HTTP-authenticatie voor WebDAV<br />Basisauth.: wachtwoord wordt als "
+"platte tekst over het netwerk verzonden (Vermijden als HTTPS is "
+"uitgeschakeld)<br />Digest-auth.: hash van het wachtwoord wordt over het "
+"netwerk verzonden (veiliger)"
 
 #: services/models.py:1761
 #: services/models.py:1762
 #: templates/services/core.html:164
 #: templates/sharing/index.html:21
 msgid "WebDAV"
-msgstr ""
+msgstr "WebDAV"
 
 #: sharing/models.py:335
-#, fuzzy
 msgid "Share Path Name"
-msgstr "Sharenaam"
+msgstr "Naam van pad naar share"
 
 #: sharing/models.py:336
 msgid ""
 "This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
 "freenas-machine:webdav_port/this_path_name"
 msgstr ""
+"Dit wordt gebruikt voor toegang tot uw WebDAV-share.<br />Voor bv. http(s"
+")://ip-van-freenas-machine:webdav_poort/deze_padnaam"
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
-msgstr ""
+msgstr "Eigendom van gebruiker & groep wijzigen"
 
 #: sharing/models.py:358
 msgid ""
@@ -10677,88 +10669,80 @@ msgid ""
 "(including all subdirectories)<br />If disabled, you will need to manually<"
 "br />add the 'webdav' user & group to the share."
 msgstr ""
+"Wijzigt de gebruiker en groep van de gedeelde map recursief naar 'webdav:"
+"webdav' (inclusief alle submappen)<br />Als dit is uitgeschakeld, dient u de "
+"gebruiker<br />en groep 'webdav' handmatig aan de share toe te voegen."
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
-msgstr ""
+msgstr "WebDAV-share"
 
 #: sharing/models.py:375
-#, fuzzy
 msgid "WebDAV Shares"
-msgstr "Actieve Shares"
+msgstr "WebDAV-shares"
 
 #: storage/admin.py:263
 #: storage/admin.py:361
-#, fuzzy
 msgid "Edit Options"
-msgstr "ZFS-opties bewerken"
+msgstr "Opties bewerken"
 
 #: storage/admin.py:268
 #: storage/admin.py:367
-#, fuzzy
 msgid "Create Dataset"
-msgstr "ZFS-gegevensset aanmaken"
+msgstr "Gegevensset aanmaken"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
-msgstr ""
+msgstr "Hoofdlettergevoeligheid"
 
 #: system/admin.py:49
-#, fuzzy
 msgid "Internal"
-msgstr "Interval"
+msgstr "Intern"
 
 #: system/admin.py:54
 #: system/admin.py:148
 msgid "Issuer"
-msgstr ""
+msgstr "Uitgever"
 
 #: system/admin.py:59
 #: system/nav.py:91
 #: templates/system/index.html:27
-#, fuzzy
 msgid "Certificates"
-msgstr "Certificaat"
+msgstr "Certificaten"
 
 #: system/admin.py:64
 #: system/admin.py:153
-#, fuzzy
 msgid "Distinguished Name"
-msgstr "Naam van gegevensset"
+msgstr "Distinguished Name"
 
 #: system/admin.py:74
 #: system/admin.py:163
 msgid "Until"
-msgstr ""
+msgstr "Tot"
 
 #: system/forms.py:163
-#, fuzzy
 msgid "Failed to create a new Boot."
-msgstr "Aanmaken van ZFS is mislukt: %s"
+msgstr "Aanmaken van nieuwe boot is mislukt."
 
 #: system/forms.py:183
-#, fuzzy
 msgid "Failed to rename Boot Environment."
-msgstr "Aanmaken van ZFS is mislukt: %s"
+msgstr "Hernoemen van opstartomgeving is mislukt."
 
 #: system/forms.py:1028
-#, fuzzy
 msgid "Place to temporarily place update file"
-msgstr "Locatie om het PBI bestand tijdelijk te bewaren"
+msgstr "Locatie om het updatebestand tijdelijk te bewaren"
 
 #: system/forms.py:1030
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the update file before "
 "it's being applied."
 msgstr ""
-"Het systeem zal deze locatie gebruiken om het firmwarebestand tijdelijk te "
+"Het systeem zal deze locatie gebruiken om het updatebestand tijdelijk te "
 "bewaren voordat het wordt toegepast."
 
 #: system/forms.py:1062
-#, fuzzy
 msgid "Update file to be installed"
-msgstr "Te installeren PBI-bestand"
+msgstr "Te installeren updatebestand"
 
 #: system/forms.py:1924
 #: system/forms.py:1952
@@ -10768,32 +10752,28 @@ msgstr "Te installeren PBI-bestand"
 #: system/forms.py:2237
 #: system/forms.py:2279
 #: system/forms.py:2395
-#, fuzzy
 msgid "Descriptive Name"
-msgstr "Beschrijving"
+msgstr "Beschrijvende naam"
 
 #: system/forms.py:1930
 #: system/forms.py:1958
 #: system/forms.py:2214
 #: system/forms.py:2243
 #: system/models.py:589
-#, fuzzy
 msgid "Cut and paste the contents of your certificate here"
-msgstr ""
-"Knip en plak hier de inhoud van uw openbare en privécertificaatbestanden."
+msgstr "Knip en plak hier de inhoud van uw certificaat"
 
 #: system/forms.py:1935
 #: system/forms.py:1963
-#, fuzzy
 msgid "Serial for next Certificate"
-msgstr "Zelfondertekend certificaat"
+msgstr "Serienummer voor volgende certificaat"
 
 #: system/forms.py:1997
 #: system/forms.py:2089
 #: system/forms.py:2282
 #: system/forms.py:2398
 msgid "Key Length"
-msgstr ""
+msgstr "Sleutellengte"
 
 #: system/forms.py:2003
 #: system/forms.py:2095
@@ -10801,290 +10781,284 @@ msgstr ""
 #: system/forms.py:2404
 #: system/models.py:613
 msgid "Digest Algorithm"
-msgstr ""
+msgstr "Digest-algoritme"
 
 #: system/forms.py:2009
 #: system/forms.py:2101
 #: system/forms.py:2294
 #: system/models.py:619
 msgid "Lifetime"
-msgstr ""
+msgstr "Levensduur"
 
 #: system/forms.py:2246
 #: system/models.py:594
-#, fuzzy
 msgid "Private Key"
-msgstr "Privésleutel van host"
+msgstr "Privésleutel"
 
 #: system/forms.py:2242
-#, fuzzy
 msgid "Certificate Signing Request"
-msgstr "TLS: geen certificaataanvraag"
+msgstr "Aanvraag voor certificaatondertekening"
 
 #: system/forms.py:2249
 #: system/models.py:595
-#, fuzzy
 msgid "Cut and paste the contents of your private key here"
-msgstr ""
-"Knip en plak hier de inhoud van uw openbare en privécertificaatbestanden."
+msgstr "Knip en plak hier de inhoud van uw privésleutel"
 
 #: system/models.py:550
 msgid "Check Automatically For Updates"
-msgstr ""
+msgstr "Automatisch controleren op updates"
 
 #: system/utils.py:82
-#, fuzzy
 msgid "Downloading"
-msgstr "Sleutel downloaden"
+msgstr "Downloaden"
 
 #: system/utils.py:103
-#, fuzzy
 msgid "Installing"
 msgstr "Installeren"
 
 #: system/nav.py:32
 #: templates/system/index.html:9
 msgid "Boot"
-msgstr ""
+msgstr "Opstarten"
 
 #: system/models.py:583
-#, fuzzy
 msgid "Descriptive Name)"
-msgstr "Beschrijving"
+msgstr "Beschrijvende naam)"
 
 #: system/models.py:600
 msgid "Signing Request"
-msgstr ""
+msgstr "Aanvraag voor ondertekening"
 
 #: system/models.py:601
-#, fuzzy
 msgid "Cut and paste the contents of your CSR here"
-msgstr ""
-"Knip en plak hier de inhoud van uw openbare en privécertificaatbestanden."
+msgstr "Knip en plak hier de inhoud van uw CSR."
 
 #: system/models.py:606
 msgid "Key length"
-msgstr ""
+msgstr "Sleutellengte"
 
 #: system/models.py:669
-#, fuzzy
 msgid "Serial for next certificate"
-msgstr "Zelfondertekend certificaat"
+msgstr "Serienummer voor volgende certificaat"
 
 #: system/views.py:163
 #: system/views.py:164
 #: system/views.py:165
-#, fuzzy
 msgid "Create"
-msgstr "Zvol aanmaken"
+msgstr "Aanmaken"
 
 #: system/models.py:675
 msgid "Signing Certificate Authority"
-msgstr ""
+msgstr "Certificeringsinstantie voor ondertekening"
 
 #: system/views.py:171
 #: system/views.py:172
 #: system/views.py:176
-#, fuzzy
 msgid "Activate"
-msgstr "Actief"
+msgstr "Activeren"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Certificate Authority"
-msgstr "Certificaat"
+msgstr "Certificeringsinstantie"
 
 #: system/views.py:189
-#, fuzzy
 msgid "Created"
-msgstr "Zvol aanmaken"
+msgstr "Gemaakt"
 
 #: system/views.py:203
-#, fuzzy
 msgid "Boot Environment successfully activated."
-msgstr "Gegevensset met succes bewerkt."
+msgstr "Opstartomgeving met succes geactiveerd."
 
 #: system/views.py:207
 msgid "Failed to activate Boot Environment."
-msgstr ""
+msgstr "Activeren van opstartomgeving is mislukt."
 
 #: system/views.py:221
-#, fuzzy
 msgid "Boot Environment successfully added."
-msgstr "Volume met succes toegevoegd."
+msgstr "Opstartomgeving met succes toegevoegd."
 
 #: system/views.py:178
 #: system/views.py:179
 #: system/views.py:180
-#, fuzzy
 msgid "Rename"
-msgstr "Gebruikersnaam"
+msgstr "Hernoemen"
 
 #: system/nav.py:83
 #: templates/system/index.html:24
 msgid "CAs"
-msgstr ""
+msgstr "CA's"
 
 #: system/views.py:238
-#, fuzzy
 msgid "Boot Environment successfully deleted."
-msgstr "Momentopname met succes verwijderd."
+msgstr "Opstartomgeving met succes verwijderd."
 
 #: system/views.py:242
 msgid "Failed to delete Boot Environment."
-msgstr ""
+msgstr "Verwijderen van opstartomgeving is mislukt."
 
 #: system/views.py:260
-#, fuzzy
 msgid "Boot Environment successfully renamed."
-msgstr "Volume met succes toegevoegd."
+msgstr "Opstartomgeving met succes hernoemd."
 
 #: system/views.py:896
-#, fuzzy
 msgid "Certificate Authority successfully imported."
-msgstr "Jail succesvol geimporteerd."
+msgstr "Certificeringsinstantie met succes geïmporteerd."
 
 #: system/views.py:915
-#, fuzzy
 msgid "Internal Certificate Authority successfully created."
-msgstr "Jail-sjabloon met succes bewerkt."
+msgstr "Interne certificeringsinstantie met succes aangemaakt."
 
 #: system/views.py:934
 msgid "Intermediate Certificate Authority successfully created."
-msgstr ""
+msgstr "Tussenliggende certificeringsinstantie met succes aangemaakt."
 
 #: system/views.py:1206
-#, fuzzy
 msgid "Internal Certificate Viewed."
-msgstr "SSL-certificaat instellen"
+msgstr "Intern certificaat bekeken."
 
 #: system/views.py:955
-#, fuzzy
 msgid "Certificate Authority successfully edited."
-msgstr "Gegevensset met succes bewerkt."
+msgstr "Certificeringsinstantie met succes bewerkt."
 
 #: system/views.py:1003
-#, fuzzy
 msgid "Certificate successfully imported."
-msgstr "Jail succesvol geimporteerd."
+msgstr "Certificaat met succes geïmporteerd."
 
 #: system/views.py:1022
-#, fuzzy
 msgid "Internal Certificate successfully created."
-msgstr "Jail-sjabloon met succes bewerkt."
+msgstr "Intern certificaat met succes aangemaakt."
 
 #: system/views.py:1041
-#, fuzzy
 msgid "Certificate CSR successfully created."
-msgstr "Gegevensset met succes bewerkt."
+msgstr "Certificaat-CSR met succes aangemaakt."
 
 #: system/views.py:1062
-#, fuzzy
 msgid "Internal Certificate successfully edited."
-msgstr "Jail-sjabloon met succes bewerkt."
+msgstr "Intern certificaat met succes bewerkt."
 
 #: system/views.py:1083
-#, fuzzy
 msgid "CSR successfully edited."
-msgstr "Succesvol gewijzigd"
+msgstr "CSR met succes bewerkt."
 
 #: templates/freeadmin/generic_model_delete.html:31
-#, fuzzy
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "Weet u zeker dat u \"%(name)s\" wilt vernietigen?"
+msgstr "Weet u zeker dat u %(verbose_name)s %(object)s wilt verwijderen?"
 
 #: templates/services/core.html:170
-#, fuzzy
 msgid "WebDAV Settings"
-msgstr "LDAP Instellingen"
+msgstr "WebDAV-instellingen"
 
 #: templates/storage/index.html:24
-#, fuzzy
 msgid "Scrubs"
-msgstr "Reinigen"
+msgstr "Reinigingen"
 
 #: templates/storage/index.html:31
-#, fuzzy
 msgid "Snapshots"
-msgstr "Momentopname"
+msgstr "Momentopnamen"
 
 #: templates/system/upgrade.html:22
 msgid "You're about to upgrade. The following packages will be changed:"
 msgstr ""
+"U gaat een upgrade uitvoeren. De volgende pakketten zullen worden gewijzigd:"
 
 #: templates/system/upgrade.html:24
-#, fuzzy
 msgid "Are you sure you want to continue?"
-msgstr "Weet u zeker dat u offline wilt gaan?"
+msgstr "Weet u zeker dat u wilt doorgaan?"
 
 #: templates/system/upgrade.html:26
-#, fuzzy
 msgid "No updates available"
-msgstr "Geen ZFS replicatie beschikbaar"
+msgstr "Geen updates beschikbaar"
 
 #: templates/system/upgrade_edit.html:7
 #: templates/system/upgrade_edit.html:9
 msgid "Check for Updates"
-msgstr ""
+msgstr "Controleren op updates"
 
 #: templates/system/certificate_datagrid.html:4
-#, fuzzy
 msgid "Import Certificate"
-msgstr "Certificaat"
+msgstr "Certificaat importeren"
 
 #: templates/system/bootenv_activate.html:4
-#, fuzzy
 msgid "Activate boot environment %(name)s"
-msgstr "Creëer ZFS Volume op %(name)s"
+msgstr "Opstartomgeving %(name)s activeren"
 
 #: templates/system/certificate_datagrid.html:11
 #: templates/system/certificate_datagrid.html:13
-#, fuzzy
 msgid "Create Internal Certificate"
-msgstr "SSL-certificaat instellen"
+msgstr "Intern certificaat aanmaken"
 
 #: templates/system/bootenv_add.html:4
 msgid "Create boot environment from %(source)s"
-msgstr ""
+msgstr "Opstartomgeving aanmaken vanaf %(source)s"
 
 #: templates/system/certificate_datagrid.html:18
 #: templates/system/certificate_datagrid.html:20
-#, fuzzy
 msgid "Create Certificate Signing Request"
-msgstr "TLS: geen certificaataanvraag"
+msgstr "Aanvraag voor certificaatondertekening aanmaken"
 
 #: templates/system/bootenv_delete.html:4
-#, fuzzy
 msgid "Are you sure you want to delete %(name)s?"
-msgstr "Weet u zeker dat u \"%(name)s\" wilt vernietigen?"
+msgstr "Weet u zeker dat u %(name)s wilt verwijderen?"
 
 #: templates/system/bootenv_datagrid.html:9
-#, fuzzy
 msgid "Create Boot"
-msgstr "Zvol aanmaken"
+msgstr "Boot aanmaken"
 
 #: templates/system/certificateauthority_datagrid.html:4
-#, fuzzy
 msgid "Import CA"
-msgstr "Importeren"
+msgstr "CA importeren"
 
 #: templates/system/certificateauthority_datagrid.html:11
 #: templates/system/certificateauthority_datagrid.html:13
 msgid "Create Internal CA"
-msgstr ""
+msgstr "Interne CA aanmaken"
 
 #: templates/system/certificateauthority_datagrid.html:18
 #: templates/system/certificateauthority_datagrid.html:20
 msgid "Create Intermediate CA"
-msgstr ""
+msgstr "Tussenliggende CA aanmaken"
 
 #: templates/system/bootenv_rename.html:4
-#, fuzzy
 msgid "Rename boot environment %(name)s"
-msgstr "Creëer ZFS Volume op %(name)s"
+msgstr "Opstartomgeving %(name)s hernoemen"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "Update toepassen"
+msgstr "Handmatige update"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+"IP-adres(sen) waarmee wordt gebonden. Als niets is opgegeven, wordt op "
+"actieve beschikbare interfaces geluisterd."
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+msgid "Import Disk"
+msgstr "Schijf importeren"
+
+#: system/forms.py:1852
+msgid "Root E-mail"
+msgstr "E-mailadres van root"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr "Gebruikte beheer-e-mailadres voor waarschuwingen."
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr "Consoleberichten"
+
+#: system/forms.py:1848
+msgid "Show console messages in the footer."
+msgstr "Consoleberichten in de voettekst tonen."
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr "Klonen"
