@@ -438,7 +438,7 @@ class Configuration(object):
                     if TRAIN_DESC_KEY in trains[train_name]:
                         temp.SetDescription(trains[train_name][TRAIN_DESC_KEY])
                     if TRAIN_SEQ_KEY in trains[train_name]:
-                        temp.SetSequence(trains[train_name][TRAIN_SEQ_KEY])
+                        temp.SetLastSequence(trains[train_name][TRAIN_SEQ_KEY])
                     if TRAIN_CHECKED_KEY in trains[train_name]:
                         temp.SetLastCheckedTime(trains[train_name][TRAIN_CHECKED_KEY])
                     self._trains[train_name] = temp
@@ -470,8 +470,8 @@ class Configuration(object):
                 temp = {}
                 if train.Description():
                     temp[TRAIN_DESC_KEY] = train.Description()
-                if train.Sequence():
-                    temp[TRAIN_SEQ_KEY] = train.Sequence()
+                if train.LastSequence():
+                    temp[TRAIN_SEQ_KEY] = train.LastSequence()
                 if train.LastCheckedTime():
                     temp[TRAIN_CHECKED_KEY] = train.LastCheckedTime()
                 obj[train_name] = temp
