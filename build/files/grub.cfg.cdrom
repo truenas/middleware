@@ -47,7 +47,7 @@ insmod gfxmenu
 insmod png
 set timeout=15
 
-menuentry "FreeNAS Installer" {
+menuentry "%NANO_LABEL% Installer" {
   kfreebsd /boot/kernel/kernel
   kfreebsd_loadenv /boot/device.hints
   set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/%CDROM_LABEL%

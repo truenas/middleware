@@ -15,13 +15,14 @@ licenses = [BSD, MIT, GPL]
 
 post-install = /usr/bin/touch /boot/kernel/linker.hints
 	/usr/bin/touch /boot/modules/linker.hints
-	if test -f /data/factory-v1.db ; then
-		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all ;
-	fi
 
 post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
 	     /usr/bin/touch /boot/modules/linker.hints
-	     /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all
+	/usr/bin/touch /data/cd-upgrade
+	/usr/bin/touch /data/need-update
+#	test -f /data/freenas-v1.db && \
+#	     /usr/bin/yes | /usr/local/bin/python \
+#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
 
 [Files]
 exclude = /usr/local/www/freenasUI

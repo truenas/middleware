@@ -19,6 +19,17 @@ include = /usr/local/www/freenasUI
 # Fresh installs don't need this.
 # However, if the package name changed, we would.
 
-post-install = test -f /data/freenas-v1.db && /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all
+post-install = 
+	if [ -f /data/freenas-v1.db ]; then
+	   /usr/bin/touch /data/cd-upgrade
+	   /usr/bin/touch /data/need-update
+	fi
+#	test -f /data/freenas-v1.db && \
+#		/usr/bin/yes | /usr/local/bin/python \
+#		            /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
 
-post-upgrade = /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all
+post-upgrade = 
+	/usr/bin/touch /data/cd-upgrade
+	/usr/bin/touch /data/need-update
+#	/usr/bin/yes | /usr/local/bin/python \
+#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations

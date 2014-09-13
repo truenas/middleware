@@ -450,10 +450,28 @@ disk_is_freenas()
     cp -pR /tmp/data_old/. /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
-	mount ${os_part} /tmp/data_old
-        # ah my old friend, the can't see the mount til I access the mountpoint
-        # bug
-        ls /tmp/data_old > /dev/null
+	# For GUI upgrades, we only have one OS partition
+	# that has conf/base/etc.  For ISO upgrades, we
+	# have two, but only one is active.
+	slice=$(gpart show ${_disk} | grep -F '[active]' | awk ' { print $3;}')
+	if [ -z "${slice}" ]; then
+	    # We don't have an active slice, so something is wrong.
+	    return 1
+	fi
+	mount /dev/${_disk}s${slice}a /tmp/data_old
+	ls /tmp/data_old > /dev/null
+	if [ ! -d /tmp/data_old/conf/base/etc ]
+	then
+	    # Mount the other partition
+	    if [ "${slice}" -eq 1 ]; then
+		slice=2
+	    else
+		slice=1
+	    fi
+	    umount /tmp/data_old
+	    mount /dev/${_disk}s${slice}a /tmp/data_old
+	    ls /tmp/data_old > /dev/null
+	fi
 	if [ -f /tmp/data_old/conf/base/etc/hostid ]; then
 	    cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
 	fi
@@ -515,7 +533,7 @@ menu_install()
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
 
-    if [ $# -gt 1 ]; then
+    if [ $# -gt 0 ]; then
 	_disks="$@"
 	interactive=false
     else
@@ -608,7 +626,7 @@ menu_install()
 	    exit 1
 	fi
 	break
-    elif [ ${_satadom} -a -c /dev/ufs/TrueNASs4 ]; then
+    elif [ "${_satadom}" = "YES" -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
 	_disk_old=`glabel status | grep ' ufs/TrueNASs4 ' | awk '{ print $3 }' | sed -e 's,s4$,,g'`
 	if disk_is_freenas ${_disk_old} ; then
@@ -633,7 +651,8 @@ menu_install()
     if ${interactive}; then
 	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
     else
-	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed.\" ; sleep 15" EXIT
+#	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed.\" ; sleep 15" EXIT
+	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
     fi
     set -e
 #    set -x
@@ -649,7 +668,36 @@ menu_install()
         /etc/rc.d/dmesg start
         mkdir -p /tmp/data
 	if [ "${upgrade_style}" = "old" ]; then
-		mount /dev/${_disk}s1a /tmp/data
+	    	# For old style, we have two potential
+	    	# partitions to look at:  s1a and s2a.
+		# 
+	    slice=$(gpart show ${_disk} | grep -F '[active]' | awk ' { print $3;}')
+	    if [ -z "${slice}" ]; then
+		# We don't have an active slice, so something is wrong.
+		false
+	    fi
+	    mount /dev/${_disk}s${slice}a /tmp/data
+	    ls /tmp/data > /dev/null
+	    if [ ! -d /tmp/data/conf/base/etc ]
+	    then
+		# Mount the other partition
+		if [ "${slice}" -eq 1 ]; then
+		    slice=2
+		else
+		    slice=1
+		fi
+		umount /tmp/data
+		mount /dev/${_disk}s${slice}a /tmp/data
+		ls /tmp/data > /dev/null
+	    fi
+	    # pre-avatar.conf build. Convert it!
+	    if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]
+	    then
+		upgrade_version_to_avatar_conf \
+		    /tmp/data/conf/base/etc/version* \
+		    /etc/avatar.conf \
+		    /tmp/data/conf/base/etc/avatar.conf
+	    fi
 	elif [ "${upgrade_style}" = "new" ]; then
 		zpool import -f -N ${POOL}
 		mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
@@ -657,17 +705,6 @@ menu_install()
 		echo "Unknown upgrade style" 1>&2
 		false
 	fi
-	# XXX need to find out why
-	ls /tmp/data > /dev/null
-        # pre-avatar.conf build. Convert it!
-        if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]
-        then
-            upgrade_version_to_avatar_conf \
-		    /tmp/data/conf/base/etc/version* \
-		    /etc/avatar.conf \
-		    /tmp/data/conf/base/etc/avatar.conf
-        fi
-
 	# This needs to be rewritten.
         install_worker.sh -D /tmp/data -m / pre-install
         umount /tmp/data
@@ -709,7 +746,9 @@ menu_install()
     fi
     
     # Tell it to look in /.mount for the packages.
-    /usr/local/bin/freenas-install -P /.mount/FreeNAS/Packages -M /.mount/FreeNAS-MANIFEST /tmp/data
+    /usr/local/bin/freenas-install -P /.mount/${AVATAR_PROJECT:-FreeNAS}/Packages \
+	-M /.mount/${AVATAR_PROJECT:-FreeNAS}-MANIFEST \
+	/tmp/data
     
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
@@ -765,11 +804,15 @@ menu_install()
 #    set +x
     if [ -d /tmp/data_preserved ]; then
 	# Instead of sentinel files, let's just migrate!
-	chroot /tmp/data /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all
+	# Unfortunately, this doesn't seem to work well.
+	# This should be investigated.
+#	chroot /tmp/data /bin/sh -c "/usr/bin/yes | \
+#		/usr/local/bin/python
+#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations"
 	# Create upgrade sentinel files
-#	: > /tmp/data/${CD_UPGRADE_SENTINEL}
-#	: > /tmp/data/${NEED_UPDATE_SENTINEL}
-#	${interactive} && dialog --msgbox "The installer has preserved your database file.
+	: > /tmp/data/${CD_UPGRADE_SENTINEL}
+	: > /tmp/data/${NEED_UPDATE_SENTINEL}
+	${interactive} && dialog --msgbox "The installer has preserved your database file.
 #$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	# Set the root password
