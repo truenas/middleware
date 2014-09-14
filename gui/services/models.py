@@ -584,7 +584,7 @@ class iSCSITargetExtent(Model):
             )
     iscsi_target_extent_insecure_tpc = models.BooleanField(
             default=True,
-            verbose_name=_("Enable TPC")
+            verbose_name=_("Enable TPC"),
             help_text=_("Allow initiators to xcopy without authenticating to foreign targets.")
             )
 
