@@ -1,4 +1,4 @@
-Release Notes for FreeNAS 9.2.1.8-BETA
+Release Notes for FreeNAS 9.2.1.8-RELEASE
 
 o Fix bug where use of NONE cipher in replication erroneously reported an
   error on a successful replication.
@@ -8,4 +8,24 @@ o Don't enable lz4 compression on replication by default if upgrading from
 
 o Multiple kernel iSCSI / CTL improvements.  This includes VMWare VAAI and
   Microsoft ODX acceleration support, improved performance and fixes for
-  number of bugs.
+  number of bugs. Kernel iSCSI can be activated by checking the experimental
+  target checkbox under services -> iSCSI.
+
+o Improve performance of viewing snapshots when replication tasks are set up.
+
+o Allow binding CIFS to specific IPs.
+
+o Fix LDAP bind URL when using TLS.
+
+o Validate AD advanced settings.  If the GC or DC are manually specified
+  make sure they are reachable.
+
+o Set UNIX permissions when the Mac permissions radio button is selected.
+  Netatalk does not play nicely with ACLs.
+
+o Fix a bug in the mail sending routines used by FreeNAS. With some mailserver
+  configurations the To: address could've been set to root instead of the
+  address specified in the root user.
+
+o Fix a bug that prevented  the system from showing the replicated status of
+  a snapshot if the remote path differed from the local path.
