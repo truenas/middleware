@@ -53,7 +53,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Update
+from freenasOS import Update, Configuration
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
@@ -1885,9 +1885,23 @@ class InitialWizardConfirmForm(Form):
 
 class UpgradeForm(ModelForm):
 
+    trains = forms.MultipleChoiceField(
+        label=_('Trains'),
+        widget=forms.CheckboxSelectMultiple,
+    )
+
     class Meta:
         fields = '__all__'
         model = models.Upgrade
+
+    def __init__(self, *args, **kwargs):
+        super(UpgradeForm, self).__init__(*args, **kwargs)
+        conf = Configuration.Configuration()
+        choices = []
+        for name in conf.AvailableTrains().keys():
+            choices.append((name, name))
+        self.fields['trains'].choices = choices
+        self.fields['trains'].initial = conf.WatchedTrains()
 
 
 class CertificateAuthorityForm(ModelForm):
