@@ -53,7 +53,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Update, Configuration
+from freenasOS import Configuration, Train, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
@@ -1896,12 +1896,28 @@ class UpgradeForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UpgradeForm, self).__init__(*args, **kwargs)
-        conf = Configuration.Configuration()
-        choices = []
-        for name in conf.AvailableTrains().keys():
-            choices.append((name, name))
-        self.fields['trains'].choices = choices
-        self.fields['trains'].initial = conf.WatchedTrains()
+        self._conf = Configuration.Configuration()
+        self._conf.LoadTrainsConfig()
+        self._tchoices = []
+        for name in self._conf.AvailableTrains().keys():
+            self._tchoices.append((name, name))
+        self.fields['trains'].choices = self._tchoices
+        self.fields['trains'].initial = self._conf.WatchedTrains()
+        log.error("trains w %r", self._conf.WatchedTrains())
+
+    def save(self, *args, **kwargs):
+        obj = super(UpgradeForm, self).save(*args, **kwargs)
+
+        watched = self._conf.WatchedTrains() or []
+        for name, desc in self._tchoices:
+            if name in self.cleaned_data.get('trains'):
+                if name not in watched:
+                    self._conf.WatchTrain(Train.Train(name), watch=True)
+            else:
+                if name in watched:
+                    self._conf.WatchTrain(Train.Train(name), watch=False)
+        self._conf.SaveTrainsConfig()
+
 
 
 class CertificateAuthorityForm(ModelForm):
