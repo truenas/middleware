@@ -48,6 +48,7 @@ class AddVolume(TreeNode):
     app_name = 'storage'
     model = 'Volumes'
     skip = True
+    order = -20
 
 
 class ImportDisk(TreeNode):
