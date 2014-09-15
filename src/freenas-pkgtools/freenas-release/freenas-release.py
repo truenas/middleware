@@ -436,9 +436,9 @@ class FSReleaseDB(ReleaseDB):
             P = Package.Package(pkg, pkg_version, cksum)
             if debug:  print >> sys.stderr, "\tP = %s-%s" % (P.Name(), P.Version())
             rv.append(P)
-        if name:
-            if len(rv) != 1:
-                raise Exception("Too many results:  %s" % rv)
+        if rv and name:
+            if len(rv) > 1:
+                raise Exception("Too many results for packge %s:  expected 1, got %d" % (P.Name(), len(rv)))
             return rv[0]
         return rv
 
@@ -732,9 +732,9 @@ class SQLiteReleaseDB(ReleaseDB):
             if debug:  print >> sys.stderr, "Found package %s-%s" % (pkg['PkgName'], pkg['PkgVersion'])
             p = Package.Package(pkg["PkgName"], pkg["PkgVersion"], None)
             rv.append(p)
-        if name:
-            if len(rv) != 1:
-                raise Exception("Too many results: %s" % rv)
+        if rv and name:
+            if len(rv) > 1:
+                raise Exception("Too many results for packge %s:  expected 1, got %d" % (P.Name(), len(rv)))
             return rv[0]
         return rv
 
@@ -876,7 +876,7 @@ def usage():
 """ % sys.argv[0]
     sys.exit(1)
 
-def ProcessRelease(source, archive, db = None, sign = False):
+def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/FreeNAS-MANIFEST, which will tell us
@@ -900,7 +900,7 @@ def ProcessRelease(source, archive, db = None, sign = False):
     manifest = Manifest.Manifest()
     if manifest is None:
         raise Exception("Could not create a manifest object")
-    manifest.LoadPath(source + "/FreeNAS-MANIFEST")
+    manifest.LoadPath(source + "/%s-MANIFEST" % project)
 
     # Okay, let's see if this train has any prior entries in the database
     previous_sequences = db.RecentSequencesForTrain(manifest.Train())
@@ -992,12 +992,12 @@ def ProcessRelease(source, archive, db = None, sign = False):
         os.makedirs("%s/%s" % (archive, manifest.Train()))
     except:
         pass
-    manifest.StorePath("%s/%s/FreeNAS-%s" % (archive, manifest.Train(), manifest.Sequence()))
+    manifest.StorePath("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()))
     try:
         os.unlink("%s/%s/LATEST" % (archive, manifest.Train()))
     except:
         pass
-    os.symlink("FreeNAS-%s" % manifest.Sequence(), "%s/%s/LATEST" % (archive, manifest.Train()))
+    os.symlink("%s-%s" % (project, manifest.Sequence()), "%s/%s/LATEST" % (archive, manifest.Train()))
 
     if db is not None:
         db.AddRelease(manifest.Sequence(),
@@ -1010,7 +1010,7 @@ def ProcessRelease(source, archive, db = None, sign = False):
                 o_cksm = upd[Package.CHECKSUM_KEY]
                 db.AddPackageUpdate(pkg, o_vers, o_cksm)
 
-def Check(archive, db):
+def Check(archive, db, project = "FreeNAS"):
     """
     Given an archive location -- the target of ProcessRelease -- compare
     the database contents with the filesystem layout.  We're looking for
@@ -1076,8 +1076,8 @@ def Check(archive, db):
         # those to expected_packages.
         for sequence_file in sequences[t]:
             if sequence_file != "LATEST":
-                mani_path = "%s/FreeNAS-%s" % (t_dir, sequence_file)
-                expected_contents["FreeNAS-%s" % sequence_file] = True
+                mani_path = "%s/%s-%s" % (t_dir, project, sequence_file)
+                expected_contents["%s-%s" % (project, sequence_file)] = True
             else:
                 mani_path = "%s/%s" % (t_dir, sequence_file)
                 expected_contents[sequence_file] = True
@@ -1153,17 +1153,19 @@ def main():
     # Variables set via getopt
     # It may be possible to have reasonable defaults for these.
     archive = None
+    project_name = "FreeNAS"
     # Work on this
     Database = None
 
     # Locabl variables
     db = None
 
-    options = "a:D:dv"
-    long_options = ["--archive=", "--destination=",
-                 "--database=",
-                 "--debug", "--verbose",
-                    ]
+    options = "a:D:dvP"
+    long_options = ["archive=", "destination=",
+                    "database=",
+                    "debug", "verbose",
+                    "project=",
+                ]
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], options, long_options)
@@ -1180,6 +1182,9 @@ def main():
             debug += 1
         elif o in ('-v', '--verbose'):
             verbose += 1
+        elif o in ('-P', '--project'):
+            # Not implemented yet, just laying the groundwork
+            if False: project_name = a
         else:
             usage()
 
@@ -1207,9 +1212,9 @@ def main():
             print >> sys.stderr, "No source directories specified"
             usage()
         for source in args:
-            ProcessRelease(source, archive, db)
+            ProcessRelease(source, archive, db, project = project_name)
     elif cmd == "check":
-        Check(archive, db)
+        Check(archive, db, project = project_name)
     else:
         print >> sys.stderr, "Unknown command %s" % cmd
         usage()
