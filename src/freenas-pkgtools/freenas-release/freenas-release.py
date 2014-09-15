@@ -732,9 +732,9 @@ class SQLiteReleaseDB(ReleaseDB):
             if debug:  print >> sys.stderr, "Found package %s-%s" % (pkg['PkgName'], pkg['PkgVersion'])
             p = Package.Package(pkg["PkgName"], pkg["PkgVersion"], None)
             rv.append(p)
-        if name:
-            if len(rv) != 1:
-                raise Exception("Too many results: %s" % rv)
+        if rv and name:
+            if len(rv) > 1:
+                raise Exception("Too many results for package %s:  expected 1, got %d" % (name, len(rv)))
             return rv[0]
         return rv
 
@@ -1160,9 +1160,9 @@ def main():
     db = None
 
     options = "a:D:dv"
-    long_options = ["--archive=", "--destination=",
-                 "--database=",
-                 "--debug", "--verbose",
+    long_options = ["archive=", "destination=",
+                 "database=",
+                 "debug", "verbose",
                     ]
 
     try:
