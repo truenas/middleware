@@ -215,14 +215,14 @@ hardware, an extra button will be added to "View Multipaths".
     :width: 5.3in
     :height: 4.5in
 
-If you click the entry for a volume, nine icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
+If you click the entry for a volume, four icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
 #.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
     volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1g, will show the
     current used space, provide the checkbox "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
     volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
-    will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported (ZFS volumes only).** This means that
-    the data is not destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
+    will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not
+    destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
     `export <http://docs.huihoo.com/opensolaris/solaris-zfs-administration-guide/html/ch04s06.html>`_
     action first. This operation flushes any unwritten data to disk, writes data to the disk indicating that the export was done, and removes all knowledge of
     the pool from the system.
@@ -233,25 +233,12 @@ If you click the entry for a volume, nine icons will appear at the bottom of the
     provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub
     left off.
 
-#.  **Edit ZFS Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
-    newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
-    applied when a file is written.
-
-#.  **Create ZFS Dataset:** allows you to create a dataset.
-
-#.  **Create zvol:** allows you to create a zvol to use as an iSCSI device extent.
-
-#.  **Change Permissions:** allows you to edit the volume's user, group, mode, permission type, and to enable recursive permissions on the volume's
-    subdirectories.
-
-#.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
-    wish to schedule the regular creation of snapshots, instead use :ref:`Periodic Snapshot Tasks`.
-
 #.  **Volume Status:** as seen in the example in Figure 8.1h, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
     device's options (shown in Figure 8.1i), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 #.  **Upgrade:** used to upgrade the ZFS version, as described in :ref:`Upgrading a ZFS Pool`.
+
 
 **Figure 8.1g: Detaching or Deleting a Volume**
 
@@ -283,9 +270,25 @@ configurable options.
 .. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level
    settings. As of 8.3.1, changes to these settings are applied immediately.
 
-A ZFS dataset only has six icons as the "Scrub Volume", "Volume Status", and "Upgrade" buttons only apply to volumes. In a dataset, the "Detach Volume" button
-is replaced with the "Destroy Dataset" button. If you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive
-action. The pop-up warning message will warn that destroying the dataset will delete all of the files and snapshots associated with that dataset.
+If you click the dataset of the volume (the second entry of the same name), or any other dataset, six icons will appear at the bottom of the screen. In order
+from left to right, these icons allow you to:
+
+#.  **Change Permissions:** allows you to edit the volume's user, group, mode, permission type, and to enable recursive permissions on the volume's
+    subdirectories.
+
+#.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
+    wish to schedule the regular creation of snapshots, instead use :ref:`Periodic Snapshot Tasks`.
+
+#. **Destroy Dataset:** if you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive action. The pop-up warning
+   message will warn that destroying the dataset will delete all of the files and snapshots associated with that dataset.
+
+#.  **Edit Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
+    newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
+    applied when a file is written.
+
+#.  **Create Dataset:** allows you to create a dataset.
+
+#.  **Create zvol:** allows you to create a zvol to use as an iSCSI device extent.
 
 .. _View Multipaths:
 
@@ -321,12 +324,12 @@ capable of active/read.
 Volume Manager
 ~~~~~~~~~~~~~~
 
-If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the ZFS Volume Manager to format the desired disks into a ZFS
+If you have unformatted disks or wish to overwrite the filesystem (and data) on your disks, use the Volume Manager to format the desired disks into a ZFS
 pool.
 
-If you are new to how ZFS handles redundancy, skim through the :ref:`ZFS Primer` before using ZFS Volume Manager.
+If you are new to how ZFS handles redundancy, skim through the :ref:`ZFS Primer` before using Volume Manager.
 
-If you click on :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, you will see a screen similar to the example shown in Figure 8.1k.
+If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you will see a screen similar to the example shown in Figure 8.1k.
 
 **Figure 8.1k: Creating a ZFS Pool Using Volume Manager**
 
@@ -367,15 +370,15 @@ Table 8.1b summarizes the configuration options of this screen.
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 
 
-To configure the pool, drag the slider to select the desired number of disks. The ZFS Volume Manager will display the resulting storage capacity, which takes
+To configure the pool, drag the slider to select the desired number of disks. The Volume Manager will display the resulting storage capacity, which takes
 swap into account. If you wish to change the layout or the number of disks, use the mouse to drag the slider to the desired volume layout. The drop-down menu
 can also be clicked to change the configuration if a different level of redundancy is required.
 
 .. note:: for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended,
    it is possible to create a volume in this situation by using the "Manual setup" button and following the instructions in :ref:`Manual Volume Creation`.
 
-ZFS Volume Manager will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. The following
-layouts are supported:
+Volume Manager will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. The following layouts
+are supported:
 
 * **Stripe:** requires at least one disk
 
@@ -537,7 +540,7 @@ to create a volume containing disks of different sizes or to put more than the r
 
 .. note:: when using disks of differing sizes, the volume is limited by the size of the smallest disk. When using more disks than are recommended for a vdev,
    you increase resilvering time and the risk that more than the allowable number of disks will fail before a resilver completes. For these reasons, it is
-   recommended to instead let the ZFS Volume Manager create an optimal pool for you, as described in ZFS Volume Manager, using same-size disks.
+   recommended to instead use Volume Manager and same-size disks.
 
 Figure 8.1m shows the "Manual Setup" screen and Table 8.1c summarizes the available options.
 
@@ -582,7 +585,7 @@ Figure 8.1m shows the "Manual Setup" screen and Table 8.1c summarizes the availa
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> ZFS Volume Manager`, shown in Figure 8.1n, can be used to add additional
+The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in Figure 8.1n, can be used to add additional
 disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
 
 **Figure 8.1n: Volume to Extend Field**
@@ -691,10 +694,10 @@ However, if you change from *Windows/Mac ACL* to
 When you select *Windows/Mac ACL*, the ACLs are set to what Windows sets on new files and directories by default. The Windows or Mac client should then be
 used to fine-tune the permissions as required.
 
-.. _Create ZFS Dataset:
+.. _Create Dataset:
 
-Create ZFS Dataset
-~~~~~~~~~~~~~~~~~~
+Create Dataset
+~~~~~~~~~~~~~~
 
 An existing ZFS volume can be divided into datasets. Permissions, compression, deduplication, and quotas can be set on a per dataset basis, allowing more
 granular control over access to storage data. A dataset is similar to a folder in that you can set permissions; it is also similar to a filesystem in that
@@ -702,12 +705,11 @@ you can set properties such as quotas and compression as well as create snapshot
 
 .. note:: ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
-If you select an existing :menuselection:`ZFS volume --> Create ZFS Dataset`, you will see the screen shown in Figure 8.1p.
+If you select an existing :menuselection:`ZFS volume --> Create Dataset`, you will see the screen shown in Figure 8.1p.
 
-Once a dataset is created, you can click on that dataset and select "Create ZFS Dataset", thus creating a nested dataset, or a dataset within a dataset. You
-can also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create ZFS Dataset" option for the intended volume or
-dataset. If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create ZFS Dataset" will be for
-the volume.
+Once a dataset is created, you can click on that dataset and select "Create Dataset", thus creating a nested dataset, or a dataset within a dataset. You can
+also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
+If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
 
 **Figure 8.1p: Creating a ZFS Dataset**
 
@@ -962,8 +964,8 @@ Removing or replacing a cache device will not result in any data loss, but may h
 Replacing Drives to Grow a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The recommended method for expanding the size of a ZFS pool is to pre-plan the number of disks in a vdev and to stripe additional vdevs using ZFS Volume
-Manager as additional capacity is needed.
+The recommended method for expanding the size of a ZFS pool is to pre-plan the number of disks in a vdev and to stripe additional vdevs using
+:ref:`Volume Manager` as additional capacity is needed.
 
 However, this is not an option if you do not have open drive ports or the ability to add a SAS/SATA HBA card. In this case, you can replace one disk at a time
 with a larger disk, wait for the resilvering process to incorporate the new disk into the pool completes, then repeat with another disk until all of the disks
@@ -1181,7 +1183,7 @@ administrators take snapshots often (e.g. every 15 minutes), store them for a pe
 Replication Tasks). Such a strategy allows the administrator to roll the system back to a specific time or, if there is a catastrophic loss, an off-site
 snapshot can restore the system up to the last snapshot interval.
 
-Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in ZFS Volume Manager.
+Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in :ref:`Volume Manager`.
 
 To create a periodic snapshot task, click :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot` which will open the screen shown in
 Figure 8.2a. Table 8.2a summarizes the fields in this screen.
@@ -1189,7 +1191,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 .. note:: if you just need a one-time snapshot, instead use :menuselection:`Storage --> Volumes --> View Volumes` and click the "Create Snapshot" button for
    the volume or dataset that you wish to snapshot.
 
-**Figure 8.2a: Creating a ZFS Periodic Snapshot**
+**Figure 8.2a: Creating a Periodic Snapshot**
 
 |periodic1.png|
 
@@ -1248,79 +1250,6 @@ Click an entry to access its "Modify" and "Delete" buttons.
     :width: 4.5in
     :height: 4.5in
 
-Click the "ZFS Snapshots" tab to review the listing of available snapshots. An example is shown in Figure 8.2c.
-
-.. note:: if snapshots do not appear, check that the current time does not conflict with the begin, end, and interval settings. If the snapshot was attempted
-   but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in Shell.
-
-**Figure 8.2c: Viewing Available Snapshots**
-
-|periodic3.png|
-
-.. |periodic3.png| image:: images/periodic3.png
-    :width: 11.1in
-    :height: 4.5in
-
-The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
-
-**Used:** indicates the amount of space consumed by this dataset and all its descendents. This value is checked against this dataset's quota and reservation.
-The space used does not include this dataset's reservation, but does take into account the reservations of any descendent datasets. The amount of space that
-a dataset consumes from its parent, as well as the amount of space that are freed if this dataset is recursively destroyed, is the greater of its space used
-and its reservation. When a snapshot is created, its space is initially shared between the snapshot and the filesystem, and possibly with previous snapshots.
-As the filesystem  changes, space  that was previously shared becomes unique to the snapshot, and is counted in the snapshot's space used. Additionally,
-deleting snapshots can increase the amount of space unique to (and used by) other snapshots. The  amount of space used, available, or referenced does not take
-into account pending changes. While pending changes are generally accounted for within a few  seconds, disk changes do not necessarily guarantee that the
-space usage information is updated immediately.
-
-**Refer:** indicates the amount of data that is accessible by this dataset, which may or may not be shared  with other  datasets  in  the pool. When a
-snapshot or clone is created, it initially references the same amount of space as the file system or snapshot it was created from, since its contents are
-identical.
-
-It will also indicate if the snapshot has been replicated to a remote system.
-
-The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
-
-**Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
-which can be mounted, the clone will appear in the "Active Volumes" tab, instead of the "Periodic Snapshots" tab, and will have the word *clone* in its name.
-
-**Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
-While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
-In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
-
-**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click "Yes", any files that have
-changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
-
-.. note:: rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
-   snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
-
-#.  Clone the desired snapshot.
-
-#.  Share the clone with the share type or service running on the FreeNAS® system.
-
-#.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
-
-This approach will never destroy any on-disk data and has no impact on replication.
-
-Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
-Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
-
-The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the "Define filter" icon (near the
-text "No filter applied"). When creating a filter:
-
-* select the column or leave the default of "Any Column".
-
-* select the condition. Possible conditions are: *contains* (default),
-  *is, starts with, ends with, does not contain, is not, does not start with, does not end with*, and
-  *is empty*.
-
-*   input a value that meets your view criteria.
-
-*   click the "Filter" button to save your filter and exit the define filter screen. Alternately, click the "+" button to add another filter.
-
-If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the "No filter
-applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
-available snapshots will be listed.
-
 .. _Replication Tasks:
 
 Replication Tasks
@@ -1334,7 +1263,7 @@ This section will refer to the system generating the ZFS snapshots as *PUSH* and
 
 Before you can configure a replication task, the following pre-requisites must be met:
 
-* a ZFS volume must exist on both *PUSH* and
+* a ZFS pool must exist on both *PUSH* and
   *PULL*.
 
 * a periodic snapshot task must be created on *PUSH*. You will not be able to create a replication task before the first snapshot exists.
@@ -1388,7 +1317,7 @@ Configure PUSH
 ~~~~~~~~~~~~~~
 
 On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots`.
+:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots`.
 
 To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task` which will open the screen shown in Figure 8.3b.
 For this example, the required configuration is as follows:
@@ -1489,7 +1418,7 @@ Once the replication task is created, it will appear in the "View Replication Ta
 
 *PUSH* will immediately attempt to replicate its latest snapshot to
 *PULL*. If the replication is successful, the snapshot will appear in the
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots` tab of *PULL*, as seen in Figure 8.3c. If the snapshot
+:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` tab of *PULL*, as seen in Figure 8.3c. If the snapshot
 is not replicated, see :ref:`Troubleshooting Replication` for troubleshooting tips.
 
 **Figure 8.3c: Verifying the Snapshot was Replicated**
@@ -1518,7 +1447,7 @@ Also check :file:`/var/log/auth.log` on *PULL* and :file:`/var/log/messages` on
 *PUSH* to see if either log gives an indication of the error.
 
 If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> ZFS Snapshots` check the box next to every snapshot except for the
+:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
 Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the
@@ -1621,3 +1550,77 @@ too intensive for your hardware, consider unchecking the "Enabled" button for th
 
 Snapshots
 -------------
+
+The "Snapshots" tab can be used to review the listing of available snapshots. An example is shown in Figure 8.5a.
+
+.. note:: if snapshots do not appear, check that the current time configured in :ref:`Periodic Snapshot Tasks` does not conflict with the "Begin", "End", and
+   "Interval" settings. If the snapshot was attempted but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in
+   :ref:`Shell`.
+
+**Figure 8.5a: Viewing Available Snapshots**
+
+|periodic3.png|
+
+.. |periodic3.png| image:: images/periodic3.png
+    :width: 11.1in
+    :height: 4.5in
+
+The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
+
+**Used:** indicates the amount of space consumed by this dataset and all its descendents. This value is checked against this dataset's quota and reservation.
+The space used does not include this dataset's reservation, but does take into account the reservations of any descendent datasets. The amount of space that
+a dataset consumes from its parent, as well as the amount of space that are freed if this dataset is recursively destroyed, is the greater of its space used
+and its reservation. When a snapshot is created, its space is initially shared between the snapshot and the filesystem, and possibly with previous snapshots.
+As the filesystem  changes, space  that was previously shared becomes unique to the snapshot, and is counted in the snapshot's space used. Additionally,
+deleting snapshots can increase the amount of space unique to (and used by) other snapshots. The  amount of space used, available, or referenced does not take
+into account pending changes. While pending changes are generally accounted for within a few  seconds, disk changes do not necessarily guarantee that the
+space usage information is updated immediately.
+
+**Refer:** indicates the amount of data that is accessible by this dataset, which may or may not be shared  with other  datasets  in  the pool. When a
+snapshot or clone is created, it initially references the same amount of space as the file system or snapshot it was created from, since its contents are
+identical.
+
+It will also indicate if the snapshot has been replicated to a remote system.
+
+The most recent snapshot will have 3 icons. The icons associated with a snapshot allow you to:
+
+**Clone Snapshot:** will prompt for the name of the clone to create. The clone will be a writable copy of the snapshot. Since a clone is really a dataset
+which can be mounted, the clone will appear in the "Active Volumes" tab, instead of the "Periodic Snapshots" tab, and will have the word *clone* in its name.
+
+**Destroy Snapshot:** a pop-up message will ask you to confirm this action. Child clones must be destroyed before their parent snapshot can be destroyed.
+While creating a snapshot is instantaneous, deleting a snapshot can be I/O intensive and can take a long time, especially when deduplication is enabled.
+In order to delete a block in a snapshot, ZFS has to walk all the allocated blocks to see if that block is used anywhere else; if it is not, it can be freed.
+
+**Rollback Snapshot:** a pop-up message will ask if you are sure that you want to rollback to this snapshot state. If you click "Yes", any files that have
+changed since the snapshot was taken will be reverted back to their state at the time of the snapshot.
+
+.. note:: rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
+   snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
+
+#.  Clone the desired snapshot.
+
+#.  Share the clone with the share type or service running on the FreeNAS® system.
+
+#.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
+
+This approach will never destroy any on-disk data and has no impact on replication.
+
+Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
+Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
+
+The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the "Define filter" icon (near the
+text "No filter applied"). When creating a filter:
+
+* select the column or leave the default of "Any Column".
+
+* select the condition. Possible conditions are: *contains* (default),
+  *is, starts with, ends with, does not contain, is not, does not start with, does not end with*, and
+  *is empty*.
+
+*   input a value that meets your view criteria.
+
+*   click the "Filter" button to save your filter and exit the define filter screen. Alternately, click the "+" button to add another filter.
+
+If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the "No filter
+applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
+available snapshots will be listed.
