@@ -5,7 +5,7 @@
 Directory Service
 =================
 
-FreeNAS® supports the following directory services:
+FreeNAS® supports integration with the following directory services:
 
 * :ref:`Active Directory` (for Windows 2000 and higher networks)
 
@@ -14,6 +14,8 @@ FreeNAS® supports the following directory services:
 * :ref:`NIS`
 
 * :ref:`NT4` (for Windows networks older than Windows 2000)
+
+It also supports :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs`.
 
 This section summarizes each of these services and their available configurations within the FreeNAS® GUI.
 
@@ -29,13 +31,14 @@ the users in a network, you do not have to recreate these user accounts on the F
 can import the account information and imported users can be authorized to access the CIFS shares on the FreeNAS® system.
 
 .. note:: if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
-   :menuselection:`Directory Services --> NT4` instead.
+   :ref:`NT4` instead.
 
 Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
 recommended that you upgrade before attempting Active Directory integration.
 
-**Before configuring the Active Directory service**, ensure name resolution is properly configured by :command:`ping`ing the domain name of the Active
-Directory domain controller from Shell on the FreeNAS® system. If the :command:`ping` fails, check the DNS server and default gateway settings in
+**Before configuring the Active Directory service**, ensure name resolution is properly configured by
+:command:`ping` ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the
+:command:`ping` fails, check the DNS server and default gateway settings in
 :menuselection:`Network --> Global Configuration` on the FreeNAS® system.
 
 Next, add a DNS record for the FreeNAS® system on the Windows server and verify that you can :command:`ping` the hostname of the FreeNAS® system from the
@@ -51,7 +54,7 @@ systems to:
 
 * be set to either localtime or universal time at the BIOS level
 
-Figure 9.1a shows the screen that appears when you click :menuselection:`Directory Services --> Active Directory`. Table 9.1a describes the configurable
+Figure 9.1a shows the screen that appears when you click :menuselection:`Directory Service --> Active Directory`. Table 9.1a describes the configurable
 options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always
 display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
@@ -81,11 +84,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use keytab               | checkbox      | only available in "Advanced Mode"; if selected, browse to the "Kerberos keytab"                                                            |
+| Use keytab               | checkbox      | only available in "Advanced Mode"; if selected, browse to the keytab with "Kerberos keytab"                                                |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | browse button | only available in Advanced Mode; browse to the location of the keytab created using the instructions in Using a                            |
-|                          |               | Keytab                                                                                                                                     |
+| Kerberos keytab          | browse button | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Encryption Mode          | drop-down     |                                                                                                                                            |
@@ -130,7 +132,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 | DNS timeout              | integer       | only available in "Advanced Mode"; in seconds, increase if AD DNS queries timeout                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Idmap backend            | drop-down     |                                                                                                                                            |
+| Idmap backend            | drop-down     | only available in "Advanced Mode";                                                                                                         |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Enable                   | checkbox      |                                                                                                                                            |
@@ -147,22 +149,18 @@ automatically once a day as a cron job.
    *$* exists in the domain administrator's password, kinit will report a "Password Incorrect" error and ldap_bind will report an "Invalid credentials
    (49)" error.
 
-Once you have configured the Active Directory service, start it in :menuselection:`Services --> Control Services --> Directory Services`. It may take a few
-minutes for the Active Directory information to be populated to the FreeNAS® system. Once populated, the AD users and groups will be available in the
-drop-down menus of the "Permissions" screen of a volume/dataset. For performance reasons, every available user may not show in the listing. However, it will
-autocomplete all applicable users if you start typing in a username.
+Once you have configured the Active Directory service, it may take a few minutes for the Active Directory information to be populated to the FreeNAS® system.
+Once populated, the AD users and groups will be available in the drop-down menus of the "Permissions" screen of a volume/dataset. For performance reasons,
+every available user may not show in the listing. However, it will autocomplete all applicable users if you start typing in a username.
 
-You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS® Shell:
-::
+You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS® Shell. To view
+users::
 
  wbinfo -u
 
-(to view users)
-::
+To view groups, use::
 
  wbinfo -g
-(to view groups)
-
 
 In addition, :command:`wbinfo -t` will test the connection and, if successful, will give a message similar to::
 
@@ -180,41 +178,6 @@ If no users or groups are listed in the output of those commands, these commands
  
 If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
 taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of "AD timeout" to 60 seconds.
-
-.. _Using a Keytab:
-
-Using a Keytab
-~~~~~~~~~~~~~~
-
-Kerberos keytabs are used to do Active Directory joins without a password. This means that the password for the Active Directory administrator account does
-not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
-
-When using a keytab, it is recommended to create and use a less privileged account for performing the required LDAP queries as the password for that account
-will be stored in the FreeNAS® configuration database. Create this account on the domain controller, then input that account name and its associated password
-into the "Domain Account Name" and "Domain Account Password" fields in the screen shown in Figure 9.1a.
-
-The keytab itself can be created on a Windows system using these commands::
-
- ktpass.exe -out hostname.keytab host/ hostname@DOMAINNAME -ptype KRB5_NT_PRINCIPAL -mapuser DOMAIN\username -pass userpass
-
- setspn -A host/ hostname@DOMAINNAME DOMAIN\username
-
-
-where:
-
-* **hostname** is the fully qualified hostname of the domain controller
-
-* **DOMAINNAME** is the domain name in all caps
-
-* **DOMAIN** is the pre-Windows 2000 short name for the domain
-
-* **username** is the privileged account name
-
-* **userpass** is the password associated with username
-
-This will create a keytab with sufficient privileges to grant tickets for CIFS and LDAP.
-
-Once the keytab is generated, transfer it to the FreeNAS® system, check the "Use keytab" box and browse to the location of the keytab.
 
 .. _Troubleshooting AD:
 
@@ -244,8 +207,8 @@ on the AD account being used does not include any spaces or special symbols, and
 
 Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the "name" field. Make sure that it is
 under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
-"NetBIOS Name" in :menuselection:`Directory Services --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
-Controller" field of :menuselection:`Directory Services --> Active Directory`.
+"NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
+Controller" field of :menuselection:`Directory Service --> Active Directory`.
 
 .. _LDAP:
 
@@ -265,7 +228,7 @@ the LDAP server and thus be provided authorized access to the data stored on the
    and instructions for using it can be found at
    `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_.
 
-Figure 9.2a shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Services --> LDAP`.
+Figure 9.2a shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Service --> LDAP`.
 
 **Figure 9.2a: Configuring LDAP**
 
@@ -354,13 +317,12 @@ a day as a cron job.
 .. note:: FreeNAS® automatically appends the root DN. This means that you should not include the scope and root DN when configuring the user, group,
    password, and machine suffixes.
 
-After configuring the LDAP service, start it in :menuselection:`Services --> Control Services --> Directory Services`. If the service will not start, refer to
-the
+After configuring the LDAP service, the LDAP users and groups should appear in the drop-down menus of the "Permissions" screen of a volume/dataset. To verify
+that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type :command:`getent group`.
+
+If the users and groups are not listed, refer to the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
 for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in :file:`/var/log/auth.log`.
-
-To verify that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type
-:command:`getent group`.
 
 .. _NIS:
 
@@ -371,9 +333,7 @@ Network Information Service (NIS) is a service which maintains and distributes a
 aliases and other text-based tables of information. If a NIS server is running on your network, the FreeNAS® system can be configured to import the users
 and groups from the NIS directory.
 
-After configuring this service, start it in :menuselection:`Services --> Control Services --> Directory Services`.
-
-Figure 9.3a shows the configuration screen which opens when you click :menuselection:`Directory Services --> NIS`. Table 9.3a summarizes the configuration
+Figure 9.3a shows the configuration screen which opens when you click :menuselection:`Directory Service --> NIS`. Table 9.3a summarizes the configuration
 options.
 
 **Figure 9.3a: NIS Configuration**
@@ -414,11 +374,12 @@ a day as a cron job.
 NT4
 ---
 
-This service should only be configured if the Windows network's domain controller is running NT4. If it is not, you should configure Active Directory instead.
+This service should only be configured if the Windows network's domain controller is running NT4. If the network's domain controller is running a more recent
+version of Windows, you should configure :ref:`Active Directory` instead.
 
-Figure 9.4a shows the configuration screen that appears when you click :menuselection:`Directory Services --> NT4`. These options are summarized in Table 9.4a.
-
-After configuring the NT4 service, start it in :menuselection:`Services --> Control Services --> Directory Services`.
+Figure 9.4a shows the configuration screen that appears when you click :menuselection:`Directory Service --> NT4`. These options are summarized in Table 9.4a.
+Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always display
+these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 **Figure 9.4a: NT4 Configuration Options**
 
@@ -434,7 +395,7 @@ After configuring the NT4 service, start it in :menuselection:`Services --> Cont
 | Domain Controller      | string    | hostname of domain controller                                       |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS® system                                         |
+| NetBIOS Name           | string    | hostname of FreeNAS system                                          |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 | Workgroup Name         | string    | name of Windows server's workgroup                                  |
@@ -446,10 +407,10 @@ After configuring the NT4 service, start it in :menuselection:`Services --> Cont
 | Administrator Password | string    | input and confirm the password for the domain administrator account |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
-| Use default domain     | checkbox  |                                                                     |
+| Use default domain     | checkbox  | only available in "Advanced Mode";                                  |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
-| Idmap backend          | drop-down |                                                                     |
+| Idmap backend          | drop-down | only available in "Advanced Mode";                                  |
 |                        | menu      |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 | Enable                 | checkbox  |                                                                     |
@@ -464,7 +425,74 @@ automatically once a day as a cron job.
 Kerberos Realms
 ---------------
 
+Beginning with FreeNAS® 9.3, a default Kerberos realm is created when...  :menuselection:`Directory Service --> Kerberos Realms` can be used to view and add
+Kerberos realms. Figure 9.5a shows the information for the default Kerberos realm.
+
+**Figure 9.5a: Viewing Kerberos Realms**
+
+|Figure95a_png|
+
+If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is shown in Figure 9.5b and Table
+9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or
+configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+
+**Figure 9.5b: Adding a Kerberos Realm**
+
+|Figure95b_png|
+
+**Table 9.4a: Kerberos Realm Options**
+
++------------------------+-----------+---------------------------------------------------------------------+
+| **Setting**            | **Value** | **Description**                                                     |
+|                        |           |                                                                     |
+|                        |           |                                                                     |
++========================+===========+=====================================================================+
+| Realm                  | string    |                                                                     |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| KDC                    | string    |                                                                     |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Admin Server           | string    | only available in "Advanced Mode";                                  |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+| Password Server        | string    | only available in "Advanced Mode";                                  |
+|                        |           |                                                                     |
++------------------------+-----------+---------------------------------------------------------------------+
+
 .. _Kerberos Keytabs:
 
 Kerberos Keytabs
 ----------------
+
+Kerberos keytabs are used to do Active Directory or LDAP joins without a password. This means that the password for the Active Directory or LDAP administrator
+account does not need to be saved into the FreeNAS® configuration database, which is a security risk in some environments.
+
+When using a keytab, it is recommended to create and use a less privileged account for performing the required queries as the password for that account will
+be stored in the FreeNAS® configuration database.  To create the keytab on a Windows system, use these commands::
+
+ ktpass.exe -out hostname.keytab host/ hostname@DOMAINNAME -ptype KRB5_NT_PRINCIPAL -mapuser DOMAIN\username -pass userpass
+
+ setspn -A host/ hostname@DOMAINNAME DOMAIN\username
+
+where:
+
+* **hostname** is the fully qualified hostname of the domain controller
+
+* **DOMAINNAME** is the domain name in all caps
+
+* **DOMAIN** is the pre-Windows 2000 short name for the domain
+
+* **username** is the privileged account name
+
+* **userpass** is the password associated with username
+
+This will create a keytab with sufficient privileges to grant tickets.
+
+Once the keytab is generated, use :menuselection:`Directory Service --> Kerberos Keytabs` to add it to the FreeNAS® system. 
+
+Then, to instruct the Active Directory service to use the keytab, check the "Use keytab" box and select the installed keytab using the drop-down "Kerberos
+keytab" menu in :menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and
+"userpass" in the keytab matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
+
+To instruct LDAP to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in :menuselection:`Directory Service --> LDAP`.
