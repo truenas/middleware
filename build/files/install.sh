@@ -524,7 +524,6 @@ menu_install()
     local os_part
     local data_part
     local upgrade_style
-    local interactive
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
@@ -535,16 +534,16 @@ menu_install()
 
     if [ $# -gt 0 ]; then
 	_disks="$@"
-	interactive=false
+	INTERACTIVE=false
     else
-	interactive=true
+	INTERACTIVE=true
     fi
     if do_sata_dom
     then
 	_satadom="YES"
     else
 	_satadom=""
-	if ${interactive}; then
+	if ${INTERACTIVE}; then
 	    get_physical_disks_list
 	    _disklist="${VAL}"
 
@@ -584,12 +583,12 @@ menu_install()
     fi
 
     if [ -z "${_disks}" ]; then
-	${interactive} && dialog --msgbox "You need to select at least one disk!" 6 74
+	${INTERACTIVE} && dialog --msgbox "You need to select at least one disk!" 6 74
 	exit 1
     fi
 
     if disk_is_mounted ${_disks} ; then
-        ${interactive} && dialog --msgbox "The destination drive is already in use!" 6 74
+        ${INTERACTIVE} && dialog --msgbox "The destination drive is already in use!" 6 74
         exit 1
     fi
 
@@ -607,7 +606,7 @@ menu_install()
     # a zpool import.
     for _disk in ${_disks}; do
     if disk_is_freenas ${_disk} ; then
-        if ${interactive}; then
+        if ${INTERACTIVE}; then
 	    if ask_upgrade ${_disk} ; then
 		_do_upgrade=1
 		_action="upgrade"
@@ -638,7 +637,7 @@ menu_install()
 	fi
     fi
     done
-    ${interactive} && new_install_verify "$_action" ${_disks}
+    ${INTERACTIVE} && new_install_verify "$_action" ${_disks}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     if [ ${_do_upgrade} -eq 0 ]; then
@@ -648,7 +647,7 @@ menu_install()
 	rm -rf /tmp/data_preserved
     fi
     # Start critical section.
-    if ${interactive}; then
+    if ${INTERACTIVE}; then
 	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
     else
 #	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed.\" ; sleep 15" EXIT
@@ -815,7 +814,7 @@ menu_install()
 	# Create upgrade sentinel files
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
-	${interactive} && dialog --msgbox "The installer has preserved your database file.
+	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
 #$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	# Set the root password
@@ -856,7 +855,7 @@ menu_install()
     else
         _msg="${_msg}Please remove the CDROM and reboot."
     fi
-    ${interactive} && dialog --msgbox "$_msg" 6 74
+    ${INTERACTIVE} && dialog --msgbox "$_msg" 6 74
 
     return 0
 }
