@@ -734,7 +734,7 @@ class SQLiteReleaseDB(ReleaseDB):
             rv.append(p)
         if rv and name:
             if len(rv) > 1:
-                raise Exception("Too many results for packge %s:  expected 1, got %d" % (P.Name(), len(rv)))
+                raise Exception("Too many results for package %s:  expected 1, got %d" % (name, len(rv)))
             return rv[0]
         return rv
 
@@ -1160,12 +1160,11 @@ def main():
     # Locabl variables
     db = None
 
-    options = "a:D:dvP"
+    options = "a:D:dv"
     long_options = ["archive=", "destination=",
-                    "database=",
-                    "debug", "verbose",
-                    "project=",
-                ]
+                 "database=",
+                 "debug", "verbose",
+                    ]
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], options, long_options)
