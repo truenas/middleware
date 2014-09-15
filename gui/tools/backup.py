@@ -667,6 +667,9 @@ class RestoreWorker(object):
         else:
             return None
 
+    def change_dir(self):
+        self.context.remote_directory = raw_input('Specify another directory or leave empty to abort: ')
+        return len(self.context.remote_directory) != 0
 
     def run(self):
         print("Logging in to remote system...")
@@ -690,16 +693,22 @@ class RestoreWorker(object):
             raise
 
         sftp = sftp_client.SFTPClient.from_transport(session)
-        sftp.chdir(self.context.remote_directory)
         backup = None
 
-        while backup is None:
-            backup = self.choose_backup(sftp)
-            if backup is not None:
-                break
+        while True:
+            try:
+                sftp.chdir(self.context.remote_directory)
+                backup = self.choose_backup(sftp)
+                if backup is not None:
+                    break
 
-            if raw_input('Do you want to abort? (y/n):') == 'y':
-                return
+                if not self.change_dir():
+                    return
+
+            except IOError:
+                print('Directory not found or unavailable!')
+                if not self.change_dir():
+                    return
 
         try:
             sftp.chdir(backup.name)
