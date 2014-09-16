@@ -357,6 +357,13 @@ last_orders() {
 		# gui image's bin directory.
 
 		if is_truenas ; then
+			tar -c -p -f ${NANO_OBJ}/gui-boot.tar \
+				-C ${NANO_OBJ}/_.isodir ./boot
+			tar -c -p -f ${NANO_OBJ}/gui-install-environment.tar \
+				-C ${NANO_OBJ}/_.instufs .
+			tar -c -p -f ${NANO_OBJ}/gui-packages.tar \
+				-s '@^Packages@FreeNAS/Packages@' \
+				-C ${NANO_OBJ}/_.packages .
 			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
