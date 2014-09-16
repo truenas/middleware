@@ -150,6 +150,7 @@ etc/ix/templates/warden/jail-post-stop
 etc/ix/templates/warden/jail-pre-delete
 etc/ix/templates/warden/jail-pre-start
 etc/ix/templates/warden/jail-pre-stop
+etc/iso_3166_2_countries.csv
 etc/netcli
 @shell etc/netcli.sh
 etc/find_alias_for_smtplib.py

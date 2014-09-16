@@ -2029,9 +2029,11 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
@@ -2123,9 +2125,11 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
@@ -2354,9 +2358,11 @@ class CertificateCreateInternalForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
@@ -2470,9 +2476,11 @@ class CertificateCreateCSRForm(ModelForm):
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
