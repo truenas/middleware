@@ -354,9 +354,9 @@ Mode" button or configure the system to always display these settings by checkin
 When creating the NFS share, keep the following points in mind:
 
 
-#.  The Maproot and Mapall options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The Mapall options supersede
-    the Maproot options. If you only wish to restrict the *root* user's permissions, set the Maproot option. If you wish to restrict the permissions of all
-    users, set the Mapall option.
+#.  The "Maproot" and "Mapall" options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The "Mapall" options
+    supersede the "Maproot" options. If you only wish to restrict the *root* user's permissions, set the "Maproot" option. If you wish to restrict the
+    permissions of all users, set the "Mapall" options.
 
 #.  Each volume or dataset is considered to be its own filesystem and NFS is not able to cross filesystem boundaries.
 
@@ -375,25 +375,25 @@ To better understand these restrictions, consider the following scenario where t
 
 Because of restriction #3, you will receive an error if you try to create one NFS share as follows:
 
-* **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
+* "Authorized networks" set to *10.0.0.0/8 20.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
+* "Path" set to :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
 
-Instead, you should select the Path of :file:`/mnt/volume1/dataset1` and check the "All directories" box.
+Instead, you should select a "Path" of :file:`/mnt/volume1/dataset1` and check the "All directories" box.
 
 However, you could restrict that directory to one of the networks by creating two shares as follows.
 
 First NFS share:
 
-* **Authorized networks:** *10.0.0.0/8*
+* "Authorized networks" set to *10.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1`
+* "Path" set to :file:`/mnt/volume1/dataset1`
 
 Second NFS share:
 
-* **Authorized networks:** *20.0.0.0/8 *
+* "Authorized networks" set to *20.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1/directory1`
+* "Path" set to :file:`/mnt/volume1/dataset1/directory1`
 
 Note that this requires the creation of two shares as it can not be accomplished in one share.
 
@@ -402,17 +402,17 @@ Note that this requires the creation of two shares as it can not be accomplished
 Example Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-By default the Mapall options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
+By default the "Mapall" options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
 associated with their user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
 
 A better scenario is to do the following:
 
 #.  Specify the built-in *nobody* account to be used for NFS access.
 
-#.  In the permissions_screen of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to your
-    specifications.
+#.  In the "Change Permissions" screen of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to
+    your specifications.
 
-#.  Select *nobody* in the Mapall User and Mapall Group drop-down menus for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
+#.  Select *nobody* in the "Mapall User" and "Mapall Group" drop-down menus for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
 
 With this configuration, it does not matter which user account connects to the NFS share, as it will be mapped to the *nobody* user account and will only
 have the permissions that you specified on the volume/dataset. For example, even if the *root* user is able to connect, it will not gain
@@ -430,13 +430,13 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
 
 #.  A NFS share has been created with the following attributes:
 
-*   "Path": :file:`/mnt/data`
+    * "Path": :file:`/mnt/data`
 
-*   "Authorized Network": *192.168.2.0/24*
+    * "Authorized Network": *192.168.2.0/24*
 
-*   "MapAll User" and "MapAll Group" are both set to *nobody*
+    * "MapAll User" and "MapAll Group" are both set to *nobody*
 
-*   the "All Directories" checkbox has been checked
+    * the "All Directories" checkbox has been checked
 
 .. _From BSD or Linux:
 
@@ -564,6 +564,42 @@ If the client receives timeout errors when trying to mount the share, add the IP
 WebDAV Shares
 ------------------
 
+Beginning with FreeNAS® 9.3,
+
+To create a WebDAV share, click :menuselection: `Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
+
+**Figure 10.3a: Adding a WebDAV Share**
+
+|webdav.png|
+
+Table 10.3a summarizes the available options.
+
+**Table 10.3a: WebDAV Share Options**
+
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**                  | **Value**     | **Description**                                                                                             |
+|                              |               |                                                                                                             |
++==============================+===============+=============================================================================================================+
+| Share Path Name              | string        | use the format *protocol://IP_of_freenas:available_portnumber/a_path_name*, where                           |
+|                              |               | *protocol* is                                                                                               |
+|                              |               | *http* or                                                                                                   |
+|                              |               | *https*; this creates the URL that will be used to access the share from a browser                          |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Comment                      | string        | optional                                                                                                    |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Path                         | browse button | browse to the volume/dataset to share                                                                       |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Read Only                    | checkbox      | if checked, users cannot write to the share                                                                 |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Change User & Group          | checkbox      | if checked, automatically sets the share's contents to the *webdav* user and group                          |
+| Ownership                    |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+
+
 .. _Windows (CIFS) Shares:
 
 Windows (CIFS) Shares
@@ -678,49 +714,51 @@ Share Configuration
 
 The process for configuring a share is as follows:
 
-#.  **If you are not using Active Directory or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User` with the
-    following attributes:
+#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User` with the following
+    attributes:
 
-* "Username" and "Password": matches the username and password on the client system
+    * "Username" and "Password": matches the username and password on the client system
 
-* "Home Directory": browse to the volume to be shared
+    * "Home Directory": browse to the volume to be shared
 
-* Repeat this process to create a user account for every user that will need access to the CIFS share
+    * Repeat this process to create a user account for every user that will need access to the CIFS share
 
+    
 #.  If you are not using Active Directory or LDAP, create a group in :menuselection:`Account --> Groups --> Add Group`. Once the group is created, click its
     "Members" button and add the user accounts that you created in step 1.
 
-#.  **Give the group permission to the volume** in :menuselection:`Storage --> View Volumes`. When setting the permissions:
+#.  Give the group permission to the volume in :menuselection:`Storage --> View Volumes`. When setting the permissions:
 
-* set "Owner(user)" to *nobody*
+    * set "Owner(user)" to *nobody*
 
-* set the "Owner(group)" to the one you created in Step 2
+    * set the "Owner(group)" to the one you created in Step 2
 
-* "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
+    * "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
 
-#.  **Create a CIFS share** in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
+    
+#.  Create a CIFS share in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
 
-* "Name": input the name of the share
+    * "Name": input the name of the share
 
-* "Path": browse to the volume to be shared
+    * "Path": browse to the volume to be shared
 
-* keep the "Browsable to Network Clients" box checked
+    * keep the "Browsable to Network Clients" box checked
 
-.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
-   share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box
-   is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still
-   access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and password
-   control.
+    .. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of
+       every share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
+       this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
+       can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
+       password control.
 
-#.  **Configure the CIFS service in :menuselection:`Services --> CIFS`** as follows:
+#.  Configure the CIFS service in :menuselection:`Services --> CIFS` as follows:
 
-* "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
-  Windows workgroup name is *WORKGROUP*
+    * "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
+      Windows workgroup name is *WORKGROUP*
 
-#.  **Start the CIFS service** in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it
-    will change to a blue ON, indicating that the service has been enabled.
+#.  Start the CIFS service in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it will
+    change to a blue "ON", indicating that the service has been enabled.
 
-#.  **Test the share.**
+#.  Test the share.
 
 To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
 share named :file:`backups`. An example is seen in Figure 10.3b:
@@ -803,9 +841,9 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
 #.  If you are not using Active Directory or LDAP, create two users, *user1* and
     *user2* in :menuselection:`Account --> Users --> Add User`. Each user has the following attributes:
 
-* Username and Password: matches that user's username and password on the Windows system
+    * "Username" and "Password" match that user's username and password on the Windows system
 
-* Home Directory: browse to the dataset created for that user
+    * for the "Home Directory", browse to the dataset created for that user
 
 #.  Set the permissions on :file:`/mnt/data/user1` so that the Owner(user) and Owner(group) is *user1*. Set the permissions on :file:`/mnt/data/user2` so that
     the "Owner(user)" and "Owner(group)" is *user2*. For each dataset's permissions, tighten the "Mode" so that "Other" can not read or execute the
@@ -819,7 +857,7 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
 #.  Create two CIFS shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`. The first CIFS share is named *user1* and has a
     Path of :file:`/mnt/data/user1`; the second CIFS share is named *user2* and has a "Path" of :file:`/mnt/data/user2`. When creating the first share, click
     the "No" button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the "Yes" button when the pop-up
-    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services.
+    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 
 #.  From a Windows system, login as *user1* and open :menuselection:`Windows Explorer --> Network --> FREENAS`. Two shares should appear, named
     *user1* and
