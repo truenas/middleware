@@ -3,7 +3,7 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.3-M3
+VERSION?=9.3-M4
 TRAIN?=FreeNAS-9.3-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
