@@ -1020,7 +1020,6 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.kpwdname:
             self.__kpwdname = self.kpwdname
 
-        self.site = 'Default-First-Site-Name'
         self.flags = 0
 
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
@@ -1057,10 +1056,14 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.ucount = 0
         self.gcount = 0
 
-        self.site = self.locate_site()
-        if self.site:
-            self.reset_servers()
-            self.set_servers()
+        if not self.site: 
+            self.site = self.locate_site()
+            if not self.site:
+                self.site = 'Default-First-Site-Name'
+
+            if self.site:
+                self.reset_servers()
+                self.set_servers()
 
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
 

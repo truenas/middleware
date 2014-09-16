@@ -800,6 +800,13 @@ class ActiveDirectory(DirectoryServiceBase):
             "domain for users and groups."),
         default=False
     )
+    ad_site = models.CharField(
+        verbose_name=_("Site Name"),
+        max_length=120,
+        help_text=_("Name of site to use."),
+        blank=True,
+        null=True
+    )
     ad_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
