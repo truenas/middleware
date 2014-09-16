@@ -38,9 +38,8 @@ This section also describes the following utilities:
 Iperf
 -----
 
-`Iperf <http://en.wikipedia.org/wiki/Iperf>`_
-is a utility for measuring maximum TCP and UDP bandwidth performance. It can be used to chart network throughput over time. For example, you can use it to
-test the speed of different types of shares to determine which type best performs on your network.
+Iperf is a utility for measuring maximum TCP and UDP bandwidth performance. It can be used to chart network throughput over time. For example, you can use it
+to test the speed of different types of shares to determine which type best performs on your network.
 
 FreeNAS® includes the Iperf server. To perform network testing, you will need to install an Iperf client on a desktop system that has network access to the
 FreeNAS® system. This section will demonstrate how to use the
@@ -174,8 +173,7 @@ When you are finished testing, either type :command:`killall iperf` or close She
 Netperf
 -------
 
-`Netperf <http://www.netperf.org/netperf/>`_
-is a benchmarking utility that can be used to measure the performance of unidirectional throughput and end-to-end latency.
+Netperf is a benchmarking utility that can be used to measure the performance of unidirectional throughput and end-to-end latency.
 
 Before you can use the :command:`netperf` command, you must start its server process using this command::
 
@@ -238,9 +236,8 @@ the second value it must be preceded with a comma or be a comma-separated pair. 
 IOzone
 ------
 
-`IOzone <http://www.iozone.org/>`_
-is a disk and filesystem benchmarking tool. It can be used to test file I/O performance for the following operations: read, write, re-read, re-write, read
-backwards, read strided, fread, fwrite, random read, pread, mmap, aio_read, and aio_write.
+IOzone is a disk and filesystem benchmarking tool. It can be used to test file I/O performance for the following operations: read, write, re-read, re-write,
+read backwards, read strided, fread, fwrite, random read, pread, mmap, aio_read, and aio_write.
 
 FreeNAS® ships with IOzone, meaning that it can be run from Shell. When using IOzone on FreeNAS®, :command:`cd` to a directory in a volume that you have
 permission to write to, otherwise you will get an error about being unable to write the temporary file.
@@ -665,8 +662,7 @@ out to be beneficial, you can make it permanent by creating a Tunable.
 XDD
 ---
 
-`XDD <http://www.ioperformance.com/>`_
-is a utility which provides accurate and detailed measurements of disk I/O performance. This section provides some usage examples.
+XDD is a utility which provides accurate and detailed measurements of disk I/O performance. This section provides some usage examples.
 
 Type the name of the command without any options to see its usage::
 
@@ -932,9 +928,9 @@ For example, if you are troubleshooting your Active Directory configuration, try
 tmux
 ----
 
-`tmux <http://tmux.sourceforge.net/>`_
-is a terminal multiplexer which enables a number of terminals to be created, accessed, and controlled from a single screen. tmux is an alternative to GNU
-screen. Similar to screen, tmux can be detached from a screen and continue running in the background, then later reattached.
+:command:`tmux` is a terminal multiplexer which enables a number of terminals to be created, accessed, and controlled from a single screen. :command:`tmux` is
+an alternative to GNU :command:`screen`. Similar to screen, :command:`tmux` can be detached from a screen and continue running in the background, then later
+reattached.
 
 To start a session, simply type :command:`tmux`. As seen in Figure 24.9a, a new session with a single window will open with a status line at the bottom of the
 screen. This line shows information on the current session and is used to enter interactive commands.
@@ -957,9 +953,8 @@ previous session. To leave the :command:`tmux` session entirely, type :command:`
 Dmidecode
 ---------
 
-`Dmidecode <http://www.nongnu.org/dmidecode/>`_
-reports hardware information as reported by the system BIOS. Dmidecode does not scan the hardware, it only reports what the BIOS told it to. A sample output
-can be seen
+Dmidecode reports hardware information as reported by the system BIOS. Dmidecode does not scan the hardware, it only reports what the BIOS told it to. A
+sample output can be seen
 `here <http://www.nongnu.org/dmidecode/sample/dmidecode.txt>`_.
 
 To view the BIOS report, type the command with no arguments::
