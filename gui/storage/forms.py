@@ -1938,6 +1938,43 @@ class ReplicationForm(ModelForm):
             ))
         )
 
+    def clean_repl_filesystem(self):
+        fs = self.cleaned_data.get('repl_filesystem')
+        if not fs:
+            return fs
+
+        # Only one replication task is allowed per dataset
+        # which means parent dataset set up as a snapshot task
+        # recursively is not allowed
+
+        # Get a list of all filesystems
+        # e.g. tank/dataset/child
+        # ['tank', 'tank/dataset', 'tank/dataset/child']
+        split = fs.split('/')
+        paths = []
+        for i in xrange(1, len(split) + 1):
+            paths.append('/'.join(split[:i]))
+
+        qs = models.Replication.objects.filter(repl_filesystem__in=paths)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        for repl in qs:
+            if repl.repl_filesystem == fs:
+                raise forms.ValidationError(_(
+                    'Only one replication allowed per dataset.'
+                ))
+            else:
+                tasks = models.Task.objects.filter(
+                    task_filesystem=repl.repl_filesystem,
+                    task_recursive=True,
+                )
+                if tasks.exists():
+                    raise forms.ValidationError(_(
+                        'Only one replication allowed per dataset, including '
+                        'parent dataset set up recursively.'
+                    ))
+        return fs
+
     def clean_repl_remote_port(self):
         port = self.cleaned_data.get('repl_remote_port')
         if not port:
