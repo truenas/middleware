@@ -26,4 +26,4 @@ To build a local copy of the HTML, run this command in /path/to/your-build-direc
 
 % sphinx-build -b singlehtml . _build
 
-When finished, open _build/index.html in a browser to verify the HTML output.
+When finished, open _build/freenas.html in a browser to verify the HTML output.
