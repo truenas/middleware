@@ -361,8 +361,6 @@ last_orders() {
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
-					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
 				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
@@ -370,7 +368,11 @@ last_orders() {
 				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
 					. \
 				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
-					.
+					. \
+				-C "${NANO_OBJ}" \
+					gui-boot.tar \
+					gui-install-environment.tar \
+					gui-packages.tar
 				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
 				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else
