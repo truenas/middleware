@@ -279,7 +279,7 @@ The following fields have been added or deleted:
 
 * The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
 
-* The "Domain logons" and "Obey pam restrictions" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
+* The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
   :menuselection:`Services --> CIFS`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
