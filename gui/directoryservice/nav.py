@@ -31,7 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
-    NIS, 
+    NIS,
     NT4
 )
 from freenasUI.freeadmin.tree import TreeNode
@@ -79,7 +79,7 @@ class NT4View(TreeNode):
     type = 'opendirectoryservice'
     icon = u'NT4Icon'
     append_to = 'directoryservice'
-    order = 1
+    order = 15
 
 
 class NISView(TreeNode):
@@ -90,7 +90,7 @@ class NISView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'NISIcon'
     append_to = 'directoryservice'
-    order = 2
+    order = 10
 
 
 class LDAPView(TreeNode):
@@ -101,7 +101,7 @@ class LDAPView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'LDAPIcon'
     append_to = 'directoryservice'
-    order = 3
+    order = 5
 
 
 class KerberosRealmView(TreeNode):
@@ -112,7 +112,7 @@ class KerberosRealmView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'KerberosRealmIcon'
     append_to = 'directoryservice'
-    order = 4
+    order = 20
 
 
 class KerberosKeytabView(TreeNode):
@@ -123,4 +123,4 @@ class KerberosKeytabView(TreeNode):
     type = 'opendirectoryservice'
     icon = u'KerberosKeytabIcon'
     append_to = 'directoryservice'
-    order = 5
+    order = 25
