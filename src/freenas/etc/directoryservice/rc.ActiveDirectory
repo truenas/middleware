@@ -33,6 +33,7 @@
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
 : ${AD_NET_ADS_TIMEOUT:="10"}
 : ${AD_DNS_TIMEOUT:="10"}
+: ${AD_TOOL:="/usr/local/bin/adtool"}
 
 __AD_proto()
 {
@@ -963,52 +964,13 @@ AD_log()
 }
 
 
-AD_load_database_values()
+AD_load_values()
 {
-	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
-
-	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
-	SELECT
-		ad.ad_domainname,
-		ad.ad_bindname,
-		ad.ad_bindpw,
-		ad.ad_netbiosname,
-		ad.ad_verbose_logging,
-		ad.ad_unix_extensions,
-		ad.ad_allow_trusted_doms,
-		ad.ad_use_default_domain,
-		ad.ad_dcname,
-		ad.ad_gcname,
-		ad.ad_use_keytab,
-		kk.keytab_file as ad_keytab,
-		kr.krb_kdc as ad_krbname,
-		kr.krb_kpasswd_server as ad_kpwdname,
-		ad.ad_timeout,
-		ad.ad_dns_timeout,
-		ad.ad_ssl
- 
-	FROM
-		directoryservice_activedirectory as ad
-
-	LEFT OUTER JOIN
-		directoryservice_kerberoskeytab as kk
-
-	ON
-		(ad.ad_kerberos_keytab_id = kk.id)
-
-	LEFT OUTER JOIN
-		directoryservice_kerberosrealm as kr
-	ON
-		(ad.ad_kerberos_realm_id = kr.id)
-
-	ORDER BY
-		-ad.id	
-
-	LIMIT 1;
-__SQL__
+	AD_generate_config
 
 	exec 3<&0
-	exec 0<"${tmpfile}"
+	exec 0<"${AD_CONFIG_FILE}"
+
 	while read -r line
 	do
 		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
@@ -1017,46 +979,15 @@ __SQL__
 		AD_set "${var}" "${val}"
 	done
 	exec 0<&3
-	rm "${tmpfile}"
 }
 
 AD_generate_config()
 {
-	local vars="\
-		ad_bindname \
-		ad_domainname \
-		ad_basedn \
-		ad_binddn \
-		ad_dcname \
-		ad_dchost \
-		ad_dcport \
-		ad_gcname \
-		ad_gchost \
-		ad_gcport \
-		ad_use_keytab \
-		ad_keytab \
-		ad_krbname\
-		ad_krbhost \
-		ad_krbport \
-		ad_kpwdname \
-		ad_kpwdhost \
-		ad_kpwdport \
-		ad_timeout \
-		ad_dns_timeout \
-		ad_ssl \
-	"
-
-	: > "${AD_CONFIG_FILE}"
-	for var in ${vars}
-	do
-		local val="$(AD_get ${var})"
-		echo "${var}=\"${val}\"" >> "${AD_CONFIG_FILE}"
-	done
-
+	${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
 	/bin/chmod 600 "${AD_CONFIG_FILE}"
 }
 
-AD_init()
+OLD_AD_init()
 {
 	local verbose=0
 
@@ -1191,6 +1122,11 @@ AD_init()
 
 	AD_generate_config
 	return 0
+}
+
+AD_init()
+{
+	AD_load_values
 }
 
 activedirectory_enabled()
