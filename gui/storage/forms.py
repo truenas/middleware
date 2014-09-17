@@ -1422,12 +1422,6 @@ class ZVol_EditForm(Form):
         else:
             self.fields['volume_dedup'].initial = 'off'
 
-    def clean(self):
-        return _clean_quota_fields(
-            self,
-            ('refquota', 'refreservation'),
-            "volume_")
-
     def set_error(self, msg):
         msg = u"%s" % msg
         self._errors['__all__'] = self.error_class([msg])
