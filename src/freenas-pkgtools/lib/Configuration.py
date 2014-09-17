@@ -57,6 +57,7 @@ def TryOpenFile(path):
         return f
 
 def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
+    raise Exception("Obsolete")
     AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
     try:
         req = urllib2.Request(url)
@@ -416,6 +417,54 @@ class Configuration(object):
         if os.path.islink(self._system_pool_link):
             self._temp = os.readlink(self._system_pool_link)
 
+    def TryGetNetworkFile(self, url, handler=None):
+        AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
+        current_version = "unknown"
+        temp_mani = self.SystemConfiguration()
+        if temp_mani:
+            current_version = temp_mani.Sequence()
+        try:
+            req = urllib2.Request(url)
+            req.add_header(AVATAR_VERSION, current_version)
+            # Hack for debugging
+            req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
+            furl = urllib2.urlopen(req, timeout=5)
+        except:
+            log.warn("Unable to load %s", url)
+            return None
+        try:
+            totalsize = int(furl.info().getheader('Content-Length').strip())
+        except:
+            totalsize = None
+        chunk_size = 64 * 1024
+        retval = tempfile.TemporaryFile(dir = self._temp)
+        read = 0
+        lastpercent = percent = 0
+        lasttime = time.time()
+        while True:
+            data = furl.read(chunk_size)
+            tmptime = time.time()
+            downrate = int(chunk_size / (tmptime - lasttime))
+            lasttime = tmptime
+            if not data:
+                break
+            read += len(data)
+            if handler and totalsize:
+                percent = int((float(read) / float(totalsize)) * 100.0)
+                if percent != lastpercent:
+                    handler(
+                        'network',
+                        url,
+                        size=totalsize,
+                        progress=percent,
+                        download_rate=downrate,
+                    )
+                lastpercent = percent
+            retval.write(data)
+
+        retval.seek(0)
+        return retval
+
     # Load the list of currently-watched trains.
     # The file is a JSON file.
     # This sets self._trains as a dictionary of
@@ -600,10 +649,7 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        fileref = TryGetNetworkFile(TRAIN_FILE,
-                                    self._temp,
-                                    current_version,
-                                    )
+        fileref = self.TryGetNetworkFile(TRAIN_FILE)
 
         if fileref is None:
             return None
@@ -711,10 +757,8 @@ class Configuration(object):
             elif full_pathname.startswith("file://"):
                 file_ref = TryOpenFile(full_pathname[len("file://"):])
             else:
-                file_ref = TryGetNetworkFile(
+                file_ref = self.TryGetNetworkFile(
                     full_pathname,
-                    self._temp,
-                    current_version,
                     handler=handler,
                 )
             if file_ref is not None:
@@ -744,9 +788,7 @@ class Configuration(object):
             # This needs to change for TrueNAS, doesn't it?
             ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
 
-        file_ref = TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
-                                     self._temp,
-                                     current_version,
+        file_ref = self.TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
                                      handler=handler,
                                  )
         return file_ref
@@ -770,10 +812,7 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
-                                 self._temp,
-                                 current_version,
-                                 )
+        file = TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
         if file is None:
             log.debug("Could not get latest manifest file for train %s" % train)
         else:
@@ -796,6 +835,10 @@ class Configuration(object):
         # we'll only go by name.
         # If it can't find one, it returns None
         rv = None
+        mani = self.SystemManifest()
+        sequence = "unknown"
+        if mani:
+            sequence = mani.Sequence()
         # First thing:  if we were given a package path, we use that,
         # and that only, and delta packages don't matter.
         if self._package_dir:
@@ -862,8 +905,8 @@ class Configuration(object):
             # the Package object.
             # Figure out the name.
             upgrade_name = package.FileName(curVers)
-            file = TryGetNetworkFile(
-                self.PackageUpdatePath(package, curVers),
+            file = self.TryGetNetworkFile(
+                url = self.PackageUpdatePath(package, curVers),
                 handler = handler,
                 )
             if h is None:
@@ -874,8 +917,8 @@ class Configuration(object):
                 if hash == h:
                     return file
         # All that, and now we do much of it again with the full version
-        file = TryGetNetworkFile(
-            self.PackagePath(package),
+        file = self.TryGetNetworkFile(
+            url = self.PackagePath(package),
             handler = handler,
             )
         if package.Checksum() is None:
