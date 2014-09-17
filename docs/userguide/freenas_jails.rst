@@ -5,27 +5,30 @@
 Jails
 =====
 
-The previous section described how to find, install, and configure software using the Plugins method.
+The previous section described how to find, install, and configure software using "Plugins".
 
-This section describes how to use the Jails method, which allows users who are comfortable using the command line to have more control over software
-installation and management. Any software installed using the Jails method must be managed from the command line and will not appear in the FreeNAS® GUI. If
-you prefer to use the FreeNAS® GUI to manage software, use :ref:`Plugins` instead.
+This section describes how to use "Jails", which allows users who are comfortable using the command line to have more control over software installation and
+management. Any software installed using "Jails" must be managed from the command line of the jail. If you prefer to use a GUI to manage software, use
+:ref:`Plugins` instead.
 
-While the Plugins method automatically creates a FreeBSD jail for each installed PBI, the Jails method allows users to create as many jails as needed and
-to customize the operating system and software within each jail. Unlike the Plugins method, one is not limited to installing only one application per jail.
+While FreeNAS® automatically creates a jail whenever a plugin is installed, it does not let the user install multiple plugins into the same jail. In
+contrast, using "Jails" allows users to create as many jails as needed and to customize the operating system and installed software within each jail.
 
-Essentially, a
-`jail <http://en.wikipedia.org/wiki/Freebsd_jail>`_
-provides a very light-weight, operating system-level virtualization. Consider it as an independent operating system running on the same hardware, without all
-of the overhead usually associated with virtualization. This means that any software and configurations within a jail are isolated from both the FreeNAS®
-operating system and any other jails running on that system. During creation, the *VIMAGE* option can be selected which provides that jail with its own,
-independent networking stack. This allows the jail to do its own IP broadcasting, which is required by some applications.
+In FreeNAS® 9.3, two types of jails are supported:
 
-By default, creating a jail installs an instance of FreeBSD and its software management utilities. This means that you can compile FreeBSD ports and install
-FreeBSD pkgng packages from the command line of a FreeBSD jail.
+#. By default, a
+   `FreeBSD jail <http://en.wikipedia.org/wiki/Freebsd_jail>`_ is created. This provides a very light-weight, operating system-level virtualization. Consider
+   it as another independent instance of FreeBSD running on the same hardware, without all of the overhead usually associated with virtualization.  The jail
+   will install the FreeBSD software management utilities so that you can compile FreeBSD ports and install FreeBSD packages from the command line of the jail.
 
-In addition to FreeBSD jails, one can use the Virtualbox template to install an instance of phpVirtualBox, which provides a web-based front-end to
-VirtualBox. This can be used to install any operating system and to use the software management tools provided by that operating system.
+#. A Virtualbox template is also provided. This template will install an instance of
+   `phpVirtualBox <http://sourceforge.net/projects/phpvirtualbox/>`_, which provides a web-based front-end to
+   `VirtualBox <.https://www.virtualbox.org/>`_ This can then be used to install any operating system and to use the software management tools provided by
+   that operating system.
+
+It is important to understand that any users, groups, installed software, and configurations within a jail are isolated from both the FreeNAS® operating
+system and any other jails running on that system. During creation, the *VIMAGE* option can be selected which will also provide that jail with its own,
+independent networking stack. This allows that jail to do its own IP broadcasting, which is required by some applications.
 
 Advanced users can also create custom templates to automate the creation of pre-installed and customized operating systems.
 
@@ -37,11 +40,11 @@ The rest of this section describes the following:
 
 * :ref:`Jails Configuration`
 
-* :ref:`Add Jails`
+* :ref:`Adding Jails`
 
 * :ref:`Using the phpVirtualBox Template`
 
-* :ref:`Jail Templates`
+* :ref:`Managing Jail Templates`
 
 .. _Jails Configuration:
 
@@ -49,10 +52,10 @@ Jails Configuration
 -------------------
 
 Before you can create any jails, you must first configure which volume or dataset will be used to hold the jails. To do so, click
-:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. While a jail can be installed on a UFS volume, it is recommended to use
-ZFS and to create a dataset to use for the "Jail Root". As jails are created on a ZFS system, they will automatically be installed into their own dataset
-under the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail named *jail1*, it will be installed
-into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
+:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. While a jail can be installed on a UFS volume,
+**it is recommended to use ZFS and to create a dataset to use for the "Jail Root"**. As jails are created on a ZFS system, they will automatically be
+installed into their own dataset under the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail
+named *jail1*, it will be installed into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
 
 **Figure 13.1a: Global Jail Configuration**
 
@@ -62,7 +65,7 @@ into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
     :width: 4.2in
     :height: 2.4in
 
-.. warning:: if you have already used the Plugins method, all of the fields in this screen will automatically be filled in. You should still double-check that
+.. warning:: if you have already installed a plugin, all of the fields in this screen will automatically be filled in. You should still double-check that
    the pre-configured IP addressing values are appropriate for your jails and will not conflict with addresses used by other systems on the network.
 
 Table 13.1a summarizes the fields in this configuration screen. Some settings are only available in "Advanced Mode". To see these settings, either click the
@@ -107,7 +110,7 @@ When selecting the "Jail Root", ensure that the size of the selected volume or d
 as any software, log files, and data to be stored within each jail. At a bare minimum, budget at least 2GB per jail and do not select a dataset that is less
 than 2GB in size.
 
-.. note:: if you plan to add storage to a jail, be aware that path size is limited to 88 characters. Make sure that the length of your volume name plus the
+.. note:: if you plan to add storage to a jail, be aware that the path size is limited to 88 characters. Make sure that the length of your volume name plus the
    dataset name plus the jail name does not exceed this limit.
 
 FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the IPv4
@@ -120,7 +123,7 @@ Review the default values of the "IPv4 Network Start Address" and "IPv4 Network 
 that you will create. If there is a DHCP server on the network, make sure that this range of addresses is excluded from the scope of the DHCP server. As jails
 are created, they will automatically be assigned the next free IP address within the range specified by these two values.
 
-.. note:: these 4 fields are necessary for the proper operation of Jails. If you are unable to add, start, or access the software installed into jails,
+.. note:: these 4 fields are necessary for the proper operation of jails. If you are unable to add, start, or access the software installed into jails,
    double-check the values in these fields. In particular, make sure that the specified IPv4 settings are reachable by clients and that the specified
    addresses are not in use by any other clients in the network.
 
@@ -138,10 +141,10 @@ Once you click the "Save" button to save the configuration, the "Jails" tab will
 
 You can now create and manage jails as described in the rest of this chapter.
 
-.. _Add Jails:
+.. _Adding Jails:
 
-Add Jails
----------
+Adding Jails
+------------
 
 To create a jail, click :menuselection:`Jails --> Add Jails` to access the screen shown in Figure 13.2a.
 
@@ -675,10 +678,10 @@ authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
 
-.. _Jail Templates:
+.. _Managing Jail Templates:
 
-Jail Templates
---------------
+Managing Jail Templates
+-----------------------
 
 FreeNAS® 9.3 supports the ability to add custom templates to the "Templates" drop-down menu shown in Figure 13.3a.
 
