@@ -20,8 +20,6 @@ This section describes the following:
 
 * :ref:`Installation Troubleshooting`
 
-* :ref:`Initial Setup`
-
 * :ref:`Upgrading`
 
 * :ref:`Virtualization`
@@ -250,7 +248,7 @@ Once the password has been input and confirmed, , you should see a message simil
 
 Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM,
 but leave the thumb drive inserted. Make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from
-it. FreeNAS® should now be able to boot into the Console setup menu described in :ref:`Initial Configuration`.
+it. FreeNAS® should now be able to boot into the Console setup menu described in :ref:`Initial Configuration Wizard`.
 
 .. _Installation Troubleshooting:
 

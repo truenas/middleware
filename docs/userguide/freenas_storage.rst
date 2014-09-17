@@ -682,7 +682,7 @@ option before discarding a disk.
 .. _View Volumes:
 
 View Volumes
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
 shown in Figure 8.1l demonstrates one ZFS pool with two datasets and one zvol.

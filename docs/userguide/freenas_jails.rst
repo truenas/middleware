@@ -176,7 +176,7 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Template                  | drop-down menu | by default, contains the *VirtualBox* template for creating an instance of phpVirtualBox; advanced users can |
-|                           |                | create and install custom templates as described in `Creating Templates`_                                    |
+|                           |                | create and install custom templates as described in `Managing Jail Templates`_                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in "Jails Configuration"; if   |
@@ -536,11 +536,11 @@ Before you can compile a port, the ports collection must be installed within the
 
  portsnap fetch extract
 
-This command will download the ports collection and extract it to the jail's :file:`/usr/ports/` directory.
-
-.. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using this command::
-
+This command will download the ports collection and extract it to the jail's :file:`/usr/ports/`
+directory::
  portsnap fetch update
+
+.. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using this command:
 
 To compile a port, you will :command:`cd` into a subdirectory of :file:`/usr/ports/`. FreshPorts provides the location to :command:`cd` into and the
 :command:`make` command to run. This example will compile the audiotag port::

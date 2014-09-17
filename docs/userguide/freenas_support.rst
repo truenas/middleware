@@ -48,10 +48,9 @@ Users are welcome to network on the FreeNAS® social media sites:
 Forums
 ------
 
-Another information source for FreeNAS® is the
-`Forums <http://forums.freenas.org/>`_. Forums contain user-contributed tips and guides which have been categorized, making it an ideal resource if you wish
-to learn more about a certain aspect of FreeNAS®. A searchbar is included should you wish to search by keyword; alternately, you can click a category to
-browse through the threads that exist for that topic.
+Another information source is the FreeNAS® Forums which contain user-contributed tips and guides which have been categorized, making it an ideal resource if
+you wish to learn more about a certain aspect of FreeNAS®. A searchbar is included should you wish to search by keyword; alternately, you can click a
+category to browse through the threads that exist for that topic.
 
 The following categories are available under **Forum Information:**
 
