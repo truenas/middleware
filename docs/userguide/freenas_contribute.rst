@@ -9,7 +9,7 @@ As an open source community, FreeNAS® relies on the input and expertise of its 
 community, your contributions benefit everyone who uses FreeNAS®.
 
 This section describes some areas of participation to get you started. It is by no means an exhaustive list. If you have an idea that you think would benefit
-the FreeNAS® community, bring it up on one of the resources mentioned in FreeNAS® Support Resources.
+the FreeNAS® community, bring it up on one of the resources mentioned in :ref:`FreeNAS® Support Resources`.
 
 This section demonstrates how you can:
 
@@ -41,27 +41,29 @@ As part of your research, perform the following steps:
 * If you are running the latest version, use the search feature to see if a similar issue already exists. If one does, do not create a new issue. Instead,
   add a comment to the existing issue if you have additional information to add.
 
-If a similar issue does not already exist, keep the following points in mind as you create a new issue:
-
-#.  You will need to register for an account, confirm you registration email address, and be logged in before you can create a new issue.
+If a similar issue does not already exist, click the "New issue" tab and complete the following information. Note that you  will need to register for an
+account, confirm your registration email address, and be logged in before you can create a new issue.
 
 #.  In the Tracker drop-down menu, select *Bug* if you are reporting a bug or
     *Feature* if you are making a feature request.
 
-#.  In the "Subject" field, include descriptive keywords that describe the issue. This is useful for other users who search for a similar problem.
+#.  In the "Subject" field, include descriptive keywords that describe the issue. This is useful to other users when searching for a similar problem.
 
 #.  In the "Description" section, describe the problem, how to recreate it, and include the text of any error messages. If you are requesting a feature,
     describe the benefit provided by the feature and, if applicable, provide examples of other products that use that feature or the URL of the homepage for
     the software.
+
+#.  Select the FreeNAS® version you are running in the "Seen in" drop-down menu.
 
 #.  If you would like to include a screenshot or log of your configuration or error, use the "Browse" button next to the "Files" field to upload the file.
 
 #.  Leave all of the other fields at their default values as these are used by developers as they take action on the issue.
 
 #.  Press the "Preview" link to read through your ticket before submitting it. Make sure it includes all of the information that someone else would need to
-    understand your problem or request. Once you are satisfied with your ticket, click the "Create Ticket" button to submit it.
+    understand your problem or request. Once you are satisfied with your ticket, click the "Create" button to submit it.
 
-An email will automatically be sent to the address you used when registering whenever a comment or action occurs on your issue.
+An email will automatically be sent to the address you used when registering which contains a copy of the new issue. If necessary, check your SPAM filter and
+allow emails from no-reply@ixsystems.com. Additional emails will be sent whenever a comment or action occurs on your issue.
 
 .. _Localize:
 
@@ -120,40 +122,17 @@ Simply type in the translated text and click the "Submit" button to save your ch
 Beta Test
 ---------
 
-Prior to any release, there is a beta period where testing snapshots will be announced on the FreeNAS® website and social media sites. This beta period is
-meant to provide users an opportunity to test the upcoming release and to provide feedback on bugs and errors so that they can be fixed prior to release.
-Feedback can be sent to the
-`Freenas-testing mailing list <http://lists.freenas.org/mailman/listinfo/freenas-testing>`_
-or a bug report can be submitted.
+The FreeNAS® download page has a
+`nightly directory <http://download.freenas.org/nightly/>`_. Once a day, the build server automatically uploads a new testing image for those users who wish
+to assist in testing. Nightly images should **never** be installed on a production system as they are intended for testing purposes only.
 
-.. _Rolling a Custom Snapshot:
+.. note:: expert users who prefer to build a customized image should refer to the instructions in this
+   `README <https://github.com/freenas/freenas>`_.
 
-Rolling a Custom Snapshot
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Additionally, prior to any release, BETA and RELEASE CANDIDATES are announced on the FreeNAS® Forums as they become available. These testing images are meant
+to provide users an opportunity to test the upcoming release in order to provide feedback on any encountered bugs so that they can be fixed prior to release.
 
-Users who wish to create their own custom ISO for testing purposes can download and compile the latest FreeNAS® source from the github repository.
+Testers can provide feedback by searching to see if the bug has already been reported, and if not, to submit a bug report using the instructions in
+`Report a Bug`_.
 
-In order to build your own testing snapshot, you will need to install the amd64 version of
-`FreeBSD 9.3 <http://www.freebsd.org/releases/9.3R/announce.html>`_
-in a virtual environment or on a test system. If you are using a virtual environment, a 64-bit system with at least 4 GB of RAM is recommended. Installation
-intructions can be found
-`here <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/bsdinstall.html>`_.
 
-After booting into the newly installed FreeBSD system, become the superuser (type :command:`su` and enter the *root* user's password) and run the following
-commands. First, install the software you'll need and refresh your path so it is aware of the new binaries::
-
- pkg_add -r git-subversion
- pkg_add -r cdrtools
- pkg_add -r python27
- pkg_add -r pbi-manager
- rehash
-
-Change to the directory where you would like to store the FreeNAS® source, download the source, then change to the directory containing the downloaded
-source::
-
- cd /path/to/your-build-filesystem
- git clone git://github.com/freenas/freenas.git
- cd freenas
-
-You are now ready to build the image using the instructions in this
-`README <https://github.com/freenas/freenas>`_.
