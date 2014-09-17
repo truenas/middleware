@@ -420,7 +420,7 @@ class Configuration(object):
     def TryGetNetworkFile(self, url, handler=None):
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
-        temp_mani = self.SystemConfiguration()
+        temp_mani = self.SystemManifest()
         if temp_mani:
             current_version = temp_mani.Sequence()
         try:
@@ -812,7 +812,7 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
+        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
         if file is None:
             log.debug("Could not get latest manifest file for train %s" % train)
         else:
