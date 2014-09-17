@@ -110,7 +110,7 @@ class Disk(object):
         yield str(self)
 
 
-def _clean_quota_fields(form, attrs, prefix):
+def _clean_zfssize_fields(form, attrs, prefix):
 
     cdata = form.cleaned_data
     for field in map(lambda x: prefix + x, attrs):
@@ -1378,7 +1378,7 @@ class ZFSDataset(Form):
         return rs
 
     def clean(self):
-        cleaned_data = _clean_quota_fields(
+        cleaned_data = _clean_zfssize_fields(
             self,
             ('refquota', 'quota', 'reservation', 'refreservation'),
             "dataset_")
@@ -1408,12 +1408,17 @@ class ZVol_EditForm(Form):
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
     )
+    volume_volsize = forms.CharField(
+        max_length=128,
+        label=_('Size'),
+        help_text=_('Example: 1 GiB'))
 
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name')
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
         data = notifier().zfs_get_options(name)
         self.fields['volume_compression'].initial = data['compression']
+        self.fields['volume_volsize'].initial = data['volsize']
 
         if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
             self.fields['volume_dedup'].initial = data['dedup']
@@ -1421,6 +1426,13 @@ class ZVol_EditForm(Form):
             self.fields['volume_dedup'].initial = 'verify'
         else:
             self.fields['volume_dedup'].initial = 'off'
+
+    def clean(self):
+        cleaned_data = _clean_zfssize_fields(
+            self,
+            ('volsize', ),
+            "volume_")
+        return cleaned_data
 
     def set_error(self, msg):
         msg = u"%s" % msg

@@ -472,6 +472,7 @@ def zvol_edit(request, name):
             for attr in (
                 'compression',
                 'dedup',
+                'volsize',
             ):
                 formfield = 'volume_%s' % attr
                 if form.cleaned_data[formfield] == "inherit":
