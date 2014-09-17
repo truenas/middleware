@@ -874,9 +874,13 @@ class JailMountPointForm(ModelForm):
         if kwargs and 'instance' in kwargs:
             self.instance = kwargs.pop('instance')
             if not self.jail and self.instance.id:
-                self.jail = Jails.objects.filter(
-                    jail_host=self.instance.jail
-                )[0]
+                try:
+                    self.jail = Jails.objects.filter(
+                        jail_host=self.instance.jail
+                    )[0]
+                except:
+                    pass
+           
 
         self.jc = JailsConfiguration.objects.order_by("-id")[0]
         self.fields['jail'] = forms.ChoiceField(
