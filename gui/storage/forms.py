@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
@@ -327,12 +327,35 @@ class VolumeVdevForm(Form):
 
 class VdevFormSet(BaseFormSet):
 
+
+    def _clean_vdevtype(self, vdevfound, vdevtype):
+        log.error("vdevtype %r", vdevtype)
+        if vdevtype in (
+            'cache',
+            'log',
+            'log mirror',
+            'spare',
+        ):
+            if vdevtype == 'log mirror':
+                name = 'log'
+            else:
+                name = vdevtype
+            log.error("vdevtype %r - %r", vdevtype, vdevfound[name])
+            if vdevfound[name] is True:
+                raise forms.ValidationError(_(
+                    'Only one row for the vitual device of type %s'
+                    ' is allowed.'
+                ) % name)
+            else:
+                vdevfound[name] = True
+
     def clean(self):
         if any(self.errors):
             # Don't bother validating the formset unless each form
             # is valid on its own
             return
 
+        vdevfound = defaultdict(lambda: False)
         if not self.pform.cleaned_data.get("volume_add"):
             """
             We need to make sure at least one vdev is a
@@ -346,7 +369,8 @@ class VdevFormSet(BaseFormSet):
                     'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
                 ):
                     has_datavdev = True
-                    break
+                    continue
+                self._clean_vdevtype(vdevfound, vdevtype)
             if not has_datavdev:
                 raise forms.ValidationError(_("You need a data disk group"))
         else:
@@ -356,26 +380,29 @@ class VdevFormSet(BaseFormSet):
             for vdev in zpool.data:
 
                 for i in range(0, self.total_form_count()):
+                    errors = []
                     form = self.forms[i]
-                    if not form.cleaned_data.get('vdevtype'):
+                    vdevtype = form.cleaned_data.get('vdevtype')
+                    if not vdevtype:
                         continue
-                    disks = form.cleaned_data.get('disks')
 
-                    if form.cleaned_data.get('vdevtype') in (
+                    if vdevtype in (
                         'cache',
                         'log',
                         'log mirror',
                         'spare',
                     ):
+                        self._clean_vdevtype(vdevfound, vdevtype)
                         continue
 
-                    errors = []
-                    if vdev.type != form.cleaned_data.get('vdevtype'):
+                    disks = form.cleaned_data.get('disks')
+
+                    if vdev.type != vdevtype:
                         errors.append(_(
                             "You are trying to add a virtual device of type "
                             "'%(addtype)s' in a pool that has a virtual "
                             "device of type '%(vdevtype)s'") % {
-                            'addtype': form.cleaned_data.get('vdevtype'),
+                            'addtype': vdevtype,
                             'vdevtype': vdev.type,
                             }
                         )
@@ -391,9 +418,7 @@ class VdevFormSet(BaseFormSet):
                             }
                         )
                     if errors:
-                        #form._errors['disks'] = form.error_class(errors)
                         raise forms.ValidationError(errors[0])
-                        break
 
 
 class ZFSVolumeWizardForm(forms.Form):
