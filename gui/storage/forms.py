@@ -1398,25 +1398,11 @@ class ZFSDataset(Form):
         del self.cleaned_data
 
 
-class ZFSVolume_EditForm(Form):
+class ZVol_EditForm(Form):
     volume_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
-    volume_atime = forms.ChoiceField(
-        choices=choices.ZFS_AtimeChoices,
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label=_('Enable atime'))
-    volume_refquota = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Quota for this volume'),
-        help_text=_('0=Unlimited; example: 1g'))
-    volume_refreservation = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Reserved space for this volume'),
-        help_text=_('0=None; example: 1g'))
     volume_dedup = forms.ChoiceField(
         label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
@@ -1424,19 +1410,10 @@ class ZFSVolume_EditForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self._mp = kwargs.pop("mp", None)
-        name = self._mp.mp_path.replace("/mnt/", "")
-        super(ZFSVolume_EditForm, self).__init__(*args, **kwargs)
+        name = kwargs.pop('name')
+        super(ZVol_EditForm, self).__init__(*args, **kwargs)
         data = notifier().zfs_get_options(name)
         self.fields['volume_compression'].initial = data['compression']
-        self.fields['volume_atime'].initial = data['atime']
-
-        for attr in ('refquota', 'refreservation'):
-            formfield = 'volume_%s' % (attr)
-            if data[attr] == 'none':
-                self.fields[formfield].initial = 0
-            else:
-                self.fields[formfield].initial = data[attr]
 
         if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
             self.fields['volume_dedup'].initial = data['dedup']
