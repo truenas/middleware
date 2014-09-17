@@ -751,6 +751,11 @@ class VolumeResourceMixin(NestedMixin):
                         kwargs={
                             'name': child.path,
                         })
+                    data['_zvol_edit_url'] = reverse(
+                        'storage_zvol_edit',
+                        kwargs={
+                            'name': child.path,
+                        })
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol', kwargs={
                         'parent': child.path,

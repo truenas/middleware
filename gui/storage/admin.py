@@ -370,6 +370,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
         # ZVol actions
+        actions['ZVolEdit'] = self._action_builder(
+            "zvol_edit",
+            label=_('Edit zvol'),
+            icon="settings",
+            show="ZVOL",
+        )
         actions['ZVolDelete'] = self._action_builder(
             "zvol_delete",
             label=_('Destroy zvol'),

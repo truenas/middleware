@@ -462,39 +462,27 @@ def zvol_delete(request, name):
         })
 
 
-def zfsvolume_edit(request, object_id):
-
-    mp = models.MountPoint.objects.get(pk=object_id)
-    volume_form = forms.ZFSVolume_EditForm(mp=mp)
+def zvol_edit(request, name):
 
     if request.method == 'POST':
-        volume_form = forms.ZFSVolume_EditForm(request.POST, mp=mp)
-        if volume_form.is_valid():
-            volume = mp.mp_volume
-            volume_name = volume.vol_name
-            volume_name = mp.mp_path.replace("/mnt/", "")
-
-            if volume_form.cleaned_data["volume_refquota"] == "0":
-                volume_form.cleaned_data["volume_refquota"] = "none"
+        form = forms.ZVol_EditForm(request.POST, name=name)
+        if form.is_valid():
 
             error, errors = False, {}
             for attr in (
                 'compression',
-                'atime',
                 'dedup',
-                'refquota',
-                'refreservation',
             ):
                 formfield = 'volume_%s' % attr
-                if volume_form.cleaned_data[formfield] == "inherit":
+                if form.cleaned_data[formfield] == "inherit":
                     success, err = notifier().zfs_inherit_option(
-                        volume_name,
+                        name,
                         attr)
                 else:
                     success, err = notifier().zfs_set_option(
-                        volume_name,
+                        name,
                         attr,
-                        volume_form.cleaned_data[formfield])
+                        form.cleaned_data[formfield])
                 if not success:
                     error = True
                     errors[formfield] = err
@@ -502,15 +490,18 @@ def zfsvolume_edit(request, object_id):
             if not error:
                 return JsonResp(
                     request,
-                    message=_("Native dataset successfully edited."))
+                    message=_("Zvol successfully edited."))
             else:
                 for field, err in errors.items():
-                    volume_form._errors[field] = volume_form.error_class([
+                    form._errors[field] = form.error_class([
                         err,
                     ])
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.ZVol_EditForm(name=name)
     return render(request, 'storage/volume_edit.html', {
-        'mp': mp,
-        'form': volume_form
+        'form': form,
     })
 
 
