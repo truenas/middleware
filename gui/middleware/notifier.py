@@ -4045,8 +4045,7 @@ class notifier:
             iface = iface[0].strip()
         except:
             pass
-
-        return iface if iface else None
+        return iface
 
     def get_default_ipv6_interface(self):
         p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
@@ -4057,8 +4056,7 @@ class notifier:
             iface = iface[0].strip()
         except:
             pass
-
-        return iface if iface else None
+        return iface
 
     def get_default_interface(self, ip_protocol='ipv4'):
         iface = None 

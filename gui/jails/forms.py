@@ -407,6 +407,17 @@ class JailsConfigurationForm(ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(JailsConfigurationForm, self).__init__(*args, **kwargs)
+
+        self.fields['jc_ipv4_dhcp'].widget.attrs['onChange'] = (
+            "jc_ipv4_dhcp_toggle();"
+        )
+        self.fields['jc_ipv6_autoconf'].widget.attrs['onChange'] = (
+            "jc_ipv6_autoconf_toggle();"
+        )
+
+
     #
     # Make sure the proper netmask/prefix length get saved
     #

@@ -339,33 +339,53 @@ class JailsConfiguration(Model):
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
     )
+    jc_ipv4_dhcp = models.BooleanField(
+        verbose_name=_("DHCP"),
+        default=False,
+        help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
+            " as default router, etc.")
+    )
     jc_ipv4_network = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network"),
-        help_text=_("IPv4 network range for jails and plugins"),
+        help_text=_("IPv4 network range for jails and plugins")
     )
     jc_ipv4_network_start = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network Start Address"),
-        help_text=_("IPv4 network start address for jails and plugins"),
+        help_text=_("IPv4 network start address for jails and plugins")
     )
     jc_ipv4_network_end = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network End Address"),
-        help_text=_("IPv4 network end address for jails and plugins"),
+        help_text=_("IPv4 network end address for jails and plugins")
+    )
+    jc_ipv6_autoconf = models.BooleanField(
+        verbose_name=_("Auto configure IPv6"),
+        default=False,
+        help_text=_(
+            "When enabled, automatically configurate IPv6 address "
+            "via rtsol(8)."
+        ),
     )
     jc_ipv6_network = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network"),
         help_text=_("IPv6 network range for jails and plugins")
     )
     jc_ipv6_network_start = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network Start Address"),
         help_text=_("IPv6 network start address for jails and plugins")
     )
     jc_ipv6_network_end = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network End Address"),
         help_text=_("IPv6 network end address for jails and plugins")
     )

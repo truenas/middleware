@@ -71,14 +71,27 @@ def jails_home(request):
 def jailsconfiguration(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
+        jc = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create()
+        jc = models.JailsConfiguration.objects.create()
 
-    return render(request, 'jails/index.html', {
-        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
-        'jailsconf': jailsconf
+    if request.method == "POST":
+        form = forms.JailsConfigurationForm(request.POST, instance=jc)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Jails Configuration successfully updated."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.JailsConfigurationForm(instance=jc)
+
+    return render(request, 'jails/jailsconfiguration.html', {
+        'form': form,
+        'inline': True
     })
 
 
