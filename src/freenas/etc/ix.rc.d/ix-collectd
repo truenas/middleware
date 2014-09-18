@@ -14,11 +14,6 @@ use_rrd_dataset()
 {
 	local use
 
-	if ! is_freenas
-	then
-		return 1
-	fi
-
 	if [ -z "$(get_rrd_dataset)" ]
 	then
 		return 1
