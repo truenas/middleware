@@ -259,7 +259,9 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | to execute                                                                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Obey pam restrictions            | checkbox       |                                                                                                       |
+| Obey pam restrictions            | checkbox       | uncheck this box to allow cross-domain authentication, to allow users and groups to be managed on     |
+|                                  |                | another forest, or to allow permissions to be delegated from active directory users and groups to     |
+|                                  |                | domain admins on another forest                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Bind IP Addresses                | checkboxes     |                                                                                                       |

@@ -159,6 +159,8 @@ issued since FreeBSD 9.3 RELEASE.
   
 * FreeNAS® now formats the installation media with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments, allowing you to
   easily recover from a failed upgrade or configuration.
+  
+* The administrative GUI can now be accessed over IPv6.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a

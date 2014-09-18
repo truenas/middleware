@@ -69,14 +69,16 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +==========================+===============+============================================================================================================================================+
 | Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                 |
-|                          |               | *sales.example.com*)                                                                                                                       |
+|                          |               | *sales.example.com*); this setting is mandatory and the GUI will refuse to save the settings if the domain controller for the specified    |
+|                          |               | domain can not be found                                                                                                                    |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Name      | string        | name of the Active Directory administrator account                                                                                         |
+| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can not   |
+|                          |               | connect to the domain controller using this account name                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Password  | string        | password for the Active Directory administrator account                                                                                    |
-|                          |               |                                                                                                                                            |
+| Domain Account Password  | string        | password for the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can  |
+|                          |               | not connect to the domain controller using this password                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
@@ -116,10 +118,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Controller        | string        | only available in "Advanced Mode"; can be used to specify hostname of domain controller to use                                             |
+| Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Global Catalog Server    | string        | only available in "Advanced Mode"; can be used to specify hostname of global catalog server to use                                         |
+| Global Catalog Server    | string        | only available in "Advanced Mode"; if the hostname of the global catalog server to use is specified, make sure it is resolvable            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Kerberos Realm           | drop-down     | only available in "Advanced Mode";                                                                                                         |
