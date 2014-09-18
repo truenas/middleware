@@ -508,7 +508,20 @@ class SSLForm(ModelForm):
         ]
         if self.instance.ssl_passphrase:
             self.fields['ssl_passphrase'].required = False
+        self.__original_save()
 
+    # This is without the field 'ssl_certfile' and that is on purpose as you will see below
+    def __original_save(self):
+      for name in ('ssl_org','ssl_unit','ssl_email','ssl_city','ssl_state','ssl_country','ssl_common','ssl_passphrase','ssl_certfile'):
+	  setattr(self.instance, "_original_%s" % name,
+	      getattr(self.instance, name)
+          )
+    # The one below has the 'ssl_certfile' field change check only (this helps distinguish between changes)
+    def __cert_changed(self):
+      if getattr(self.instance, "_original_ssl_certfile") != self.cleaned_data.get("ssl_certfile"):
+	return True
+      return False
+    
     def clean_ssl_passphrase2(self):
         passphrase1 = self.cleaned_data.get("ssl_passphrase")
         passphrase2 = self.cleaned_data.get("ssl_passphrase2")
