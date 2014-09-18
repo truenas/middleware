@@ -393,6 +393,11 @@ ix_nginx_start()
 	local port=$(echo "${settings}"|cut -f4 -d"|")
 	local httpsport=$(echo "${settings}"|cut -f5 -d"|")
 
+	if [ "${proto}" = "https" -o "${proto}" = "httphttps" ] &&  [ ! -f "${HTTPDKEY}" -a ! -f "${HTTPDCERT}" ];
+	then
+		$(service ix-ssl start nginx)
+	fi
+	
 	if [ "${proto}" = "https" -a ! -f "${SSLCONF}" ]
 	then
 		port="80"
