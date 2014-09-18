@@ -510,6 +510,7 @@ menu_install()
     local _items
     local _disk
     local _disks=""
+    local _realdisks=""
     local _disk_old
     local _config_file
     local _desc
@@ -531,6 +532,7 @@ menu_install()
 
     _tmpfile="/tmp/answer"
     TMPFILE=$_tmpfile
+    REALDISKS="/tmp/realdisks"
 
     if [ $# -gt 0 ]; then
 	_disks="$@"
@@ -637,7 +639,14 @@ menu_install()
 	fi
     fi
     done
-    ${INTERACTIVE} && new_install_verify "$_action" ${_disks}
+
+    if [ $_satadom = "YES" -a -n "$(echo ${_disks}|grep "raid/")" ]; then
+	_realdisks=$(cat ${REALDISKS})
+    else
+	_realdisks=$_disks
+    fi
+
+    ${INTERACTIVE} && new_install_verify "$_action" ${_realdisks}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     if [ ${_do_upgrade} -eq 0 ]; then
@@ -648,10 +657,10 @@ menu_install()
     fi
     # Start critical section.
     if ${INTERACTIVE}; then
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
+	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press any key to continue.. \" junk" EXIT
     else
-#	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_disks} has failed.\" ; sleep 15" EXIT
-	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_disks} has failed. Press any key to continue.. \" junk" EXIT
+#	trap "echo \"The ${AVATAR_PROJECT} ${_action} on ${_realdisks} has failed.\" ; sleep 15" EXIT
+	trap "set +x; read -p \"The $AVATAR_PROJECT $_action on ${_realdisks} has failed. Press any key to continue.. \" junk" EXIT
     fi
     set -e
 #    set -x
@@ -661,7 +670,7 @@ menu_install()
     # build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
     # For one of the install_worker ISO scripts
-    export INSTALL_MEDIA=${_disks}
+    export INSTALL_MEDIA=${_realdisks}
     if [ ${_do_upgrade} -eq 1 ]
     then
         /etc/rc.d/dmesg start
@@ -719,7 +728,7 @@ menu_install()
 
 	# Destroy existing partition table, if there is any but tolerate
 	# failure.
-	for _disk in ${_disks}; do
+	for _disk in ${_realdisks}; do
 	    gpart destroy -F ${_disk} || true
 	done
     fi
@@ -731,10 +740,14 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
+    if echo ${_disks} | grep -q "raid/"; then
+	graid delete ${_disks}
+    fi
+
     # We repartition even if it's an upgrade.
     # This destroys all of the pool data, and
     # ensures a clean filesystems.
-    partition_disk ${_disks}
+    partition_disk ${_realdisks}
     mount_disk /tmp/data
     
     if [ -d /tmp/data_preserved ]; then
@@ -801,7 +814,7 @@ menu_install()
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/default freenas-boot
-    install_grub /tmp/data ${_disks}
+    install_grub /tmp/data ${_realdisks}
     
 #    set +x
     if [ -d /tmp/data_preserved ]; then
@@ -848,7 +861,7 @@ menu_install()
 
     trap - EXIT
 
-    _msg="The $AVATAR_PROJECT $_action on ${_disks} succeeded!\n"
+    _msg="The $AVATAR_PROJECT $_action on ${_realdisks} succeeded!\n"
     _dlv=`/sbin/sysctl -n vfs.nfs.diskless_valid 2> /dev/null`
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
