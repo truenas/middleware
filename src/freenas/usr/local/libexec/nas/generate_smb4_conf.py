@@ -565,8 +565,8 @@ def add_activedirectory_conf(smb4_conf):
         "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
-    if ad.ad_unix_extensions:
-        confset1(smb4_conf, "winbind nss info = rfc2307")
+    if ad.ad_nss_info:
+        confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
     idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, ad_workgroup)

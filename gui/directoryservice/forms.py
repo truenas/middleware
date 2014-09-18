@@ -252,6 +252,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_dcname',
         'ad_gcname',
         'ad_kerberos_realm',
+        'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
         'ad_idmap_backend'

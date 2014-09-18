@@ -845,6 +845,17 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_RID)
     )
+    ad_nss_info = models.CharField(
+        max_length=120,  
+        blank=True,
+        null=True,
+        choices=choices.NSS_INFO_CHOICES,
+        verbose_name=_("Winbind NSS Info"),
+        help_text=_("This parameter is designed to control how Winbind "
+            "retrieves Name Service Information to construct a user's "
+            "home directory and login"
+        )
+    )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False

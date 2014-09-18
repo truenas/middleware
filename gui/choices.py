@@ -910,3 +910,10 @@ class COUNTRY_CHOICES(object):
     def __iter__(self):
         return iter((c[self.__2li], c[self.__cni]) \
             for c in self.__country_list)
+
+
+NSS_INFO_CHOICES = (
+    ('sfu', 'sfu'), 
+    ('sfu20', 'sfu20'),
+    ('rfc2307', 'rfc2307')
+)
