@@ -642,6 +642,10 @@ class SSLForm(ModelForm):
 	  obj.ssl_certfile = ""
 	obj.save()
 
+    def done(self, request, events):
+      if (self.__original_changed() or self.__cert_changed()):
+	notifier().start_ssl("nginx")
+	events.append("restartHttpd()")
 
 class SMARTTestForm(ModelForm):
 
