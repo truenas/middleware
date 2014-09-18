@@ -340,7 +340,7 @@ class JailsConfiguration(Model):
         help_text=_("Path where to store jail data")
     )
     jc_ipv4_dhcp = models.BooleanField(
-        verbose_name=_("DHCP"),
+        verbose_name=_("IPv4 DHCP"),
         default=False,
         help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
             " as default router, etc.")
@@ -364,7 +364,7 @@ class JailsConfiguration(Model):
         help_text=_("IPv4 network end address for jails and plugins")
     )
     jc_ipv6_autoconf = models.BooleanField(
-        verbose_name=_("Auto configure IPv6"),
+        verbose_name=_("IPv6 Autoconfigure"),
         default=False,
         help_text=_(
             "When enabled, automatically configurate IPv6 address "
