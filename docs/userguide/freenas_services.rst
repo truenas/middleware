@@ -124,6 +124,8 @@ you create each user, first create a child dataset for that user. For example, c
 Troubleshooting AFP
 ~~~~~~~~~~~~~~~~~~~
 
+You can determine which users are connected to an AFP share by typing :command:`afpusers`.
+
 If you receive a "Something wrong with the volume's CNID DB" error message, run the following command from :ref:`Shell`, replacing the path to the problematic
 AFP share::
 

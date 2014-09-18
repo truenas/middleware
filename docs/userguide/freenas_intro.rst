@@ -174,6 +174,9 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
+* The :command:`afpusers` command has been added. Similar to
+  `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
+
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
 
