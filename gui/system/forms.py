@@ -628,6 +628,12 @@ class SSLForm(ModelForm):
         cdata = self.cleaned_data
         if not cdata.get("ssl_passphrase2"):
             cdata['ssl_passphrase'] = cdata['ssl_passphrase2']
+        
+        if (self.__original_changed() and self.__cert_changed()):
+	  self._errors["ssl_certfile"] = self.error_class(
+	    [_("You can either enter details to internally create a certificate"
+	       "</br> Or You can copy paste your existing keypair and certificate"
+	       "</br> into the 'ssl_certfile' filed. BUT NOT BOTH!")])
         return cdata
 
     def save(self):
