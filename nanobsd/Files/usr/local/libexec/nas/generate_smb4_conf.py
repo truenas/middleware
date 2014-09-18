@@ -272,9 +272,10 @@ def add_activedirectory_conf(smb4_conf):
         "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
-    if ad.ad_unix_extensions:
-        confset1(smb4_conf, "winbind nss info = rfc2307")
+    if ad.ad_nss_info:
+        confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
+    if ad.ad_unix_extensions:
         confset2(smb4_conf, "idmap config %s: backend = ad", ad.ad_workgroup)
         confset2(smb4_conf, "idmap config %s: schema_mode = rfc2307", ad.ad_workgroup)
         confset1(smb4_conf, "idmap config %s: range = %d-%d" %(

@@ -1663,6 +1663,16 @@ class ActiveDirectory(Model):
             verbose_name=_("Kerberos Password Server"),
             help_text=_("Hostname of the kerberos password server to use."),
             )
+    ad_nss_info = models.CharField(
+            max_length=120,
+            blank=True,
+            null=True,
+            choices=choices.NSS_INFO_CHOICES,
+            verbose_name=_("Winbind NSS Info"),
+            help_text=_("This parameter is designed to control how "
+                "Winbind retrieves Name Service Information to construct "
+                "a user's home directory and login shell.")
+            )
     ad_timeout = models.IntegerField(
             default=10,
             verbose_name=_("AD timeout"),
@@ -1705,6 +1715,7 @@ class ActiveDirectory(Model):
             'ad_gcname',
             'ad_krbname',
             'ad_kpwdname',
+            'ad_nss_info',
             'ad_timeout',
             'ad_dns_timeout'
             )

@@ -788,3 +788,10 @@ class SERIAL_CHOICES(object):
             ports = ['0x2f8']
         for p in ports:
             yield (p, p)
+
+
+NSS_INFO_CHOICES = (
+    ('sfu', 'sfu'),
+    ('sfu20', 'sfu20'),
+    ('rfc2307', 'rfc2307')
+)
