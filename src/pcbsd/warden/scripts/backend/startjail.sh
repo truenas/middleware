@@ -122,7 +122,7 @@ start_jail_vimage()
   ifconfig "${EPAIRB}" vnet ${JID}
 
   # Configure the IPv4 addresses
-  if [ "${IP4}" = "dhcp" ] ; then
+  if [ "${IP4}" = "DHCP" ] ; then
      local ipv4=
 
      warden_print "Getting IPv4 address from DHCP"
@@ -160,10 +160,10 @@ start_jail_vimage()
   sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
 
   # Configure the IPv6 addresses
-  if [ "${IP6}" = "autoconf" ] ; then
+  if [ "${IP6}" = "AUTOCONF" ] ; then
      sysrc -j ${JID} rtsold_enable="YES"
      sysrc -j ${JID} "ifconfig_${EPAIRB}_ipv6"="inet6 accept_rtadv auto_linklocal"
-     jexec ${JID} service rtsold start
+     #jexec ${JID} service rtsold start
 
   elif [ -n "${IP6}" ] ; then
      warden_print "Configuring jail for IPv6"
@@ -561,7 +561,7 @@ fi
 IP4="$(warden_get_ipv4)"
 # Check if somebody snuck in a IP without / on it
 echo $IP4 | grep -q '/'
-if [ $? -ne 0 -a "${IP4}" != "dhcp" ] ; then
+if [ $? -ne 0 -a "${IP4}" != "DHCP" ] ; then
    IP4="${IP4}/24"
 fi
 
@@ -570,7 +570,7 @@ IPS4="$(warden_get_ipv4_aliases)"
 IP6="$(warden_get_ipv6)"
 # Check if somebody snuck in a IP without / on it
 echo $IP6 | grep -q '/'
-if [ $? -ne 0 -a "${IP6}" != "autoconf" ] ; then
+if [ $? -ne 0 -a "${IP6}" != "AUTOCONF" ] ; then
    IP6="${IP6}/64"
 fi
 
@@ -619,7 +619,7 @@ else
 fi
 
 # Hack. rtsold needs an extra kick for some reason. fukifinoy.
-if [ "${VIMAGEENABLE}" = "YES" -a "${IP6}" = "autoconf" ] ; then
+if [ "${VIMAGEENABLE}" = "YES" -a "${IP6}" = "AUTOCONF" ] ; then
    jexec ${JID} service rtsold restart
    warden_add_ndp_entries "${JID}"
 

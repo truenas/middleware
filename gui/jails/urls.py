@@ -39,9 +39,11 @@ urlpatterns = patterns('freenasUI.jails.views',
     url(r'^stop/(?P<id>\d+)$', 'jail_stop', name="jail_stop"),
     url(r'^progress/$', 'jail_progress', name="jail_progress"),
     url(r'^linuxprogress/$', 'jail_linuxprogress', name="jail_linuxprogress"),
+    url(r'^jail/info/(?P<id>\d+)/$', 'jail_info', name="jail_info"),
     url(r'^template/info/(?P<name>.+)/$', 'jail_template_info', name="jail_template_info"),
     url(r'^template/create/$', 'jail_template_create', name="jail_template_create"),
     url(r'^template/edit/(?P<id>.+)/$', 'jail_template_edit', name="jail_template_edit"),
+    url(r'^jailsconfiguration/info/$', 'jailsconfiguration_info', name="jailsconfiguration_info"),
     url(r'^jailsconfiguration/network/info/$', 'jailsconfiguration_network_info', name="jailsconfiguration_network_info"),
     )
 

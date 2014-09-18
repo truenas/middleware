@@ -407,12 +407,12 @@ def get_jail_ipv6_network_end():
 
 
 #
-# guess_ipv4_address()
+# get_ipv4_address()
 #
 # Get the configured jail IPv4 network, if it doesn't have a start or stop
 # address, fill them in, then probe the range for first available address.
 #
-def guess_ipv4_address():
+def get_ipv4_address():
     ipv4_addr = None
 
     st_ipv4_network = get_jail_ipv4_network()
@@ -440,12 +440,12 @@ def guess_ipv4_address():
 
 
 #
-# guess_ipv6_address()
+# get_ipv6_address()
 #
 # Get the configured jail IPv6 network, if it doesn't have a start or stop
 # address, fill them in, then probe the range for first available address.
 #
-def guess_ipv6_address():
+def get_ipv6_address():
     ipv6_addr = None
 
     st_ipv6_network = get_jail_ipv6_network()
@@ -525,21 +525,13 @@ def get_host_ipv6_network():
     return st_host_ipv6_network
 
 
-#
-# guess_addresses()
-#
-# Figure out the next IPv4 and IPv6 addresses available (if any). 
-# If a bridge address is necessary, figure that as well
-#
-def guess_addresses():
+def guess_ipv4_addresses():
     addresses = {
         'high_ipv4': None,
-        'high_ipv6': None,
-        'bridge_ipv4': None,
-        'bridge_ipv6': None
+        'bridge_ipv4': None
     }
 
-    ipv4_addr = guess_ipv4_address()
+    ipv4_addr = get_ipv4_address()
     ipv4_jail_network = get_jail_ipv4_network()
 
     if ipv4_addr:
@@ -555,7 +547,16 @@ def guess_addresses():
             log.debug("guess_addresses: %s", e)
             return addresses  
 
-    ipv6_addr = guess_ipv6_address()
+    return addresses
+
+
+def guess_ipv6_addresses():
+    addresses = {
+        'high_ipv6': None,
+        'bridge_ipv6': None
+    }
+
+    ipv6_addr = get_ipv6_address()
     ipv6_jail_network = get_jail_ipv6_network()
 
     if ipv6_addr:
@@ -570,6 +571,24 @@ def guess_addresses():
         except Exception as e:
             log.debug("guess_addresses: %s", e)
             return addresses  
+
+    return addresses
+
+
+#
+# guess_addresses()
+#
+# Figure out the next IPv4 and IPv6 addresses available (if any). 
+# If a bridge address is necessary, figure that as well
+#
+def guess_addresses():
+    addresses = {}
+
+    ipv4_addresses = guess_ipv4_addresses()
+    addresses.update(ipv4_addresses)
+
+    ipv6_addresses = guess_ipv6_addresses()
+    addresses.update(ipv6_addresses)
 
     return addresses
 

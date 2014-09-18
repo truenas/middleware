@@ -667,7 +667,7 @@ get_default_ipv4_route()
    fi
 
    eval ${jexec} route -nv show default | \
-      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%' 2>/dev/null
 }
 
 get_default_ipv6_route()
@@ -681,7 +681,7 @@ get_default_ipv6_route()
    fi
 
    eval ${jexec} route -nv show -inet6 default | \
-      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%' 2>/dev/null
 }
 
 get_default_interface()
@@ -695,7 +695,7 @@ get_default_interface()
    fi
 
    eval ${jexec} route -nv show default | \
-      grep -w interface | awk '{ print $2 }'
+      grep -w interface | awk '{ print $2 }' 2>/dev/null
 }
 
 get_default_ipv4_interface()
@@ -709,7 +709,7 @@ get_default_ipv4_interface()
    fi
 
    eval ${jexec} route -nv show default | \
-      grep -w interface | awk '{ print $2 }'
+      grep -w interface | awk '{ print $2 }' 2>/dev/null
 }
 
 get_default_ipv6_interface()
@@ -723,7 +723,7 @@ get_default_ipv6_interface()
    fi
 
    eval ${jexec} route -nv show -inet6 default | \
-      grep -w interface | awk '{ print $2 }'
+      grep -w interface | awk '{ print $2 }' 2>/dev/null
 }
 
 get_bridge_interfaces()
@@ -2089,7 +2089,7 @@ warden_get_ipv4()
 
    ipv4="$(eval cat "${dir}/ipv4" 2>/dev/null ${strip})"
    if [ -z "${ipv4}" ] ; then
-      ipv4="dhcp"
+      ipv4="DHCP"
    fi
 
    echo "${ipv4}"
@@ -2183,7 +2183,7 @@ warden_ipv4_isdhcp()
    local ipv4="$(warden_get_ipv4)"
 
    local ret=1
-   if [ -n "${ipv4}" -a "${ipv4}" = "dhcp" ] ; then
+   if [ -n "${ipv4}" -a "${ipv4}" = "DHCP" ] ; then
       ret=0
    fi
 
@@ -2204,12 +2204,12 @@ warden_ipv4_isnull()
 
 warden_set_ipv4()
 {
-   local newip="$(echo "${1}"|tr A-Z a-z)"
+   local newip="$(echo "${1}"|tr a-z A-Z)"
    local oldip="$(warden_get_ipv4)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
 
-   if [ "${newip}" = "dhcp" ] ; then
+   if [ "${newip}" = "DHCP" ] ; then
        echo "${newip}" > "${JMETADIR}/ipv4"
        return 0
    fi
@@ -2247,7 +2247,7 @@ warden_get_ipv6()
 
    ipv6="$(eval cat "${dir}/ipv6" 2>/dev/null ${strip})"
    if [ -z "${ipv6}" ] ; then
-      ipv6="autoconf"
+      ipv6="AUTOCONF"
    fi
 
    echo "${ipv6}"
@@ -2340,7 +2340,7 @@ warden_ipv6_isautoconf()
    local ipv6="$(warden_get_ipv6)"
 
    local ret=1
-   if [ -n "${ipv6}" -a "${ipv6}" = "autoconf" ] ; then
+   if [ -n "${ipv6}" -a "${ipv6}" = "AUTOCONF" ] ; then
       ret=0
    fi
 
@@ -2361,15 +2361,17 @@ warden_ipv6_isnull()
 
 warden_set_ipv6()
 {
-   local newip="$(echo "${1}"|tr A-Z a-z)"
+   local newip="$(echo "${1}"|tr a-z A-Z)"
    local oldip="$(warden_get_ipv6)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
 
-   if [ "${newip}" = "autoconf" ] ; then
+   if [ "${newip}" = "AUTOCONF" ] ; then
        echo "${newip}" > "${JMETADIR}/ipv6"
        return 0
    fi
+
+   newip="$(echo "${newip}"|tr A-Z a-z)"
    
    get_ip_and_netmask "${newip}"  
    newip="${JIP}"

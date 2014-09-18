@@ -1159,11 +1159,14 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
            case $1 in
              --ipv4) shift
 			  if [ -z "$1" ] ; then warden_exit "No IPv4 address specified!"; fi
-                          IP4="$(echo "${1}"|tr A-Z a-z)"
+                          IP4="$(echo "${1}"|tr a-z A-Z)"
                           ;;
              --ipv6) shift
 			  if [ -z "$1" ] ; then warden_exit "No IPv6 address specified!"; fi
-                          IP6="$(echo "${1}"|tr A-Z a-z)"
+                          IP6="$(echo "${1}"|tr a-z A-Z)"
+                          if [ "${IP6}" != "AUTOCONF" ] ; then
+                              IP6="$(echo "${1}"|tr A-Z a-z)"
+                          fi 
                           ;;
 
              --src) SRC="YES" ;;

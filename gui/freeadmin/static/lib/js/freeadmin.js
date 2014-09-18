@@ -666,6 +666,94 @@ require([
         }
     }
 
+    jail_ipv4_dhcp_toggle = function() {
+        jc_info = get_jc_info();
+        if (!jc_info) {
+            return;
+        } 
+
+        if (!jc_info.jc_ipv4_dhcp) {
+            return;
+        }
+
+        var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv4_netmask = registry.byId("id_jail_ipv4_netmask");
+        var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
+        var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
+        var vnet = registry.byId("id_jail_vnet");
+        var nat = registry.byId("id_jail_nat");
+
+        ipv4.set("value", ipv4.get("value") ? ipv4.get("value") : "DHCP");
+        vnet.set("checked", true);
+
+        ipv4.set("disabled", true);
+        ipv4_netmask.set("disabled", true);
+        bridge_ipv4.set("disabled", true);
+        bridge_ipv4_netmask.set("disabled", true);
+        defaultrouter_ipv4.set("disabled", true);
+        vnet.set("disabled", true);
+        nat.set("disabled", true);
+    }
+
+    jail_ipv6_autoconf_toggle = function() {
+        jc_info = get_jc_info();
+        if (!jc_info) {
+            return;
+        } 
+
+        if (!jc_info.jc_ipv6_autoconf) {
+            return;
+        }
+
+        var ipv6 = registry.byId("id_jail_ipv6");
+        var ipv6_prefix = registry.byId("id_jail_ipv6_prefix");
+        var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+        var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
+        var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
+        var vnet = registry.byId("id_jail_vnet");
+        var nat = registry.byId("id_jail_nat");
+
+        ipv6.set("value", ipv6.get("value") ? ipv6.get("value") : "AUTOCONF");
+        vnet.set("checked", true);
+
+        ipv6.set("disabled", true);
+        ipv6_prefix.set("disabled", true);
+        bridge_ipv6.set("disabled", true);
+        bridge_ipv6_prefix.set("disabled", true);
+        defaultrouter_ipv6.set("disabled", true);
+        vnet.set("disabled", true);
+        nat.set("disabled", true);
+    }
+
+    get_jail_info = function(id) {
+        jail_info = null;
+
+        if (id == null) {
+            return null;
+        } 
+
+        xhr.get('/jails/jail/info/' + id + '/', {
+            sync: true
+        }).then(function(data) {
+            jail_info = JSON.parse(data);
+        });
+
+        return jail_info;
+    }
+
+    get_jc_info = function() {
+        jc_info = null;
+
+        xhr.get('/jails/jailsconfiguration/info/', {
+            sync: true
+        }).then(function(data) {
+            jc_info = JSON.parse(data);
+        });
+
+        return jc_info;
+    }
+
     get_jc_network_info = function()  {
         jc_network_info = null;
 

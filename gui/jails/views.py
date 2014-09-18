@@ -476,21 +476,38 @@ def jail_zfsrmsnap(request, id):
     return render(request, 'jails/zfsrmsnap.html', {})
 
 
+def jail_info(request, id):
+    data = {}
+
+    fields = models.Jails._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
+
+    try:
+        jail = models.Jails.objects.get(pk=id) 
+        for k in data.keys(): 
+            data[k] = getattr(jail, k) 
+
+    except:
+        pass
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
 def jail_template_info(request, name):
-    data = {
-        'jt_name': None,
-        'jt_os': None,
-        'jt_arch': None,
-        'jt_url': None
-    }
+    data = {}
+
+    fields = models.JailTemplate._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
 
     if name:
         jt = models.JailTemplate.objects.get(jt_name=name)
         if jt:
-            data['jt_name'] = jt.jt_name
-            data['jt_os'] = jt.jt_os
-            data['jt_arch'] = jt.jt_arch
-            data['jt_url'] = jt.jt_url
+            for k in data.keys():
+                data[k] = getattr(jt, k) 
+            data['jt_instances'] = jt.jt_instances
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
@@ -532,6 +549,25 @@ def jail_template_edit(request, id):
     return render(request, "jails/jail_template_edit.html", {
         'form': form
     })
+
+def jailsconfiguration_info(request):
+    data = {}
+
+    fields = models.JailsConfiguration._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
+
+    try:
+        jc = models.JailsConfiguration.objects.all()[0]
+
+    except:
+        pass
+
+    for k in data.keys():
+        data[k] = getattr(jc, k)
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
 
 
 def jailsconfiguration_network_info(request):

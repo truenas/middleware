@@ -123,14 +123,14 @@ do
   BRIDGEIPS4="$(warden_get_ipv4_bridge_aliases "${jailfp}")"
   GATEWAY4="$(warden_get_ipv4_defaultrouter "${jailfp}")"
 
-  if [ "${IP4}" = "dhcp" ] && warden_jail_isrunning "${JAILNAME}" ; then
+  if [ "${IP4}" = "DHCP" ] && warden_jail_isrunning "${JAILNAME}" ; then
      JID="$(warden_get_jailid "${JAILNAME}")"
      IFACE="$(get_default_ipv4_interface "${JID}")"
 
-     IP4="dhcp:$(get_interface_ipv4_address "${IFACE}" "${JID}")"
+     IP4="DHCP:$(get_interface_ipv4_address "${IFACE}" "${JID}")"
 
      if [ -z "${GATEWAY4}" ] ; then
-        GATEWAY4="dhcp:$(get_default_ipv4_route "${JID}")"
+        GATEWAY4="DHCP:$(get_default_ipv4_route "${JID}")"
      fi
   fi 
 
@@ -143,13 +143,13 @@ do
   BRIDGEIPS6="$(warden_get_ipv6_bridge_aliases "${jailfp}")"
   GATEWAY6="$(warden_get_ipv6_defaultrouter "${jailfp}")"
 
-  if [ "${IP6}" = "autoconf" ] && warden_jail_isrunning "${JAILNAME}" ; then
+  if [ "${IP6}" = "AUTOCONF" ] && warden_jail_isrunning "${JAILNAME}" ; then
      JID="$(warden_get_jailid "${JAILNAME}")"
      IFACE="$(get_default_ipv6_interface "${JID}")"
-     IP6="autoconf:$(get_interface_ipv6_address "${IFACE}" "${JID}")"
+     IP6="AUTOCONF:$(get_interface_ipv6_address "${IFACE}" "${JID}")"
 
      if [ -z "${GATEWAY6}" ] ; then
-        GATEWAY6="autoconf:$(get_default_ipv6_route "${JID}")"
+        GATEWAY6="AUTOCONF:$(get_default_ipv6_route "${JID}")"
      fi
   fi 
 

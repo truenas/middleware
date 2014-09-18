@@ -41,7 +41,10 @@ from freenasUI.jails.models import (
     JailTemplate,
     JailMountPoint
 )
-from freenasUI.jails.utils import guess_addresses
+from freenasUI.jails.utils import (
+    guess_ipv4_addresses,
+    guess_ipv6_addresses
+)
 from freenasUI.common.warden import (
     Warden,
     WARDEN_FLAGS_NONE,
@@ -111,6 +114,11 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
+        try:
+            self.jc = JailsConfiguration.objects.order_by("-id")[0]
+        except Exception as e:
+            raise MiddlewareError(e.message)
+
         self.logfile = "/var/tmp/warden.log"
         self.statusfile = "/var/tmp/status"
         try:
@@ -141,37 +149,36 @@ class JailCreateForm(ModelForm):
             "jail_nat_toggle();"
         )
 
-        addrs = guess_addresses()
+        if not self.jc.jc_ipv4_dhcp: 
+            ipv4_addrs = guess_ipv4_addresses()
+            if ipv4_addrs['high_ipv4']:
+                parts = str(ipv4_addrs['high_ipv4']).split('/')
+                self.fields['jail_ipv4'].initial = parts[0]
+                if len(parts) > 1:
+                    self.fields['jail_ipv4_netmask'].initial = parts[1]
 
-        if addrs['high_ipv4']:
-            parts = str(addrs['high_ipv4']).split('/')
-            self.fields['jail_ipv4'].initial = parts[0]
-            if len(parts) > 1:
-                self.fields['jail_ipv4_netmask'].initial = parts[1]
+            if ipv4_addrs['bridge_ipv4']:
+                parts = str(ipv4_addrs['bridge_ipv4']).split('/')
+                self.fields['jail_bridge_ipv4'].initial = parts[0]
+                if len(parts) > 1:
+                    self.fields['jail_bridge_ipv4_netmask'].initial = parts[1]
 
-        if addrs['high_ipv6']:
-            parts = str(addrs['high_ipv6']).split('/')
-            self.fields['jail_ipv6'].initial = parts[0]
-            if len(parts) > 1:
-                self.fields['jail_ipv6_prefix'].initial = parts[1]
+        if not self.jc.jc_ipv6_autoconf:
+            ipv6_addrs = guess_ipv6_addresses()
+            if ipv6_addrs['high_ipv6']:
+                parts = str(ipv6_addrs['high_ipv6']).split('/')
+                self.fields['jail_ipv6'].initial = parts[0]
+                if len(parts) > 1:
+                    self.fields['jail_ipv6_prefix'].initial = parts[1]
 
-        if addrs['bridge_ipv4']:
-            parts = str(addrs['bridge_ipv4']).split('/')
-            self.fields['jail_bridge_ipv4'].initial = parts[0]
-            if len(parts) > 1:
-                self.fields['jail_bridge_ipv4_netmask'].initial = parts[1]
-
-        if addrs['bridge_ipv6']:
-            parts = str(addrs['bridge_ipv6']).split('/')
-            self.fields['jail_bridge_ipv6'].initial = parts[0]
-            if len(parts) > 1:
-                self.fields['jail_bridge_ipv6_prefix'].initial = parts[1]
+            if ipv6_addrs['bridge_ipv6']:
+                parts = str(ipv6_addrs['bridge_ipv6']).split('/')
+                self.fields['jail_bridge_ipv6'].initial = parts[0]
+                if len(parts) > 1:
+                    self.fields['jail_bridge_ipv6_prefix'].initial = parts[1]
 
     def save(self):
-        try:
-            jc = JailsConfiguration.objects.order_by("-id")[0]
-        except Exception as e:
-            raise MiddlewareError(e.message)
+        jc = self.jc
 
         if not jc.jc_path:
             raise MiddlewareError(_("No jail root configured."))
@@ -259,17 +266,25 @@ class JailCreateForm(ModelForm):
         jail_flags |= WARDEN_CREATE_FLAGS_TEMPLATE
         jail_create_args['template'] = template_create_args['nick']
 
+        if jc.jc_ipv4_dhcp:
+            jail_ipv4 = "dhcp"
+
         if jail_ipv4:
+            if jail_ipv4 != "dhcp":
+                jail_ipv4 = "%s/%s" % (jail_ipv4, jail_ipv4_netmask)
+
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
-            jail_create_args['ipv4'] = "%s/%s" % (
-                jail_ipv4, jail_ipv4_netmask
-            )
+            jail_create_args['ipv4'] = jail_ipv4
+
+        if jc.jc_ipv6_autoconf:
+            jail_ipv6 = "autoconf"
 
         if jail_ipv6:
+            if jail_ipv6 != "autoconf":
+                jail_ipv6 = "%s/%s" % (jail_ipv6, jail_ipv6_prefix)
+
             jail_flags |= WARDEN_CREATE_FLAGS_IPV6
-            jail_create_args['ipv6'] = "%s/%s" % (
-                jail_ipv6, jail_ipv6_prefix
-            )
+            jail_create_args['ipv6'] = jail_ipv6
 
         jail_flags |= WARDEN_CREATE_FLAGS_LOGFILE
         jail_flags |= WARDEN_CREATE_FLAGS_SYSLOG
@@ -339,6 +354,8 @@ class JailCreateForm(ModelForm):
 
         jail_nat = self.cleaned_data.get('jail_nat', None)
         jail_vnet = self.cleaned_data.get('jail_vnet', None)
+        if jc.jc_ipv4_dhcp or jc.jc_ipv6_autoconf:
+            jail_vnet = True
 
         jail_set_args = {}
         jail_set_args['jail'] = jail_host
