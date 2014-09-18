@@ -637,8 +637,10 @@ class SSLForm(ModelForm):
         return cdata
 
     def save(self):
-        super(SSLForm, self).save()
-        notifier().start_ssl("nginx")
+        obj = super(SSLForm, self).save(commit=False)
+	if self.__original_changed():
+	  obj.ssl_certfile = ""
+	obj.save()
 
 
 class SMARTTestForm(ModelForm):
