@@ -38,6 +38,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
 from freenasUI.jails.utils import get_jails_index
+from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.warden import (
     Warden,
     WARDEN_EXPORT_FLAGS_DIR
@@ -532,3 +533,73 @@ def jail_template_edit(request, id):
         'form': form
     })
 
+
+def jailsconfiguration_network_info(request):
+    data = {
+        'jc_ipv4_network': None,
+        'jc_ipv4_network_start': None,
+        'jc_ipv4_network_end': None,
+        'jc_ipv6_network': None,
+        'jc_ipv6_network_start': None,
+        'jc_ipv6_network_end': None,
+    }
+
+    ipv4_iface = notifier().get_default_ipv4_interface()
+    if ipv4_iface:
+        ipv4_st = sipcalc_type(iface=ipv4_iface)
+        if ipv4_st.is_ipv4():
+            data['jc_ipv4_network'] = "%s/%d" % (
+                ipv4_st.network_address,
+                ipv4_st.network_mask_bits
+            )
+            data['jc_ipv4_network_start'] = str(
+                ipv4_st.usable_range[0]).split('/')[0]
+            data['jc_ipv4_network_end'] = str(
+                ipv4_st.usable_range[1]).split('/')[0] 
+
+    ipv6_iface = notifier().get_default_ipv6_interface()
+    try: 
+        iface_info = notifier().get_interface_info(ipv6_iface)
+        if iface_info['ipv6'] == None:
+            raise Exception
+
+        ipv6_addr = iface_info['ipv6'][0]['inet6']
+        if ipv6_addr == None:
+            raise Exception
+
+        ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
+        if ipv6_prefix == None:
+            raise Exception
+
+        ipv6_st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))
+        if not ipv6_st:
+            raise Exception
+
+        if not ipv6_st.is_ipv6():
+            raise Exception
+
+        ipv6_st2 = sipcalc_type(ipv6_st.subnet_prefix_masked)
+        if not ipv6_st:
+            raise Exception
+
+        if not ipv6_st.is_ipv6():
+            raise Exception
+
+        data['jc_ipv6_network'] = "%s/%d" % (
+            ipv6_st2.compressed_address,
+            ipv6_st.prefix_length
+        )
+
+        ipv6_st2 = sipcalc_type(ipv6_st.network_range[0])
+        data['jc_ipv6_network_start'] = str(
+            ipv6_st2.compressed_address).split('/')[0]
+
+        ipv6_st2 = sipcalc_type(ipv6_st.network_range[1])
+        data['jc_ipv6_network_end'] = str(
+            ipv6_st2.compressed_address).split('/')[0]
+
+    except:
+        pass
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')

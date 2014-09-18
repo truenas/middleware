@@ -404,10 +404,9 @@ class JailsConfiguration(Model):
         super(JailsConfiguration, self).save(*args, **kwargs)
         notifier().start("ix-warden")
 
-    def __init__(self, *args, **kwargs):
-        super(JailsConfiguration, self).__init__(*args, **kwargs)
+    def __configure_ipv4_network(self):
         ipv4_iface = notifier().get_default_ipv4_interface()
-        if not ipv4_iface:
+        if ipv4_iface == None:
             return
 
         st = sipcalc_type(iface=ipv4_iface)
@@ -432,6 +431,7 @@ class JailsConfiguration(Model):
         else:
             self.jc_ipv4_network_end = self.jc_ipv4_network_end.split('/')[0]
 
+    def __configure_ipv6_network(self):
         ipv6_iface = notifier().get_default_ipv6_interface()
         if ipv6_iface == None:
             return
@@ -479,6 +479,15 @@ class JailsConfiguration(Model):
             self.jc_ipv6_network_end = str(st2.compressed_address).split('/')[0]
         else:
             self.jc_ipv6_network_end = self.jc_ipv6_network_end.split('/')[0]
+
+    def __init__(self, *args, **kwargs):
+        super(JailsConfiguration, self).__init__(*args, **kwargs)
+
+        if not self.jc_ipv4_dhcp:
+            self.__configure_ipv4_network()
+        if not self.jc_ipv6_autoconf:
+            self.__configure_ipv6_network()
+
 
 
 class JailTemplate(Model):

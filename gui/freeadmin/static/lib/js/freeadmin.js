@@ -666,6 +666,18 @@ require([
         }
     }
 
+    get_jc_network_info = function()  {
+        jc_network_info = null;
+
+        xhr.get('/jails/jailsconfiguration/network/info/', {
+            sync: true
+        }).then(function(data) {
+            jc_network_info = JSON.parse(data);
+        });
+
+        return jc_network_info;
+    }
+
     jc_ipv4_dhcp_toggle = function() {
         var ipv4_dhcp = registry.byId("id_jc_ipv4_dhcp");
         var ipv4_network = registry.byId("id_jc_ipv4_network");
@@ -682,6 +694,19 @@ require([
             ipv4_network.set("disabled", false);
             ipv4_network_start.set("disabled", false);
             ipv4_network_end.set("disabled", false);
+
+            jc_network_info =  get_jc_network_info();
+            if (jc_network_info) {
+                if (jc_network_info.jc_ipv4_network) {
+                    ipv4_network.set("value", jc_network_info.jc_ipv4_network);
+                }
+                if (jc_network_info.jc_ipv4_network_start) {
+                    ipv4_network_start.set("value", jc_network_info.jc_ipv4_network_start);
+                }
+                if (jc_network_info.jc_ipv4_network_end) {
+                    ipv4_network_end.set("value", jc_network_info.jc_ipv4_network_end);
+                }
+            } 
         }
     }
 
@@ -701,6 +726,19 @@ require([
             ipv6_network.set("disabled", false);
             ipv6_network_start.set("disabled", false);
             ipv6_network_end.set("disabled", false);
+
+            jc_network_info =  get_jc_network_info();
+            if (jc_network_info) {
+                if (jc_network_info.jc_ipv6_network) {
+                    ipv6_network.set("value", jc_network_info.jc_ipv6_network);
+                }
+                if (jc_network_info.jc_ipv6_network_start) {
+                    ipv6_network_start.set("value", jc_network_info.jc_ipv6_network_start);
+                }
+                if (jc_network_info.jc_ipv6_network_end) {
+                    ipv6_network_end.set("value", jc_network_info.jc_ipv6_network_end);
+                }
+            } 
         }
     }
 
