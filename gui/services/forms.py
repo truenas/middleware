@@ -1525,7 +1525,17 @@ class DomainControllerForm(ModelForm):
     )
 
     class Meta:
-        fields = '__all__'
+        fields = [
+            'dc_realm',
+            'dc_domain',
+            'dc_role',
+            'dc_dns_backend',
+            'dc_dns_forwarder',
+            'dc_forest_level',
+            'dc_passwd',
+            'dc_passwd2',
+            'dc_kerberos_realm' 
+        ]
         model = models.DomainController
         widgets = {
             'dc_passwd': forms.widgets.PasswordInput(render_value=False),
