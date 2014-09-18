@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-07-12 00:31+0000\n"
-"Last-Translator: net0bsd <eescobedo@gmail.com>\n"
+"PO-Revision-Date: 2014-09-17 14:20+0000\n"
+"Last-Translator: Boredoom <imboredoom@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1405125094.0\n"
+"X-POOTLE-MTIME: 1410963656.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9941,7 +9941,7 @@ msgstr "Permisos de Directorios"
 #: directoryservice/models.py:335
 #, fuzzy
 msgid "ad"
-msgstr "Lectura"
+msgstr "anuncio"
 
 #: choices.py:788
 #, fuzzy
@@ -10532,14 +10532,13 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Autentificación"
+msgstr "Autenticación Básica"
 
 #: choices.py:44
 #, fuzzy
 msgid "Digest Authentication"
-msgstr "Autentificación"
+msgstr "Autenticación Resumida"
 
 #: choices.py:799
 msgid "adex"
@@ -11223,4 +11222,40 @@ msgstr ""
 #: system/views.py:164
 #: system/views.py:165
 msgid "Clone"
+msgstr ""
+
+#: directoryservice/models.py:804
+#, fuzzy
+msgid "Site Name"
+msgstr "Nombre del Servidor"
+
+#: directoryservice/models.py:806
+#, fuzzy
+msgid "Name of site to use."
+msgstr "Nombre del Plugin"
+
+#: services/models.py:263
+msgid ""
+"This parameter controls whether or not Samba should obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/forms.py:1964
+msgid "Only one replication allowed per dataset."
+msgstr ""
+
+#: storage/forms.py:1973
+msgid ""
+"Only one replication allowed per dataset, including parent dataset set up "
+"recursively."
+msgstr ""
+
+#: system/forms.py:1889
+msgid "Trains"
 msgstr ""

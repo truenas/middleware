@@ -10792,3 +10792,38 @@ msgstr ""
 #: system/views.py:165
 msgid "Clone"
 msgstr ""
+
+#: directoryservice/models.py:804
+#, fuzzy
+msgid "Site Name"
+msgstr "Naziv poslužitelja"
+
+#: directoryservice/models.py:806
+msgid "Name of site to use."
+msgstr ""
+
+#: services/models.py:263
+msgid ""
+"This parameter controls whether or not Samba should obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/forms.py:1964
+msgid "Only one replication allowed per dataset."
+msgstr ""
+
+#: storage/forms.py:1973
+msgid ""
+"Only one replication allowed per dataset, including parent dataset set up "
+"recursively."
+msgstr ""
+
+#: system/forms.py:1889
+msgid "Trains"
+msgstr ""

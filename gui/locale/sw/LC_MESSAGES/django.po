@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-09-11 09:33+0000\n"
+"PO-Revision-Date: 2014-09-17 09:33+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sw\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1410427996.0\n"
+"X-POOTLE-MTIME: 1410946436.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10218,4 +10218,38 @@ msgstr ""
 #: system/views.py:164
 #: system/views.py:165
 msgid "Clone"
+msgstr ""
+
+#: directoryservice/models.py:804
+msgid "Site Name"
+msgstr ""
+
+#: directoryservice/models.py:806
+msgid "Name of site to use."
+msgstr ""
+
+#: services/models.py:263
+msgid ""
+"This parameter controls whether or not Samba should obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/forms.py:1964
+msgid "Only one replication allowed per dataset."
+msgstr ""
+
+#: storage/forms.py:1973
+msgid ""
+"Only one replication allowed per dataset, including parent dataset set up "
+"recursively."
+msgstr ""
+
+#: system/forms.py:1889
+msgid "Trains"
 msgstr ""
