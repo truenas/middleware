@@ -157,10 +157,14 @@ issued since FreeBSD 9.3 RELEASE.
 * There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
   file as new versions of FreeNAS® must be installed using a menu-driven installer.
   
-* FreeNAS® now formats the installation media with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments, allowing you to
-  easily recover from a failed upgrade or configuration.
+* FreeNAS® now formats the device holding the operating system with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments,
+  allowing you to easily recover from a failed upgrade, system patch, or configuration.
+  
+* The new installer provides the option to select multiple devices, meaning that you can now mirror the boot device.
   
 * The administrative GUI can now be accessed over IPv6.
+
+* NFSv4 support, which includes Kerberized NFS support, has been added.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
@@ -170,9 +174,10 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
 
-* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`.
+* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
 
-* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`.
+* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`. All services
+  which support the use of certificates now have a drop-down menu for selecting an imported or created certificate.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
@@ -184,13 +189,16 @@ issued since FreeBSD 9.3 RELEASE.
 
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
-  
+
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
-  
+
 * The Linux jail templates have been removed as they were too experimental and limited to 32-bit. Instead, use the VirtualBox template, which installs a
   web-based instance of phpVirtualBox, and use that to install the desired Linux distro or any other operating system.
-  
+
+* Plugins and Jails now support DHCP configuration for IPv4 and IPv6. This should resolve most software connectivity issues when the network contains a DHCP
+  server.
+
 * The cruciblewds, s3cmd, and Syncthing plugins have been added.
 
 The GUI has been reorganized as follows:
@@ -274,7 +282,8 @@ The following fields have been added or deleted:
 
 * The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
 
-* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added.
+* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added. Added keytabs are stored in the
+  configuration database so that they persist across reboots and system upgrades.
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
@@ -348,7 +357,7 @@ Actual hardware requirements will vary depending upon what you are using your Fr
 You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions
 regarding the hardware best suited to meet your requirements. This
-`forum post <http://forums.freenas.org/threads/so-you-want-some-hardware-suggestions.12276/>`_
+`forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`_
 provides some specific recommendations if you are planning on purchasing hardware.
 
 .. _RAM:
