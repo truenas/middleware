@@ -491,6 +491,7 @@ def zvol_edit(request, name):
         form = forms.ZVol_EditForm(request.POST, name=name)
         if form.is_valid():
 
+            _n = notifier()
             error, errors = False, {}
             for attr in (
                 'compression',
@@ -499,11 +500,11 @@ def zvol_edit(request, name):
             ):
                 formfield = 'volume_%s' % attr
                 if form.cleaned_data[formfield] == "inherit":
-                    success, err = notifier().zfs_inherit_option(
+                    success, err = _n.zfs_inherit_option(
                         name,
                         attr)
                 else:
-                    success, err = notifier().zfs_set_option(
+                    success, err = _n.zfs_set_option(
                         name,
                         attr,
                         form.cleaned_data[formfield])
@@ -512,6 +513,11 @@ def zvol_edit(request, name):
                     errors[formfield] = err
 
             if not error:
+                extents = iSCSITargetExtent.objects.filter(
+                    iscsi_target_extent_type='ZVOL',
+                    iscsi_target_extent_path='zvol/' + name)
+                if extents.exists():
+                    _n.reload("iscsitarget")
                 return JsonResp(
                     request,
                     message=_("Zvol successfully edited."))
