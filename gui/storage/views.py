@@ -203,16 +203,16 @@ def volumemanager(request):
         _('WARNING!'),
         _(
             'Always backup the key! If the key is lost, the data on the disks '
-            'is inaccessible.'
+            'will also be lost with no hope of recovery.'
         ),
         _(
-            'This type of encryption is primarily targeted at users who store '
-            'sensitive data and want to retain the ability to remove disks '
-            'from the pool without having to first wipe the disk\'s contents.'
+            'This type of encryption is primarily targeted at users who are '
+            'storing sensitive data and want the ability to remove disks from '
+            'the pool and dispose of/re-use them without concern for erasure.'
         ),
         _(
-            'iXsystems, Inc. will not be hold responsible for any kind of lost'
-            '/unrecoverable data.'
+            'iXsystems, Inc. can not be held responsible for any lost '
+            'or unrecoverable data as a consequence of using this feature.'
         ),
     )
 
