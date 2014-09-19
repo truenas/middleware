@@ -666,8 +666,8 @@ get_default_ipv4_route()
       jexec=""
    fi
 
-   eval ${jexec} route -nv show default | \
-      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%' 2>/dev/null
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_default_ipv6_route()
@@ -680,8 +680,8 @@ get_default_ipv6_route()
       jexec=""
    fi
 
-   eval ${jexec} route -nv show -inet6 default | \
-      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%' 2>/dev/null
+   eval ${jexec} route -nv show -inet6 default 2>/dev/null | \
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_default_interface()
@@ -694,8 +694,8 @@ get_default_interface()
       jexec=""
    fi
 
-   eval ${jexec} route -nv show default | \
-      grep -w interface | awk '{ print $2 }' 2>/dev/null
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
 }
 
 get_default_ipv4_interface()
@@ -708,8 +708,8 @@ get_default_ipv4_interface()
       jexec=""
    fi
 
-   eval ${jexec} route -nv show default | \
-      grep -w interface | awk '{ print $2 }' 2>/dev/null
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
 }
 
 get_default_ipv6_interface()
@@ -722,8 +722,8 @@ get_default_ipv6_interface()
       jexec=""
    fi
 
-   eval ${jexec} route -nv show -inet6 default | \
-      grep -w interface | awk '{ print $2 }' 2>/dev/null
+   eval ${jexec} route -nv show -inet6 default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
 }
 
 get_bridge_interfaces()
