@@ -56,8 +56,10 @@ copy but instead converts a snapshot into a stream of data. This design means th
 a different RAIDZ level, volume size, compression settings, etc.
   
 **ZFS boot environments provide a method for recovering from a failed upgrade**. Beginning with FreeNAS® version 9.3, a snapshot of the dataset the operating
-system resides on is automatically taken before an upgrade or a system configuration change. This saved boot environment is automatically added to the GRUB
-boot loader. Should the upgrade or configuration change fail, simply reboot and select the previous boot environment from the boot menu.
+system resides on is automatically taken before an upgrade or a system update. This saved boot environment is automatically added to the GRUB boot loader.
+Should the upgrade or configuration change fail, simply reboot and select the previous boot environment from the boot menu. Users can also create their own
+boot environments in :menuselection:`System --> Boot` as needed, for example before making configuration changes. This way, the system can be rebooted into
+a snapshot of the system that did not include the new configuration changes.
 
 **ZFS provides a write cache** in RAM as well as a
 `ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for **synchronous** writes until they

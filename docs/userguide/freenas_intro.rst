@@ -399,19 +399,25 @@ that FreeNAS® may not behave properly with less than 8GB of RAM.
 Compact or USB Flash
 ~~~~~~~~~~~~~~~~~~~~
 
-The FreeNAS® operating system is a running image. This means that it should not be installed onto a hard drive, but rather to a USB or compact flash device
-that is at least 2 GB in size. If you don't have compact flash, use a USB thumb drive that is dedicated to the running image and which stays inserted in the
-USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the drive. In other
-words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
+The FreeNAS® operating system is installed to at least one device that is separate from the storage disks. The device can be a USB stick, compact flash,
+or SSD. Technically, it can also be installed onto a hard drive, but this is discouraged as that drive will then become unavailable for data storage.
 
-.. note:: many USB thumb drives that are labeled as 2GB are not really 2GB in size.  For this reason, it is recommended to use media that is 4GB or larger and
-   to use a name brand USB stick.
+When determining the type and size of device to install the operating system to, keep the following points in mind:
 
-USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point) chipsets. If you receive a
-"failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this will downclock the USB
-ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a :ref:`Tunables`
-named *xhci_load*, set its value to
-*YES*, and reboot the system.
+- the recommended bare minimum size is 4GB. This provides room for the operating system and two boot environments. The recommended minimum is 8GB or 16GB as
+  this provides more room for boot environments.
+
+- If you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
+  sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
+
+- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
+
+- when using a USB stick, USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point)
+  chipsets. If you receive a "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this
+  will downclock the USB ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware,
+  follow the instructions in :ref:`Tunables` to create a "Tunable" named *xhci_load*, set its value to *YES*, and reboot the system.
+  
+- if a reliable boot disk is required, use two identical devices and select them both during the installation. Doing so will create a mirrored boot device.
 
 .. _Storage Disks and Controllers:
 
@@ -458,8 +464,7 @@ drive that is below the minimum recommended size you lose a fair amount of stora
 swap.
 
 If you are new to ZFS and are purchasing hardware, read through
-`ZFS Storage Pools  <http://www.open-tech.com/2011/10/zfs-best-practices-guide-from-solaris-internals/>`_
-`Recommendations <http://www.solarisinternals.com/wiki/index.php/ZFS_Best_Practices_Guide#ZFS_Storage_Pools_Recommendations>`_
+`ZFS Storage Pools Recommendations <http://www.solarisinternals.com/wiki/index.php/ZFS_Best_Practices_Guide#ZFS_Storage_Pools_Recommendations>`_
 first.
 
 ZFS uses dynamic block sizing, meaning that it is capable of striping different sized disks. However, if you care about performance, use disks of the same
