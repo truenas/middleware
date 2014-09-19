@@ -536,7 +536,7 @@ get_interface_ipv6_addresses()
    fi
 
    addrs="$(eval ${jexec} ifconfig "${iface}" | \
-      grep -w inet6 | awk '{ print $2 }')"
+      grep -w inet6 | grep -v scope | awk '{ print $2 }')"
    for addr in ${addrs} ; do
       echo "${addr}" | cut -f1 -d'%'
    done
@@ -584,7 +584,7 @@ get_interface_ipv6_address()
    fi
 
    eval ${jexec} ifconfig "${iface}" | grep -w inet6 | \
-       head -1 | awk '{ print $2 }' | cut -f1 -d'%'
+       grep -v scope | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()
@@ -653,7 +653,7 @@ get_interface_ipv6_aliases()
    fi
 
    eval ${jexec} ifconfig "${iface}" | \
-      grep -w inet6 | tail -${count} | awk '{ print $2 }'
+      grep -w inet6 | grep -v scope | tail -${count} | awk '{ print $2 }'
 }
 
 get_default_ipv4_route()
@@ -1445,7 +1445,8 @@ ipv6_configured()
       jexec="jexec ${jid}"
    fi
 
-   eval ${jexec} ifconfig "${iface}" | grep -qw inet6 2>/dev/null
+   eval ${jexec} ifconfig "${iface}" | \
+       grep -qw inet6 | grep -v scope 2>/dev/null
    return $?
 }
 
@@ -1464,6 +1465,7 @@ ipv6_address_configured()
 
    eval ${jexec} ifconfig "${iface}" | \
       grep -w inet6 | \
+      grep -v scope | \
       awk '{ print $2 }' | \
       grep -Ew "^${addr}" >/dev/null 2>&1
    return $?
