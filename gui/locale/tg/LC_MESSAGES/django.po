@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2014-09-17 09:33+0000\n"
+"PO-Revision-Date: 2014-09-18 09:34+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tg\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1410946439.0\n"
+"X-POOTLE-MTIME: 1411032857.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10252,4 +10252,16 @@ msgstr ""
 
 #: system/forms.py:1889
 msgid "Trains"
+msgstr ""
+
+#: storage/admin.py:375
+msgid "Edit zvol"
+msgstr ""
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+msgid "Zvol successfully edited."
 msgstr ""

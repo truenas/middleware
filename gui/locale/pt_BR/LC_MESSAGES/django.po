@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-08-06 11:56+0000\n"
-"Last-Translator: kaduleite <kaduleite@gmail.com>\n"
+"PO-Revision-Date: 2014-09-18 21:06+0000\n"
+"Last-Translator: tkramer.tk <tkramer.tk@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1407326163.0\n"
+"X-POOTLE-MTIME: 1411074410.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Simples"
+msgstr "Plano            "
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -10498,14 +10498,13 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Autenticação"
+msgstr "Autenticação básica"
 
 #: choices.py:44
 #, fuzzy
 msgid "Digest Authentication"
-msgstr "Autenticação"
+msgstr "Autenticação sintética"
 
 #: choices.py:799
 msgid "adex"
@@ -11225,3 +11224,17 @@ msgstr ""
 #: system/forms.py:1889
 msgid "Trains"
 msgstr ""
+
+#: storage/admin.py:375
+#, fuzzy
+msgid "Edit zvol"
+msgstr "Adicionar Zvol"
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+#, fuzzy
+msgid "Zvol successfully edited."
+msgstr "Jail editado com sucesso."

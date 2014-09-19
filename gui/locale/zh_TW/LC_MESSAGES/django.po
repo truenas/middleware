@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2013-06-14 08:41+0000\n"
-"Last-Translator: kentwelcome <kentwelcome@gmail.com>\n"
+"PO-Revision-Date: 2014-09-18 11:18+0000\n"
+"Last-Translator: caesartan <caesartan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1371199287.0\n"
+"X-POOTLE-MTIME: 1411039126.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -42,7 +42,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "自動判斷"
+msgstr "自動"
 
 #: choices.py:54
 msgid "PIO0"
@@ -10501,9 +10501,8 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "驗證"
+msgstr "基本認證"
 
 #: choices.py:44
 #, fuzzy
@@ -11222,3 +11221,17 @@ msgstr ""
 #: system/forms.py:1889
 msgid "Trains"
 msgstr ""
+
+#: storage/admin.py:375
+#, fuzzy
+msgid "Edit zvol"
+msgstr "新增 ZVol 磁區"
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+#, fuzzy
+msgid "Zvol successfully edited."
+msgstr "%s 更新成功"

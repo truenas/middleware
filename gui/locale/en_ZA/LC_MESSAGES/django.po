@@ -10256,3 +10256,15 @@ msgstr ""
 #: system/forms.py:1889
 msgid "Trains"
 msgstr ""
+
+#: storage/admin.py:375
+msgid "Edit zvol"
+msgstr ""
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+msgid "Zvol successfully edited."
+msgstr ""

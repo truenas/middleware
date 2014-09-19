@@ -10711,3 +10711,17 @@ msgstr ""
 #: system/forms.py:1889
 msgid "Trains"
 msgstr ""
+
+#: storage/admin.py:375
+#, fuzzy
+msgid "Edit zvol"
+msgstr "Přidat svazek"
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+#, fuzzy
+msgid "Zvol successfully edited."
+msgstr "Žalář úspěšně editován."
