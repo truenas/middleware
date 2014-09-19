@@ -959,6 +959,7 @@ define([
       url: "",
       url_progress: "",
       dedup_warning: "",
+      encryption_warning: "",
       extend: "",
       swapSize: 0,
       manualUrl: "",
@@ -1078,6 +1079,23 @@ define([
         enc = new CheckBox({
           name: "encryption"
         }, this.dapDiskEnc);
+
+        on(enc, "click", function() {
+          if(this.get("value") == "on") {
+            tpDialog = new TooltipDialog({
+              content: me.encryption_warning,
+              onMouseLeave: function() {
+                popup.close(tpDialog);
+                tpDialog.destroyRecursive();
+              }
+            });
+            popup.open({
+              popup: tpDialog,
+              around: enc.domNode,
+              orient: ["above", "after", "below-alt"]
+            });
+          }
+        });
 
         //encini = new CheckBox({
         //  name: "encryption_inirand",
