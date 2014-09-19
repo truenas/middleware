@@ -45,7 +45,10 @@ from freenasUI.common.warden import (
 )
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.jails.models import (
+    Jails,
+    JailsConfiguration
+)
 from freenasUI.jails.utils import (
     jail_path_configured,
     jail_auto_configure,
@@ -216,12 +219,17 @@ def plugin_update(request, oid):
 
 
 def install_available(request, oid):
+    jc = JailsConfiguration.objects.all()[0]
+
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_addresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("No available IP addresses"))
+
+        if not jc.jc_ipv4_dhcp:
+            addrs = guess_addresses()
+            if not addrs['high_ipv4']:
+                raise MiddlewareError(_("No available IP addresses"))
+
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
@@ -348,14 +356,18 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
+    jc = JailsConfiguration.objects.all()[0]
 
     #FIXME: duplicated code with available_install
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_addresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("No available IP addresses"))
+
+        if not jc.jc_ipv4_dhcp:
+            addrs = guess_addresses()
+            if not addrs['high_ipv4']:
+                raise MiddlewareError(_("No available IP addresses"))
+
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
@@ -502,7 +514,7 @@ def plugin_fcgi_client(request, name, oid, path):
         raise Http404
 
     plugin = qs[0]
-    jail_ip = Jails.objects.filter(jail_host=plugin.plugin_jail)[0].jail_ipv4
+    jail_ip = Jails.objects.filter(jail_host=plugin.plugin_jail)[0].jail_ipv4_addr
 
     app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
     env = request.META.copy()

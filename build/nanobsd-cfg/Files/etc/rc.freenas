@@ -382,7 +382,8 @@ jail_get_ipv4()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|awk '/^ipv4:/ { print $2 }'
+	${WARDEN} list -v "${name}" | \
+            awk '/^ipv4:/ { print $2 }'|sed -E 's|DHCP:||'
 	return $?
 }
 
@@ -395,7 +396,8 @@ jail_get_alias_ipv4()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|grep -E '^alias-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
+	${WARDEN} list -v "${name}" | \
+            grep -E '^alias-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
 	return $?
 }
 
@@ -421,7 +423,8 @@ jail_get_alias_bridge_ipv4()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|grep -E '^alias-bridge-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
+	${WARDEN} list -v "${name}" | \
+            grep -E '^alias-bridge-ipv4:'|cut -f2 -d:|sed -E 's|^ +||'
 	return $?
 }
 
@@ -434,7 +437,8 @@ jail_get_defaultrouter_ipv4()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|awk '/^defaultrouter-ipv4:/ { print $2 }'
+	${WARDEN} list -v "${name}" | \
+            awk '/^defaultrouter-ipv4:/ { print $2 }'|sed -E 's|DHCP:||'
 	return $?
 }
 
@@ -447,7 +451,8 @@ jail_get_ipv6()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|awk '/^ipv6:/ { print $2 }'
+	${WARDEN} list -v "${name}" | \
+            awk '/^ipv6:/ { print $2 }'|sed -E 's|AUTOCONF:||'
 	return $?
 }
 
@@ -460,7 +465,8 @@ jail_get_alias_ipv6()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|grep -E '^alias-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
+	${WARDEN} list -v "${name}" | \
+            grep -E '^alias-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
 	return $?
 }
 
@@ -486,7 +492,8 @@ jail_get_alias_bridge_ipv6()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|grep -E '^alias-bridge-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
+	${WARDEN} list -v "${name}" | \
+            grep -E '^alias-bridge-ipv6:'|cut -f2 -d:|sed -E 's|^ +||'
 	return $?
 }
 
@@ -499,7 +506,8 @@ jail_get_defaultrouter_ipv6()
 		return 1
 	fi
 
-	${WARDEN} list -v "${name}"|awk '/^defaultrouter-ipv6:/ { print $2 }'
+	${WARDEN} list -v "${name}" | \
+            awk '/^defaultrouter-ipv6:/ { print $2 }'|sed -E 's|AUTOCONF:||'
 	return $?
 }
 

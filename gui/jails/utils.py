@@ -594,9 +594,13 @@ def guess_addresses():
 
 
 def new_default_plugin_jail(basename):
-    addrs = guess_addresses()
-    if not addrs['high_ipv4']:
-        raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = "%s/warden.log" % jc.jc_path
+
+    if not jc.jc_ipv4_dhcp:
+        addrs = guess_addresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
 
     jailname = None
     for i in xrange(1, 1000):
@@ -607,10 +611,6 @@ def new_default_plugin_jail(basename):
             break
 
     w = warden.Warden()
-
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = "%s/warden.log" % jc.jc_path
-
     template_create_args = {}
 
     template = JailTemplate.objects.get(jt_name='pluginjail')
@@ -654,9 +654,18 @@ def new_default_plugin_jail(basename):
         raise MiddlewareError(_('Unable to find template!'))
 
     try:
+        high_ipv4 = "DHCP"
+        if not jc.jc_ipv4_dhcp:
+            high_ipv4 = addrs['high_ipv4']
+
+        high_ipv6 = "AUTOCONF"
+        if not jc.jc_ipv6_autoconf:
+            high_ipv6 = addrs['high_ipv6']
+
         create_args = {
             'jail': jailname,
-            'ipv4': addrs['high_ipv4'],
+            'ipv4': high_ipv4,
+            'ipv6': high_ipv6,
             'flags': (
                 warden.WARDEN_CREATE_FLAGS_LOGFILE |
                 warden.WARDEN_CREATE_FLAGS_TEMPLATE |
@@ -668,9 +677,6 @@ def new_default_plugin_jail(basename):
             'template': 'pluginjail',
             'logfile': logfile
         }
-
-        if addrs['high_ipv6']:
-            create_args['ipv6'] = addrs['high_ipv6']
 
         w.create(**create_args)
 

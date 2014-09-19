@@ -279,7 +279,7 @@ __EOF__
             root   /usr/local/www/nginx-dist;
         }
 
-        include plugins.conf;
+        #include plugins.conf;
     }
 __EOF__
 
