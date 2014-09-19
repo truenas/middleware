@@ -194,9 +194,32 @@ def volumemanager(request):
     qs = models.Volume.objects.filter(vol_fstype='ZFS')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
+    encwarn = (
+        u'<span style="color: red; font-size:110%%;">%s</span>'
+        u'<p>%s</p>'
+        u'<p>%s</p>'
+        u'<p>%s</p>'
+    ) % (
+        _('WARNING!'),
+        _(
+            'Always backup the key! If the key is lost, the data on the disks '
+            'is inaccessible.'
+        ),
+        _(
+            'This type of encryption is primarily targeted at users who store '
+            'sensitive data and want to retain the ability to remove disks '
+            'from the pool without having to first wipe the disk\'s contents.'
+        ),
+        _(
+            'iXsystems, Inc. will not be hold responsible for any kind of lost'
+            '/unrecoverable data.'
+        ),
+    )
+
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
+        'encryption_warning': encwarn,
         'swap_size': swap * 1024 * 1024 * 1024,
         'manual_url': reverse('storage_volumemanager_zfs'),
         'extend': json.dumps(
