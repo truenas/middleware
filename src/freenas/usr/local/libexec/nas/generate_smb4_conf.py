@@ -846,7 +846,7 @@ def generate_smb4_shares(smb4_shares):
 
         confset1(smb4_shares, "nfs4:mode = special")
         confset1(smb4_shares, "nfs4:acedup = merge")
-        confset1(smb4_shares, "nfs4:chown = yes")
+        confset1(smb4_shares, "nfs4:chown = true")
         confset1(smb4_shares, "zfsacl:acesort = dontcare")
 
         for line in share.cifs_auxsmbconf.split('\n'):
