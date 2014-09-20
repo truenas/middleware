@@ -7,8 +7,11 @@
 # platform-specific stuff.
 
 try:
+    import sys
+    sys.path.append("/usr/local/lib")
     from freenasUI.common.system import get_avatar_conf
-    _os_type = get_avatar_conf()[AVATAR_PROJECT]
+    # Is there a way to this without hardcoding the key string?
+    _os_type = get_avatar_conf()["AVATAR_PROJECT"]
 except:
     _os_type = "FreeNAS"
 
