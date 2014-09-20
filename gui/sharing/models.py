@@ -332,9 +332,9 @@ class NFS_Share_Path(Model):
 class WebDAV_Share(Model):
     webdav_name = models.CharField(
 	    max_length=120,
-	    verbose_name=_("Share Path Name"),
+	    verbose_name=_("Share Name"),
 	    help_text=_("This will be used to access your WebDAV share."
-	      "<br />For e.g. http(s)://ip-of-freenas-machine:webdav_port/this_path_name"),
+	      "<br />For example http(s)://ip-of-freenas-machine:webdav_port/'Share Name'"),
     )
     
     webdav_comment = models.CharField(
