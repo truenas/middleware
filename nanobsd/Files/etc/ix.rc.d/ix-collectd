@@ -59,7 +59,7 @@ generate_collectd()
     # If there is a failover table remove the rc.conf cache
     # rc.conf.local will run again using the correct collectd_enable
     # See #5019
-    local failover="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select count(*) from system_failover" 2> /dev/null)"
+    local failover="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select count(*) from failover_failover" 2> /dev/null)"
     if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
 	rm ${FREENAS_CONFIG_MD5}
     fi
