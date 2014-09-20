@@ -8,10 +8,9 @@
 
 try:
     import sys
-    sys.path.append("/usr/local/lib")
-    from freenasUI.common.system import get_avatar_conf
-    # Is there a way to this without hardcoding the key string?
-    _os_type = get_avatar_conf()["AVATAR_PROJECT"]
+    sys.path.append("/usr/local/www")
+    from freenasUI.common.system import get_sw_name
+    _os_type = get_sw_name()
 except:
     _os_type = "FreeNAS"
 
