@@ -153,7 +153,7 @@ create_CA()
 	dd if=/dev/urandom count=16 bs=1 | uuencode -|head -2 | \
 	    tail -1 > "${tmp}"
 	${OPENSSL} req -config "${SSLCONF}" -batch -passout file:"${tmp}" \
-	    -new -x509 -keyout "${key}" -out "${crt}"
+	    -new -x509 -days 365 -keyout "${key}" -out "${crt}"
 
 	cp "${key}" "${key}.orig"
 	${OPENSSL} rsa -passin file:"${tmp}" -in "${key}.orig" \
