@@ -142,51 +142,52 @@ def main():
             'null_first': 'iscsi_lunid IS NULL',
         }).order_by('null_first', 'iscsi_lunid'):
 
-            cf_contents.append("\t\t\n")
-            if t2e.iscsi_lunid is None:
-                while cur_lunid in used_lunids:
-                    cur_lunid += 1
-                cf_contents.append("\t\tlun %s {\n" % cur_lunid)
-                cur_lunid += 1
-            else:
-                cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
             path = t2e.iscsi_extent.iscsi_target_extent_path
-            size = t2e.iscsi_extent.iscsi_target_extent_filesize
-            if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
-                disk = Disk.objects.filter(id=path).order_by('disk_enabled')
-                if not disk.exists():
-                    continue
-                disk = disk[0]
-                if disk.disk_multipath_name:
-                    path = "multipath/%s" % disk.disk_multipath_name
+            if os.path.exists(path):
+                cf_contents.append("\t\t\n")
+                if t2e.iscsi_lunid is None:
+                    while cur_lunid in used_lunids:
+                        cur_lunid += 1
+                    cf_contents.append("\t\tlun %s {\n" % cur_lunid)
+                    cur_lunid += 1
                 else:
-                    path = disk.identifier_to_device()
-            else:
-                if not path.startswith("/mnt"):
-                    path = "/dev/" + path
-                    cf_contents.append("\t\t\toption unmap on\n")
-            cf_contents.append("\t\t\tpath %s\n" % path)
-            cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
-            cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
-            padded_serial = target.iscsi_target_serial
-            if t2e.iscsi_lunid is None:
-                padded_serial += str(cur_lunid-1)
-            else:
-                padded_serial += str(t2e.iscsi_lunid)
-            for i in xrange(31-len(target.iscsi_target_serial)):
-                padded_serial += " "
-            cf_contents.append('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
-            if size != "0":
-                if size.endswith('B'):
-                    size = size.strip('B')
-                cf_contents.append("\t\t\tsize %s\n" % size)
-            cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
-            cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
-            cf_contents.append('\t\t\toption revision "0123"\n')
-            cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
-            if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
-                cf_contents.append('\t\t\toption insecure_tpc on\n')
-            cf_contents.append("\t\t}\n")
+                    cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
+                size = t2e.iscsi_extent.iscsi_target_extent_filesize
+                if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
+                    disk = Disk.objects.filter(id=path).order_by('disk_enabled')
+                    if not disk.exists():
+                        continue
+                    disk = disk[0]
+                    if disk.disk_multipath_name:
+                        path = "multipath/%s" % disk.disk_multipath_name
+                    else:
+                        path = disk.identifier_to_device()
+                else:
+                    if not path.startswith("/mnt"):
+                        path = "/dev/" + path
+                        cf_contents.append("\t\t\toption unmap on\n")
+                cf_contents.append("\t\t\tpath %s\n" % path)
+                cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
+                cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
+                padded_serial = target.iscsi_target_serial
+                if t2e.iscsi_lunid is None:
+                    padded_serial += str(cur_lunid-1)
+                else:
+                    padded_serial += str(t2e.iscsi_lunid)
+                for i in xrange(31-len(target.iscsi_target_serial)):
+                    padded_serial += " "
+                cf_contents.append('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
+                if size != "0":
+                    if size.endswith('B'):
+                        size = size.strip('B')
+                    cf_contents.append("\t\t\tsize %s\n" % size)
+                cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
+                cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
+                cf_contents.append('\t\t\toption revision "0123"\n')
+                cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
+                if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
+                    cf_contents.append('\t\t\toption insecure_tpc on\n')
+                cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
     fh = open(ctl_config, "w")
