@@ -225,8 +225,6 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service ix-afpd quietstart
     /usr/sbin/service netatalk forcestop
     /usr/sbin/service netatalk restart
-    /usr/sbin/service ix-collectd quietstart
-    /usr/sbin/service collectd restart
 #
 # There appears to be a small lag if we allow NFS traffic right away.  During
 # this time, we fail NFS requests with ESTALE to the remote system.  This
@@ -248,6 +246,8 @@ if [ \${EVENT} = "LINK_UP" ]; then
     echo "Syncing enclosure" | logger
     /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync
 
+    /usr/sbin/service ix-collectd quietstart
+    /usr/sbin/service collectd restart
     echo "Failover event complete." | logger
 fi
 
