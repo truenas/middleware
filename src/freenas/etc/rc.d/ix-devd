@@ -32,7 +32,7 @@ ix_devd_gen()
 notify 100 {
    match "system"   "IFNET";
    match "subsystem" "carp.*";
-   action "/bin/sh -x /etc/carp-state-change-hook \$subsystem \$type | logger";
+   action "/bin/sh /etc/carp-state-change-hook \$subsystem \$type";
 };
 E*O*F
 
@@ -142,6 +142,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     # Start fenced.
     # If not forced, start a normal one, otherwise, mark as such.
+    echo "Starting fenced." | logger
     RETVAL=Undefined
     /sbin/camcontrol rescan all
     if [ \${USER_OVERRIDE} -eq 0 -a \${FASTTRACK} -eq 0 ] ; then
@@ -196,7 +197,9 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	fi
     fi
 
+    echo "Beginning volume imports." | logger
     for volumename in ${volumenames}; do
+        echo "importing \${volumename}" | logger
 	[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f \${volumename} || /sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
 	RETVAL=\$?
 	if [ \${RETVAL} -ne 0 ]; then
@@ -209,22 +212,25 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     [ ! -e ${FAILED_FILE} ] && cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
     rm ${IMPORTING_FILE}
+    echo "Volume imports complete." | logger
 
     #mount -uw /
+    echo "Restarting services." | logger
     /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py nfsv4link > /dev/null
-    /etc/rc.d/statd restart
+    /etc/rc.d/statd quietrestart
     /usr/sbin/service ix-nfsd quietstart
-    /usr/sbin/service mountd restart
-    /usr/sbin/service nfsd restart
+    /usr/sbin/service mountd quietrestart
+    /usr/sbin/service nfsd quietrestart
     /usr/sbin/service ix-ctld quietstart
-    /usr/sbin/service ctld forcestop
-    /usr/sbin/service ctld restart
+    /usr/sbin/service ctld quietforcestop
+    /usr/sbin/service ctld quietstart
     /usr/sbin/service ix-samba quietstart
-    /usr/sbin/service samba_server forcestop
-    /usr/sbin/service samba_server restart
+    /usr/sbin/service samba_server quietforcestop
+    /usr/sbin/service samba_server quietstart
     /usr/sbin/service ix-afpd quietstart
-    /usr/sbin/service netatalk forcestop
-    /usr/sbin/service netatalk restart
+    /usr/sbin/service netatalk quietforcestop
+    /usr/sbin/service netatalk quietstart
+    echo "Service restarts complete." | logger
 #
 # There appears to be a small lag if we allow NFS traffic right away.  During
 # this time, we fail NFS requests with ESTALE to the remote system.  This
@@ -235,6 +241,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     truncate -s 0 /etc/pf.conf
     echo \${IPS} | xargs -n 1 -J % echo pass quick from any to % keep state >> /etc/pf.conf
     pfctl -f /etc/pf.conf
+    echo "Allowing network traffic." | logger
     echo "\$(date), \$(hostname), assume master" | mail -s "Failover" root
 
     if  [ -f /tmp/failover_override ] ; then
@@ -247,7 +254,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync
 
     /usr/sbin/service ix-collectd quietstart
-    /usr/sbin/service collectd restart
+    /usr/sbin/service collectd quietrestart
     echo "Failover event complete." | logger
 fi
 
