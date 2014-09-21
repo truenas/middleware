@@ -222,13 +222,13 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service mountd quietrestart
     /usr/sbin/service nfsd quietrestart
     /usr/sbin/service ix-ctld quietstart
-    /usr/sbin/service ctld quietforcestop
+    /usr/sbin/service ctld forcestop
     /usr/sbin/service ctld quietstart
     /usr/sbin/service ix-samba quietstart
-    /usr/sbin/service samba_server quietforcestop
+    /usr/sbin/service samba_server forcestop
     /usr/sbin/service samba_server quietstart
     /usr/sbin/service ix-afpd quietstart
-    /usr/sbin/service netatalk quietforcestop
+    /usr/sbin/service netatalk forcestop
     /usr/sbin/service netatalk quietstart
     echo "Service restarts complete." | logger
 #
