@@ -143,6 +143,20 @@ def main():
         }).order_by('null_first', 'iscsi_lunid'):
 
             path = t2e.iscsi_extent.iscsi_target_extent_path
+            unmap = False
+            if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
+                disk = Disk.objects.filter(id=path).order_by('disk_enabled')
+                if not disk.exists():
+                    continue
+                disk = disk[0]
+                if disk.disk_multipath_name:
+                    path = "multipath/%s" % disk.disk_multipath_name
+                else:
+                    path = disk.identifier_to_device()
+            else:
+                if not path.startswith("/mnt"):
+                    path = "/dev/" + path
+                    unmap = True
             if os.path.exists(path):
                 cf_contents.append("\t\t\n")
                 if t2e.iscsi_lunid is None:
@@ -153,19 +167,8 @@ def main():
                 else:
                     cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
                 size = t2e.iscsi_extent.iscsi_target_extent_filesize
-                if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
-                    disk = Disk.objects.filter(id=path).order_by('disk_enabled')
-                    if not disk.exists():
-                        continue
-                    disk = disk[0]
-                    if disk.disk_multipath_name:
-                        path = "multipath/%s" % disk.disk_multipath_name
-                    else:
-                        path = disk.identifier_to_device()
-                else:
-                    if not path.startswith("/mnt"):
-                        path = "/dev/" + path
-                        cf_contents.append("\t\t\toption unmap on\n")
+                if unmap:
+                    cf_contents.append("\t\t\toption unmap on\n")
                 cf_contents.append("\t\t\tpath %s\n" % path)
                 cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
                 cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
