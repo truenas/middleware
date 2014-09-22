@@ -380,7 +380,7 @@ _gen_conf()
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
 	_bool_svcconfig rsyncd_enable rsync
-	_bool_svcconfig bsnmpd_enable snmp
+	_bool_svcconfig snmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig inadynmt_enable dynamicdns
@@ -399,6 +399,11 @@ _gen_conf()
 
 	if dirsrv_enabled nis; then
 		_nis_config
+	fi
+
+	if srv_enabled snmp; then
+		echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
+		echo "snmpd_flags=\"-Ls5d\""
 	fi
 
 	_sssd_config

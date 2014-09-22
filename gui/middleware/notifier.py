@@ -245,7 +245,7 @@ class notifier:
             'afp': ('netatalk', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
             'dynamicdns': ('inadyn-mt', None),
-            'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
+            'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
@@ -1146,16 +1146,16 @@ class notifier:
         self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
-        self._system("/usr/sbin/service ix-bsnmpd quietstart")
-        self._system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-snmpd quietstart")
+        self._system("/usr/sbin/service snmpd quietstart")
 
     def _stop_snmp(self):
-        self._system("/usr/sbin/service bsnmpd quietstop")
+        self._system("/usr/sbin/service snmpd quietstop")
 
     def _restart_snmp(self):
-        self._system("/usr/sbin/service ix-bsnmpd quietstart")
-        self._system("/usr/sbin/service bsnmpd forcestop")
-        self._system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-snmpd quietstart")
+        self._system("/usr/sbin/service snmpd forcestop")
+        self._system("/usr/sbin/service snmpd quietstart")
 
     def _restart_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")

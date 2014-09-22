@@ -80,7 +80,6 @@ add_port devel/pcre
 add_port editors/nano
 add_port ftp/proftpd
 add_port misc/cpuid
-add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 if ! is_truenas ; then

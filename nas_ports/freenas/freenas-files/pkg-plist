@@ -56,7 +56,7 @@ etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
 etc/ix.rc.d/ix-aliases
 etc/ix.rc.d/ix-ataidle
-etc/ix.rc.d/ix-bsnmpd
+etc/ix.rc.d/ix-snmpd
 etc/ix.rc.d/ix-cache
 etc/ix.rc.d/ix-collectd
 etc/ix.rc.d/ix-crontab

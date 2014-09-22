@@ -138,7 +138,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-afpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-afpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-aliases ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-aliases
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ataidle ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ataidle
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-bsnmpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-bsnmpd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-snmpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-snmpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-cache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-cache
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-collectd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-collectd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-crontab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-crontab
