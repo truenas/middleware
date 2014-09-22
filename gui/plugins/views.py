@@ -509,15 +509,36 @@ def plugin_fcgi_client(request, name, oid, path):
     This is a view that works as a FCGI client
     It is used for development server (no nginx) for easier development
     """
+    jc = JailsConfiguration.objects.all()
+    if not jc.exists():
+        raise Http404
+
+    jc = jc[0]
+
     qs = models.Plugins.objects.filter(id=oid, plugin_name=name)
     if not qs.exists():
         raise Http404
 
     plugin = qs[0]
-    jail_ip = Jails.objects.filter(jail_host=plugin.plugin_jail)[0].jail_ipv4_addr
+    jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    jail_ip = jail.jail_ipv4_addr
+
+    fastcgi_env_path = "%s/%s/%s/fastcgi_env" % (
+        jc.jc_path, jail.jail_host, plugin.plugin_path
+    )
 
     app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
     env = request.META.copy()
+
+    try:
+        if os.path.exists(fastcgi_env_path):
+            plugin_fascgi_env = {}
+            execfile(fastcgi_env_path, {}, plugin_fascgi_env)
+            env.update(plugin_fascgi_env)
+
+    except Exception as e:
+        log.debug("Failed to update CGI headers: %s", e)
+
     env.pop('wsgi.file_wrapper', None)
     env.pop('wsgi.version', None)
     env.pop('wsgi.input', None)
