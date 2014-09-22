@@ -28,6 +28,7 @@ import dateutil
 import logging
 import os
 import string
+import uuid
 
 from datetime import datetime
 from dateutil import tz, parser as dtparser
@@ -475,6 +476,10 @@ class SystemDataset(Model):
             'collection daemon into the system dataset'
         )
     )
+    sys_uuid = models.CharField(
+        editable=False,
+        max_length=32,
+    )
 
     class Meta:
         verbose_name = _("System Dataset")
@@ -489,6 +494,9 @@ class SystemDataset(Model):
     @property
     def usedataset(self):
         return self.sys_syslog_usedataset
+
+    def new_uuid(self):
+        self.sys_uuid = uuid.uuid4().hex
 
 
 class Upgrade(Model):

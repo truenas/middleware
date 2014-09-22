@@ -50,7 +50,6 @@ import re
 import select
 import shutil
 import signal
-import socket
 import sqlite3
 import stat
 from subprocess import Popen, PIPE
@@ -5241,12 +5240,12 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return systemdataset
 
-        hostname = socket.gethostname().split('.')[0]
-        self.system_dataset_rename(basename, hostname)
+        self.system_dataset_rename(basename, systemdataset)
 
         datasets = [basename]
         for sub in (
-            'cores', 'samba4', 'syslog-%s' % hostname, 'rrd-%s' % hostname
+            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
+            'rrd-%s' % systemdataset.sys_uuid
         ):
             datasets.append('%s/%s' % (basename, sub))
 
@@ -5286,24 +5285,19 @@ class notifier:
 
         return systemdataset
 
-    def system_dataset_rename(self, basename=None, hostname=None, suffix=None):
+    def system_dataset_rename(self, basename=None, sysdataset=None):
         if basename is None:
             basename = self.system_dataset_settings()[2]
-        if hostname is None:
-            hostname = socket.gethostname().split('.')[0]
-
-        if suffix is None:
-            suffix = ''
-        else:
-            suffix = '-%s' % suffix
+        if sysdataset is None:
+            sysdataset = self.system_dataset_settings()[0]
 
         legacydatasets = {
-            'syslog': '%s/syslog%s' % (basename, suffix),
-            'rrd': '%s/rrd%s' % (basename, suffix),
+            'syslog': '%s/syslog' % basename,
+            'rrd': '%s/rrd' % basename,
         }
         newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, hostname),
-            'rrd': '%s/rrd-%s' % (basename, hostname),
+            'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
+            'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
         }
         proc = self._pipeopen(
             'zfs list -H -o name %s' % ' '.join(
