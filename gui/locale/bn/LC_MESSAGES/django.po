@@ -10322,3 +10322,50 @@ msgstr ""
 #: storage/views.py:494
 msgid "Zvol successfully edited."
 msgstr ""
+
+#: directoryservice/models.py:853
+msgid "Winbind NSS Info"
+msgstr ""
+
+#: directoryservice/models.py:854
+msgid ""
+"This parameter is designed to control how Winbind retrieves Name Service "
+"Information to construct a user's home directory and login"
+msgstr ""
+
+#: jails/models.py:359
+msgid "IPv4 DHCP"
+msgstr ""
+
+#: jails/models.py:383
+msgid "IPv6 Autoconfigure"
+msgstr ""
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For example http(s)://ip-"
+"of-freenas-machine:webdav_port/'Share Name'"
+msgstr ""
+
+#: storage/views.py:203
+msgid "WARNING!"
+msgstr ""
+
+#: storage/views.py:205
+msgid ""
+"Always backup the key! If the key is lost, the data on the disks will also "
+"be lost with no hope of recovery."
+msgstr ""
+
+#: storage/views.py:209
+msgid ""
+"This type of encryption is primarily targeted at users who are storing "
+"sensitive data and want the ability to remove disks from the pool and "
+"dispose of/re-use them without concern for erasure."
+msgstr ""
+
+#: storage/views.py:214
+msgid ""
+"iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
+"data as a consequence of using this feature."
+msgstr ""

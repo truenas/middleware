@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-09-18 18:02+0000\n"
+"PO-Revision-Date: 2014-09-20 11:21+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411063326.0\n"
+"X-POOTLE-MTIME: 1411212095.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11115,3 +11115,62 @@ msgstr ""
 #: storage/views.py:494
 msgid "Zvol successfully edited."
 msgstr "Zvol met succes bewerkt."
+
+#: directoryservice/models.py:853
+msgid "Winbind NSS Info"
+msgstr "Winbind NSS-info"
+
+#: directoryservice/models.py:854
+msgid ""
+"This parameter is designed to control how Winbind retrieves Name Service "
+"Information to construct a user's home directory and login"
+msgstr ""
+"Deze parameter is ontworpen om te bepalen hoe Winbind naamserverinformatie "
+"ophaalt om de basismap en aanmelding van een gebruiker aan te maken"
+
+#: jails/models.py:359
+msgid "IPv4 DHCP"
+msgstr "IPv4-DHCP"
+
+#: jails/models.py:383
+msgid "IPv6 Autoconfigure"
+msgstr "IPv6-autoconfiguratie"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For example http(s)://ip-"
+"of-freenas-machine:webdav_port/'Share Name'"
+msgstr ""
+"Dit wordt gebruikt voor toegang tot uw WebDAV-share.<br />Bijvoorbeeld http(s"
+")://ip-van-freenas-machine:webdav-poort/'Sharenaam'"
+
+#: storage/views.py:203
+msgid "WARNING!"
+msgstr "WAARSCHUWING!"
+
+#: storage/views.py:205
+msgid ""
+"Always backup the key! If the key is lost, the data on the disks will also "
+"be lost with no hope of recovery."
+msgstr ""
+"Maak altijd een back-up van de sleutel! Als de sleutel is verloren, zijn de "
+"gegevens op de schijven ook verloren, zonder kans op herstel."
+
+#: storage/views.py:209
+msgid ""
+"This type of encryption is primarily targeted at users who are storing "
+"sensitive data and want the ability to remove disks from the pool and "
+"dispose of/re-use them without concern for erasure."
+msgstr ""
+"Dit type versleuteling is primair gericht op gebruikers die gevoelige "
+"gegevens bewaren, schijven uit de pool willen kunnen verwijderen en deze "
+"zonder kans op wissen willen kunnen wegdoen/hergebruiken."
+
+#: storage/views.py:214
+msgid ""
+"iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
+"data as a consequence of using this feature."
+msgstr ""
+"iXsystems, Inc. kan niet verantwoordelijk worden gehouden voor enige "
+"verloren of onherstelbare gegevens als gevolg van het gebruik van deze "
+"functie."
