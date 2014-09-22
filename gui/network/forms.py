@@ -454,10 +454,13 @@ class HostnameForm(Form):
 
     def save(self):
         host, domain = self.cleaned_data.get('hostname')
+        oldhost = self.instance.gc_hostname
         self.instance.gc_hostname = host
         self.instance.gc_domain = domain
         self.instance.save()
-        notifier().reload("hostname")
+        _n = notifier()
+        _n.reload("hostname")
+        _n.system_dataset_rename(suffix=oldhost)
 
 
 class VLANForm(ModelForm):
