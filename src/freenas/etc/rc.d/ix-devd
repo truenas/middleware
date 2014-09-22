@@ -224,6 +224,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     /usr/sbin/service ix-ctld quietstart
     /usr/sbin/service ctld forcestop
     /usr/sbin/service ctld quietstart
+    /usr/sbin/service ix-system quietstart
     /usr/sbin/service ix-samba quietstart
     /usr/sbin/service samba_server forcestop
     /usr/sbin/service samba_server quietstart
