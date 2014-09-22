@@ -5286,15 +5286,20 @@ class notifier:
 
         return systemdataset
 
-    def system_dataset_rename(self, basename=None, hostname=None):
+    def system_dataset_rename(self, basename=None, hostname=None, suffix=None):
         if basename is None:
             basename = self.system_dataset_settings()[2]
         if hostname is None:
             hostname = socket.gethostname().split('.')[0]
 
+        if suffix is None:
+            suffix = ''
+        else:
+            suffix = '-%s' % suffix
+
         legacydatasets = {
-            'syslog': '%s/syslog' % basename,
-            'rrd': '%s/rrd' % basename,
+            'syslog': '%s/syslog%s' % (basename, suffix),
+            'rrd': '%s/rrd%s' % (basename, suffix),
         }
         newdatasets = {
             'syslog': '%s/syslog-%s' % (basename, hostname),
