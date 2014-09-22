@@ -88,7 +88,7 @@ get_syslog_dataset()
 
 	if [ -n "${system_dataset}" ]
 	then
-		echo "${system_dataset}/syslog"
+		echo "${system_dataset}/syslog-$(hostname -s)"
 	fi
 }
 
