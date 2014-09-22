@@ -5318,6 +5318,12 @@ class notifier:
             if name in output:
                 newname = newdatasets.get(ident)
                 if newname not in output:
+
+                    if ident == 'syslog':
+                        self.stop('syslogd')
+                    elif ident == 'rrd':
+                        self.stop('collectd')
+
                     proc = self._pipeopen(
                         'zfs rename -f "%s" "%s"' % (name, newname)
                     )
@@ -5329,6 +5335,12 @@ class notifier:
                             newname,
                             errmsg,
                         )
+
+                    if ident == 'syslog':
+                        self.start('syslogd')
+                    elif ident == 'rrd':
+                        self.start('collectd')
+
                 else:
                     # There is already a dataset using the new name
                     pass
