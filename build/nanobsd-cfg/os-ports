@@ -148,7 +148,9 @@ add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
 		OPTIONS_FILE_SET+=SPDY \
 		OPTIONS_FILE_SET+=STATUS
-add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL OPTIONS_FILE_UNSET+=PERL_EMBEDDED
+add_port net-mgmt/net-snmp OPTIONS_FILE_UNSET+=PERL \
+		OPTIONS_FILE_UNSET+=PERL_EMBEDDED \
+		NET_SNMP_WITHOUT_MIB_MODULE_LIST=sctp-mib
 add_port sysutils/nut OPTIONS_FILE_UNSET+="NEON"
 add_port textproc/py-libxml2
 add_port textproc/expat2
