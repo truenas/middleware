@@ -56,8 +56,8 @@ use_syslog_dataset()
 		then
 			echo "1"
 		else
-			local failover="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select count(*) from failover_failover" 2> /dev/null)"
-			if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
+			local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+			if [ "x${failover}" = "xBACKUP" ]; then
 				echo "1"
 			else
 				echo "0"

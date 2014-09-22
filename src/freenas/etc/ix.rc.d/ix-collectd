@@ -34,7 +34,13 @@ use_rrd_dataset()
 		then
 			echo "1"
 		else
-			echo "0"
+			local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notif
+ier.py failover_status 2> /dev/null)"
+			if [ "x${failover}" = "xBACKUP" ]; then
+				echo "1"
+			else
+				echo "0"
+			fi
 		fi
 	done
 	)"
