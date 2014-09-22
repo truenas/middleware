@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import uuid
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -1046,6 +1047,10 @@ class SystemDataset(Model):
             'collection daemon into the system dataset'
         )
     )
+    sys_uuid = models.CharField(
+        editable=False,
+        max_length=32,
+    )
 
     class Meta:
         verbose_name = _("System Dataset")
@@ -1060,3 +1065,6 @@ class SystemDataset(Model):
     @property
     def usedataset(self):
         return self.sys_syslog_usedataset
+
+    def new_uuid(self):
+        self.sys_uuid = uuid.uuid4().hex
