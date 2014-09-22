@@ -50,6 +50,7 @@ import re
 import select
 import shutil
 import signal
+import socket
 import sqlite3
 import stat
 from subprocess import Popen, PIPE
@@ -5240,8 +5241,13 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return systemdataset
 
+        hostname = socket.gethostname().split('.')[0]
+        self.system_dataset_rename(basename, hostname)
+
         datasets = [basename]
-        for sub in ('samba4', 'syslog', 'cores', 'rrd'):
+        for sub in (
+            'cores', 'samba4', 'syslog-%s' % hostname, 'rrd-%s' % hostname
+        ):
             datasets.append('%s/%s' % (basename, sub))
 
         assert volume.vol_fstype in ('ZFS', 'UFS')
@@ -5279,6 +5285,48 @@ class notifier:
         self.nfsv4link()
 
         return systemdataset
+
+    def system_dataset_rename(self, basename=None, hostname=None):
+        if basename is None:
+            basename = self.system_dataset_settings()[2]
+        if hostname is None:
+            hostname = socket.gethostname().split('.')[0]
+
+        legacydatasets = {
+            'syslog': '%s/syslog' % basename,
+            'rrd': '%s/rrd' % basename,
+        }
+        newdatasets = {
+            'syslog': '%s/syslog-%s' % (basename, hostname),
+            'rrd': '%s/rrd-%s' % (basename, hostname),
+        }
+        proc = self._pipeopen(
+            'zfs list -H -o name %s' % ' '.join(
+                [
+                    "%s" % name
+                    for name in legacydatasets.values() + newdatasets.values()
+                ]
+            )
+        )
+        output = proc.communicate()[0].strip('\n').split('\n')
+        for ident, name in legacydatasets.items():
+            if name in output:
+                newname = newdatasets.get(ident)
+                if newname not in output:
+                    proc = self._pipeopen(
+                        'zfs rename -f "%s" "%s"' % (name, newname)
+                    )
+                    errmsg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        log.error(
+                            "Failed renaming system dataset from %s to %s: %s",
+                            name,
+                            newname,
+                            errmsg,
+                        )
+                else:
+                    # There is already a dataset using the new name
+                    pass
 
     def system_dataset_path(self):
         if not os.path.exists(SYSTEMPATH):
