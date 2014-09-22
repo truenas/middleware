@@ -88,7 +88,7 @@ get_syslog_dataset()
 
 	if [ -n "${system_dataset}" ]
 	then
-		echo "${system_dataset}/syslog-$(hostname -s)"
+		echo "${system_dataset}/syslog-$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select sys_uuid from system_systemdataset")"
 	fi
 }
 
