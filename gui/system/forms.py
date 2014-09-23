@@ -624,7 +624,7 @@ class InitialWizard(CommonWizard):
                     if not name.startswith('ds_nt4'):
                         continue
                     nt4data[name.replace('ds_', '')] = value
-                nt4data.update['nt4_enable': True]
+                nt4data['nt4_enable'] = True
 
                 nt4form = NT4Form(
                     data=nt4data,
