@@ -6,7 +6,8 @@ from django.db import models
 
 class Migration(DataMigration):
     depends_on = (
-        ('services', '0122_add_field_ActiveDirectory_ad_nss_info.py'),
+        ('services', '0122_add_field_ActiveDirectory_ad_nss_info'),
+        ('system', '0082_auto__add_unique_certificate_cert_name__add_unique_certificateauthorit'),
     )
 
     def forwards(self, orm):
