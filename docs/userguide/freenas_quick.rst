@@ -123,21 +123,28 @@ Figure 3.1a shows the initial wizard configuration screen that appears if the st
 
 |wizard1.png|
 
+.. |wizard1.png| image:: images/wizard1.png
+    :width: 3.6in
+    :height: 2.3in
+
 Input a name for the ZFS pool that conforms to these
 `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
-**not** :file:`data` or :file:`freenas`.
+**not** :file:`data` or :file:`freenas`).
 
-Next, decide if the pool should provide disk redundancy, and if so, which type. The following types are available:
+Next, decide if the pool should provide disk redundancy, and if so, which type. The :ref:`ZFS Primer` discusses RAIDZ redundancy in more detail. If you prefer
+to make a more complex configuration, click the "Exit" button to close the "Wizard" and instead use :ref:`Volume Manager`.
+
+The following redundancy types are available:
 
 * **Automatic:**
 
-* **RAID 10:**
+* **RAID 10:** creates a striped mirror and requires a minimum of 4 disks.
 
-* **RAIDZ2:**
+* **RAIDZ2:** requires a minimum of 4 disks. Up to 2 disks can fail without data loss.
 
-* **RAIDZ1:**
+* **RAIDZ1:** requires a minimum of 3 disks. Up to 1 disk can fail without data loss.
 
-* **Stripe:**
+* **Stripe:** requires a minimum of 1 disk. Provides **no** redundancy, meaning if any of the disks in the stripe fails, all data in the stripe is lost.
 
 Once you have made your selection, click "Next" to continue.
 
@@ -158,14 +165,18 @@ The next screen in the wizard is shown in Figure 3.1c.
 
 |wizard3.png|
 
+.. |wizard3.png| image:: images/wizard3.png
+    :width: 3.8in
+    :height: 2.1in
+
 If the FreeNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
 
 However, if the FreeNAS® system is on a network containing an Active Directory, LDAP, NIS, or NT4 server and you wish to import the users and groups from
 that server, select the type of directory service in the "Directory Service" drop-down menu. The rest of the fields in this screen will vary, depending upon
 which directory service is selected. Tables 3.1a to 3.1d summarize the available configuration options for each directory service.
 
-.. note:: additional configuration options are available. The wizard can be used to set the initial values required to connect to that directory service. You
-   can then review the other available options in :ref:`Directory Service` to determine if additional configuration is required.
+.. note:: additional configuration options are available for each directory service. The wizard can be used to set the initial values required to connect to
+   that directory service. You can then review the other available options in :ref:`Directory Service` to determine if additional configuration is required.
 
 **Table 3.1a: Active Directory Options**
 
@@ -256,19 +267,27 @@ The next configuration screen, shown in Figure 3.1d, can be used to create the n
 
 |wizard4.png|
 
-FreeNAS® supports several types of shares for providing storage data to the clients in a network. To create a share, input a name, then select the "Purpose"
-of the share:
+.. |wizard4.png| image:: images/wizard4.png
+    :width: 3.5in
+    :height: 3.4in
+
+FreeNAS® supports several types of shares for providing storage data to the clients in a network. The initial wizard can be used to quickly make shares using
+default permissions which should "just work" for common scenarios. If you wish to configure more complex scenarios, refer to the section on :ref:`Sharing`.
+
+To create a share using the wizard, input a name, then select the "Purpose" of the share:
 
 * **Windows (CIFS):** this type of share can be accessed by any operating system using a CIFS client. Check the box for "Allow Guest" if users should not be
-  prompted for a password in order to access the share.
+  prompted for a password in order to access the share. If you make any CIFS shares using the wizard, you can fine-tune them afterwards using
+  :ref:`Windows (CIFS) Shares`.
 
 * **Mac OS X (AFP):** this type of share can be accessed by Mac OS X users. Check the box for "Time Machine" if Mac users will be using the FreeNAS® system
-  as a backup device.
+  as a backup device. If you make any AFP shares using the wizard, you can fine-tune them afterwards using :ref:`Apple (AFP) Shares`.
 
-* **Generic Unix (UFS):** this type of share can be accessed by any operating system using a NFS client.
+* **Generic Unix (NFS):** this type of share can be accessed by any operating system using a NFS client. If you make any NFS shares using the wizard, you can
+  fine-tune them afterwards using :ref:`Unix (NFS) Shares`.
 
 * **Block Storage (iSCSI):** this type of share can be accessed by any operating system using iSCSI initiator software. Input the size of the block storage to
-  create in the format *20GiB* (for 20 GB).
+  create in the format *20G* (for 20 GB). If you make any iSCSI shares using the wizard, you can fine-tune them afterwards using :ref:`iSCSI`.
 
 After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 3.1e.
 
@@ -276,43 +295,66 @@ After selecting the "Purpose", click the "Ownership" button to see the screen sh
 
 |wizard5.png|
 
-The default permissions for the share will be displayed. To create a user and/or group to customize the permissions, check the appropriate box.
+.. |wizard5.png| image:: images/wizard5.png
+    :width: 3.2in
+    :height: 2.3in
 
+The default permissions for the share will be displayed. To create a user or group, input the desired name, then check the "Create User" box, to create that
+user, and the "Create Group" box, to create that group. Check or uncheck the boxes in the "Mode" section to set the initial access permissions for the share.
+When finished, click the "Return" button to return to the share creation screen. Click the "Add" button to finish creating that share, which will then
+appear in the "Name" frame.
 
-#. Set the Email Address: FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative
-   attention. The alert system automatically emails the *root* user account whenever an alert is issued.
+You can use the "Delete" button to remove the highlighted share in the "Name" frame. If you need to edit a share, highlight it, make the change, then press
+the "Update" button.
 
-   To set the email address for the *root* account, go to :menuselection:`Account --> Users --> View Users`. Click the "Change E-mail" button associated with
-   the *root* user account and input the email address of the person to receive the administrative emails.
+When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 3.1f.
 
-#. Enable Console Logging: To view system messages within the graphical administrative interface, go to :menuselection:`System --> Advanced`. Check the box
-   "Show console messages in the footer" and click "Save". The output of :command:`tail -f /var/log/messages` will now be displayed at the bottom of the
-   screen. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
+**Figure 3.1f: Miscellaneous Settings**
 
-#. Configure Permissions: Setting permissions is an important aspect of configuring access to storage data. The graphical administrative interface is meant to
-   set the **initial** permissions in order to make a volume or dataset accessible as a share. Once a share is available, the client operating system should
-   be used to fine-tune the permissions of the files and directories that are created by the client.
+|wizard6.png|
 
-   Determine which users should have access to which data. This will help you to determine if multiple
-   shares should be created to meet the permissions needs of your environment.
+.. |wizard6.png| image:: images/wizard6.png
+    :width: 3.44in
+    :height: 3.99in
 
-#. Start Service(s): Once you have configured your share or service, you will need to start its associated service(s) in order to implement the configuration.
-   By default, all services are off until you start them. The status of services is managed using :menuselection:`Services --> Control Services`. To start a
-   service, click its red "OFF" button. After a second or so, it will change to a blue ON, indicating that the service has been enabled. Watch the console
-   messages as the service starts to determine if there are any error messages.
+This screen can be used to configure the following settings:
 
-#. Test Configuration: If the service successfully starts, try to make a connection to the service from a client system. For example, use Windows Explorer to
-   try to connect to a CIFS share, use an FTP client such as Filezilla to try to connect to an FTP share, or use Finder on a Mac OS X system to try to connect
-   to an AFP share. If the service starts correctly and you can make a connection but receive permissions errors, check that the user has permissions to the
-   volume/dataset being accessed.
+* **Console messages:** check this box if you would like to view system messages at the bottom of the graphical administrative interface. This can be handy
+  when troubleshooting a service that will not start. When using the console message view, if you click the console messages area, it will pop-up as a window,
+  allowing you to scroll through the output and to copy its contents.
 
-#. Backup Configuration: Once you have tested your configuration, be sure to back it up. Go to :menuselection:`System --> General` and click the "Save Config"
-   button. Your browser will provide an option to save a copy of the configuration database. You should
-   **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
+* **Root E-mail:** FreeNAS® provides an "Alert" icon in the upper right corner to provide a visual indication of events that warrant administrative
+  attention. The alert system automatically emails the *root* user account whenever an alert is issued. **It is important** to input the email address of the
+  person to receive these alerts and other administrative emails. The rest of the email settings in this screen should also be reviewed and edited as
+  necessary. Before leaving this screen, click the "Send Test Mail" button to ensure that email notifications are working correctly.
 
-The rest of this Guide,
+* **From email:** the from email address to use when sending email notifications.
+
+* **Outgoing mail server:** hostname or IP address of SMTP server.
+
+* **Port to connect to:** port number used by the SMTP server.
+
+* **TLS/SSL:** encryption type used by the SMTP server.
+
+* **Use SMTP Authentication:** check this box if the SMTP server requires authentication.
+
+* **Username:** input the username if the SMTP server requires authentication.
+
+* **Password:** input the password if the SMTP server requires authentication.
+
+When finished, click "Next". A message will indicate that the wizard is now ready to perform all of the saved actions. If you wish to make any changes, click
+the "Return to Wizard" button to review your edits. If you click the "Exit without saving" button, none of your selections will be saved. To save your edits,
+click the "Confirm" button. A status bar will indicate when the wizard has completed applying your settings.
+
+In addition to the settings that you specify, the wizard will automatically enable :ref:`S.M.A.R.T. Tests`, create a boot environment, and add the new boot
+environment to the boot menu. If you also wish to save a backup of the configuration database to the system being used to access the administrative graphical
+interface, go to :menuselection:`System --> General`, click the "Save Config" button, and browse to the directory to save the configuration to.
+**It is recommended to always backup your configuration after making any configuration changes**.
+
+The rest of this Guide describes the FreeNAS® graphical interface in more detail. The layout of this Guide follows the order of the menu items in the tree
+located in the left frame of the graphical interface.
 
 .. note:: it is important to use the GUI (or the Console Setup menu) for all configuration changes. FreeNAS® uses a configuration database to store its
-   settings. While it is possible to use the command line to modify your configuration, changes made at the command line are not written to the configuration
-   database. This means that any changes made at the command line will not persist after a reboot and will be overwritten by the values in the configuration
-   database during an upgrade.
+   settings. While it is possible to use the command line to modify your configuration, changes made at the command line **are not** written to the
+   configuration database. This means that any changes made at the command line will not persist after a reboot and will be overwritten by the values in the
+   configuration database during an upgrade.
