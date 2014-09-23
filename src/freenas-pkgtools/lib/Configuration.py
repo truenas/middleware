@@ -933,6 +933,31 @@ class Configuration(object):
                 return None
         raise Exception("This should not be reached")
 
+    def ManifestNoteURL(self, manifest, note):
+        # This returns the url of the specified note, or
+        # None if it doesn't exist.
+        # This is largely a simple wrapper.
+        path = manifest.NotePath(note)
+        if path:
+            url = "%s/%s" % (UPDATE_SERVER, path)
+            return url
+        return None
+
+    def GetManifestNote(self, manifest, note, handler = None):
+        # This returns the contents of the specified note,
+        # or None if it can't be found.
+        # We need the manifest so we can get the train name.
+        # Notes are stored at <base>/<train>/Notes, and
+        # the path of the note is stored in the manifest.
+        url = self.ManifetNoteURL(manifest, note)
+        if url:
+            file = self.TryGetNetworkFile(
+                url = url,
+                handler = handler,
+            )
+            if file:
+                return file.read()
+        return None
 
 if __name__ == "__main__":
     conf = Configuration()

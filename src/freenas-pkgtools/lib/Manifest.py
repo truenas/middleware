@@ -237,6 +237,11 @@ class Manifest(object):
         self._sequence = seq
         return
 
+    def SetNote(self, name, location):
+        if self._notes is None:
+            self._notes = {}
+        self._notes[name] = location
+
     def Notes(self):
         return self._notes
 
@@ -296,3 +301,8 @@ class Manifest(object):
 
     def NewTrain(self):
         return self._switch
+
+    def NotePath(self, note_name):
+        if note_name in self.Notes():
+            return "%s/Notes/%s" % (self.Train(), self.Notes()[note_name])
+        return None
