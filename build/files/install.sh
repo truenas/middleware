@@ -536,7 +536,7 @@ prompt_password() {
 
     exec 3>&-
 
-    echo -n ${password}
+    >&2 echo -n ${password}
 
 }
 
@@ -693,7 +693,10 @@ menu_install()
     _config_file="/tmp/pc-sysinstall.cfg"
 
     if ${INTERACTIVE} && [ "${_do_upgrade}" -eq 0 ]; then
-	_password=eval prompt_password
+	prompt_password 2> /tmp/password
+	if [ $? -eq 0 ]; then
+	    _password=$(cat /tmp/password 2> /dev/null)
+	fi
     fi
 
     if [ ${_do_upgrade} -eq 0 ]; then
