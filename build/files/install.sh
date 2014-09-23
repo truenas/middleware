@@ -502,41 +502,34 @@ disk_is_freenas()
 
 prompt_password() {
 
-    local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd"
+    local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
-    exec 3>&1
-
-    password=$(while true; do
-
-	values=$(dialog --insecure \
+    while true; do
+	dialog --insecure \
+	    --output-fd 3 \
 	    --passwordform "Enter your root password" 10 50 0 \
 		"Password:" 1 1 "" 0 20 25 20 \
 		"Confirm Password:" 2 1 "" 2 20 25 20 \
-		2>&1 1>&3)
+	    3> ${_tmpfile}
 
 	if [ $? -ne 0 ]; then
+	    rm -f ${_tmpfile}
 	    return 1
 	fi
 
-	_counter=0
-	for value in ${values}; do
-	    _counter=$((${_counter}+1))
-	    eval password${_counter}=${value}
-	done
+	{ read password1 ; read password2; } < ${_tmpfile}
+	rm -f ${_tmpfile}
 
-	if [ ${_counter} -ne 2 -o "x${password1}" != "x${password2}" ]; then
-	    #dialog --msgbox "Passwords do not match." 7 60 2> /dev/null
+	if [ "${password1}" != "${password2}" ]; then
+	    dialog --msgbox "Passwords do not match." 7 60 2> /dev/null
 	else
-	    echo -n ${password1}
+	    password="${password1}"
 	    break
 	fi
-
+	
     done
-    )
 
-    exec 3>&-
-
-    >&2 echo -n ${password}
+    echo -n "${password}" 1>&2
 
 }
 
