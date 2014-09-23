@@ -175,10 +175,8 @@ FreeNAS® system:
    unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if
    sensitive data is stored on the system.
 
-To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. Input the volume name, select the disks to add to the volume, and click
-the "Add Volume" button to make the encrypted volume.
-
-Once the volume is created, **it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Refer to
+To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
+**it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Refer to
 :ref:`Managing Encrypted Volumes` for instructions on how to perform these tasks.
 
 .. _Manual Setup:
