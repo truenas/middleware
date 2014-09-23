@@ -577,7 +577,8 @@ class SQLiteReleaseDB(ReleaseDB):
         """)
 
         # The ReleaseNotes table consists of notes, and which sequences use them.
-        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNotes(Note TEXT NOT NULL, Sequence TEXT NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relnote_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(Sequence))")
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNotes(NoteName TEXT NOT NULL, NoteFile TEXT NOT NULL, Sequence NOT NULL, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relnote_constraint UNIQUE(NoteName, Sequence), CONSTRAINT relnote_sequence_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(indx))")
+
 
         # The ReleaseNames table consists of release names, and which sequences use them.
         self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNames(Name TEXT NOT NULL, Sequence NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relname_constrant FOREIGN KEY(Sequence) REFERENCES Sequences(indx))")
@@ -676,25 +677,12 @@ class SQLiteReleaseDB(ReleaseDB):
             """, (sequence, pkg.Name(), pkg.Version()))
 
             
-        if notes:
-            if isinstance(notes, basestring):
-                t_notes = [notes]
-            else:
-                t_notes = notes
-            for n in notes:
-                self.cursor().execute("""
-                INSERT INTO ReleaseNotes(Sequence, Note)
-                SELECT Sequence, ?
-                FROM Trains
-                WHERE Sequence = ?
-                """, (n, sequence))
-
         if name:
             self.cursor().execute("""
             INSERT INTO ReleaseNames(Name, Sequence)
-            SELECT ?, Sequence
-            FROM Trains
-            WHERE Sequence = ?
+            SELECT ?, Sequences.indx
+            FROM Sequences
+            WHERE Sequences.Sequence = ?
             """, (name, sequence))
 
         self.commit()
