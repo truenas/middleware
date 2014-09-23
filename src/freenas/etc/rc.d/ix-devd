@@ -256,6 +256,8 @@ if [ \${EVENT} = "LINK_UP" ]; then
 
     /usr/sbin/service ix-collectd quietstart
     /usr/sbin/service collectd quietrestart
+    /usr/sbin/service ix-syslogd quietstart
+    /usr/sbin/service syslogd quietrestart
     echo "Failover event complete." | logger
 fi
 
