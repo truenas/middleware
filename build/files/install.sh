@@ -225,7 +225,7 @@ Proceed with the ${_type}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "$AVATAR_PROJECT ${_type}" --yesno "${_msg}" 13 74
+    dialog --clear --title "$AVATAR_PROJECT ${_type}" --yesno "${_msg}" 13 74
     [ $? -eq 0 ] || exit 1
 }
 
@@ -500,6 +500,46 @@ disk_is_freenas()
     return $_rv
 }
 
+prompt_password() {
+
+    local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd"
+
+    exec 3>&1
+
+    password=$(while true; do
+
+	values=$(dialog --insecure \
+	    --passwordform "Enter your root password" 10 50 0 \
+		"Password:" 1 1 "" 0 20 25 20 \
+		"Confirm Password:" 2 1 "" 2 20 25 20 \
+		2>&1 1>&3)
+
+	if [ $? -ne 0 ]; then
+	    return 1
+	fi
+
+	_counter=0
+	for value in ${values}; do
+	    _counter=$((${_counter}+1))
+	    eval password${_counter}=${value}
+	done
+
+	if [ ${_counter} -ne 2 -o "x${password1}" != "x${password2}" ]; then
+	    #dialog --msgbox "Passwords do not match." 7 60 2> /dev/null
+	else
+	    echo -n ${password1}
+	    break
+	fi
+
+    done
+    )
+
+    exec 3>&-
+
+    echo -n ${password}
+
+}
+
 menu_install()
 {
     local _action
@@ -522,6 +562,7 @@ menu_install()
     local _menuheight
     local _msg
     local _dlv
+    local _password
     local os_part
     local data_part
     local upgrade_style
@@ -540,6 +581,7 @@ menu_install()
     else
 	INTERACTIVE=true
     fi
+
     if do_sata_dom
     then
 	_satadom="YES"
@@ -646,8 +688,13 @@ menu_install()
 	_realdisks=$_disks
     fi
 
+
     ${INTERACTIVE} && new_install_verify "$_action" ${_realdisks}
     _config_file="/tmp/pc-sysinstall.cfg"
+
+    if ${INTERACTIVE} && [ "${_do_upgrade}" -eq 0 ]; then
+	_password=eval prompt_password
+    fi
 
     if [ ${_do_upgrade} -eq 0 ]; then
 	# With the new partitioning, disk_is_freenas may
@@ -829,9 +876,9 @@ menu_install()
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
 #$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
-    elif [ "${_do_upgrade}" -eq 0 ]; then
+    elif [ "${_do_upgrade}" -eq 0 -a -n "${_password}" ]; then
 	# Set the root password
-	chroot /tmp/data /etc/netcli reset_root_pw
+	chroot /tmp/data /etc/netcli reset_root_pw ${_password}
     fi
     umount /tmp/data/boot/grub
     umount /tmp/data/dev
