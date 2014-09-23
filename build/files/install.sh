@@ -507,9 +507,10 @@ prompt_password() {
     while true; do
 	dialog --insecure \
 	    --output-fd 3 \
-	    --passwordform "Enter your root password" 10 50 0 \
-		"Password:" 1 1 "" 0 20 25 20 \
-		"Confirm Password:" 2 1 "" 2 20 25 20 \
+	    --passwordform "Enter your root password; cancel for no root password" \
+	    10 50 0 \
+	    "Password:" 1 1 "" 0 20 25 20 \
+	    "Confirm Password:" 2 1 "" 2 20 25 20 \
 	    3> ${_tmpfile}
 
 	if [ $? -ne 0 ]; then
@@ -522,6 +523,8 @@ prompt_password() {
 
 	if [ "${password1}" != "${password2}" ]; then
 	    dialog --msgbox "Passwords do not match." 7 60 2> /dev/null
+	elif [ -z "${password1}" ]; then
+	    dialog --msgbox "Empty password is not secure" 7 60 2> /dev/null
 	else
 	    password="${password1}"
 	    break
