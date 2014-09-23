@@ -67,7 +67,7 @@ class CIFS_ShareForm(ModelForm):
 
     def clean_cifs_path(self):
         path = self.cleaned_data.get('cifs_path')
-        if path and not os.path.exists(path):
+        if path and not os.path.exists(path.encode('utf8')):
             raise forms.ValidationError(_('The path %s does not exist') % path)
         return path
 
