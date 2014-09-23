@@ -203,7 +203,6 @@ Update resource
                 "ldap_machinesuffix": "",
                 "ldap_basedn": "dc=test,dc=org",
                 "ldap_usersuffix": "",
-                "ldap_basedn": "",
                 "ldap_bindpw": "",
                 "ldap_binddn": "",
                 "ldap_enable": false,
@@ -214,7 +213,6 @@ Update resource
    :json string ldap_hostname: name or IP address of the LDAP server
    :json string ldap_basedn: default base Distinguished Name (DN) to use for searches
    :json boolean ldap_anonbind: allow anonymous binding
-   :json string ldap_basedn: distinguished name with which to bind to the directory server
    :json string ldap_bindpw: credentials with which to bind
    :json string ldap_binddn: distinguished name with which to bind to the directory server
    :json string ldap_usersuffix: suffix that is used for users
