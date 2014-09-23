@@ -503,7 +503,7 @@ def generate_smb4_shares(smb4_shares):
         zfsout = []
 
     for share in shares:
-        if not os.path.isdir(share.cifs_path):
+        if not os.path.isdir(share.cifs_path.encode('utf8')):
             continue
 
         task = False
