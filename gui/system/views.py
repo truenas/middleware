@@ -499,11 +499,14 @@ def testmail(request):
     else:
         allfield = '__all__'
 
-    email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
+    if fromwizard:
+        email = request.POST.get('system-sys_email')
+        errmsg = _('You must provide a Root E-mail')
+    else:
+        email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
+        errmsg = _('You must configure the root email (Accounts->Users->root)')
     if not email:
-        form.errors[allfield] = form.error_class([
-            "You must configure the root email (Accounts->Users->root)"
-        ])
+        form.errors[allfield] = form.error_class([errmsg])
 
         return JsonResp(
             request,
@@ -516,10 +519,10 @@ def testmail(request):
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
-        error, errmsg = send_mail(subject=_('Test message from %s'
-                                            % (sw_name)),
-                                  text=_('This is a message test from %s'
-                                         % (sw_name, )))
+        error, errmsg = send_mail(
+            subject=_('Test message from %s') % sw_name,
+            text=_('This is a message test from %s') % sw_name,
+            to=[email])
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
