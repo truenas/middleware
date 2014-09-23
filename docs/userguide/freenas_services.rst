@@ -1646,14 +1646,12 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 SNMP
 ----
 
-SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® can be
-configured as a
-`bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_
-server using FreeBSD's simple and extensible SNMP daemon. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
+SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® uses
+`Net-SNMP <http://net-snmp.sourceforge.net/>`_ to provide SNMP. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
 
-* UDP 161 (:command:`bsnmpd` listens here for SNMP requests)
+* UDP 161 (listens here for SNMP requests)
 
-Available MIBS are located in :file:`/usr/share/SNMP/mibs` and :file:`/usr/local/share/SNMP/mibs`.
+Available MIBS are located in :file:`/usr/share/snmp/mibs` and :file:`/usr/local/share/snmp/mibs`.
 
 Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
@@ -1682,7 +1680,6 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
 | Auxiliary Parameters | string     | additional                                                     |
-|                      |            | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
 |                      |            | options not covered in this screen, one per line               |
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
