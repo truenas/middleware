@@ -157,7 +157,6 @@ start_jail_vimage()
   # Enable IPv6
   sysrc -j ${JID} inet6_enable="YES"
   sysrc -j ${JID} ip6addrctl_enable="YES"
-  sysrc -j ${JID} ipv6_activate_all_interfaces="YES"
 
   # Configure the IPv6 addresses
   if [ "${IP6}" = "AUTOCONF" ] ; then
