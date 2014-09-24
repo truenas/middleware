@@ -281,7 +281,7 @@ Advanced
 | Setting                                 | Value                            | Description                                                                  |
 |                                         |                                  |                                                                              |
 +=========================================+==================================+==============================================================================+
-| Enable Console Menu                     | checkbox                         | unchecking this box removes the console menu shown in Figure 2.6a            |
+| Enable Console Menu                     | checkbox                         | unchecking this box removes the console menu shown in Figure 3a              |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Use Serial Console                      | checkbox                         | do **not** check this box if your serial port is disabled                    |
@@ -318,7 +318,7 @@ Advanced
 |                                         |                                  | features; enabling this shows these features by default                      |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable autotune                         | checkbox                         | enables the autotune script which attempts to optimize the system depending  |
+| Enable autotune                         | checkbox                         | enables :ref:`autotune` which attempts to optimize the system depending      |
 |                                         |                                  | upon the hardware which is installed                                         |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
@@ -338,7 +338,7 @@ If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Save Debug:** used to generate a text file of diagnostic information. t will prompt for the location to save the ASCII text file.
+**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
@@ -353,12 +353,13 @@ exists on a system with limited RAM, the autotune script will automatically adju
 issues. It should only be used as a temporary measure on a system that hangs until the underlying hardware issue is addressed by adding more RAM. Autotune
 will always slow the system down as it caps the ARC.
 
-The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default; check it if you would like the autotuner to run
-at boot time. If you would like the script to run immediately, reboot the system.
+The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default. Check this box if you would like the autotuner to run
+at boot time. If you would like the script to run immediately, you will need to reboot the system.
 
-If autotuner finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Tunables`. If you do not like the changes,
-you can modify the values that are displayed in the GUI and your changes will override the values that were created by the autotune script. However, if you
-delete a tunable that was created by autotune, it will be recreated at next boot. This is because autotune only creates values that do not already exist.
+If the autotune script finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Tunables`. If you do not like the
+changes, you can modify the values that are displayed in the GUI and your changes will override the values that were created by the autotune script. However,
+if you delete a tunable that was created by autotune, it will be recreated at next boot. This is because autotune only creates values that do not already
+exist.
 
 If you are trying to increase the performance of your FreeNAS® system and suspect that the current hardware may be limiting performance, try enabling
 autotune.
@@ -373,16 +374,16 @@ Email
 :menuselection:`System --> Email`, shown in Figure 5.5a, is used to configure the email settings on the FreeNAS® system. Table 5.5a summarizes the settings
 that can be configured using the Email tab.
 
-.. note:: it is important to configure the system so that it can successfully send emails. An automatic script send a nightly email to the *root* user account
-   containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
+.. note:: it is important to configure the system so that it can successfully send emails. An automatic script sends a nightly email to the *root* user
+   account containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
 **Figure 5.5a: Email Screen**
 
 |system4.png|
 
 .. |system4.png| image:: images/system4.png
-    :width: 4.7in
-    :height: 3.7in
+    :width: 6.2in
+    :height: 3.6in
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -408,13 +409,13 @@ that can be configured using the Email tab.
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Use                  | checkbox             | enables/disables                                                                                |
 | SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
-| Authentication       |                      | using PLAIN SASL                                                                                |
+| Authentication       |                      | using PLAIN SASL; if checked, input the required "Username" and "Password"                      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Username             | string               | used to authenticate with SMTP server                                                           |
+| Username             | string               | input the username if the SMTP server requires authentication                                   |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Password             | string               | used to authenticate with SMTP server                                                           |
+| Password             | string               | input the password if the SMTP server requires authentication                                   |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -435,8 +436,8 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |system5.png|
 
 .. |system5.png| image:: images/system5.png
-    :width: 3.8in
-    :height: 2.0in
+    :width: 6.3in
+    :height: 1.8in
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -465,9 +466,7 @@ additional kernel module such as a FreeBSD hardware driver.
 
 .. warning:: setting a sysctl or a loader is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a loader could
    adversely affect the ability of the FreeNAS® system to successfully boot.
-   **Do not create a tunable on a production system unless you understand the ramifications of that change.** This means that you should
-   always test the impact of any changes on a test system first. It is also recommended to create a boot environment using the instructions in `Boot`_
-   **before** creating a tunable so that the system can reboot into the previous boot environment should the tunable prevent the system from booting.
+   **Do not create a tunable on a production system unless you understand the ramifications of that change.** 
 
 Since sysctl and loader values are specific to the kernel parameter to be tuned or driver to be loaded, descriptions and suggested values can be found in the
 man page for the specific driver and in many sections of the
@@ -487,28 +486,28 @@ Table 5.7a summarizes the options when adding a tunable.
 
 **Table 5.7a: Adding a Tunable**
 
-+-------------+-------------------+---------------------------------------------------------------------------+
-| **Setting** | **Value**         | **Description**                                                           |
-|             |                   |                                                                           |
-|             |                   |                                                                           |
-+=============+===================+===========================================================================+
-| Variable    | string            | typically the name of the driver to load, as indicated by its man page    |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Value       | integer or string | value to associate with variable; typically this is set to *YES*          |
-|             |                   | to enable the driver specified by the variable                            |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Type        | drop-down menu    | choices are *Loader* or                                                   |
-|             |                   | *Sysctl*                                                                  |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
-| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it      |
-|             |                   |                                                                           |
-+-------------+-------------------+---------------------------------------------------------------------------+
++-------------+-------------------+-------------------------------------------------------------------------------------+
+| **Setting** | **Value**         | **Description**                                                                     |
+|             |                   |                                                                                     |
+|             |                   |                                                                                     |
++=============+===================+=====================================================================================+
+| Variable    | string            | typically the name of the sysctl or driver to load, as indicated by its man page    |
+|             |                   |                                                                                     |
++-------------+-------------------+-------------------------------------------------------------------------------------+
+| Value       | integer or string | value to associate with "Variable"; typically this is set to *YES*                  |
+|             |                   | to enable the sysctl or driver specified by the "Variable"                          |
+|             |                   |                                                                                     |
++-------------+-------------------+-------------------------------------------------------------------------------------+
+| Type        | drop-down menu    | choices are *Loader* or                                                             |
+|             |                   | *Sysctl*                                                                            |
+|             |                   |                                                                                     |
++-------------+-------------------+-------------------------------------------------------------------------------------+
+| Comment     | string            | optional, but a useful reminder for the reason behind adding this tunable           |
+|             |                   |                                                                                     |
++-------------+-------------------+-------------------------------------------------------------------------------------+
+| Enabled     | checkbox          | uncheck if you would like to disable the tunable without deleting it                |
+|             |                   |                                                                                     |
++-------------+-------------------+-------------------------------------------------------------------------------------+
 
 .. note:: as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the *Sysctl* is enabled,
    its value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is
@@ -518,24 +517,24 @@ Table 5.7a summarizes the options when adding a tunable.
 Any tunables that you add will be listed in :menuselection:`System --> Tunables`. To change the value of an existing tunable, click its "Edit" button. To
 remove a tunable, click its "Delete" button.
 
-Some sysctls are read-only, meaning that they require a reboot in order to enable their setting. You can verify if a sysctl is read-only by first attempting
-to change it from :ref:`Shell`. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command
+Some sysctls are read-only, meaning that they require a reboot in order to enable their setting. You can determine if a sysctl is read-only by first
+attempting to change it from :ref:`Shell`. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
-an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must be added in :menuselection:`System --> Tunables`.
+an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-At this time, the GUI does not display the sysctls that are pre-set when FreeNAS® is installed. 9.3 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
  kern.filedelay=5
- kern.coredump=0
+ kern.coredump=1
  kern.sugid_coredump=1
  net.inet.tcp.delayed_ack=0
 
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-At this time, the GUI does not display the loaders that are pre-set when FreeNAS® is installed. 9.3 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas"
