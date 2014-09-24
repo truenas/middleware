@@ -101,7 +101,6 @@ remove_gcc47()
 /usr/local/lib/gcc47/libstdc++.so.6
 /usr/local/lib/gcc47/libstdc++.so
 /usr/local/lib/gcc47/libstdc++.a
-/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
 /usr/local/lib/gcc47/libmudflap.so.0
 /usr/local/lib/gcc47/libmudflap.so
 /usr/local/lib/gcc47/libmudflapth.so.0
@@ -151,7 +150,6 @@ remove_gcc()
 /usr/local/lib/gcc47/libstdc++.so.6
 /usr/local/lib/gcc47/libstdc++.so
 /usr/local/lib/gcc47/libstdc++.a
-/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
 /usr/local/lib/gcc47/libmudflap.so.0
 /usr/local/lib/gcc47/libmudflap.so
 /usr/local/lib/gcc47/libmudflapth.so.0
