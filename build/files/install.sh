@@ -394,7 +394,6 @@ disk_is_freenas()
 	    umount /tmp/data_old
 	    if [ -n "${DS}" ]; then
 		# Okay, mount this pool
-		set -x
 		if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
 		    cp -pR /tmp/data_old/data/. /tmp/data_preserved
 		    # Don't want to keep the old pkgdb around, since we're
