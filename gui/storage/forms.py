@@ -140,6 +140,15 @@ def _clean_zfssize_fields(form, attrs, prefix):
     return cdata
 
 
+def _inherit_choices(choices, inheritvalue):
+    nchoices = []
+    for value, name in choices:
+        if value == 'inherit':
+            name += ' (%s)' % inheritvalue
+        nchoices.append((value, name))
+    return nchoices
+
+
 class VolumeMixin(object):
 
     def clean_volume_name(self):
@@ -1335,14 +1344,40 @@ class ZFSDataset(Form):
         self._fs = kwargs.pop('fs')
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if '/' in self._fs:
+            parentds = self._fs.rsplit('/', 1)[0]
+            parentdata = _n.zfs_get_options(parentds)
+
+            self.fields['dataset_atime'].choices = _inherit_choices(
+                choices.ZFS_AtimeChoices,
+                parentdata['atime'][0]
+            )
+            self.fields['dataset_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                parentdata['compression'][0]
+            )
+            self.fields['dataset_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                parentdata['dedup'][0]
+            )
+
         if self._create is False:
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
-            data = notifier().zfs_get_options(self._fs)
-            self.fields['dataset_compression'].initial = data['compression'][0]
-            self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
+            data = _n.zfs_get_options(self._fs)
+
+            if data['compression'][2] == 'inherit':
+                self.fields['dataset_compression'].initial = 'inherit'
+            else:
+                self.fields['dataset_compression'].initial = data['compression'][0]
+            self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
             self.fields['dataset_share_type'].widget.attrs['readonly'] = True
-            self.fields['dataset_atime'].initial = data['atime'][0]
+
+            if data['atime'][2] == 'inherit':
+                self.fields['dataset_atime'].initial = 'inherit'
+            else:
+                self.fields['dataset_atime'].initial = data['atime'][0]
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
                 formfield = 'dataset_%s' % (attr)
@@ -1350,8 +1385,9 @@ class ZFSDataset(Form):
                     self.fields[formfield].initial = 0
                 else:
                     self.fields[formfield].initial = data[attr][0]
-
-            if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
+            if data['dedup'][2] == 'inherit':
+                self.fields['dataset_dedup'].initial = 'inherit'
+            elif data['dedup'][0] in ('on', 'off', 'verify'):
                 self.fields['dataset_dedup'].initial = data['dedup'][0]
             elif data['dedup'][0] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
@@ -1416,11 +1452,27 @@ class ZVol_EditForm(Form):
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name')
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
-        data = notifier().zfs_get_options(name)
-        self.fields['volume_compression'].initial = data['compression'][0]
+        _n = notifier()
+        if '/' in name:
+            parentds = name.rsplit('/', 1)[0]
+            parentdata = _n.zfs_get_options(parentds)
+
+            self.fields['volume_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                parentdata['compression'][0]
+            )
+            self.fields['volume_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                parentdata['dedup'][0]
+            )
+
+        data = _n.zfs_get_options(name)
+        self.fields['volume_compression'].initial = data['compression'][2]
         self.fields['volume_volsize'].initial = data['volsize'][0]
 
-        if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
+        if data['dedup'][2] == 'inherit':
+            self.fields['volume_dedup'].initial = 'inherit'
+        elif data['dedup'][0] in ('on', 'off', 'verify'):
             self.fields['volume_dedup'].initial = data['dedup'][0]
         elif data['dedup'][0] == 'sha256,verify':
             self.fields['volume_dedup'].initial = 'verify'
