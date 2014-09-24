@@ -9,19 +9,19 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Information`: provides general FreeNAS® system information such as hostname, operating system version, platform, and uptime
 
-* :ref:`General`: used to general settings such as HTTPS access, the language, and the timezone
+* :ref:`General`: used to configure general settings such as HTTPS access, the language, and the timezone
 
-* :ref:`Boot`: used to create, rename, and delete boot environments.
+* :ref:`Boot`: used to create, rename, and delete boot environments
 
-* :ref:`Advanced`: used to configure advanced settings such as the serial console, swap, console messages, and other advanced fields
+* :ref:`Advanced`: used to configure advanced settings such as the serial console, swap, and console messages
 
 * :ref:`Email`: used to configure the email address to receive notifications
 
-* :ref:`System Dataset`: used to configure the location of the system dataset
+* :ref:`System Dataset`: used to configure the location where logs and reporting graphs are stored
 
 * :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
-* :ref:`Upgrade`: used to perform upgrades and to check for new updates.
+* :ref:`Upgrade`: used to perform upgrades and to check for system updates
 
 * :ref:`CAs`: used to import or create an internal or intermediate CA (Certificate Authority)
 
@@ -44,7 +44,11 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|Figure51a_png|
+|system1.png|
+
+.. |system1.png| image:: images/system1.png
+    :width: 4.8in
+    :height: 4.2in
 
 .. _General:
 
@@ -58,8 +62,8 @@ General
 |system2.png|
 
 .. |system2.png| image:: images/system2.png
-    :width: 4.8in
-    :height: 4.2in
+    :width: 6.2in
+    :height: 4.5in
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -70,7 +74,8 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +======================+================+================================================================================================================================+
 | Protocol             | drop-down menu | protocol to use when connecting to the administrative GUI from a browser; if you change the default of *HTTP* to               |
-|                      |                | *HTTPS*, select the certificate to use in "Certificate"; if you do not have a certificate, first create a CA (in `CAs`_)       |
+|                      |                | *HTTPS* or to                                                                                                                  |
+|                      |                | *HTTP+HTTPS*, select the certificate to use in "Certificate"; if you do not have a certificate, first create a CA (in `CAs`_)  |
 |                      |                | then the certificate (in `Certificates`_)                                                                                      |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -95,8 +100,10 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | WebGUI HTTPS Port    | integer        | allows you to configure a non-standard port for accessing the administrative GUI over HTTPS                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| WebGUI HTTPS -->     | checkbox       |                                                                                                                                |
-| HTTPS Redirect       |                |                                                                                                                                |
+| WebGUI HTTPS -->     | checkbox       | when this box is checked, *HTTP* connections will be automatically redirected to                                               |
+| HTTPS Redirect       |                | *HTTPS* if                                                                                                                     |
+|                      |                | *HTTPS* is selected in "Protocol", otherwise such connections will fail                                                        |
+|                      |                |                                                                                                                                |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Language             | drop-down menu | select the localization from the drop-down menu and reload the browser; you can view the status of localization at             |
@@ -132,13 +139,13 @@ contains an alternate script which only saves a copy of the configuration when i
 `forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`_
 contains a script for backing up the configuration from another system.
 
-**Upload Config:** allows you to browse to location of saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
-operation of time sensitive applications such as Active Directory. By default, FreeNAS® is pre-configured to use three public NTP servers. If your network is
-using Active Directory, ensure that the FreeNAS® system and the Active Directory Domain Controller have been configured to use the same NTP servers. To
-add a NTP server to match the settings used by your network's domain controller, click :menuselection:`NTP Servers --> Add NTP Server` to open the screen
-shown in Figure 5.2b. Table 5.2b summarizes the options when adding an NTP server.
+operation of time sensitive applications such as Active Directory or other directory services. By default, FreeNAS® is pre-configured to use three public NTP
+servers. If your network is using a directory service, ensure that the FreeNAS® system and the server running the directory service have been configured to
+use the same NTP servers. To add a NTP server on the FreeNAS® system, click :menuselection:`NTP Servers --> Add NTP Server` to open the screen shown in
+Figure 5.2b. Table 5.2b summarizes the options when adding an NTP server.
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
@@ -189,33 +196,46 @@ Boot
 ----
 
 Beginning with version 9.3, FreeNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
-the operating system or testing configuration changes becomes a low-risk operation as you can create a snapshot of your current boot environment before
-upgrading or making configuration changes to the system. When a boot environment is created, an entry is added to the boot menu. If the upgrade or
-configuration change fails, simply reboot the system and select that boot environment from the boot menu to instruct the system to go back to that system
-state.
+the operating system or applying a system patch becomes a low-risk operation as you can create a snapshot of your current boot environment before upgrading or
+applying the system patch. When a boot environment is created, an entry is added to the boot menu. If the upgrade or system update fails, simply reboot the
+system and select the previous boot environment from the boot menu to instruct the system to go back to that system state.
 
-As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed.
+.. note:: do not confuse boot environments with the configuration database. Boot environments are a snapshot of the operating system at a specified time, such
+   as before an upgrade or a system patch. When a FreeNAS® system boots, it loads the specified boot environment, or operating system, then reads the
+   configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
+   changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
+
+As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed. If you used the initial configuration wizard, a second boot
+environment called *Wizard-date* is also created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Default Boot Environment**
 
 |be1.png|
 
+.. |be1.png| image:: images/be1.png
+    :width: 5.9in
+    :height: 1.8in
+
 To create a boot environment, click the "Create" button, input a name for the boot environment, and click "OK". In the example shown in Figure 5.3b, a boot
-environment named *working_config* was created in preparation before making testing changes to a known working configuration.
+environment named *prepatch* was created in preparation before applying a system patch.
 
 **Figure 5.3b: Viewing Boot Environments**
 
 |be2.png|
 
-Highlight an entry to view its configuration buttons. Each entry contains the following information:
+.. |be2.png| image:: images/be2.png
+    :width: 6.2in
+    :height: 4.5in
 
-* **Name:** the name of the boot entry which will appear in the boot menu.
+Each entry contains the following information:
+
+* **Name:** the name of the boot entry as it will appear in the boot menu.
 
 * **Active:** indicates which entry will boot by default if the user does not select another entry in the boot menu.
 
 * **Created:** indicates the date and time the boot entry was created.
 
-The following configuration buttons are available:
+Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
 * **Rename:** used to change the name of the boot environment.
 
@@ -235,6 +255,10 @@ Figure 5.3c shows the boot menu with our example boot environment added.
 **Figure 5.3c: Boot Environments in Boot Menu**
 
 |be3.png|
+
+.. |be3.png| image:: images/be3.png
+    :width: 5.4in
+    :height: 4.0in
 
 .. _Advanced:
 
