@@ -1352,7 +1352,7 @@ class ZFSDataset(Form):
                     self.fields[formfield].initial = data[attr][0]
 
             if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
-                self.fields['dataset_dedup'].initial = data['dedup']
+                self.fields['dataset_dedup'].initial = data['dedup'][0]
             elif data['dedup'][0] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
             else:
@@ -1421,7 +1421,7 @@ class ZVol_EditForm(Form):
         self.fields['volume_volsize'].initial = data['volsize'][0]
 
         if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
-            self.fields['volume_dedup'].initial = data['dedup']
+            self.fields['volume_dedup'].initial = data['dedup'][0]
         elif data['dedup'][0] == 'sha256,verify':
             self.fields['volume_dedup'].initial = 'verify'
         else:
