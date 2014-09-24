@@ -564,13 +564,41 @@ If the client receives timeout errors when trying to mount the share, add the IP
 WebDAV Shares
 ------------------
 
-Beginning with FreeNAS® 9.3,
+Beginning with FreeNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory
+from a web browser.
 
-To create a WebDAV share, click :menuselection: `Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
+Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
+by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
+format::
+
+ protocol://IP_address:port_number/share_name
+ 
+where:
+
+* **protocol:** is either
+  *http* or
+  *https*, depending upon the "Protocol" configured in :menuselection:`Services --> WebDAV`.
+  
+* **IP address:** is the IP address of the FreeNAS® system. Take care when configuring a public IP address to ensure that the network's firewall only allows
+  access to authorized systems.
+  
+* **port_number:** is configured in :menuselection:`Services --> WebDAV`. If the FreeNAS® system is to be accessed using a public IP address, consider
+  changing the default port number and ensure that the network's firewall only allows access to authorized systems.
+  
+* **share_name:** is configured in :menuselection:`Sharing --> WebDAV Shares`.
+
+Inputting the URL into a web browser will bring up an authentication pop-up message. Input a username of *webdav* and the password configured in
+:menuselection:`Services --> WebDAV`.
+
+To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
 
 **Figure 10.3a: Adding a WebDAV Share**
 
 |webdav.png|
+
+.. |webdav.png| image:: images/webdav.png
+    :width: 4.2in
+    :height: 2.4in
 
 Table 10.3a summarizes the available options.
 
@@ -580,10 +608,7 @@ Table 10.3a summarizes the available options.
 | **Setting**                  | **Value**     | **Description**                                                                                             |
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
-| Share Path Name              | string        | use the format *protocol://IP_of_freenas:available_portnumber/a_path_name*, where                           |
-|                              |               | *protocol* is                                                                                               |
-|                              |               | *http* or                                                                                                   |
-|                              |               | *https*; this creates the URL that will be used to access the share from a browser                          |
+| Share Path Name              | string        | input a name for the share                                                                                  |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Comment                      | string        | optional                                                                                                    |
@@ -599,6 +624,9 @@ Table 10.3a summarizes the available options.
 | Ownership                    |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
+Once you click "OK", a pop-up will ask if you would like to enable the service. Once the service starts, review the settings in
+:menuselection:`Services --> WebDAV` as they are used to determine which URL is used to access the WebDAV share and whether or not authentication is required
+to access the share. These settings are described in :ref:`WebDAV`.
 
 .. _Windows (CIFS) Shares:
 

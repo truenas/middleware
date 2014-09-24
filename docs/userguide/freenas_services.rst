@@ -2017,9 +2017,12 @@ this command. These users are created in the "Extra users" field.
 WebDAV
 ------
 
-Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
+Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
+one WebDAV share using :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share`. Refer to :ref:`WebDAV Shares` for instructions on how to create a
+share and then how to connect to it once the service is configured and started.
 
-Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available options.
+The settings in the WebDAV service apply to all WebDAV shares. Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available
+options.
 
 **Figure 11.16a: WebDAV Configuration Screen**
 
