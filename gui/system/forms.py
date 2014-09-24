@@ -1713,7 +1713,7 @@ class InitialWizardVolumeForm(Form):
                 rows = 2
                 perrow = (num - mod) / 2
                 vdevtype = cls._grp_type(perrow)
-            elif num < 99:
+            elif num >= 18:
                 div9 = int(num / 9)
                 div10 = int(num / 10)
                 mod9 = num % 9
