@@ -3895,8 +3895,10 @@ class notifier:
                     dval = retval[data[0]]
             else:
                 dval = retval
-            if (not data[1] in noinherit_fields) and (data[3] == 'default' or data[3].startswith('inherited')):
-                dval[data[1]] = "inherit"
+            if (not data[1] in noinherit_fields) and (
+                data[3] == 'default' or data[3].startswith('inherited')
+            ):
+                dval[data[1]] = "inherit (%s)" % data[2]
             else:
                 dval[data[1]] = data[2]
         return retval
