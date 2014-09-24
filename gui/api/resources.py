@@ -280,7 +280,13 @@ class DatasetResource(DojoResource):
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
         ))
-        return zfslist[kwargs.get('pk')]
+        try:
+            return zfslist['%s/%s' % (
+                kwargs.get('parent').vol_name,
+                kwargs.get('pk')
+            )]
+        except KeyError:
+            raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
         retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
