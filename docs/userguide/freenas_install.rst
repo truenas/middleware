@@ -496,9 +496,9 @@ as it contains useful guidelines for minimizing the risk of losing your data.
 
 In order to install or run FreeNAS® within a virtual environment, you will need to create a virtual machine that meets the following minimum requirements:
 
-* **at least** 4096 MB base memory size
+* **at least** 8192 MB base memory size
 
-* a virtual disk **at least 2 GB in size** to hold the operating system and swap
+* a virtual disk **at least 8 GB in size** to hold the operating system and boot environments
 
 * at least one more virtual disk **at least 4 GB in size** to be used as data storage
 
@@ -526,7 +526,6 @@ To create the virtual machine, start VirtualBox and click the "New" button, seen
     :width: 6.9252in
     :height: 3.6335in
 
-
 Click the "Next" button to see the screen in Figure 2.6b. Enter a name for the virtual machine, click the "Operating System" drop-down menu and select BSD,
 and select "FreeBSD (64-bit)" from the "Version" dropdown.
 
@@ -538,7 +537,7 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
     :width: 5.4626in
     :height: 3.6665in
 
-Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 4096 MB**. When finished, click "Next" to see the screen in
+Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 8192 MB**. When finished, click "Next" to see the screen in
 Figure 2.6d.
 
 **Figure 2.6c: Select the Amount of Memory Reserved for the Virtual Machine**
@@ -590,7 +589,7 @@ you select "Next", you will see the screen in Figure 2.6g.
     :width: 5.9783in
     :height: 4.6035in
 
-This screen is used to set the size (or upper limit) of the virtual machine. **Increase the default size to 2 or 4 GB**. Use the folder icon to browse to a
+This screen is used to set the size (or upper limit) of the virtual machine. **Increase the default size to 8 GB**. Use the folder icon to browse to a
 directory on disk with sufficient space to hold the virtual machine.
 
 Once you make your selection and press "Next", you will see a summary of your choices. Use the "Back" button to return to a previous screen if you need to
@@ -641,11 +640,15 @@ mode" when you try to boot the ISO, your CPU either does not have the required e
 
 To configure the network adapter, go to :menuselection:`Settings --> Network`. In the "Attached to" drop-down menu select "Bridged Adapter", then select the
 name of the physical interface from the "Name" drop-down menu. In the example shown in Figure 2.6k, the Intel Pro/1000 Ethernet card is attached to the
-network and has a device name of *re0*.
+network and has a device name of *em0*.
 
 **Figure 2.6k: Configuring a Bridged Adapter in VirtualBox**
 
 |virtualbox11.png|
+
+.. |virtualbox11.png| image:: images/virtualbox11.png
+    :width: 5.98in
+    :height: 3.74in
 
 Once your configuration is complete, click the "Start" arrow and install FreeNAS® as described in `Performing the Installation`_. Once FreeNAS® is
 installed, press "F12" to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by removing the
@@ -695,7 +698,7 @@ shown in Figure 2.6n, click "Other" then select a FreeBSD architecture that matc
     :width: 6.9252in
     :height: 4.1in
 
-Click "Next" and create a virtual disk file of **2 GB** to hold the FreeNAS® operating system, as shown in Figure 2.6o.
+Click "Next" and create a virtual disk file of **8 GB** to hold the FreeNAS® operating system, as shown in Figure 2.6o.
 
 **Figure 2.6o: Create a Disk for the Operating System**
 
@@ -716,7 +719,7 @@ screen shown in Figure 2.6p.
     :width: 6.7346in
     :height: 4.3146in
 
-Increase the "Memory Configuration" to **at least 2048 MB**.
+Increase the "Memory Configuration" to **at least 8192 MB**.
 
 Under "CPUs", make sure that only 1 virtual processor is listed, otherwise you will be unable to start any FreeNAS® services.
 
