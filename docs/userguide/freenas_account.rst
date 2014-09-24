@@ -21,8 +21,8 @@ Groups
 
 The Groups interface allows you to manage UNIX-style groups on the FreeNAS® system.
 
-.. note:: if Active Directory or OpenLDAP is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS® using :menuselection:`Directory Service --> Active Directory` or :menuselection:`Directory Service --> LDAP`.
+.. note:: if a directory service is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
+   account information into FreeNAS®. Refer to :ref:`Directory Service` for details.
 
 This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
 
@@ -65,10 +65,10 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 | Group Name          | string    | mandatory                                                                                                                |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo         | checkbox  | if checked, members of the group have permission to use :command:`sudo`                                                  |
+| Permit Sudo         | checkbox  | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                    |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Allow repeated GIDs | checkbox  | allows multiple groups to share the same group id; this is useful when a GID is already associated with the UNIX         |
+| Allow repeated GIDs | checkbox  | allows multiple groups to share the same group id (GID); this is useful when a GID is already associated with the UNIX   |
 |                     |           | permissions for existing data                                                                                            |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
@@ -84,9 +84,6 @@ In the example shown in Figure 4.1c, the *data1* group has been created and the
 *data1* group has been selected and
 *user1* has been added as a member of that group.
 
-To delete a group, click its "Delete Group" button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
-that the built-in groups do not provide a "Delete Group" button.
-
 **Figure 4.1c: Assigning a User as a Member of a Group**
 
 |group3.png|
@@ -95,30 +92,23 @@ that the built-in groups do not provide a "Delete Group" button.
     :width: 7.8in
     :height: 4.4in
 
+To delete a group, click its "Delete Group" button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
+that the built-in groups do not provide a "Delete Group" button.
+
 .. _Users:
 
 Users
 -----
 
 FreeNAS® supports users, groups, and permissions, allowing great flexibility in configuring which users have access to the data stored on FreeNAS®. In order
-to assign permissions which will be used by shares, you will need to do **one of the following**:
+to assign permissions to shares, you will need to do **one of the following**:
 
-#.  Create a guest account that all users will use.
-
-#.  Create a user account for every user in the network where the name of each account is the same as a logon name used on a computer. For example, if a
-    Windows system has a login name of *bobsmith*, you should create a user account with the name
+#.  Create a guest account that all users will use or create a user account for every user in the network where the name of each account is the same as a
+    logon name used on a computer. For example, if a Windows system has a login name of *bobsmith*, you should create a user account with the name
     *bobsmith* on FreeNAS®. If your intent is to assign groups of users different permissions to shares, you will need to also create groups and assign users
     to the groups.
 
-#.  If your network uses Active Directory to manage user accounts and permissions, enable the Active Directory service.
-
-#.  If your network uses an OpenLDAP server to manage user accounts and permissions, enable the LDAP service.
-
-User accounts can be given permissions to volumes or datasets. If you wish to use groups to manage permissions, you should create the user accounts first,
-then assign the accounts as members of the groups. This section demonstrates how to create a user account.
-
-.. note:: if Active Directory or OpenLDAP is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS® using :menuselection:`Directory Service --> Active Directory` or :menuselection:`Directory Service --> LDAP`.
+#.  If your network uses a directory service, import the existing account information using the instructions in :ref:`Directory Service`.
 
 :menuselection:`Account --> Users --> View Users` provides a listing of all of the system accounts that were installed with the FreeNAS® operating system, as
 shown in Figure 4.2a.
@@ -175,8 +165,9 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | port number used by the service                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Username                   | string          | greyed out if user already created; maximum 32 characters to allow for longer AD names though a maximum of                                            |
-|                            |                 | 8 is recommended for interoperability; can include numerals but can not include a space                                                               |
+| Username                   | string          | greyed out if user already created; maximum 32 characters though a maximum of 8 is recommended for interoperability; can not begin with a hyphen, if  |
+|                            |                 | a *$* is used it can only be the last character, and it can not contain a space, tab, or the characters                                               |
+|                            |                 | *, : + & # % ^ \ & ( ) ! @ ~ * ? < > = "*                                                                                                             |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Create a new primary group | checkbox        | by default, a primary group with the same name as the user will be created; uncheck this box to select a                                              |
@@ -189,15 +180,16 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | *wheel* group in "Auxiliary groups"                                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Create Home Directory In   | browse button   | leave as */nonexistent* for system accounts, otherwise browse to the name of an                                                                       |
-|                            |                 | **existing** volume or dataset that the user will be assigned permission to access                                                                    |
+| Create Home Directory In   | browse button   | browse to the name of an **existing** volume or dataset that the user will be assigned permission to access                                           |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Home Directory Mode        | checkboxes      | only available in "Advanced Mode" and will be read-only for built-in users; sets default permissions of user's                                        |
+| Home Directory Mode        | checkboxes      | only available in "Advanced Mode" and will be read-only for built-in users; sets default Unix permissions of user's                                   |
 |                            |                 | home directory                                                                                                                                        |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Shell                      | drop-down menu  | if creating a system account, choose *nologin*; if creating a user account, select shell of choice                                                    |
+| Shell                      | drop-down menu  | if creating a system account, choose *nologin*; if creating a user account, select shell of choice;                                                   |
+|                            |                 | if *netcli.sh* is selected, that user can access the Console Setup menu, even if it is disabled in                                                    |
+|                            |                 | :menuselection:`System --> Advanced --> Enable Console Menu`                                                                                          |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Full Name                  | string          | mandatory, may contain spaces                                                                                                                         |
@@ -222,7 +214,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | box will grey out "Disable password login" which is mutually exclusive                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo                | checkbox        | if checked, members of the group have permission to use :command:`sudo`                                                                               |
+| Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`                                                                  |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |   
