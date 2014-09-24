@@ -1903,7 +1903,6 @@ class UpgradeForm(ModelForm):
             self._tchoices.append((name, name))
         self.fields['trains'].choices = self._tchoices
         self.fields['trains'].initial = self._conf.WatchedTrains()
-        log.error("trains w %r", self._conf.WatchedTrains())
 
     def save(self, *args, **kwargs):
         obj = super(UpgradeForm, self).save(*args, **kwargs)
