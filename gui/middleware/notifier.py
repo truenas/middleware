@@ -3898,9 +3898,9 @@ class notifier:
             if (not data[1] in noinherit_fields) and (
                 data[3] == 'default' or data[3].startswith('inherited')
             ):
-                dval[data[1]] = "inherit (%s)" % data[2]
+                dval[data[1]] = (data[2], "inherit (%s)" % data[2])
             else:
-                dval[data[1]] = data[2]
+                dval[data[1]] = (data[2], ) * 2
         return retval
 
     def zfs_set_option(self, name, item, value):

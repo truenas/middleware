@@ -1339,21 +1339,21 @@ class ZFSDataset(Form):
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
             data = notifier().zfs_get_options(self._fs)
-            self.fields['dataset_compression'].initial = data['compression']
+            self.fields['dataset_compression'].initial = data['compression'][0]
             self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
             self.fields['dataset_share_type'].widget.attrs['readonly'] = True
-            self.fields['dataset_atime'].initial = data['atime']
+            self.fields['dataset_atime'].initial = data['atime'][0]
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
                 formfield = 'dataset_%s' % (attr)
-                if data[attr] == 'none':
+                if data[attr][0] == 'none':
                     self.fields[formfield].initial = 0
                 else:
-                    self.fields[formfield].initial = data[attr]
+                    self.fields[formfield].initial = data[attr][0]
 
-            if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
+            if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
                 self.fields['dataset_dedup'].initial = data['dedup']
-            elif data['dedup'] == 'sha256,verify':
+            elif data['dedup'][0] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
             else:
                 self.fields['dataset_dedup'].initial = 'off'
@@ -1417,12 +1417,12 @@ class ZVol_EditForm(Form):
         name = kwargs.pop('name')
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
         data = notifier().zfs_get_options(name)
-        self.fields['volume_compression'].initial = data['compression']
-        self.fields['volume_volsize'].initial = data['volsize']
+        self.fields['volume_compression'].initial = data['compression'][0]
+        self.fields['volume_volsize'].initial = data['volsize'][0]
 
-        if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
+        if data['dedup'][0] in ('on', 'off', 'verify', 'inherit'):
             self.fields['volume_dedup'].initial = data['dedup']
-        elif data['dedup'] == 'sha256,verify':
+        elif data['dedup'][0] == 'sha256,verify':
             self.fields['volume_dedup'].initial = 'verify'
         else:
             self.fields['volume_dedup'].initial = 'off'

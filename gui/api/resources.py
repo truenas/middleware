@@ -706,11 +706,11 @@ class VolumeResourceMixin(NestedMixin):
                 data['compression'] = self.__zfsopts.get(
                     child.path,
                     {},
-                ).get('compression', '-')
+                ).get('compression', ('', '-'))[1]
                 data['compressratio'] = self.__zfsopts.get(
                     child.path,
                     {},
-                ).get('compressratio', '-')
+                ).get('compressratio', ('', '-'))[1]
 
                 data['used'] = "%s (%s%%)" % (
                     humanize_size(data['used']),
