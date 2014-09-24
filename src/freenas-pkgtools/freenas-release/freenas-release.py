@@ -59,7 +59,7 @@ class ReleaseDB(object):
             self.commit()
         self._connection = None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None):
+    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
         pass
 
     def PackageForSequence(self, sequence, name = None):
@@ -201,7 +201,7 @@ class PyReleaseDB(ReleaseDB):
                 return s
         return None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None):
+    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
         # Add the sequence, train, packages, name
 
         if self._find_sequence(sequence):
@@ -379,7 +379,7 @@ class FSReleaseDB(ReleaseDB):
         if not self.SafeMakedir("%s/sequences" % dbpath):
             raise Exception("Cannot create database path %s/sequences" % dbpath)
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None):
+    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
         """
         Add the release into the database:
         Create a directory _dbpath/$train (okay if already exists)
@@ -583,6 +583,11 @@ class SQLiteReleaseDB(ReleaseDB):
         # The ReleaseNames table consists of release names, and which sequences use them.
         self._cursor.execute("CREATE TABLE IF NOT EXISTS ReleaseNames(Name TEXT NOT NULL, Sequence NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT relname_constrant FOREIGN KEY(Sequence) REFERENCES Sequences(indx))")
 
+        # A table for notices.  Notices are like notes, except there is
+        # only one, and it is kept in the manifest, not downloaded
+        # separately.
+        self._cursor.execute("CREATE TABLE IF NOT EXISTS Notices(Notice TEXT NOT NULL, Sequence NOT NULL UNIQUE, indx INTEGER PRIMARY KEY ASC AUTOINCREMENT, CONSTRAINT notices_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(indx))")
+ 
         # The Manifests table.
         # A manifest consists of a reference to an entry in Sequences for the sequence number,
         # and a package reference.  A manifest file is built by selecting the packages for
@@ -632,7 +637,7 @@ class SQLiteReleaseDB(ReleaseDB):
             self._connection.close()
             self._connection = None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None):
+    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
         """
         Add the release into the database.  This inserts values into
         the Releases, Packages, Trains, and ReleaseNotes tables, as appropriate.
@@ -677,6 +682,27 @@ class SQLiteReleaseDB(ReleaseDB):
             """, (sequence, pkg.Name(), pkg.Version()))
 
             
+        if notes:
+            for n in notes.keys():
+                sql = """
+                INSERT INTO ReleaseNotes(Sequence, NoteName, NoteFile)
+                SELECT Sequences.indx, ?, ?
+                FROM Sequences
+                WHERE Sequences.Sequence = ?
+                """
+                parms = (n, notes[n], sequence)
+                if debug or verbose:
+                    print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+                self.cursor().execute(sql, parms)
+                
+        if notice:
+            self.cursor().execute("""
+            INSERT INTO Notices(Sequence, Notice)
+            SELECT Sequences.indx, ?
+            FROM Sequences
+            WHERE Sequences.Sequence = ?
+            """, (notice, sequence))
+
         if name:
             self.cursor().execute("""
             INSERT INTO ReleaseNames(Name, Sequence)
@@ -890,6 +916,18 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         raise Exception("Could not create a manifest object")
     manifest.LoadPath(source + "/%s-MANIFEST" % project)
 
+    # Let's look for any of the known notes
+    notes = {}
+    for note_name in ["ReleaseNotes", "ChangeLog", "NOTICE"]:
+        try:
+            with open("%s/%s" % (source, note_name), "r") as f:
+                notes[note_name] = f.read()
+        except:
+            pass
+    
+    if os.path.exists(source + "/ReleaseNotes"):
+
+        notes["ReleaseNotes"]
     # Okay, let's see if this train has any prior entries in the database
     previous_sequences = db.RecentSequencesForTrain(manifest.Train())
 
@@ -974,12 +1012,51 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
 
         pkg_list.append(pkg)
 
-    # And now let's add it to the database
-    manifest.SetPackages(pkg_list)
+    # Everything goes into the archive, and
+    # most is relative to the name of the train.
     try:
         os.makedirs("%s/%s" % (archive, manifest.Train()))
     except:
         pass
+    # Now let's go over the possible notes.
+    # Right now, we only support three:
+    # ReleaseNotes, ChangeLog, and NOTICE.
+    # NOTICE goes into the manifest to display
+    # when loaded; ReleaseNotes and ChangeLog
+    # go into the archive under <train>/Notes,
+    # with a unique name.  (We'll use mktemp
+    # to create it; the name goes into the manifest
+    # and is recreated by the library code.)
+    if "NOTICE" in notes:
+        manifest.SetNotice(notes["NOTICE"])
+    for note_name in ["ReleaseNotes", "ChangeLog"]:
+        import tempfile
+        note_dir = "%s/%s/Notes" % (archive, manifest.Train())
+        try:
+            os.makedirs(note_dir)
+        except:
+            pass
+        if note_name in notes:
+            try:
+                # The note goes in:
+                # <archive>/<train>/Notes/<name>-<random>.txt
+                # The manifest gets a dictionary with
+                # <name> : <name>-<random>.txt
+                # which the library code will use to
+                # fetch over the network.
+                note_file = tempfile.NamedTemporaryFile(suffix=".txt",
+                                                        dir=note_dir,
+                                                        prefix="%s-" % note_name,
+                                                        delete = False)
+                if debug or verbose:
+                    print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
+                note_file.write(notes[note_name])
+                manifest.SetNote(note_name, os.path.basename(note_file.name))
+            except OSError as e:
+                print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
+        
+    # And now let's add it to the database
+    manifest.SetPackages(pkg_list)
     manifest.StorePath("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()))
     try:
         os.unlink("%s/%s/LATEST" % (archive, manifest.Train()))
@@ -990,7 +1067,9 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     if db is not None:
         db.AddRelease(manifest.Sequence(),
                       manifest.Train(),
-                      manifest.Packages())
+                      manifest.Packages(),
+                      notes = manifest.Notes(),
+                      notice = manifest.Notice())
         for pkg in manifest.Packages():
             # Check for the updates
             for upd in pkg.Updates():
