@@ -670,8 +670,10 @@ require([
         var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
         var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
         var ipv4 = registry.byId("id_jail_ipv4");
+        var ipv4_alias = registry.byId("id_jail_alias_ipv4");
         var ipv4_netmask = registry.byId("id_jail_ipv4_netmask");
         var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
+        var bridge_ipv4_alias = registry.byId("id_jail_alias_bridge_ipv4");
         var bridge_ipv4_netmask = registry.byId("id_jail_bridge_ipv4_netmask");
         var defaultrouter_ipv4 = registry.byId("id_jail_defaultrouter_ipv4");
         var vnet = registry.byId("id_jail_vnet");
@@ -688,6 +690,14 @@ require([
             ipv4_netmask.set("disabled", true);
             bridge_ipv4.set("disabled", true);
             bridge_ipv4_netmask.set("disabled", true);
+
+            if (ipv4_alias) {
+                ipv4_alias.set("disabled", true);
+            }
+            if (bridge_ipv4_alias) {
+                bridge_ipv4_alias.set("disabled", true);
+            }
+
             defaultrouter_ipv4.set("disabled", true);
             vnet.set("disabled", true);
             nat.set("disabled", true);
@@ -697,6 +707,14 @@ require([
             ipv4_netmask.set("disabled", false);
             bridge_ipv4.set("disabled", false);
             bridge_ipv4_netmask.set("disabled", false);
+
+            if (ipv4_alias) {
+                ipv4_alias.set("disabled", false);
+            }
+            if (bridge_ipv4_alias) {
+                bridge_ipv4_alias.set("disabled", false);
+            }
+
             defaultrouter_ipv4.set("disabled", false);
 
             if (!jail_ipv6_autoconf) {
@@ -710,8 +728,10 @@ require([
         var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
         var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
         var ipv6 = registry.byId("id_jail_ipv6");
+        var ipv6_alias = registry.byId("id_jail_alias_ipv6");
         var ipv6_prefix = registry.byId("id_jail_ipv6_prefix");
         var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
+        var bridge_ipv6_alias = registry.byId("id_jail_alias_bridge_ipv6");
         var bridge_ipv6_prefix = registry.byId("id_jail_bridge_ipv6_prefix");
         var defaultrouter_ipv6 = registry.byId("id_jail_defaultrouter_ipv6");
         var vnet = registry.byId("id_jail_vnet");
@@ -728,6 +748,14 @@ require([
             ipv6_prefix.set("disabled", true);
             bridge_ipv6.set("disabled", true);
             bridge_ipv6_prefix.set("disabled", true);
+
+            if (ipv6_alias) {
+                ipv6_alias.set("disabled", true);
+            }
+            if (bridge_ipv6_alias) {
+                bridge_ipv6_alias.set("disabled", true);
+            }
+
             defaultrouter_ipv6.set("disabled", true);
             vnet.set("disabled", true);
             nat.set("disabled", true);
@@ -737,6 +765,14 @@ require([
             ipv6_prefix.set("disabled", false);
             bridge_ipv6.set("disabled", false);
             bridge_ipv6_prefix.set("disabled", false);
+
+            if (ipv6_alias) {
+                ipv6_alias.set("disabled", false);
+            }
+            if (bridge_ipv6_alias) {
+                bridge_ipv6_alias.set("disabled", false);
+            }
+
             defaultrouter_ipv6.set("disabled", false);
 
             if (!jail_ipv4_dhcp) {
