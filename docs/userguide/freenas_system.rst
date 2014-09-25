@@ -574,14 +574,40 @@ tunables back.
 Upgrade
 -------
 
-**Manual Update:** used to Upgrade FreeNAS®.
+Beginning with version 9.3, FreeNAS® uses signed patches rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
+when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
+release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they still have the option to
+reboot into a previous snapshot of the operating system. Signed patches also mean that the administrator no longer has to manually download the GUI upgrade
+file and its associated checksum in order to perform an upgrade.
+
+Figure 5.8a shows an example of the :menuselection:`System --> Upgrade` screen. 
+
+**Figure 5.8a: Upgrade Options**
+
+|update1.png|
+
+This screen provides the following configurable options:
+
+* **Check Automatically for Updates:**
+
+* **Location:**
+
+* **Trains:** this section contains the software tracks that an administrator can synchronize their system with. In this example, *FreeNAS-ALPHA* represents
+  the next major release which is still in alpha stage (FreeNAS® 10.0-ALPHA) and *FreeNAS-9.3-Nightlies* represents the last nightly build of the current
+  release branch (9.3).
+
+To...
+
+The "Manual Update" button is still provided for backwards compatibility.
 
 .. _CAs:
 
 CAs
 ---
 
-Beginning with version 9.3, FreeNAS® can act as a Certificate Authority (CA).
+Beginning with version 9.3, FreeNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS to encrypt any of the connections to the
+FreeNAS® system, you will need to first create a CA, then either create or import the certificate to be used for encrypted connections. Once you do this,
+the certificate will appear in the drop-down menus for all the services that support SSL or TLS.
 
 Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs`.
 
@@ -589,12 +615,20 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 |ca1.png|
 
-To import an existing CA, click the "Import CA" button to open the configuration screen shown in Figure 5.9b. The configurable options are summarized in
-Table 5.9a.
+.. |ca1.png| image:: images/ca1.png
+    :width: 6.2in
+    :height: 2.1in
+
+If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
+Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Figure 5.9b: Importing a CA**
 
 |ca2.png|
+
+.. |ca2.png| image:: images/ca2.png
+    :width: 3.8in
+    :height: 2.5in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -602,27 +636,33 @@ Table 5.9a.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
+| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Certificate          | string               |                                                                                                 |
+| Certificate          | string               | mandatory; paste in the certificate for the CA                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Private Key          | string               |                                                                                                 |
+| Private Key          | string               | paste the private key associated with the certificate                                           |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Serial               | string               |                                                                                                 |
+| Serial               | string               | mandatory; input the serial number for the certificate                                          |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-To instead create a new CA, decide if it will be for internal use only or if it needs to be part of a chain of trust.
+To instead create a new CA, first decide if it will be the only CA which will sign certificates for internal use or if the CA will be part of a
+`certificate chain <https://en.wikipedia.org/wiki/Root_certificate>`_.
 
-To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.9c. The configurable options are
-described in Table 5.9b.
+To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.9c. 
 
 **Figure 5.9c: Creating an Internal CA**
 
 |ca3.png|
+
+.. |ca3.png| image:: images/ca3.png
+    :width: 3.0in
+    :height: 3.96in
+
+The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
 **Table 5.9b: Internal CA Options**
 
@@ -630,83 +670,58 @@ described in Table 5.9b.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
+| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
+| Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
+| Digest Algorithm     | drop-down menu       | the default should be fine unless your organization requires a different algorithm              |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
+| Lifetime             | integer              | in days                                                                                         |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | drop-down menu       |                                                                                                 |
+| Country              | drop-down menu       | select the country for the organization                                                         |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
+| State                | string               | mandatory; input the state or province for the organization                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
+| City                 | string               | mandatory; input the city for the organization                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
+| Organization         | string               | mandatory; input the name of the company or organization                                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
+| Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
+| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-To instead create an intermediate CA, click the "Create Intermediate CA" to open the screen shown in Figure 5.9d. The configurable options are
-described in Table 5.9c.
+To instead create an intermediate CA which is part of a certificate chain, click the "Create Intermediate CA" button. This screen adds one more option to the
+screen shown in Figure 5.9c:
 
-**Figure 5.9d: Creating an Intermediate CA**
+* **Signing Certificate Authority:** this drop-down menu is used to specify the root CA in the certificate chain. This CA must first be imported using the
+  "Import CA" button.
 
-|ca4.png|
+Any CAs that you import or create will be added as entries in :menuselection:`System --> CAs`. The columns in this screen will indicate the name of the CA,
+whether or not it is an internal CA, whether or not the issuer is self-signed, the number of certificates that have been issued by the CA, the distinguished
+name of the CA, the date and time the CA was created, and the date and time the CA expires.
 
-**Table 5.9c: Intermediate CA Options**
+If you click the entry for a CA, the following buttons become available:
 
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Signing Certificate  | drop-down menu       |                                                                                                 |
-| Authority            |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+* **Edit:** can be used to edit the "Name", "Certificate", "Private Key", or "Serial" of the CA.
+
+* **Export Certificate:** will prompt to browse to the location, on the system being used to access the FreeNAS® system, to save a copy of the CA's
+  X.509 certificate.
+
+* **Export Private Key:** will prompt to browse to the location, on the system being used to access the FreeNAS® system, to save a copy of the CA's private
+  key.
+
+* **Delete:** will prompt to confirm before deleting the CA.
 
 .. _Certificates:
 
