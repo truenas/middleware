@@ -1888,6 +1888,7 @@ class UpgradeForm(ModelForm):
     trains = forms.MultipleChoiceField(
         label=_('Trains'),
         widget=forms.CheckboxSelectMultiple,
+        required=False,
     )
 
     class Meta:
@@ -1899,10 +1900,12 @@ class UpgradeForm(ModelForm):
         self._conf = Configuration.Configuration()
         self._conf.LoadTrainsConfig()
         self._tchoices = []
-        for name in self._conf.AvailableTrains().keys():
-            self._tchoices.append((name, name))
-        self.fields['trains'].choices = self._tchoices
-        self.fields['trains'].initial = self._conf.WatchedTrains()
+        trains = self._conf.AvailableTrains()
+        if trains:
+            for name in self._conf.AvailableTrains().keys():
+                self._tchoices.append((name, name))
+            self.fields['trains'].choices = self._tchoices
+            self.fields['trains'].initial = self._conf.WatchedTrains()
 
     def save(self, *args, **kwargs):
         obj = super(UpgradeForm, self).save(*args, **kwargs)
