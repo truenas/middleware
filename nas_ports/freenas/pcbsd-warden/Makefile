@@ -86,6 +86,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/zfsrevertsnap.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/zfsrevertsnap.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/zfsrmclone.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/zfsrmclone.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/backend/zfsrmsnap.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/backend/zfsrmsnap.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/hooks/dhclient-exit-hooks ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/hooks/dhclient-exit-hooks
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/rc.d/shutdown.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/rc.d/shutdown.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/rc.d/startup.sh ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/rc.d/startup.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/pcbsd/warden/scripts/rc.d/wardenrc ${STAGEDIR}${PREFIX}/usr/local/share/warden/scripts/rc.d/wardenrc

@@ -350,6 +350,9 @@ copypbiscripts() {
     chroot "${1}" chmod 755 /var/db/pbi/keys
     chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
   fi
+
+  # Copy dhclient hooks
+  cp ${PROGDIR}/scripts/hooks/dhclient-exit-hooks "${1}/etc"
 }
 
 mkportjail() {

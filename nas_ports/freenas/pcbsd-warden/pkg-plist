@@ -31,6 +31,7 @@ usr/local/share/warden/scripts/backend/zfsmksnap.sh
 usr/local/share/warden/scripts/backend/zfsrevertsnap.sh
 usr/local/share/warden/scripts/backend/zfsrmclone.sh
 usr/local/share/warden/scripts/backend/zfsrmsnap.sh
+usr/local/share/warden/scripts/hooks/dhclient-exit-hooks
 usr/local/share/warden/scripts/rc.d/shutdown.sh
 usr/local/share/warden/scripts/rc.d/startup.sh
 usr/local/share/warden/scripts/rc.d/wardenrc
