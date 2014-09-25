@@ -5,18 +5,17 @@
 Tasks
 =====
 
-The Tasks section of the administrative GUI can be used to configure the following:
+The Tasks section of the administrative GUI can be used to configure the following repetitive tasks:
 
-* :ref:`Cron Jobs`: provides a graphical front-end to
-  `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
+* :ref:`Cron Jobs`: allows you to schedule a command or script to automatically execute at a specified time
 
 * :ref:`Init/Shutdown Scripts`: used to configure a command or script to automatically execute during system startup or shutdown
 
-* :ref:`Rsync Tasks`: allows you to schedule rsync tasks
+* :ref:`Rsync Tasks`: allows you to schedule data synchronization to another system
 
-* :ref:`S.M.A.R.T. Tests`: allows you to schedule which S.M.A.R.T. tests to run on a per-disk basis
+* :ref:`S.M.A.R.T. Tests`: allows you to schedule how often disk tests occur
 
-Each of these is described in more detail in this section.
+Each of these tasks is described in more detail in this section.
 
 .. _Cron Jobs:
 
@@ -86,7 +85,7 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 |                   |                             |                                                                                                         |
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 
-Created cron jobs will be listed in View Cron Jobs. If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
+Created cron jobs will be listed in "View Cron Jobs". If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
 .. _Init/Shutdown Scripts:
 
@@ -443,7 +442,7 @@ S.M.A.R.T. Tests
 
 `S.M.A.R.T. <http://en.wikipedia.org/wiki/S.M.A.R.T.>`_
 (Self-Monitoring, Analysis and Reporting Technology) is a monitoring system for computer hard disk drives to detect and report on various indicators of
-reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE and SCSI-3 hard drives support S.M.A.R.T.--refer
+reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE, and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
 
 Figure 6.4a shows the configuration screen that appears when you click :menuselection:`System --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
@@ -497,4 +496,4 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
 
 
-You can verify which tests will run and when by typing :command:`smartd -q showtests` within Shell.
+You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
