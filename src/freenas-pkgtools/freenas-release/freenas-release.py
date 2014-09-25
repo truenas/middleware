@@ -59,7 +59,7 @@ class ReleaseDB(object):
             self.commit()
         self._connection = None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
+    def AddRelease(self, manifest):
         pass
 
     def PackageForSequence(self, sequence, name = None):
@@ -109,6 +109,12 @@ class ReleaseDB(object):
         """
         return []
 
+    def NotesForSequence(self, sequence):
+        return {}
+
+    def NoticeForSequence(self, sequence):
+        return None
+
 class PyReleaseDB(ReleaseDB):
     """
     Database as a json file.
@@ -132,6 +138,7 @@ class PyReleaseDB(ReleaseDB):
 			RELNAME_KEY	-- A string indicating the release name.
 			RELNOTES_KEY	-- An array of unknown at this time.
 			TRAINS_KEY	-- The name of the train for this sequence.
+    			NOTICES_KEY	-- A special note, kept with the manifest.
     TRAINS_KEY:		A dictionary.  Key is the name of the train,
 			value is an array of sequences.
     
@@ -141,6 +148,7 @@ class PyReleaseDB(ReleaseDB):
     SEQUENCES_KEY = "kSequences"
     RELNAME_KEY = "kReleaseName"
     RELNOTES_KEY = "kReleaseNotes"
+    NOTICES_KEY = "kNotices"
     CHECKSUM_KEY = "kChecksum"
     TRAINS_KEY = "kTrains"
     UPDATES_KEY = "kUpdates"
@@ -201,13 +209,13 @@ class PyReleaseDB(ReleaseDB):
                 return s
         return None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
+    def AddRelease(self, manifest):
         # Add the sequence, train, packages, name
 
-        if self._find_sequence(sequence):
-            raise Exception("Duplicate sequence %s" % sequence)
+        if self._find_sequence(manifest.Sequence()):
+            raise Exception("Duplicate sequence %s" % manifest.Sequence())
         pkg_list = []
-        for pkg in packages:
+        for pkg in manifet.Package():
             # See if this package/version is in the db's package list.
             pkgs = self._packages()
             if pkg.Name() not in pkgs:
@@ -227,18 +235,18 @@ class PyReleaseDB(ReleaseDB):
                 pkg_list.append((pkg.Name(), pkg.Version()))
         # Now add pkg_list to the list of sequences
         elem = (
-            sequence,
+            manifest.Sequence(),
             {
                 self.PACKAGES_KEY : pkg_list,
-                self.RELNAME_KEY : name,
-                self.RELNOTES_KEY : [],
-                self.TRAINS_KEY : train,
+                self.RELNOTES_KEY : manifest.Notes(),
+                self.TRAINS_KEY : manifest.Train(),
+                self.NOTICE_KEY : manifest.Notice(),
             }
         )
         self._sequences().append(elem)
-        if train not in self._trains():
-            self._trains()[train] = []
-        self._trains()[train].append(sequence)
+        if manifest.Train() not in self._trains():
+            self._trains()[manifest.Train()] = []
+        self._trains()[manifest.Train()].append(manifest.Sequence())
         self.commit()
 
     def PackageForSequence(self, sequence, name = None):
@@ -333,6 +341,18 @@ class PyReleaseDB(ReleaseDB):
 
         return rv
 
+    def NotesForSequence(self, sequence):
+        seq = self._find_sequence(sequence)
+        if seq and self.NOTES_KEY in seq:
+            return seq[self.NOTES_KEY]
+        return {}
+
+    def NoticeForSequence(self, sequence):
+        seq = self._find_sequence(sequence)
+        if seq and self.NOTICE_KEY in seq:
+            return seq[self.NOTICE_KEY]
+        return None
+
 class FSReleaseDB(ReleaseDB):
     """
     Filesystem as database.
@@ -379,11 +399,14 @@ class FSReleaseDB(ReleaseDB):
         if not self.SafeMakedir("%s/sequences" % dbpath):
             raise Exception("Cannot create database path %s/sequences" % dbpath)
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
+    def AddRelease(self, manifest):
         """
         Add the release into the database:
         Create a directory _dbpath/$train (okay if already exists)
         Create a directory _dbpath/$train/$sequence (cannot already exist)
+        Create a direcotry _dbpath/$train/$sequence/Notes (if manifest.Notes())
+        	Create a file for each manifest.Notes(), contents being the note
+        Create a file _dbpath/$train/$sequence/NOTICE (if manifest.Notice())
         Soft link _dbpath/$train/$sequence -> _dbpath/sequences/$sequence (cannot already exist)
         Create directories _dbpath/packages/$package_name (okay if already exists)
         Create a file _dbpath/packages/$package_name/$package_version (okay if already exists)
@@ -391,13 +414,22 @@ class FSReleaseDB(ReleaseDB):
         Soft link _dbpath/pckages/$package_name/$package_version -> _dbpath/$train/$sequence/$package_name
         """
 
-        if debug: print >> sys.stderr, "FSReleaseDB::AddRelease(%s, %s, %s, %s, %s)" % (sequence, train, packages, name, notes)
-        if not self.SafeMakedir("%s/%s" % (self._dbpath, train)):
-            raise Exception("Cannot create database path %s/%s" % (self._dbpath, train))
-        os.makedirs("%s/%s/%s" % (self._dbpath, train, sequence))
-        os.symlink("../%s/%s" % (train, sequence),
-                   "%s/sequences/%s" % (self._dbpath, sequence))
-        for pkg in packages:
+        if debug: print >> sys.stderr, "FSReleaseDB::AddRelease(%s, %s, %s, %s)" % (manifet.Sequence(), manifest.Train(), manifest.Packages(), manifest.Notes())
+        if not self.SafeMakedir("%s/%s" % (self._dbpath, manifest.Train())):
+            raise Exception("Cannot create database path %s/%s" % (self._dbpath, manifest.Train()))
+        os.makedirs("%s/%s/%s" % (self._dbpath, manifest.Train(), manifest.Sequence()))
+        if manifest.Notes():
+            npath = "%s/%s/%s/Notes" % (self._dbpath, manifest.Train(), manifest.Sequence())
+            os.makedirs(npath)
+            for note in manifest.Notes.keys():
+                with open("%s/%s" % (npath, note), "w") as f:
+                    f.write(manifest.Notes()[note])
+        if manifest.Notice():
+            with open("%s/%s/%s/NOTICE" % (self._dbpath, manifest.Train(), manifest.Sequence()), "w") as f:
+                f.write(manifest.Notice())
+        os.symlink("../%s/%s" % (manifest.Train(), manifest.Sequence()),
+                   "%s/sequences/%s" % (self._dbpath, manifest.Sequence()))
+        for pkg in manifest.Packages():
             if not self.SafeMakedir("%s/packages/%s" % (self._dbpath, pkg.Name())):
                 raise Exception("Cannot create database path %s/packages/%s" % (self._dbpath, pkg.Name()))
             if not os.path.exists("%s/packages/%s/%s" % (self._dbpath, pkg.Name(), pkg.Version())):
@@ -405,7 +437,7 @@ class FSReleaseDB(ReleaseDB):
                     if pkg.Checksum():
                         f.write(pkg.Checksum())
             os.symlink("../../packages/%s/%s" % (pkg.Name(), pkg.Version()),
-                       "%s/%s/%s/%s" % (self._dbpath, train, sequence, pkg.Name()))
+                       "%s/%s/%s/%s" % (self._dbpath, manifest.Train(), manifest.Sequence(), pkg.Name()))
 
     def PackageForSequence(self, sequence, name = None):
         """
@@ -536,6 +568,27 @@ class FSReleaseDB(ReleaseDB):
                 rv.append(t)
         return rv
 
+    def NotesForSequence(self, sequence):
+        train = self.TrainForSequence(sequence)
+        if train:
+            rv = {}
+            npath = "%s/%s/%s/Notes" % (self._dbpath, train, sequence)
+            for note in os.listdir(npath):
+                rv[note] = open("%s/%s" % (npath, note)).read()
+            return rv
+        return {}
+
+    def NoticeForSequence(self, sequence):
+        train = self.TrainForSeauence(sequence)
+        if train:
+            npath = "%s/%s/%s/NOTICE" % (self._dbpath, train, sequence)
+            try:
+                with open(npath, "r") as f:
+                    return f.read()
+            except:
+                return None
+        return None
+
 class SQLiteReleaseDB(ReleaseDB):
     """
     SQLite subclass for ReleaseDB
@@ -637,7 +690,9 @@ class SQLiteReleaseDB(ReleaseDB):
             self._connection.close()
             self._connection = None
 
-    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
+    def AddRelease(self, manifest):
+        #    def AddRelease(self, sequence, train, packages, name = None, notes = None, notice = None):
+
         """
         Add the release into the database.  This inserts values into
         the Releases, Packages, Trains, and ReleaseNotes tables, as appropriate.
@@ -650,7 +705,7 @@ class SQLiteReleaseDB(ReleaseDB):
 
         # First, make sure the train name is in the database
         # The "ON CONFLICT IGNORE" ensures it won't cause a problem if it's already in there.
-        self.cursor().execute("INSERT INTO Trains(TrainName) VALUES(?)", (train,))
+        self.cursor().execute("INSERT INTO Trains(TrainName) VALUES(?)", (manifest.Train(),))
 
         # Next, insert the sequence into the database, referring the train name
         sql = """
@@ -659,13 +714,38 @@ class SQLiteReleaseDB(ReleaseDB):
         FROM Trains
         WHERE Trains.TrainName = ?
         """
-        parms = (sequence, train)
+        parms = (manifest.Sequence(), manifest.Train())
         if debug:  print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
 
         self.cursor().execute(sql, parms)
 
+        if manifest.Notes():
+            for note in manifest.Notes().keys():
+                sql = """
+                INSERT INTO ReleaseNotes(NoteName, NoteFile, Sequence)
+                SELECT ?, ?, Sequences.indx
+                FROM Sequences
+                WHERE Sequences.Sequence = ?
+                """
+                parms = (note, manifest.Notes()[note], manifest.Sequence())
+                if debug:
+                    print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+                self.cursor().execute(sql, parms)
+
+        if manifest.Notice():
+            sql = """
+            INSERT INTO Notices(Notice, Sequence)
+            SELECT ?, Sequences.indx
+            FROM Sequences
+            WHERE Sequences.Sequence = ?
+            """
+            parms = (manifest.Notice(), manifest.Sequence())
+            if debug:
+                print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+                self.cursor().execute(sql, parms)
+
         # Next, the packages.
-        for pkg in packages:
+        for pkg in manifest.Packages():
             # First put the package into the database.
             # Note that we created the table with ON CONFLICT IGNORE;
             # without that, we would have to see if the <Name, Version> tuple
@@ -679,37 +759,17 @@ class SQLiteReleaseDB(ReleaseDB):
             FROM Sequences JOIN Packages
             WHERE Sequences.Sequence = ?
             AND (Packages.PkgName = ? AND Packages.PkgVersion = ?)
-            """, (sequence, pkg.Name(), pkg.Version()))
+            """, (manifest.Sequence(), pkg.Name(), pkg.Version()))
 
             
-        if notes:
-            for n in notes.keys():
-                sql = """
-                INSERT INTO ReleaseNotes(Sequence, NoteName, NoteFile)
-                SELECT Sequences.indx, ?, ?
-                FROM Sequences
-                WHERE Sequences.Sequence = ?
-                """
-                parms = (n, notes[n], sequence)
-                if debug or verbose:
-                    print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
-                self.cursor().execute(sql, parms)
-                
-        if notice:
-            self.cursor().execute("""
-            INSERT INTO Notices(Sequence, Notice)
-            SELECT Sequences.indx, ?
-            FROM Sequences
-            WHERE Sequences.Sequence = ?
-            """, (notice, sequence))
-
-        if name:
-            self.cursor().execute("""
-            INSERT INTO ReleaseNames(Name, Sequence)
-            SELECT ?, Sequences.indx
-            FROM Sequences
-            WHERE Sequences.Sequence = ?
-            """, (name, sequence))
+        # I haven't implemented this at all
+        # if manifest.Name():
+        #self.cursor().execute("""
+        #INSERT INTO ReleaseNames(Name, Sequence)
+        #SELECT ?, Sequences.indx
+        #FROM Sequences
+        #WHERE Sequences.Sequence = ?
+        #""", (name, sequence))
 
         self.commit()
 
@@ -862,6 +922,41 @@ class SQLiteReleaseDB(ReleaseDB):
             rv.append(t["TrainName"])
 
         return rv
+
+    def NotesForSequence(self, sequence):
+        sql = """
+        SELECT ReleaseNotes.NoteName AS Name,
+        	ReleaseNotes.NoteFile AS File,
+        FROM ReleaseNotes
+        JOIN Sequences
+        WHERE ReleaseNotes.Sequence = Sequences.indx
+        AND Sequences.Sequence = ?
+        """
+        parms = (sequence,)
+        if debug:
+            print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+        self._cursor().execute(sql,parms)
+        rv = {}
+        for row in self._cursor().fetchall():
+            n = row["Name"]
+            f = row["File"]
+            rv[n] = f
+        return rv
+
+    def NoticeForSequence(self, sequence):
+        sql = """
+        SELECT Notice
+        FROM Notices
+        JOIN Sequences
+        WHERE Notices.Sequence = Sequences.indx
+        AND Sequences.Sequence = ?
+        """
+        parms = (sequence,)
+        if debug:
+            print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+        self._cursor().execute(sql, parms)
+        notice = self._cursor().fetchone()
+        return notice["Notice"]
 
 def ChecksumFile(path):
     import hashlib
@@ -1065,11 +1160,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     os.symlink("%s-%s" % (project, manifest.Sequence()), "%s/%s/LATEST" % (archive, manifest.Train()))
 
     if db is not None:
-        db.AddRelease(manifest.Sequence(),
-                      manifest.Train(),
-                      manifest.Packages(),
-                      notes = manifest.Notes(),
-                      notice = manifest.Notice())
+        db.AddRelease(manifest)
         for pkg in manifest.Packages():
             # Check for the updates
             for upd in pkg.Updates():
@@ -1110,6 +1201,8 @@ def Check(archive, db, project = "FreeNAS"):
 
     found_contents = {}
     for entry in os.listdir(archive):
+        if entry == "trains.txt":
+            continue
         if not os.path.isdir(archive + "/" + entry):
             print >> sys.stderr, "%s/%s is not a directory" % (archive, entry)
         else:
@@ -1133,6 +1226,7 @@ def Check(archive, db, project = "FreeNAS"):
         t_dir = "%s/%s" % (archive, t)
         expected_contents = {}
         found_contents = {}
+
         for entry in os.listdir(t_dir):
             found_contents[entry] = True
 
@@ -1151,6 +1245,7 @@ def Check(archive, db, project = "FreeNAS"):
 
             temp_mani = Manifest.Manifest()
             temp_mani.LoadPath(mani_path)
+
             for pkg in temp_mani.Packages():
                 if pkg.FileName() in expected_packages:
                     if expected_packages[pkg.FileName()] != pkg.Checksum():
