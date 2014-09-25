@@ -1,3 +1,4 @@
+
 #!/bin/sh
 #
 # $FreeBSD$
@@ -28,9 +29,9 @@ generate_snmpconf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 		cat > "${snmp_config}" << EOF
-agentAddress udp:161,udp6:[::1]:161,unix:/var/run/snmpd.sock
-sysLocation ${snmp_location}
-sysContact ${snmp_contact}
+agentAddress udp:161,udp6:161,unix:/var/run/snmpd.sock
+sysLocation ${snmp_location:-unknown}
+sysContact ${snmp_contact:-unknown@localhost}
 sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
 
 rocommunity ${snmp_community} default
