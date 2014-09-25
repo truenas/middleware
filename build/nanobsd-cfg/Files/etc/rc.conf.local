@@ -514,6 +514,12 @@ _gen_conf()
 		[ -n "${lldp_location}" ] && echo -n " -l \\\"${lldp_location}\\\""
 		echo "\""
 	done
+
+	local tun_var tun_value
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tun_var, tun_value FROM system_tunable WHERE tun_type = 'rc' ORDER BY id" | \
+	while read -r tun_var tun_value; do
+		echo "${tun_var}=\"${tun_value}\""
+	done
 }
 
 # Regenerate stale caches of rc.conf data.  We run multiple time
