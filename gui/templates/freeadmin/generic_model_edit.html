@@ -29,9 +29,11 @@ this.submitForm(this, e);
     <tr>
         <td colspan="2">
             <button id="btn_{{ verbose_name}}_Ok" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type:'submit'">
+                {% if extra_js %}
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
+                {% endif %}
                 {% block oklabel %}
                 {% if inline %}
                 {% trans "Save" %}
