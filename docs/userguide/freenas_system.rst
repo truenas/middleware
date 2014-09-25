@@ -728,14 +728,18 @@ If you click the entry for a CA, the following buttons become available:
 Certificates
 ------------
 
-Beginning with version 9.3, FreeNAS® can import existing existing certificates, create new certificates, which can then be self-signed, and certificate
-signing requests so that created certificates can be signed by another CA.
+Beginning with version 9.3, FreeNAS® can import existing existing certificates, create new certificates, and issue certificate
+signing requests so that created certificates can be signed by the CA which was previously imported or created in :ref:`CAs`.
 
 Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
 
 **Figure 5.10a: Initial Certificates Screen**
 
 |cert1.png|
+
+.. |cert1.png| image:: images/cert1.png
+    :width: 6.4in
+    :height: 1.8in
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
@@ -744,28 +748,37 @@ summarized in Table 5.10a.
 
 |cert2.png|
 
+.. |cert2.png| image:: images/cert2.png
+    :width: 3.7in
+    :height: 2.2in
+
 **Table 5.10a: Certificate Import Options**
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
+| Name                 | string               | mandatory; input a descriptive name for the certificate                                         |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Certificate          | string               |                                                                                                 |
+| Certificate          | string               | mandatory; paste the contents of the certificate                                                |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Private Key          | string               |                                                                                                 |
+| Private Key          | string               | mandatory; paste the private key associated with the certificate                                |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-To create a new certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.10c. The configurable options are summarized
-in Table 5.10b.
+To instead create a new self-signed certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.10c. The configurable
+options are summarized in Table 5.10b. When completing the fields for the certificate authority, use the information for your organization. Since this is a
+self-signed certificate, use the CA that you imported or created using :ref:`CAs` as the signing authority.
 
 **Figure 5.10c: Creating a New Certificate**
 
 |cert3.png|
+
+.. |cert3.png| image:: images/cert3.png
+    :width: 3.6in
+    :height: 4.3in
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -773,78 +786,67 @@ in Table 5.10b.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Signing Certificate  | drop-down menu       |                                                                                                 |
+| Signing Certificate  | drop-down menu       | mandatory; select the CA which was previously imported or created using :ref:`CAs`              |
 | Authority            |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               |                                                                                                 |
+| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
+| Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
+| Digest Algorithm     | drop-down menu       | the default should be fine unless your organization requires a different algorithm              |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | drop-down menu       |                                                                                                 |
+| Lifetime             | integer              | in days                                                                                         |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
+| Country              | drop-down menu       | select the country for the organization                                                         |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
+| State                | string               | mandatory; input the state or province for the organization                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
+| City                 | string               | mandatory; input the city for the organization                                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
+| Organization         | string               | mandatory; input the name of the company or organization                                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
+| Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-Once a certificate is created, it can either be self-signed, if you have created a CA, or sent to another CA for signing. Before a certificate can be signed,
-a certificate signing request must be created. To create the certificate signing request, click the "Create Certificate Signing Request" button to open the
-screen shown in Figure 5.10d. The configurable options are summarized in Table 5.10c.
+If you need to use a certificate that is signed by an external CA, such as Verisign, instead create a certificate signing request. To do so, click the
+"Create Certificate Signing Request" button. This will open a screen similar to Figure 5.10c, but without the "Signing Certificate Authority" field.
 
-**Figure 5.10d: Creating a Certificate Signing Request**
+All certificates that you import, self-sign, or make a certificate signing request for will be added as entries to :menuselection:`System --> Certificates`.
+In the example shown in Figure 5.10d, a self-signed certificate and a certificate signing request have been created for the fictional organization
+*My Company*. The self-signed certificate was issued by the internal CA named
+*My Company* and the administrator has not yet sent the certificate signing request to Verisign so that it can be signed. Once that certificate is signed and
+returned by the external CA, it should be imported using the "Import Certificate" button so that is available as a configurable option for encrypting
+connections.
+
+**Figure 5.10d: Managing Certificates**
 
 |cert4.png|
 
-**Table 5.10c: Certificate Signing Request Options**
+.. |cert4.png| image:: images/cert4.png
+    :width: 6.3in
+    :height: 4.5in
 
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Key Length           | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Digest Algorithm     | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Lifetime             | integer              |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Country              | drop-down menu       |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| State                | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Organization         | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Email Address        | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               |                                                                                                 |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+If you click an entry, it will activate the following configuration buttons:
+
+* **View:** once a certificate is created, it cannot be edited. You can, however, view its "Name", "Certificate", and "Private Key". If you need to change a
+  certificate, you will need to "Delete" it then recreate it.
+
+* **Export Certificate:** used to save a copy of the certificate or certificate signing request to the system being used to access the FreeNAS® system. For a
+  certificate signing request, send the exported certificate to the external signing authority so that it can be signed.
+
+* **Export Private Key:** used to save a copy of the private key associated with the certificate or certificate signing request to the system being used to
+  access the FreeNAS® system.
+
+* **Delete:** used to delete a certificate or certificate signing request.
