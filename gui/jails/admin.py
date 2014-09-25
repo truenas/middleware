@@ -70,11 +70,15 @@ class JailsFAdmin(BaseFreeAdmin):
 
     advanced_fields = [
         'jail_type',
+        'jail_ipv4_dhcp',
+        'jail_ipv4',
+        'jail_ipv4_netmask',
         'jail_alias_ipv4',
         'jail_bridge_ipv4',
         'jail_bridge_ipv4_netmask',
         'jail_alias_bridge_ipv4',
         'jail_defaultrouter_ipv4',
+        'jail_ipv6_autoconf',
         'jail_ipv6',
         'jail_ipv6_prefix',
         'jail_alias_ipv6',

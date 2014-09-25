@@ -204,12 +204,28 @@ class Jails(Model):
     )
 
     @property
+    def jail_ipv4_dhcp(self):
+        ret = False
+        jail_ipv4 = self.jail_ipv4
+        if jail_ipv4 and jail_ivp4.startswith("DHCP:"):
+            ret = True
+        return ret
+
+    @property
     def jail_ipv4_addr(self):
         jail_ipv4 = self.jail_ipv4
         if jail_ipv4:
             jail_ipv4 = jail_ipv4.replace("DHCP:", '')
 
         return jail_ipv4
+
+    @property
+    def jail_ipv6_autoconf(self):
+        ret = False
+        jail_ipv6 = self.jail_ipv6
+        if jail_ipv6 and jail_ivp6.startswith("AUTOCONF:"):
+            ret = True
+        return ret
 
     @property
     def jail_ipv6_addr(self):

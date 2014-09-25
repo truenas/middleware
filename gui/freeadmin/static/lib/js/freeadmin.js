@@ -667,15 +667,8 @@ require([
     }
 
     jail_ipv4_dhcp_toggle = function() {
-        jc_info = get_jc_info();
-        if (!jc_info) {
-            return;
-        } 
-
-        if (!jc_info.jc_ipv4_dhcp) {
-            return;
-        }
-
+        var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
+        var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
         var ipv4 = registry.byId("id_jail_ipv4");
         var ipv4_netmask = registry.byId("id_jail_ipv4_netmask");
         var bridge_ipv4 = registry.byId("id_jail_bridge_ipv4");
@@ -684,28 +677,38 @@ require([
         var vnet = registry.byId("id_jail_vnet");
         var nat = registry.byId("id_jail_nat");
 
-        ipv4.set("value", ipv4.get("value") ? ipv4.get("value") : "DHCP");
-        vnet.set("checked", true);
+        var jail_ipv4_dhcp = ipv4_dhcp.get("value");
+        var jail_ipv6_autoconf = ipv6_autoconf.get("value");
 
-        ipv4.set("disabled", true);
-        ipv4_netmask.set("disabled", true);
-        bridge_ipv4.set("disabled", true);
-        bridge_ipv4_netmask.set("disabled", true);
-        defaultrouter_ipv4.set("disabled", true);
-        vnet.set("disabled", true);
-        nat.set("disabled", true);
+        if (jail_ipv4_dhcp == "on") {
+            ipv4.set("value", ipv4.get("value") ? ipv4.get("value") : "DHCP");
+            vnet.set("checked", true);
+
+            ipv4.set("disabled", true);
+            ipv4_netmask.set("disabled", true);
+            bridge_ipv4.set("disabled", true);
+            bridge_ipv4_netmask.set("disabled", true);
+            defaultrouter_ipv4.set("disabled", true);
+            vnet.set("disabled", true);
+            nat.set("disabled", true);
+
+        } else {
+            ipv4.set("disabled", false);
+            ipv4_netmask.set("disabled", false);
+            bridge_ipv4.set("disabled", false);
+            bridge_ipv4_netmask.set("disabled", false);
+            defaultrouter_ipv4.set("disabled", false);
+
+            if (!jail_ipv6_autoconf) {
+                vnet.set("disabled", false);
+                nat.set("disabled", false);
+            }
+        }
     }
 
     jail_ipv6_autoconf_toggle = function() {
-        jc_info = get_jc_info();
-        if (!jc_info) {
-            return;
-        } 
-
-        if (!jc_info.jc_ipv6_autoconf) {
-            return;
-        }
-
+        var ipv4_dhcp = registry.byId("id_jail_ipv4_dhcp");
+        var ipv6_autoconf = registry.byId("id_jail_ipv6_autoconf");
         var ipv6 = registry.byId("id_jail_ipv6");
         var ipv6_prefix = registry.byId("id_jail_ipv6_prefix");
         var bridge_ipv6 = registry.byId("id_jail_bridge_ipv6");
@@ -714,16 +717,33 @@ require([
         var vnet = registry.byId("id_jail_vnet");
         var nat = registry.byId("id_jail_nat");
 
-        ipv6.set("value", ipv6.get("value") ? ipv6.get("value") : "AUTOCONF");
-        vnet.set("checked", true);
+        var jail_ipv4_dhcp = ipv4_dhcp.get("value");
+        var jail_ipv6_autoconf = ipv6_autoconf.get("value");
 
-        ipv6.set("disabled", true);
-        ipv6_prefix.set("disabled", true);
-        bridge_ipv6.set("disabled", true);
-        bridge_ipv6_prefix.set("disabled", true);
-        defaultrouter_ipv6.set("disabled", true);
-        vnet.set("disabled", true);
-        nat.set("disabled", true);
+        if (jail_ipv6_autoconf == "on") {
+            ipv6.set("value", ipv6.get("value") ? ipv6.get("value") : "AUTOCONF");
+            vnet.set("checked", true);
+
+            ipv6.set("disabled", true);
+            ipv6_prefix.set("disabled", true);
+            bridge_ipv6.set("disabled", true);
+            bridge_ipv6_prefix.set("disabled", true);
+            defaultrouter_ipv6.set("disabled", true);
+            vnet.set("disabled", true);
+            nat.set("disabled", true);
+
+        } else {
+            ipv6.set("disabled", false);
+            ipv6_prefix.set("disabled", false);
+            bridge_ipv6.set("disabled", false);
+            bridge_ipv6_prefix.set("disabled", false);
+            defaultrouter_ipv6.set("disabled", false);
+
+            if (!jail_ipv4_dhcp) {
+                vnet.set("disabled", false);
+                nat.set("disabled", false);
+            }
+        }
     }
 
     get_jail_info = function(id) {
