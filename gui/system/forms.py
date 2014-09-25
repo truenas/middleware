@@ -1183,7 +1183,7 @@ class TunableForm(ModelForm):
         value = cdata.get('tun_var')
         if value:
             if (
-                cdata.get('tun_type') == 'loader' and
+                cdata.get('tun_type') in ('loader', 'rc') and
                 not LOADER_VARNAME_FORMAT_RE.match(value)
             ) or (
                 cdata.get('tun_type') == 'sysctl' and
