@@ -291,7 +291,10 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     rm -f ${FAILOVER_ASSUMED_MASTER}
 
     /etc/rc.d/watchdogd start
+    /usr/sbin/service ix-syslogd quietstart
+    /usr/sbin/service syslogd quietrestart
     /usr/sbin/service ix-crontab quietstart
+    /usr/sbin/service ix-collectd quietstart
     /usr/sbin/service collectd forcestop
     echo "\$(date), \$(hostname), assume backup" | mail -s "Failover" root
 
