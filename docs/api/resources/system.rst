@@ -900,7 +900,7 @@ Create resource
 
    :json string tun_var: name of the tunable
    :json string tun_value: value of the tunable
-   :json string tun_type: type of the tunable (sysctl/loader)
+   :json string tun_type: type of the tunable (sysctl/loader/rc)
    :json string tun_comment: user comment for the entry
    :json boolean tun_enabled: whether the entry is enabled
    :reqheader Content-Type: the request content type
@@ -945,7 +945,7 @@ Update resource
 
    :json string tun_var: name of the tunable
    :json string tun_value: value of the tunable
-   :json string tun_type: type of the tunable (sysctl/loader)
+   :json string tun_type: type of the tunable (sysctl/loader/rc)
    :json string tun_comment: user comment for the entry
    :json boolean tun_enabled: whether the entry is enabled
    :reqheader Content-Type: the request content type
