@@ -632,22 +632,22 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Table 5.9a: Importing a CA Options**
 
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**            | **Description**                                                                                 |
-|                      |                      |                                                                                                 |
-+======================+======================+=================================================================================================+
-| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Certificate          | string               | mandatory; paste in the certificate for the CA                                                  |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Private Key          | string               | paste the private key associated with the certificate                                           |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Serial               | string               | mandatory; input the serial number for the certificate                                          |
-|                      |                      |                                                                                                 |
-+----------------------+----------------------+-------------------------------------------------------------------------------------------------+
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**            | **Description**                                                                                   |
+|                      |                      |                                                                                                   |
++======================+======================+===================================================================================================+
+| Name                 | string               | mandatory; input a descriptive name for the CA                                                    |
+|                      |                      |                                                                                                   |
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
+| Certificate          | string               | mandatory; paste in the certificate for the CA                                                    |
+|                      |                      |                                                                                                   |
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
+| Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
+|                      |                      |                                                                                                   |
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
+| Serial               | string               | mandatory; input the serial number for the certificate                                            |
+|                      |                      |                                                                                                   |
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 
 To instead create a new CA, first decide if it will be the only CA which will sign certificates for internal use or if the CA will be part of a
 `certificate chain <https://en.wikipedia.org/wiki/Root_certificate>`_.
@@ -704,8 +704,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 To instead create an intermediate CA which is part of a certificate chain, click the "Create Intermediate CA" button. This screen adds one more option to the
 screen shown in Figure 5.9c:
 
-* **Signing Certificate Authority:** this drop-down menu is used to specify the root CA in the certificate chain. This CA must first be imported using the
-  "Import CA" button.
+* **Signing Certificate Authority:** this drop-down menu is used to specify the root CA in the certificate chain. This CA must first be imported or created.
 
 Any CAs that you import or create will be added as entries in :menuselection:`System --> CAs`. The columns in this screen will indicate the name of the CA,
 whether or not it is an internal CA, whether or not the issuer is self-signed, the number of certificates that have been issued by the CA, the distinguished
