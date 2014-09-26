@@ -1378,7 +1378,6 @@ partition_disk() {
     # Now give the rest of the disk to freenas-boot
     gpart add -t freebsd-zfs -i 2 -a 4k ${disk} > /dev/null
     # Now we make it active, for legacy support.
-    gpart set -a active ${disk}
     set +e
     return 0
 }
@@ -1511,7 +1510,7 @@ prompt_password() {
     fi
 
     while true; do
-	dialog --insecure \
+	env DIALOGRC=/tmp/dialogconf dialog --insecure \
 	    --output-fd 3 \
 	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
@@ -1538,6 +1537,8 @@ prompt_password() {
 	fi
 
     done
+
+    rm -f ${DIALOGRC}
 
     echo -n "${password}" > ${outfile}
     return 0
@@ -1815,9 +1816,7 @@ ${migrate_text}" \
 		: > ${mountpoint}/${CD_UPGRADE_SENTINEL}
 		: > ${mountpoint}/${NEED_UPDATE_SENTINEL}
 	    else
-		set -x
 		mkdir -p ${mountpoint}/data
-		test -d ${mountpoint}/data || read -p "What happened?" foo
 		cp -R /data/* ${mountpoint}/data
 		chown -R www:www ${mountpoint}/data
 	    fi
