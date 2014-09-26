@@ -167,11 +167,15 @@ drive and select its drive letter from the "Device" drop-down menu. Click the "W
 Performing the Installation
 ---------------------------
 
-With the installation media inserted, boot the system. This should load the FreeNAS® GRUB menu shown in Figure 2.3a.
+With the installation media inserted, boot the system. This should load the FreeNAS® installation's GRUB menu shown in Figure 2.3a.
 
 **Figure 2.3a: FreeNAS® Grub Menu**
 
-|Figure23a_png|
+|install1.png|
+
+.. |install1.png| image:: images/install1.png
+    :width: 6.04in
+    :height: 3.4in
 
 .. note:: if the installer does not boot, check that the installation device is listed first in the boot order in the BIOS. When booting from a CD, some
    motherboards may require you to connect the CD device to SATA0 (the first connector) in order to boot from CD. If the installer stalls during bootup,
@@ -183,39 +187,40 @@ console setup menu seen in Figure 2.3b.
 
 **Figure 2.3b: FreeNAS® Console Setup**
 
-|Figure23b_png|
+|install2.png|
 
 Press :kbd:`Enter` to select the default option of "1 Install/Upgrade". The next menu, seen in Figure 2.3c, will list all available drives, including any
-inserted USB thumb drives which will begin with *da*. In this example, the user is performing a test installation using VirtualBox and has created a 4 GB
+inserted USB thumb drives which will begin with *da*. In this example, the user is performing a test installation using VirtualBox and has created a 8 GB
 virtual disk to hold the operating system.
 
 **Figure 2.3c: Selecting Which Drive to Install Into**
 
-|cdrom2.png|
+|install3.png|
 
-.. |cdrom2.png| image:: images/cdrom2.png
-    :width: 5.8228in
-    :height: 3.0335in
+.. |install3.png| image:: images/install3.png
+    :width: 6.04in
+    :height: 3.3in
 
-Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into, press the :kbd:`spacebar` to select it, then press
-:kbd:`Enter`. FreeNAS® will issue the warning seen in Figure 2.3d, reminding you not to install onto a storage drive. Press :kbd:`Enter` to start the
-installation.
+Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into and press the :kbd:`spacebar` to select it. If you wish to
+mirror the boot device, arrow to the second device and press :kbd:`spacebar` to select it as well. After making your selections, press :kbd:`Enter`.
+FreeNAS® will issue the warning seen in Figure 2.3d, reminding you to not install the operating system onto a drive that is meant for storage. Press
+:kbd:`Enter` to advance to the screen shown in Figure 2.3f.
 
 **Figure 2.3d: FreeNAS® Installation Warning**
 
 |cdrom3.png|
 
 .. |cdrom3.png| image:: images/cdrom3.png
-    :width: 6.9252in
-    :height: 2.5709in
+    :width: 6.0in
+    :height: 2.5in
 
-.. note:: at this time, the installer does not check the size of the install media before attempting an installation. A 2 GB device is required, but the
-   install will appear to complete successfully on smaller devices, only to fail at boot. If using a USB thumb drive, an 4 GB drive is recommended as many 2
-   GB thumb drives have a smaller capacity which will result in a seemingly successful installation that fails to boot.
+.. note:: at this time, the installer does not check the size of the install media before attempting an installation. A minimum of a 4 GB device is required,
+   but the install will appear to complete successfully on smaller devices, only to fail at boot. If a 4 GB USB drive fails to boot, try using a 8 GB USB
+   drive instead.
 
-The installer will recognize if a previous version of FreeNAS® is already installed, and if so, will display the menu shown in Figure 2.3e. However, the 
-installer can not be used to upgrade from a FreeNAS® .7 system. If the installer recognizes that a previous version of FreeNAS® is installed and you wish to
-overwrite the existing installation, arrow over to "Fresh Install" and press :kbd:`Enter` twice to start the installation.
+The installer will recognize if a previous version of FreeNAS® 8.x or 9.x is already installed, and if so, will display the menu shown in Figure 2.3e. If the
+installer recognizes that a previous version of FreeNAS® is installed and you wish to overwrite the existing installation, arrow over to "Fresh Install" and
+press :kbd:`Enter` twice to advance to the screen shown in Figure 2.3f.
 
 **Figure 2.3e: Performing a Fresh Install**
 
@@ -225,30 +230,38 @@ overwrite the existing installation, arrow over to "Fresh Install" and press :kb
     :width: 5.9327in
     :height: 3.1917in
 
-Towards the end of the installation, it will prompt you to enter the password for the *root* user account. Setting a password is mandatory and the password
-can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess password.
-::
- Changing password for root
- Password: input_password_here
- Retype password: reinput_password_here
+The next screen, shown in Figure 2.3f, prompts for the *root* password which is used to log into the administrative graphical interface.
+
+**Figure 2.3f: Set the Root Password**
+
+|install4.png|
+
+.. |install4.png| image:: images/install4.png
+    :width: 6.1in
+    :height: 3.3in
+
+Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
+password. Input the password, press the down arrow key, and confirm the password. Then press :kbd:`Enter` to start the installation.
 
 .. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
    *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
    be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
 
-Once the password has been input and confirmed, , you should see a message similar to Figure 2.3f.
+Once the installation is complete, you should see a message similar to Figure 2.3g.
 
-**Figure 2.3f: FreeNAS® Installation Complete**
+**Figure 2.3g: FreeNAS® Installation Complete**
 
 |cdrom4.png|
 
 .. |cdrom4.png| image:: images/cdrom4.png
-    :width: 6.911in
+    :width: 6.0in
     :height: 1.9783in
 
-Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM,
-but leave the thumb drive inserted. Make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from
-it. FreeNAS® should now be able to boot into the Console setup menu described in :ref:`Initial Configuration Wizard`.
+Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM.
+As the system reboots, make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from it.
+
+The first time the FreeNAS® system boots, it will apply the system configuration database then reboot again. During the second reboot, FreeNAS® should boot
+into the "Console Setup" menu described in :ref:`Initial Configuration Wizard`.
 
 .. _Installation Troubleshooting:
 
@@ -260,13 +273,13 @@ If the system does not boot into FreeNAS®, there are several things that you ca
 First, check the system BIOS and see if there is an option to change the USB emulation from CD/DVD/floppy to hard drive. If it still will not boot, check to
 see if the card/drive is UDMA compliant.
 
-Some users have found that some brands of 2 GB USB sticks do not work as they are not really 2 GB in size, but changing to a 4 GB stick fixes the problem.
+Some users have found that some brands of 4 GB USB sticks do not work as they are not really 4 GB in size, but changing to a 8 GB stick fixes the problem.
 
 If you are writing the image to a compact flash card, make sure that it is MSDOS formatted.
 
-If the system starts to boot but hangs with this repeated error message:
+If the system starts to boot but hangs with this repeated error message::
 
-run_interrupt_driven_hooks: still waiting after 60 seconds for xpt_config
+ run_interrupt_driven_hooks: still waiting after 60 seconds for xpt_config
 
 go into the system BIOS and see if there is an onboard device configuration for a 1394 Controller. If so, disable the device and try booting again.
 
@@ -279,42 +292,45 @@ written from the image file. Be very careful that you specify the USB stick when
 Upgrading
 ---------
 
-FreeNAS® provides two methods for performing an upgrade: an ISO upgrade or an upgrade using the graphical administrative interface. Unless the Release Notes
-indicate that your current version requires an ISO upgrade, you can use either upgrade method. Both methods are described in this section.
+Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the operating system up-to-date:
 
-**Before performing an upgrade, always backup your configuration file and your data.**
+#. Upgrades to major releases, for example from version 9.2 to 9.3, can still be performed using either an ISO or the graphical administrative interface.
+   Unless the Release Notes for the new major release indicate that your current version requires an ISO upgrade, you can use either upgrade method.
 
-When upgrading, **be aware of the following caveats:**
+#. Minor releases have been replaced with signed patches. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
+   you do not have to wait for a minor release to update the system with a system patch or newer versions of drivers and features and that you no longer have
+   to manually download an upgrade file and its associated checksum in order to do so.
 
-* Neither upgrade method can be used to migrate from FreeNAS 0.7x. Instead, install FreeNAS® and either auto-import supported software RAID or import
-  supported filesystems. You will need to recreate your configuration as the installation process will not import 0.7 configuration settings.
+#. Boot environments can be used to ensure that upgrading or patching the operating system is a no-risk operation. Before performing any changes to the
+   operating system, create a boot environment using the instructions in :ref:`Boot`. This way, you have the option to return to the previous version of the
+   operating system by rebooting the system and selecting the previous boot environment from the boot menu.
+
+This section describes how to perform an upgrade to a major release as well as how to update the system with newer features between major releases.
 
 .. _Initial Preparation:
 
 Initial Preparation
 ~~~~~~~~~~~~~~~~~~~
 
-Before upgrading the system, perform the following steps:
-
-#.  `Download <http://www.freenas.org/download-releases.html>`_
-    the :file:`.iso` or :file:`.txz` file that matches the system's architecture to the computer that you use to access the FreeNAS® system.
-
-#.  Locate and confirm the SHA256 hash for the file that you downloaded in the Release Notes for the version that you are upgrading to.
+Before upgrading the operating system or applying a system update, perform the following steps:
 
 #.  **Backup the FreeNAS® configuration** in :menuselection:`System --> General --> Save Config`.
 
-#.  If any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key.
+#. **Create a boot environment** in :menuselection:`System --> Boot`.
+
+#.  If any volumes are encrypted, **make sure** that you have set the passphrase and have a copy of the encryption key and the latest recovery key.
 
 #.  Warn users that the FreeNAS® shares will be unavailable during the upgrade; you should schedule the upgrade for a time that will least impact users.
 
 #.  Stop all services in :menuselection:`Services --> Control Services`.
 
-.. _Upgrading from CDROM:
+.. _Upgrading to a Major Release From the ISO:
 
-Upgrading from the ISO
-~~~~~~~~~~~~~~~~~~~~~~
+Upgrading to a Major Release From the ISO
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Burn the downloaded :file:`.iso` file to a CD or USB thumb drive.
+`Download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the release and its associated SHA256 hash to the computer that you use to
+access the FreeNAS® system. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in :ref:`Preparing the Media`.
 
 Insert the prepared media into the system and boot from it. Once the media has finished booting into the installation menu, press :kbd:`Enter` to select the
 default option of "1 Install/Upgrade." The installer will present a screen showing all available drives; select the device FreeNAS® is installed into and
@@ -359,10 +375,10 @@ database schema changes" line in the reboot cycle. This conversion can take a lo
 for some reason you end up with database errors but the graphical administrative interface is accessible, go to :menuselection:`Settings --> General` and use
 the "Upload Config" button to upload the configuration that you saved before you started the upgrade.
 
-.. _Upgrading From the GUI:
+.. _Upgrading to a Major Release From the GUI:
 
-Upgrading From the GUI
-~~~~~~~~~~~~~~~~~~~~~~
+Upgrading to a Major Release From the GUI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To perform an upgrade using this method,
 `download <http://www.freenas.org/download-releases.html>`_
@@ -398,6 +414,11 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 
 * assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server; refresh your browser after a moment to see if you can access
   the system
+
+.. _Updating Between Major Releases:
+
+Updating Between Major Releases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _Unlocking an Encrypted Volume:
 
