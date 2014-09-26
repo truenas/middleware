@@ -329,8 +329,9 @@ Before upgrading the operating system or applying a system update, perform the f
 Upgrading to a Major Release From the ISO
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the release and its associated SHA256 hash to the computer that you use to
-access the FreeNAS® system. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in :ref:`Preparing the Media`.
+To perform an upgrade to a major release using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the release to
+the computer that will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
+:ref:`Preparing the Media`.
 
 Insert the prepared media into the system and boot from it. Once the media has finished booting into the installation menu, press :kbd:`Enter` to select the
 default option of "1 Install/Upgrade." The installer will present a screen showing all available drives; select the device FreeNAS® is installed into and
@@ -346,11 +347,12 @@ The installer will recognize that an earlier version of FreeNAS® is installed o
     :width: 5.9327in
     :height: 3.1917in
 
-.. note:: if you select to perform a "Fresh Install", you will have to restore the backup of your configuration.
+.. note:: if you select to perform a "Fresh Install", you will have to restore the backup of your configuration using
+   :menuselection:`System --> General --> Upload Config` after you boot into the new operating system.
 
 To perform an upgrade, press :kbd:`Enter` to accept the default of "Upgrade Install". Again, the installer will remind you that the operating system should be
-installed on a thumb drive. Press :kbd:`Enter` to start the upgrade. Once the installer has finished unpacking the new image, you will see the menu shown in
-Figure 2.5b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
+installed on a disk that is not used for storage. Press :kbd:`Enter` to start the upgrade. Once the installer has finished unpacking the new image, you will
+see the menu shown in Figure 2.5b. The database file that is preserved and migrated contains your FreeNAS® configuration settings.
 
 **Figure 2.5b: FreeNAS® will Preserve and Migrate Settings**
 
@@ -360,15 +362,8 @@ Figure 2.5b. The database file that is preserved and migrated contains your Free
     :width: 6.9252in
     :height: 3.8134in
 
-Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot, as seen in Figure 2.5c.
-
-**Figure 2.5c: Upgrade is Complete**
-
-|upgrade3.png|
-
-.. |upgrade3.png| image:: images/upgrade3.png
-    :width: 6.9252in
-    :height: 2.4161in
+Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot. Press "OK", highlight "3 Reboot System", and press
+:kbd:`Enter` to reboot the system. If booting from CD, remove the CDROM.
 
 During the reboot there may be a conversion of the previous configuration database to the new version of the database. This happens during the "Applying
 database schema changes" line in the reboot cycle. This conversion can take a long time to finish so be patient and the boot should complete normally. If
@@ -380,21 +375,29 @@ the "Upload Config" button to upload the configuration that you saved before you
 Upgrading to a Major Release From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method,
-`download <http://www.freenas.org/download-releases.html>`_
-the latest version of the :file:`.txz` file. Then, go to :menuselection:`System --> Upgrade` as shown in Figure 2.5d.
+To perform an upgrade to a major release using this method, `download <http://www.freenas.org/download-releases.html>`_ the latest version of the :file:`.txz`
+file for the release and its associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to
+:menuselection:`System --> Upgrade`. Click the "Manual Update" button to open the screen shown in Figure 2.5c.
 
-**Figure 2.5d: Upgrading FreeNAS® From the GUI**
+**Figure 2.5c: Upgrading FreeNAS® From the GUI**
 
-|Figure27d_png|
+|upgrade3.png|
+
+.. |upgrade3.png| image:: images/upgrade3.png
+    :width: 7.4in
+    :height: 2.5in
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
 allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "Apply Update" button to see the screen
-shown in Figure 2.5e.
+shown in Figure 2.5d.
 
-**Figure 2.5e: Step 2 of 2**
+**Figure 2.5d: Step 2 of 2**
 
-|Figure27e_png|
+|upgrade4.png|
+
+.. |upgrade4.png| image:: images/upgrade4.png
+    :width: 8.2in
+    :height: 2.8in
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
@@ -402,23 +405,39 @@ Browse to the location of the downloaded :file:`.txz` file, then paste its SHA25
 
 When finished, click the "Apply Update" button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
 
-* the SHA256 hash is confirmed and an error will display if it does not match; if you get this error, double-check that you pasted the correct checksum and
-  try pasting again
+* The SHA256 hash is confirmed and an error will display if it does not match. If you get this error, double-check that you pasted the correct checksum and
+  try pasting again.
 
-* the new image is uncompressed and written to the USB compact or flash drive; this can take a few minutes so be patient
+* The new image is uncompressed and written to the operating system drive. This can take a few minutes so be patient.
 
-* once the new image is written, you will momentarily lose your connection as the FreeNAS® system will automatically reboot into the new version of the
-  operating system
+* Once the new image is written, you will temporarily lose your connection as the FreeNAS® system will reboot into the new version of the operating system.
+  FreeNAS® will actually reboot twice: once the new operating system loads, the upgrade process applies the new database schema and reboots again.
 
-* FreeNAS® will actually reboot twice: once the new operating system loads, the upgrade process applies the new database schema and reboots again
-
-* assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server; refresh your browser after a moment to see if you can access
-  the system
+* Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
+  the system.
 
 .. _Updating Between Major Releases:
 
 Updating Between Major Releases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To update the system between major releases, use :menuselection:`System --> Upgrade`.
+
+In the screen shown in Figure 2.5e, select which "Trains" you would like to track updates to.
+
+**Figure 2.5e: Checking for Updates**
+
+|update1.png|
+
+.. |update1.png| image:: images/update1.png
+    :width: 6.24in
+    :height: 2.3in
+
+In this example, this system has the option to track *FreeNAS-ALPHA*, or the upcoming 10.0 release and
+*FreeNAS-9.3-Nightlies* which represents the latest nightly build which includes all new features, drivers, and bug fixes since 9.3 was released. The
+administrator has selected to track the *FreeNAS-9.3-Nightlies*.
+
+To see if any updates are available, click the "Check for Updates" button.
 
 .. _Unlocking an Encrypted Volume:
 
