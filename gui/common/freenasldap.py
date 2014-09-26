@@ -1227,8 +1227,8 @@ class FreeNAS_ActiveDirectory_Base(object):
                 break
 
         for c in ipv6_candidates:
-            (site, s, iinfo) = ipv6_candidates[c]
-            sinfo = self.get_sites(site=site)
+            (site_dn, s, iinfo) = ipv6_candidates[c]
+            sinfo = self.get_sites(distinguishedname=site_dn)[0]
             if sinfo:
                 ipv6_site = sinfo[1]['cn'][0]
                 break
