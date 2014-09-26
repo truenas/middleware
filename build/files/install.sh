@@ -1596,6 +1596,8 @@ partition_disk() {
     fi
     # Now give the rest of the disk to freenas-boot
     gpart add -t freebsd-zfs -i 2 -a 4k ${disk} > /dev/null
+    # Now we make it active, for legacy support.
+    gpart set -a active ${disk}
     set +e
     return 0
 }
