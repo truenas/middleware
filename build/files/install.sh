@@ -392,13 +392,13 @@ find_zfs_pools() {
 	    # entries.  Since we don't have sort in /rescue,
 	    # we use awk.
 	    awk ' {
-			disks[$2] = $1;
+			pools[$1] = $2;
 			system("rm -f /tmp/pool-" $2 ".subdisks");
 		}
 	END {
-		for (pool in disks) {
-			file = "/tmp/pool-" pool ".subdisks";
-			print disks[pool] >> file
+		for (disk in pools) {
+			file = "/tmp/pool-" pools[disk] ".subdisks";
+			print disk >> file
 		}
 	}' < /tmp/pool-pairs.$$
 	fi
@@ -1813,7 +1813,9 @@ ${migrate_text}" \
 		: > ${mountpoint}/${CD_UPGRADE_SENTINEL}
 		: > ${mountpoint}/${NEED_UPDATE_SENTINEL}
 	    else
+		set -x
 		mkdir -p ${mountpoint}/data
+		test -d ${mountpoint}/data || read -p "What happened?" foo
 		cp -R /data/* ${mountpoint}/data
 		chown -R www:www ${mountpoint}/data
 	    fi
