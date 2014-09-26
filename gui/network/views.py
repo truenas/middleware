@@ -119,9 +119,10 @@ def summary(request):
         'pflog0',
         ), int_list)
 
-    ifaces = []
+    ifaces = {}
     for iface in int_list:
 
+        ifaces[iface] = {'v4': [], 'v6': []}
         p1 = Popen(["ifconfig", iface, "inet"], stdin=PIPE, stdout=PIPE)
         p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE)
         output = p2.communicate()[0]
@@ -142,19 +143,24 @@ def summary(request):
                     netmask = count
                 except:
                     pass
-                ifaces.append({
-                    'name': iface,
+                ifaces[iface]['v4'].append({
                     'inet': line[1],
                     'netmask': netmask,
                     'broadcast': line[5] if len(line) > 5 else None,
-                    })
-        #else:
-        #    ifaces.append({
-        #        'name': iface,
-        #        'inet': '-',
-        #        'netmask': '-',
-        #        'broadcast': '-',
-        #        })
+                })
+
+        p1 = Popen(["ifconfig", iface, "inet6"], stdin=PIPE, stdout=PIPE)
+        p2 = Popen(["grep", "inet6 "], stdin=p1.stdout, stdout=PIPE)
+        output = p2.communicate()[0]
+        if p2.returncode == 0:
+            for line in output.split('\n'):
+                if not line:
+                    continue
+                line = line.strip('\t').strip().split(' ')
+                ifaces[iface]['v6'].append({
+                    'addr': line[1].split('%')[0],
+                    'prefixlen': line[3],
+                })
 
     p1 = Popen(["cat", "/etc/resolv.conf"], stdin=PIPE, stdout=PIPE)
     p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE)
