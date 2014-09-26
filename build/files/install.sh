@@ -392,13 +392,13 @@ find_zfs_pools() {
 	    # entries.  Since we don't have sort in /rescue,
 	    # we use awk.
 	    awk ' {
-			pools[$1] = $2;
+			disks[$2] = $1;
 			system("rm -f /tmp/pool-" $2 ".subdisks");
 		}
 	END {
-		for (disk in pools) {
-			file = "/tmp/pool-" pools[disk] ".subdisks";
-			print disk >> file
+		for (pool in disks) {
+			file = "/tmp/pool-" pool ".subdisks";
+			print disks[pool] >> file
 		}
 	}' < /tmp/pool-pairs.$$
 	fi
@@ -1377,8 +1377,6 @@ partition_disk() {
     fi
     # Now give the rest of the disk to freenas-boot
     gpart add -t freebsd-zfs -i 2 -a 4k ${disk} > /dev/null
-    # Now we make it active, for legacy support.
-    gpart set -a active ${disk}
     set +e
     return 0
 }
@@ -1497,6 +1495,12 @@ prompt_password() {
     local outfile=/dev/null
     local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
+    cat << __EOF__ > /tmp/dialogconf
+bindkey formfield TAB ITEM_NEXT
+bindkey formfield DOWN form_NEXT
+bindkey formbox ^A form_NEXT
+__EOF__
+
     while getopts "o:" opt
     do
 	case "${opt}" in
@@ -1511,7 +1515,7 @@ prompt_password() {
     fi
 
     while true; do
-	dialog --insecure \
+	env DIALOGRC=/tmp/dialogconf dialog --insecure \
 	    --output-fd 3 \
 	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
@@ -1538,6 +1542,8 @@ prompt_password() {
 	fi
 
     done
+
+    rm -f ${DIALOGRC}
 
     echo -n "${password}" > ${outfile}
     return 0
@@ -1815,9 +1821,7 @@ ${migrate_text}" \
 		: > ${mountpoint}/${CD_UPGRADE_SENTINEL}
 		: > ${mountpoint}/${NEED_UPDATE_SENTINEL}
 	    else
-		set -x
 		mkdir -p ${mountpoint}/data
-		test -d ${mountpoint}/data || read -p "What happened?" foo
 		cp -R /data/* ${mountpoint}/data
 		chown -R www:www ${mountpoint}/data
 	    fi
