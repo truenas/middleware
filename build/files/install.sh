@@ -2087,7 +2087,9 @@ ${migrate_text}" \
 		: > ${mountpoint}/${CD_UPGRADE_SENTINEL}
 		: > ${mountpoint}/${NEED_UPDATE_SENTINEL}
 	    else
+		set -x
 		mkdir -p ${mountpoint}/data
+		test -d ${mountpoint}/data || read -p "What happened?" foo
 		cp -R /data/* ${mountpoint}/data
 		chown -R www:www ${mountpoint}/data
 	    fi
