@@ -313,10 +313,11 @@ partition_disk() {
 	    # The rest of the disk
 	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk} >&2
 
+	    # And make it active
+	    gpart set -a active ${_disk} >&2
+
 	    echo ${_disk}p2
 	done)
-
-	
 
 	if [ $# -gt 1 ]; then
 	    _mirror="mirror"
