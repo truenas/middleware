@@ -96,10 +96,12 @@ class JailCreateForm(ModelForm):
         required=False
     )
     jail_ipv4_dhcp = forms.BooleanField( 
-        label=_("IPv4 DHCP")
+        label=_("IPv4 DHCP"),
+        required=False
     )
     jail_ipv6_autoconf = forms.BooleanField(
-        label=_("IPv6 Autoconfigure")
+        label=_("IPv6 Autoconfigure"),
+        required=False
     )
 
     class Meta:
@@ -467,7 +469,6 @@ class JailsConfigurationForm(ModelForm):
             "jc_ipv6_autoconf_toggle();"
         )
 
-
     #
     # Make sure the proper netmask/prefix length get saved
     #
@@ -582,10 +583,12 @@ class JailsEditForm(ModelForm):
         required=False
     )
     jail_ipv4_dhcp = forms.BooleanField(
-        label=_("IPv4 DHCP")
+        label=_("IPv4 DHCP"),
+        required=False
     )
     jail_ipv6_autoconf = forms.BooleanField(
-        label=_("IPv6 Autoconfigure")
+        label=_("IPv6 Autoconfigure"),
+        required=False
     )
 
     advanced_fields = [
