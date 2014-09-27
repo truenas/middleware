@@ -29,3 +29,6 @@ o Fix a bug in the mail sending routines used by FreeNAS. With some mailserver
 
 o Fix a bug that prevented  the system from showing the replicated status of
   a snapshot if the remote path differed from the local path.
+
+o "Shellshock" security vulnerability in bash (which is not the system shell
+  FreeNAS or FreeBSD) proactively closed.
