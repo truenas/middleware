@@ -27,14 +27,11 @@
 from decimal import Decimal
 import bisect
 import logging
-import os
 import re
 import subprocess
 
 from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
-
-from freenasUI.common import humanize_size
 
 log = logging.getLogger('middleware.zfs')
 
@@ -61,19 +58,6 @@ def _vdev_type(name):
         if name.startswith(_type):
             return _type
     return False
-
-
-def zfs_size_to_bytes(size):
-    if 'K' in size:
-        return Decimal(size.replace('K', '')) * 1024
-    elif 'M' in size:
-        return Decimal(size.replace('M', '')) * 1048576
-    elif 'G' in size:
-        return Decimal(size.replace('G', '')) * 1073741824
-    elif 'T' in size:
-        return Decimal(size.replace('T', '')) * 1099511627776
-    else:
-        return size
 
 
 class Pool(object):
@@ -449,6 +433,28 @@ class ZFSList(SortedDict):
             self.pools[new.pool] = [new]
         self[new.path] = new
 
+    def find(self, names, root=False):
+        if not root:
+            search = '/'.join(names[0:2])
+            names = names[2:]
+        else:
+            search = names[0]
+            names = names[1:]
+        item = self.get(search, None)
+        if item:
+            while names:
+                found = False
+                search = names[0]
+                names = names[1:]
+                for child in item.children:
+                    if child.name == search:
+                        item = child
+                        found = True
+                        break
+                if not found:
+                    break
+        return item
+
     def __getitem__(self, item):
         if isinstance(item, slice):
             zlist = []
@@ -465,17 +471,24 @@ class ZFSList(SortedDict):
 
 class ZFSDataset(object):
 
+    category = 'filesystem'
     name = None
     path = None
     pool = None
     used = None
+    usedsnap = None
+    usedds = None
+    usedrefreserv = None
+    usedchild = None
     avail = None
     refer = None
     mountpoint = None
     parent = None
     children = None
 
-    def __init__(self, path=None, used=None, avail=None, refer=None, mountpoint=None):
+    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
+                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
+                 mountpoint=None):
         self.path = path
         if path:
             if '/' in path:
@@ -484,6 +497,10 @@ class ZFSDataset(object):
                 self.pool = ''
                 self.name = path
         self.used = used
+        self.usedsnap = usedsnap
+        self.usedds = usedds
+        self.usedrefreserv = usedrefreserv
+        self.usedchild = usedchild
         self.avail = avail
         self.refer = refer
         self.mountpoint = mountpoint
@@ -503,58 +520,70 @@ class ZFSDataset(object):
         child.parent = self
         self.children.append(child)
 
-    #TODO copied from MountPoint
-    #Move this to a common place
-    def _get__vfs(self):
-        if not hasattr(self, '__vfs'):
-            try:
-                self.__vfs = os.statvfs(self.mountpoint)
-            except:
-                self.__vfs = None
-        return self.__vfs
-
-    def _get_total_si(self):
-        try:
-            totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
-            return u"%s" % (humanize_size(totalbytes))
-        except:
-            return _(u"Error getting total space")
-
-    def _get_avail_si(self):
-        try:
-            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
-            return u"%s" % (humanize_size(availbytes))
-        except:
-            return _(u"Error getting available space")
-
-    def _get_used_bytes(self):
-        try:
-            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                self._vfs.f_frsize
-        except:
-            return 0
-
-    def _get_used_si(self):
-        try:
-            usedbytes = self._get_used_bytes()
-            return u"%s" % (humanize_size(usedbytes))
-        except:
-            return _(u"Error getting used space")
-
     def _get_used_pct(self):
         try:
-            availpct = 100 * (
-                self._vfs.f_blocks - self._vfs.f_bavail
-            ) / self._vfs.f_blocks
-            return u"%d%%" % (availpct)
+            return int((float(self.used) / float(self.avail)) * 100.0)
         except:
             return _(u"Error")
 
-    _vfs = property(_get__vfs)
-    total_si = property(_get_total_si)
-    avail_si = property(_get_avail_si)
     used_pct = property(_get_used_pct)
-    used_si = property(_get_used_si)
+
+
+class ZFSVol(object):
+
+    category = 'volume'
+    name = None
+    path = None
+    pool = None
+    used = None
+    usedsnap = None
+    usedds = None
+    usedrefreserv = None
+    usedchild = None
+    avail = None
+    refer = None
+    parent = None
+    children = None
+
+    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
+                 usedrefreserv=None, usedchild=None, avail=None, refer=None):
+        self.path = path
+        if path:
+            if '/' in path:
+                self.pool, self.name = path.split('/', 1)
+            else:
+                self.pool = ''
+                self.name = path
+        self.used = used
+        self.usedsnap = usedsnap
+        self.usedds = usedds
+        self.usedrefreserv = usedrefreserv
+        self.usedchild = usedchild
+        self.avail = avail
+        self.refer = refer
+        self.parent = None
+        self.children = []
+
+    def __repr__(self):
+        return "<ZFSVol: %s>" % self.path
+
+    @property
+    def full_name(self):
+        if self.pool:
+            return "%s/%s" % (self.pool, self.name)
+        return self.name
+
+    def append(self, child):
+        child.parent = self
+        self.children.append(child)
+
+    def _get_used_pct(self):
+        try:
+            return int((float(self.used) / float(self.avail)) * 100.0)
+        except:
+            return _(u"Error")
+
+    used_pct = property(_get_used_pct)
 
 
 class Snapshot(object):
@@ -565,7 +594,7 @@ class Snapshot(object):
     refer = None
     mostrecent = False
     parent_type = None
-    replciation = None
+    replication = None
 
     def __init__(
         self,
@@ -592,14 +621,6 @@ class Snapshot(object):
     def fullname(self):
         return "%s@%s" % (self.filesystem, self.name)
 
-    @property
-    def used_bytes(self):
-        return zfs_size_to_bytes(self.used)
-
-    @property
-    def refer_bytes(self):
-        return zfs_size_to_bytes(self.refer)
-
 
 def parse_status(name, doc, data):
 
@@ -607,7 +628,7 @@ def parse_status(name, doc, data):
     Parse the scrub statistics from zpool status
     The scrub is within scan: tag and may have multiple lines
     """
-    scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M|re.S)
+    scan = re.search(r'scan: (scrub.+?)\b[a-z]+:', data, re.M | re.S)
     scrub = {}
     if scan:
         scan = scan.group(1)
@@ -675,7 +696,7 @@ def parse_status(name, doc, data):
     """
     Parse the resilver statistics from zpool status
     """
-    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M|re.S)
+    scan = re.search(r'scan: (resilver.+?)\b[a-z]+:', data, re.M | re.S)
     resilver = {}
     if scan:
         scan = scan.group(1)
@@ -836,8 +857,8 @@ def parse_status(name, doc, data):
     return pool
 
 
-def list_datasets(path="", recursive=False, hierarchical=False,
-                  include_root=False):
+def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
+             types=None):
     """
     Return a dictionary that contains all ZFS dataset list and their
     mountpoints
@@ -847,11 +868,16 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         "list",
         "-p",
         "-H",
-        "-t", "filesystem",
         "-s", "name",
+        "-o", "space,refer,mountpoint,type",
     ]
     if recursive:
         args.insert(3, "-r")
+
+    if types:
+        args.insert(4, "-t")
+        args.insert(5, ",".join(types))
+
     if path:
         args.append(path)
 
@@ -863,8 +889,6 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
     zfslist = ZFSList()
-    last_dataset = None
-    last_depth = 2
     for line in zfs_output:
         if not line:
             continue
@@ -874,21 +898,79 @@ def list_datasets(path="", recursive=False, hierarchical=False,
         # root filesystem is not treated as dataset by us
         if depth == 1 and not include_root:
             continue
-        dataset = ZFSDataset(
-            path=data[0],
-            used=data[1],
-            avail=data[2],
-            refer=data[3],
-            mountpoint=data[4],
-        )
+        _type = data[9]
+        if _type == 'filesystem':
+            item = ZFSDataset(
+                path=data[0],
+                avail=int(data[1]) if data[1].isdigit() else None,
+                used=int(data[2]) if data[2].isdigit() else None,
+                usedsnap=int(data[3]) if data[3].isdigit() else None,
+                usedds=int(data[4]) if data[4].isdigit() else None,
+                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
+                usedchild=int(data[6]) if data[6].isdigit() else None,
+                refer=int(data[7]) if data[7].isdigit() else None,
+                mountpoint=data[8],
+            )
+        elif _type == 'volume':
+            item = ZFSVol(
+                path=data[0],
+                avail=int(data[1]) if data[1].isdigit() else None,
+                used=int(data[2]) if data[2].isdigit() else None,
+                usedsnap=int(data[3]) if data[3].isdigit() else None,
+                usedds=int(data[4]) if data[4].isdigit() else None,
+                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
+                usedchild=int(data[6]) if data[6].isdigit() else None,
+                refer=int(data[7]) if data[7].isdigit() else None,
+            )
+        else:
+            raise NotImplementedError
+
         if not hierarchical:
-            zfslist.append(dataset)
+            zfslist.append(item)
             continue
 
-        parentds = zfslist.get('/'.join(names[:-1]))
+        parentds = zfslist.find(names, root=include_root)
         if parentds:
-            parentds.append(dataset)
+            parentds.append(item)
         else:
-            zfslist.append(dataset)
+            zfslist.append(item)
 
     return zfslist
+
+
+def list_datasets(path="", recursive=False, hierarchical=False,
+                  include_root=False):
+    return zfs_list(
+        path=path,
+        recursive=recursive,
+        hierarchical=hierarchical,
+        include_root=include_root,
+        types=["filesystem"],
+    )
+
+
+def zpool_list():
+    zfsproc = subprocess.Popen([
+        'zpool',
+        'list',
+        '-o', 'name,size,alloc,free,cap',
+        '-p',
+        '-H',
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    output = zfsproc.communicate()[0].strip('\n')
+    if zfsproc.returncode != 0:
+        raise SystemError('zpool list failed')
+
+    rv = {}
+    for line in output.split('\n'):
+        data = line.split('\t')
+        attrs = {
+            'name': data[0],
+            'size': int(data[1]),
+            'alloc': int(data[2]),
+            'free': int(data[3]),
+            'capacity': int(data[4]),
+        }
+        rv[attrs['name']] = attrs
+    return rv

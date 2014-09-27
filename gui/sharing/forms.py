@@ -33,6 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
 from freenasUI.sharing import models
@@ -65,12 +66,6 @@ class CIFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.CIFS_Share
 
-    def clean_cifs_path(self):
-        path = self.cleaned_data.get('cifs_path')
-        if path and not os.path.exists(path):
-            raise forms.ValidationError(_('The path %s does not exist') % path)
-        return path
-
     def clean_cifs_name(self):
         name = self.cleaned_data.get('cifs_name')
         path = self.cleaned_data.get('cifs_path')
@@ -89,9 +84,21 @@ class CIFS_ShareForm(ModelForm):
         return net
 
     def save(self):
-        ret = super(CIFS_ShareForm, self).save()
+        obj = super(CIFS_ShareForm, self).save(commit=False)
+        path = self.cleaned_data.get('cifs_path').encode('utf8')
+        if not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError, e:
+                raise MiddlewareError(_(
+                    'Failed to create %(path)s: %(error)s' % {
+                        'path': path,
+                        'error': e,
+                    }
+                ))
+        obj.save()
         notifier().reload("cifs")
-        return ret
+        return obj
 
     def done(self, request, events):
         if not services.objects.get(srv_service='cifs').srv_enable:

@@ -40,6 +40,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
+from freenasOS import Update
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -57,6 +58,7 @@ from freenasUI.common.system import (
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import JailCreateForm, JailsEditForm
+from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -77,12 +79,14 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.forms import BootEnvAddForm, BootEnvRenameForm
+from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
     HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
 )
-from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.exceptions import ImmediateHttpResponse, NotFound
 from tastypie.utils import trailing_slash
 from tastypie.validation import FormValidation
 
@@ -276,7 +280,13 @@ class DatasetResource(DojoResource):
             kwargs.get('parent').vol_name,
             kwargs.get('pk'),
         ))
-        return zfslist[kwargs.get('pk')]
+        try:
+            return zfslist['%s/%s' % (
+                kwargs.get('parent').vol_name,
+                kwargs.get('pk')
+            )]
+        except KeyError:
+            raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
         retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
@@ -521,172 +531,146 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
+        assert bundle.obj.vol_fstype == 'ZFS'
+
+        pool = notifier().zpool_parse(bundle.obj.vol_name)
+
         bundle.data['id'] = bundle.obj.id
         bundle.data['name'] = bundle.obj.vol_name
-        if bundle.obj.vol_fstype == 'ZFS':
-            pool = notifier().zpool_parse(bundle.obj.vol_name)
-            bundle.data['children'] = []
-            bundle.data.update({
-                'read': pool.data.read,
-                'write': pool.data.write,
-                'cksum': pool.data.cksum,
-            })
-            uid = Uid(bundle.obj.id * 100)
-            for key in ('data', 'cache', 'spares', 'logs'):
-                root = getattr(pool, key, None)
-                if not root:
-                    continue
+        bundle.data['children'] = []
+        bundle.data.update({
+            'read': pool.data.read,
+            'write': pool.data.write,
+            'cksum': pool.data.cksum,
+        })
+        uid = Uid(bundle.obj.id * 100)
+        for key in ('data', 'cache', 'spares', 'logs'):
+            root = getattr(pool, key, None)
+            if not root:
+                continue
 
-                current = root
-                parent = bundle.data
-                tocheck = []
-                while True:
+            current = root
+            parent = bundle.data
+            tocheck = []
+            while True:
 
-                    if isinstance(current, zfs.Root):
-                        data = {
-                            'name': current.name,
-                            'type': 'root',
-                            'status': current.status,
-                            'read': current.read,
-                            'write': current.write,
-                            'cksum': current.cksum,
-                            'children': [],
-                        }
-                    elif isinstance(current, zfs.Vdev):
-                        data = {
-                            'name': current.name,
-                            'type': 'vdev',
-                            'status': current.status,
-                            'read': current.read,
-                            'write': current.write,
-                            'cksum': current.cksum,
-                            'children': [],
-                        }
-                        if (
-                            current.parent.name == "logs" and
-                            not current.name.startswith("stripe")
-                        ):
-                            data['_remove_url'] = reverse(
-                                'storage_zpool_disk_remove',
+                if isinstance(current, zfs.Root):
+                    data = {
+                        'name': current.name,
+                        'type': 'root',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                        'children': [],
+                    }
+                elif isinstance(current, zfs.Vdev):
+                    data = {
+                        'name': current.name,
+                        'type': 'vdev',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                        'children': [],
+                    }
+                    if (
+                        current.parent.name == "logs" and
+                        not current.name.startswith("stripe")
+                    ):
+                        data['_remove_url'] = reverse(
+                            'storage_zpool_disk_remove',
+                            kwargs={
+                                'vname': pool.name,
+                                'label': current.name,
+                            })
+                elif isinstance(current, zfs.Dev):
+                    data = {
+                        'name': current.devname,
+                        'label': current.name,
+                        'type': 'dev',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                    }
+                    if self.is_webclient(bundle.request):
+                        try:
+                            disk = Disk.objects.order_by(
+                                'disk_enabled'
+                            ).filter(disk_name=current.disk)[0]
+                            data['_disk_url'] = "%s?deletable=false" % (
+                                disk.get_edit_url(),
+                            )
+                        except IndexError:
+                            disk = None
+                        if current.status == 'ONLINE':
+                            data['_offline_url'] = reverse(
+                                'storage_disk_offline',
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
-                    elif isinstance(current, zfs.Dev):
-                        data = {
-                            'name': current.devname,
-                            'label': current.name,
-                            'type': 'dev',
-                            'status': current.status,
-                            'read': current.read,
-                            'write': current.write,
-                            'cksum': current.cksum,
-                        }
-                        if self.is_webclient(bundle.request):
-                            try:
-                                disk = Disk.objects.order_by(
-                                    'disk_enabled'
-                                ).filter(disk_name=current.disk)[0]
-                                data['_disk_url'] = "%s?deletable=false" % (
-                                    disk.get_edit_url(),
-                                )
-                            except IndexError:
-                                disk = None
-                            if current.status == 'ONLINE':
-                                data['_offline_url'] = reverse(
-                                    'storage_disk_offline',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
 
-                            if current.replacing:
+                        if current.replacing:
+                            data['_detach_url'] = reverse(
+                                'storage_disk_detach',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
+
+                        """
+                        Replacing might go south leaving multiple UNAVAIL
+                        disks, for that reason replace button should be
+                        enable even for disks already under replacing
+                        subtree
+                        """
+                        data['_replace_url'] = reverse(
+                            'storage_zpool_disk_replace',
+                            kwargs={
+                                'vname': pool.name,
+                                'label': current.name,
+                            })
+                        if current.parent.parent.name in (
+                            'spares',
+                            'cache',
+                            'logs',
+                        ):
+                            if not current.parent.name.startswith(
+                                "stripe"
+                            ):
                                 data['_detach_url'] = reverse(
                                     'storage_disk_detach',
                                     kwargs={
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
+                            else:
+                                data['_remove_url'] = reverse(
+                                    'storage_zpool_disk_remove',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
 
-                            """
-                            Replacing might go south leaving multiple UNAVAIL
-                            disks, for that reason replace button should be
-                            enable even for disks already under replacing
-                            subtree
-                            """
-                            data['_replace_url'] = reverse(
-                                'storage_zpool_disk_replace',
-                                kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
-                                })
-                            if current.parent.parent.name in (
-                                'spares',
-                                'cache',
-                                'logs',
-                            ):
-                                if not current.parent.name.startswith(
-                                    "stripe"
-                                ):
-                                    data['_detach_url'] = reverse(
-                                        'storage_disk_detach',
-                                        kwargs={
-                                            'vname': pool.name,
-                                            'label': current.name,
-                                        })
-                                else:
-                                    data['_remove_url'] = reverse(
-                                        'storage_zpool_disk_remove',
-                                        kwargs={
-                                            'vname': pool.name,
-                                            'label': current.name,
-                                        })
+                else:
+                    raise ValueError("Invalid node")
 
-                    else:
-                        raise ValueError("Invalid node")
+                if key == 'data' and isinstance(current, zfs.Root):
+                    parent.update(data)
+                else:
+                    data['id'] = uid.next()
+                    parent['children'].append(data)
 
-                    if key == 'data' and isinstance(current, zfs.Root):
-                        parent.update(data)
-                    else:
-                        data['id'] = uid.next()
-                        parent['children'].append(data)
+                for child in current:
+                    tocheck.append((data, child))
 
-                    for child in current:
-                        tocheck.append((data, child))
+                if tocheck:
+                    parent, current = tocheck.pop()
+                else:
+                    break
 
-                    if tocheck:
-                        parent, current = tocheck.pop()
-                    else:
-                        break
-
-        elif bundle.obj.vol_fstype == 'UFS':
-            items = notifier().geom_disks_dump(bundle.obj)
-            bundle.data['children'] = []
-            bundle.data.update({
-                'read': 0,
-                'write': 0,
-                'cksum': 0,
-                'status': bundle.obj.status,
-            })
-            uid = Uid(bundle.obj.id * 100)
-            for i in items:
-                qs = Disk.objects.filter(disk_name=i['diskname']).order_by(
-                    'disk_enabled')
-                if qs:
-                    i['_disk_url'] = "%s?deletable=false" % (
-                        qs[0].get_edit_url(),
-                    )
-                if i['status'] == 'UNAVAIL':
-                    i['_replace_url'] = reverse(
-                        'storage_geom_disk_replace',
-                        kwargs={'vname': bundle.obj.vol_name})
-                i.update({
-                    'id': uid.next(),
-                    'read': 0,
-                    'write': 0,
-                    'cksum': 0,
-                })
-                bundle.data['children'].append(i)
         bundle = self.alter_detail_data_to_serialize(request, bundle)
         response = self.create_response(request, [bundle.data])
         response['Content-Range'] = 'items 0-0/1'
@@ -705,79 +689,99 @@ class VolumeResourceMixin(NestedMixin):
         child_resource = DatasetResource()
         return child_resource.dispatch_detail(request, pk=pk, parent=obj)
 
-    def _get_datasets(self, bundle, vol, datasets, uid):
-        children = []
-        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
-        for path, dataset in datasets.items():
-            if dataset.name.startswith('.'):
+    def _get_children(self, bundle, vol, children, uid):
+        rv = []
+        attr_fields = ('avail', 'used', 'used_pct')
+        for path, child in children.items():
+            if child.name.startswith('.'):
                 continue
 
             data = {
                 'id': uid.next(),
-                'name': dataset.name,
-                'type': 'dataset',
-                'status': vol.status,
-                'mountpoint': dataset.mountpoint,
-                'path': dataset.path,
+                'name': child.name,
+                'type': 'dataset' if child.category == 'filesystem' else 'zvol',
+                'status': '-',
+                'path': child.path,
             }
+            if child.category == 'filesystem':
+                data['mountpoint'] = child.mountpoint
+            for attr in attr_fields:
+                data[attr] = getattr(child, attr)
+
             if self.is_webclient(bundle.request):
                 data['compression'] = self.__zfsopts.get(
-                    dataset.path,
+                    child.path,
                     {},
-                ).get('compression', '-')
+                ).get('compression', ('', '-'))[1]
                 data['compressratio'] = self.__zfsopts.get(
-                    dataset.path,
+                    child.path,
                     {},
-                ).get('compressratio', '-')
-            for attr in attr_fields:
-                data[attr] = getattr(dataset, attr)
+                ).get('compressratio', ('', '-'))[1]
 
-            data['used'] = "%s (%s)" % (
-                data['used_si'],
-                data['used_pct'],
-            )
+                data['used'] = "%s (%s%%)" % (
+                    humanize_size(data['used']),
+                    data['used_pct'],
+                )
+                data['avail'] = humanize_size(data['avail'])
 
             if self.is_webclient(bundle.request):
-                data['_dataset_delete_url'] = reverse(
-                    'storage_dataset_delete',
+                data['_add_zfs_volume_url'] = reverse(
+                    'storage_zvol',
                     kwargs={
-                        'name': dataset.path,
+                        'parent': child.path,
                     })
-                data['_dataset_edit_url'] = reverse(
-                    'storage_dataset_edit',
-                    kwargs={
-                        'dataset_name': dataset.path,
-                    })
-                data['_dataset_create_url'] = reverse(
-                    'storage_dataset',
-                    kwargs={
-                        'fs': dataset.path,
-                    })
-                data['_permissions_url'] = reverse(
-                    'storage_mp_permission',
-                    kwargs={
-                        'path': dataset.mountpoint,
-                    })
+                if child.category == 'filesystem':
+                    data['_dataset_delete_url'] = reverse(
+                        'storage_dataset_delete',
+                        kwargs={
+                            'name': child.path,
+                        })
+                    data['_dataset_edit_url'] = reverse(
+                        'storage_dataset_edit',
+                        kwargs={
+                            'dataset_name': child.path,
+                        })
+                    data['_dataset_create_url'] = reverse(
+                        'storage_dataset',
+                        kwargs={
+                            'fs': child.path,
+                        })
+                    data['_permissions_url'] = reverse(
+                        'storage_mp_permission',
+                        kwargs={
+                            'path': child.mountpoint,
+                        })
+                elif child.category == 'volume':
+                    data['_zvol_delete_url'] = reverse(
+                        'storage_zvol_delete',
+                        kwargs={
+                            'name': child.path,
+                        })
+                    data['_zvol_edit_url'] = reverse(
+                        'storage_zvol_edit',
+                        kwargs={
+                            'name': child.path,
+                        })
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol', kwargs={
-                        'parent': dataset.path,
+                        'parent': child.path,
                     })
                 data['_manual_snapshot_url'] = reverse(
                     'storage_manualsnap',
                     kwargs={
-                        'fs': dataset.path,
+                        'fs': child.path,
                     })
 
-            if dataset.children:
-                _datasets = SortedDict()
-                for child in dataset.children:
-                    _datasets[child.name] = child
-                data['children'] = self._get_datasets(
-                    bundle, vol, _datasets, uid
+            if child.children:
+                _children = SortedDict()
+                for child in child.children:
+                    _children[child.name] = child
+                data['children'] = self._get_children(
+                    bundle, vol, _children, uid
                 )
 
-            children.append(data)
-        return children
+            rv.append(data)
+        return rv
 
     def hydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).hydrate(bundle)
@@ -814,14 +818,8 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle.data['name'] = bundle.obj.vol_name
         if self.is_webclient(bundle.request):
-            bundle.data['compression'] = self.__zfsopts.get(
-                bundle.obj.vol_name,
-                {},
-            ).get('compression', '-')
-            bundle.data['compressratio'] = self.__zfsopts.get(
-                bundle.obj.vol_name,
-                {},
-            ).get('compressratio', '-')
+            bundle.data['compression'] = '-'
+            bundle.data['compressratio'] = '-'
 
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
@@ -833,11 +831,6 @@ class VolumeResourceMixin(NestedMixin):
                 kwargs={
                     'vid': bundle.obj.id,
                 })
-            bundle.data['_permissions_url'] = reverse(
-                'storage_mp_permission',
-                kwargs={
-                    'path': urllib.quote_plus(mp.mp_path),
-                })
             bundle.data['_status_url'] = "%s?id=%d" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
                 bundle.obj.id,
@@ -848,26 +841,6 @@ class VolumeResourceMixin(NestedMixin):
                     'storage_scrub',
                     kwargs={
                         'vid': bundle.obj.id,
-                    })
-                bundle.data['_options_url'] = reverse(
-                    'storage_volume_edit',
-                    kwargs={
-                        'object_id': mp.id,
-                    })
-                bundle.data['_add_dataset_url'] = reverse(
-                    'storage_dataset',
-                    kwargs={
-                        'fs': bundle.obj.vol_name,
-                    })
-                bundle.data['_add_zfs_volume_url'] = reverse(
-                    'storage_zvol',
-                    kwargs={
-                        'parent': bundle.obj.vol_name,
-                    })
-                bundle.data['_manual_snapshot_url'] = reverse(
-                    'storage_manualsnap',
-                    kwargs={
-                        'fs': bundle.obj.vol_name,
                     })
                 bundle.data['_upgrade_url'] = reverse(
                     'storage_volume_upgrade',
@@ -906,15 +879,17 @@ class VolumeResourceMixin(NestedMixin):
                         'storage_volume_lock',
                         kwargs={'object_id': bundle.obj.id})
 
-        attr_fields = ('total_si', 'avail_si', 'used_si', 'used_pct')
+        attr_fields = ('avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(mp, attr)
 
         if is_decrypted:
-            bundle.data['used'] = "%s (%s)" % (
-                bundle.data['used_si'],
-                bundle.data['used_pct'],
-            )
+            if self.is_webclient(bundle.request):
+                bundle.data['used'] = "%s (%s)" % (
+                    humanize_size(bundle.data['used']),
+                    bundle.data['used_pct'],
+                )
+                bundle.data['avail'] = humanize_size(bundle.data['avail'])
         else:
             bundle.data['used'] = _("Locked")
 
@@ -923,42 +898,13 @@ class VolumeResourceMixin(NestedMixin):
         if bundle.obj.vol_fstype == 'ZFS':
             uid = Uid(bundle.obj.id * 100)
 
-            children = self._get_datasets(
+            bundle.data['children'] = self._get_children(
                 bundle,
                 bundle.obj,
-                bundle.obj.get_datasets(hierarchical=True),
+                bundle.obj.get_children(),
                 uid=uid,
             )
 
-            zvols = bundle.obj.get_zvols() or {}
-            for name, zvol in zvols.items():
-                data = {
-                    'id': uid.next(),
-                    'name': name,
-                    'status': mp.status,
-                    'type': 'zvol',
-                    'total_si': humanize_size(zvol['volsize']),
-                    'avail_si': '-',
-                    'used': humanize_size(zvol['refer']),
-                    'compression': zvol['compression'],
-                    'compressratio': zvol['compressratio'],
-                }
-
-                if self.is_webclient(bundle.request):
-                    data['_zvol_delete_url'] = reverse(
-                        'storage_zvol_delete',
-                        kwargs={
-                            'name': name,
-                        })
-                    data['_manual_snapshot_url'] = reverse(
-                        'storage_manualsnap',
-                        kwargs={
-                            'fs': name,
-                        })
-
-                children.append(data)
-
-            bundle.data['children'] = children
         return bundle
 
 
@@ -1811,11 +1757,21 @@ class JailsResourceMixin(NestedMixin):
 
 class JailTemplateResourceMixin(object):
 
+    class Meta:
+        queryset = JailTemplate.objects.exclude(jt_system=True)
+
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
         bundle.data['jt_instances'] = bundle.obj.jt_instances
-        return bundle
 
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse('jail_template_edit',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+
+        return bundle
 
 class PluginsResourceMixin(NestedMixin):
 
@@ -1894,7 +1850,22 @@ class SnapshotResource(DojoResource):
         # transfered already or not
         repli = {}
         for repl in Replication.objects.all():
-            repli[repl] = notifier().repl_remote_snapshots(repl)
+            """
+            Multiple replications tasks can have the same remote host.
+            We can't get the list of snapshots on the remote side multiple
+            times, make sure we don't do that.
+            """
+            found = False
+            for _repl, snaps in repli.items():
+                if _repl.repl_remote.ssh_remote_hostname == \
+                    repl.repl_remote.ssh_remote_hostname and \
+                    _repl.repl_remote.ssh_remote_port == \
+                    repl.repl_remote.ssh_remote_port:
+                    found = True
+                    repli[repl] = snaps
+                    break
+            if found is False:
+                repli[repl] = notifier().repl_remote_snapshots(repl)
 
         snapshots = notifier().zfs_snapshot_list(replications=repli)
 
@@ -1902,8 +1873,6 @@ class SnapshotResource(DojoResource):
         for snaps in snapshots.values():
             results.extend(snaps)
         FIELD_MAP = {
-            'used': 'used_bytes',
-            'refer': 'refer_bytes',
             'extra': 'mostrecent',
         }
 
@@ -2022,6 +1991,8 @@ class SnapshotResource(DojoResource):
 
     def dehydrate(self, bundle):
         if self.is_webclient(bundle.request):
+            bundle.data['used'] = humanize_size(bundle.data['used'])
+            bundle.data['refer'] = humanize_size(bundle.data['refer'])
             bundle.data['extra'] = {
                 'clone_url': reverse(
                     'storage_clonesnap',
@@ -2236,23 +2207,24 @@ class CertificateAuthorityResourceMixin(object):
         bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
         bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
 
-        bundle.data['_edit_url'] = reverse('CA_edit',
-             kwargs={
-                'id': bundle.obj.id 
-            }
-        )
-        bundle.data['_export_certificate_url'] = reverse(
-             'CA_export_certificate',
-             kwargs={
-                'id': bundle.obj.id 
-            }
-        )
-        bundle.data['_export_privatekey_url'] = reverse(
-             'CA_export_privatekey',
-             kwargs={
-                'id': bundle.obj.id 
-            }
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['_edit_url'] = reverse('CA_edit',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+            bundle.data['_export_certificate_url'] = reverse(
+                 'CA_export_certificate',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+            bundle.data['_export_privatekey_url'] = reverse(
+                 'CA_export_privatekey',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
 
         return bundle
 
@@ -2272,36 +2244,216 @@ class CertificateResourceMixin(object):
         bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
         bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
 
-        if bundle.obj.cert_type_CSR:
-            bundle.data['_CSR_edit_url'] = reverse(
-                'CSR_edit',
-                kwargs={
-                    'id': bundle.obj.id 
+        if self.is_webclient(bundle.request):
+            if bundle.obj.cert_type_CSR:
+                bundle.data['_CSR_edit_url'] = reverse(
+                    'CSR_edit',
+                    kwargs={
+                        'id': bundle.obj.id
+                    }
+                )
+
+            bundle.data['_view_url'] = reverse('certificate_view',
+                 kwargs={
+                    'id': bundle.obj.id
+                 }
+            )
+            bundle.data['_export_certificate_url'] = reverse(
+                 'certificate_export_certificate',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+            bundle.data['_export_privatekey_url'] = reverse(
+                 'certificate_export_privatekey',
+                 kwargs={
+                    'id': bundle.obj.id
+                }
+            )
+            bundle.data['_export_certificate_and_privatekey_url'] = reverse(
+                 'certificate_export_certificate_and_privatekey',
+                 kwargs={
+                    'id': bundle.obj.id
                 }
             )
 
-        bundle.data['_edit_url'] = reverse('certificate_edit',
-             kwargs={
-                'id': bundle.obj.id 
-             }
+        return bundle
+
+
+class BootEnvResource(NestedMixin, DojoResource):
+
+    id = fields.CharField(attribute='id')
+    name = fields.CharField(attribute='name')
+    active = fields.CharField(attribute='active')
+    space = fields.CharField(attribute='space')
+    created = fields.DateTimeField(attribute='created')
+
+    class Meta:
+        object_class = BootEnv
+        resource_name = 'system/bootenv'
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/rename%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('rename_detail'),
+                name="api_bootenv_rename"
+            ),
+        ]
+
+    def rename_detail(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        bundle.data['_export_certificate_url'] = reverse(
-             'certificate_export_certificate',
-             kwargs={
-                'id': bundle.obj.id 
-            }
+        form = BootEnvRenameForm(
+            name=obj.name,
+            data=deserialized,
         )
-        bundle.data['_export_privatekey_url'] = reverse(
-             'certificate_export_privatekey',
-             kwargs={
-                'id': bundle.obj.id 
-            }
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Boot Environment has been renamed.', status=202)
+
+    def get_list(self, request, **kwargs):
+        results = []
+        for clone in Update.ListClones():
+            results.append(BootEnv(**clone))
+
+        for sfield in self._apply_sorting(request.GET):
+            if sfield.startswith('-'):
+                field = sfield[1:]
+                reverse = True
+            else:
+                field = sfield
+                reverse = False
+            results.sort(
+                key=lambda item: getattr(item, field),
+                reverse=reverse)
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=self._meta.limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
         )
-        bundle.data['_export_certificate_and_privatekey_url'] = reverse(
-             'certificate_export_certificate_and_privatekey',
-             kwargs={
-                'id': bundle.obj.id 
-            }
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
+        return response
+
+    def post_list(self, request, **kwargs):
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json')
         )
 
+        form = BootEnvAddForm(
+            data=deserialized,
+            source=deserialized.get('source'),
+        )
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+
+        obj = None
+        for clone in Update.ListClones():
+            if clone['name'] == deserialized.get('name'):
+                obj = BootEnv(**clone)
+                break
+
+        if obj is None:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error_message': 'Boot Evionment not found!',
+                })
+            )
+        bundle = self.full_dehydrate(
+            self.build_bundle(obj=obj, request=request)
+        )
+        return self.create_response(
+            request,
+            bundle,
+            response_class=HttpCreated,
+        )
+
+    def obj_delete(self, bundle, **kwargs):
+        delete = Update.DeleteClone(kwargs.get('pk'))
+        if delete is False:
+            raise ImmediateHttpResponse(
+                response=self.error_response(
+                    bundle.request,
+                    'Failed to delete Boot Environment.',
+                )
+            )
+        return HttpResponse(status=204)
+
+    def obj_get(self, bundle, **kwargs):
+        obj = None
+        for clone in Update.ListClones():
+            if clone['name'] == kwargs.get('pk'):
+                obj = BootEnv(**clone)
+                break
+        if obj is None:
+            raise NotFound("Boot Environment not found")
+        return obj
+
+    def dehydrate(self, bundle):
+        if self.is_webclient(bundle.request):
+            bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
+                'source': bundle.obj.name,
+            })
+            bundle.data['_delete_url'] = reverse(
+                'system_bootenv_delete', kwargs={'name': bundle.obj.name},
+            )
+            bundle.data['_delete_url'] = reverse(
+                'system_bootenv_delete', kwargs={'name': bundle.obj.name},
+            )
+            active_humanize = []
+            if 'R' not in bundle.obj.active:
+                bundle.data['_activate_url'] = reverse(
+                    'system_bootenv_activate', kwargs={
+                        'name': bundle.obj.name
+                    },
+                )
+            else:
+                active_humanize.append(_('On Reboot'))
+            if 'N' in bundle.obj.active:
+                active_humanize.append(_('Now'))
+            bundle.data['active'] = ', '.join(active_humanize)
+            bundle.data['_rename_url'] = reverse(
+                'system_bootenv_rename', kwargs={'name': bundle.obj.name},
+            )
         return bundle

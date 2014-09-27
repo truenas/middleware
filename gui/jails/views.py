@@ -38,6 +38,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.jails import forms, models
 from freenasUI.jails.utils import get_jails_index
+from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.warden import (
     Warden,
     WARDEN_EXPORT_FLAGS_DIR
@@ -49,7 +50,7 @@ log = logging.getLogger("jails.views")
 
 
 def jails_home(request):
-    default_iface = notifier().guess_default_interface()
+    default_iface = notifier().get_default_interface()
 
     try:
         jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
@@ -71,14 +72,27 @@ def jails_home(request):
 def jailsconfiguration(request):
 
     try:
-        jailsconf = models.JailsConfiguration.objects.order_by("-id")[0]
+        jc = models.JailsConfiguration.objects.order_by("-id")[0]
 
     except IndexError:
-        jailsconf = models.JailsConfiguration.objects.create()
+        jc = models.JailsConfiguration.objects.create()
 
-    return render(request, 'jails/index.html', {
-        'focus_form': request.GET.get('tab', 'jails.JailsConfiguration.View'),
-        'jailsconf': jailsconf
+    if request.method == "POST":
+        form = forms.JailsConfigurationForm(request.POST, instance=jc)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Jails Configuration successfully updated."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.JailsConfigurationForm(instance=jc)
+
+    return render(request, 'jails/jailsconfiguration.html', {
+        'form': form,
+        'inline': True
     })
 
 
@@ -462,15 +476,166 @@ def jail_zfsrmsnap(request, id):
     return render(request, 'jails/zfsrmsnap.html', {})
 
 
-def jail_template_info(request, name):
+def jail_info(request, id):
+    data = {}
 
-    data = { }
-    jt = models.JailTemplate.objects.get(jt_name=name)
-    if jt:
-        data['jt_name'] = jt.jt_name
-        data['jt_os'] = jt.jt_os
-        data['jt_arch'] = jt.jt_arch
-        data['jt_url'] = jt.jt_url
+    fields = models.Jails._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
+
+    try:
+        jail = models.Jails.objects.get(pk=id) 
+        for k in data.keys(): 
+            data[k] = getattr(jail, k) 
+
+    except:
+        pass
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def jail_template_info(request, name):
+    data = {}
+
+    fields = models.JailTemplate._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
+
+    if name:
+        jt = models.JailTemplate.objects.get(jt_name=name)
+        if jt:
+            for k in data.keys():
+                data[k] = getattr(jt, k) 
+            data['jt_instances'] = jt.jt_instances
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def jail_template_create(request):
+    if request.method == "POST":
+        form = forms.JailTemplateCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail Template successfully created.")
+            )
+
+    else:
+        form = forms.JailTemplateCreateForm()
+
+    return render(request, "jails/jail_template_create.html", {
+        'form': form
+    })
+
+
+def jail_template_edit(request, id):
+    jt = models.JailTemplate.objects.get(pk=id)
+
+    if request.method == "POST":
+        form = forms.JailTemplateEditForm(request.POST, instance=jt)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("Jail Template successfully edited.")
+            )
+
+    else:
+        form = forms.JailTemplateEditForm(instance=jt)
+
+    return render(request, "jails/jail_template_edit.html", {
+        'form': form
+    })
+
+def jailsconfiguration_info(request):
+    data = {}
+
+    fields = models.JailsConfiguration._meta.get_all_field_names()
+    for f in fields:
+        data[f] = None
+
+    try:
+        jc = models.JailsConfiguration.objects.all()[0]
+
+    except:
+        pass
+
+    for k in data.keys():
+        data[k] = getattr(jc, k)
+
+    content = json.dumps(data)
+    return HttpResponse(content, content_type='application/json')
+
+
+def jailsconfiguration_network_info(request):
+    data = {
+        'jc_ipv4_network': None,
+        'jc_ipv4_network_start': None,
+        'jc_ipv4_network_end': None,
+        'jc_ipv6_network': None,
+        'jc_ipv6_network_start': None,
+        'jc_ipv6_network_end': None,
+    }
+
+    ipv4_iface = notifier().get_default_ipv4_interface()
+    if ipv4_iface:
+        ipv4_st = sipcalc_type(iface=ipv4_iface)
+        if ipv4_st.is_ipv4():
+            data['jc_ipv4_network'] = "%s/%d" % (
+                ipv4_st.network_address,
+                ipv4_st.network_mask_bits
+            )
+            data['jc_ipv4_network_start'] = str(
+                ipv4_st.usable_range[0]).split('/')[0]
+            data['jc_ipv4_network_end'] = str(
+                ipv4_st.usable_range[1]).split('/')[0] 
+
+    ipv6_iface = notifier().get_default_ipv6_interface()
+    try: 
+        iface_info = notifier().get_interface_info(ipv6_iface)
+        if iface_info['ipv6'] == None:
+            raise Exception
+
+        ipv6_addr = iface_info['ipv6'][0]['inet6']
+        if ipv6_addr == None:
+            raise Exception
+
+        ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
+        if ipv6_prefix == None:
+            raise Exception
+
+        ipv6_st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))
+        if not ipv6_st:
+            raise Exception
+
+        if not ipv6_st.is_ipv6():
+            raise Exception
+
+        ipv6_st2 = sipcalc_type(ipv6_st.subnet_prefix_masked)
+        if not ipv6_st:
+            raise Exception
+
+        if not ipv6_st.is_ipv6():
+            raise Exception
+
+        data['jc_ipv6_network'] = "%s/%d" % (
+            ipv6_st2.compressed_address,
+            ipv6_st.prefix_length
+        )
+
+        ipv6_st2 = sipcalc_type(ipv6_st.network_range[0])
+        data['jc_ipv6_network_start'] = str(
+            ipv6_st2.compressed_address).split('/')[0]
+
+        ipv6_st2 = sipcalc_type(ipv6_st.network_range[1])
+        data['jc_ipv6_network_end'] = str(
+            ipv6_st2.compressed_address).split('/')[0]
+
+    except:
+        pass
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')

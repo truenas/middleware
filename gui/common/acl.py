@@ -53,6 +53,7 @@ ACL_FLAGS_TYPE_NFSV4 = 0x0200
 # Odds and ends
 #
 ACL_WINDOWS_FILE     = ".windows"
+ACL_MAC_FILE         = ".mac"
 
 
 class Base_ACL_Exception(Exception):

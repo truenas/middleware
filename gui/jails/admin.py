@@ -28,6 +28,7 @@ from collections import OrderedDict
 import logging
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
@@ -51,7 +52,7 @@ class JailsFAdmin(BaseFreeAdmin):
     icon_view = u"ServicesIcon"
 
     resource_mixin = JailsResourceMixin
-    exclude_fields = (
+    exclude_fields = [
         'id',
         'jail_ipv4',
         'jail_alias_ipv4',
@@ -65,7 +66,34 @@ class JailsFAdmin(BaseFreeAdmin):
         'jail_defaultrouter_ipv6',
         'jail_vnet',
         'jail_nat'
-    )
+    ]
+
+    advanced_fields = [
+        'jail_type',
+        'jail_ipv4_dhcp',
+        'jail_ipv4',
+        'jail_ipv4_netmask',
+        'jail_alias_ipv4',
+        'jail_bridge_ipv4',
+        'jail_bridge_ipv4_netmask',
+        'jail_alias_bridge_ipv4',
+        'jail_defaultrouter_ipv4',
+        'jail_ipv6_autoconf',
+        'jail_ipv6',
+        'jail_ipv6_prefix',
+        'jail_alias_ipv6',
+        'jail_bridge_ipv6',
+        'jail_bridge_ipv6_prefix',
+        'jail_alias_bridge_ipv6',
+        'jail_defaultrouter_ipv6',
+        'jail_mac',
+        'jail_iface',
+        'jail_flags',
+        'jail_autostart',
+        'jail_status',
+        'jail_vnet',
+        'jail_nat'
+    ]
 
     def get_datagrid_columns(self):
         columns = []
@@ -288,8 +316,11 @@ class JailTemplateFAdmin(BaseFreeAdmin):
             function(evt, actionName, action) {
                 for (var i=0;i < evt.rows.length;i++) {
                     var row = evt.rows[i];
-                    if (row.data.jt_instances > 0 && actionName == 'Delete') {
-                        query(".grid" + actionName).forEach(function(item, idx) {
+                    if ((row.data.jt_instances > 0 || \
+                        row.data.jt_readonly) \
+                        && actionName == 'Delete') {
+                        query(".grid" + actionName).forEach(
+                            function(item, idx) {
                             domStyle.set(item, "display", "none");
                         });
                     }
@@ -300,6 +331,12 @@ class JailTemplateFAdmin(BaseFreeAdmin):
         actions['Delete']['on_select_after'] = on_select_after
 
         return actions
+
+    def get_datagrid_context(self, request):
+        context = super(JailTemplateFAdmin, self).get_datagrid_context(request)
+        context.update({'add_url': reverse('jail_template_create')})
+        return context
+
 
 
 class JailMountPointFAdmin(BaseFreeAdmin):

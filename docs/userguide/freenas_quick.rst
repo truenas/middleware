@@ -1,174 +1,360 @@
 :orphan:
 
-.. _Configuration Quick Start:
+.. _Booting Into FreeNAS®:
 
-Configuration Quick Start
-=========================
-
-This section demonstrates the initial preparation that should be performed before you start to configure the FreeNAS® system. It then provides an overview of
-the configuration workflow.
-
-.. note:: it is important to use the GUI (or the console) for all configuration changes. FreeNAS® uses a configuration database to store its settings. While
-   you can use the command line to modify your configuration, changes made at the command line are not written to the configuration database. This means that
-   any changes made at the command line will not persist after a reboot and will be overwritten by the values in the configuration database during an upgrade.
-
-.. _Set the Root Password:
-
-Set the Root Password
----------------------
-
-The first time you access the FreeNAS® administrative interface, a pop-up window will prompt you to set the *root* password. You should set a hard to guess
-password as anyone who knows this password can gain access to the FreeNAS® administrative GUI.
-
-.. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
-   *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
-   be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
-
-.. _Set the Email Address:
-
-Set the Email Address
----------------------
-
-FreeNAS® provides an Alert icon in the upper right corner to provide a visual indication of events that warrant administrative attention. The alert system
-automatically emails the *root* user account whenever an alert is issued.
-
-To set the email address for the *root* account, go to :menuselection:`Account --> Users --> View Users`. Click the "Change E-mail" button associated with the
-*root* user account and input the email address of the person to receive the administrative emails.
-
-.. _Enable Console Logging:
-
-Enable Console Logging
+Booting Into FreeNAS®
 ----------------------
 
-To view system messages within the graphical administrative interface, go to :menuselection:`System --> Advanced`. Check the box "Show console
-messages in the footer" and click "Save". The output of :command:`tail -f /var/log/messages` will now be displayed at the bottom of the screen. If you click
-the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy its contents.
+When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the the FreeNAS®
+system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
-You are now ready to start configuring the FreeNAS® system. Typically, the configuration workflow will use the following steps in their listed order.
+.. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
+   :command:`/etc/netcli` from Shell. You can disable the Console Setup menu by unchecking the "Enable Console Menu" in :menuselection:`System --> Advanced`.
 
-.. _Create Storage:
+**Figure 3a: FreeNAS® Console Setup Menu**
 
-Create Storage
---------------
+|console1.png|
 
-FreeNAS® supports the creation of both UFS and ZFS volumes; however, ZFS volumes are recommended to get the most out of your FreeNAS® system.
+.. |console1.png| image:: images/console1.png
+    :width: 5.8in
+    :height: 2.8in
 
-When creating a volume, you have several choices depending upon your storage requirements and whether or not data already exists on the disk(s). The following
-options are available:
+This menu provides the following options:
 
-#.  Auto-import an existing UFS disk, gstripe (RAID0), gmirror (RAID1), or graid3 (RAID3) in :menuselection:`Storage --> Volumes --> Auto Import Volume`.
+**1) Configure Network Interfaces:** provides a configuration wizard to configure the system's network interfaces.
 
-#.  Auto-import an existing ZFS disk, stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in :menuselection:`Storage --> Volumes --> Auto Import Volume`.
+**2) Configure Link Aggregation:** allows you to either create a new link aggregation or to delete an existing link aggregation.
 
-#.  Import a disk that is formatted with UFS, NTFS, MSDOS, or EXT2 in :menuselection:`Storage --> Volumes --> Import Volume.
+**3) Configure VLAN Interface:** used to create or delete a VLAN interface.
 
-#.  Format disk(s) with UFS and optionally create a gstripe (RAID0), gmirror (RAID1), or graid3 (RAID3) in
-    :menuselection:`Storage --> Volumes --> UFS Volume Manager`.
+**4) Configure Default Route:** used to set the IPv4 or IPv6 default gateway. When prompted, input the IP address of the default gateway.
 
-#.  Format disk(s) with ZFS and optionally create a stripe, mirror, RAIDZ1, RAIDZ2, or RAIDZ3 in :menuselection:`Storage -->Volumes --> ZFS Volume Manager`.
+**5) Configure Static Routes:** will prompt for the destination network and the gateway IP address. Re-enter this option for each route you need to add.
 
-If you format your disk(s) with ZFS, additional options are available:
+**6) Configure DNS:** will prompt for the name of the DNS domain then the IP address of the first DNS server. To input multiple DNS servers, press
+:kbd:`Enter` to input the next one. When finished, press :kbd:`Enter` twice to leave this option.
 
-#.  Divide the ZFS pool into datasets to provide more flexibility when configuring user access to data.
+**7) Reset Root Password:** if you are unable to login to the graphical administrative interface, select this option and follow the prompts to set the *root*
+password.
 
-#.  Create a Zvol to be used when configuring an iSCSI device extent.
+**8) Reset to factory defaults:** if you wish to delete
+**all** of the configuration changes made in the administrative GUI, select this option. Once the configuration is reset, the system will reboot. You will
+need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-import your volume.
 
-.. _Create Users/Groups:
+**9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
-Create Users/Groups
--------------------
+**10) Reboot:** reboots the system.
 
-FreeNAS® supports a variety of user access scenarios:
+**11) Shutdown:** halts the system.
 
-* the use of an anonymous or guest account that everyone in the network uses to access the stored data
+During boot, FreeNAS® will automatically try to connect to a DHCP server from all live interfaces. If it successfully receives an IP address, it will display
+the IP address which can be used to access the graphical console. In the example seen in Figure 2.5b, the FreeNAS® system is accessible from
+*http://192.168.1.97*.
 
-* the creation of individual user accounts where each user has access to their own ZFS dataset
+If your FreeNAS® server is not connected to a network with a DHCP server, you can use the network configuration wizard to manually configure the interface as
+seen in Example 3a. In this example, the FreeNAS® system has one network interface (*em0*).
 
-* the addition of individual user accounts to groups where each group has access to their own volume or ZFS dataset
+**Example 3a: Manually Setting an IP Address from the Console Menu**
+::
 
-* the import of existing accounts from an OpenLDAP or Active Directory server
+ Enter an option from 1-11: 1
+ 1) em0
+ Select an interface (q to quit): 1
+ Delete existing config? (y/n) n
+ Configure interface for DHCP? (y/n) n
+ Configure IPv4? (y/n) y
+ Interface name: (press enter as can be blank)
+ Several input formats are supported
+ Example 1 CIDR Notation: 192.168.1.1/24
+ Example 2 IP and Netmask separate:
+ IP: 192.168.1.1
+ Netmask: 255.255.255.0, or /24 or 24
+ IPv4 Address: 192.168.1.108/24
+ Saving interface configuration: Ok
+ Configure IPv6? (y/n) n
+ Restarting network: ok
+ You may try the following URLs to access the web user interface:
+ `http://192.168.1.108 <http://192.168.1.108/>`_
 
-When configuring your FreeNAS® system, **select one of the following,** depending upon whether or not the network has an existing OpenLDAP or Active
-Directory domain. OpenLDAP and Active Directory are mutually exclusive, meaning that you can not use both but must choose one or the other.
+Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
+system. You should be prompted to input the password for the root user, as seen in Figure 3b.
 
-#.  Manually create users and groups. User management is described in Users and group management is described in Groups.
+**Figure 3b: Input the Root Password**
 
-#.  Import existing Active Directory account information using the instructions in Active Directory.
+|Figure26b_png|
 
-#.  Import existing OpenLDAP account information using the instructions in LDAP.
+Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
-.. _Configure Permissions:
+**Figure 3c: FreeNAS® Graphical Configuration Menu**
 
-Configure Permissions
----------------------
+|Figure26c_png|
 
-Setting permissions is an important aspect of configuring access to storage data. The graphical administrative interface is meant to set the **initial**
-permissions in order to make a volume or dataset accessible as a share. Once a share is available, the client operating system should be used to fine-tune the
-permissions of the files and directories that are created by the client.
+If you are unable to access the IP address from a browser, check the following:
 
-Configured volumes and datasets will appear in :menuselection:`Storage --> Volumes`. Each volume and dataset will have its own "Change Permissions" option,
-allowing for greater flexibility when providing access to data.
+* Are proxy settings enabled in the browser configuration? If so, disable the settings and try connecting again.
 
-Before creating your shares, determine which users should have access to which data. This will help you to determine if multiple volumes, datasets, and/or
-shares should be created to meet the permissions needs of your environment.
+* If the page does not load, make sure that you can :command:`ping` the FreeNAS® system's IP address. If the address is in a private IP address range, you
+  will only be able to access the system from within the private network.
 
-.. _Configure Sharing:
+* If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
+  display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
+  `Firefox <http://www.mozilla.com/en-US/firefox/all.html>`_
+  instead.
 
-Configure Sharing
------------------
+* If you receive "An error occurred!" messages when attempting to configure an item in the GUI, make sure that the browser is set to allow cookies from
+  the FreeNAS® system.
 
-Once your volumes have been configured with permissions, you are ready to configure the type of share or service that you determine is suitable for your
-network.
+This
+`blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
+describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
 
-FreeNAS® supports several types of shares and sharing services for providing storage data to the clients in a network. It is recommended that you
-**select only one type of share per volume or dataset** in order to prevent possible conflicts between different types of shares. The type of share you
-create depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds. The following
-types of shares and services are available:
+.. _Initial Configuration Wizard:
 
-* **Apple (AFP):** FreeNAS® uses Netatalk to provide sharing services to Apple clients. This type of share is a good choice if all of your computers run
-  Mac OS X.
+Initial Configuration Wizard
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* **Unix (NFS):** this type of share is accessible by Mac OS X, Linux, BSD, and professional/enterprise versions of Windows. It is a good choice if there
-  are many different operating systems in your network.
+Beginning with FreeNAS® 9.3, a configuration wizard automatically starts the first time the FreeNAS® GUI is accessed. This wizard walks you through the
+steps needed to quickly configure FreeNAS® to start serving data over a network. This section describes these configuration steps. If you wish to use the
+wizard again after the initial configuration, click the "Wizard" icon.
 
-* **Windows (CIFS):** FreeNAS® uses Samba to provide the SMB/CIFS sharing service. This type of share is accessible by Windows, Mac OS X, Linux, and BSD
-  computers, but it is slower than an NFS share. If your network contains only Windows systems, this is a good choice.
+Figure 3.1a shows the initial wizard configuration screen that appears if the storage disks have not yet been formatted.
 
-* **FTP:** this service provides fast access from any operating system, using a cross-platform FTP and file manager client application such as Filezilla.
-  FreeNAS® supports encryption and chroot for FTP.
+**Figure 3.1a: Initial Configuration Wizard**
 
-* **SSH:** this service provides encrypted connections from any operating system using SSH command line utilities or the graphical WinSCP application for
-  Windows clients.
+|wizard1.png|
 
-* **iSCSI:** FreeNAS® supports the export of virtual disk drives that are accessible to clients running iSCSI initiator software.
+.. |wizard1.png| image:: images/wizard1.png
+    :width: 3.6in
+    :height: 2.3in
 
-.. _Start Service(s):
+Input a name for the ZFS pool that conforms to these
+`naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
+**not** :file:`data` or :file:`freenas`).
 
-Start Service(s)
-----------------
+Next, decide if the pool should provide disk redundancy, and if so, which type. The :ref:`ZFS Primer` discusses RAIDZ redundancy in more detail. If you prefer
+to make a more complex configuration, click the "Exit" button to close the "Wizard" and instead use :ref:`Volume Manager`.
 
-Once you have configured your share or service, you will need to start its associated service(s) in order to implement the configuration. By default, all
-services are off until you start them. The status of services is managed using :menuselection:`Services --> Control Services`. To start a service, click its
-red "OFF" button. After a second or so, it will change to a blue ON, indicating that the service has been enabled. Watch the console messages as the service
-starts to determine if there are any error messages.
+The following redundancy types are available:
 
-.. _Test Configuration:
+* **Automatic:**
 
-Test Configuration
-------------------
+* **RAID 10:** creates a striped mirror and requires a minimum of 4 disks.
 
-If the service successfully starts, try to make a connection to the service from a client system. For example, use Windows Explorer to try to connect to a
-CIFS share, use an FTP client such as Filezilla to try to connect to an FTP share, or use Finder on a Mac OS X system to try to connect to an AFP share.
+* **RAIDZ2:** requires a minimum of 4 disks. Up to 2 disks can fail without data loss.
 
-If the service starts correctly and you can make a connection but receive permissions errors, check that the user has permissions to the volume/dataset being
-accessed.
+* **RAIDZ1:** requires a minimum of 3 disks. Up to 1 disk can fail without data loss.
 
-.. _Backup Configuration:
+* **Stripe:** requires a minimum of 1 disk. Provides **no** redundancy, meaning if any of the disks in the stripe fails, all data in the stripe is lost.
 
-Backup Configuration
---------------------
+Once you have made your selection, click "Next" to continue.
 
-Once you have tested your configuration, be sure to back it up. Go to :menuselection:`System --> General` and click the "Save Config" button. Your browser
-will provide an option to save a copy of the configuration database.
+If the disks have already been formatted with UFS or ZFS, the initial wizard screen will instead prompt to import the volume, as seen in Figure 3.1b.
 
-You should **backup your configuration whenever you make configuration changes and always before upgrading FreeNAS®**.
+**Figure 3.1b: Volume Import Screen**
+
+|wizard2.png|
+
+Select the existing volume from the drop-down menu and click "Next" to continue.
+
+.. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart
+   the wizard again by clicking the "Wizard" icon. Alternately, you can use the FreeNAS® GUI to configure the system, as described in the rest of this Guide.
+
+The next screen in the wizard is shown in Figure 3.1c.
+
+**Figure 3.1c: Directory Service Selection**
+
+|wizard3.png|
+
+.. |wizard3.png| image:: images/wizard3.png
+    :width: 3.8in
+    :height: 2.1in
+
+If the FreeNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
+
+However, if the FreeNAS® system is on a network containing an Active Directory, LDAP, NIS, or NT4 server and you wish to import the users and groups from
+that server, select the type of directory service in the "Directory Service" drop-down menu. The rest of the fields in this screen will vary, depending upon
+which directory service is selected. Tables 3.1a to 3.1d summarize the available configuration options for each directory service.
+
+.. note:: additional configuration options are available for each directory service. The wizard can be used to set the initial values required to connect to
+   that directory service. You can then review the other available options in :ref:`Directory Service` to determine if additional configuration is required.
+
+**Table 3.1a: Active Directory Options**
+
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**              | **Value**     | **Description**                                                                                       |
+|                          |               |                                                                                                       |
++==========================+===============+=======================================================================================================+
+| Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                            |
+|                          |               | *sales.example.com*)                                                                                  |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| Domain Account Name      | string        | name of the Active Directory administrator account                                                    |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+| Domain Account Password  | string        | password for the Active Directory administrator account                                               |
+|                          |               |                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
+
+**Table 3.1b: LDAP Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| Hostname                | string         | hostname or IP address of LDAP server                                                                 |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Base DN                 | string         | top level of the LDAP directory tree to be used when searching for resources (e.g.                    |
+|                         |                | *dc=test,dc=org*)                                                                                     |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Base password           | string         | password for                                                                                          |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+
+**Table 3.1c: NIS Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| NIS domain              | string         | name of NIS domain                                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NIS servers             | string         | comma delimited list of hostnames or IP addresses                                                     |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Secure mode             | checkbox       | if checked,                                                                                           |
+|                         |                | `ypbind(8) <http://www.freebsd.org/cgi/man.cgi?query=ypbind>`_                                        |
+|                         |                | will refuse to bind to any NIS server that is not running as root on a TCP port number over 1024      |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Manycast                | checkbox       | if checked, ypbind will bind to the server that responds the fastest; this is useful when no local    |
+|                         |                | NIS server is available on the same subnet                                                            |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+
+**Table 3.1d: NT4 Options**
+
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                       |
+|                         |                |                                                                                                       |
++=========================+================+=======================================================================================================+
+| Domain Controller       | string         | hostname of domain controller                                                                         |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NetBIOS Name            | string         | hostname of FreeNAS system                                                                            |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Workgroup Name          | string         | name of Windows server's workgroup                                                                    |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Administrator Name      | string         | name of the domain administrator account                                                              |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Administrator Password  | string         | input and confirm the password for the domain administrator account                                   |
+|                         |                |                                                                                                       |
++-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+
+The next configuration screen, shown in Figure 3.1d, can be used to create the network shares.
+
+**Figure 3.1d: Share Creation**
+
+|wizard4.png|
+
+.. |wizard4.png| image:: images/wizard4.png
+    :width: 3.5in
+    :height: 3.4in
+
+FreeNAS® supports several types of shares for providing storage data to the clients in a network. The initial wizard can be used to quickly make shares using
+default permissions which should "just work" for common scenarios. If you wish to configure more complex scenarios, refer to the section on :ref:`Sharing`.
+
+To create a share using the wizard, input a name, then select the "Purpose" of the share:
+
+* **Windows (CIFS):** this type of share can be accessed by any operating system using a CIFS client. Check the box for "Allow Guest" if users should not be
+  prompted for a password in order to access the share. If you make any CIFS shares using the wizard, you can fine-tune them afterwards using
+  :ref:`Windows (CIFS) Shares`.
+
+* **Mac OS X (AFP):** this type of share can be accessed by Mac OS X users. Check the box for "Time Machine" if Mac users will be using the FreeNAS® system
+  as a backup device. If you make any AFP shares using the wizard, you can fine-tune them afterwards using :ref:`Apple (AFP) Shares`.
+
+* **Generic Unix (NFS):** this type of share can be accessed by any operating system using a NFS client. If you make any NFS shares using the wizard, you can
+  fine-tune them afterwards using :ref:`Unix (NFS) Shares`.
+
+* **Block Storage (iSCSI):** this type of share can be accessed by any operating system using iSCSI initiator software. Input the size of the block storage to
+  create in the format *20G* (for 20 GB). If you make any iSCSI shares using the wizard, you can fine-tune them afterwards using :ref:`iSCSI`.
+
+After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 3.1e.
+
+**Figure 3.1e: Share Permissions**
+
+|wizard5.png|
+
+.. |wizard5.png| image:: images/wizard5.png
+    :width: 3.2in
+    :height: 2.3in
+
+The default permissions for the share will be displayed. To create a user or group, input the desired name, then check the "Create User" box, to create that
+user, and the "Create Group" box, to create that group. Check or uncheck the boxes in the "Mode" section to set the initial access permissions for the share.
+When finished, click the "Return" button to return to the share creation screen. Click the "Add" button to finish creating that share, which will then
+appear in the "Name" frame.
+
+You can use the "Delete" button to remove the highlighted share in the "Name" frame. If you need to edit a share, highlight it, make the change, then press
+the "Update" button.
+
+When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 3.1f.
+
+**Figure 3.1f: Miscellaneous Settings**
+
+|wizard6.png|
+
+.. |wizard6.png| image:: images/wizard6.png
+    :width: 3.44in
+    :height: 3.99in
+
+This screen can be used to configure the following settings:
+
+* **Console messages:** check this box if you would like to view system messages at the bottom of the graphical administrative interface. This can be handy
+  when troubleshooting a service that will not start. When using the console message view, if you click the console messages area, it will pop-up as a window,
+  allowing you to scroll through the output and to copy its contents.
+
+* **Root E-mail:** FreeNAS® provides an "Alert" icon in the upper right corner to provide a visual indication of events that warrant administrative
+  attention. The alert system automatically emails the *root* user account whenever an alert is issued. **It is important** to input the email address of the
+  person to receive these alerts and other administrative emails. The rest of the email settings in this screen should also be reviewed and edited as
+  necessary. Before leaving this screen, click the "Send Test Mail" button to ensure that email notifications are working correctly.
+
+* **From email:** the from email address to use when sending email notifications.
+
+* **Outgoing mail server:** hostname or IP address of SMTP server.
+
+* **Port to connect to:** port number used by the SMTP server.
+
+* **TLS/SSL:** encryption type used by the SMTP server.
+
+* **Use SMTP Authentication:** check this box if the SMTP server requires authentication.
+
+* **Username:** input the username if the SMTP server requires authentication.
+
+* **Password:** input the password if the SMTP server requires authentication.
+
+When finished, click "Next". A message will indicate that the wizard is now ready to perform all of the saved actions. If you wish to make any changes, click
+the "Return to Wizard" button to review your edits. If you click the "Exit without saving" button, none of your selections will be saved. To save your edits,
+click the "Confirm" button. A status bar will indicate when the wizard has completed applying your settings.
+
+In addition to the settings that you specify, the wizard will automatically enable :ref:`S.M.A.R.T. Tests`, create a boot environment, and add the new boot
+environment to the boot menu. If you also wish to save a backup of the configuration database to the system being used to access the administrative graphical
+interface, go to :menuselection:`System --> General`, click the "Save Config" button, and browse to the directory to save the configuration to.
+**It is recommended to always backup your configuration after making any configuration changes**.
+
+The rest of this Guide describes the FreeNAS® graphical interface in more detail. The layout of this Guide follows the order of the menu items in the tree
+located in the left frame of the graphical interface.
+
+.. note:: it is important to use the GUI (or the Console Setup menu) for all configuration changes. FreeNAS® uses a configuration database to store its
+   settings. While it is possible to use the command line to modify your configuration, changes made at the command line **are not** written to the
+   configuration database. This means that any changes made at the command line will not persist after a reboot and will be overwritten by the values in the
+   configuration database during an upgrade.

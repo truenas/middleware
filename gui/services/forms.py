@@ -133,10 +133,33 @@ class servicesForm(ModelForm):
 
 class CIFSForm(ModelForm):
 
+    cifs_srv_bindip = forms.MultipleChoiceField(
+        label=models.CIFS._meta.get_field('cifs_srv_bindip').verbose_name,
+        help_text=models.CIFS._meta.get_field('cifs_srv_bindip').help_text,
+        required=False,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
+
     class Meta:
         fields = '__all__'
-        exclude = [ 'cifs_SID' ]
+        exclude = [ 'cifs_SID', 'cifs_srv_bindip' ]
         model = models.CIFS
+
+    def __init__(self, *args, **kwargs): 
+        super(CIFSForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('cifs_srv_bindip'):
+            if ',' in self.data['cifs_srv_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'cifs_srv_bindip',
+                    self.data['cifs_srv_bindip'].split(',')
+                )
+        self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
+        self.fields['cifs_srv_bindip'].initial = (
+            self.instance.cifs_srv_bindip.encode('utf-8').split(',')
+            if self.instance.id and self.instance.cifs_srv_bindip
+            else ''
+        )
 
     def __check_octet(self, v):
         try:
@@ -162,6 +185,21 @@ class CIFSForm(ModelForm):
         self.__check_octet(v)
         return v
 
+    def clean_cifs_srv_bindip(self):
+        ips = self.cleaned_data.get("cifs_srv_bindip")
+        if not ips:
+            return ''
+        bind = []
+        for ip in ips:
+            try:
+                IPAddress(ip.encode('utf-8'))
+            except:
+                raise forms.ValidationError(
+                    "This is not a valid IP: %s" % (ip, )
+                )
+            bind.append(ip)
+        return ','.join(bind)
+
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
@@ -183,7 +221,10 @@ class CIFSForm(ModelForm):
         return cleaned_data
 
     def save(self):
-        super(CIFSForm, self).save()
+        obj = super(CIFSForm, self).save(commit=False)
+        obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
+        obj.save()
+
         started = notifier().restart("cifs")
         if (
             started is False
@@ -1205,6 +1246,11 @@ class iSCSITargetExtentForm(ModelForm):
                     os.makedirs(dirs)
                 except Exception, e:
                     log.error("Unable to create dirs for extent file: %s", e)
+            if not os.path.exists(path):
+                size = self.cleaned_data["iscsi_target_extent_filesize"]
+                if size.lower().endswith("b"):
+                    size = size[:-1]
+                os.system("truncate -s %s %s" % (size, path))
 
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
@@ -1479,7 +1525,17 @@ class DomainControllerForm(ModelForm):
     )
 
     class Meta:
-        fields = '__all__'
+        fields = [
+            'dc_realm',
+            'dc_domain',
+            'dc_role',
+            'dc_dns_backend',
+            'dc_dns_forwarder',
+            'dc_forest_level',
+            'dc_passwd',
+            'dc_passwd2',
+            'dc_kerberos_realm' 
+        ]
         model = models.DomainController
         widgets = {
             'dc_passwd': forms.widgets.PasswordInput(render_value=False),

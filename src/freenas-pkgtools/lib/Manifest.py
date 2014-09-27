@@ -11,12 +11,37 @@ log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
+# The keys are as follows:
+# SEQUENCE_KEY:  A string, uniquely identifying this manifest.
+# PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.
+# SIGNATURE_KEY:  A string for the signed value of the manifest.  Not yet implemented.
+# NOTES_KEY:  An array of name, URL pairs.  Typical names are "README" and "Release Notes".
+# TRAIN_KEY:  A string identifying the train for this maifest.
+# VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
+# SCHEME_KEY:  A string, identifying the layout version.  Only one value for now.
+# NOTICE_KEY:  A string, identifying a message to be displayed before installing this manifest.
+# 	This is mainly intended to be used to indicate a particular train is ended.
+#	A notice is something more important than a release note, and is included in
+#	the manifest, rather than relying on a URL.
+# SWITCH_KEY:  A string, identifying the train that should be used instead.
+# 	This will cause Configuraiton.FindLatestManifest() to use that value instead, so
+#	it should only be used when a particular train is end-of-life'd.
+
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
 SIGNATURE_KEY = "Signature"
 NOTES_KEY = "Notes"
 TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
+SCHEME_KEY = "Scheme"
+NOTICE_KEY = "Notice"
+SWITCH_KEY = "NewTrainName"
+
+# SCHEME_V1 is the first scheme for packaging and manifests.
+# Manifest is at <location>/FreeNAS/<train_name>/LATEST,
+# packages are at <location>/Packages
+
+SCHEME_V1 = "version1"
 
 class ChecksumFailException(Exception):
     pass
@@ -75,6 +100,9 @@ class Manifest(object):
     _packages = None
     _signature = None
     _version = None
+    _scheme = SCHEME_V1
+    _notice = None
+    _switch = None
 
     def __init__(self, configuration = None):
         if configuration is None:
@@ -83,12 +111,15 @@ class Manifest(object):
 
     def dict(self):
         retval = {}
-        if self._sequence is not None: retval[SEQUENCE_KEY] = int(self._sequence)
+        if self._sequence is not None: retval[SEQUENCE_KEY] = self._sequence
         if self._packages is not None: retval[PACKAGES_KEY] = self._packages
         if self._signature is not None: retval[SIGNATURE_KEY] = self._signature
         if self._notes is not None: retval[NOTES_KEY] = self._notes
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
+        if self._notice is not None:  retval[NOTICE_KEY] = self._notice
+        if self._switch is not None:  retval[SWITCH_KEY] = self._switch
+        retval[SCHEME_KEY] = self._scheme
         return retval
 
     def String(self):
@@ -106,10 +137,12 @@ class Manifest(object):
         self._packages = None
         self._signature = None
         self._version = None
+        self._notice = None
+        self._switch = None
 
         for key in tdict.keys():
             if key == SEQUENCE_KEY:
-                self.SetSequence(int(tdict[key]))
+                self.SetSequence(tdict[key])
             elif key == PACKAGES_KEY:
                 for p in tdict[key]:
                     pkg = Package.Package(p[Package.NAME_KEY], p[Package.VERSION_KEY], p[Package.CHECKSUM_KEY])
@@ -125,8 +158,15 @@ class Manifest(object):
                 self.SetTrain(tdict[key])
             elif key == VERSION_KEY:
                 self.SetVersion(tdict[key])
+            elif key == SCHEME_KEY:
+                self.SetScheme(tdict[key])
+            elif key == NOTICE_KEY:
+                self.SetNotice(tdict[key])
+            elif key == SWITCH_KEY:
+                # Deliberately not a method to set this one
+                self._switch = tdict[key]
             else:
-                raise ManifestInvalidException
+                log.debug("Unknown key %s" % key)
         self.Validate()
         return
 
@@ -157,13 +197,11 @@ class Manifest(object):
         # and some number of packages.  If there is a signature,
         # it needs to match the computed signature.
         if self._sequence is None:
-            raise ManifestInvalidException
-        if self._sequence != int(self._sequence):
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("Sequence is not set")
         if self._train is None:
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("Train is not set")
         if self._packages is None or len(self._packages) == 0:
-            raise ManifestInvalidException
+            raise Exceptions.ManifestInvalidException("No packages")
         if self._signature is not None:
             temp = self.dict()
             if SIGNATURE_KEY in temp:  temp.pop(SIGNATURE_KEY)
@@ -174,12 +212,35 @@ class Manifest(object):
                 raise ChecksumFailException
         return True
 
+    def Notice(self):
+        if not self._notice and self._switch:
+            # If there's no notice, but there is a train-switch directive,
+            # then make up a notice about it.
+            return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
+        return self._notice
+
+    def SetNotice(self, n):
+        self._notice = n
+        return
+
+    def Scheme(self):
+        return self._scheme
+
+    def SetScheme(self, s):
+        self._scheme = s
+        return
+
     def Sequence(self):
         return self._sequence
 
     def SetSequence(self, seq):
-        self._sequence = int(seq)
+        self._sequence = seq
         return
+
+    def SetNote(self, name, location):
+        if self._notes is None:
+            self._notes = {}
+        self._notes[name] = location
 
     def Notes(self):
         return self._notes
@@ -189,7 +250,8 @@ class Manifest(object):
         return
 
     def Train(self):
-        if self._train is None:  raise ManifestInvalidException
+        if self._train is None:
+            raise Exceptions.ManifestInvalidException("Invalid train")
         return self._train
 
     def SetTrain(self, train):
@@ -207,6 +269,10 @@ class Manifest(object):
     def AddPackages(self, list):
         if self._packages is None: self._packages = []
         self._packages.append(list)
+        return
+
+    def SetPackages(self, list):
+        self._packages = list
         return
 
     def VerifySignature(self):
@@ -232,3 +298,11 @@ class Manifest(object):
     def SetVersion(self, version):
         self._version = version
         return
+
+    def NewTrain(self):
+        return self._switch
+
+    def NotePath(self, note_name):
+        if note_name in self.Notes():
+            return "%s/Notes/%s" % (self.Train(), self.Notes()[note_name])
+        return None

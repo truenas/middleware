@@ -4,7 +4,7 @@
 
    Introduction <freenas_intro>
    Installing and Upgrading FreeNAS® <freenas_install>
-   Configuration Quick Start <freenas_quick>
+   Booting Into FreeNAS® <freenas_quick>
    Account <freenas_account>
    System <freenas_system>
    Tasks <freenas_tasks>
@@ -16,8 +16,8 @@
    Plugins <freenas_plugins>
    Jails <freenas_jails>
    Reporting <freenas_reporting>
-   Display System Processes <freenas_processes>
    Wizard <freenas_wizard>
+   Display System Processes <freenas_processes>
    Shell <freenas_shell>
    Log Out <freenas_logout>
    Reboot <freenas_reboot>

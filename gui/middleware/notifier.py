@@ -80,7 +80,7 @@ cache.get_apps()
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
+from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE, ACL_MAC_FILE
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
@@ -245,7 +245,7 @@ class notifier:
             'afp': ('netatalk', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
             'dynamicdns': ('inadyn-mt', None),
-            'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
+            'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
@@ -1146,16 +1146,16 @@ class notifier:
         self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
-        self._system("/usr/sbin/service ix-bsnmpd quietstart")
-        self._system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-snmpd quietstart")
+        self._system("/usr/sbin/service snmpd quietstart")
 
     def _stop_snmp(self):
-        self._system("/usr/sbin/service bsnmpd quietstop")
+        self._system("/usr/sbin/service snmpd quietstop")
 
     def _restart_snmp(self):
-        self._system("/usr/sbin/service ix-bsnmpd quietstart")
-        self._system("/usr/sbin/service bsnmpd forcestop")
-        self._system("/usr/sbin/service bsnmpd quietstart")
+        self._system("/usr/sbin/service ix-snmpd quietstart")
+        self._system("/usr/sbin/service snmpd forcestop")
+        self._system("/usr/sbin/service snmpd quietstart")
 
     def _restart_http(self):
         self._system("/usr/sbin/service ix-nginx quietstart")
@@ -1546,7 +1546,6 @@ class notifier:
         Get all unused geli providers
 
         It might be an entire disk or a partition of type freebsd-zfs
-        (GELI on UFS not supported yet)
         """
         providers = []
         doc = self._geom_confxml()
@@ -1892,42 +1891,6 @@ class notifier:
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
 
-    def __create_ufs_volume(self, volume, swapsize, group):
-        geom_vdev = ""
-        u_name = str(volume.vol_name)
-        # TODO: We do not support multiple GEOM levels for now.
-        geom_type = group['type']
-
-        if geom_type == '':
-            # Grab disk from the group
-            disk = group['disks'][0]
-            self.__gpt_labeldisk(type="freebsd-ufs", devname=disk, swapsize=swapsize)
-            devname = self.part_type_from_device('ufs', disk)
-            # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
-            # generated automatically
-            p1 = self._pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
-            stderr = p1.communicate()[1]
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Volume creation failed: "%s"' % error)
-        else:
-            # Grab all disks from the group
-            for disk in group['disks']:
-                # FIXME: turn into a function
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
-                geom_vdev += " /dev/" + disk
-                # TODO gpt label disks
-            self._system("geom %s load" % (geom_type))
-            p1 = self._pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Volume creation failed: "%s"' % error)
-            ufs_device = "/dev/%s/%s" % (geom_type, volume.vol_name)
-            self._system("newfs -U -L %s %s" % (u_name, ufs_device))
-
     def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
         u_name = str(volume.vol_name)
@@ -1962,11 +1925,8 @@ class notifier:
         """Initialize a volume designated by volume_id"""
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
-        if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
-        elif volume.vol_fstype == 'UFS':
-            self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
+        assert volume.vol_fstype == 'ZFS'
+        self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
@@ -2614,13 +2574,25 @@ class notifier:
             path = path.encode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        macacl = os.path.join(path, ACL_MAC_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
-        if acl == 'windows' and not winexists:
-            open(winacl, 'a').close()
-            winexists = True
-        elif acl == 'unix' and winexists:
-            os.unlink(winacl)
-            winexists = False
+        if acl == 'windows':
+            if not winexists:
+                open(winacl, 'a').close()
+                winexists = True
+            if os.path.isfile(macacl):
+                os.unlink(macacl)
+        elif acl == 'mac':
+            if winexists:
+                os.unlink(winacl)
+            if not os.path.isfile(macacl):
+                open(macacl, 'a').close()
+        elif acl == 'unix':
+            if winexists:
+                os.unlink(winacl)
+                winexists = False
+            if os.path.isfile(macacl):
+                os.unlink(macacl)
 
         if winexists:
             if not mode:
@@ -2696,7 +2668,7 @@ class notifier:
 
     def create_upload_location(self):
         """
-        Create a temporary location for firmware upgrade
+        Create a temporary location for manual update
         over a memory device (mdconfig) using UFS
 
         Raises:
@@ -2735,7 +2707,7 @@ class notifier:
 
     def destroy_upload_location(self):
         """
-        Destroy a temporary location for firmware upgrade
+        Destroy a temporary location for manual update
         over a memory device (mdconfig) using UFS
 
         Raises:
@@ -3441,30 +3413,6 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
-    def graid_all(self):
-        """
-        Get all available graid instances
-
-        Returns:
-            A list of dicts describing the graid
-        """
-
-        graids = []
-        doc = self._geom_confxml()
-        for geom in doc.xpath("//class[name = 'RAID']/geom"):
-            consumers = []
-            gname = geom.xpath("./name")[0].text
-            for ref in geom.xpath("./consumer/provider/@ref"):
-                for name in doc.xpath(
-                    "//provider[@id = '%s']/name" % ref
-                ):
-                    consumers.append(name.text)
-            graids.append({
-                'name': gname,
-                'consumers': consumers,
-            })
-        return graids
-
     def get_disks(self):
         """
         Grab usable disks and pertinent info about them
@@ -3488,11 +3436,6 @@ class notifier:
                 if dev in disks:
                     disks.remove(dev)
             disks.append(mp.devname)
-
-        for graid in self.graid_all():
-            for dev in graid.get("consumers"):
-                if dev in disks:
-                    disks.remove(dev)
 
         for disk in disks:
             info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
@@ -3797,16 +3740,16 @@ class notifier:
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
         if path:
-            zfsproc = self._pipeopen("/sbin/zfs list -r -t snapshot -H -S creation '%s'" % path)
+            zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot -H -S creation '%s'" % path)
         else:
-            zfsproc = self._pipeopen("/sbin/zfs list -t snapshot -H -S creation")
+            zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
-                list = line.split('\t')
-                snapname = list[0]
-                used = list[1]
-                refer = list[3]
+                _list = line.split('\t')
+                snapname = _list[0]
+                used = _list[1]
+                refer = _list[3]
                 fs, name = snapname.split('@')
                 try:
                     snaplist = fsinfo[fs]
@@ -3817,11 +3760,10 @@ class notifier:
                 replication = None
                 if replications:
                     for repl, snaps in replications.iteritems():
+                        if fs != repl.repl_filesystem:
+                            break
                         remotename = '%s@%s' % (
-                            fs.replace(
-                                repl.repl_filesystem + '@',
-                                repl.repl_zfs + '@',
-                            ),
+                            repl.repl_zfs,
                             name,
                         )
                         if remotename in snaps:
@@ -3924,10 +3866,12 @@ class notifier:
                     dval = retval[data[0]]
             else:
                 dval = retval
-            if (not data[1] in noinherit_fields) and (data[3] == 'default' or data[3].startswith('inherited')):
-                dval[data[1]] = "inherit"
+            if (not data[1] in noinherit_fields) and (
+                data[3] == 'default' or data[3].startswith('inherited')
+            ):
+                dval[data[1]] = (data[2], "inherit (%s)" % data[2], 'inherit')
             else:
-                dval[data[1]] = data[2]
+                dval[data[1]] = (data[2], data[2], data[3])
         return retval
 
     def zfs_set_option(self, name, item, value):
@@ -4014,50 +3958,6 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
-    def geom_disk_replace(self, volume, to_disk):
-        """Replace disk in ``volume`` for ``to_disk``
-
-        Raises:
-            ValueError: Volume not found
-
-        Returns:
-            0 if the disk was replaced, > 0 otherwise
-        """
-
-        assert volume.vol_fstype == 'UFS'
-
-        provider = self.get_label_consumer('ufs', volume.vol_name)
-        if provider is None:
-            raise ValueError("UFS Volume %s not found" % (volume.vol_name,))
-        class_name = provider.xpath("../../name")[0].text
-        geom_name = provider.xpath("../name")[0].text
-
-        if class_name == "MIRROR":
-            rv = self._system_nolog("geom mirror forget %s" % (geom_name,))
-            if rv != 0:
-                return rv
-            p1 = self._pipeopen("geom mirror insert %s /dev/%s" % (str(geom_name), str(to_disk),))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Replacement failed: "%s"' % error)
-            return 0
-
-        elif class_name == "RAID3":
-            numbers = provider.xpath("../consumer/config/Number")
-            ncomponents = int(provider.xpath("../config/Components")[0].text)
-            numbers = [int(node.text) for node in numbers]
-            lacking = [x for x in xrange(ncomponents) if x not in numbers][0]
-            p1 = self._pipeopen("geom raid3 insert -n %d %s %s" %
-                                        (lacking, str(geom_name), str(to_disk),))
-            stdout, stderr = p1.communicate()
-            if p1.returncode != 0:
-                error = ", ".join(stderr.split('\n'))
-                raise MiddlewareError('Replacement failed: "%s"' % error)
-            return 0
-
-        return 1
-
     def iface_destroy(self, name):
         self._system("ifconfig %s destroy" % name)
 
@@ -4109,16 +4009,100 @@ class notifier:
     def interface_mtu(self, iface, mtu):
         self._system("ifconfig %s mtu %s" % (iface, mtu))
 
-    def guess_default_interface(self):
-        p1 = self._pipeopen("route get default | grep 'interface:' | awk '{ print $2 }'")
+    def get_default_ipv4_interface(self):
+        p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
         iface = p1.communicate()
         if p1.returncode != 0:
             iface = None
         try:
             iface = iface[0].strip()
+
         except:
             pass
+
+        return iface if iface else None
+
+    def get_default_ipv6_interface(self):
+        p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
+        iface = p1.communicate()
+        if p1.returncode != 0:
+            iface = None
+        try:
+            iface = iface[0].strip()
+
+        except:
+            pass
+
+        return iface if iface else None
+
+    def get_default_interface(self, ip_protocol='ipv4'):
+        iface = None 
+
+        if ip_protocol == 'ipv4':
+            iface = self.get_default_ipv4_interface()
+        elif ip_protocol == 'ipv6':
+            iface = self.get_default_ipv6_interface()
+
         return iface
+
+    def get_interface_info(self, iface):
+        if not iface:
+            return None
+
+        iface_info = { 'ether': None, 'ipv4': None, 'ipv6': None, 'status': None }
+        p = self._pipeopen("ifconfig '%s' ether|grep -w ether" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            out = out[0].strip()
+            m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out)
+            if m != None:
+                iface_info['ether'] = m.group(1)
+
+        p = self._pipeopen("ifconfig '%s' inet|grep -w inet" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            lines = out[0].splitlines()
+            for line in lines:
+                line = line.lstrip().rstrip()
+                m = re.search('inet (([0-9]{1,3}\.){3}[0-9]{1,3})' +
+                    ' +netmask (0x[0-9a-fA-F]{8})' +
+                    ' +broadcast (([0-9]{1,3}\.){3}[0-9]{1,3})',
+                    line
+                )
+
+                if m != None:
+                    if iface_info['ipv4'] == None:
+                        iface_info['ipv4'] = []
+
+                    iface_info['ipv4'].append({
+                        'inet': m.group(1),
+                        'netmask': m.group(3),
+                        'broadcast': m.group(4)
+                    })
+
+        p = self._pipeopen("ifconfig '%s' inet6|grep -w inet6|grep -v scopeid" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            lines = out[0].splitlines()
+            for line in lines:
+                line = line.lstrip().rstrip()
+                m = re.search('inet6 ([0-9a-fA-F:]+) +prefixlen ([0-9]+)', line)
+                if m != None:
+                    if iface_info['ipv6'] == None:
+                        iface_info['ipv6'] = []
+
+                    iface_info['ipv6'].append({
+                        'inet6': m.group(1),
+                        'prefixlen': m.group(2)
+                    })
+        p = self._pipeopen("ifconfig '%s'|grep -w status" % iface)
+        out = p.communicate()
+        if p.returncode == 0:
+            out = out[0].strip()
+            parts = out.split(':') 
+            iface_info['status'] = parts[1].strip()
+
+        return iface_info
 
     def lagg_remove_port(self, lagg, iface):
         return self._system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
@@ -4603,53 +4587,6 @@ class notifier:
             for ed in EncryptedDisk.objects.filter(encrypted_volume=vol):
                 if ed.encrypted_provider not in provs:
                     ed.delete()
-
-    def geom_disks_dump(self, volume):
-        """
-        Raises:
-            ValueError: UFS volume not found
-        """
-        provider = self.get_label_consumer('ufs', volume.vol_name)
-        if provider is None:
-            raise ValueError("UFS Volume %s not found" % (volume,))
-        class_name = provider.xpath("../../name")[0].text
-
-        items = []
-        if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
-            if class_name == 'STRIPE':
-                statepath = "../config/State"
-                status = provider.xpath("../config/Status")[0].text
-                ncomponents = int(re.search(r'Total=(?P<total>\d+)', status).group("total"))
-            else:
-                statepath = "./config/State"
-                ncomponents = int(provider.xpath("../config/Components")[0].text)
-            consumers = provider.xpath("../consumer")
-            doc = self._geom_confxml()
-            for consumer in consumers:
-                provid = consumer.xpath("./provider/@ref")[0]
-                status = consumer.xpath(statepath)[0].text
-                name = doc.xpath("//provider[@id = '%s']/../name" % provid)[0].text
-                items.append({
-                    'type': 'dev',
-                    'diskname': name,
-                    'name': name,
-                    'status': status,
-                })
-            for i in xrange(len(consumers), ncomponents):
-                items.append({
-                    'type': 'dev',
-                    'name': 'UNAVAIL',
-                    'status': 'UNAVAIL',
-                })
-        elif class_name == 'PART':
-            name = provider.xpath("../name")[0].text
-            items.append({
-                'type': 'dev',
-                'diskname': name,
-                'name': name,
-                'status': 'ONLINE',
-            })
-        return items
 
     def multipath_all(self):
         """
@@ -5276,8 +5213,13 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return systemdataset
 
+        self.system_dataset_rename(basename, systemdataset)
+
         datasets = [basename]
-        for sub in ('samba4', 'syslog', 'cores', 'rrd'):
+        for sub in (
+            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
+            'rrd-%s' % systemdataset.sys_uuid
+        ):
             datasets.append('%s/%s' % (basename, sub))
 
         assert volume.vol_fstype in ('ZFS', 'UFS')
@@ -5315,6 +5257,60 @@ class notifier:
         self.nfsv4link()
 
         return systemdataset
+
+    def system_dataset_rename(self, basename=None, sysdataset=None):
+        if basename is None:
+            basename = self.system_dataset_settings()[2]
+        if sysdataset is None:
+            sysdataset = self.system_dataset_settings()[0]
+
+        legacydatasets = {
+            'syslog': '%s/syslog' % basename,
+            'rrd': '%s/rrd' % basename,
+        }
+        newdatasets = {
+            'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
+            'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
+        }
+        proc = self._pipeopen(
+            'zfs list -H -o name %s' % ' '.join(
+                [
+                    "%s" % name
+                    for name in legacydatasets.values() + newdatasets.values()
+                ]
+            )
+        )
+        output = proc.communicate()[0].strip('\n').split('\n')
+        for ident, name in legacydatasets.items():
+            if name in output:
+                newname = newdatasets.get(ident)
+                if newname not in output:
+
+                    if ident == 'syslog':
+                        self.stop('syslogd')
+                    elif ident == 'rrd':
+                        self.stop('collectd')
+
+                    proc = self._pipeopen(
+                        'zfs rename -f "%s" "%s"' % (name, newname)
+                    )
+                    errmsg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        log.error(
+                            "Failed renaming system dataset from %s to %s: %s",
+                            name,
+                            newname,
+                            errmsg,
+                        )
+
+                    if ident == 'syslog':
+                        self.start('syslogd')
+                    elif ident == 'rrd':
+                        self.start('collectd')
+
+                else:
+                    # There is already a dataset using the new name
+                    pass
 
     def system_dataset_path(self):
         if not os.path.exists(SYSTEMPATH):
@@ -5365,6 +5361,9 @@ class notifier:
                                 shutil.rmtree(item)
                                 self._createlink(SYSTEMPATH, item)
                     else:
+                        # We can get here if item is a dead symlink
+                        if os.path.islink(item):
+                            shutil.rmtree(item)
                         self._createlink(SYSTEMPATH, item)
 
     def system_dataset_migrate(self, _from, _to):

@@ -5,13 +5,13 @@
 Reboot
 ======
 
-If you click the "Reboot" entry in the tree, you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate
+If you click the "Reboot" entry in the tree, you will receive the warning message shown in Figure 19a and your browser color will change to red to indicate
 that you have selected an option that will negatively impact users of the FreeNAS® system.
 
 .. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key using the
    instructions in :ref:`Encryption` before performing a reboot. **Without these, you will not be able to unlock the encrypted volume after the reboot.**
 
-**Figure 18a: Reboot Warning Message**
+**Figure 19a: Reboot Warning Message**
 
 |reboot.png|
 

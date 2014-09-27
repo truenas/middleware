@@ -61,20 +61,24 @@ volume/dataset permissions, create the AFP share(s), configure the AFP service, 
 This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring
 Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a. Some settings are only
-available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by
-checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a.
 
-Table 10.1a summarizes the available options when creating an AFP share. Refer to
+**Figure 10.1a: Creating an AFP Share**
+
+|afp2.png|
+
+.. |afp2.png| image:: images/afp2.png
+    :width: 3.8in
+    :height: 3.4in
+
+Table 10.1a summarizes the available options when creating an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
+click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`. Refer to
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
 for a more detailed explanation of the available options.
 
 Once you press the "OK" button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the AFP service successfully started.
-
-**Figure 10.1a: Creating an AFP Share**
-
-|Figure101a_png|
 
 **Table 10.1a: AFP Share Configuration Options**
 
@@ -90,43 +94,50 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               | and can not contain a period                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Share Comment                | string        | optional                                                                                                    |
+| Share Comment                | string        | only available in "Advanced Mode"; optional                                                                 |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Allow List                   | string        | comma delimited list of allowed users and/or groups where groupname begins with a @                         |
+| Allow List                   | string        | only available in "Advanced Mode"; comma delimited list of allowed users and/or groups where groupname      |
+|                              |               | begins with a *@*                                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Deny List                    | string        | comma delimited list of denied users and/or groups where groupname begins with a @                          |
+| Deny List                    | string        | only available in "Advanced Mode"; comma delimited list of denied users and/or groups where groupname       |
+|                              |               | begins with a *@*                                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Read-only Access             | string        | comma delimited list of users and/or groups who only have read access where groupname begins with a @       |
+| Read-only Access             | string        | only available in "Advanced Mode"; comma delimited list of users and/or groups who only have read access    |
+|                              |               | where groupname begins with a *@*                                                                           |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Read-write Access            | string        | comma delimited list of users and/or groups who have read and write access where groupname begins with a @  |
+| Read-write Access            | string        | only available in "Advanced Mode"; comma delimited list of users and/or groups who have read and write      |
+|                              |               | access where groupname begins with a @                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Time Machine                 | checkbox      | due to a limitation in how Mac deals with low-diskspace issues when multiple Mac's share the same volume,   |
 |                              |               | checking "Time Machine" on multiple shares may result in intermittent failed backups                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Zero Device Numbers          | checkbox      | only available in Advanced Mode; enable when the device number is not constant across a reboot              |
+| Zero Device Numbers          | checkbox      | only available in "Advanced Mode"; enable when the device number is not constant across a reboot            |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| No Stat                      | checkbox      | only available in Advanced Mode; if checked, AFP won't stat the volume path when enumerating the volumes    |
+| No Stat                      | checkbox      | only available in "Advanced Mode"; if checked, AFP won't stat the volume path when enumerating the volumes  |
 |                              |               | list; useful for automounting or volumes created by a preexec script                                        |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| AFP3 UNIX Privs              | checkbox      | enables Unix privileges supported by OSX 10.5 and higher; do not enable if the network contains Mac OS X    |
-|                              |               | 10.4 clients or lower as they do not support these                                                          |
+| AFP3 UNIX Privs              | checkbox      | only available in "Advanced Mode"; enables Unix privileges supported by OSX 10.5 and higher; do not enable  |
+|                              |               | if the network contains Mac OS X 10.4 clients or lower as they do not support these                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default file permission      | checkboxes    | only works with Unix ACLs; new files created on the share are set with the selected permissions             |
+| Default file permission      | checkboxes    | only available in "Advanced Mode"; only works with Unix ACLs; new files created on the share are set with   |
+|                              |               | the selected permissions                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default directory permission | checkboxes    | only works with Unix ACLs; new directories created on the share are set with the selected permissions       |
+| Default directory permission | checkboxes    | only available in "Advanced Mode"; only works with Unix ACLs; new directories created on the share are set  |
+|                              |               | with the selected permissions                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Default umask                | integer       | umask for newly created files, default is *000* (anyone can read, write, and execute)                       |
+| Default umask                | integer       | only available in "Advanced Mode"; umask for newly created files, default is *000* (anyone can read, write, |
+|                              |               | and execute)                                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -268,21 +279,28 @@ client application.
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
 Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in :menuselection:`Services --> NFS`, then start NFS in
-:menuselection:` Services --> Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are allowed to
-access the NFS share.
+:menuselection:`Services --> Control Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are
+allowed to access the NFS share.
 
 This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating
 systems, and provides some troubleshooting tips.
 
-To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. Table 10.2a summarizes the
-options in this screen.
+To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. 
 
 **Figure 10.2a: Creating an NFS Share**
 
-|Figure102a_png|
+|nfs2.png|
+
+.. |nfs2.png| image:: images/nfs2.png
+    :width: 4.4in
+    :height: 3.9in
 
 Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
+
+Table 10.2a summarizes the options in this screen. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
+Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
 
 **Table 10.2a: NFS Share Options**
 
@@ -296,11 +314,11 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Authorized networks | string         | space delimited list of allowed network addresses in the form 1.2.3.0/24 where the number after the slash is a     |
-|                     |                | CIDR mask                                                                                                          |
+| Authorized networks | string         | only available in "Advanced Mode"; space delimited list of allowed network addresses in the form *1.2.3.0/24*      |
+|                     |                | where the number after the slash is a CIDR mask                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Authorized  IP      | string         | space delimited list of allowed IP addresses or hostnames                                                          |
+| Authorized  IP      | string         | only available in "Advanced Mode"; space delimited list of allowed IP addresses or hostnames                       |
 | addresses or hosts  |                |                                                                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
@@ -310,31 +328,35 @@ Once you press the "OK" button when creating the NFS share, a pop-up menu will a
 | Read only           | checkbox       | prohibits writing to the share                                                                                     |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Quiet               | checkbox       | inhibits some syslog diagnostics which can be useful to avoid some annoying error messages; see                    |
+| Quiet               | checkbox       | only available in "Advanced Mode"; inhibits some syslog diagnostics which can be useful to avoid some annoying     |
+|                     |                | error messages; see                                                                                                |
 |                     |                | `exports(5) <http://www.freebsd.org/cgi/man.cgi?query=exports>`_                                                   |
 |                     |                | for examples                                                                                                       |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Maproot User        | drop-down menu | if a user is selected, the *root* user is limited to that user's permissions                                       |
+| Maproot User        | drop-down menu | only available in "Advanced Mode"; if a user is selected, the *root* user is limited to that user's permissions    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Maproot Group       | drop-down menu | if a group is selected, the *root* user will also be limited to that group's permissions                           |
+| Maproot Group       | drop-down menu | only available in "Advanced Mode"; if a group is selected, the *root* user will also be limited to that group's    |
+|                     |                | permissions                                                                                                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Mapall User         | drop-down menu | the specified user's permissions are used by all clients                                                           |
+| Mapall User         | drop-down menu | only available in "Advanced Mode"; the specified user's permissions are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Mapall Group        | drop-down menu | the specified group's permission are used by all clients                                                           |
+| Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-
+| Security            | selection      |  only available in "Advanced Mode";                                                                                |
+|                     |                |                                                                                                                    |
++---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
 When creating the NFS share, keep the following points in mind:
 
 
-#.  The Maproot and Mapall options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The Mapall options supersede
-    the Maproot options. If you only wish to restrict the *root* user's permissions, set the Maproot option. If you wish to restrict the permissions of all
-    users, set the Mapall option.
+#.  The "Maproot" and "Mapall" options are exclusive, meaning you can only use one or the other--the GUI will not let you use both. The "Mapall" options
+    supersede the "Maproot" options. If you only wish to restrict the *root* user's permissions, set the "Maproot" option. If you wish to restrict the
+    permissions of all users, set the "Mapall" options.
 
 #.  Each volume or dataset is considered to be its own filesystem and NFS is not able to cross filesystem boundaries.
 
@@ -353,25 +375,25 @@ To better understand these restrictions, consider the following scenario where t
 
 Because of restriction #3, you will receive an error if you try to create one NFS share as follows:
 
-* **Authorized networks:** *10.0.0.0/8 20.0.0.0/8 *
+* "Authorized networks" set to *10.0.0.0/8 20.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
+* "Path" set to :file:`/mnt/volume1/dataset1` and :file:`/mnt/volume1/dataset1/directory1`
 
-Instead, you should select the Path of :file:`/mnt/volume1/dataset1` and check the "All directories" box.
+Instead, you should select a "Path" of :file:`/mnt/volume1/dataset1` and check the "All directories" box.
 
 However, you could restrict that directory to one of the networks by creating two shares as follows.
 
 First NFS share:
 
-* **Authorized networks:** *10.0.0.0/8*
+* "Authorized networks" set to *10.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1`
+* "Path" set to :file:`/mnt/volume1/dataset1`
 
 Second NFS share:
 
-* **Authorized networks:** *20.0.0.0/8 *
+* "Authorized networks" set to *20.0.0.0/8*
 
-* **Path:** :file:`/mnt/volume1/dataset1/directory1`
+* "Path" set to :file:`/mnt/volume1/dataset1/directory1`
 
 Note that this requires the creation of two shares as it can not be accomplished in one share.
 
@@ -380,17 +402,17 @@ Note that this requires the creation of two shares as it can not be accomplished
 Example Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-By default the Mapall options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
+By default the "Mapall" options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
 associated with their user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
 
 A better scenario is to do the following:
 
 #.  Specify the built-in *nobody* account to be used for NFS access.
 
-#.  In the permissions_screen of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to your
-    specifications.
+#.  In the "Change Permissions" screen of the volume/dataset that is being shared, change the owner and group to *nobody* and set the permissions according to
+    your specifications.
 
-#.  Select *nobody* in the Mapall User and Mapall Group drop-down menus for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
+#.  Select *nobody* in the "Mapall User" and "Mapall Group" drop-down menus for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
 
 With this configuration, it does not matter which user account connects to the NFS share, as it will be mapped to the *nobody* user account and will only
 have the permissions that you specified on the volume/dataset. For example, even if the *root* user is able to connect, it will not gain
@@ -408,13 +430,13 @@ In the following examples, an NFS share on a FreeNAS® system with the IP addres
 
 #.  A NFS share has been created with the following attributes:
 
-*   "Path": :file:`/mnt/data`
+    * "Path": :file:`/mnt/data`
 
-*   "Authorized Network": *192.168.2.0/24*
+    * "Authorized Network": *192.168.2.0/24*
 
-*   "MapAll User" and "MapAll Group" are both set to *nobody*
+    * "MapAll User" and "MapAll Group" are both set to *nobody*
 
-*   the "All Directories" checkbox has been checked
+    * the "All Directories" checkbox has been checked
 
 .. _From BSD or Linux:
 
@@ -542,6 +564,70 @@ If the client receives timeout errors when trying to mount the share, add the IP
 WebDAV Shares
 ------------------
 
+Beginning with FreeNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory
+from a web browser.
+
+Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
+by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
+format::
+
+ protocol://IP_address:port_number/share_name
+ 
+where:
+
+* **protocol:** is either
+  *http* or
+  *https*, depending upon the "Protocol" configured in :menuselection:`Services --> WebDAV`.
+  
+* **IP address:** is the IP address of the FreeNAS® system. Take care when configuring a public IP address to ensure that the network's firewall only allows
+  access to authorized systems.
+  
+* **port_number:** is configured in :menuselection:`Services --> WebDAV`. If the FreeNAS® system is to be accessed using a public IP address, consider
+  changing the default port number and ensure that the network's firewall only allows access to authorized systems.
+  
+* **share_name:** is configured in :menuselection:`Sharing --> WebDAV Shares`.
+
+Inputting the URL into a web browser will bring up an authentication pop-up message. Input a username of *webdav* and the password configured in
+:menuselection:`Services --> WebDAV`.
+
+To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
+
+**Figure 10.3a: Adding a WebDAV Share**
+
+|webdav.png|
+
+.. |webdav.png| image:: images/webdav.png
+    :width: 4.2in
+    :height: 2.4in
+
+Table 10.3a summarizes the available options.
+
+**Table 10.3a: WebDAV Share Options**
+
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**                  | **Value**     | **Description**                                                                                             |
+|                              |               |                                                                                                             |
++==============================+===============+=============================================================================================================+
+| Share Path Name              | string        | input a name for the share                                                                                  |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Comment                      | string        | optional                                                                                                    |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Path                         | browse button | browse to the volume/dataset to share                                                                       |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Read Only                    | checkbox      | if checked, users cannot write to the share                                                                 |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Change User & Group          | checkbox      | if checked, automatically sets the share's contents to the *webdav* user and group                          |
+| Ownership                    |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+
+Once you click "OK", a pop-up will ask if you would like to enable the service. Once the service starts, review the settings in
+:menuselection:`Services --> WebDAV` as they are used to determine which URL is used to access the WebDAV share and whether or not authentication is required
+to access the share. These settings are described in :ref:`WebDAV`.
+
 .. _Windows (CIFS) Shares:
 
 Windows (CIFS) Shares
@@ -567,20 +653,24 @@ This section will demonstrate some common configuration scenarios:
 
 * If you are having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
 
-Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`. Some
-settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these
-settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
-Table 10.3a summarizes the options when creating a CIFS share.
+**Figure 10.3a: Adding a CIFS Share**
+
+|cifs2.png|
+
+.. |cifs2.png| image:: images/cifs2.png
+    :width: 5.4in
+    :height: 3.5in
+
+Table 10.3a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
+"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
 
 `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
 provides more details for each configurable option. Once you press the "OK" button when creating the CIFS share, a pop-up menu will ask "Would you like to
 enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
 started.
-
-**Figure 10.3a: Adding a CIFS Share**
-
-|Figure103a_png|
 
 **Table 10.3a: Options for a CIFS Share**
 
@@ -594,30 +684,34 @@ started.
 | Name                         | string        | mandatory; name of share                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Comment                      | string        | optional description                                                                                        |
+| Comment                      | string        | only available in "Advanced Mode";  optional description                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when   |
 |                              |               | creating a share on a system that already has custom ACLs set                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Export Read Only             | checkbox      | prohibits write access to the share                                                                         |
+| Export Read Only             | checkbox      | only available in "Advanced Mode"; prohibits write access to the share                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Browsable to Network Clients | checkbox      | enables Windows clients to browse the shared directory using Windows Explorer                               |
+| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; enables Windows clients to browse the shared directory using Windows     |
+|                              |               | Explorer                                                                                                    |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Export Recycle Bin           | checkbox      | deleted files are instead moved to a hidden :file:`.recycle` directory in the root folder of the share      |
+| Export Recycle Bin           | checkbox      | only available in "Advanced Mode"; deleted files are instead moved to a hidden :file:`.recycle` directory   |
+|                              |               | in the root folder of the share                                                                             |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Show Hidden Files            | checkbox      | if enabled, will display filenames that begin with a dot (Unix hidden files)                                |
+| Show Hidden Files            | checkbox      | only available in "Advanced Mode"; if enabled, will display filenames that begin with a dot (Unix hidden    |
+|                              |               | files)                                                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow Guest Access           | checkbox      | if checked, no password is required to connect to the share and all users share the permissions of the      |
 |                              |               | guest user defined in the CIFS service                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Only Allow Guest Access      | checkbox      | requires "Allow guest access" to also be checked; forces guest access for all connections                   |
+| Only Allow Guest Access      | checkbox      | only available in "Advanced Mode"; requires "Allow guest access" to also be checked; forces guest access    |
+|                              |               | for all connections                                                                                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
@@ -648,49 +742,51 @@ Share Configuration
 
 The process for configuring a share is as follows:
 
-#.  **If you are not using Active Directory or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User` with the
-    following attributes:
+#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User` with the following
+    attributes:
 
-* "Username" and "Password": matches the username and password on the client system
+    * "Username" and "Password": matches the username and password on the client system
 
-* "Home Directory": browse to the volume to be shared
+    * "Home Directory": browse to the volume to be shared
 
-* Repeat this process to create a user account for every user that will need access to the CIFS share
+    * Repeat this process to create a user account for every user that will need access to the CIFS share
 
+    
 #.  If you are not using Active Directory or LDAP, create a group in :menuselection:`Account --> Groups --> Add Group`. Once the group is created, click its
     "Members" button and add the user accounts that you created in step 1.
 
-#.  **Give the group permission to the volume** in :menuselection:`Storage --> View Volumes`. When setting the permissions:
+#.  Give the group permission to the volume in :menuselection:`Storage --> View Volumes`. When setting the permissions:
 
-* set "Owner(user)" to *nobody*
+    * set "Owner(user)" to *nobody*
 
-* set the "Owner(group)" to the one you created in Step 2
+    * set the "Owner(group)" to the one you created in Step 2
 
-* "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
+    * "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
 
-#.  **Create a CIFS share** in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
+    
+#.  Create a CIFS share in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
 
-* "Name": input the name of the share
+    * "Name": input the name of the share
 
-* "Path": browse to the volume to be shared
+    * "Path": browse to the volume to be shared
 
-* keep the "Browsable to Network Clients" box checked
+    * keep the "Browsable to Network Clients" box checked
 
-.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
-   share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box
-   is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still
-   access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and password
-   control.
+    .. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of
+       every share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
+       this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
+       can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
+       password control.
 
-#.  **Configure the CIFS service in :menuselection:`Services --> CIFS`** as follows:
+#.  Configure the CIFS service in :menuselection:`Services --> CIFS` as follows:
 
-* "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
-  Windows workgroup name is *WORKGROUP*
+    * "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
+      Windows workgroup name is *WORKGROUP*
 
-#.  **Start the CIFS service** in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it
-    will change to a blue ON, indicating that the service has been enabled.
+#.  Start the CIFS service in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it will
+    change to a blue "ON", indicating that the service has been enabled.
 
-#.  **Test the share.**
+#.  Test the share.
 
 To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
 share named :file:`backups`. An example is seen in Figure 10.3b:
@@ -773,9 +869,9 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
 #.  If you are not using Active Directory or LDAP, create two users, *user1* and
     *user2* in :menuselection:`Account --> Users --> Add User`. Each user has the following attributes:
 
-* Username and Password: matches that user's username and password on the Windows system
+    * "Username" and "Password" match that user's username and password on the Windows system
 
-* Home Directory: browse to the dataset created for that user
+    * for the "Home Directory", browse to the dataset created for that user
 
 #.  Set the permissions on :file:`/mnt/data/user1` so that the Owner(user) and Owner(group) is *user1*. Set the permissions on :file:`/mnt/data/user2` so that
     the "Owner(user)" and "Owner(group)" is *user2*. For each dataset's permissions, tighten the "Mode" so that "Other" can not read or execute the
@@ -789,7 +885,7 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
 #.  Create two CIFS shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`. The first CIFS share is named *user1* and has a
     Path of :file:`/mnt/data/user1`; the second CIFS share is named *user2* and has a "Path" of :file:`/mnt/data/user2`. When creating the first share, click
     the "No" button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the "Yes" button when the pop-up
-    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services.
+    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 
 #.  From a Windows system, login as *user1* and open :menuselection:`Windows Explorer --> Network --> FREENAS`. Two shares should appear, named
     *user1* and

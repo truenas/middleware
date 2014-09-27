@@ -5,6 +5,9 @@ from south.v2 import DataMigration
 from django.db import models
 
 class Migration(DataMigration):
+    depends_on = ( 
+        ('directoryservice', '0030_upgrade_9_2_1_8_to_9_3_0.py'),
+    )
 
     def forwards(self, orm):
         orm['services.services'].objects.filter(

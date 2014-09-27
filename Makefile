@@ -4,9 +4,11 @@
 
 NANO_LABEL?=FreeNAS
 VERSION?=10.0.0-ALPHA
-TRAIN?=FreeNAS-ALPHA
+TRAIN?=FreeNAS-10-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
+STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
+IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -20,6 +22,7 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 ENV_SETUP+= TRAIN=${TRAIN}
+ENV_SETUP+= UPDATE_USER=sef	# For now, just use sef's account
 
 .if defined(NANO_ARCH)
  ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
@@ -82,6 +85,18 @@ release: git-verify
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
+	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+	sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < build/README > "objs/${STAGEDIR}/README"
+	cp FreeBSD/repo-manifest "objs/${STAGEDIR}/MANIFEST"
+
+release-push: release
+	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
+	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+
+update-push:	release
+	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout

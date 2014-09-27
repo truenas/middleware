@@ -21,7 +21,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT
 )
 
-from freenasUI.services.models import ActiveDirectory
+from freenasUI.directoryservice.models import ActiveDirectory
 
 
 class ActiveDirectoryConfig(FreeNAS_ActiveDirectory):
@@ -54,6 +54,7 @@ class ADToolShell(cmd.Cmd):
 
     def do_help(self, arg):
         options = [
+            [ "config_file", "Generate configf file" ],
             [ "verbose_logging", "Verbose logging" ],
             [ "timeout", "Timeout for commands" ],
             [ "dns_timeout", "DNS query timeout" ],
@@ -63,6 +64,7 @@ class ADToolShell(cmd.Cmd):
             [ "binddn", "Bind DN"],
             [ "netbiosname", "Netbios name of the domain" ],
             [ "workgroup", "Netbios name of the domain" ],
+            [ "site", "Domain site" ],
             [ "dcname", "Domain controller in hostname:port format" ],
             [ "dchost", "Domain controller hostname" ],
             [ "dcport", "Domain controller port" ],
@@ -147,7 +149,46 @@ Available options:
             val = True
         return val
 
-    def do_get_verbose_logging(self, args):
+    def get_config_file(self, args):
+        keys = [
+            "ad_bindname",
+            "ad_domainname",
+            "ad_basedn",
+            "ad_binddn",
+            "ad_site",
+            "ad_dcname",
+            "ad_dchost",
+            "ad_dcport",
+            "ad_gcname",
+            "ad_gchost",
+            "ad_gcport",
+            "ad_use_keytab",
+            "ad_keytab",
+            "ad_krbname",
+            "ad_krbhost",
+            "ad_krbport",
+            "ad_kpwdname",
+            "ad_kpwdhost",
+            "ad_kpwdport",
+            "ad_timeout",
+            "ad_dns_timeout",
+            "ad_ssl"
+        ]
+
+        for k in keys:
+            attr = k.replace("ad_", "")
+            val = getattr(self.adc, attr)
+
+            if val == True:
+                val = 1
+            if val == False:
+                val = 0
+
+            print >> sys.stdout, "%s=%s" % (
+                k, val if val != None else ''
+            )
+
+    def get_verbose_logging(self, args):
         print >> sys.stdout, self.adc.verbose_logging
     
     def set_verbose_logging(self, args):
@@ -250,7 +291,10 @@ Available options:
 
     def set_workgroup(self, args):
         return self.set_netbiosname(args)
-    
+
+    def get_site(self, args):
+        print >> sys.stdout, self.adc.site
+
     def get_dcname(self, args):
         print >> sys.stdout, self.adc.dcname
 

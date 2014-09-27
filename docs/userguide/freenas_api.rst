@@ -55,10 +55,10 @@ To build a local copy of the API reference documentation::
  cd freenas/docs/api
  make html
 
-Point a web browser to :file:`/usr/local/freenas/docs/api/_build/html/index.html` to view the documentation. As seen in the example in Figure 25.1a, the
+Point a web browser to :file:`/usr/local/freenas/docs/api/_build/html/index.html` to view the documentation. As seen in the example in Figure 26.1a, the
 resources are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
 
-**Figure 25.1a: FreeNAS® API Documentation**
+**Figure 26.1a: FreeNAS® API Documentation**
 
 |Figure251a_png|
 
@@ -124,11 +124,11 @@ to *http*.
 
 **Lines 8-16:** sets the values for the user being created. The "Users" resource, found in :file:`freenas/docs/api/_build/html/resources/account.html#users`,
 describes this resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a
-FreeBSD user, the values that you input must be valid for a FreeBSD user account. Table 25.2a summarizes the valid values. Since this resource is using JSON,
+FreeBSD user, the values that you input must be valid for a FreeBSD user account. Table 26.2a summarizes the valid values. Since this resource is using JSON,
 the possible boolean values are *True*
 or *False*.
 
-**Table 25.2a: Valid JSON Parameters for Users Create Resource**
+**Table 26.2a: Valid JSON Parameters for Users Create Resource**
 
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 | **JSON Parameter**       | **Type** | **Description**                                                                                                      |

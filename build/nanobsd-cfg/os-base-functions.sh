@@ -50,16 +50,6 @@ write_version_file ( )
 	fi
 }
 
-add_truenas_gui()
-{
-	local gui dst dstCR
-	gui=${AVATAR_ROOT}/gui
-	dstCR=/usr/local/www/freenasUI
-	dst=${NANO_WORLDDIR}${dstCR}
-
-	add_gui_encrypted "$gui" "$dst" "$dstCR"
-}
-
 # Move the $world/data to the /data partion
 move_data()
 {
@@ -111,7 +101,6 @@ remove_gcc47()
 /usr/local/lib/gcc47/libstdc++.so.6
 /usr/local/lib/gcc47/libstdc++.so
 /usr/local/lib/gcc47/libstdc++.a
-/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
 /usr/local/lib/gcc47/libmudflap.so.0
 /usr/local/lib/gcc47/libmudflap.so
 /usr/local/lib/gcc47/libmudflapth.so.0
@@ -161,7 +150,6 @@ remove_gcc()
 /usr/local/lib/gcc47/libstdc++.so.6
 /usr/local/lib/gcc47/libstdc++.so
 /usr/local/lib/gcc47/libstdc++.a
-/usr/local/lib/gcc47/libstdc++.so.6-gdb.py
 /usr/local/lib/gcc47/libmudflap.so.0
 /usr/local/lib/gcc47/libmudflap.so
 /usr/local/lib/gcc47/libmudflapth.so.0
@@ -367,12 +355,17 @@ last_orders() {
 		# gui image's bin directory.
 
 		if is_truenas ; then
+			tar -c -p -f ${NANO_OBJ}/gui-boot.tar \
+				-C ${NANO_OBJ}/_.isodir ./boot
+			tar -c -p -f ${NANO_OBJ}/gui-install-environment.tar \
+				-C ${NANO_OBJ}/_.instufs .
+			tar -c -p -f ${NANO_OBJ}/gui-packages.tar \
+				-s '@^Packages@FreeNAS/Packages@' \
+				-C ${NANO_OBJ}/_.packages .
 			tar -c -p -v -f ${gui_upgrade_bname}.tar \
 				-s '@^update$@bin/update@' \
 				-s '@^updatep1$@bin/updatep1@' \
 				-s '@^updatep2$@bin/updatep2@' \
-				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Files/root" \
-					update updatep1 updatep2 \
 				-C "$NANO_WORLDDIR" \
 					etc/avatar.conf \
 				-C "${AVATAR_ROOT}/build/nanobsd-cfg/Installer" \
@@ -380,7 +373,11 @@ last_orders() {
 				-C "${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer" \
 					. \
 				-C "$AVATAR_ROOT/build/nanobsd-cfg/GUI_Upgrade" \
-					.
+					. \
+				-C "${NANO_OBJ}" \
+					gui-boot.tar \
+					gui-install-environment.tar \
+					gui-packages.tar
 				${NANO_XZ} ${PXZ_ACCEL} -9 -z ${gui_upgrade_bname}.tar
 				mv ${gui_upgrade_bname}.tar.xz ${gui_upgrade_bname}.txz
 		else

@@ -496,6 +496,8 @@ class Available(object):
             return results
 
         plugins = []
+	results.sort(key=lambda x: x['Application'].lower())
+
         for p in results:
             try:
                 index_entry = self.get_index_entry(

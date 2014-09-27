@@ -10713,3 +10713,803 @@ msgstr ""
 #: templates/system/initialwizard_import.html:31
 msgid "Skip"
 msgstr ""
+
+#: choices.py:43
+#, fuzzy
+msgid "Basic Authentication"
+msgstr "Autenticazione"
+
+#: choices.py:44
+#, fuzzy
+msgid "Digest Authentication"
+msgstr "Autenticazione"
+
+#: choices.py:799
+msgid "adex"
+msgstr ""
+
+#: choices.py:811
+msgid "Import an existing Certificate Authority"
+msgstr ""
+
+#: choices.py:812
+msgid "Create an internal Certificate Authority"
+msgstr ""
+
+#: choices.py:813
+msgid "Create an intermediate Certificate Authority"
+msgstr ""
+
+#: choices.py:817
+msgid "Import an existing Certificate"
+msgstr ""
+
+#: choices.py:818
+#, fuzzy
+msgid "Create an internal Certificate"
+msgstr "Certificato SSL"
+
+#: choices.py:819
+#, fuzzy
+msgid "Create a Certificate Signing Request"
+msgstr "Certificato autofirmato"
+
+#: choices.py:823
+msgid "512"
+msgstr ""
+
+#: choices.py:824
+msgid "1024"
+msgstr ""
+
+#: choices.py:825
+msgid "2048"
+msgstr ""
+
+#: choices.py:826
+msgid "4096"
+msgstr ""
+
+#: choices.py:830
+msgid "SHA1"
+msgstr ""
+
+#: choices.py:831
+msgid "SHA224"
+msgstr ""
+
+#: choices.py:832
+msgid "SHA256"
+msgstr ""
+
+#: choices.py:833
+msgid "SHA384"
+msgstr ""
+
+#: choices.py:834
+msgid "SHA512"
+msgstr ""
+
+#: directoryservice/forms.py:406
+#, fuzzy
+msgid "NIS failed to reload."
+msgstr "Riavvio del servizio AFP fallito."
+
+#: api/resources.py:2488
+#, fuzzy
+msgid "On Reboot"
+msgstr "Riavvia"
+
+#: directoryservice/models.py:228
+#: directoryservice/models.py:229
+msgid "ADEX Idmap"
+msgstr ""
+
+#: api/resources.py:2490
+#, fuzzy
+msgid "Now"
+msgstr "No"
+
+#: directoryservice/models.py:637
+#, fuzzy
+msgid "Descriptive Name."
+msgstr "Descrizione"
+
+#: directoryservice/models.py:668
+#: directoryservice/models.py:806
+#, fuzzy
+msgid "FQDN of the domain controller to use."
+msgstr "Nome del Domain Controller"
+
+#: directoryservice/models.py:812
+msgid "FQDN of the global catalog server to use."
+msgstr ""
+
+#: directoryservice/models.py:993
+#, fuzzy
+msgid "SUDO Suffix"
+msgstr "User Suffix"
+
+#: directoryservice/models.py:996
+#, fuzzy
+msgid ""
+"This parameter specifies the suffix that is used for the SUDO configuration "
+"in the LDAP directory, e.g. ou=SUDOers"
+msgstr ""
+"Questo parametro specifica il suffisso che viene utilizzato per gli utenti, "
+"quando questi vengono aggiunti alla Directory LDAP, es. ou=Users"
+
+#: directoryservice/models.py:1049
+msgid "Idmap Backend"
+msgstr ""
+
+#: directoryservice/models.py:1056
+msgid "Samba Schema"
+msgstr ""
+
+#: jails/forms.py:92
+#, fuzzy
+msgid "Template"
+msgstr "Netmask IPv4"
+
+#: jails/utils.py:706
+msgid "You need to create a ZFS volume to proceed!"
+msgstr ""
+
+#: jails/views.py:492
+#, fuzzy
+msgid "Jail Template successfully created."
+msgstr "Dataset modificato con successo."
+
+#: jails/views.py:512
+#, fuzzy
+msgid "Jail Template successfully edited."
+msgstr "Dataset modificato con successo."
+
+#: services/forms.py:1541
+#, fuzzy
+msgid "Confirm WebDAV Password"
+msgstr "Conferma Password"
+
+#: services/forms.py:1607
+msgid "The HTTP and HTTPS ports cannot be the same!"
+msgstr ""
+
+#: services/forms.py:1628
+#, fuzzy
+msgid "The WebDAV service failed to reload."
+msgstr "Riavvio del servizio AFP fallito."
+
+#: services/models.py:325
+#, fuzzy
+msgid "Global auxiliary parameters"
+msgstr "Parametri ausiliari"
+
+#: services/models.py:328
+#, fuzzy
+msgid "These parameters are added to [Global] section of afp.conf"
+msgstr "Questi parametri sono aggiunti alla sezione [global] di smb.conf"
+
+#: services/models.py:1728
+#, fuzzy
+msgid "HTTP Port"
+msgstr "Porta TCP"
+
+#: services/models.py:1731
+msgid ""
+"This is the port at which WebDAV will run on.<br />Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1736
+#, fuzzy
+msgid "HTTPS Port"
+msgstr "Porta TCP"
+
+#: services/models.py:1739
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br />Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1745
+#, fuzzy
+msgid "Webdav Password"
+msgstr "Nuova password"
+
+#: services/models.py:1747
+msgid "The Default Password is: davtest"
+msgstr ""
+
+#: services/models.py:1752
+#, fuzzy
+msgid "HTTP Authentication"
+msgstr "Autenticazione"
+
+#: services/models.py:1755
+msgid ""
+"Type of HTTP Authentication for WebDAV<br />Basic Auth: Password is sent "
+"over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
+"Hash of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1761
+#: services/models.py:1762
+#: templates/services/core.html:164
+#: templates/sharing/index.html:21
+msgid "WebDAV"
+msgstr ""
+
+#: sharing/models.py:335
+#, fuzzy
+msgid "Share Path Name"
+msgstr "Nome server"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
+"freenas-machine:webdav_port/this_path_name"
+msgstr ""
+
+#: sharing/models.py:357
+msgid "Change User & Group Ownership"
+msgstr ""
+
+#: sharing/models.py:358
+msgid ""
+"Changes the user & group of the shared folder to 'webdav:webdav' recursively "
+"(including all subdirectories)<br />If disabled, you will need to manually<"
+"br />add the 'webdav' user & group to the share."
+msgstr ""
+
+#: sharing/models.py:374
+msgid "WebDAV Share"
+msgstr ""
+
+#: sharing/models.py:375
+#, fuzzy
+msgid "WebDAV Shares"
+msgstr "Condivisioni attive"
+
+#: storage/admin.py:263
+#: storage/admin.py:361
+#, fuzzy
+msgid "Edit Options"
+msgstr "Modifica Opzioni ZFS"
+
+#: storage/admin.py:268
+#: storage/admin.py:367
+#, fuzzy
+msgid "Create Dataset"
+msgstr "Crea un Dataset ZFS"
+
+#: storage/forms.py:1439
+msgid "Case Sensitivity"
+msgstr ""
+
+#: system/admin.py:49
+#, fuzzy
+msgid "Internal"
+msgstr "Intervallo"
+
+#: system/admin.py:54
+#: system/admin.py:148
+msgid "Issuer"
+msgstr ""
+
+#: system/admin.py:59
+#: system/nav.py:91
+#: templates/system/index.html:27
+#, fuzzy
+msgid "Certificates"
+msgstr "Certificato SSL"
+
+#: system/admin.py:64
+#: system/admin.py:153
+#, fuzzy
+msgid "Distinguished Name"
+msgstr "Nome Dataset"
+
+#: system/forms.py:163
+#, fuzzy
+msgid "Failed to create a new Boot."
+msgstr "Impossibile recuperare %(url)s: %(error)s"
+
+#: system/admin.py:74
+#: system/admin.py:163
+msgid "Until"
+msgstr ""
+
+#: system/forms.py:183
+#, fuzzy
+msgid "Failed to rename Boot Environment."
+msgstr "Impossibile recuperare %(url)s: %(error)s"
+
+#: system/forms.py:1028
+#, fuzzy
+msgid "Place to temporarily place update file"
+msgstr "Posizione temporanea in cui salvare il file PBI"
+
+#: system/forms.py:1030
+#, fuzzy
+msgid ""
+"The system will use this place to temporarily store the update file before "
+"it's being applied."
+msgstr ""
+"Il sistema utilizzerà questo posto per salvare temporaneamente il firmware "
+"prima di installarlo."
+
+#: system/forms.py:1062
+#, fuzzy
+msgid "Update file to be installed"
+msgstr "File PBI da installare"
+
+#: system/forms.py:1924
+#: system/forms.py:1952
+#: system/forms.py:1994
+#: system/forms.py:2086
+#: system/forms.py:2208
+#: system/forms.py:2237
+#: system/forms.py:2279
+#: system/forms.py:2395
+#, fuzzy
+msgid "Descriptive Name"
+msgstr "Descrizione"
+
+#: system/forms.py:1930
+#: system/forms.py:1958
+#: system/forms.py:2214
+#: system/forms.py:2243
+#: system/models.py:589
+#, fuzzy
+msgid "Cut and paste the contents of your certificate here"
+msgstr ""
+"Copia e incolla qui il contenuto dei file della chiave pubblica e privata "
+"del tuo certificato."
+
+#: system/forms.py:1935
+#: system/forms.py:1963
+#, fuzzy
+msgid "Serial for next Certificate"
+msgstr "Certificato autofirmato"
+
+#: system/forms.py:1997
+#: system/forms.py:2089
+#: system/forms.py:2282
+#: system/forms.py:2398
+msgid "Key Length"
+msgstr ""
+
+#: system/forms.py:2003
+#: system/forms.py:2095
+#: system/forms.py:2288
+#: system/forms.py:2404
+#: system/models.py:613
+msgid "Digest Algorithm"
+msgstr ""
+
+#: system/forms.py:2009
+#: system/forms.py:2101
+#: system/forms.py:2294
+#: system/models.py:619
+msgid "Lifetime"
+msgstr ""
+
+#: system/forms.py:2246
+#: system/models.py:594
+#, fuzzy
+msgid "Private Key"
+msgstr "Chiave Privata Host"
+
+#: system/forms.py:2242
+#, fuzzy
+msgid "Certificate Signing Request"
+msgstr "Certificato autofirmato"
+
+#: system/forms.py:2249
+#: system/models.py:595
+#, fuzzy
+msgid "Cut and paste the contents of your private key here"
+msgstr ""
+"Copia e incolla qui il contenuto dei file della chiave pubblica e privata "
+"del tuo certificato."
+
+#: system/models.py:550
+msgid "Check Automatically For Updates"
+msgstr ""
+
+#: system/utils.py:82
+msgid "Downloading"
+msgstr ""
+
+#: system/utils.py:103
+#, fuzzy
+msgid "Installing"
+msgstr "Controllo Plugin"
+
+#: system/nav.py:32
+#: templates/system/index.html:9
+msgid "Boot"
+msgstr ""
+
+#: system/models.py:583
+#, fuzzy
+msgid "Descriptive Name)"
+msgstr "Descrizione"
+
+#: system/models.py:600
+msgid "Signing Request"
+msgstr ""
+
+#: system/models.py:601
+#, fuzzy
+msgid "Cut and paste the contents of your CSR here"
+msgstr ""
+"Copia e incolla qui il contenuto dei file della chiave pubblica e privata "
+"del tuo certificato."
+
+#: system/models.py:606
+msgid "Key length"
+msgstr ""
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+#, fuzzy
+msgid "Create"
+msgstr "Crea un zvol ZFS"
+
+#: system/models.py:669
+#, fuzzy
+msgid "Serial for next certificate"
+msgstr "Certificato autofirmato"
+
+#: system/views.py:171
+#: system/views.py:172
+#: system/views.py:176
+#, fuzzy
+msgid "Activate"
+msgstr "Azione"
+
+#: system/models.py:675
+msgid "Signing Certificate Authority"
+msgstr ""
+
+#: system/views.py:189
+#, fuzzy
+msgid "Created"
+msgstr "Crea un zvol ZFS"
+
+#: system/models.py:794
+#, fuzzy
+msgid "Certificate Authority"
+msgstr "Certificato SSL"
+
+#: system/views.py:203
+#, fuzzy
+msgid "Boot Environment successfully activated."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:207
+msgid "Failed to activate Boot Environment."
+msgstr ""
+
+#: system/views.py:221
+#, fuzzy
+msgid "Boot Environment successfully added."
+msgstr "Volume aggiunto con successo."
+
+#: system/views.py:178
+#: system/views.py:179
+#: system/views.py:180
+#, fuzzy
+msgid "Rename"
+msgstr "Nome utente"
+
+#: system/views.py:238
+#, fuzzy
+msgid "Boot Environment successfully deleted."
+msgstr "Snapshot eliminato con successo."
+
+#: system/nav.py:83
+#: templates/system/index.html:24
+msgid "CAs"
+msgstr ""
+
+#: system/views.py:242
+msgid "Failed to delete Boot Environment."
+msgstr ""
+
+#: system/views.py:260
+#, fuzzy
+msgid "Boot Environment successfully renamed."
+msgstr "Volume aggiunto con successo."
+
+#: system/views.py:896
+#, fuzzy
+msgid "Certificate Authority successfully imported."
+msgstr "%s aggiornato con successo."
+
+#: system/views.py:915
+#, fuzzy
+msgid "Internal Certificate Authority successfully created."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:934
+msgid "Intermediate Certificate Authority successfully created."
+msgstr ""
+
+#: system/views.py:1206
+#, fuzzy
+msgid "Internal Certificate Viewed."
+msgstr "Certificato SSL"
+
+#: system/views.py:955
+#, fuzzy
+msgid "Certificate Authority successfully edited."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:1003
+#, fuzzy
+msgid "Certificate successfully imported."
+msgstr "%s aggiornato con successo."
+
+#: system/views.py:1022
+#, fuzzy
+msgid "Internal Certificate successfully created."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:1041
+#, fuzzy
+msgid "Certificate CSR successfully created."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:1062
+#, fuzzy
+msgid "Internal Certificate successfully edited."
+msgstr "Dataset modificato con successo."
+
+#: system/views.py:1083
+#, fuzzy
+msgid "CSR successfully edited."
+msgstr "modificato con successo"
+
+#: templates/freeadmin/generic_model_delete.html:31
+#, fuzzy
+msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
+msgstr "Sei sicuro di voler eliminare \"%(name)s\"?"
+
+#: templates/services/core.html:170
+#, fuzzy
+msgid "WebDAV Settings"
+msgstr "Impostazioni LDAP"
+
+#: templates/storage/index.html:24
+#, fuzzy
+msgid "Scrubs"
+msgstr "Scrub ZFS"
+
+#: templates/storage/index.html:31
+#, fuzzy
+msgid "Snapshots"
+msgstr "Snapshot"
+
+#: templates/system/upgrade.html:22
+msgid "You're about to upgrade. The following packages will be changed:"
+msgstr ""
+
+#: templates/system/upgrade.html:24
+#, fuzzy
+msgid "Are you sure you want to continue?"
+msgstr "Sei sicuro di voler disconnettere?"
+
+#: templates/system/upgrade.html:26
+#, fuzzy
+msgid "No updates available"
+msgstr "Nessuna replicazione ZFS disponibile"
+
+#: templates/system/upgrade_edit.html:7
+#: templates/system/upgrade_edit.html:9
+msgid "Check for Updates"
+msgstr ""
+
+#: templates/system/bootenv_activate.html:4
+#, fuzzy
+msgid "Activate boot environment %(name)s"
+msgstr "Crea Volume ZFS su %(name)s"
+
+#: templates/system/certificate_datagrid.html:4
+#, fuzzy
+msgid "Import Certificate"
+msgstr "Certificato SSL"
+
+#: templates/system/bootenv_add.html:4
+msgid "Create boot environment from %(source)s"
+msgstr ""
+
+#: templates/system/certificate_datagrid.html:11
+#: templates/system/certificate_datagrid.html:13
+#, fuzzy
+msgid "Create Internal Certificate"
+msgstr "Certificato SSL"
+
+#: templates/system/bootenv_delete.html:4
+#, fuzzy
+msgid "Are you sure you want to delete %(name)s?"
+msgstr "Sei sicuro di voler eliminare \"%(name)s\"?"
+
+#: templates/system/certificate_datagrid.html:18
+#: templates/system/certificate_datagrid.html:20
+#, fuzzy
+msgid "Create Certificate Signing Request"
+msgstr "Certificato autofirmato"
+
+#: templates/system/bootenv_datagrid.html:9
+#, fuzzy
+msgid "Create Boot"
+msgstr "Crea un zvol ZFS"
+
+#: templates/system/certificateauthority_datagrid.html:4
+#, fuzzy
+msgid "Import CA"
+msgstr "Importa Volume"
+
+#: templates/system/certificateauthority_datagrid.html:11
+#: templates/system/certificateauthority_datagrid.html:13
+msgid "Create Internal CA"
+msgstr ""
+
+#: templates/system/certificateauthority_datagrid.html:18
+#: templates/system/certificateauthority_datagrid.html:20
+msgid "Create Intermediate CA"
+msgstr ""
+
+#: templates/system/bootenv_rename.html:4
+#, fuzzy
+msgid "Rename boot environment %(name)s"
+msgstr "Crea Volume ZFS su %(name)s"
+
+#: templates/system/upgrade_edit.html:13
+#: templates/system/upgrade_edit.html:15
+#, fuzzy
+msgid "Manual Update"
+msgstr "Applica aggiornamento"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "Importa Volume"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "E-mail"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr ""
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr ""
+
+#: system/forms.py:1848
+#, fuzzy
+msgid "Show console messages in the footer."
+msgstr ""
+"Mostra i messaggi della console a piè di pagina (necessita ricaricamento "
+"dell'interfaccia)"
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""
+
+#: directoryservice/models.py:804
+#, fuzzy
+msgid "Site Name"
+msgstr "Nome server"
+
+#: directoryservice/models.py:806
+#, fuzzy
+msgid "Name of site to use."
+msgstr "Nome del plugin"
+
+#: services/models.py:263
+msgid ""
+"This parameter controls whether or not Samba should obey PAM's account and "
+"session management directives"
+msgstr ""
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/forms.py:1964
+msgid "Only one replication allowed per dataset."
+msgstr ""
+
+#: storage/forms.py:1973
+msgid ""
+"Only one replication allowed per dataset, including parent dataset set up "
+"recursively."
+msgstr ""
+
+#: system/forms.py:1889
+msgid "Trains"
+msgstr ""
+
+#: storage/admin.py:375
+#, fuzzy
+msgid "Edit zvol"
+msgstr "Aggiungi ZVol"
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+#, fuzzy
+msgid "Zvol successfully edited."
+msgstr "%s aggiornato con successo."
+
+#: directoryservice/models.py:853
+msgid "Winbind NSS Info"
+msgstr ""
+
+#: directoryservice/models.py:854
+msgid ""
+"This parameter is designed to control how Winbind retrieves Name Service "
+"Information to construct a user's home directory and login"
+msgstr ""
+
+#: jails/models.py:359
+#, fuzzy
+msgid "IPv4 DHCP"
+msgstr "DHCP"
+
+#: jails/models.py:383
+#, fuzzy
+msgid "IPv6 Autoconfigure"
+msgstr "Configurazione automatica IPv6"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For example http(s)://ip-"
+"of-freenas-machine:webdav_port/'Share Name'"
+msgstr ""
+
+#: storage/views.py:203
+#, fuzzy
+msgid "WARNING!"
+msgstr "AVVISO"
+
+#: storage/views.py:205
+msgid ""
+"Always backup the key! If the key is lost, the data on the disks will also "
+"be lost with no hope of recovery."
+msgstr ""
+
+#: storage/views.py:209
+msgid ""
+"This type of encryption is primarily targeted at users who are storing "
+"sensitive data and want the ability to remove disks from the pool and "
+"dispose of/re-use them without concern for erasure."
+msgstr ""
+
+#: storage/views.py:214
+msgid ""
+"iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
+"data as a consequence of using this feature."
+msgstr ""

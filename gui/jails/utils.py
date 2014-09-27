@@ -245,10 +245,12 @@ def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
 
         if ipv4_exclude_dict and str(addr) in ipv4_exclude_dict:
             addr += 1
+            i += 1
             continue
 
         if ping_host(str(addr).split('/')[0]):
             addr += 1
+            i += 1
             continue
 
         else:
@@ -293,10 +295,12 @@ def get_available_ipv6(ipv6_start, ipv6_end=None, ipv6_exclude_dict=None):
 
         if ipv6_exclude_dict and str(addr) in ipv6_exclude_dict:
             addr += 1
+            i += 1
             continue
 
         if ping_host(str(addr).split('/')[0], ping6=True):
             addr += 1
+            i += 1
             continue
 
         else:
@@ -403,12 +407,12 @@ def get_jail_ipv6_network_end():
 
 
 #
-# guess_ipv4_address()
+# get_ipv4_address()
 #
 # Get the configured jail IPv4 network, if it doesn't have a start or stop
 # address, fill them in, then probe the range for first available address.
 #
-def guess_ipv4_address():
+def get_ipv4_address():
     ipv4_addr = None
 
     st_ipv4_network = get_jail_ipv4_network()
@@ -436,13 +440,13 @@ def guess_ipv4_address():
 
 
 #
-# guess_ipv6_address()
+# get_ipv6_address()
 #
 # Get the configured jail IPv6 network, if it doesn't have a start or stop
 # address, fill them in, then probe the range for first available address.
 #
-def guess_ipv6_address():
-    ipv4_addr = None
+def get_ipv6_address():
+    ipv6_addr = None
 
     st_ipv6_network = get_jail_ipv6_network()
     if st_ipv6_network:
@@ -460,12 +464,12 @@ def guess_ipv6_address():
                 st_ipv6_network.prefix_length
             ))  
 
-        #ipv6_addr = get_available_ipv6(st_ipv6_network_start,
-        #    st_ipv6_network_end,
-        #    get_ipv6_exclude_dict()
-        #)
+        ipv6_addr = get_available_ipv6(st_ipv6_network_start,
+            st_ipv6_network_end,
+            get_ipv6_exclude_dict()
+        )
 
-    return ipv4_addr
+    return ipv6_addr
 
 
 #
@@ -480,7 +484,7 @@ def get_host_ipv4_network():
     st_host_ipv4_network = None
 
     try:
-        iface = notifier().guess_default_interface()
+        iface = notifier().get_default_ipv4_interface()
         st_ha = sipcalc_type(iface=iface)
         if not st_ha.is_ipv4():
             st_host_ipv4_network = None
@@ -506,7 +510,7 @@ def get_host_ipv6_network():
     st_host_ipv6_network = None
 
     try:
-        iface = notifier().guess_default_interface()
+        iface = notifier().get_default_ipv6_interface()
         st_ha = sipcalc_type(iface=iface)
         if not st_ha.is_ipv6():
             st_host_ipv6_network = None
@@ -521,21 +525,13 @@ def get_host_ipv6_network():
     return st_host_ipv6_network
 
 
-#
-# guess_addresses()
-#
-# Figure out the next IPv4 and IPv6 addresses available (if any). 
-# If a bridge address is necessary, figure that as well
-#
-def guess_addresses():
+def guess_ipv4_addresses():
     addresses = {
         'high_ipv4': None,
-        'high_ipv6': None,
-        'bridge_ipv4': None,
-        'bridge_ipv6': None
+        'bridge_ipv4': None
     }
 
-    ipv4_addr = guess_ipv4_address()
+    ipv4_addr = get_ipv4_address()
     ipv4_jail_network = get_jail_ipv4_network()
 
     if ipv4_addr:
@@ -551,7 +547,16 @@ def guess_addresses():
             log.debug("guess_addresses: %s", e)
             return addresses  
 
-    ipv6_addr = guess_ipv6_address()
+    return addresses
+
+
+def guess_ipv6_addresses():
+    addresses = {
+        'high_ipv6': None,
+        'bridge_ipv6': None
+    }
+
+    ipv6_addr = get_ipv6_address()
     ipv6_jail_network = get_jail_ipv6_network()
 
     if ipv6_addr:
@@ -570,10 +575,32 @@ def guess_addresses():
     return addresses
 
 
+#
+# guess_addresses()
+#
+# Figure out the next IPv4 and IPv6 addresses available (if any). 
+# If a bridge address is necessary, figure that as well
+#
+def guess_addresses():
+    addresses = {}
+
+    ipv4_addresses = guess_ipv4_addresses()
+    addresses.update(ipv4_addresses)
+
+    ipv6_addresses = guess_ipv6_addresses()
+    addresses.update(ipv6_addresses)
+
+    return addresses
+
+
 def new_default_plugin_jail(basename):
-    addrs = guess_addresses()
-    if not addrs['high_ipv4']:
-        raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = "%s/warden.log" % jc.jc_path
+
+    if not jc.jc_ipv4_dhcp:
+        addrs = guess_addresses()
+        if not addrs['high_ipv4']:
+            raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
 
     jailname = None
     for i in xrange(1, 1000):
@@ -584,10 +611,6 @@ def new_default_plugin_jail(basename):
             break
 
     w = warden.Warden()
-
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = "%s/warden.log" % jc.jc_path
-
     template_create_args = {}
 
     template = JailTemplate.objects.get(jt_name='pluginjail')
@@ -631,19 +654,32 @@ def new_default_plugin_jail(basename):
         raise MiddlewareError(_('Unable to find template!'))
 
     try:
-        w.create(
-            jail=jailname,
-            ipv4=addrs['high_ipv4'],
-            flags=(
+        high_ipv4 = "DHCP"
+        if not jc.jc_ipv4_dhcp:
+            high_ipv4 = addrs['high_ipv4']
+
+        high_ipv6 = "AUTOCONF"
+        if not jc.jc_ipv6_autoconf:
+            high_ipv6 = addrs['high_ipv6']
+
+        create_args = {
+            'jail': jailname,
+            'ipv4': high_ipv4,
+            'ipv6': high_ipv6,
+            'flags': (
                 warden.WARDEN_CREATE_FLAGS_LOGFILE |
                 warden.WARDEN_CREATE_FLAGS_TEMPLATE |
                 warden.WARDEN_CREATE_FLAGS_VANILLA |
                 warden.WARDEN_CREATE_FLAGS_SYSLOG |
-                warden.WARDEN_CREATE_FLAGS_IPV4
+                warden.WARDEN_CREATE_FLAGS_IPV4 |
+                warden.WARDEN_CREATE_FLAGS_IPV6
             ),
-            template='pluginjail',
-            logfile=logfile,
-        )
+            'template': 'pluginjail',
+            'logfile': logfile
+        }
+
+        w.create(**create_args)
+
     except Exception, e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
 
@@ -692,57 +728,27 @@ def jail_auto_configure():
     vol_fstype = 'ZFS'
     volume = Volume.objects.filter(vol_fstype='ZFS')
     if not volume.exists():
-        log.warn("ZFS is recommended for plugins!")
-        volume = Volume.objects.filter(vol_fstype='UFS')
-        if not volume.exists():
-            raise MiddlewareError(_("You need to create a volume to proceed!"))
-        vol_fstype = 'UFS'  
+        raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
 
     volume = volume[0]
     basename = "%s/jails" % volume.vol_name
 
-    if vol_fstype == 'ZFS':
-        name = basename
-        for i in xrange(2, 100):
-            datasets = list_datasets(
-                path="/mnt/%s" % name,
-                recursive=False,
-            )
-            if not datasets:
-                break
-            else:
-                name = "%s_%d" % (basename, i)
-        rv, err = notifier().create_zfs_dataset(name)
-        if rv != 0:
-            raise MiddlewareError(_("Failed to create dataset %(name)s: %(error)s") % {
-                'name': name,
-                'error': err,
-            })
-
-    elif vol_fstype == 'UFS':
-        name = "/mnt/%s" % basename
-        if os.path.exists(name):
-            max = 1
-            dirs = glob.glob("%s_*" % name)
-            if dirs:
-                for d in dirs:
-                    parts = d.split('_')
-                    if len(parts) > 1 and re.match('^[0-9]+$', parts[1]):
-                        num = int(parts[1])
-                        if num > max:
-                            max = num
-
-            name = "%s_%d" % (name, max + 1)
-
-        name = name.replace('/mnt/', '')
-        try:
-            os.makedirs("/mnt/%s" % name)
-
-        except Exception as e:
-            raise MiddlewareError(_("Failed to create directory %(name)s: %(error)s") % {
-                'name': name,
-                'error': e
-            })
+    name = basename
+    for i in xrange(2, 100):
+        datasets = list_datasets(
+            path="/mnt/%s" % name,
+            recursive=False,
+        )
+        if not datasets:
+            break
+        else:
+            name = "%s_%d" % (basename, i)
+    rv, err = notifier().create_zfs_dataset(name)
+    if rv != 0:
+        raise MiddlewareError(_("Failed to create dataset %(name)s: %(error)s") % {
+            'name': name,
+            'error': err,
+        })
 
     try:
         jail = JailsConfiguration.objects.latest('id')

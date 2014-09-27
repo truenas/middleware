@@ -201,7 +201,9 @@ class Interfaces(Model):
             )
 
     def __unicode__(self):
-            return u'%s' % self.int_name
+        if not self.int_name:
+            return self.int_interface
+        return u'%s' % self.int_name
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)

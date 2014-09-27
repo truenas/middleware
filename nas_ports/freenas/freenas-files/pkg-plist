@@ -56,7 +56,7 @@ etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
 etc/ix.rc.d/ix-aliases
 etc/ix.rc.d/ix-ataidle
-etc/ix.rc.d/ix-bsnmpd
+etc/ix.rc.d/ix-snmpd
 etc/ix.rc.d/ix-cache
 etc/ix.rc.d/ix-collectd
 etc/ix.rc.d/ix-crontab
@@ -150,6 +150,7 @@ etc/ix/templates/warden/jail-post-stop
 etc/ix/templates/warden/jail-pre-delete
 etc/ix/templates/warden/jail-pre-start
 etc/ix/templates/warden/jail-pre-stop
+etc/iso_3166_2_countries.csv
 etc/netcli
 @shell etc/netcli.sh
 etc/find_alias_for_smtplib.py

@@ -15,10 +15,10 @@ setup_linux_jail()
   mkdir -p "${JMETADIR}" >/dev/null 2>&1
   echo "${HOST}" > "${JMETADIR}/host"
 
-  if [ "${IP4}" != "OFF" ] ; then
+  if [ "${IP4}" != "OFF" -a "${IP4}" != "DHCP" ] ; then
     echo "${IP4}/${MASK4}" > "${JMETADIR}/ipv4"
   fi
-  if [ "${IP6}" != "OFF" ] ; then
+  if [ "${IP6}" != "OFF" -1 "${IP6}" != "AUTOCONF" ] ; then
     echo "${IP6}/${MASK6}" > "${JMETADIR}/ipv6"
   fi
 
@@ -167,14 +167,14 @@ else
    WORLDCHROOT="$ARCHIVEFILE"
 fi
 
-if [ "${IP4}" != "OFF" ] ; then
+if [ "${IP4}" != "OFF" -a "${IP4}" != "DHCP" ] ; then
   get_ip_and_netmask "${IP4}"
   IP4="${JIP}"
   MASK4="${JMASK}"
   if [ -z "$MASK4" ] ; then MASK4="24"; fi
 fi
 
-if [ "${IP6}" != "OFF" ] ; then
+if [ "${IP6}" != "OFF" -a "${IP6}" != "AUTOCONF" ] ; then
   get_ip_and_netmask "${IP6}"
   IP6="${JIP}"
   MASK6="${JMASK}"
@@ -278,10 +278,20 @@ fi
 mkdir -p "${JMETADIR}" >/dev/null 2>&1
 echo "${HOST}" > "${JMETADIR}/host"
 if [ "${IP4}" != "OFF" ] ; then
-   echo "${IP4}/${MASK4}" > "${JMETADIR}/ipv4"
+   __IP4="${IP4}/${MASK4}"
+   if [ "${IP4}" = "DHCP" ] ; then
+       __IP4="${IP4}"
+   fi
+
+   echo "${__IP4}" > "${JMETADIR}/ipv4"
 fi
 if [ "${IP6}" != "OFF" ] ; then
-   echo "${IP6}/${MASK6}" > "${JMETADIR}/ipv6"
+   __IP6="${IP6}/${MASK6}"
+   if [ "${IP6}" = "AUTOCONF" ] ; then
+       __IP6="${IP6}"
+   fi
+
+   echo "${__IP6}" > "${JMETADIR}/ipv6"
 fi
 set_unique_id "${JDIR}"
 
@@ -348,10 +358,10 @@ cat<<__EOF__>"${JAILDIR}/etc/hosts"
 127.0.0.1               localhost localhost.localdomain ${HOST}
 __EOF__
 
-if [ "${IP4}" != "OFF" ] ; then
+if [ "${IP4}" != "OFF" -a "${IP4}" != "DHCP" ] ; then
   echo "${IP4}			${HOST}" >> "${JAILDIR}/etc/hosts"
 fi
-if [ "${IP6}" != "OFF" ] ; then
+if [ "${IP6}" != "OFF" -a "${IP6}" != "AUTOCONF" ] ; then
   echo "${IP6}			${HOST}" >> "${JAILDIR}/etc/hosts"
   sed -i '' "s|#ListenAddress ::|ListenAddress ${IP6}|g" ${JAILDIR}/etc/ssh/sshd_config
 fi

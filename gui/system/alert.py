@@ -132,7 +132,7 @@ class AlertPlugins:
                 msgs.append(unicode(alert).encode('utf8'))
         if len(msgs) == 0:
             return
-        send_mail(subject=_("Critical Alerts"),
+        send_mail(subject=_("Critical Alerts").encode('utf8'),
                   text='\n'.join(msgs))
 
     def run(self):

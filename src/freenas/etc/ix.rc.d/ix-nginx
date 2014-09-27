@@ -106,7 +106,7 @@ generate_plugins_conf()
 		fi
 
 		cat<<-__EOF__>>"${NGINX_PLUGINS_CONF}"
-		location ~ /plugins/${name}/${id}/ {
+		location ~ '/plugins/${name}/${id}/' {
 		    fastcgi_pass   ${ip}:${port};
 		    include		fastcgi_params;
 		    root ${ppath};
@@ -279,7 +279,7 @@ __EOF__
             root   /usr/local/www/nginx-dist;
         }
 
-        include plugins.conf;
+        #include plugins.conf;
     }
 __EOF__
 
@@ -451,8 +451,8 @@ ix_nginx_start()
 	local httpsport=$(echo "${settings}"|cut -f5 -d"|")
 	local httpsredirect=$(echo "${settings}"|cut -f6 -d"|")
 
-	generate_plugins_conf
-	generate_fastcgi_params
+	#generate_plugins_conf
+	#generate_fastcgi_params
 
 	generate_nginx_conf "${proto}" "${addr}" "${addr6}" "${port}" "${httpsport}" "${httpsredirect}"
 

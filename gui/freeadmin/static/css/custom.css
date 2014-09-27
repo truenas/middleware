@@ -327,6 +327,11 @@ table.grid tr {
     border-bottom:1px #ccc solid;
 }
 
+.BootIcon {
+    background-image:url('/static/images/ui/tree/boot.png');
+    width:16px;
+    height:16px;
+}
 .EmailIcon {
     background-image:url('/static/images/ui/tree/email.png');
     width:16px;

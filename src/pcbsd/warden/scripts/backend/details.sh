@@ -33,14 +33,14 @@ fi
 
 set_warden_metadir
 
-IP4="`cat "${JMETADIR}/ipv4" 2>/dev/null`"
+IP4="$(warden_get_ipv4)"
 if [ -n "${IP4}" ] ; then
   get_ip_and_netmask "${IP4}"
   IP4="${JIP}"
   MASK4="${JMASK}"
 fi
 
-IP6="`cat "${JMETADIR}/ipv6" 2>/dev/null`"
+IP6="$(warden_get_ipv6)"
 if [ -n "${IP6}" ] ; then
   get_ip_and_netmask "${IP6}"
   IP6="${JIP}"

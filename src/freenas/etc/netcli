@@ -175,7 +175,7 @@ def get_lagg_nics(nics=None):
     return group
 
 
-def configure_interface_stub():
+def configure_interface_stub(*args):
     retval = configure_interface()
     notifier().restart("http")
     return retval
@@ -449,7 +449,7 @@ Acceptable formats are 255.255.255.0,
         print _("ok")
         return True
 
-def reset_root_pw():
+def reset_root_pw(*args):
     from freenasUI.account.models import bsdUsers
     qs = bsdUsers.objects.filter(bsdusr_uid=0)
     if not qs.exists():
@@ -460,15 +460,20 @@ def reset_root_pw():
     print _("Changing password for %s") % user.bsdusr_username
     print
 
-    prompt = lambda y: (getpass.getpass(), getpass.getpass(y))
-    while True:
-        p1, p2 = prompt(_('Retype password: '))
-        if p1 == p2:
-            break
-        print
-        print _('Passwords do not match. Try again.')
-        print
-            
+    if not args:
+        waituser = True
+        prompt = lambda y: (getpass.getpass(), getpass.getpass(y))
+        while True:
+            p1, p2 = prompt(_('Retype password: '))
+            if p1 == p2:
+                break
+            print
+            print _('Passwords do not match. Try again.')
+            print
+    else:
+        p1 = args[0]
+        waituser = False
+
     if p1:
         user.set_password(p1)
         user.save()
@@ -479,13 +484,14 @@ def reset_root_pw():
         print
         print _('Password change aborted.')
         print
-    
 
-    print _('Press enter to continue')
-    print
-    raw_input("")
+    if waituser:
+        print _('Press enter to continue')
+        print
+        raw_input("")
 
-def reset_factory_defaults():
+
+def reset_factory_defaults(*args):
     a = raw_input(_('Are you sure you want to reset to factory defaults? ')
                   + '(yes/no): ')
     if a.lower().startswith('y'):
@@ -493,7 +499,7 @@ def reset_factory_defaults():
         os.system("/sbin/shutdown -r now")
 
 
-def configure_lagg_interface():
+def configure_lagg_interface(*args):
 
     menu = [
         [ _("Create Link Aggregation"), create_lagg_interface ],
@@ -580,6 +586,7 @@ def create_lagg_interface():
     print _("The system must be rebooted for these changes to take effect.")
     return True
 
+
 def delete_lagg_interface():
     lagg_interfaces = LAGGInterface.objects.all()
 
@@ -628,7 +635,7 @@ def delete_lagg_interface():
     return True
 
 
-def configure_vlan():
+def configure_vlan(*args):
 
     menu = [
         [ _("Create VLAN Interface"), create_vlan ],
@@ -812,7 +819,7 @@ def configure_ipv6_default_route(gc):
         print _("No default route entered.")
         return False
 
-def configure_default_route():
+def configure_default_route(*args):
     gc = GlobalConfiguration.objects.all()
     gc = gc[0]
     need_save = False
@@ -848,7 +855,8 @@ def configure_default_route():
         print _("Routing configuration unchanged.")
         return True
 
-def configure_static_routes():
+
+def configure_static_routes(*args):
     dest = raw_input(_("Destination network: "))
     gateway = raw_input(_("Gateway: "))
     desc = raw_input(_("Description: "))
@@ -885,7 +893,8 @@ def configure_static_routes():
     print _("ok")
     return True
 
-def configure_dns():
+
+def configure_dns(*args):
     ns1 = ns2 = ns3 = domain = None
     gc = GlobalConfiguration.objects.all()
     gc = gc[0]
@@ -955,11 +964,11 @@ def configure_dns():
         print _("ok")
         return True
 
-def shell():
+def shell(*args):
     return os.system("/usr/bin/su -l root")
 
 
-def reboot():
+def reboot(*args):
     while True:
         ret = raw_input(_("Confirm reboot (y/n): "))
         if ret.lower().startswith("y"):
@@ -969,7 +978,7 @@ def reboot():
         if ret.lower().startswith("n"):
             return False
 
-def shutdown():
+def shutdown(*args):
     while True:
         ret = raw_input(_("Confirm Shutdown (y/n): "))
         if ret.lower().startswith("y"):
@@ -1074,6 +1083,11 @@ def main_menu():
     for item in menu:
         menu_max = menu_max + 1
         menu_map[menu_max] = item
+        # If this was requested on the command line, then we just call it
+        if len(sys.argv) > 1:
+            if globals()[sys.argv[1]] == item[1]:
+                item[1](*sys.argv[2:])
+                sys.exit(0)
 
     while True:
         print
@@ -1106,5 +1120,7 @@ if __name__ == '__main__':
     while True:
         try:
             main_menu()
+        except SystemExit as e:
+            sys.exit(e.code)
         except:
             exit(1)

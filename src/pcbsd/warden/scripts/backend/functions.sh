@@ -350,6 +350,9 @@ copypbiscripts() {
     chroot "${1}" chmod 755 /var/db/pbi/keys
     chroot "${1}" /usr/local/sbin/pbi_info >/dev/null 2>&1
   fi
+
+  # Copy dhclient hooks
+  cp ${PROGDIR}/scripts/hooks/dhclient-exit-hooks "${1}/etc"
 }
 
 mkportjail() {
@@ -506,7 +509,7 @@ get_interface_addresses()
       jexec="" 
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv4_addresses()
@@ -520,7 +523,7 @@ get_interface_ipv4_addresses()
       jexec="" 
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | grep -w inet | awk '{ print $2 }'
 }
 
 get_interface_ipv6_addresses()
@@ -535,7 +538,8 @@ get_interface_ipv6_addresses()
       jexec=""
    fi
 
-   addrs="$(${jexec} ifconfig "${iface}" | grep -w inet6 | awk '{ print $2 }')"
+   addrs="$(eval ${jexec} ifconfig "${iface}" | \
+      grep -w inet6 | grep -v scope | awk '{ print $2 }')"
    for addr in ${addrs} ; do
       echo "${addr}" | cut -f1 -d'%'
    done
@@ -552,7 +556,8 @@ get_interface_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | head -1 | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | grep -w inet | \
+      head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv4_address()
@@ -566,7 +571,8 @@ get_interface_ipv4_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | head -1 | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | grep -w inet | \
+      head -1 | awk '{ print $2 }'
 }
 
 get_interface_ipv6_address()
@@ -580,7 +586,8 @@ get_interface_ipv6_address()
       jexec=""
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet6 | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
+   eval ${jexec} ifconfig "${iface}" | grep -w inet6 | \
+       grep -v scope | head -1 | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_interface_aliases()
@@ -595,14 +602,15 @@ get_interface_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
+   count="$(eval ${jexec} ifconfig "${iface}" | grep -w inet | wc -l)"
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | tail -${count} | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | \
+      grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv4_aliases()
@@ -617,14 +625,15 @@ get_interface_ipv4_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
+   count="$(eval ${jexec} ifconfig "${iface}" | grep -w inet | wc -l)"
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet | tail -${count} | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | \
+      grep -w inet | tail -${count} | awk '{ print $2 }'
 }
 
 get_interface_ipv6_aliases()
@@ -639,20 +648,20 @@ get_interface_ipv6_aliases()
       jexec=""
    fi
 
-   count=`${jexec} ifconfig "${iface}" | grep -w inet | wc -l`
+   count="$(eval ${jexec} ifconfig "${iface}" | grep -w inet | wc -l)"
    count="$(echo "${count} - 1" | bc)"
    if [ "${count}" -lt "0" ]
    then
       return
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -w inet6 | tail -${count} | awk '{ print $2 }'
+   eval ${jexec} ifconfig "${iface}" | \
+      grep -w inet6 | grep -v scope | tail -${count} | awk '{ print $2 }'
 }
 
-get_default_route()
+get_default_ipv4_route()
 {
-   local iface="${1}"
-   local jid="${2}"
+   local jid="${1}"
    local jexec="jexec ${jid}"
 
    if [ -z "${jid}" ]
@@ -660,13 +669,27 @@ get_default_route()
       jexec=""
    fi
 
-   ${jexec} netstat -f inet -nr | grep '^default' | awk '{ print $2 }'
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
+}
+
+get_default_ipv6_route()
+{
+   local jid="${1}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   eval ${jexec} route -nv show -inet6 default 2>/dev/null | \
+      grep -w gateway | awk '{ print $2 }' | cut -f1 -d'%'
 }
 
 get_default_interface()
 {
-   local iface="${1}"
-   local jid="${2}"
+   local jid="${1}"
    local jexec="jexec ${jid}"
 
    if [ -z "${jid}" ]
@@ -674,7 +697,36 @@ get_default_interface()
       jexec=""
    fi
 
-   ${jexec} netstat -f inet -nrW | grep '^default' | awk '{ print $7 }'
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
+}
+
+get_default_ipv4_interface()
+{
+   local jid="${1}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   eval ${jexec} route -nv show default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
+}
+
+get_default_ipv6_interface()
+{
+   local jid="${1}"
+   local jexec="jexec ${jid}"
+
+   if [ -z "${jid}" ]
+   then
+      jexec=""
+   fi
+
+   eval ${jexec} route -nv show -inet6 default 2>/dev/null | \
+      grep -w interface | awk '{ print $2 }'
 }
 
 get_bridge_interfaces()
@@ -1012,6 +1064,8 @@ CR()
     shift
 
     mount -t devfs none "${jaildir}/dev"
+    devfs -m "${jaildir}/dev" rule -s 4 applyset
+
     chroot "${jaildir}" /bin/sh -exc "$@" | warden_pipe
     umount "${jaildir}/dev"
 }
@@ -1360,7 +1414,7 @@ ipv4_configured()
       jexec="jexec ${jid}"
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -qw inet 2>/dev/null
+   eval ${jexec} ifconfig "${iface}" | grep -qw inet 2>/dev/null
    return $?
 }
 
@@ -1377,7 +1431,7 @@ ipv4_address_configured()
       jexec="jexec ${jid}"
    fi
 
-   ${jexec} ifconfig "${iface}" | \
+   eval ${jexec} ifconfig "${iface}" | \
       grep -w inet | \
       awk '{ print $2 }' | \
       grep -Ew "^${addr}" >/dev/null 2>&1
@@ -1394,7 +1448,8 @@ ipv6_configured()
       jexec="jexec ${jid}"
    fi
 
-   ${jexec} ifconfig "${iface}" | grep -qw inet6 2>/dev/null
+   eval ${jexec} ifconfig "${iface}" | \
+       grep -qw inet6 | grep -v scope 2>/dev/null
    return $?
 }
 
@@ -1411,8 +1466,9 @@ ipv6_address_configured()
       jexec="jexec ${jid}"
    fi
 
-   ${jexec} ifconfig "${iface}" | \
+   eval ${jexec} ifconfig "${iface}" | \
       grep -w inet6 | \
+      grep -v scope | \
       awk '{ print $2 }' | \
       grep -Ew "^${addr}" >/dev/null 2>&1
    return $?
@@ -1835,82 +1891,561 @@ is_linux_jail()
    return 1
 }
 
+warden_host_entry_exists()
+{
+   local hostsfile="${1}"
+   local entry="${2}"
+
+   if [ ! -f "${hostsfile}" -o -z "${entry}" ] ; then
+      return 1
+   fi
+
+   grep -qw "${entry}" "${hostsfile}"
+   return $?
+}
+
+warden_host_entry_add()
+{
+   local hostsfile="${1}"
+   local ip="${2}"
+
+   if [ -z "${hostsfile}" -o -z "${ip}" ] ; then
+      return 1
+   fi
+
+   shift; shift;
+   local hosts="$*"
+   if [ -z "${hosts}" ] ; then
+      return 1
+   fi
+
+   printf "%s\t%s\n" "${ip}" "${hosts}" >> "${hostsfile}"
+}
+
+warden_host_entry_remove()
+{
+   local hostsfile="${1}"
+   local entry="${2}"
+   local tmpfile="$(mktemp /tmp/XXXXXX)"
+
+   grep -wiv "${entry}" "${hostsfile}" < "${hostsfile}" > "${tmpfile}"
+   mv "${tmpfile}" "${hostsfile}"
+   chmod 644 "${hostsfile}"
+}
+
+warden_host_entry_modify()
+{
+   local hostsfile="${1}"
+   local oldip="${2}"
+   local newip="${3}"
+
+   if [ ! -f "${hostsfile}" -o -z "${oldip}" -o -z "${newip}" ] ; then
+      return 1
+   fi
+
+   local tmpfile="$(mktemp /tmp/XXXXXX)"
+   awk -v oldip="${oldip}" -v newip="${newip}" '
+      BEGIN { sub("/.+$", "", oldip); sub("/.+$", "", newip); }
+      {
+         if ($0 ~ oldip) {
+            split($0, parts);
+            if (parts[1] == oldip) {
+               gsub(oldip, newip);
+            }
+         }
+
+         print $0;
+   }
+   ' < "${hostsfile}" > "${tmpfile}"
+   if [ "$?" = "0" ] ; then
+      mv "${tmpfile}" "${hostsfile}"
+      chmod 644 "${hostsfile}"
+   fi
+   rm -f "${tmpfile}"
+}
+
+warden_get_id()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/id" 2>/dev/null
+}
+
+warden_get_host()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/host" 2>/dev/null
+}
+
+warden_vnet_enabled()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   local res=1
+   if [ -e "${dir}/vnet" ] ; then
+      res=0
+   fi
+
+   return ${res}
+}
+
+warden_nat_enabled()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   local res=1
+   if [ -e "${dir}/nat" ] ; then
+      res=0
+   fi
+
+   return ${res}
+}
+
+warden_autostart_enabled()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   local res=1
+   if [ -e "${dir}/autostart" ] ; then
+      res=0
+   fi
+
+   return ${res}
+}
+
+warden_get_jailtype()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/jailtype" 2>/dev/null
+}
+
+warden_get_jailflags()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/jail-flags" 2>/dev/null|tr ' ' ','
+}
+
+warden_get_iface()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/iface" 2>/dev/null
+}
+
+warden_get_mac()
+{
+   local dir="${1}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   cat "${dir}/mac" 2>/dev/null
+}
+
+warden_get_ipv4()
+{
+   local dir="${1}"
+   local strip="${2}"
+   local ipv4=
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv4="$(eval cat "${dir}/ipv4" 2>/dev/null ${strip})"
+   if [ -z "${ipv4}" ] ; then
+      ipv4="DHCP"
+   fi
+
+   echo "${ipv4}"
+}
+
+warden_get_ipv4_aliases()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv4_aliases= 
+   if [ -e "${dir}/alias-ipv4" ] ; then
+      while read line
+      do
+         line="$(eval echo "${line}" ${strip})"
+         ipv4_aliases="${ipv4_aliases} ${line}"
+      done < "${dir}/alias-ipv4"
+   fi
+
+   echo "${ipv4_aliases}"
+}
+
+warden_get_ipv4_defaultrouter()
+{
+   local dir="${1}"
+   local strip="${2}"
+   local filter=""
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   eval cat "${dir}/defaultrouter-ipv4" 2>/dev/null ${strip}
+}
+
+warden_get_ipv4_bridge()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   eval cat "${dir}/bridge-ipv4" 2>/dev/null ${strip}
+}
+
+warden_get_ipv4_bridge_aliases()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv4_bridge_aliases= 
+   if [ -e "${dir}/alias-bridge-ipv4" ] ; then
+      while read line
+      do
+         line="$(eval echo "${line}" ${strip})"
+         ipv4_bridge_aliases="${ipv4_bridge_aliases} $line"
+      done < "${dir}/alias-bridge-ipv4"
+   fi
+
+   echo "${ipv4_bridge_aliases}"
+}
+
+warden_ipv4_isdhcp()
+{
+   local ipv4="$(warden_get_ipv4)"
+
+   local ret=1
+   if [ -n "${ipv4}" -a "${ipv4}" = "DHCP" ] ; then
+      ret=0
+   fi
+
+   return ${ret}
+}
+
+warden_ipv4_isnull()
+{
+   local ipv4="$(warden_get_ipv4)"
+
+   local ret=1
+   if [ -z "${ipv4}" ] ; then
+      ret=0
+   fi
+
+   return ${ret}
+}
+
 warden_set_ipv4()
 {
-   local newip="${1}"
-   local oldip="$(cat "${JMETADIR}/ipv4")"
+   local newip="$(echo "${1}"|tr a-z A-Z)"
+   local oldip="$(warden_get_ipv4)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
-   local tmp="$(mktemp /tmp/.wipXXXXXX)"
+
+   if [ "${newip}" = "DHCP" ] ; then
+       echo "${newip}" > "${JMETADIR}/ipv4"
+       return 0
+   fi
    
    get_ip_and_netmask "${newip}"  
    newip="${JIP}"
    newmask="${JMASK}"
+
+   if [ -z "${newip}" ] ; then
+      rm -rf "${JMETADIR}/ipv4"
+   fi
 
    if [ -z "${newmask}" ] ; then
       newmask="24"
    fi
 
-   if [ -n "${oldip}" -a -s "${hosts}" ] ; then 
-      awk -v oldip="${oldip}" -v newip="${newip}" '
-      BEGIN { sub("/.+$", "", oldip); sub("/.+$", "", newip); }
-      {
-         if ($0 ~ oldip) {
-            split($0, parts);
-            if (parts[1] == oldip) {
-               gsub(oldip, newip);
-            }
-         }
-
-         print $0;
-      }
-      ' < "${hosts}" > "${tmp}"
-      if [ "$?" = "0" ] ; then
-         mv "${tmp}" "${hosts}"
-         chmod 644 "${hosts}"
-      fi
-      rm -f "${tmp}"
-   fi
+   warden_host_entry_modify "${hosts}" "${oldip}" "${newip}"
 
    echo "${newip}/${newmask}" > "${JMETADIR}/ipv4"
 }
 
+warden_get_ipv6()
+{
+   local dir="${1}"
+   local strip="${2}"
+   local ipv6=
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv6="$(eval cat "${dir}/ipv6" 2>/dev/null ${strip})"
+   if [ -z "${ipv6}" ] ; then
+      ipv6="AUTOCONF"
+   fi
+
+   echo "${ipv6}"
+}
+
+warden_get_ipv6_aliases()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv6_aliases= 
+   if [ -e "${dir}/alias-ipv6" ] ; then
+      while read line
+      do
+         line="$(eval echo "${line}" ${strip})"
+         ipv6_aliases="${ipv6_aliases} $line"
+      done < "${dir}/alias-ipv6"
+   fi
+
+   echo "${ipv6_aliases}"
+}
+
+warden_get_ipv6_defaultrouter()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   eval cat "${dir}/defaultrouter-ipv6" 2>/dev/null ${strip}
+}
+
+warden_get_ipv6_bridge()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   eval cat "${dir}/bridge-ipv6" 2>/dev/null ${strip}
+}
+
+warden_get_ipv6_bridge_aliases()
+{
+   local dir="${1}"
+   local strip="${2}"
+
+   if [ -z "${dir}" ] ; then
+      dir="${JMETADIR}"
+   fi
+
+   if [ -n "${strip}" ] ; then
+      strip="|cut -f1 -d'/'"
+   fi
+
+   ipv6_bridge_aliases= 
+   if [ -e "${dir}/alias-bridge-ipv6" ] ; then
+      while read line
+      do
+         line="$(eval echo "${line}" ${strip})"
+         ipv6_bridge_aliases="${ipv6_bridge_aliases} $line"
+      done < "${dir}/alias-bridge-ipv6"
+   fi
+
+   echo "${ipv6_bridge_aliases}"
+}
+
+warden_ipv6_isautoconf()
+{
+   local ipv6="$(warden_get_ipv6)"
+
+   local ret=1
+   if [ -n "${ipv6}" -a "${ipv6}" = "AUTOCONF" ] ; then
+      ret=0
+   fi
+
+   return ${ret}
+}
+
+warden_ipv6_isnull()
+{
+   local ipv6="$(warden_get_ipv6)"
+
+   local ret=1
+   if [ -z "${ipv6}" ] ; then
+      ret=0
+   fi
+
+   return ${ret}
+}
+
 warden_set_ipv6()
 {
-   local newip="${1}"
-   local oldip="$(cat "${JMETADIR}/ipv6")"
+   local newip="$(echo "${1}"|tr a-z A-Z)"
+   local oldip="$(warden_get_ipv6)"
    local jaildir="${JDIR}/${JAILNAME}"
    local hosts="${jaildir}/etc/hosts"
-   local tmp="$(mktemp /tmp/.wipXXXXXX)"
+
+   if [ "${newip}" = "AUTOCONF" ] ; then
+       echo "${newip}" > "${JMETADIR}/ipv6"
+       return 0
+   fi
+
+   newip="$(echo "${newip}"|tr A-Z a-z)"
    
    get_ip_and_netmask "${newip}"  
    newip="${JIP}"
    newmask="${JMASK}"
 
+   if [ -z "${newip}" ] ; then
+      rm -rf "${JMETADIR}/ipv6"
+   fi
+
    if [ -z "${newmask}" ] ; then
       newmask="64"
    fi
 
-   if [ -n "${oldip}" -a -s "${hosts}" ] ; then 
-      awk -v oldip="${oldip}" -v newip="${newip}" '
-      BEGIN { sub("/.+$", "", oldip); sub("/.+$", "", newip); }
-      {
-         if ($0 ~ oldip) {
-            split($0, parts);
-            if (parts[1] == oldip) {
-               gsub(oldip, newip);
-            }
-         }
-
-         print $0;
-      }
-      ' < "${hosts}" > "${tmp}"
-      if [ "$?" = "0" ] ; then
-         mv "${tmp}" "${hosts}"
-         chmod 644 "${hosts}"
-      fi
-      rm -f "${tmp}"
-   fi
+   warden_host_entry_modify "${hosts}" "${oldip}" "${newip}"
 
    echo "${newip}/${newmask}" > "${JMETADIR}/ipv6"
+}
+
+warden_jail_isrunning()
+{
+   local jail="${1}"
+
+   exec 4>&1
+   err="$( ((jls -j "${jail}" 2>/dev/null || echo "0:$?" >&3) | \
+      (grep -qw "${jail}" || echo "1:$?" >&3)) 3>&1 >&4 )"
+   exec 4>&-
+
+   [ -z "${err}" ]
+}
+
+warden_get_jailid()
+{
+   local jail="${1}"
+
+   if ! warden_jail_isrunning "${jail}" ; then
+      return 1
+   fi
+
+   jail="$(jls name|awk -v jail="^${jail}\$" '$1 ~ jail { print $1 }')"
+   if [ -z "${jail}" ] ; then
+       return 1
+   fi
+
+   jls jid name|awk -v jail="^${jail}\$" '$2 ~ jail { print $1 }'
+   return $?
+}
+
+warden_add_ndp_entries()
+{
+   local jid="${1}"
+   if [ -z "${jid}" ] ; then
+      return 1
+   fi
+
+   for iface in $(ifconfig -l|sed -E 's#((bridge|epair|ipfw|lo)[0-9]+([^ ]+)?)##g')
+   do
+      if ifconfig ${iface} inet6|egrep -q inet6 2>/dev/null 2>&1
+      then
+         ether="$(ifconfig ${iface} ether|grep ether | awk '{ print $2 }')"
+         for ip6 in $(ifconfig ${iface} inet6 | \
+            grep inet6 | grep -v scope | awk '{ print $2 }')
+         do
+            if [ -n "${ether}" ] ; then
+               warden_print "ndp -s ${ip6} ${ether}"
+               jexec ${jid} ndp -s "${ip6}" "${ether}" >/dev/null 2>&1
+            fi
+         done
+      fi
+   done
+
+   return 0
 }

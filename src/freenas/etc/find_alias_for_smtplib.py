@@ -52,6 +52,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     margs['extra_headers'].update({
         'X-Mailer': get_sw_name(),
         'X-%s-Host' % get_sw_name(): socket.gethostname(),
+        'To': to_addr,
     })
     margs['subject'] = em.get('Subject')
 

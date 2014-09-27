@@ -33,6 +33,7 @@
 : ${AD_CONTROL_FILE:="${AD_CONFIG_PATH}/ctl"}
 : ${AD_NET_ADS_TIMEOUT:="10"}
 : ${AD_DNS_TIMEOUT:="10"}
+: ${AD_TOOL:="/usr/local/bin/adtool"}
 
 __AD_proto()
 {
@@ -866,13 +867,15 @@ AD_join_domain()
 
 	: ${bindname:="$(AD_get ad_bindname)"}
 	: ${domainname:="$(AD_get ad_domainname)"}
+	: ${dchost:="$(AD_get ad_dchost)"}
+	: ${dcport:="$(AD_get ad_dcport)"}
 
 	LOGNAME="${bindname}"
 	export LOGNAME
 
-	AD_log "AD_join_domain: net -k ads join ${domainname}"
+	AD_log "AD_join_domain: net -k ads join ${domainname} -S ${dchost} -p ${dcport}"
 
-	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads join "${domainname}"
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads join "${domainname} -S ${dchost} -p ${dcport}"
 	res=$?
 
 	local ok="Failed"
@@ -961,46 +964,42 @@ AD_log()
 }
 
 
-AD_load_database_values()
+AD_load_values()
+{
+	AD_generate_config
+
+	exec 3<&0
+	exec 0<"${AD_CONFIG_FILE}"
+
+	while read -r line
+	do
+		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+
+		AD_set "${var}" "${val}"
+	done
+	exec 0<&3
+}
+
+AD_generate_config()
+{
+	${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
+	/bin/chmod 600 "${AD_CONFIG_FILE}"
+}
+
+AD_load_bindpw()
 {
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
 
 	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
 	SELECT
-		ad.ad_domainname,
-		ad.ad_bindname,
-		ad.ad_bindpw,
-		ad.ad_netbiosname,
-		ad.ad_verbose_logging,
-		ad.ad_unix_extensions,
-		ad.ad_allow_trusted_doms,
-		ad.ad_use_default_domain,
-		ad.ad_dcname,
-		ad.ad_gcname,
-		ad.ad_use_keytab,
-		kk.keytab_file as ad_keytab,
-		kr.krb_kdc as ad_krbname,
-		kr.krb_kpasswd_server as ad_kpwdname,
-		ad.ad_timeout,
-		ad.ad_dns_timeout,
-		ad.ad_ssl
- 
+		ad_bindpw
+
 	FROM
-		directoryservice_activedirectory as ad
-
-	LEFT OUTER JOIN
-		directoryservice_kerberoskeytab as kk
-
-	ON
-		(ad.ad_kerberos_keytab_id = kk.id)
-
-	LEFT OUTER JOIN
-		directoryservice_kerberosrealm as kr
-	ON
-		(ad.ad_kerberos_realm_id = kr.id)
+		directoryservice_activedirectory
 
 	ORDER BY
-		-ad.id	
+		-id
 
 	LIMIT 1;
 __SQL__
@@ -1018,177 +1017,10 @@ __SQL__
 	rm "${tmpfile}"
 }
 
-AD_generate_config()
-{
-	local vars="\
-		ad_bindname \
-		ad_domainname \
-		ad_basedn \
-		ad_binddn \
-		ad_dcname \
-		ad_dchost \
-		ad_dcport \
-		ad_gcname \
-		ad_gchost \
-		ad_gcport \
-		ad_use_keytab \
-		ad_keytab \
-		ad_krbname\
-		ad_krbhost \
-		ad_krbport \
-		ad_kpwdname \
-		ad_kpwdhost \
-		ad_kpwdport \
-		ad_timeout \
-		ad_dns_timeout \
-		ad_ssl \
-	"
-
-	: > "${AD_CONFIG_FILE}"
-	for var in ${vars}
-	do
-		local val="$(AD_get ${var})"
-		echo "${var}=\"${val}\"" >> "${AD_CONFIG_FILE}"
-	done
-
-	/bin/chmod 600 "${AD_CONFIG_FILE}"
-}
-
 AD_init()
 {
-	local verbose=0
-
-	AD_load_database_values
-
-	verbose=$(AD_get ad_verbose_logging)
-
-	timeout=$(AD_get ad_timeout)
-	if [ -z "${timeout}" ]
-	then
-		timeout="${AD_NET_ADS_TIMEOUT}"
-		AD_set ad_timeout "${timeout}"
-	fi
-
-	dns_timeout=$(AD_get ad_dns_timeout)
-	if [ -z "${dns_timeout}" ]
-	then
-		dns_timeout="${AD_DNS_TIMEOUT}"
-		AD_set ad_dns_timeout "${dns_timeout}"
-	fi
-
-	local bindname=$(AD_get ad_bindname)
-	local domainname=$(AD_get ad_domainname)
-
-	local binddn=$(AD_get ad_binddn)
-	if [ -z "${binddn}" ]
-	then
-		binddn="${bindname}@$(echo ${domainname}|tr a-z A-Z)"
-		AD_set ad_binddn "${binddn}"
-	fi	
-	AD_log "AD_init: binddn = $(AD_get ad_binddn)"
-
-	local dcname=$(AD_get ad_dcname)
-	if [ -z "${dcname}" ]
-	then
-		dcname=$(AD_get_domain_controller "${domainname}")
-		AD_set ad_dcname "${dcname}"
-	fi
-
-	local dchost="$(echo "${dcname}"|cut -f1 -d:)"
-	local dcport="$(echo "${dcname}"|cut -f2 -d: -s)"
-	if [ -z "${dcport}" ]
-	then
-		dcport=389
-	fi
-
-	AD_set ad_dchost "${dchost}"
-	AD_set ad_dcport "${dcport}"
-	
-	AD_log "AD_init: dchost = $(AD_get ad_dchost), dcport = $(AD_get ad_dcport)"
-
-	local basedn=$(AD_get ad_basedn)
-	if [ -z "${basedn}" ]
-	then
-		basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
-		AD_set ad_basedn "${basedn}"
-	fi
-	AD_log "AD_init: basedn = $(AD_get ad_basedn)"
-
-	local workgroup=$(AD_get workgroup)
-	if [ -z "${workgroup}" ]
-	then
-		workgroup=$(AD_get_workgroup "${basedn}")
-		AD_set ad_workgroup "${workgroup}"
-	fi
-	AD_log "AD_init: workgroup = $(AD_get ad_workgroup)"
-
-	local gcname=$(AD_get ad_gcname)
-	if [ -z "${gcname}" ]
-	then
-		local rd="$(AD_get_root_domain "${domainname}")"
-		gcname="$(AD_get_domain_global_catalog_server "${rd}")"
-		AD_set ad_gcname "${gcname}"
-	fi
-
-	local gchost="$(echo "${gcname}"|cut -f1 -d:)"
-	local gcport="$(echo "${gcname}"|cut -f2 -d: -s)"
-
-	if [ -z "${gcport}" ]
-	then
-		gcport=3268
-	fi
-
-	AD_set ad_gchost "${gchost}"
-	AD_set ad_gcport "${gcport}"
-	AD_log "AD_init: gchost = $(AD_get ad_gchost), gcport = $(AD_get ad_gcport)"
-
-	local krbname=$(AD_get ad_krbname)
-	if [ -z "${krbname}" ]
-	then
-		krbname="$(AD_get_kerberos_server ${domainname})"
-		AD_set ad_krbname "${krbname}"
-	fi
-
-#	XXX What is this for???	XXX
-#	krbsvc="$(echo "${krbname}"|cut -f1 -d/ -s)"
-#	if [ -n "${krbsvc}" ]
-#	then
-#		AD_set ad_krbsvc "${krbsvc}"
-#	fi
-
-	krbhost="$(echo "${krbname}"|cut -f1 -d:)"
-	krbport="$(echo "${krbname}"|cut -f2 -d: -s)"
-
-	if [ -z "${krbport}" ]
-	then
-		krbport=88
-	fi
-
-	AD_set ad_krbhost "${krbhost}"
-	AD_set ad_krbport "${krbport}"
-	AD_log "AD_init: krbhost = $(AD_get ad_krbhost), krbport = $(AD_get ad_krbport)"
-
-	local kpwdname=$(AD_get ad_kpwdname)
-	if [ -z "${kpwdname}" ]
-	then
-		kpwdname="$(AD_get_kpasswd_server ${domainname})"
-		AD_set ad_kpwdname "${kpwdname}"
-	fi
-
-	kpwdhost="$(echo "${kpwdname}"|cut -f1 -d:)"
-	kpwdport="$(echo "${kpwdname}"|cut -f2 -d: -s)"
-
-	if [ -z "${kpwdport}" ]
-	then
-		kpwdport=464
-	fi
-
-	AD_set ad_kpwdhost "${kpwdhost}"
-	AD_set ad_kpwdport "${kpwdport}"
-	AD_log "AD_init: kpwdhost = $(AD_get ad_kpwdhost), kpwdport = $(AD_get ad_kpwdport)"
-
-	AD_generate_config
-	return 0
+	AD_load_values
+	AD_load_bindpw
 }
 
 activedirectory_enabled()

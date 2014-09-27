@@ -12,7 +12,6 @@ TOP="$(pwd)"
 
 OBJ=objs
 
-TARBALL="${TOP}/${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}.tar"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 rm -rf "${TOP}/${OBJ}/${STAGEDIR}"
 set -x
@@ -22,7 +21,7 @@ mkdir -p "${TOP}/${OBJ}/${STAGEDIR}"
 arch=x64
 mapped_arch=amd64
 mkdir -p ${TOP}/${OBJ}/${STAGEDIR}/${arch}
-for ext in img.xz GUI_Upgrade.txz iso vmdk.xz usb; do
+for ext in GUI_Upgrade.txz iso; do
 	if [ -f ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ]; then
 		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 		ln ${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}

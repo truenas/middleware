@@ -603,8 +603,7 @@ class KerberosRealm(Model):
     krb_kdc = models.CharField(
         verbose_name=_("KDC"),
         max_length=120,
-        help_text=_("KDC for this realm."),
-        blank=True
+        help_text=_("KDC for this realm.")
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
@@ -631,6 +630,12 @@ class KerberosRealm(Model):
 
 
 class KerberosKeytab(Model):
+    keytab_name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=120,
+        help_text=_("Descriptive Name."),
+        unique=True
+    )
     keytab_principal = models.CharField(
         verbose_name=_("Principal"),
         max_length=120,
@@ -660,7 +665,7 @@ class NT4(DirectoryServiceBase):
     nt4_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
-        help_text=_("Hostname of the domain controller to use."),
+        help_text=_("FQDN of the domain controller to use."),
     )
     nt4_netbiosname = models.CharField(
         verbose_name=_("NetBIOS Name"),
@@ -795,17 +800,26 @@ class ActiveDirectory(DirectoryServiceBase):
             "domain for users and groups."),
         default=False
     )
+    ad_site = models.CharField(
+        verbose_name=_("Site Name"),
+        max_length=120,
+        help_text=_("Name of site to use."),
+        blank=True,
+        null=True
+    )
     ad_dcname = models.CharField(
         verbose_name=_("Domain Controller"),
         max_length=120,
-        help_text=_("Hostname of the domain controller to use."),
-        blank=True
+        help_text=_("FQDN of the domain controller to use."),
+        blank=True,
+        null=True
     )
     ad_gcname = models.CharField(
         verbose_name=_("Global Catalog Server"),
         max_length=120,
-        help_text=_("Hostname of the global catalog server to use."),
-        blank=True
+        help_text=_("FQDN of the global catalog server to use."),
+        blank=True,
+        null=True
     )
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
@@ -830,6 +844,17 @@ class ActiveDirectory(DirectoryServiceBase):
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_RID)
+    )
+    ad_nss_info = models.CharField(
+        max_length=120,  
+        blank=True,
+        null=True,
+        choices=choices.NSS_INFO_CHOICES,
+        verbose_name=_("Winbind NSS Info"),
+        help_text=_("This parameter is designed to control how Winbind "
+            "retrieves Name Service Information to construct a user's "
+            "home directory and login"
+        )
     )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
@@ -1041,11 +1066,15 @@ class LDAP(DirectoryServiceBase):
         null=True
     )
     ldap_idmap_backend = models.CharField(
-        verbose_name=_("Idmap backend"),
+        verbose_name=_("Idmap Backend"),
         choices=choices.IDMAP_CHOICES,
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
+    )
+    ldap_has_samba_schema = models.BooleanField(
+        verbose_name=_("Samba Schema"),
+        default=False
     )
     ldap_enable = models.BooleanField(
         verbose_name=_("Enable"),

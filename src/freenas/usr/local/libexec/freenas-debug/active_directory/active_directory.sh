@@ -47,11 +47,13 @@ active_directory_func()
 	#
 	onoff=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		srv_enable
+		ad_enable
 	FROM
-		services_services
-	WHERE
-		srv_service = 'activedirectory'
+		directoryservice_activedirectory
+	ORDER BY
+		-id
+
+	LIMIT 1
 	")
 
 	enabled="DISABLED"
@@ -68,15 +70,23 @@ active_directory_func()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read workgroup netbiosname adminname domainname dcname unix trusted <<-__AD__
+	read domainname bindname netbiosname use_keytab ssl \
+		unix_extensions allow_trusted_doms use_default_domain \
+		dcname gcname timeout dns_timeout <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ad_netbiosname,
-		ad_adminname,
 		ad_domainname,
-		ad_dcname,
+		ad_bindname,
+		ad_netbiosname,
+		ad_use_keytab,
+		ad_ssl,
 		ad_unix_extensions,
-		ad_allow_trusted_doms
+		ad_allow_trusted_doms,
+		ad_use_default_domain,
+		ad_dcname,
+		ad_gcname,
+		ad_timeout,
+		ad_dns_timeout
 
 	FROM
 		directoryservice_activedirectory
@@ -93,13 +103,17 @@ __AD__
 
 	section_header "Active Directory Settings"
 	cat<<-__EOF__
-	Workgroup:              ${workgroup}
-	Netbios name:           ${netbiosname}
-	Administrator:          ${adminname}
-	Domain name:            ${domainname}
+	Domain:                 ${domainname}
+	Workgroup:              ${netbiosname}
+	Bind name:              ${bindname}
+	UNIX extensions:        ${unix_extensions}
+	Trusted domains:        ${allow_trusted_doms}
+	Use Keytab:             ${use_keytab}
+	SSL:                    ${ssl}
+	Timeout:                ${timeout}
+	DNS Timeout:            ${dns_timeout}
 	Domain controller:      ${dcname}
-	UNIX extensions:        ${unix}
-        Trusted domains:        ${trusted}
+	Global Catalog Server:  ${gcname}
 __EOF__
 	section_footer
 
@@ -132,10 +146,10 @@ __EOF__
 	section_footer
 
 	#
-	#	Dump Active Directory NSS configuration
+	#	Dump Active Directory SSSD configuration
 	#
-	section_header "${NSS_LDAP_CONF}"
-	sc "${NSS_LDAP_CONF}"
+	section_header "${SSSD_CONF}"
+	sc "${SSSD_CONF}" | grep -iv ldap_default_authtok
 	section_footer
 
 	#

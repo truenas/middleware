@@ -171,13 +171,13 @@ class CertificateFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-        actions['edit'] = {
-            'button_name': 'Edit',
+        actions['view'] = {
+            'button_name': 'View',
             'on_click': """function() {
                 var mybtn = this;
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
-                    editObject('Edit', data._edit_url, [mybtn,]);
+                    editObject('View', data._view_url, [mybtn,]);
                 }
             }""",
         }

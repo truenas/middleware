@@ -33,7 +33,7 @@ class ViewScrub(TreeNode):
 class ViewSnap(TreeNode):
 
     gname = 'Snapshots.View'
-    name = _(u'ZFS Snapshots')
+    name = _(u'Snapshots')
     type = 'openstorage'
     icon = u'ViewAllPeriodicSnapIcon'
 
@@ -41,31 +41,20 @@ class ViewSnap(TreeNode):
 class AddVolume(TreeNode):
 
     gname = 'Add'
-    name = _(u'ZFS Volume Manager')
+    name = _(u'Volume Manager')
     view = 'storage_volumemanager'
     type = 'volumewizard'
     icon = u'AddVolumeIcon'
     app_name = 'storage'
     model = 'Volumes'
     skip = True
+    order = -20
 
 
-class AddVolumeUFS(TreeNode):
-
-    gname = 'Add'
-    name = _(u'UFS Volume Manager (legacy)')
-    view = 'storage_volumemanager_ufs'
-    type = 'volumewizard'
-    icon = u'AddVolumeIcon'
-    app_name = 'storage'
-    model = 'Volumes'
-    skip = True
-
-
-class ImportVolume(TreeNode):
+class ImportDisk(TreeNode):
 
     gname = 'Import'
-    name = _(u'Import Volume')
+    name = _(u'Import Disk')
     view = 'storage_import'
     type = 'volumewizard'
     icon = u'ImportVolumeIcon'
@@ -98,10 +87,10 @@ class ViewMultipaths(TreeNode):
     skip = True
 
 
-class AutoImportVolume(TreeNode):
+class ImportVolume(TreeNode):
 
-    gname = 'AutoImport'
-    name = _(u'Auto Import Volume')
+    gname = 'ImportVolume'
+    name = _(u'Import Volume')
     view = 'storage_autoimport'
     type = 'volumewizard'
     icon = u'ImportVolumeIcon'
@@ -162,7 +151,7 @@ class Volumes(TreeNode):
         nav.icon = u'VolumesIcon'
 
         ds = TreeNode('Dataset')
-        ds.name = _(u'Create ZFS Dataset')
+        ds.name = _(u'Create Dataset')
         ds.view = 'storage_dataset'
         ds.icon = u'AddDatasetIcon'
         ds.type = 'object'
@@ -192,14 +181,11 @@ class Volumes(TreeNode):
         super(Volumes, self).__init__(*args, **kwargs)
         self.append_children([
             AddVolume(),
+            ImportDisk(),
             ImportVolume(),
-            AutoImportVolume(),
             ViewVolumes(),
             ViewDisks(),
         ])
-
-        if not appPool.hook_feature_disabled('ufs'):
-            self.append_child(AddVolumeUFS())
 
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name=''
@@ -218,7 +204,7 @@ class Volumes(TreeNode):
 
             if i.mp_volume.vol_fstype == 'ZFS':
                 ds = TreeNode('Dataset')
-                ds.name = _(u'Create ZFS Dataset')
+                ds.name = _(u'Create Dataset')
                 ds.view = 'storage_dataset'
                 ds.icon = u'AddDatasetIcon'
                 ds.type = 'object'

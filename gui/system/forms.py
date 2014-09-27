@@ -26,6 +26,7 @@
 #####################################################################
 
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 import cPickle as pickle
 import json
 import logging
@@ -52,6 +53,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
+from freenasOS import Configuration, Train, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size
@@ -142,6 +144,49 @@ def clean_path_locked(mp):
             )
 
 
+class BootEnvAddForm(Form):
+
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=50,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self._source = kwargs.pop('source', None)
+        super(BootEnvAddForm, self).__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        kwargs = {}
+        if self._source:
+            kwargs['bename'] = self._source
+        clone = Update.CreateClone(
+            self.cleaned_data.get('name'),
+            **kwargs
+        )
+        if clone is False:
+            raise MiddlewareError(_('Failed to create a new Boot.'))
+
+
+class BootEnvRenameForm(Form):
+
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=50,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self._name = kwargs.pop('name')
+        super(BootEnvRenameForm, self).__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        rename = Update.RenameClone(
+            self._name,
+            self.cleaned_data.get('name'),
+        )
+        if rename is False:
+            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+
+
 class CommonWizard(SessionWizardView):
 
     template_done = 'system/done.html'
@@ -211,6 +256,7 @@ class InitialWizard(CommonWizard):
 
     def done(self, form_list, **kwargs):
 
+        events = []
         curstep = 0
         progress = {
             'step': curstep,
@@ -230,6 +276,7 @@ class InitialWizard(CommonWizard):
         volume_form = form_list.get('volume')
         volume_import = form_list.get('import')
         ds_form = form_list.get('ds')
+        sys_form = form_list.get('system')
 
         with transaction.atomic():
             _n = notifier()
@@ -462,6 +509,30 @@ class InitialWizard(CommonWizard):
                 with open(WIZARD_PROGRESSFILE, 'wb') as f:
                     f.write(pickle.dumps(progress))
 
+            console = cleaned_data.get('sys_console')
+            adv = models.Advanced.objects.order_by('-id')[0]
+            advdata = dict(adv.__dict__)
+            advdata['adv_consolemsg'] = console
+            advdata.pop('_state', None)
+            advform = AdvancedForm(
+                advdata,
+                instance=adv,
+            )
+            if advform.is_valid():
+                advform.save()
+                advform.done(self.request, events)
+
+            # Set administrative email to receive alerts
+            if cleaned_data.get('sys_email'):
+                bsdUsers.objects.filter(bsdusr_uid=0).update(
+                    bsdusr_email=cleaned_data.get('sys_email'),
+                )
+
+            email = models.Email.objects.order_by('-id')[0]
+            em = EmailForm(cleaned_data, instance=email)
+            if em.is_valid():
+                em.save()
+
         if ds_form:
 
             curstep += 1
@@ -553,7 +624,7 @@ class InitialWizard(CommonWizard):
                     if not name.startswith('ds_nt4'):
                         continue
                     nt4data[name.replace('ds_', '')] = value
-                nt4data.update['nt4_enable': True]
+                nt4data['nt4_enable'] = True
 
                 nt4form = NT4Form(
                     data=nt4data,
@@ -626,6 +697,10 @@ class InitialWizard(CommonWizard):
         for service in services_restart:
             _n.restart(service)
 
+        Update.CreateClone('Wizard-%s' % (
+            datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        ))
+
         progress['percent'] = 100
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
             f.write(pickle.dumps(progress))
@@ -634,28 +709,29 @@ class InitialWizard(CommonWizard):
 
         return JsonResp(
             self.request,
-            message=__('Initial configuration succeeded.')
+            message=__('Initial configuration succeeded.'),
+            events=events,
         )
 
 
-class FirmwareWizard(FileWizard):
+class ManualUpdateWizard(FileWizard):
 
     def get_template_names(self):
         return [
-            'system/firmware_wizard_%s.html' % self.get_step_index(),
+            'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        firmware = cleaned_data.get('firmware')
-        path = self.file_storage.path(firmware.file.name)
+        updatefile = cleaned_data.get('updatefile')
+        path = self.file_storage.path(updatefile.file.name)
 
         # Verify integrity of uploaded image.
         assert ('sha256' in cleaned_data)
         checksum = notifier().checksum(path)
         if checksum != str(cleaned_data['sha256']).lower().strip():
-            self.file_storage.delete(firmware.name)
-            raise MiddlewareError("Invalid firmware, wrong checksum")
+            self.file_storage.delete(updatefile.name)
+            raise MiddlewareError("Invalid update file, wrong checksum")
 
         # Validate that the image would pass all pre-install
         # requirements.
@@ -666,12 +742,12 @@ class FirmwareWizard(FileWizard):
         try:
             retval = notifier().validate_update(path)
         except:
-            self.file_storage.delete(firmware.name)
+            self.file_storage.delete(updatefile.name)
             raise
 
         if not retval:
-            self.file_storage.delete(firmware.name)
-            raise MiddlewareError("Invalid firmware")
+            self.file_storage.delete(updatefile.name)
+            raise MiddlewareError("Invalid update file")
 
         notifier().apply_update(path)
         try:
@@ -979,12 +1055,12 @@ class EmailForm(ModelForm):
         return email
 
 
-class FirmwareTemporaryLocationForm(Form):
+class ManualUpdateTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(
-        label=_("Place to temporarily place firmware file"),
+        label=_("Place to temporarily place update file"),
         help_text=_(
             "The system will use this place to temporarily store the "
-            "firmware file before it's being applied."),
+            "update file before it's being applied."),
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
     )
@@ -997,7 +1073,7 @@ class FirmwareTemporaryLocationForm(Form):
         return mp
 
     def __init__(self, *args, **kwargs):
-        super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
+        super(ManualUpdateTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [
             (x.mp_path, x.mp_path)
             for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')
@@ -1014,8 +1090,8 @@ class FirmwareTemporaryLocationForm(Form):
             notifier().change_upload_location(mp)
 
 
-class FirmwareUploadForm(Form):
-    firmware = FileField(label=_("New image to be installed"), required=True)
+class ManualUpdateUploadForm(Form):
+    updatefile = FileField(label=_("Update file to be installed"), required=True)
     sha256 = forms.CharField(
         label=_("SHA256 sum for the image"),
         required=True
@@ -1107,7 +1183,7 @@ class TunableForm(ModelForm):
         value = cdata.get('tun_var')
         if value:
             if (
-                cdata.get('tun_type') == 'loader' and
+                cdata.get('tun_type') in ('loader', 'rc') and
                 not LOADER_VARNAME_FORMAT_RE.match(value)
             ) or (
                 cdata.get('tun_type') == 'sysctl' and
@@ -1637,7 +1713,7 @@ class InitialWizardVolumeForm(Form):
                 rows = 2
                 perrow = (num - mod) / 2
                 vdevtype = cls._grp_type(perrow)
-            elif num < 99:
+            elif num >= 18:
                 div9 = int(num / 9)
                 div10 = int(num / 10)
                 mod9 = num % 9
@@ -1770,15 +1846,80 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
         return len(cls._populate_disk_choices()) > 0
 
 
+class InitialWizardSystemForm(Form):
+
+    sys_console = forms.BooleanField(
+        label=_('Console messages'),
+        help_text=_('Show console messages in the footer.'),
+        required=False,
+    )
+    sys_email = forms.EmailField(
+        label=_('Root E-mail'),
+        help_text=_('Administrative email address used for alerts.'),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardSystemForm, self).__init__(*args, **kwargs)
+        self._instance = models.Email.objects.order_by('-id')[0]
+        for fname, field in EmailForm(instance=self._instance).fields.items():
+            self.fields[fname] = field
+            field.initial = getattr(self._instance, fname, None)
+            field.required = False
+        self.fields['em_smtp'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_system-em_smtp", ["id_system-em_pass1", '
+            '"id_system-em_pass2", "id_system-em_user"], true);'
+        )
+
+    def clean(self):
+        em = EmailForm(self.cleaned_data, instance=self._instance)
+        if self.cleaned_data.get('em_fromemail') and not em.is_valid():
+            for fname, errors in em._errors.items():
+                self._errors[fname] = errors
+        return self.cleaned_data
+
+
 class InitialWizardConfirmForm(Form):
     pass
 
 
 class UpgradeForm(ModelForm):
 
+    trains = forms.MultipleChoiceField(
+        label=_('Trains'),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+
     class Meta:
         fields = '__all__'
         model = models.Upgrade
+
+    def __init__(self, *args, **kwargs):
+        super(UpgradeForm, self).__init__(*args, **kwargs)
+        self._conf = Configuration.Configuration()
+        self._conf.LoadTrainsConfig()
+        self._tchoices = []
+        trains = self._conf.AvailableTrains()
+        if trains:
+            for name in self._conf.AvailableTrains().keys():
+                self._tchoices.append((name, name))
+            self.fields['trains'].choices = self._tchoices
+            self.fields['trains'].initial = self._conf.WatchedTrains()
+
+    def save(self, *args, **kwargs):
+        obj = super(UpgradeForm, self).save(*args, **kwargs)
+
+        watched = self._conf.WatchedTrains() or []
+        for name, desc in self._tchoices:
+            if name in self.cleaned_data.get('trains'):
+                if name not in watched:
+                    self._conf.WatchTrain(Train.Train(name), watch=True)
+            else:
+                if name in watched:
+                    self._conf.WatchTrain(Train.Train(name), watch=False)
+        self._conf.SaveTrainsConfig()
+
 
 
 class CertificateAuthorityForm(ModelForm):
@@ -1879,10 +2020,10 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -1890,15 +2031,17 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -1973,10 +2116,10 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -1984,15 +2127,17 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2025,6 +2170,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        self.fields['cert_signedby'].widget.attrs["onChange"] = (
+            "javascript:CA_autopopulate();"
+        )
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
@@ -2086,32 +2234,17 @@ class CertificateForm(ModelForm):
 
     def save(self):
         super(CertificateForm, self).save()
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
 
-class CertificateEditForm(ModelForm):
-    cert_name = forms.CharField(
-        label=_("Name"),
-        required=True,
-        help_text=_("Descriptive Name")
-    )
-    cert_certificate = forms.CharField(
-        label=_("Certificate"),
-        widget=forms.Textarea(),
-        required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
-    )
+class CertificateViewForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
-        super(CertificateEditForm, self).__init__(*args, **kwargs)
+        super(CertificateViewForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
-
-    def save(self):
-        super(CertificateEditForm, self).save()
-        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2149,7 +2282,7 @@ class CertificateCSREditForm(ModelForm):
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2176,7 +2309,7 @@ class CertificateImportForm(ModelForm):
         label=_("Private Key"),
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your private key here"), 
+        help_text=_("Cut and paste the contents of your private key here"),
     )
 
     def save(self):
@@ -2193,7 +2326,7 @@ class CertificateImportForm(ModelForm):
 
         super(CertificateImportForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2216,10 +2349,10 @@ class CertificateCreateInternalForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
@@ -2227,15 +2360,17 @@ class CertificateCreateInternalForm(ModelForm):
         required=True,
         initial=3650
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2268,6 +2403,9 @@ class CertificateCreateInternalForm(ModelForm):
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        self.fields['cert_signedby'].widget.attrs["onChange"] = (
+            "javascript:certificate_autopopulate();"
+        )
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_INTERNAL
@@ -2303,7 +2441,7 @@ class CertificateCreateInternalForm(ModelForm):
 
         super(CertificateCreateInternalForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2334,21 +2472,23 @@ class CertificateCreateCSRForm(ModelForm):
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
-    cert_digest_algorithm = forms.ChoiceField( 
+    cert_digest_algorithm = forms.ChoiceField(
         label=_("Digest Algorithm"),
         required=True,
-        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES, 
+        choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
-    cert_country = forms.CharField(
+    cert_country = forms.ChoiceField(
         label=_("Country"),
         required=True,
+        choices=choices.COUNTRY_CHOICES(), 
+        initial='US',
         help_text=_("Country Name (2 letter code)")
     )
     cert_state = forms.CharField(
         label=_("State"),
         required=True,
-        help_text=_("State or Province Name (full name)")  
+        help_text=_("State or Province Name (full name)")
     )
     cert_city = forms.CharField(
         label=_("City"),
@@ -2390,7 +2530,7 @@ class CertificateCreateCSRForm(ModelForm):
 
         super(CertificateCreateCSRForm, self).save()
 
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [

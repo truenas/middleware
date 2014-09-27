@@ -102,6 +102,21 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 
     resource_mixin = KerberosKeytabResourceMixin
 
+    def get_datagrid_columns(self):
+        columns = []
+
+        columns.append({
+            'name': "keytab_name",
+            'label': _("Name")
+        })
+
+        columns.append({
+            'name': "keytab_principal",
+            'label': _("Principal")
+        })
+
+        return columns
+
     def get_datagrid_context(self, request):
         context = super(KerberosKeytabFAdmin, self).get_datagrid_context(request)
         context.update({'add_url': reverse('directoryservice_kerberoskeytab_add')})

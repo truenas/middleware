@@ -7,6 +7,7 @@ import tempfile
 import time
 import urllib2
 
+from . import Avatar
 import Exceptions
 import Installer
 import Train
@@ -25,11 +26,13 @@ log = logging.getLogger('freenasOS.Configuration')
 # Change this for release
 # Need to change search code since it isn't really
 # searching any longer.
-UPDATE_SERVER = "beta-update.freenas.org"
-SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/FreeNAS" ]
+# We may want to use a different update server for
+# TrueNAS.
+UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
+SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/" + Avatar() ]
 
 # List of trains
-TRAIN_FILE = UPDATE_SERVER + "trains.txt"
+TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
@@ -54,12 +57,13 @@ def TryOpenFile(path):
         return f
 
 def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
-    FREENAS_VERSION = "X-FreeNAS-Manifest-Version"
+    raise Exception("Obsolete")
+    AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
     try:
         req = urllib2.Request(url)
-        req.add_header(FREENAS_VERSION, current_version)
+        req.add_header(AVATAR_VERSION, current_version)
         # Hack for debugging
-        req.add_header("User-Agent", FREENAS_VERSION + "=" + current_version)
+        req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
         furl = urllib2.urlopen(req, timeout=5)
     except:
         log.warn("Unable to load %s", url)
@@ -413,6 +417,122 @@ class Configuration(object):
         if os.path.islink(self._system_pool_link):
             self._temp = os.readlink(self._system_pool_link)
 
+    def TryGetNetworkFile(self, url, handler=None):
+        AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
+        current_version = "unknown"
+        temp_mani = self.SystemManifest()
+        if temp_mani:
+            current_version = temp_mani.Sequence()
+        try:
+            req = urllib2.Request(url)
+            req.add_header(AVATAR_VERSION, current_version)
+            # Hack for debugging
+            req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
+            furl = urllib2.urlopen(req, timeout=5)
+        except:
+            log.warn("Unable to load %s", url)
+            return None
+        try:
+            totalsize = int(furl.info().getheader('Content-Length').strip())
+        except:
+            totalsize = None
+        chunk_size = 64 * 1024
+        retval = tempfile.TemporaryFile(dir = self._temp)
+        read = 0
+        lastpercent = percent = 0
+        lasttime = time.time()
+        while True:
+            data = furl.read(chunk_size)
+            tmptime = time.time()
+            downrate = int(chunk_size / (tmptime - lasttime))
+            lasttime = tmptime
+            if not data:
+                break
+            read += len(data)
+            if handler and totalsize:
+                percent = int((float(read) / float(totalsize)) * 100.0)
+                if percent != lastpercent:
+                    handler(
+                        'network',
+                        url,
+                        size=totalsize,
+                        progress=percent,
+                        download_rate=downrate,
+                    )
+                lastpercent = percent
+            retval.write(data)
+
+        retval.seek(0)
+        return retval
+
+    # Load the list of currently-watched trains.
+    # The file is a JSON file.
+    # This sets self._trains as a dictionary of
+    # Train objects (key being the train name).
+    def LoadTrainsConfig(self):
+        import json
+        if self._temp is None:
+            if not os.path.islink(self._system_pool_link):
+                log.error("No system pool, cannot load trains configuration")
+            else:
+                self._temp = os.readlink(self._system_pool_link)
+        self._trains = {}
+        if self._temp:
+            train_path = self._temp + "/Trains.json"
+            try:
+                with open(train_path, "r") as f:
+                    trains = json.load(f)
+                for train_name in trains.keys():
+                    temp = Train.Train(train_name)
+                    if TRAIN_DESC_KEY in trains[train_name]:
+                        temp.SetDescription(trains[train_name][TRAIN_DESC_KEY])
+                    if TRAIN_SEQ_KEY in trains[train_name]:
+                        temp.SetLastSequence(trains[train_name][TRAIN_SEQ_KEY])
+                    if TRAIN_CHECKED_KEY in trains[train_name]:
+                        temp.SetLastCheckedTime(trains[train_name][TRAIN_CHECKED_KEY])
+                    self._trains[train_name] = temp
+            except:
+                pass
+        sys_mani = self.SystemManifest()
+        if sys_mani.Train() not in self._trains:
+            temp = Train.Train(sys_mani.Train(), "Installed OS", sys_mani.Sequence())
+            self._trains[temp.Name()] = temp
+        return
+
+    # Save the list of currently-watched trains.
+    def SaveTrainsConfig(self):
+        import json
+        sys_mani = self.SystemManifest()
+        current_train = sys_mani.Train()
+        if self._trains is None: self._trains = {}
+        if current_train not in self._trains:
+            self._trains[current_train] = Train.Train(current_train, "Installed OS", sys_mani.Sequence())
+        if self._temp is None:
+            if not os.path.islink(self._system_pool_link):
+                log.error("No system pool, cannot load trains configuration")
+            else:
+                self._temp = os.readlink(self._system_pool_link)
+        if self._temp:
+            obj = {}
+            for train_name in self._trains.keys():
+                train = self._trains[train_name]
+                temp = {}
+                if train.Description():
+                    temp[TRAIN_DESC_KEY] = train.Description()
+                if train.LastSequence():
+                    temp[TRAIN_SEQ_KEY] = train.LastSequence()
+                if train.LastCheckedTime():
+                    temp[TRAIN_CHECKED_KEY] = train.LastCheckedTime()
+                obj[train_name] = temp
+            train_path = self._temp + "/Trains.json"
+            try:
+                with open(train_path, "w") as f:
+                    json.dump(obj, f, sort_keys=True,
+                              indent=4, separators=(',', ': '))
+            except OSError as e:
+                log.error("Could not write out trains:  %s" % str(e))
+        return
+
     def SystemManifest(self):
         man = Manifest.Manifest(self)
         try:
@@ -501,6 +621,17 @@ class Configuration(object):
         self._trains.append(train)
         return
 
+    def CurrentTrain(self):
+        """
+        Returns the name of the train of the current
+        system.  It may return None, but that's for edge cases
+        generally related to installation and build environments.
+        """
+        sys_mani = self.SystemManifest()
+        if sys_mani:
+           return sys_mani.Train()
+        return None
+
     def AvailableTrains(self):
         """
         Returns the set of available trains from
@@ -518,10 +649,7 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        fileref = TryGetNetworkFile(TRAIN_FILE,
-                                    self._temp,
-                                    current_version,
-                                    )
+        fileref = self.TryGetNetworkFile(TRAIN_FILE)
 
         if fileref is None:
             return None
@@ -541,11 +669,32 @@ class Configuration(object):
 
         return rv if len(rv) > 0 else None
 
-    def Trains(self):
+    def WatchedTrains(self):
+        if self._trains is None:
+            self._trains = self.LoadTrainsConfig()
         return self._trains
 
-    def SetTrains(self, list):
-        self._trains = list
+    def WatchTrain(self, train, watch = True):
+        """
+        Add a train to the local set to be watched.
+        A watched train is checked for updates.
+        If the train is already watched, this does nothing.
+        train is a Train object.
+        If stop is True, then this is used to stop watching
+        this particular train.
+        """
+        if self._trains is None:
+            self._trains = {}
+        if watch:
+            if train.Name() not in self._trains:
+                self._trains[train.Name()] = train
+        else:
+            if train.Name() in self._trains:
+                self._trains.pop(train.Name())
+        return
+
+    def SetTrains(self, tlist):
+        self._trains = tlist
         return
 
     def TemporaryDirectory(self):
@@ -557,6 +706,20 @@ class Configuration(object):
 
     def CreateTemporaryFile(self):
         return tempfile.TemporaryFile(dir = self._temp)
+
+    def PackagePath(self, pkg):
+        if self._package_dir:
+            return "%s/%s" % (self._package_dir, pkg.FileName())
+        else:
+            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName())
+
+    def PackageUpdatePath(self, pkg, old_version):
+        # Do we need this?  If we're given a package directory,
+        # then we won't have updates.
+        if self._package_dir:
+            return "%s/%s" % (self._package_dir, pkg.FileName(old_version))
+        else:
+            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName(old_version))
 
     def SearchForFile(self, path, handler=None):
         # Iterate through the search locations,
@@ -594,10 +757,8 @@ class Configuration(object):
             elif full_pathname.startswith("file://"):
                 file_ref = TryOpenFile(full_pathname[len("file://"):])
             else:
-                file_ref = TryGetNetworkFile(
+                file_ref = self.TryGetNetworkFile(
                     full_pathname,
-                    self._temp,
-                    current_version,
                     handler=handler,
                 )
             if file_ref is not None:
@@ -622,36 +783,41 @@ class Configuration(object):
         if train is None:
             train = sys_mani.Train()
         if sequence is None:
-            ManifestFile = "%s/LATEST" % train
+            ManifestFile = "/%s/LATEST" % train
         else:
             # This needs to change for TrueNAS, doesn't it?
-            ManifestFile = "%s/FreeNAS-%s" % (train, sequence)
+            ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
 
-        file_ref = TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
-                                     self._temp,
-                                     current_version,
+        file_ref = self.TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
                                      handler=handler,
                                  )
         return file_ref
 
     def FindLatestManifest(self, train = None):
-        # Finds the latest (largest sequence number)
-        # manifest for a given train, iterating through
-        # the search locations.
+        # Gets <UPDATE_SERVER>/<train>/LATEST
         # Returns a manifest, or None.
         rv = None
+        current_version = None
+        temp_mani = self.SystemManifest()
+        if temp_mani:
+            current_version = temp_mani.Sequence()
+
         if train is None:
-            temp_mani = self.SystemManifest()
             if temp_mani is None:
                 # I give up
                 raise Exceptions.ConfigurationInvalidException
-            train = temp_mani.Train()
-        for file in self.SearchForFile(train + "/LATEST"):
-            temp_mani = Manifest.Manifest(self)
-            temp_mani.LoadFile(file)
-            if rv is None or temp_mani.Sequence() > rv.Sequence():
-                rv = temp_mani
+            if temp_mani.NewTrain():
+                # If we're redirected to a new train, use that.
+                train = temp_mani.NewTrain()
+            else:
+                train = temp_mani.Train()
 
+        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
+        if file is None:
+            log.debug("Could not get latest manifest file for train %s" % train)
+        else:
+            rv = Manifest.Manifest(self)
+            rv.LoadFile(file)
         return rv
 
     def FindPackageFile(self, package, upgrade_from=None, handler=None):
@@ -669,6 +835,32 @@ class Configuration(object):
         # we'll only go by name.
         # If it can't find one, it returns None
         rv = None
+        mani = self.SystemManifest()
+        sequence = "unknown"
+        if mani:
+            sequence = mani.Sequence()
+        # First thing:  if we were given a package path, we use that,
+        # and that only, and delta packages don't matter.
+        if self._package_dir:
+            try:
+                file = open(self.PackagePath(package))
+            except:
+                return None
+            else:
+                if package.Checksum():
+                    h = ChecksumFile(file)
+                    if h != package.Checksum():
+                        return None
+                return file
+
+        # If we got here, then we are using the network to get the
+        # requested package.  In that case, if possible, we want to
+        # try to get a delta package, both to lower network bandwidth,
+        # and to improve speed.  And writes to the filesystem.
+        # So first we see if we can upgrade.
+
+        # If upgrade_from was explicitly given, we'll use that.
+        # Otherwise, we check the packagedb.
         # If we don't have a packagedb on the system,
         # that's not fatal -- it just means we can't do an upgrade.
         curVers = None
@@ -709,36 +901,63 @@ class Configuration(object):
                     break
                     
             # If we have an old version, look for that.
-            if o is not None:
-                # Figure out the name.
-                upgrade_name = package.FileName(curVers)
-                for file in self.SearchForFile(
-                    "Packages/%s" % upgrade_name,
-                    handler=handler,
-                ):
-                    if h is not None:
-                        hash = ChecksumFile(file)
-                        if hash == h:
-                            return file
-                    else:
-                        return file
-        # All that, and now we do much of it again with the full version
-        new_name = package.FileName()
-        for file in self.SearchForFile(
-            "Packages/%s" % new_name,
-            handler=handler,
-        ):
-            if package.Checksum() is not None:
-                hash = ChecksumFile(file)
-                if hash == package.Checksum():
-                    return file
-            else:
-                # If there's no checksum, and we found something with the
-                # right name, return that.
+            # o is eiter curVers, or a version found in
+            # the Package object.
+            # Figure out the name.
+            upgrade_name = package.FileName(curVers)
+            file = self.TryGetNetworkFile(
+                url = self.PackageUpdatePath(package, curVers),
+                handler = handler,
+                )
+            if h is None:
+                # No checksum, so just accept the file
                 return file
+            else:
+                hash = ChecksumFile(file)
+                if hash == h:
+                    return file
+        # All that, and now we do much of it again with the full version
+        file = self.TryGetNetworkFile(
+            url = self.PackagePath(package),
+            handler = handler,
+            )
+        if package.Checksum() is None:
+            # No checksum, so we just go wit hthe match
+            return file
+        else:
+            hash = ChecksumFile(file)
+            if hash == package.Checksum():
+                return file
+            else:
+                # No match
+                return None
+        raise Exception("This should not be reached")
 
-        return rv
+    def ManifestNoteURL(self, manifest, note):
+        # This returns the url of the specified note, or
+        # None if it doesn't exist.
+        # This is largely a simple wrapper.
+        path = manifest.NotePath(note)
+        if path:
+            url = "%s/%s" % (UPDATE_SERVER, path)
+            return url
+        return None
 
+    def GetManifestNote(self, manifest, note, handler = None):
+        # This returns the contents of the specified note,
+        # or None if it can't be found.
+        # We need the manifest so we can get the train name.
+        # Notes are stored at <base>/<train>/Notes, and
+        # the path of the note is stored in the manifest.
+        url = self.ManifetNoteURL(manifest, note)
+        if url:
+            file = self.TryGetNetworkFile(
+                url = url,
+                handler = handler,
+            )
+            if file:
+                return file.read()
+        return None
 
 if __name__ == "__main__":
     conf = Configuration()

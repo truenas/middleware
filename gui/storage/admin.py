@@ -89,10 +89,8 @@ class VolumeFAdmin(BaseFreeAdmin):
     def get_datagrid_context(self, request):
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name='').exists()
-        ufs_disabled = appPool.hook_feature_disabled('ufs')
         return {
             'has_multipath': has_multipath,
-            'ufs_disabled': ufs_disabled,
         }
 
     def get_datagrid_columns(self):
@@ -114,14 +112,8 @@ class VolumeFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
-            'name': 'avail_si',
+            'name': 'avail',
             'label': _('Available'),
-            'sortable': False,
-        })
-
-        columns.append({
-            'name': 'total_si',
-            'label': _('Size'),
             'sortable': False,
         })
 
@@ -203,7 +195,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
   for(var i=0;i < evt.rows.length;i++) {
     var row = evt.rows[i];
-    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s)) {
+    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s) || !%(hide_url)s) {
       query(".grid" + actionName).forEach(function(item, idx) {
         domStyle.set(item, "display", "none");
       });
@@ -216,6 +208,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'hide_enc': hide_enc,
             'hide_hasenc': hide_hasenc,
             'hide_unknown': hide_unknown,
+            'hide_url': 'row.data.%s' % url,
             }
 
         on_click = """function() {
@@ -262,12 +255,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
         actions['Options'] = self._action_builder(
             'options',
-            label=_('Edit ZFS Options'),
+            label=_('Edit Options'),
             icon="settings",
         )
         actions['NewDataset'] = self._action_builder(
             'add_dataset',
-            label=_('Create ZFS Dataset'),
+            label=_('Create Dataset'),
         )
         actions['NewVolume'] = self._action_builder(
             'add_zfs_volume',
@@ -290,7 +283,6 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Volume Status'),
             func="viewModel",
             icon="zpool_status",
-            fstype="ALL",
         )
         actions['VolLock'] = self._action_builder(
             "volume_lock",
@@ -361,13 +353,13 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
         actions['DatasetEdit'] = self._action_builder(
             "dataset_edit",
-            label=_('Edit ZFS Options'),
+            label=_('Edit Options'),
             icon="settings",
             show="DATASET",
         )
         actions['DatasetCreate'] = self._action_builder(
             "dataset_create",
-            label=_('Create ZFS Dataset'),
+            label=_('Create Dataset'),
             icon="add_dataset",
             show="DATASET",
         )
@@ -378,6 +370,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
         # ZVol actions
+        actions['ZVolEdit'] = self._action_builder(
+            "zvol_edit",
+            label=_('Edit zvol'),
+            icon="settings",
+            show="ZVOL",
+        )
         actions['ZVolDelete'] = self._action_builder(
             "zvol_delete",
             label=_('Destroy zvol'),

@@ -27,13 +27,14 @@
 
 from django.conf.urls import patterns, url
 from freenasUI.system.forms import (
-    FirmwareWizard,
-    FirmwareTemporaryLocationForm,
-    FirmwareUploadForm,
+    ManualUpdateWizard,
+    ManualUpdateTemporaryLocationForm,
+    ManualUpdateUploadForm,
     InitialWizard,
     InitialWizardConfirmForm,
     InitialWizardDSForm,
     InitialWizardShareFormSet,
+    InitialWizardSystemForm,
     InitialWizardVolumeForm,
     InitialWizardVolumeImportForm
 )
@@ -46,6 +47,7 @@ urlpatterns = patterns('freenasUI.system.views',
             ('volume', InitialWizardVolumeForm),
             ('ds', InitialWizardDSForm),
             ('shares', InitialWizardShareFormSet),
+            ('system', InitialWizardSystemForm),
             ('confirm', InitialWizardConfirmForm),
         ],
         condition_dict={
@@ -63,10 +65,18 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^shutdown/run/$', 'shutdown_run', name="system_shutdown_run"),
     url(r'^reporting/$', 'reporting', name="system_reporting"),
     url(r'^info/$', 'system_info', name="system_info"),
-    url(r'^firmwizard/$', FirmwareWizard.as_view(
-        [FirmwareTemporaryLocationForm, FirmwareUploadForm]
-    ), name='system_firmwizard'),
-    url(r'^firmwizard/progress/$', "firmware_progress", name="system_firmware_progress"),
+    url(r'^manualupdate/$', ManualUpdateWizard.as_view(
+        [ManualUpdateTemporaryLocationForm, ManualUpdateUploadForm]
+    ), name='system_manualupdate'),
+    url(r'^manualupdate/progress/$', "manualupdate_progress", name="system_manualupdate_progress"),
+    url(r'^bootenv/activate/(?P<name>[^/]+)/$', 'bootenv_activate', name='system_bootenv_activate'),
+    url(r'^bootenv/add/$', 'bootenv_add', name='system_bootenv_add'),
+    url(r'^bootenv/add/(?P<source>[^/]+)/$', 'bootenv_add', name='system_bootenv_add'),
+    url(r'^bootenv/delete/(?P<name>[^/]+)/$', 'bootenv_delete', name='system_bootenv_delete'),
+    url(r'^bootenv/rename/(?P<name>[^/]+)/$', 'bootenv_rename', name='system_bootenv_rename'),
+    url(r'^bootenv/datagrid/$', 'bootenv_datagrid', name='system_bootenv_datagrid'),
+    url(r'^bootenv/datagrid/structure/$', 'bootenv_datagrid_structure', name='system_bootenv_datagrid_structure'),
+    url(r'^bootenv/datagrid/actions/$', 'bootenv_datagrid_actions', name='system_bootenv_datagrid_actions'),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),
@@ -91,12 +101,14 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^CA/edit/(?P<id>\d+)/$', 'CA_edit', name="CA_edit"),
     url(r'^CA/export/certificate/(?P<id>\d+)/$', 'CA_export_certificate', name="CA_export_certificate"),
     url(r'^CA/export/privatekey/(?P<id>\d+)/$', 'CA_export_privatekey', name="CA_export_privatekey"),
+    url(r'^CA/info/(?P<id>\d+)/$', 'CA_info', name="CA_info"),
     url(r'^certificate/import/$', 'certificate_import', name="certificate_import"),
     url(r'^certificate/create/internal/$', 'certificate_create_internal', name="certificate_create_internal"),
-    url(r'^certificate/edit/(?P<id>\d+)/$', 'certificate_edit', name="certificate_edit"),
+    url(r'^certificate/view/(?P<id>\d+)/$', 'certificate_view', name="certificate_view"),
     url(r'^certificate/CSR/edit/(?P<id>\d+)/$', 'CSR_edit', name="CSR_edit"),
     url(r'^certificate/create/CSR/$', 'certificate_create_CSR', name="certificate_create_CSR"),
     url(r'^certificate/export/certificate/(?P<id>\d+)$', 'certificate_export_certificate', name="certificate_export_certificate"),
     url(r'^certificate/export/privatekey/(?P<id>\d+)$', 'certificate_export_privatekey', name="certificate_export_privatekey"),
-    url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', 'certificate_export_certificate_and_privatekey', name="certificate_export_certificate_and_privatekey")
+    url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', 'certificate_export_certificate_and_privatekey', name="certificate_export_certificate_and_privatekey"),
+    url(r'^certificate/info/(?P<id>\d+)/$', 'certificate_info', name="certificate_info"),
 )

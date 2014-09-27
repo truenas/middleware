@@ -48,6 +48,7 @@ from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import Interfaces
 
 log = logging.getLogger('jails.models')
 
@@ -204,6 +205,38 @@ class Jails(Model):
     )
 
     @property
+    def jail_ipv4_dhcp(self):
+        ret = False
+        jail_ipv4 = self.jail_ipv4
+        if jail_ipv4 and jail_ivp4.startswith("DHCP:"):
+            ret = True
+        return ret
+
+    @property
+    def jail_ipv4_addr(self):
+        jail_ipv4 = self.jail_ipv4
+        if jail_ipv4:
+            jail_ipv4 = jail_ipv4.replace("DHCP:", '')
+
+        return jail_ipv4
+
+    @property
+    def jail_ipv6_autoconf(self):
+        ret = False
+        jail_ipv6 = self.jail_ipv6
+        if jail_ipv6 and jail_ivp6.startswith("AUTOCONF:"):
+            ret = True
+        return ret
+
+    @property
+    def jail_ipv6_addr(self):
+        jail_ipv6 = self.jail_ipv6
+        if jail_ipv6:
+            jail_ipv6 = jail_ipv6.replace("AUTOCONF:", '')
+
+        return jail_ipv6
+
+    @property
     def jail_path(self):
         if self.__jail_path:
             return self.__jail_path
@@ -339,33 +372,53 @@ class JailsConfiguration(Model):
         verbose_name=_("Jail Root"),
         help_text=_("Path where to store jail data")
     )
+    jc_ipv4_dhcp = models.BooleanField(
+        verbose_name=_("IPv4 DHCP"),
+        default=False,
+        help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
+            " as default router, etc.")
+    )
     jc_ipv4_network = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network"),
-        help_text=_("IPv4 network range for jails and plugins"),
+        help_text=_("IPv4 network range for jails and plugins")
     )
     jc_ipv4_network_start = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network Start Address"),
-        help_text=_("IPv4 network start address for jails and plugins"),
+        help_text=_("IPv4 network start address for jails and plugins")
     )
     jc_ipv4_network_end = Network4Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv4 Network End Address"),
-        help_text=_("IPv4 network end address for jails and plugins"),
+        help_text=_("IPv4 network end address for jails and plugins")
+    )
+    jc_ipv6_autoconf = models.BooleanField(
+        verbose_name=_("IPv6 Autoconfigure"),
+        default=False,
+        help_text=_(
+            "When enabled, automatically configurate IPv6 address "
+            "via rtsol(8)."
+        ),
     )
     jc_ipv6_network = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network"),
         help_text=_("IPv6 network range for jails and plugins")
     )
     jc_ipv6_network_start = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network Start Address"),
         help_text=_("IPv6 network start address for jails and plugins")
     )
     jc_ipv6_network_end = Network6Field(
         blank=True,
+        null=True,
         verbose_name=_("IPv6 Network End Address"),
         help_text=_("IPv6 network end address for jails and plugins")
     )
@@ -384,13 +437,12 @@ class JailsConfiguration(Model):
         super(JailsConfiguration, self).save(*args, **kwargs)
         notifier().start("ix-warden")
 
-    def __init__(self, *args, **kwargs):
-        super(JailsConfiguration, self).__init__(*args, **kwargs)
-        iface = notifier().guess_default_interface()
-        if not iface:
+    def __configure_ipv4_network(self):
+        ipv4_iface = notifier().get_default_ipv4_interface()
+        if ipv4_iface == None:
             return
 
-        st = sipcalc_type(iface=iface)
+        st = sipcalc_type(iface=ipv4_iface)
         if not st:
             return
 
@@ -411,6 +463,80 @@ class JailsConfiguration(Model):
             self.jc_ipv4_network_end = str(st.usable_range[1]).split('/')[0]
         else:
             self.jc_ipv4_network_end = self.jc_ipv4_network_end.split('/')[0]
+
+    def __configure_ipv6_network(self):
+        ipv6_iface = notifier().get_default_ipv6_interface()
+        if ipv6_iface == None:
+            return
+
+        iface_info = notifier().get_interface_info(ipv6_iface)
+        if iface_info['ipv6'] == None:
+            return
+
+        ipv6_addr = iface_info['ipv6'][0]['inet6']
+        if ipv6_addr == None:
+            return
+
+        ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
+        if ipv6_prefix == None:
+            return
+
+        st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))
+        if not st:
+            return
+
+        if not st.is_ipv6():
+            return
+
+        st2 = sipcalc_type(st.subnet_prefix_masked)
+        if not st:
+            return
+
+        if not st.is_ipv6():
+            return
+
+        if not self.jc_ipv6_network:
+            self.jc_ipv6_network = "%s/%d" % (
+                st2.compressed_address, st.prefix_length
+            )
+
+        if not self.jc_ipv6_network_start:
+            st2 = sipcalc_type(st.network_range[0])
+
+            self.jc_ipv6_network_start = str(st2.compressed_address).split('/')[0]
+        else:
+            self.jc_ipv6_network_start = self.jc_ipv6_network_start.split('/')[0]
+
+        if not self.jc_ipv6_network_end:
+            st2 = sipcalc_type(st.network_range[1])
+            self.jc_ipv6_network_end = str(st2.compressed_address).split('/')[0]
+        else:
+            self.jc_ipv6_network_end = self.jc_ipv6_network_end.split('/')[0]
+
+    def __init__(self, *args, **kwargs):
+        super(JailsConfiguration, self).__init__(*args, **kwargs)
+
+        ipv4_iface = notifier().get_default_ipv4_interface()
+        try:
+             iface = Interfaces.objects.filter(int_interface=ipv4_iface)[0]
+             if iface.int_dhcp:
+                 self.jc_ipv4_dhcp = True
+        except:
+            pass
+
+        ipv6_iface = notifier().get_default_ipv6_interface()
+        try:
+             iface = Interfaces.objects.filter(int_interface=ipv6_iface)[0]
+             if iface.int_ipv6auto:  
+                 self.jc_ipv6_autoconf = True
+        except:
+            pass
+
+        if not self.jc_ipv4_dhcp:
+            self.__configure_ipv4_network()
+        if not self.jc_ipv6_autoconf:
+            self.__configure_ipv6_network()
+
 
 
 class JailTemplate(Model):
@@ -436,6 +562,14 @@ class JailTemplate(Model):
     jt_url = models.CharField(
         max_length=255,
         verbose_name=_("URL")
+    )
+
+    jt_system = models.BooleanField(
+        default=False
+    )
+
+    jt_readonly = models.BooleanField(
+        default=False
     )
 
     @property

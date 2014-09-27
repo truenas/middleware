@@ -38,7 +38,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common import humanize_size
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
@@ -95,6 +94,15 @@ class Volume(Model):
                 self.vol_name,
                 e)
             return []
+
+    def get_children(self, hierarchical=True, include_root=True):
+        if self.vol_fstype == 'ZFS':
+            return zfs.zfs_list(
+                path=self.vol_name,
+                recursive=True,
+                types=["filesystem", "volume"],
+                hierarchical=hierarchical,
+                include_root=include_root)
 
     def get_datasets(self, hierarchical=False, include_root=False):
         if self.vol_fstype == 'ZFS':
@@ -363,8 +371,8 @@ class Scrub(Model):
     )
 
     class Meta:
-        verbose_name = _("ZFS Scrub")
-        verbose_name_plural = _("ZFS Scrubs")
+        verbose_name = _("Scrub")
+        verbose_name_plural = _("Scrubs")
         ordering = ["scrub_volume__vol_name"]
 
     def __unicode__(self):
@@ -720,6 +728,17 @@ class MountPoint(Model):
     def __unicode__(self):
         return self.mp_path
 
+    def _get__zplist(self):
+        if not hasattr(self, '__zplist'):
+            try:
+                self.__zplist = zfs.zpool_list().get(self.mp_volume.vol_name)
+            except SystemError:
+                self.__zplist = None
+        return self.__zplist
+
+    def _set__zplist(self, value):
+        self.__zplist = value
+
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
             try:
@@ -728,21 +747,14 @@ class MountPoint(Model):
                 self.__vfs = None
         return self.__vfs
 
-    def _get_total_si(self):
+    def _get_avail(self):
         try:
-            totalbytes = self._vfs.f_blocks * self._vfs.f_frsize
-            return u"%s" % (humanize_size(totalbytes))
-        except:
-            if self.mp_volume.is_decrypted():
-                return _(u"Error getting total space")
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return self._zplist['free']
             else:
-                return _("Locked")
-
-    def _get_avail_si(self):
-        try:
-            availbytes = self._vfs.f_bavail * self._vfs.f_frsize
-            return u"%s" % (humanize_size(availbytes))
+                return self._vfs.f_bavail * self._vfs.f_frsize
         except:
+            raise
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting available space")
             else:
@@ -750,15 +762,17 @@ class MountPoint(Model):
 
     def _get_used_bytes(self):
         try:
-            return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                self._vfs.f_frsize
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return self._zplist['alloc']
+            else:
+                return (self._vfs.f_blocks - self._vfs.f_bfree) * \
+                    self._vfs.f_frsize
         except:
             return 0
 
-    def _get_used_si(self):
+    def _get_used(self):
         try:
-            usedbytes = self._get_used_bytes()
-            return u"%s" % (humanize_size(usedbytes))
+            return self._get_used_bytes()
         except:
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting used space")
@@ -767,9 +781,12 @@ class MountPoint(Model):
 
     def _get_used_pct(self):
         try:
-            availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
-                self._vfs.f_blocks
-            return u"%d%%" % (availpct)
+            if self.mp_volume.vol_fstype == 'ZFS':
+                return "%d%%" % self._zplist['capacity']
+            else:
+                availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
+                    self._vfs.f_blocks
+            return u"%d%%" % availpct
         except:
             return _(u"Error")
 
@@ -782,10 +799,10 @@ class MountPoint(Model):
             return _(u"Error")
 
     _vfs = property(_get__vfs)
-    total_si = property(_get_total_si)
-    avail_si = property(_get_avail_si)
+    _zplist = property(_get__zplist, _set__zplist)
+    avail = property(_get_avail)
     used_pct = property(_get_used_pct)
-    used_si = property(_get_used_si)
+    used = property(_get_used)
     status = property(_get_status)
 
 

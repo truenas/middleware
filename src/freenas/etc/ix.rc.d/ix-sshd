@@ -24,21 +24,50 @@ generate_sshd()
     if [ ! -d /root/.ssh ]; then
 	mkdir -p /root/.ssh
     fi
-
+    
+    local options=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_options FROM services_ssh ORDER BY -id LIMIT 1")
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 	    ssh_sftp_log_level=${ssh_sftp_log_level:-"ERROR"}
 	    ssh_sftp_log_facility=${ssh_sftp_log_facility:-"AUTH"}
-	    cat > $cfg <<EOF
+	    cat > $cfg << __EOF__
+Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${ssh_sftp_log_facility}
+__EOF__
+	    if [ -z "$options" ]; then
+		cat >> $cfg << __EOF__
 Protocol 2
 UseDNS no
-Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${ssh_sftp_log_facility}
 ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
 NoneEnabled yes
-EOF
+__EOF__
+	    else
+		if ! echo $options | grep -q "Protocol"; then
+		    echo "Protocol 2" >> $cfg
+		fi
+		
+		if ! echo $options | grep -q "UseDNS"; then
+		    echo "UseDNS no" >> $cfg
+		fi
+		
+		if ! echo $options | grep -q "ChallengeResponseAuthentication"; then
+		    echo "ChallengeResponseAuthentication no" >> $cfg
+		fi
+		
+		if ! echo $options | grep -q "ClientAliveCountMax"; then
+		    echo "ClientAliveCountMax 3" >> $cfg
+		fi
+		
+		if ! echo $options | grep -q "ClientAliveInterval"; then
+		    echo "ClientAliveInterval 15" >> $cfg
+		fi
+		
+		if ! echo "$options"| grep -q "NoneEnabled"; then
+		    echo "NoneEnabled yes" >> $cfg
+		fi
+	    fi
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
 	    fi
@@ -64,8 +93,10 @@ EOF
 	    if [ "$ssh_pubkeyauth" = 1 ]; then
 		echo "PubkeyAuthentication yes" >> $cfg
 	    fi
+	    
+	    echo $options >> $cfg
     done
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_options FROM services_ssh ORDER BY -id LIMIT 1" >> $cfg
+    
     # Generate a passwordless key-pair for automatic replication
     if [ ! -d /data/ssh ]; then
 	mkdir -m 755 /data/ssh

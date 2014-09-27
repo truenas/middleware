@@ -77,26 +77,12 @@ if [ "$VIMAGEENABLE" = "YES" ] ; then
 
 else
   # Get list of IP4s for this jail
-  if [ -e "${JMETADIR}/ipv4" ] ; then
-    IP4S="`cat "${JMETADIR}/ipv4" | cut -d '/' -f 1`"
-  fi
-  if [ -e "${JMETADIR}/alias-ipv4" ] ; then
-    while read line
-    do
-      IP4S="${IP4S} `echo $line | cut -d '/' -f 1`"
-    done < "${JMETADIR}/alias-ipv4"
-  fi
+  IP4S="$(warden_get_ipv4 '' 1)"
+  IP4S="${IP4S} $(warden_get_ipv4_aliases '' 1)"
 
   # Get list of IP6s for this jail
-  if [ -e "${JMETADIR}/ipv6" ] ; then
-    IP6S="`cat "${JMETADIR}/ipv6" | cut -d '/' -f 1`"
-  fi
-  if [ -e "${JMETADIR}/alias-ipv6" ] ; then
-    while read line
-    do
-      IP6S="${IP6S} `echo $line | cut -d '/' -f 1`"
-    done < "${JMETADIR}/alias-ipv6"
-  fi
+  IP6S="$(warden_get_ipv6 '' 1)"
+  IP6S="${IP6S} $(warden_get_ipv6_aliases '' 1)"
 
   # Check if we need to remove the IP aliases from this jail
   for _ip in $IP4S
@@ -128,7 +114,7 @@ fi
 if [ -e "${JMETADIR}/jail-linux" ] ; then LINUXJAIL="YES" ; fi
 
 # Check for user-supplied mounts
-if [ -e "${JMETADIR}/fstab" ] ; then
+if [ -s "${JMETADIR}/fstab" ] ; then
    warden_print "Unmounting user-supplied file-systems"
    cat "${JMETADIR}/fstab" \
      | sed "s|%%JAILDIR%%|${JAILDIR}|g" \

@@ -1,4 +1,4 @@
-To build (and/or make changes to) the latest draft of the User Guide:
+To build (and/or make changes to) the upcoming version of the User Guide:
 
 Install the following (these are the FreeBSD package names):
 
@@ -7,22 +7,23 @@ Install the following (these are the FreeBSD package names):
 
 Check out the source code from git:
 
-% cd /path/to/your-build-filesystem
+% cd /path/to/your-build-directory
 % git clone git://github.com/freenas/freenas.git
-% cd /path/to/your-build-filesystem/freenas/docs/userguide
+% cd /path/to/your-build-directory/freenas/docs/userguide
 
-NOTE: all of the following commands should be run from /path/to/your-build-filesystem/freenas/docs/userguide.
+NOTE: all of the following commands should be run from /path/to/your-build-directory/freenas/docs/userguide.
 
 To set up the doc build environment for the first time:
 
 % sphinx-quickstart 
 
-If you want to edit the User Guide, make changes to index.rst using any ASCII text editor.
+If you want to edit the User Guide, make changes to *.rst file for the chapter to edit, using any ASCII text editor.
 Refer to http://docutils.sourceforge.net/docs/user/rst/quickref.html for formatting syntax.
 Refer to http://wiki.typo3.org/Editors_%28reST%29 for a list of reST editors.
+Need help getting started or want to discuss edits? Join the http://lists.freenas.org/mailman/listinfo/freenas-docs mailing list.
 
-To build new version of html:
+To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
 
-% sphinx-build -b html . _build
+% sphinx-build -b singlehtml . _build
 
-When finished, open _build/index.html in a browser to verify HTML output.
+When finished, open _build/freenas.html in a browser to verify the HTML output.

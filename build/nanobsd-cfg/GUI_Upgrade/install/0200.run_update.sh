@@ -27,6 +27,7 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
 
+. /etc/avatar.conf
 . /etc/nanobsd.conf
 . /etc/rc.freenas
 
@@ -50,11 +51,12 @@ standard_upgrade()
 	# Unlike the trampoline install, we've got the basics we need in
 	# place, so we only have to be concerned with gui-packages.tar.
     set -x
+	OS=${AVATAR_PROJECT}
 	UPGRADE_DIR=${SCRIPTDIR}/update
 	mkdir -p ${UPGRADE_DIR} || upgrade_fail "Unable to create package directory"
 	tar xf ${SCRIPTDIR}/gui-packages.tar -C ${UPGRADE_DIR} || upgrade_fail "Unable to extract package files"
-	NEW_VERSION=FreeNAS-$(/usr/local/bin/manifest_util -M ${UPGRADE_DIR}/FreeNAS-MANIFEST sequence)
-	if [ "${NEW_VERSION}" = "FreeNAS-" ]; then
+	NEW_VERSION=${OS}-$(/usr/local/bin/manifest_util -M ${UPGRADE_DIR}/${OS}-MANIFEST sequence)
+	if [ "${NEW_VERSION}" = "${OS}-" ]; then
 	    upgrade_fail "Unable to determine sequence for new version"
 	fi
 	beadm create "${NEW_VERSION}" || upgrade_fail "Unable to create new boot environment"
@@ -73,12 +75,12 @@ standard_upgrade()
 	    upgrade_fail "Could not mount new boot environment"
 	fi
 	mount -t nullfs /boot/grub ${dest}/boot/grub
-	/usr/local/bin/freenas-install -M ${UPGRADE_DIR}/FreeNAS-MANIFEST \
-	    -P ${UPGRADE_DIR} ${dest}
+	/usr/local/bin/freenas-install -M ${UPGRADE_DIR}/${OS}-MANIFEST \
+	    -P ${UPGRADE_DIR}/Packages ${dest}
 	rv=$?
 	umount ${dest}/boot/grub
 	beadm unmount ${NEW_VERSION}
-	if [ $? -ne 0 ]; then
+	if [ $rv -ne 0 ]; then
 	    beadm destroy -F ${NEW_VERSION}
 	    upgrade_fail "Could not install new version"
 	else
@@ -159,7 +161,7 @@ trampoline_upgrade()
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/mnt
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer
 	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/dev
-	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/.mount/FreeNAS
+	mkdir -p ${TRAMPOLINE_MFS_ROOT}/installer/.mount/${AVATAR_PROJECT}
 	
 	# Copy /rescue from the installation image.
 	tar xf ${SCRIPTDIR}/gui-install-environment.tar -C ${TRAMPOLINE_MFS_ROOT} ./rescue
@@ -182,11 +184,11 @@ echo -n "Extracting upgrade image, please wait..."
 
 /rescue/mount -o ro /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a /mnt
 /rescue/mount -t tmpfs tmpfs /installer
-/rescue/mkdir -p /installer/.mount/FreeNAS
+/rescue/mkdir -p /installer/.mount/${AVATAR_PROJECT}
 
 /rescue/tar xf /mnt/gui-install-environment.tar  -C /installer || (echo "FAILED BASE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
 /rescue/tar xf /mnt/gui-packages.tar -C /installer/.mount || (echo "FAILED PACKAGE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
-/rescue/mv /installer/.mount/Packages /installer/.mount/FreeNAS/Packages
+/rescue/mv /installer/.mount/Packages /installer/.mount/${AVATAR_PROJECT}/Packages
 /rescue/umount /mnt
 
 echo " Done!"

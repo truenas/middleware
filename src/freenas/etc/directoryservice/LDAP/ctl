@@ -61,14 +61,27 @@ cifs_start()
 
 cifs_stop()
 {
+	local val="${1}"
+	local res=0
+
 	ldapctl_cmd ${python} ${notifier} stop cifs
-	return $?
+	res=$?
+
+	if [ -n "${val}" ]
+	then
+		srv_set cifs "${val}"
+	fi
+
+	return ${res}
 }
 
 cifs_restart()
 {
-	ldapctl_cmd ${python} ${notifier} stop cifs
-	ldapctl_cmd ${python} ${notifier} start cifs
+	if LDAP_has_samba_schema
+	then
+		ldapctl_cmd ${python} ${notifier} stop cifs
+		ldapctl_cmd ${python} ${notifier} start cifs
+	fi
 	return $?
 }
 
@@ -142,7 +155,7 @@ ldapctl_stop()
 		ldap_set 1
 	fi
 
-	if cifs_enabled
+	if cifs_enabled 
 	then
 		cifs_started=1
 		cifs_stop
@@ -161,30 +174,26 @@ ldapctl_stop()
 
 	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
 	then
-		ldapctl_cmd ${service} samba_server forcestop
-		srv_set cifs 0
+		cifs_stop 0
 		ldap_set 0
 		ldapctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
-		ldapctl_cmd ${service} samba_server forcestop
-		srv_set cifs 0
+		cifs_stop 0
 		ldap_set 0
 		ldapctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
-		ldapctl_cmd ${service} samba_server forcestop
+		cifs_stop 1
 		ldap_set 0
-		srv_set cifs 1
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
 	then
-		ldapctl_cmd ${service} samba_server forcestop
+		cifs_stop 1
 		ldap_set 0
-		srv_set cifs 1
 		cifs_start
 	fi
 

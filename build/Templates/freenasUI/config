@@ -16,10 +16,20 @@ include = /usr/local/www/freenasUI
 
 [Scripts]
 
-# This is a huge hack for demo purposes.  Remove
-# when I figure out something sane.
+# Fresh installs don't need this.
+# However, if the package name changed, we would.
 
-post-install = /usr/sbin/service restart django || true
+post-install = 
+	if [ -f /data/freenas-v1.db ]; then
+	   /usr/bin/touch /data/cd-upgrade
+	   /usr/bin/touch /data/need-update
+	fi
+#	test -f /data/freenas-v1.db && \
+#		/usr/bin/yes | /usr/local/bin/python \
+#		            /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
 
-post-upgrade = /usr/bin/touch /data/cd-upgrade
-	     /usr/bin/touch /data/need-update
+post-upgrade = 
+	/usr/bin/touch /data/cd-upgrade
+	/usr/bin/touch /data/need-update
+#	/usr/bin/yes | /usr/local/bin/python \
+#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations

@@ -46,7 +46,7 @@ Control Services
 ----------------
 
 :menuselection:`Services --> Control Services`, shown in Figure 11.1a, allows you to quickly determine which services are currently running, to start and stop
-services, and to configure services. By default, all services (except for the S.M.A.R.T. service) are off until you start them.
+services, and to configure services. By default, all services, except for the S.M.A.R.T. service, are off until you start them.
 
 **Figure 11.1a: Control Services**
 
@@ -56,7 +56,7 @@ services, and to configure services. By default, all services (except for the S.
     :width: 3.8in
     :height: 4.5in
 
-A service is stopped if its icon is a red OFF. A service is running if its icon is a blue ON. To start or stop a service, click its ON/OFF icon.
+A service is stopped if its icon is a red "OFF". A service is running if its icon is a blue "ON". To start or stop a service, click its ON/OFF icon.
 
 To configure a service, click the wrench icon associated with the service or click the name of the service in the "Services" section of the tree menu.
 
@@ -64,7 +64,7 @@ If a service does not start, go to :menuselection:`System --> Advanced` and chec
 show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
 messages. Watch these messages for errors when you stop and start the problematic service.
 
-If you would like to read the system logs to get more information about a service failure, open Shell and type :command:`more /var/log/messages`.
+If you would like to read the system logs to get more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
 
 .. _AFP:
 
@@ -93,7 +93,7 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 | Guest Access            | checkbox       | if checked, clients will not be prompted to authenticate before accessing AFP shares                            |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Guest Account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
+| Guest account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
 |                         |                | shared                                                                                                          |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
@@ -103,14 +103,14 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 | Enable home directories | checkbox       | if checked, any user home directories located under "Home directories" will be available over the share         |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Home directories        | Browse button  | select the volume or dataset which contains user home directories                                               |
+| Home directories        | browse button  | select the volume or dataset which contains user home directories                                               |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Database Path           |Browse button   | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
+| Database Path           | browse button  | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
 |                         |                | writable                                                                                                        |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
-| Global Auxiliary        | string         | additional `afp.conf(5) <http://netatalk.sourceforge.net/3.0/htmldocs/afp.conf.5.html>`_                        |
-| Parameters              |                | parameters not covered elsewhere in this screen                                                                 |
+| Global auxiliary        | string         | additional `afp.conf(5) <http://netatalk.sourceforge.net/3.0/htmldocs/afp.conf.5.html>`_                        |
+| parameters              |                | parameters not covered elsewhere in this screen                                                                 |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 
@@ -124,7 +124,9 @@ you create each user, first create a child dataset for that user. For example, c
 Troubleshooting AFP
 ~~~~~~~~~~~~~~~~~~~
 
-If you receive a "Something wrong with the volume's CNID DB" error message, run the following command from Shell, replacing the path to the problematic
+You can determine which users are connected to an AFP share by typing :command:`afpusers`.
+
+If you receive a "Something wrong with the volume's CNID DB" error message, run the following command from :ref:`Shell`, replacing the path to the problematic
 AFP share::
 
  dbd -rf /path/to/share
@@ -173,14 +175,14 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | Description                      | string         | optional                                                                                              |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| DOS Charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME clients; default is        |
+| DOS charset                      | drop-down menu | the character set Samba uses when communicating with DOS and Windows 9x/ME clients; default is        |
 |                                  |                | *CP437*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| UNIX Charset                     | drop-down menu | default is *UTF-8* which supports all characters in all languages                                     |
+| UNIX charset                     | drop-down menu | default is *UTF-8* which supports all characters in all languages                                     |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Log Level                        | drop-down menu | choices are *Minimum*,                                                                                |
+| Log level                        | drop-down menu | choices are *Minimum*,                                                                                |
 |                                  |                | *Normal*, or                                                                                          |
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
@@ -257,7 +259,12 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | to execute                                                                                            |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Obey pam restrictions            | checkbox       |                                                                                                       |
+| Obey pam restrictions            | checkbox       | uncheck this box to allow cross-domain authentication, to allow users and groups to be managed on     |
+|                                  |                | another forest, or to allow permissions to be delegated from active directory users and groups to     |
+|                                  |                | domain admins on another forest                                                                       |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Bind IP Addresses                | checkboxes     |                                                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Idmap Range Low                  | integer        |                                                                                                       |
@@ -316,9 +323,9 @@ Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares
 until you manually stop and start the CIFS service.
 
 .. note:: do not set the
-   *directory name cache size* as an auxiliary parameter. Due to differences in how Linux and BSD handle file descriptors, directory name caching is disabled
-   on BSD systems in order to improve performance.
-   
+   *directory name cache size* as an "Auxiliary parameter". Due to differences in how Linux and BSD handle file descriptors, directory name caching is
+   disabled on BSD systems in order to improve performance.
+
 .. _Troubleshooting CIFS:
 
 Troubleshooting CIFS
@@ -328,8 +335,8 @@ Samba is single threaded, so CPU speed makes a big difference in CIFS performanc
 speeds in excess of Gb LAN while low power CPUs such as Intel Atoms and AMD C-30s\E-350\E-450 will not be able to achieve more than about 30-40MB/sec
 typically. Remember that other loading such as ZFS loading will also require CPU resources and may cause Samba performance to be less than optimal.
 
-Samba's "write cache" parameter has been reported to improve write performance in some configurations and can be added to the "Auxiliary Parameters" field.
-Use an integer value which is a multiple of _SC_PAGESIZE (typically 4096) to avoid memory fragmentation. This will increase Samba's memory requirements and
+Samba's *write cache* parameter has been reported to improve write performance in some configurations and can be added to the "Auxiliary parameters" field.
+Use an integer value which is a multiple of _SC_PAGESIZE (typically *4096*) to avoid memory fragmentation. This will increase Samba's memory requirements and
 should not be used on systems with limited RAM.
 
 If you wish to increase network performance, read the Samba section on
@@ -347,9 +354,12 @@ Where possible, avoid using a mix of case in filenames as this may cause confusi
 `Representing and resolving filenames with Samba <http://oreilly.com/openbook/samba/book/ch05_04.html>`_
 explains this in more detail.
 
+If a particular user cannot connect to a CIFS share, double-check that their password does not contain the *?* character. If it does, have the user change
+their password and try again.
+
 If permissions work for Windows users but not for OS X users, try disabling "Unix Extensions" and restarting the CIFS service.
 
-If the CIFS service will not start, run this command from Shell to see if there is an error in the configuration::
+If the CIFS service will not start, run this command from :ref:`Shell` to see if there is an error in the configuration::
 
  testparm /usr/local/etc/smb4.conf
 
@@ -360,7 +370,7 @@ It is recommended to use a dataset for CIFS sharing. When creating the dataset, 
 **Do not** use :command:`chmod` to attempt to fix the permissions on a CIFS share as it destroys the Windows ACLs. The correct way to manage permissions on a
 CIFS share is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so,
 right-click on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using :command:`chmod`,
-:command:`winacl` can be used to fix them. Type :command:`winacl` from Shell for usage instructions. 
+:command:`winacl` can be used to fix them. Type :command:`winacl` from :ref:`Shell` for usage instructions. 
 
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
@@ -427,6 +437,9 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Administrator password | string         | password to be used for the Active Directory administrator account                                                                                                                        |
+|                        |                |                                                                                                                                                                                           |
++------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos Realm         | drop-down menu |                                                                                                                                                                                           |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
@@ -663,10 +676,6 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | variables                                                                           |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS use implicit SSL                                         | checkbox       | only available in "Advanced "; if checked, will break clients that expect           |
-|                                                              |                | explicit connections                                                                |
-|                                                              |                |                                                                                     |
-+--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS DNS name required                                        | checkbox       | only available in "Advanced Mode"; if checked, the client's DNS name must           |
 |                                                              |                | resolve to its IP address and the cert must contain the same DNS name               |
 |                                                              |                |                                                                                     |
@@ -675,11 +684,11 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                              |                | contain the IP address that matches the IP address of the client                    |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Certificate and private key                                  | string         | only available in "Advanced Mode"; the SSL certificate and private key to be        |
-|                                                              |                | used for TLS FTP connections                                                        |
+| Certificate                                                  | drop-down menu | the SSL certificate to be used for TLS FTP connections; to create a certificate,    |
+|                                                              |                | use `System --> Certificates`                                                       |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Auxiliary parameters                                         | string         | only available in "Advanced Mode";                                  include         |
+| Auxiliary parameters                                         | string         | only available in "Advanced Mode"; used to add                                      |
 |                                                              |                | `proftpd(8) <http://linux.die.net/man/8/proftpd>`_                                  |
 |                                                              |                | parameters not covered elsewhere in this screen                                     |
 |                                                              |                |                                                                                     |
@@ -703,7 +712,7 @@ you don't have to manage changed passwords on the FreeNAS® system.
 
 To configure anonymous FTP:
 
-#.  **Give the built-in ftp user account permissions** to the volume/dataset to be shared in :menuselection:`Storage --> Volumes` as follows:
+#.  Give the built-in ftp user account permissions to the volume/dataset to be shared in :menuselection:`Storage --> Volumes` as follows:
 
     * "Owner(user)": select the built-in *ftp* user from the drop-down menu
 
@@ -714,16 +723,16 @@ To configure anonymous FTP:
     .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
        will be accessing FreeNAS® via FTP.
 
-#.  **Configure anonymous FTP** in :menuselection:`Services --> FTP` by setting the following attributes:
+#.  Configure anonymous FTP in :menuselection:`Services --> FTP` by setting the following attributes:
 
     * check the box "Allow Anonymous Login"
 
     * "Path": browse to the volume/dataset/directory to be shared
 
-#.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
-    the service has been enabled.
+#.  Start the FTP service in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to FTP. After a second or so, it will change to a
+    blue "ON", indicating that the service has been enabled.
 
-#.  **Test the connection** from a client using a utility such as
+#.  Test the connection from a client using a utility such as
     `Filezilla <http://filezilla-project.org/>`_.
 
 In the example shown in Figure 11.6b, a user has input the following information into the Filezilla client:
@@ -758,20 +767,20 @@ is limited to the size of the quota.
 
 To configure this scenario:
 
-#.  **Create a ZFS dataset for each user** in :menuselection:`Storage --> Volumes`. Click an existing :menuselection:`ZFS volume --> Create ZFS Dataset` and
-    set an appropriate quota for each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
+#.  Create a ZFS dataset for each user in :menuselection:`Storage --> Volumes`. Click an existing :menuselection:`ZFS volume --> Create ZFS Dataset` and set
+    an appropriate quota for each dataset. Repeat this process to create a dataset for every user that will need access to the FTP service.
 
-#.  **If you are not using AD or LDAP, create a user account for each user** in :menuselection:`Account --> Users --> Add User`. For each user, browse to the
+#.  If you are not using AD or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User`. For each user, browse to the
     dataset created for that user in the "Home Directory" field. Repeat this process to create a user account for every user that will need access to the FTP
     service, making sure to assign each user their own dataset.
 
-#.  **Set the permissions for each dataset** in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
+#.  Set the permissions for each dataset in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
     account as "Owner" of that dataset and to set the desired permissions for that user. Repeat for each dataset.
 
     .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
        will be accessing FreeNAS® via FTP.
 
-#.  **Configure FTP** in :menuselection:`Services --> FTP` with the following attributes:
+#.  Configure FTP in :menuselection:`Services --> FTP` with the following attributes:
 
     * "Path": browse to the parent volume containing the datasets
 
@@ -781,10 +790,10 @@ To configure this scenario:
 
     * check the box "Always Chroot"
 
-#.  **Start the FTP service** in Control Services. Click the red "OFF" button next to FTP. After a second or so, it will change to a blue ON, indicating that
-    the service has been enabled.
+#.  Start the FTP service in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to FTP. After a second or so, it will change to a
+    blue "ON", indicating that the service has been enabled.
 
-#.  **Test the connection from a client** using a utility such as Filezilla.
+#.  Test the connection from a client using a utility such as Filezilla.
 
 To test this configuration in Filezilla, use the IP address of the FreeNAS® system, the Username of a user that has been associated with a dataset, and the
 Password for that user. The messages should indicate that the authorization and the FTP connection are successful. The user can now navigate the contents of
@@ -798,15 +807,14 @@ Encrypting FTP
 
 To configure any FTP scenario to use encrypted connections:
 
-#.  **Enable TLS** in S:menuselection:`Services --> FTP`. Check the box "Enable TLS". Once you press "OK", a certificate and key will automatically be
-    generated for you and :command:`proftpd` will restart and be configured to use that certificate. If you prefer to use your own certificate, delete the
-    automatically generated one that appears in the "Certificate and private key" field and paste in your own certificate and key.
+#.  Import or create a certificate authority using the instructions in :ref:`CAs`. Then, import or create the certificate to use for encrypted connections
+    using the instructions in :ref:`Certificates`.
 
-#.  **Specify secure FTP when accessing the FreeNAS® system.** For example, in Filezilla input
-    *ftps://IP_address* (for an implicit connection) or
-    *ftpes://IP_address*
-    (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the certificate of the FreeNAS®
-    system. Click "OK" to accept the certificate and negotiate an encrypted connection.
+#.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate drop-down menu.
+
+#.  Specify secure FTP when accessing the FreeNAS® system. For example, in Filezilla input *ftps://IP_address* (for an implicit connection) or
+    *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the
+    certificate of the FreeNAS® system. Click "OK" to accept the certificate and negotiate an encrypted connection.
 
 To force encrypted connections, add the following line to Auxiliary Parameters::
 
@@ -817,13 +825,13 @@ To force encrypted connections, add the following line to Auxiliary Parameters::
 Troubleshooting FTP
 ~~~~~~~~~~~~~~~~~~~
 
-The FTP service will not start if it can not resolve the system's hostname to an IP address using DNS. To see if the FTP service is running, open Shell and
-issue the command::
+The FTP service will not start if it can not resolve the system's hostname to an IP address using DNS. To see if the FTP service is running, open :ref:`Shell`
+and issue the command::
 
  sockstat -4p 21
 
-If there is nothing listening on port 21, proftpd isn't running. To see the error message that occurs when FreeNAS® tries to start the FTP service, go to
-:menuselection:`System --> Advanced`, check the box "Show console messages in the footer" and click "Save". Next, go to
+If there is nothing listening on port 21, the FTP service isn't running. To see the error message that occurs when FreeNAS® tries to start the FTP service,
+go to :menuselection:`System --> Advanced`, check the box "Show console messages in the footer" and click "Save". Next, go to
 :menuselection:`Services --> Control Services` and switch the FTP service off then back on in the GUI. Watch the console messages at the bottom of the browser
 for errors.
 
@@ -1394,7 +1402,7 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 | Country Code           | string     |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Location               |            |                                                                                                                     |
+| Location               | string     |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
@@ -1592,10 +1600,10 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
     :width: 2.9in
     :height: 2.7in
 
-.. note:: :command:`smartd` will wake up at every "Check Interval" configured in Figure 8.10a. It will check the times you configured in your tests (described
-   in Figure 4.5a) to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it does not make sense to set a
-   "Check Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart test to every hour, the test
-   will only be run every 2 hours since the daemon only wakes up every 2 hours.
+.. note:: :command:`smartd` will wake up at every configured "Check Interval". It will check the times you configured in
+   :menuselection:`System --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
+   does not make sense to set a "Check Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart
+   test to every hour, the test will only be run every 2 hours since the daemon only wakes up every 2 hours.
 
 Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 
@@ -1638,14 +1646,12 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 SNMP
 ----
 
-SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® can be
-configured as a
-`bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_
-server using FreeBSD's simple and extensible SNMP daemon. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
+SNMP (Simple Network Management Protocol) is used to monitor network-attached devices for conditions that warrant administrative attention. FreeNAS® uses
+`Net-SNMP <http://net-snmp.sourceforge.net/>`_ to provide SNMP. When you start the SNMP service, the following port will be enabled on the FreeNAS® system:
 
-* UDP 161 (:command:`bsnmpd` listens here for SNMP requests)
+* UDP 161 (listens here for SNMP requests)
 
-Available MIBS are located in :file:`/usr/share/SNMP/mibs` and :file:`/usr/local/share/SNMP/mibs`.
+Available MIBS are located in :file:`/usr/share/snmp/mibs` and :file:`/usr/local/share/snmp/mibs`.
 
 Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
@@ -1674,7 +1680,6 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
 | Auxiliary Parameters | string     | additional                                                     |
-|                      |            | `bsnmpd(8) <http://www.freebsd.org/cgi/man.cgi?query=bsnmpd>`_ |
 |                      |            | options not covered in this screen, one per line               |
 |                      |            |                                                                |
 +----------------------+------------+----------------------------------------------------------------+
@@ -1687,9 +1692,7 @@ SSH
 
 Secure Shell (SSH) allows for files to be transferred securely over an encrypted network. If you configure your FreeNAS® system as an SSH server, the users
 in your network will need to use
-`SSH  <http://en.wikipedia.org/wiki/Comparison_of_SSH_clients>`_
-`client software <http://en.wikipedia.org/wiki/Comparison_of_SSH_clients>`_
-in order to transfer files using SSH.
+`SSH  client software <http://en.wikipedia.org/wiki/Comparison_of_SSH_clients>`_ in order to transfer files using SSH.
 
 This section shows the FreeNAS® SSH configuration options, demonstrates an example configuration that restricts users to their home directory, and provides
 some troubleshooting tips.
@@ -1758,9 +1761,10 @@ Mode" button or configure the system to always display these settings by checkin
 
 A few sshd_config(5) options that are useful to input in the "Extra Options" field include:
 
-* **ClientAliveInterval**: increase this number if ssh connections tend to drop
+*  increase the *ClientAliveInterval* if SSH connections tend to drop
 
-* **ClientMaxStartup**: defaults to 10; increase if you have more users
+* *ClientMaxStartup* defaults to 
+  *10*; increase this value if you need more concurrent SSH connections
 
 .. _SFTP Chroot:
 
@@ -1781,24 +1785,23 @@ the following steps.
    `bypass the chroot <http://winscp.net/eng/docs/faq_breaks_permissions>`_. This section assumes that users are accessing the chroot using the command line
    :command:`sftp`.
 
-#.  **Create a ZFS dataset for each user requiring :command:`sftp` access** in :menuselection:`Storage --> Volumes`.
+#.  Create a ZFS dataset for each user requiring :command:`sftp` access in :menuselection:`Storage --> Volumes`.
 
-#.  **If you are not using Active Directory or LDAP, create a user account** 
-    for each user in :menuselection:`Account --> Users --> Add User`. In the "Home Directory" field, browse to the location of the dataset you created for
-    that user. Repeat this process to create a user account for every user that will need access to the SSH service.
+#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User`. In the "Home
+    Directory" field, browse to the location of the dataset you created for that user. Repeat this process to create a user account for every user that will
+    need access to the SSH service.
 
-#.  **Create a group** named
-    *sftp* in :menuselection:`Account --> Groups --> Add Group`. Then, click on the
+#.  Create a group named *sftp* in :menuselection:`Account --> Groups --> Add Group`. Then, click on the
     *sftp* group in "View Groups" and add the users who are to be restricted to their home directories when using :command:`sftp`.
 
-#.  **Set permissions for each dataset** in :menuselection:`Storage --> Volume --> View Volumes`. SSH chroot is
+#.  Set permissions for each dataset in :menuselection:`Storage --> Volume --> View Volumes`. SSH chroot is
     **very specific** with regards to the required permissions (see the ChrootDirectory keyword in
     `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
     for details).
     **Your configuration will not work if the permissions on the datasets used by SSH chroot users differ from those shown in Figure 11.13b.**
 
-#.  Create a home directory within each dataset using Shell. Due to the permissions required by SSH chroot, the user will not have permissions to write to the
-    root of their own dataset until you do this. Since your intention is to limit them to the contents of their home directory, manually create a home
+#.  Create a home directory within each dataset using :ref:`Shell`. Due to the permissions required by SSH chroot, the user will not have permissions to write
+    to the root of their own dataset until you do this. Since your intention is to limit them to the contents of their home directory, manually create a home
     directory for each user **within their own dataset** and change the ownership of the directory to the user. Example 11.13a demonstrates the commands used
     to create a home directory called *user1* for the user account
     *user1* on dataset :file:`/mnt/volume1/user1`:
@@ -1818,7 +1821,7 @@ the following steps.
 
      chown user1:user1 /mnt/volume1/user1/user1
 
-#.  **Configure SSH** in :menuselection:`Services --> SSH`. Add these lines to the "Extra Options" section:
+#.  Configure SSH in :menuselection:`Services --> SSH`. Add these lines to the "Extra Options" section:
     ::
 
 
@@ -1828,18 +1831,18 @@ the following steps.
      ForceCommand internal-sftp
      AllowTcpForwarding no
 
-#.  **Start the SSH service** in Control Services. Click the red "OFF" button next to SSH. After a second or so, it will change to a blue ON, indicating that
-    the service has been enabled.
+#.  Start the SSH service in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to SSH. After a second or so, it will change to a
+    blue "ON", indicating that the service has been enabled.
 
-#.  **Test the connection** from a client by running :command:`sftp`, :command:`ssh`, and :command:`scp` as the user. The :command:`sftp` command should work
-    but be limited to the user's home directory and the :command:`ssh` and :command:`scp` commands should fail.
+#.  Test the connection from a client by running :command:`sftp`, :command:`ssh`, and :command:`scp` as the user. The :command:`sftp` command should work but
+    be limited to the user's home directory and the :command:`ssh` and :command:`scp` commands should fail.
 
 .. _Troubleshooting SSH:
 
 Troubleshooting SSH
 ~~~~~~~~~~~~~~~~~~~
 
-If you add any "Extra Options" in the SSH configuration screen, be aware that the keywords listed in
+If you add any "Extra Options", be aware that the keywords listed in
 `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
 are case sensitive. This means that your configuration will fail to do what you intended if you do not match the upper and lowercase letters of the keyword.
 
@@ -1848,7 +1851,7 @@ of :menuselection:`Network --> Global Configuration`.
 
 When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have
 permission to transfer files within the intended directories. If the user account is experiencing problems, the SSH error messages are usually pretty specific
-to what the problem is. Type the following command within Shell to read these messages as they occur::
+to what the problem is. Type the following command within :ref:`Shell` to read these messages as they occur::
 
  tail -f /var/log/messages
 
@@ -2014,9 +2017,12 @@ this command. These users are created in the "Extra users" field.
 WebDAV
 ------
 
-Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection.
+Beginning with FreeNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
+one WebDAV share using :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share`. Refer to :ref:`WebDAV Shares` for instructions on how to create a
+share and then how to connect to it once the service is configured and started.
 
-Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available options.
+The settings in the WebDAV service apply to all WebDAV shares. Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available
+options.
 
 **Figure 11.16a: WebDAV Configuration Screen**
 
@@ -2026,7 +2032,7 @@ Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the
     :width: 3.6in
     :height: 2.4in
 
-**Tablee 11.16a: WebDAV Configuration Options**
+**Table 11.16a: WebDAV Configuration Options**
 
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**               | **Value**      | **Description**                                                                                       |

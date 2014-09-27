@@ -60,11 +60,6 @@ ${PKG_ONLY_MAKE_CONF}
 
 customize_cmd hack_nsswitch_conf
 
-
-if is_truenas ; then
-	customize_cmd add_truenas_gui
-fi
-
 customize_cmd move_data
 
 if is_truenas ; then

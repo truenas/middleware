@@ -82,6 +82,17 @@ def __get_plugins_jail_info(plugin_id):
         plugin = plugin[0]
         jail = Jails.objects.get(jail_host=plugin.plugin_jail)
 
+        #
+        # XXX Hackety hack hack! XXX
+        # 
+        # jail_ipv4|jail_ipv6, if using DHCP or AUTOCONF, will be 
+        # prefixed with "DHCP:"  and "AUTOCONF:". Current plugins aren't
+        # aware of this (nor do they really need to be), so we just pass
+        # it the property that only has the IP address.
+        #
+        jail.jail_ipv4 = jail.jail_ipv4_addr
+        jail.jail_ipv6 = jail.jail_ipv6_addr
+
     return jail
 
 

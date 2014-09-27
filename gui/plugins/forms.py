@@ -34,6 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common import pbi
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
@@ -137,7 +138,11 @@ class PBIUploadForm(Form):
         jail = None
         if not pjail:
             #FIXME: Better base name, using pbi_info
-            jail = new_default_plugin_jail("customplugin")
+            try:
+                jail = new_default_plugin_jail("customplugin")
+            except Exception as e: 
+                raise MiddlewareError(e)
+
             pjail = jail.jail_host
         if notifier().install_pbi(pjail, newplugin):
             newplugin = newplugin[0]

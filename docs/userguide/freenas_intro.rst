@@ -111,11 +111,9 @@ Notable features in FreeNAS® include:
 
 * supports Active Directory or LDAP for user authentication as well as manual user and group creation
 
-* supports the creation and import of UFS2 based volumes, including gmirror, gstripe, and graid3
-
 * supports the creation and import of
   `ZFS <http://en.wikipedia.org/wiki/ZFS>`_
-  pools, enabling many features not available in UFS2 such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
+  pools, enabling many features such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
 
 * upgrade procedure saves the current operating system to an inactive partition, allowing for an easy reversal of an undesirable upgrade
 
@@ -152,31 +150,57 @@ issued since FreeBSD 9.3 RELEASE.
 
 * FreeNAS® is now 64-bit only.
 
+* FreeNAS® is now ZFS only. This means that the "UFS Volume Manager" has been removed and disks can no longer be formatted with UFS. However, for backwards
+  compatibility, existing UFS-formatted disks can still be imported using "Import Volume" and UFS software RAID volumes can be imported using "Auto Import
+  Volume".
+
 * There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
   file as new versions of FreeNAS® must be installed using a menu-driven installer.
   
-* FreeNAS® now formats the installation media with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments, allowing you to
-  easily recover from a failed upgrade or configuration.
+* FreeNAS® now formats the device holding the operating system with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments,
+  allowing you to easily recover from a failed upgrade, system patch, or configuration.
+  
+* The new installer provides the option to select multiple devices, meaning that you can now mirror the boot device.
+  
+* The administrative GUI can now be accessed over IPv6.
+
+* NFSv4 support, which includes Kerberized NFS support, has been added.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
 
-* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`.
+* The ability to manage boot environments has been added to :menuselection:`System --> Boot`.
 
-* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`.
+* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
+
+* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
+
+* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`. All services
+  which support the use of certificates now have a drop-down menu for selecting an imported or created certificate.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
+
+* The :command:`afpusers` command has been added. Similar to
+  `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering.
 
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
-  
+
+* `Net-SNMP <http://net-snmp.sourceforge.net/>`_ has replaced :command:`bsnmpd` as the SNMP service.
+
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
-  
+
+* The Linux jail templates have been removed as they were too experimental and limited to 32-bit. Instead, use the VirtualBox template, which installs a
+  web-based instance of phpVirtualBox, and use that to install the desired Linux distro or any other operating system.
+
+* Plugins and Jails now support DHCP configuration for IPv4 and IPv6. This should resolve most software connectivity issues when the network contains a DHCP
+  server.
+
 * The cruciblewds, s3cmd, and Syncthing plugins have been added.
 
 The GUI has been reorganized as follows:
@@ -195,7 +219,7 @@ The GUI has been reorganized as follows:
   
 * A new :ref:`Tasks` menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
 
-* A :ref:`ZFS Snapshots` menu has been added to Storage.
+* A :ref:`Snapshots` menu has been added to Storage.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -209,12 +233,14 @@ The following fields have been added or deleted:
 
 * The "Reset WebGUI login credentials" entry in the "Console setup" menu has been renamed to "Reset Root Password".
 
-* The "WebGUI -> HTTPS Port" field has been added to :menuselection:`System --> General`.
+* The "Certificate" drop-down menu and "WebGUI -> HTTPS Port" field have been added to :menuselection:`System --> General`.
 
 * The "System dataset pool" and "Use system dataset for syslog" fields have been removed from :menuselection:`System --> Advanced` as these are now set in
   :menuselection:`System --> System Dataset`.
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
+
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade -> Manual Update`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
@@ -227,9 +253,18 @@ The following fields have been added or deleted:
 
 * A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
 
+* The icons in Storage have been renamed to clarify their purpose. "Auto Import Volume" is now "Import Volume", "Import Volume" is now "Import Disk", "ZFS
+  Volume Manager" is now "Volume Manager", and "ZFS Scrubs" are now "Scrubs".
+
+* The "Case Sensitivity" drop-down menu has been added to :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
   you no longer need to upgrade a ZFS pool from the command line.
-  
+
+* The "Change Permissions" screen for a volume or dataset now has three "Permission Type"s: *Unix*, 
+  *Mac*, and
+  *Windows*.
+
 * The "Volume Status" screen now shows the status of the latest ZFS scrub, the number of errors, number of repaired blocks, and the date of the last scrub.
 
 * The "Volume Status" screen now shows the resilvering status when a disk is replaced.
@@ -238,20 +273,19 @@ The following fields have been added or deleted:
   :menuselection:`Storage --> Replication Tasks -> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
   can significantly reduce the time needed for the initial replication.
 
-* The "Domain logons" checkbox has been added to :menuselection:`Services --> CIFS`.
-
 * The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Encryption Mode",
   "Certificate", and "Enable" fields and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> Active Directory`. The
   "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos Realm" drop-down menu.
 
-* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP` and the "Enable" checkbox, "Use
-  default domain" field and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
+* The "Encryption Mode" and "Auxiliary Parameters" fields have been removed from :menuselection:`Directory Service --> LDAP`. The "Enable" and "Samba Schema"
+  checkboxes, "SUDO Suffix" and "Use default domain" fields, and "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
 
 * The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
 
 * The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
 
-* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added.
+* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added. Added keytabs are stored in the
+  configuration database so that they persist across reboots and system upgrades.
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
@@ -259,13 +293,19 @@ The following fields have been added or deleted:
 
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 
-* The "Obey pam restrictions" checkbox and the "Idmap Range Low" and "Idmap Range High" fields have been added to :menuselection:`Services --> CIFS`.
+* The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
+
+* The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
+  :menuselection:`Services --> CIFS`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
 
 * The "Kerberos Realm" drop-down menu has been added to :menuselection:`Services --> Domain Controller`.
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
+
+* The "TLS use implicit SSL" checkbox has been removed from `Services --> FTP` as this feature is deprecated. The "Certificate and private key" field has
+  been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own certificates.
 
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
@@ -274,6 +314,12 @@ The following fields have been added or deleted:
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
 * The "Enable NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
+* The "vanilla" option has been removed from :menuselection:`Jails --> Add Jails` as it was confusing.
+
+* The "NIC" drop-down menu has been added to :menuselection:`Jails --> Add Jails` so that the interface to use for jail connections can be specified.
+
+* The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
 
 .. _Known Issues:
 
@@ -313,7 +359,7 @@ Actual hardware requirements will vary depending upon what you are using your Fr
 You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions
 regarding the hardware best suited to meet your requirements. This
-`forum post <http://forums.freenas.org/threads/so-you-want-some-hardware-suggestions.12276/>`_
+`forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`_
 provides some specific recommendations if you are planning on purchasing hardware.
 
 .. _RAM:
@@ -334,9 +380,6 @@ recommended minimum. If performance is inadequate, consider adding more RAM as a
 of RAM. While it is possible to use ZFS on systems with less than 8 GB of RAM, performance will be substantially reduced. The ZFS filesystem will
 automatically disable pre-fetching (caching) on systems where it is not able to use at least 4 GB of memory for its cache and data structures.
 
-.. note:: if your RAM is limited, you can consider using the UFS filesystem until you can afford better hardware. However, many of the compelling features of
-   FreeNAS® are not available with UFS.
-
 If your system supports it and your budget allows for it, install ECC RAM. While more expensive, ECC RAM is highly recommended as it prevents in-flight
 corruption of data before the error-correcting properties of ZFS come into play, thus providing consistency for the checksumming and parity calculations
 performed by ZFS. If you consider your data to be important, use ECC RAM. This 
@@ -348,29 +391,35 @@ If you use Active Directory with FreeNAS®, add an additional 2 GB of RAM for wi
 
 If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
-If you don't have at least 8GB of RAM with ZFS or 2GB of RAM with UFS, you should consider getting more powerful hardware before using FreeNAS® to store your
-data. Plenty of users expect FreeNAS® to function with less than these requirements, just at reduced performance.  The
-bottom line is that these minimums are based on the feedback of many users. Users that do not meet these requirements and who ask for help in the forums or
-IRC will likely be ignored because of the abundance of information that FreeNAS® may not behave properly with less than 8GB of RAM.
+If you don't have at least 8GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
+FreeNAS® to function with less than these requirements, just at reduced performance.  The bottom line is that these minimums are based on the feedback of
+many users. Users that do not meet these requirements and who ask for help in the forums or IRC will likely be ignored because of the abundance of information
+that FreeNAS® may not behave properly with less than 8GB of RAM.
 
 .. _Compact or USB Flash:
 
 Compact or USB Flash
 ~~~~~~~~~~~~~~~~~~~~
 
-The FreeNAS® operating system is a running image. This means that it should not be installed onto a hard drive, but rather to a USB or compact flash device
-that is at least 2 GB in size. If you don't have compact flash, use a USB thumb drive that is dedicated to the running image and which stays inserted in the
-USB slot. While technically you can install FreeNAS® onto a hard drive, this is discouraged as you will lose the storage capacity of the drive. In other
-words, the operating system will take over the drive and will not allow you to store data on it, regardless of the size of the drive.
+The FreeNAS® operating system is installed to at least one device that is separate from the storage disks. The device can be a USB stick, compact flash,
+or SSD. Technically, it can also be installed onto a hard drive, but this is discouraged as that drive will then become unavailable for data storage.
 
-.. note:: many USB thumb drives that are labeled as 2GB are not really 2GB in size.  For this reason, it is recommended to use media that is 4GB or larger and
-   to use a name brand USB stick.
+When determining the type and size of device to install the operating system to, keep the following points in mind:
 
-USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point) chipsets. If you receive a
-"failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this will downclock the USB
-ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware, create a :ref:`Tunables`
-named *xhci_load*, set its value to
-*YES*, and reboot the system.
+- the recommended bare minimum size is 4GB. This provides room for the operating system and two boot environments. The recommended minimum is 8GB or 16GB as
+  this provides more room for boot environments.
+
+- If you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
+  sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
+
+- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
+
+- when using a USB stick, USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point)
+  chipsets. If you receive a "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this
+  will downclock the USB ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware,
+  follow the instructions in :ref:`Tunables` to create a "Tunable" named *xhci_load*, set its value to *YES*, and reboot the system.
+  
+- if a reliable boot disk is required, use two identical devices and select them both during the installation. Doing so will create a mirrored boot device.
 
 .. _Storage Disks and Controllers:
 
@@ -417,8 +466,7 @@ drive that is below the minimum recommended size you lose a fair amount of stora
 swap.
 
 If you are new to ZFS and are purchasing hardware, read through
-`ZFS Storage Pools  <http://www.open-tech.com/2011/10/zfs-best-practices-guide-from-solaris-internals/>`_
-`Recommendations <http://www.solarisinternals.com/wiki/index.php/ZFS_Best_Practices_Guide#ZFS_Storage_Pools_Recommendations>`_
+`ZFS Storage Pools Recommendations <http://www.solarisinternals.com/wiki/index.php/ZFS_Best_Practices_Guide#ZFS_Storage_Pools_Recommendations>`_
 first.
 
 ZFS uses dynamic block sizing, meaning that it is capable of striping different sized disks. However, if you care about performance, use disks of the same

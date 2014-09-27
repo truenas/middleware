@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
@@ -110,7 +110,7 @@ class Disk(object):
         yield str(self)
 
 
-def _clean_quota_fields(form, attrs, prefix):
+def _clean_zfssize_fields(form, attrs, prefix):
 
     cdata = form.cleaned_data
     for field in map(lambda x: prefix + x, attrs):
@@ -140,6 +140,15 @@ def _clean_quota_fields(form, attrs, prefix):
     return cdata
 
 
+def _inherit_choices(choices, inheritvalue):
+    nchoices = []
+    for value, name in choices:
+        if value == 'inherit':
+            name += ' (%s)' % inheritvalue
+        nchoices.append((value, name))
+    return nchoices
+
+
 class VolumeMixin(object):
 
     def clean_volume_name(self):
@@ -152,189 +161,6 @@ class VolumeMixin(object):
             raise forms.ValidationError(
                 _("A volume with that name already exists."))
         return vname
-
-
-class VolumeManagerUFSForm(Form, VolumeMixin):
-    volume_name = forms.CharField(
-        max_length=30,
-        label=_('Volume name'),
-    )
-    volume_disks = forms.MultipleChoiceField(
-        choices=(),
-        widget=forms.SelectMultiple(attrs=attrs_dict),
-        label='Member disks',
-        required=False)
-    group_type = forms.ChoiceField(
-        choices=(),
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        required=False)
-    ufspathen = forms.BooleanField(
-        initial=False,
-        label=_('Specify custom path'),
-        required=False)
-    ufspath = forms.CharField(
-        max_length=1024,
-        label=_('Path'),
-        required=False)
-
-    def __init__(self, *args, **kwargs):
-        super(VolumeManagerUFSForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = self._populate_disk_choices()
-        #qs = models.Volume.objects.filter(vol_fstype='ZFS')
-        self.fields['ufspathen'].widget.attrs['onClick'] = (
-            'toggleGeneric("id_ufspathen", ["id_ufspath"], true);')
-        if not self.data.get("ufspathen", False):
-            self.fields['ufspath'].widget.attrs['disabled'] = 'disabled'
-        self.fields['ufspath'].widget.attrs['promptMessage'] = _(
-            "Leaving this blank will give the volume a default path of "
-            "/mnt/${VOLUME_NAME}")
-
-        grouptype_choices = (
-            ('mirror', 'mirror'),
-            ('stripe', 'stripe'),
-        )
-        if "volume_disks" in self.data:
-            disks = self.data.getlist("volume_disks")
-        else:
-            disks = []
-        l = len(disks) - 1
-        if l >= 2 and (((l - 1) & l) == 0):
-            grouptype_choices += (
-                ('raid3', 'RAID-3'),
-            )
-        self.fields['group_type'].choices = grouptype_choices
-
-    def _populate_disk_choices(self):
-
-        disks = []
-
-        # Grab disk list
-        # Root device already ruled out
-        for disk, info in notifier().get_disks().items():
-            disks.append(Disk(
-                info['devname'],
-                info['capacity'],
-                serial=info.get('ident')))
-
-        # Exclude what's already added
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
-
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        used_disks.extend([i.get_device()[5:] for i in qs])
-
-        for d in list(disks):
-            if d.dev in used_disks:
-                disks.remove(d)
-
-        choices = sorted(disks)
-        choices = [tuple(d) for d in choices]
-        return choices
-
-    def clean_group_type(self):
-        len_disks = len(self.cleaned_data['volume_disks'])
-        if 'volume_disks' not in self.cleaned_data or \
-                len_disks > 1 and \
-                self.cleaned_data['group_type'] in (None, ''):
-            raise forms.ValidationError(_("This field is required."))
-        if len_disks == 1:
-            # UFS middleware expects no group_type for single disk volume
-            return ''
-        return self.cleaned_data['group_type']
-
-    def clean_ufspath(self):
-        ufspath = self.cleaned_data['ufspath']
-        if not ufspath:
-            return None
-        if not access(ufspath, 0):
-            raise forms.ValidationError(_("Path does not exist."))
-        st = stat(ufspath)
-        if not S_ISDIR(st.st_mode):
-            raise forms.ValidationError(_("Path is not a directory."))
-        return ufspath
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        volume_name = cleaned_data.get("volume_name", "")
-        disks = cleaned_data.get("volume_disks", [])
-
-        if len(disks) == 0 and models.Volume.objects.filter(
-                vol_name=volume_name).count() == 0:
-            msg = _(u"This field is required")
-            self._errors["volume_disks"] = self.error_class([msg])
-            del cleaned_data["volume_disks"]
-        if models.Volume.objects.filter(vol_name=volume_name).count():
-            msg = _(u"You already have a volume with same name")
-            self._errors["volume_name"] = self.error_class([msg])
-            del cleaned_data["volume_name"]
-
-        if volume_name:
-            if len(volume_name) > 9:
-                msg = _(u"UFS volume names cannot be higher than 9 characters")
-                self._errors["volume_name"] = self.error_class([msg])
-                cleaned_data.pop("volume_name", None)
-            elif not re.search(r'^[a-z0-9]+$', volume_name, re.I):
-                msg = _(
-                    u"UFS volume names can only contain alphanumeric "
-                    "characters")
-                self._errors["volume_name"] = self.error_class([msg])
-                cleaned_data.pop("volume_name", None)
-
-        return cleaned_data
-
-    def done(self, request):
-        # Construct and fill forms into database.
-        volume_name = self.cleaned_data.get("volume_name")
-        disk_list = self.cleaned_data['volume_disks']
-        group_type = self.cleaned_data.get('group_type')
-        ufspath = self.cleaned_data['ufspath']
-
-        with transaction.atomic():
-            volume = models.Volume(
-                vol_name=volume_name,
-                vol_fstype='UFS',
-            )
-            volume.save()
-
-            mp_path = ufspath if ufspath else '/mnt/' + volume_name
-
-            mp = models.MountPoint(
-                mp_volume=volume,
-                mp_path=mp_path,
-                mp_options='rw,nfsv4acls')
-            mp.save()
-            self.volume = volume
-
-            grouped = OrderedDict()
-            grouped['root'] = {'type': group_type, 'disks': disk_list}
-            notifier().init(
-                "volume",
-                volume,
-                groups=grouped,
-                path=ufspath,
-            )
-
-        if mp_path in ('/etc', '/var', '/usr'):
-            device = '/dev/ufs/' + volume_name
-            mp = '/mnt/' + volume_name
-
-            if not access(mp, 0):
-                mkdir(mp, 755)
-
-            mount(device, mp)
-            popen("/usr/local/bin/rsync -avzD '%s/*' '%s/'" % (
-                mp_path,
-                mp,
-            )).close()
-            umount(mp)
-
-            if access(mp, 0):
-                rmdir(mp)
-
-        # This must be outside transaction block to make sure the changes
-        # are committed before the call of ix-fstab
-        notifier().reload("disk")
 
 
 class VolumeManagerForm(VolumeMixin, Form):
@@ -510,12 +336,35 @@ class VolumeVdevForm(Form):
 
 class VdevFormSet(BaseFormSet):
 
+
+    def _clean_vdevtype(self, vdevfound, vdevtype):
+        log.error("vdevtype %r", vdevtype)
+        if vdevtype in (
+            'cache',
+            'log',
+            'log mirror',
+            'spare',
+        ):
+            if vdevtype == 'log mirror':
+                name = 'log'
+            else:
+                name = vdevtype
+            log.error("vdevtype %r - %r", vdevtype, vdevfound[name])
+            if vdevfound[name] is True:
+                raise forms.ValidationError(_(
+                    'Only one row for the vitual device of type %s'
+                    ' is allowed.'
+                ) % name)
+            else:
+                vdevfound[name] = True
+
     def clean(self):
         if any(self.errors):
             # Don't bother validating the formset unless each form
             # is valid on its own
             return
 
+        vdevfound = defaultdict(lambda: False)
         if not self.pform.cleaned_data.get("volume_add"):
             """
             We need to make sure at least one vdev is a
@@ -529,7 +378,8 @@ class VdevFormSet(BaseFormSet):
                     'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
                 ):
                     has_datavdev = True
-                    break
+                    continue
+                self._clean_vdevtype(vdevfound, vdevtype)
             if not has_datavdev:
                 raise forms.ValidationError(_("You need a data disk group"))
         else:
@@ -539,26 +389,29 @@ class VdevFormSet(BaseFormSet):
             for vdev in zpool.data:
 
                 for i in range(0, self.total_form_count()):
+                    errors = []
                     form = self.forms[i]
-                    if not form.cleaned_data.get('vdevtype'):
+                    vdevtype = form.cleaned_data.get('vdevtype')
+                    if not vdevtype:
                         continue
-                    disks = form.cleaned_data.get('disks')
 
-                    if form.cleaned_data.get('vdevtype') in (
+                    if vdevtype in (
                         'cache',
                         'log',
                         'log mirror',
                         'spare',
                     ):
+                        self._clean_vdevtype(vdevfound, vdevtype)
                         continue
 
-                    errors = []
-                    if vdev.type != form.cleaned_data.get('vdevtype'):
+                    disks = form.cleaned_data.get('disks')
+
+                    if vdev.type != vdevtype:
                         errors.append(_(
                             "You are trying to add a virtual device of type "
                             "'%(addtype)s' in a pool that has a virtual "
                             "device of type '%(vdevtype)s'") % {
-                            'addtype': form.cleaned_data.get('vdevtype'),
+                            'addtype': vdevtype,
                             'vdevtype': vdev.type,
                             }
                         )
@@ -574,9 +427,7 @@ class VdevFormSet(BaseFormSet):
                             }
                         )
                     if errors:
-                        #form._errors['disks'] = form.error_class(errors)
                         raise forms.ValidationError(errors[0])
-                        break
 
 
 class ZFSVolumeWizardForm(forms.Form):
@@ -1493,25 +1344,52 @@ class ZFSDataset(Form):
         self._fs = kwargs.pop('fs')
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if '/' in self._fs:
+            parentds = self._fs.rsplit('/', 1)[0]
+            parentdata = _n.zfs_get_options(parentds)
+
+            self.fields['dataset_atime'].choices = _inherit_choices(
+                choices.ZFS_AtimeChoices,
+                parentdata['atime'][0]
+            )
+            self.fields['dataset_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                parentdata['compression'][0]
+            )
+            self.fields['dataset_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                parentdata['dedup'][0]
+            )
+
         if self._create is False:
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
-            data = notifier().zfs_get_options(self._fs)
-            self.fields['dataset_compression'].initial = data['compression']
-            self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
+            data = _n.zfs_get_options(self._fs)
+
+            if data['compression'][2] == 'inherit':
+                self.fields['dataset_compression'].initial = 'inherit'
+            else:
+                self.fields['dataset_compression'].initial = data['compression'][0]
+            self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
             self.fields['dataset_share_type'].widget.attrs['readonly'] = True
-            self.fields['dataset_atime'].initial = data['atime']
+
+            if data['atime'][2] == 'inherit':
+                self.fields['dataset_atime'].initial = 'inherit'
+            else:
+                self.fields['dataset_atime'].initial = data['atime'][0]
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
                 formfield = 'dataset_%s' % (attr)
-                if data[attr] == 'none':
+                if data[attr][0] == 'none':
                     self.fields[formfield].initial = 0
                 else:
-                    self.fields[formfield].initial = data[attr]
-
-            if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
-                self.fields['dataset_dedup'].initial = data['dedup']
-            elif data['dedup'] == 'sha256,verify':
+                    self.fields[formfield].initial = data[attr][0]
+            if data['dedup'][2] == 'inherit':
+                self.fields['dataset_dedup'].initial = 'inherit'
+            elif data['dedup'][0] in ('on', 'off', 'verify'):
+                self.fields['dataset_dedup'].initial = data['dedup'][0]
+            elif data['dedup'][0] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
             else:
                 self.fields['dataset_dedup'].initial = 'off'
@@ -1536,7 +1414,7 @@ class ZFSDataset(Form):
         return rs
 
     def clean(self):
-        cleaned_data = _clean_quota_fields(
+        cleaned_data = _clean_zfssize_fields(
             self,
             ('refquota', 'quota', 'reservation', 'refreservation'),
             "dataset_")
@@ -1556,58 +1434,57 @@ class ZFSDataset(Form):
         del self.cleaned_data
 
 
-class ZFSVolume_EditForm(Form):
+class ZVol_EditForm(Form):
     volume_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
-    volume_atime = forms.ChoiceField(
-        choices=choices.ZFS_AtimeChoices,
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label=_('Enable atime'))
-    volume_refquota = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Quota for this volume'),
-        help_text=_('0=Unlimited; example: 1g'))
-    volume_refreservation = forms.CharField(
-        max_length=128,
-        initial=0,
-        label=_('Reserved space for this volume'),
-        help_text=_('0=None; example: 1g'))
     volume_dedup = forms.ChoiceField(
         label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
     )
+    volume_volsize = forms.CharField(
+        max_length=128,
+        label=_('Size'),
+        help_text=_('Example: 1 GiB'))
 
     def __init__(self, *args, **kwargs):
-        self._mp = kwargs.pop("mp", None)
-        name = self._mp.mp_path.replace("/mnt/", "")
-        super(ZFSVolume_EditForm, self).__init__(*args, **kwargs)
-        data = notifier().zfs_get_options(name)
-        self.fields['volume_compression'].initial = data['compression']
-        self.fields['volume_atime'].initial = data['atime']
+        name = kwargs.pop('name')
+        super(ZVol_EditForm, self).__init__(*args, **kwargs)
+        _n = notifier()
+        if '/' in name:
+            parentds = name.rsplit('/', 1)[0]
+            parentdata = _n.zfs_get_options(parentds)
 
-        for attr in ('refquota', 'refreservation'):
-            formfield = 'volume_%s' % (attr)
-            if data[attr] == 'none':
-                self.fields[formfield].initial = 0
-            else:
-                self.fields[formfield].initial = data[attr]
+            self.fields['volume_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                parentdata['compression'][0]
+            )
+            self.fields['volume_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                parentdata['dedup'][0]
+            )
 
-        if data['dedup'] in ('on', 'off', 'verify', 'inherit'):
-            self.fields['volume_dedup'].initial = data['dedup']
-        elif data['dedup'] == 'sha256,verify':
+        data = _n.zfs_get_options(name)
+        self.fields['volume_compression'].initial = data['compression'][2]
+        self.fields['volume_volsize'].initial = data['volsize'][0]
+
+        if data['dedup'][2] == 'inherit':
+            self.fields['volume_dedup'].initial = 'inherit'
+        elif data['dedup'][0] in ('on', 'off', 'verify'):
+            self.fields['volume_dedup'].initial = data['dedup'][0]
+        elif data['dedup'][0] == 'sha256,verify':
             self.fields['volume_dedup'].initial = 'verify'
         else:
             self.fields['volume_dedup'].initial = 'off'
 
     def clean(self):
-        return _clean_quota_fields(
+        cleaned_data = _clean_zfssize_fields(
             self,
-            ('refquota', 'refreservation'),
+            ('volsize', ),
             "volume_")
+        return cleaned_data
 
     def set_error(self, msg):
         msg = u"%s" % msg
@@ -1701,7 +1578,8 @@ class MountPointAccessForm(Form):
         label=_('Permission Type'),
         choices=(
             ('unix', 'Unix'),
-            ('windows', 'Windows / Mac ACL'),
+            ('mac', 'Mac'),
+            ('windows', 'Windows'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
@@ -1720,6 +1598,8 @@ class MountPointAccessForm(Form):
             if os.path.exists(os.path.join(path, ".windows")):
                 self.fields['mp_acl'].initial = 'windows'
                 self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
+            elif os.path.exists(os.path.join(path, ".mac")):
+                self.fields['mp_acl'].initial = 'mac'
             else:
                 self.fields['mp_acl'].initial = 'unix'
             user, group = notifier().mp_get_owner(path)
@@ -1732,7 +1612,8 @@ class MountPointAccessForm(Form):
 
     def clean(self):
         if (
-            self.cleaned_data.get("mp_acl") == "unix"
+            (self.cleaned_data.get("mp_acl") == "unix" or
+                self.cleaned_data.get("mp_acl") == "mac")
             and
             not self.cleaned_data.get("mp_mode")
         ):
@@ -1898,7 +1779,7 @@ class CloneSnapshotForm(Form):
         return retval
 
 
-class DiskReplacementForm(Form):
+class ZFSDiskReplacementForm(Form):
 
     replace_disk = forms.ChoiceField(
         choices=(),
@@ -1906,8 +1787,22 @@ class DiskReplacementForm(Form):
         label=_('Member disk'))
 
     def __init__(self, *args, **kwargs):
-        self.disk = kwargs.pop('disk', None)
-        super(DiskReplacementForm, self).__init__(*args, **kwargs)
+        self.volume = kwargs.pop('volume')
+        self.label = kwargs.pop('label')
+        disk = notifier().label_to_disk(self.label)
+        if disk is None:
+            disk = self.label
+        self.disk = disk
+        super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
+        if self.volume.vol_encrypt == 2:
+            self.fields['pass'] = forms.CharField(
+                label=_("Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
+            self.fields['pass2'] = forms.CharField(
+                label=_("Confirm Passphrase"),
+                widget=forms.widgets.PasswordInput(),
+            )
         self.fields['replace_disk'].choices = self._populate_disk_choices()
         self.fields['replace_disk'].choices.sort(
             key=lambda a: float(
@@ -1945,26 +1840,6 @@ class DiskReplacementForm(Form):
         ))
         return choices
 
-
-class ZFSDiskReplacementForm(DiskReplacementForm):
-
-    def __init__(self, *args, **kwargs):
-        self.volume = kwargs.pop('volume')
-        self.label = kwargs.pop('label')
-        disk = notifier().label_to_disk(self.label)
-        if disk is None:
-            disk = self.label
-        kwargs['disk'] = disk
-        super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
-        if self.volume.vol_encrypt == 2:
-            self.fields['pass'] = forms.CharField(
-                label=_("Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
-            self.fields['pass2'] = forms.CharField(
-                label=_("Confirm Passphrase"),
-                widget=forms.widgets.PasswordInput(),
-            )
 
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
@@ -2010,20 +1885,6 @@ class ZFSDiskReplacementForm(DiskReplacementForm):
                     self.disk,
                     passphrase=passfile
                 )
-        if rv == 0:
-            return True
-        else:
-            return False
-
-
-class UFSDiskReplacementForm(DiskReplacementForm):
-
-    def __init__(self, *args, **kwargs):
-        super(UFSDiskReplacementForm, self).__init__(*args, **kwargs)
-
-    def done(self, volume):
-        devname = self.cleaned_data['replace_disk']
-        rv = notifier().geom_disk_replace(volume, devname)
         if rv == 0:
             return True
         else:
@@ -2136,6 +1997,43 @@ class ReplicationForm(ModelForm):
                 self.fields['repl_remote_cipher'].initial,
             ))
         )
+
+    def clean_repl_filesystem(self):
+        fs = self.cleaned_data.get('repl_filesystem')
+        if not fs:
+            return fs
+
+        # Only one replication task is allowed per dataset
+        # which means parent dataset set up as a snapshot task
+        # recursively is not allowed
+
+        # Get a list of all filesystems
+        # e.g. tank/dataset/child
+        # ['tank', 'tank/dataset', 'tank/dataset/child']
+        split = fs.split('/')
+        paths = []
+        for i in xrange(1, len(split) + 1):
+            paths.append('/'.join(split[:i]))
+
+        qs = models.Replication.objects.filter(repl_filesystem__in=paths)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        for repl in qs:
+            if repl.repl_filesystem == fs:
+                raise forms.ValidationError(_(
+                    'Only one replication allowed per dataset.'
+                ))
+            else:
+                tasks = models.Task.objects.filter(
+                    task_filesystem=repl.repl_filesystem,
+                    task_recursive=True,
+                )
+                if tasks.exists():
+                    raise forms.ValidationError(_(
+                        'Only one replication allowed per dataset, including '
+                        'parent dataset set up recursively.'
+                    ))
+        return fs
 
     def clean_repl_remote_port(self):
         port = self.cleaned_data.get('repl_remote_port')

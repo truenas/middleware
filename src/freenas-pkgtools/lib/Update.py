@@ -1,7 +1,9 @@
-import errno
-import os
-import sys
+from datetime import datetime
 import logging
+import os
+import re
+import subprocess
+import sys
 
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
@@ -41,6 +43,7 @@ def RunCommand(command, args):
     else:
         return False
 
+
 def ListClones():
     # Return a list of boot-environment clones.
     # This is just a simple wrapper for
@@ -54,26 +57,33 @@ def ListClones():
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     except:
-        log.error("Could not run %s" % cmd)
+        log.error("Could not run %s", cmd)
         return None
-    for line in p.stdout:
-        try:
-            fields = line.split()
-        except:
-            log.error("Malformed output from %s:  %s" % (beadm, line))
-            continue
-        rv.append(fields[0])
-    p.wait()
+    stdout, stderr = p.communicate()
     if p.returncode != 0:
-        log.error("`%s' returned %d" % (cmd, p.returncode))
+        log.error("`%s' returned %d", cmd, p.returncode)
         return None
+
+    for line in stdout.strip('\n').split('\n'):
+        fields = line.split('\t')
+        rv.append({
+            'name': fields[0],
+            'active': fields[1],
+            'mountpoint': fields[2],
+            'space': fields[3],
+            'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
+        })
     return rv
-    
-def CreateClone(name, snap_grub = True):
+
+
+def CreateClone(name, snap_grub=True, bename=None):
     # Create a boot environment from the current
     # root, using the given name.  Returns False
     # if it could not create it
-    args = ["create", name]
+    if bename:
+        args = ["create", "-e", bename, name]
+    else:
+        args = ["create", name]
     rv = RunCommand(beadm, args)
     if rv is False:
         return False
@@ -84,9 +94,21 @@ def CreateClone(name, snap_grub = True):
         zfs = "/sbin/zfs"
         args = ["snapshot", _grub_snapshot(name)]
         if RunCommand(zfs, args) is False:
-            log.debug("Unable to create grub snapshot Pre-Upgrade-%s" % name)
-        
+            log.debug("Unable to create grub snapshot Pre-Upgrade-%s", name)
+
     return True
+
+
+def RenameClone(oldname, newname):
+    # Create a boot environment from the current
+    # root, using the given name.  Returns False
+    # if it could not create it
+    args = ["rename", oldname, newname]
+    rv = RunCommand(beadm, args)
+    if rv is False:
+        return False
+    return True
+
 
 def MountClone(name, mountpoint = None):
     # Mount the given boot environment.  It will
@@ -191,8 +213,8 @@ def CheckForUpdates(root = None, handler = None):
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
     m = conf.FindLatestManifest()
-    log.debug("Current sequence = %d, available sequence = %d" % (cur.Sequence(), m.Sequence()
-                                                                             if m is not None else 0))
+    log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
+                                                                             if m is not None else "None"))
     if m is None:
         raise ValueError("Manifest could not be found!")
     diffs = Manifest.CompareManifests(cur, m)
@@ -251,7 +273,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
     if root is None:
         # We clone the existing boot environment to
         # "FreeNAS-<sequence>"
-        clone_name = "FreeNAS-%d" % new_man.Sequence()
+        clone_name = "FreeNAS-%s" % new_man.Sequence()
         if CreateClone(clone_name) is False:
             log.error("Unable to create boot-environment %s" % clone_name)
             raise Exception("Unable to create new boot-environment %s" % clone_name)

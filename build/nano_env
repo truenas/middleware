@@ -109,7 +109,7 @@ if [ -z "${SVNVERSION}" ]; then
 fi
 
 
-if [ -n "${git}" ]; then
+if [ -z "${SEQUENCE}" -a -n "${git}" ]; then
     # Get the sequence number from the time of the commit
     SEQUENCE=`$git_cmd show -s --format=%ct ${git}`
     export SEQUENCE
@@ -313,6 +313,7 @@ WITHOUT_BIND_ETC=true
 WITHOUT_BIND_LIBS_LWRES=true
 WITHOUT_BIND_NAMED=true
 WITHOUT_BLUETOOTH=true
+WITHOUT_BSNMP=true
 WITHOUT_CALENDAR=true
 WITHOUT_CTM=true
 WITHOUT_CVS=true

@@ -34,7 +34,7 @@ scrub will be displayed in :ref:`View Volumes`. Reading the scrub results can pr
   
 Unlike traditional UNIX filesystems, **you do not need to define partition sizes at filesystem creation time**. Instead, you feed a certain number of disk(s)
 at a time (known as a vdev) to a ZFS pool and create filesystems from the pool as needed. As more capacity is needed, identical vdevs can be striped into the
-pool. In FreeNAS®, :ref:`ZFS Volume Manager` can be used to create or extend ZFS pools. Once a pool is created, it can be divided into dynamically-sized
+pool. In FreeNAS®, :ref:`Volume Manager` can be used to create or extend ZFS pools. Once a pool is created, it can be divided into dynamically-sized
 datasets or fixed-size zvols as needed. Datasets can be used to optimize storage for the type of data being stored as permissions and properties such as
 quotas and compression can be set on a per-dataset level. A zvol is essentially a raw, virtual block device which can be used for applications that need
 raw-device semantics such as iSCSI device extents.
@@ -56,14 +56,16 @@ copy but instead converts a snapshot into a stream of data. This design means th
 a different RAIDZ level, volume size, compression settings, etc.
   
 **ZFS boot environments provide a method for recovering from a failed upgrade**. Beginning with FreeNAS® version 9.3, a snapshot of the dataset the operating
-system resides on is automatically taken before an upgrade or a system configuration change. This saved boot environment is automatically added to the GRUB
-boot loader. Should the upgrade or configuration change fail, simply reboot and select the previous boot environment from the boot menu.
+system resides on is automatically taken before an upgrade or a system update. This saved boot environment is automatically added to the GRUB boot loader.
+Should the upgrade or configuration change fail, simply reboot and select the previous boot environment from the boot menu. Users can also create their own
+boot environments in :menuselection:`System --> Boot` as needed, for example before making configuration changes. This way, the system can be rebooted into
+a snapshot of the system that did not include the new configuration changes.
 
 **ZFS provides a write cache** in RAM as well as a
 `ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for **synchronous** writes until they
 are written asynchronously to the ZFS pool. If the system has many synchronous writes where the integrity of the write matters, such as from a database server
 or when using NFS over ESXi, performance can be increased by adding a
-dedicated log device, or slog, using :ref:`ZFS Volume Manager`.  More detailed explanations can be found in this
+dedicated log device, or slog, using :ref:`Volume Manager`.  More detailed explanations can be found in this
 `forum post <http://forums.freenas.org/threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_ and in this
 `blog post <http://nex7.blogspot.com/2013/04/zfs-intent-log.html>`_. A dedicated log device will have no affect on CIFS, AFP, or iSCSI as these protocols
 rarely use synchronous writes. When creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of capacitors that
@@ -84,11 +86,11 @@ L2ARC is **not** a substitute for insufficient RAM as L2ARC needs RAM in order t
 be increasing performance, and in most cases you will actually hurt performance and could potentially cause system instability. RAM is always faster than
 disks, so always add as much RAM as possible before determining if the system would benefit from a L2ARC device. If you have a lot of applications that do
 large amounts of **random** reads, on a dataset small enough to fit into the L2ARC, read performance may be increased by adding a dedicated cache device using
-:ref:`ZFS Volume Manager`. SSD cache devices only help if your active data is larger than system RAM, but small enough that a significant percentage of it
+:ref:`Volume Manager`. SSD cache devices only help if your active data is larger than system RAM, but small enough that a significant percentage of it
 will fit on the SSD. As a general rule of thumb, an L2ARC should not be added to a system with less than 64 GB of RAM and the size of an L2ARC should not
 exceed 5x the amount of RAM. In some cases, it may be more efficient to have two separate pools: one on SSDs for active data and another on hard drives for
 rarely used content. After adding an L2ARC, monitor its effectiveness using tools such as :command:`arcstat`. If you need to increase the size of an existing
-L2ARC, you can stripe another cache device using :ref:`ZFS Volume Manager`. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are
+L2ARC, you can stripe another cache device using :ref:`Volume Manager`. The GUI will always stripe L2ARC, not mirror it, as the contents of L2ARC are
 recreated at boot. Losing an L2ARC device will not affect the integrity of the pool, but may have an impact on read performance, depending upon the workload
 and the ratio of dataset size to cache size. Note that a dedicated L2ARC device can not be shared between ZFS pools. 
 

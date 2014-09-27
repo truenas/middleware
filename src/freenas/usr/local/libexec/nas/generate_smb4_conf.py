@@ -38,6 +38,7 @@ from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
     ldap_enabled,
+    ldap_has_samba_schema,
     nt4_enabled
 )
 from freenasUI.directoryservice.models import (
@@ -77,6 +78,13 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 
+def smb4_ldap_enabled():
+    ret = False
+
+    if ldap_enabled() and ldap_has_samba_schema():
+        ret = True
+
+    return ret
 
 def is_within_zfs(mountpoint):
     try:
@@ -139,7 +147,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role():
     role = "standalone"
-    if nt4_enabled() or activedirectory_enabled() or ldap_enabled():
+    if nt4_enabled() or activedirectory_enabled() or smb4_ldap_enabled():
         role = "member"
 
     if domaincontroller_enabled():
@@ -501,6 +509,7 @@ def add_ldap_conf(smb4_conf):
 
     confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
+    confset1(smb4_conf, "domain logons = yes")
 
     idmap = get_idmap_object(ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, ldap_workgroup)
@@ -556,8 +565,8 @@ def add_activedirectory_conf(smb4_conf):
         "yes" if ad.ad_use_default_domain else "no")
     confset1(smb4_conf, "winbind refresh tickets = yes")
 
-    if ad.ad_unix_extensions:
-        confset1(smb4_conf, "winbind nss info = rfc2307")
+    if ad.ad_nss_info:
+        confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
     idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, ad_workgroup)
@@ -620,6 +629,10 @@ def generate_smb4_conf(smb4_conf, role):
 
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
+    if cifs.cifs_srv_bindip:
+        confset2(smb4_conf, "interfaces = 127.0.0.1 %s",
+            cifs.cifs_srv_bindip.replace(',', ' '))
+        confset1(smb4_conf, "bind interfaces only = yes")
 
     confset1(smb4_conf, "encrypt passwords = yes")
     confset1(smb4_conf, "dns proxy = no")
@@ -659,11 +672,12 @@ def generate_smb4_conf(smb4_conf, role):
         "yes" if cifs.cifs_srv_timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
         "yes" if cifs.cifs_srv_nullpw else False)
-    confset2(smb4_conf, "domain logons = %s",
-        "yes" if cifs.cifs_srv_domain_logons else "no")
-
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")
+
+    if not smb4_ldap_enabled():
+        confset2(smb4_conf, "domain logons = %s",
+            "yes" if cifs.cifs_srv_domain_logons else "no")
 
     if cifs.cifs_srv_localmaster and not nt4_enabled() \
         and not activedirectory_enabled():
@@ -692,7 +706,7 @@ def generate_smb4_conf(smb4_conf, role):
         if nt4_enabled():
             add_nt4_conf(smb4_conf)
 
-        elif ldap_enabled():
+        elif smb4_ldap_enabled():
             add_ldap_conf(smb4_conf)
 
         elif activedirectory_enabled():
@@ -768,7 +782,7 @@ def generate_smb4_shares(smb4_shares):
         zfsout = []
 
     for share in shares:
-        if not os.path.isdir(share.cifs_path):
+        if not os.path.isdir(share.cifs_path.encode('utf8')):
             continue
 
         task = False
@@ -788,7 +802,7 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
         confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
         confset1(smb4_shares, "printable = no")
-        confset1(smb4_shares, "veto files = /.snapshot/.windows/.zfs/")
+        confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
         confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
         confset2(smb4_shares, "writeable = %s",
             "no" if share.cifs_ro else "yes")
@@ -832,7 +846,7 @@ def generate_smb4_shares(smb4_shares):
 
         confset1(smb4_shares, "nfs4:mode = special")
         confset1(smb4_shares, "nfs4:acedup = merge")
-        confset1(smb4_shares, "nfs4:chown = yes")
+        confset1(smb4_shares, "nfs4:chown = true")
         confset1(smb4_shares, "zfsacl:acesort = dontcare")
 
         for line in share.cifs_auxsmbconf.split('\n'):
@@ -1094,7 +1108,7 @@ def main():
             f.write(line + '\n')
         f.close()
 
-    if role == 'member' and ldap_enabled():
+    if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
 
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")

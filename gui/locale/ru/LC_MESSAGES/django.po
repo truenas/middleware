@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-07-24 19:00+0000\n"
+"PO-Revision-Date: 2014-09-19 21:13+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1406228413.0\n"
+"X-POOTLE-MTIME: 1411161232.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -9123,9 +9123,8 @@ msgstr ""
 "checkip.dyndns.org:80 /."
 
 #: services/models.py:1292
-#, fuzzy
 msgid "TLS allow dot login"
-msgstr "Разрешить вход суперпользователя"
+msgstr ""
 
 #: services/models.py:1296
 msgid "TLS allow per user"
@@ -9664,9 +9663,8 @@ msgid "Network connectivity will be interrupted"
 msgstr ""
 
 #: services/models.py:117
-#, fuzzy
 msgid "Domain logons"
-msgstr "Доменное имя"
+msgstr "Входы в ломен"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
@@ -9711,26 +9709,22 @@ msgid "Enable"
 msgstr "Включено"
 
 #: directoryservice/models.py:295
-#, fuzzy
 msgid "Bind DN"
-msgstr "Корневая связь DN"
+msgstr ""
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Пароль администратора"
+msgstr ""
 
 #: services/forms.py:753
 #: services/forms.py:896
-#, fuzzy
 msgid "Certificate"
-msgstr "Сертификат SSL"
+msgstr "Сертификат"
 
 # корневая связь - тупой перевод))
 #: services/forms.py:864
-#, fuzzy
 msgid "Incorrect password."
-msgstr "Пароль администратора"
+msgstr "Неверный пароль."
 
 #: services/models.py:1623
 #: services/models.py:1835
@@ -9750,52 +9744,48 @@ msgstr ""
 
 #: system/nav.py:45
 #: templates/system/index.html:3
-#, fuzzy
 msgid "Information"
-msgstr "Информационные"
+msgstr "Информация"
 
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Задания Rsync"
+msgstr "Задания"
 
 #: templates/services/core.html:32
-#, fuzzy
 msgid "Domain Controller Settings"
-msgstr "Имя контролера домена"
+msgstr "Настройки контролера домена"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
-#, fuzzy
 msgid "Set SSL Certificate"
-msgstr "Сертификат SSL"
+msgstr "Установить сертификат SSL"
 
 #: system/hook.py:22
 #: system/hook.py:24
 msgid "Performance Test"
-msgstr ""
+msgstr "Тест производительности"
 
 #: system/views.py:545
 msgid "System dataset is required to perform this action."
-msgstr ""
+msgstr "Для выполнения действия требуется системный dataset."
 
 #: templates/system/perftest.html:20
-#, fuzzy
 msgid "You are about to start a performance test."
-msgstr "Вы собираетесь добавить ключ восстановления для этого тома"
+msgstr "Вы собираетесь начать тест производительности."
 
 #: templates/system/perftest.html:22
 msgid ""
 "Running these tests can substantially impact performance on a production "
 "system and are only to be used for diagnostic purposes."
 msgstr ""
+"Запуск этих тестов может существенно повлиять на производительность в "
+"производственной системе и может быть использован только в целях диагностики."
 
 #: templates/system/perftest.html:24
-#, fuzzy
 msgid "Are you sure you want to proceed?"
-msgstr "Вы уверены, что хотите удалить?"
+msgstr "Действительно хотите продолжить?"
 
 #: services/models.py:256
 msgid "Obey pam restrictions"
@@ -9812,13 +9802,12 @@ msgid "NAA...used only by the initiator"
 msgstr ""
 
 #: services/models.py:595
-#, fuzzy
 msgid "Enable TPC"
-msgstr "Включить TLS"
+msgstr "Включить TPC"
 
 #: services/models.py:596
 msgid "Allow initiators to xcopy without authenticating to foreign targets."
-msgstr ""
+msgstr "Разрешить инициаторами хсору на другие цели."
 
 #: templates/directoryservice/activedirectory_edit.html:8
 #: templates/directoryservice/ldap_edit.html:8
@@ -10052,6 +10041,8 @@ msgstr ""
 msgid ""
 "Specifies the bind path where user objects can be found in the LDAP server."
 msgstr ""
+"Задает путь привязки, где пользовательские объекты можно найти на сервере "
+"LDAP."
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
@@ -10060,12 +10051,11 @@ msgstr ""
 #: directoryservice/models.py:350
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
-msgstr ""
+msgstr "Задает путь привязки, где объекты групп можно найти на сервере LDAP."
 
 #: directoryservice/models.py:355
-#, fuzzy
 msgid "User CN"
-msgstr "Пользователь &"
+msgstr ""
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
@@ -10081,9 +10071,8 @@ msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Домен"
+msgstr "Домен LDAP"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -10093,22 +10082,27 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
+"При использовании LDAP-сервера на сервере Active Directory, что позволяет "
+"указать домен для доступа к серверу Active Directory. Это позволяет "
+"использовать доверительные отношения, сохраняя при этом все RFC 2307 записи "
+"в одном месте. Этот параметр является необязательным, по умолчанию "
+"используется AD сервер текущего домена."
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "Адрес LDAP"
 
 #: directoryservice/models.py:385
 msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
+"При использовании автономного LDAP сервер, этот параметр определяет адрес "
+"для доступа к серверу LDAP."
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "Идентификатор пользователя"
+msgstr ""
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10118,15 +10112,16 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:402
-#, fuzzy
 msgid "LDAP Realm"
-msgstr "Область"
+msgstr "LDAP Область"
 
 #: directoryservice/models.py:405
 msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
 msgstr ""
+"Определяет область для использования в имен пользователей и групп. Это "
+"требуется только при использовании cn_realm вместе с автономной LDAP сервер."
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
@@ -10149,6 +10144,9 @@ msgid ""
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
 msgstr ""
+"Эта опция может использоваться для настройки внешней программы для "
+"сопоставления идентификаторов вместо использования tdb счетчика. Отображения "
+"затем сохраняются базы данных int tdb2 idmap."
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -10156,18 +10154,15 @@ msgid "TDB2 Idmap"
 msgstr ""
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Domain administrator account name"
 msgstr "Имя учетной записи администратора домена"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
 msgstr "Пароль учетной записи администратора домена."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
 msgstr "Использовать домен по умолчанию"
 
@@ -10189,58 +10184,49 @@ msgid "Initial Wizard"
 msgstr "Безопасная инициализация"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Не удалось обновить плагин"
+msgstr "Не удалось создать группу %s"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "Jail не существует"
+msgstr "Группа не существует: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "Jail не существует"
+msgstr "Пользователь не существует: %s"
 
 #: system/forms.py:306
-#, fuzzy
 msgid "Failed to create ZFS: %s"
-msgstr "Невозможно создать %(name)s: %(error)s"
+msgstr "Не удалось создать ZFS: %s"
 
 #: system/forms.py:1136
-#, fuzzy
 msgid "Share Name"
-msgstr "Имя сервера"
+msgstr "Имя Ресурса"
 
 #: system/forms.py:1140
 #: templates/system/initialwizard_volume.html:65
 msgid "Purpose"
-msgstr ""
+msgstr "Назначение"
 
 #: system/forms.py:1144
-#, fuzzy
 msgid "Unix (NFS)"
-msgstr "Общий ресурс Unix (NFS)"
+msgstr "Unix (NFS)"
 
 #: system/forms.py:1145
 msgid "Block Storage (iSCSI)"
-msgstr ""
+msgstr "Блочное хранилище (iSCSI)"
 
 #: system/forms.py:1149
-#, fuzzy
 msgid "Allow Guest"
-msgstr "Список разрешений"
+msgstr "Разрешить гостевой доступ"
 
 #: system/forms.py:1157
-#, fuzzy
 msgid "iSCSI Size"
-msgstr "iSCSI"
+msgstr "Размер iSCSI"
 
 #: system/forms.py:1208
-#, fuzzy
 msgid "Pool Name"
-msgstr "Имя ZVol"
+msgstr "Имя пула"
 
 # или Автоматический, или Авто
 #: system/forms.py:1223
@@ -10250,61 +10236,60 @@ msgstr "Автозапуск"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
-msgstr ""
+msgstr "VMWare (RAID 10: Хорошие надежность и производительность)"
 
 #: system/forms.py:1231
 msgid "Backups (RAID Z2: Best Reliability, Less Storage)"
-msgstr ""
+msgstr "Резервные копии (RAID Z2: Лучшая надежность, меньше места)"
 
 #: system/forms.py:1235
 msgid "Media (RAID Z1: Less Reliability, More Storage)"
-msgstr ""
+msgstr "Media (RAID Z1: Хуже надежность, больше места)"
 
 #: system/forms.py:1239
 msgid "Logs (RAID 0: No Reliability, Max Performance / Storage)"
-msgstr ""
+msgstr "Журналы (RAID 0: Низкая надежность, максимум скорости и места)"
 
 #: system/forms.py:1441
-#, fuzzy
 msgid "No available disks have been found."
-msgstr "Не найдено"
+msgstr "Не найдено доступных дисков."
 
 #: templates/system/initialwizard_confirm.html:29
 msgid ""
 "You are about to leave the Initial Wizard and perform all pending (saved) "
 "actions."
 msgstr ""
+"Вы собираетесь покинуть мастера начальной установки и выполнить все "
+"отложенные (сохраненные) действия."
 
 #: templates/system/initialwizard_confirm.html:32
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Вы уверены, что хотите очистить?"
+msgstr "Вы уверены?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Конфигурация"
+msgstr "Подтвердить"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
-msgstr ""
+msgstr "Вернуться к мастеру"
 
 #: templates/system/initialwizard_confirm.html:62
 msgid "Exit without saving"
-msgstr ""
+msgstr "Выйти без сохранения"
 
 #: templates/system/initialwizard_shares.html:28
 msgid "Previous"
-msgstr ""
+msgstr "Предыдущая"
 
 #: templates/system/initialwizard_shares.html:44
 #: templates/system/initialwizard_volume.html:85
 msgid "Next"
-msgstr ""
+msgstr "Следующая"
 
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
-msgstr ""
+msgstr "Ожидаемый общий размер"
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -10312,24 +10297,20 @@ msgid "Wizard"
 msgstr "Безопасная инициализация"
 
 #: services/forms.py:302
-#, fuzzy
 msgid "This field is required to enable NFSv4."
-msgstr "Это поле обязательно."
+msgstr "Это поле обязательно для включения NFSv4."
 
 #: services/models.py:351
-#, fuzzy
 msgid "Enable NFSv4"
-msgstr "Включить FXP"
+msgstr "Включить NFSv4"
 
 #: services/models.py:354
-#, fuzzy
 msgid "NFSv4 Root Path"
-msgstr "Удаленный путь"
+msgstr "Корень NFSv4"
 
 #: system/forms.py:1468
-#, fuzzy
 msgid "A pool with this name already exists."
-msgstr "Том с таким именем уже существует."
+msgstr "Пул с таким именем уже существует."
 
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
@@ -10349,18 +10330,16 @@ msgid "A keytab is required."
 msgstr "Требуется файл"
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Сервер Kerberos"
+msgstr "Область Kerberos."
 
 #: directoryservice/models.py:552
 msgid "KDC"
 msgstr ""
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "KDC for this realm."
-msgstr "Квота для этого тома"
+msgstr "KDC для этой области."
 
 #: directoryservice/models.py:557
 #, fuzzy
@@ -10372,17 +10351,20 @@ msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
+"Определяет сервер для этой области, где выполняются все изменения в базе "
+"данных."
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Сервер паролей Kerberos"
+msgstr "Сервер Паролей"
 
 #: directoryservice/models.py:568
 msgid ""
 "Points to the server where all the password changes are performed.  If there "
 "is no such entry, the kpasswd port on the admin_server host will be tried."
 msgstr ""
+"Указывает на сервер, где выполняются все изменения пароля. Если нет такой "
+"записи, будет использоваться порт kpasswd на хосте admin_server."
 
 #: directoryservice/models.py:581
 msgid "Principal"
@@ -10399,14 +10381,12 @@ msgstr ""
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
 #: services/models.py:1662
-#, fuzzy
 msgid "Kerberos Realm"
-msgstr "Файл Kerberos Keytab"
+msgstr "Область Kerberos"
 
 #: services/views.py:269
-#, fuzzy
 msgid "CIFS successfully updated."
-msgstr "%s успешно обновлен."
+msgstr "CIFS успешно обновлен."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -10453,9 +10433,8 @@ msgid "Kerberos"
 msgstr "Сервер Kerberos"
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos Realms"
-msgstr "Файл Kerberos Keytab"
+msgstr "Область Kerberos"
 
 #: templates/directoryservice/index.html:18
 #, fuzzy
@@ -10465,8 +10444,754 @@ msgstr "Файл Kerberos Keytab"
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
 msgid "Exit"
-msgstr ""
+msgstr "Выход"
 
 #: templates/system/initialwizard_import.html:31
 msgid "Skip"
+msgstr "Пропустить"
+
+#: choices.py:43
+msgid "Basic Authentication"
+msgstr "Простая Аутентификация"
+
+#: choices.py:44
+msgid "Digest Authentication"
+msgstr "Дайджест Аутентификация"
+
+#: choices.py:799
+msgid "adex"
+msgstr ""
+
+#: choices.py:811
+msgid "Import an existing Certificate Authority"
+msgstr "Импорт существующего центра сертификации"
+
+#: choices.py:812
+msgid "Create an internal Certificate Authority"
+msgstr "Создать внутренний центр сентификации"
+
+#: choices.py:813
+msgid "Create an intermediate Certificate Authority"
+msgstr "Создать промежуточный центр сертификации"
+
+#: choices.py:817
+msgid "Import an existing Certificate"
+msgstr "Импортировать сушествуюший сертификат"
+
+#: choices.py:818
+msgid "Create an internal Certificate"
+msgstr "Создать внутренний сертификат"
+
+#: choices.py:819
+msgid "Create a Certificate Signing Request"
+msgstr "Создать запрос на подписание сертификата"
+
+#: choices.py:823
+msgid "512"
+msgstr ""
+
+#: choices.py:824
+msgid "1024"
+msgstr ""
+
+#: choices.py:825
+msgid "2048"
+msgstr ""
+
+#: choices.py:826
+msgid "4096"
+msgstr ""
+
+#: choices.py:830
+msgid "SHA1"
+msgstr ""
+
+#: choices.py:831
+msgid "SHA224"
+msgstr ""
+
+#: choices.py:832
+msgid "SHA256"
+msgstr ""
+
+#: choices.py:833
+msgid "SHA384"
+msgstr ""
+
+#: choices.py:834
+msgid "SHA512"
+msgstr ""
+
+#: directoryservice/forms.py:406
+msgid "NIS failed to reload."
+msgstr "Не удалось перезагрузить NIS."
+
+#: api/resources.py:2488
+msgid "On Reboot"
+msgstr "При загрузке"
+
+#: directoryservice/models.py:228
+#: directoryservice/models.py:229
+msgid "ADEX Idmap"
+msgstr ""
+
+#: api/resources.py:2490
+msgid "Now"
+msgstr "Сейчас"
+
+#: directoryservice/models.py:637
+#, fuzzy
+msgid "Descriptive Name."
+msgstr "Описание"
+
+#: directoryservice/models.py:668
+#: directoryservice/models.py:806
+msgid "FQDN of the domain controller to use."
+msgstr "Имя хоста контроллера домена."
+
+#: directoryservice/models.py:812
+msgid "FQDN of the global catalog server to use."
+msgstr "Имя хоста сервера глобального каталога."
+
+#: directoryservice/models.py:993
+#, fuzzy
+msgid "SUDO Suffix"
+msgstr "Суффикс пользователя"
+
+#: directoryservice/models.py:996
+#, fuzzy
+msgid ""
+"This parameter specifies the suffix that is used for the SUDO configuration "
+"in the LDAP directory, e.g. ou=SUDOers"
+msgstr ""
+"Этот параметр указывает суффикс, который используется для пользователей, "
+"если они добавлены в каталог LDAP, например ou=Users"
+
+#: directoryservice/models.py:1049
+msgid "Idmap Backend"
+msgstr ""
+
+#: directoryservice/models.py:1056
+msgid "Samba Schema"
+msgstr ""
+
+#: jails/forms.py:92
+#, fuzzy
+msgid "Template"
+msgstr "Шаблоны"
+
+#: jails/views.py:492
+msgid "Jail Template successfully created."
+msgstr "Шаблон jail успешно создан."
+
+#: jails/views.py:512
+msgid "Jail Template successfully edited."
+msgstr "Шаблон jail успешно изменен."
+
+#: services/forms.py:1541
+msgid "Confirm WebDAV Password"
+msgstr "Подтвердите WebDAV пароль"
+
+#: services/forms.py:1607
+msgid "The HTTP and HTTPS ports cannot be the same!"
+msgstr "Порты HTTP и HTTPS не могут совпадать!"
+
+#: services/forms.py:1628
+msgid "The WebDAV service failed to reload."
+msgstr "Службу WebDAV не удалось перезагрузить."
+
+#: services/models.py:325
+msgid "Global auxiliary parameters"
+msgstr "Глобальные дополнительные параметры"
+
+#: services/models.py:328
+msgid "These parameters are added to [Global] section of afp.conf"
+msgstr "Эти параметры добавляются в раздел [global] файла smb.conf"
+
+#: services/models.py:1728
+msgid "HTTP Port"
+msgstr "HTTP порт"
+
+#: services/models.py:1731
+msgid ""
+"This is the port at which WebDAV will run on.<br />Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Это порт, на котором будет работать WebDAV.<br />Не используйте порт, "
+"который уже используется другой службой (например, 22 используеься SSH)."
+
+#: services/models.py:1736
+msgid "HTTPS Port"
+msgstr "HTTPS порт"
+
+#: services/models.py:1739
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br />Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Это порт, на котором будет работать Безопасный WebDAV.<br />Не используйте "
+"порт, который уже используется другой службой (например, 22 используеься "
+"SSH)."
+
+#: services/models.py:1745
+msgid "Webdav Password"
+msgstr "Пароль WebDAV"
+
+#: services/models.py:1747
+msgid "The Default Password is: davtest"
+msgstr "Пароль по умолчанию: davtest"
+
+#: services/models.py:1752
+msgid "HTTP Authentication"
+msgstr "HTTP Аутентификация"
+
+#: services/models.py:1755
+msgid ""
+"Type of HTTP Authentication for WebDAV<br />Basic Auth: Password is sent "
+"over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
+"Hash of the password is sent over the network (more secure)"
+msgstr ""
+"Тип HTTP-аутентификации для WebDAV<br />Basic Auth: Пароль отправляется по "
+"сети в открытом виде (Избегайте, если HTTPS отключен)<br />Digest Auth: Хэш "
+"пароля отправляется по сети (более безопасный)"
+
+#: services/models.py:1761
+#: services/models.py:1762
+#: templates/services/core.html:164
+#: templates/sharing/index.html:21
+msgid "WebDAV"
+msgstr ""
+
+#: sharing/models.py:335
+#, fuzzy
+msgid "Share Path Name"
+msgstr "Имя сервера"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
+"freenas-machine:webdav_port/this_path_name"
+msgstr ""
+
+#: sharing/models.py:357
+msgid "Change User & Group Ownership"
+msgstr ""
+
+#: sharing/models.py:358
+msgid ""
+"Changes the user & group of the shared folder to 'webdav:webdav' recursively "
+"(including all subdirectories)<br />If disabled, you will need to manually<"
+"br />add the 'webdav' user & group to the share."
+msgstr ""
+
+#: sharing/models.py:374
+msgid "WebDAV Share"
+msgstr ""
+
+#: sharing/models.py:375
+#, fuzzy
+msgid "WebDAV Shares"
+msgstr "Активные общие ресурсы"
+
+#: storage/admin.py:263
+#: storage/admin.py:361
+#, fuzzy
+msgid "Edit Options"
+msgstr "Изменить опции ZFS"
+
+#: storage/admin.py:268
+#: storage/admin.py:367
+#, fuzzy
+msgid "Create Dataset"
+msgstr "Создание набора данных ZFS"
+
+#: storage/forms.py:1439
+msgid "Case Sensitivity"
+msgstr ""
+
+#: system/admin.py:49
+msgid "Internal"
+msgstr "Внутренний"
+
+#: system/admin.py:54
+#: system/admin.py:148
+msgid "Issuer"
+msgstr ""
+
+#: system/admin.py:59
+#: system/nav.py:91
+#: templates/system/index.html:27
+msgid "Certificates"
+msgstr "Сертификаты"
+
+#: system/admin.py:64
+#: system/admin.py:153
+msgid "Distinguished Name"
+msgstr "Уникальное имя"
+
+#: system/admin.py:74
+#: system/admin.py:163
+msgid "Until"
+msgstr "До"
+
+#: system/forms.py:163
+msgid "Failed to create a new Boot."
+msgstr "Не удалось создать новое Окружение Загрузки."
+
+#: system/forms.py:183
+msgid "Failed to rename Boot Environment."
+msgstr "Не удалось переименовать Окружение Загрузки."
+
+#: system/forms.py:1028
+msgid "Place to temporarily place update file"
+msgstr "Место временного хранения файла обновления"
+
+#: system/forms.py:1030
+msgid ""
+"The system will use this place to temporarily store the update file before "
+"it's being applied."
+msgstr ""
+"Система будет использовать это место для временного хранения файла "
+"обновления."
+
+#: system/forms.py:1062
+msgid "Update file to be installed"
+msgstr "Файл обновления для установки"
+
+#: system/forms.py:1924
+#: system/forms.py:1952
+#: system/forms.py:1994
+#: system/forms.py:2086
+#: system/forms.py:2208
+#: system/forms.py:2237
+#: system/forms.py:2279
+#: system/forms.py:2395
+msgid "Descriptive Name"
+msgstr "Описательное Имя"
+
+#: system/forms.py:1930
+#: system/forms.py:1958
+#: system/forms.py:2214
+#: system/forms.py:2243
+#: system/models.py:589
+msgid "Cut and paste the contents of your certificate here"
+msgstr "Скопируйте и вставьте сюда содержимое Вашего сертификата"
+
+#: system/forms.py:1935
+#: system/forms.py:1963
+msgid "Serial for next Certificate"
+msgstr "Порядковый номер следующего сертификата"
+
+#: system/forms.py:1997
+#: system/forms.py:2089
+#: system/forms.py:2282
+#: system/forms.py:2398
+msgid "Key Length"
+msgstr "Длина ключа"
+
+#: system/forms.py:2003
+#: system/forms.py:2095
+#: system/forms.py:2288
+#: system/forms.py:2404
+#: system/models.py:613
+msgid "Digest Algorithm"
+msgstr "Алгоритм хеширования"
+
+#: system/forms.py:2009
+#: system/forms.py:2101
+#: system/forms.py:2294
+#: system/models.py:619
+msgid "Lifetime"
+msgstr "Время жизни"
+
+#: system/forms.py:2246
+#: system/models.py:594
+msgid "Private Key"
+msgstr "Закрытый ключ"
+
+#: system/forms.py:2242
+msgid "Certificate Signing Request"
+msgstr "Запрос подписи сертификата"
+
+#: system/forms.py:2249
+#: system/models.py:595
+msgid "Cut and paste the contents of your private key here"
+msgstr "Скопируйте и вставьте сюда содержимое Вашего секретного ключа"
+
+#: system/models.py:550
+msgid "Check Automatically For Updates"
+msgstr "Автоматически проверять обновления"
+
+#: system/utils.py:82
+#, fuzzy
+msgid "Downloading"
+msgstr "Скачать ключ"
+
+#: system/utils.py:103
+#, fuzzy
+msgid "Installing"
+msgstr "Установка"
+
+#: system/nav.py:32
+#: templates/system/index.html:9
+msgid "Boot"
+msgstr ""
+
+#: system/models.py:583
+#, fuzzy
+msgid "Descriptive Name)"
+msgstr "Описание"
+
+#: system/models.py:600
+msgid "Signing Request"
+msgstr ""
+
+#: system/models.py:601
+#, fuzzy
+msgid "Cut and paste the contents of your CSR here"
+msgstr ""
+"Скопируйте и вставьте сюда содержимое файлов Ваших сертификатов секретного и "
+"открытого ключей."
+
+#: system/models.py:606
+msgid "Key length"
+msgstr ""
+
+#: system/models.py:669
+#, fuzzy
+msgid "Serial for next certificate"
+msgstr "Самоподписанный сертификат"
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+#, fuzzy
+msgid "Create"
+msgstr "Создать zvol"
+
+#: system/models.py:675
+msgid "Signing Certificate Authority"
+msgstr ""
+
+#: system/views.py:171
+#: system/views.py:172
+#: system/views.py:176
+#, fuzzy
+msgid "Activate"
+msgstr "Активен"
+
+#: system/models.py:794
+#, fuzzy
+msgid "Certificate Authority"
+msgstr "Сертификат SSL"
+
+#: system/views.py:189
+#, fuzzy
+msgid "Created"
+msgstr "Создать zvol"
+
+#: system/views.py:203
+#, fuzzy
+msgid "Boot Environment successfully activated."
+msgstr "Набор данных успешно изменен."
+
+#: system/views.py:207
+msgid "Failed to activate Boot Environment."
+msgstr ""
+
+#: system/views.py:221
+#, fuzzy
+msgid "Boot Environment successfully added."
+msgstr "Том успешно добавлен."
+
+#: system/views.py:178
+#: system/views.py:179
+#: system/views.py:180
+#, fuzzy
+msgid "Rename"
+msgstr "Имя пользователя"
+
+#: system/nav.py:83
+#: templates/system/index.html:24
+msgid "CAs"
+msgstr ""
+
+#: system/views.py:238
+#, fuzzy
+msgid "Boot Environment successfully deleted."
+msgstr "Снимок успешно удален."
+
+#: system/views.py:242
+msgid "Failed to delete Boot Environment."
+msgstr ""
+
+#: system/views.py:260
+#, fuzzy
+msgid "Boot Environment successfully renamed."
+msgstr "Том успешно добавлен."
+
+#: system/views.py:896
+#, fuzzy
+msgid "Certificate Authority successfully imported."
+msgstr "Jail успешно импортирован."
+
+#: system/views.py:915
+#, fuzzy
+msgid "Internal Certificate Authority successfully created."
+msgstr "Шаблон jail успешно изменен."
+
+#: system/views.py:934
+msgid "Intermediate Certificate Authority successfully created."
+msgstr ""
+
+#: system/views.py:1206
+#, fuzzy
+msgid "Internal Certificate Viewed."
+msgstr "Сертификат SSL"
+
+#: system/views.py:955
+msgid "Certificate Authority successfully edited."
+msgstr "Центр сертификации успешно изменен."
+
+#: system/views.py:1003
+msgid "Certificate successfully imported."
+msgstr "Сертификат успешно импортирован."
+
+#: system/views.py:1022
+msgid "Internal Certificate successfully created."
+msgstr "Внутренний сертификат успешно создан."
+
+#: system/views.py:1041
+msgid "Certificate CSR successfully created."
+msgstr "Запрос подписи сертификата успешно создан."
+
+#: system/views.py:1062
+msgid "Internal Certificate successfully edited."
+msgstr "Внутренний сертификат успешно изменен."
+
+#: system/views.py:1083
+msgid "CSR successfully edited."
+msgstr "Запрос подписи сертификата успешно изменен."
+
+#: templates/freeadmin/generic_model_delete.html:31
+msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
+msgstr "Вы уверены, что хотите удалить %(verbose_name)s %(object)s?"
+
+#: templates/services/core.html:170
+msgid "WebDAV Settings"
+msgstr "Настройки WebDAV"
+
+#: templates/storage/index.html:24
+msgid "Scrubs"
+msgstr "Проверки"
+
+#: templates/storage/index.html:31
+msgid "Snapshots"
+msgstr "Снимки"
+
+#: templates/system/upgrade.html:22
+msgid "You're about to upgrade. The following packages will be changed:"
+msgstr "Вы собираетесь обновить. Следующие пакеты будут изменены:"
+
+#: templates/system/upgrade.html:24
+msgid "Are you sure you want to continue?"
+msgstr "Действительно желаете продолжить?"
+
+#: templates/system/upgrade.html:26
+msgid "No updates available"
+msgstr "Нет доступных обновлений"
+
+#: templates/system/upgrade_edit.html:7
+#: templates/system/upgrade_edit.html:9
+msgid "Check for Updates"
+msgstr "Проверить наличие обновлений"
+
+#: templates/system/certificate_datagrid.html:4
+msgid "Import Certificate"
+msgstr "Импорт сертификата"
+
+#: templates/system/bootenv_activate.html:4
+msgid "Activate boot environment %(name)s"
+msgstr "Активировать окружение загрузки %(name)s"
+
+#: templates/system/certificate_datagrid.html:11
+#: templates/system/certificate_datagrid.html:13
+msgid "Create Internal Certificate"
+msgstr "Создать внутренний сертификат"
+
+#: templates/system/bootenv_add.html:4
+msgid "Create boot environment from %(source)s"
+msgstr "Создать окружение загрузки из %(source)s"
+
+#: templates/system/certificate_datagrid.html:18
+#: templates/system/certificate_datagrid.html:20
+msgid "Create Certificate Signing Request"
+msgstr "Создать запрос подписи сертификата"
+
+#: templates/system/bootenv_delete.html:4
+msgid "Are you sure you want to delete %(name)s?"
+msgstr "Вы уверены, что хотите удалить %(name)s?"
+
+#: templates/system/bootenv_datagrid.html:9
+msgid "Create Boot"
+msgstr "Создать окружение загрузки"
+
+#: templates/system/certificateauthority_datagrid.html:4
+msgid "Import CA"
+msgstr "Импорт CA"
+
+#: templates/system/certificateauthority_datagrid.html:11
+#: templates/system/certificateauthority_datagrid.html:13
+msgid "Create Internal CA"
+msgstr "Создать внутренний СА"
+
+#: templates/system/certificateauthority_datagrid.html:18
+#: templates/system/certificateauthority_datagrid.html:20
+msgid "Create Intermediate CA"
+msgstr "Создать промежуточный CA"
+
+#: templates/system/bootenv_rename.html:4
+msgid "Rename boot environment %(name)s"
+msgstr "Переименовать окружение загрузки %(name)s"
+
+#: templates/system/upgrade_edit.html:13
+#: templates/system/upgrade_edit.html:15
+#, fuzzy
+msgid "Manual Update"
+msgstr "Применить обновление"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, allavailable interfaces that "
+"are up will be listened on."
+msgstr ""
+
+#: storage/nav.py:56
+#: templates/storage/volume_datagrid.html:17
+#: templates/storage/volume_datagrid.html:19
+#, fuzzy
+msgid "Import Disk"
+msgstr "Импорт"
+
+#: system/forms.py:1852
+#, fuzzy
+msgid "Root E-mail"
+msgstr "E-mail"
+
+#: system/forms.py:1843
+msgid "Administrative email address used for alerts."
+msgstr "E-mail адрес используемый для оповещений."
+
+#: system/forms.py:1847
+msgid "Console messages"
+msgstr "Сообщения консоли"
+
+#: system/forms.py:1848
+msgid "Show console messages in the footer."
+msgstr "Показывать консольные сообщения в нижней части страницы."
+
+#: system/views.py:163
+#: system/views.py:164
+#: system/views.py:165
+msgid "Clone"
+msgstr ""
+
+#: directoryservice/models.py:804
+msgid "Site Name"
+msgstr "Имя Сайта"
+
+#: directoryservice/models.py:806
+msgid "Name of site to use."
+msgstr "Имя сайта, которое следует сяпользовать."
+
+#: services/models.py:263
+msgid ""
+"This parameter controls whether or not Samba should obey PAM's account and "
+"session management directives"
+msgstr ""
+"Этот параметр управляет, должен ли Samba подчиняться директивам управления "
+"аккаунтом и сеансом PAM"
+
+#: services/models.py:268
+msgid ""
+"IP address(es) to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+"IP-адрес(а) для привязки. Если ничего не указано, будут прослушиваться все "
+"доступные интерфейсы."
+
+#: storage/forms.py:1964
+msgid "Only one replication allowed per dataset."
+msgstr ""
+
+#: storage/forms.py:1973
+msgid ""
+"Only one replication allowed per dataset, including parent dataset set up "
+"recursively."
+msgstr ""
+
+#: system/forms.py:1889
+msgid "Trains"
+msgstr "Поезда"
+
+#: storage/admin.py:375
+#, fuzzy
+msgid "Edit zvol"
+msgstr "Добавить zvol"
+
+#: storage/forms.py:346
+msgid "Only one row for the vitual device of type %s is allowed."
+msgstr ""
+
+#: storage/views.py:494
+msgid "Zvol successfully edited."
+msgstr "ZVOL успешно изменен."
+
+#: directoryservice/models.py:853
+msgid "Winbind NSS Info"
+msgstr ""
+
+#: directoryservice/models.py:854
+msgid ""
+"This parameter is designed to control how Winbind retrieves Name Service "
+"Information to construct a user's home directory and login"
+msgstr ""
+
+#: jails/models.py:359
+#, fuzzy
+msgid "IPv4 DHCP"
+msgstr "DHCP"
+
+#: jails/models.py:383
+msgid "IPv6 Autoconfigure"
+msgstr "Автоматически настроить IPv6"
+
+#: sharing/models.py:336
+msgid ""
+"This will be used to access your WebDAV share.<br />For example http(s)://ip-"
+"of-freenas-machine:webdav_port/'Share Name'"
+msgstr ""
+
+#: storage/views.py:203
+#, fuzzy
+msgid "WARNING!"
+msgstr "ПРЕДУПРЕЖДЕНИЕ"
+
+#: storage/views.py:205
+msgid ""
+"Always backup the key! If the key is lost, the data on the disks will also "
+"be lost with no hope of recovery."
+msgstr ""
+
+#: storage/views.py:209
+msgid ""
+"This type of encryption is primarily targeted at users who are storing "
+"sensitive data and want the ability to remove disks from the pool and "
+"dispose of/re-use them without concern for erasure."
+msgstr ""
+
+#: storage/views.py:214
+msgid ""
+"iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
+"data as a consequence of using this feature."
 msgstr ""

@@ -45,7 +45,10 @@ from freenasUI.common.warden import (
 )
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.jails.models import Jails, JailsConfiguration
+from freenasUI.jails.models import (
+    Jails,
+    JailsConfiguration
+)
 from freenasUI.jails.utils import (
     jail_path_configured,
     jail_auto_configure,
@@ -69,7 +72,7 @@ log = logging.getLogger('plugins.views')
 
 
 def home(request):
-    default_iface = notifier().guess_default_interface()
+    default_iface = notifier().get_default_interface()
 
     conf = models.Configuration.objects.latest('id')
     return render(request, "plugins/index.html", {
@@ -216,12 +219,17 @@ def plugin_update(request, oid):
 
 
 def install_available(request, oid):
+    jc = JailsConfiguration.objects.all()[0]
+
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_addresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("No available IP addresses"))
+
+        if not jc.jc_ipv4_dhcp:
+            addrs = guess_addresses()
+            if not addrs['high_ipv4']:
+                raise MiddlewareError(_("No available IP addresses"))
+
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
@@ -249,7 +257,10 @@ def install_available(request, oid):
         if not plugin.download("/var/tmp/firmware/pbifile.pbi"):
             raise MiddlewareError(_("Failed to download plugin"))
 
-        jail = new_default_plugin_jail(plugin.unixname)
+        try:
+            jail = new_default_plugin_jail(plugin.unixname)
+        except Exception as e:
+            raise MiddlewareError(e)
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
@@ -345,14 +356,18 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
+    jc = JailsConfiguration.objects.all()[0]
 
     #FIXME: duplicated code with available_install
     try:
         if not jail_path_configured():
             jail_auto_configure()
-        addrs = guess_addresses()
-        if not addrs['high_ipv4']:
-            raise MiddlewareError(_("No available IP addresses"))
+
+        if not jc.jc_ipv4_dhcp:
+            addrs = guess_addresses()
+            if not addrs['high_ipv4']:
+                raise MiddlewareError(_("No available IP addresses"))
+
     except MiddlewareError, e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
@@ -494,15 +509,36 @@ def plugin_fcgi_client(request, name, oid, path):
     This is a view that works as a FCGI client
     It is used for development server (no nginx) for easier development
     """
+    jc = JailsConfiguration.objects.all()
+    if not jc.exists():
+        raise Http404
+
+    jc = jc[0]
+
     qs = models.Plugins.objects.filter(id=oid, plugin_name=name)
     if not qs.exists():
         raise Http404
 
     plugin = qs[0]
-    jail_ip = Jails.objects.filter(jail_host=plugin.plugin_jail)[0].jail_ipv4
+    jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    jail_ip = jail.jail_ipv4_addr
+
+    fastcgi_env_path = "%s/%s/%s/fastcgi_env" % (
+        jc.jc_path, jail.jail_host, plugin.plugin_path
+    )
 
     app = FCGIApp(host=str(jail_ip), port=plugin.plugin_port)
     env = request.META.copy()
+
+    try:
+        if os.path.exists(fastcgi_env_path):
+            plugin_fascgi_env = {}
+            execfile(fastcgi_env_path, {}, plugin_fascgi_env)
+            env.update(plugin_fascgi_env)
+
+    except Exception as e:
+        log.debug("Failed to update CGI headers: %s", e)
+
     env.pop('wsgi.file_wrapper', None)
     env.pop('wsgi.version', None)
     env.pop('wsgi.input', None)

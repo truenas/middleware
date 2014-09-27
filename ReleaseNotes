@@ -3,7 +3,14 @@ Release Notes for FreeNAS 9.3-ALPHA
 FreeNAS now uses ZFS for the boot device, also supporting mirroring of boot
 devices for greater reliabilty.  The features of ZFS are also utilized to
 provide "boot environments" which allow the system to be rolled back (or even
-forked) to different OS versions, a boot-time menu being provided to select
-a specific boot environment.
+forked) to different OS versions. A boot-time menu is provided for selecting
+and booting from a specific boot environment as well as a new system->boot
+UI screen provided to create, delete and select default boot environments.
 
+WebDAV file sharing is now supported
 
+Samba upgraded to 4.1.12
+
+NFSv4 support added, including kerberized NFS.
+
+Kernel iSCSI target with support for VMWare VAAI, MS ODX and Windows 2012 Clustering.

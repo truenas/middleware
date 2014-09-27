@@ -40,11 +40,6 @@ if __name__ == "__main__":
 
     config = Configuration.Configuration()
     if package_dir is not None:
-        if package_dir.endswith("Packages"):
-            package_dir = package_dir[:-len("Packages")]
-        elif package_dir.endswith("Packages/"):
-            package_dir = package_dir[:-len("Packages/")]
-
         config.SetPackageDir(package_dir)
 
     if mani_file is None:

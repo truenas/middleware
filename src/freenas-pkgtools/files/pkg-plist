@@ -6,10 +6,6 @@ usr/local/lib/freenasOS/Package.py
 usr/local/lib/freenasOS/Train.py
 usr/local/lib/freenasOS/Update.py
 usr/local/lib/freenasOS/__init__.py
-usr/local/bin/create_manifest
-usr/local/bin/create_package
-usr/local/bin/diff_packages
 usr/local/bin/freenas-install
 usr/local/bin/manifest_util
-usr/local/bin/pkgify
 usr/local/bin/freenas-update

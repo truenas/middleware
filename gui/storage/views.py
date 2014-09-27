@@ -54,7 +54,7 @@ from freenasUI.storage import forms, models
 log = logging.getLogger('storage.views')
 
 
-#FIXME: Move to a utils module
+# FIXME: Move to a utils module
 def _diskcmp(a, b):
     rega = re.search(r'^([a-z/]+)(\d+)$', a[1])
     regb = re.search(r'^([a-z/]+)(\d+)$', b[1])
@@ -194,9 +194,32 @@ def volumemanager(request):
     qs = models.Volume.objects.filter(vol_fstype='ZFS')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
+    encwarn = (
+        u'<span style="color: red; font-size:110%%;">%s</span>'
+        u'<p>%s</p>'
+        u'<p>%s</p>'
+        u'<p>%s</p>'
+    ) % (
+        _('WARNING!'),
+        _(
+            'Always backup the key! If the key is lost, the data on the disks '
+            'will also be lost with no hope of recovery.'
+        ),
+        _(
+            'This type of encryption is primarily targeted at users who are '
+            'storing sensitive data and want the ability to remove disks from '
+            'the pool and dispose of/re-use them without concern for erasure.'
+        ),
+        _(
+            'iXsystems, Inc. can not be held responsible for any lost '
+            'or unrecoverable data as a consequence of using this feature.'
+        ),
+    )
+
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
+        'encryption_warning': encwarn,
         'swap_size': swap * 1024 * 1024 * 1024,
         'manual_url': reverse('storage_volumemanager_zfs'),
         'extend': json.dumps(
@@ -207,29 +230,6 @@ def volumemanager(request):
                 'enc': x.vol_encrypt > 0
             } for x in qs if x.is_decrypted()]
         ),
-    })
-
-
-def volumemanager_ufs(request):
-
-    if request.method == "POST":
-
-        form = forms.VolumeManagerUFSForm(request.POST)
-        if form.is_valid():
-            form.done(request)
-            return JsonResp(request, message=_("Volume successfully added."))
-        else:
-            if 'volume_disks' in request.POST:
-                disks = request.POST.getlist('volume_disks')
-            else:
-                disks = None
-
-    else:
-        form = forms.VolumeManagerUFSForm()
-        disks = []
-    return render(request, 'storage/wizard.html', {
-        'form': form,
-        'disks': disks,
     })
 
 
@@ -264,8 +264,9 @@ def volumemanager_zfs(request):
                 disks = None
             zpoolfields = re.compile(r'zpool_(.+)')
             zfsextra = [
-                (zpoolfields.search(i).group(1), i, request.POST.get(i)) \
-                        for i in request.POST.keys() if zpoolfields.match(i)]
+                (zpoolfields.search(i).group(1), i, request.POST.get(i))
+                for i in request.POST.keys() if zpoolfields.match(i)
+            ]
 
     else:
         form = forms.ZFSVolumeWizardForm()
@@ -316,7 +317,9 @@ def dataset_create(request, fs):
             dataset_share_type = cleaned_data.get('dataset_share_type')
             if dataset_share_type == "windows":
                 props['aclmode'] = 'restricted'
-            props['casesensitivity'] = cleaned_data.get('dataset_case_sensitivity')
+            props['casesensitivity'] = cleaned_data.get(
+                'dataset_case_sensitivity'
+            )
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
@@ -482,61 +485,59 @@ def zvol_delete(request, name):
         })
 
 
-def zfsvolume_edit(request, object_id):
-
-    mp = models.MountPoint.objects.get(pk=object_id)
-    volume_form = forms.ZFSVolume_EditForm(mp=mp)
+def zvol_edit(request, name):
 
     if request.method == 'POST':
-        volume_form = forms.ZFSVolume_EditForm(request.POST, mp=mp)
-        if volume_form.is_valid():
-            volume = mp.mp_volume
-            volume_name = volume.vol_name
-            volume_name = mp.mp_path.replace("/mnt/", "")
+        form = forms.ZVol_EditForm(request.POST, name=name)
+        if form.is_valid():
 
-            if volume_form.cleaned_data["volume_refquota"] == "0":
-                volume_form.cleaned_data["volume_refquota"] = "none"
-
+            _n = notifier()
             error, errors = False, {}
             for attr in (
                 'compression',
-                'atime',
                 'dedup',
-                'refquota',
-                'refreservation',
+                'volsize',
             ):
                 formfield = 'volume_%s' % attr
-                if volume_form.cleaned_data[formfield] == "inherit":
-                    success, err = notifier().zfs_inherit_option(
-                        volume_name,
+                if form.cleaned_data[formfield] == "inherit":
+                    success, err = _n.zfs_inherit_option(
+                        name,
                         attr)
                 else:
-                    success, err = notifier().zfs_set_option(
-                        volume_name,
+                    success, err = _n.zfs_set_option(
+                        name,
                         attr,
-                        volume_form.cleaned_data[formfield])
+                        form.cleaned_data[formfield])
                 if not success:
                     error = True
                     errors[formfield] = err
 
             if not error:
+                extents = iSCSITargetExtent.objects.filter(
+                    iscsi_target_extent_type='ZVOL',
+                    iscsi_target_extent_path='zvol/' + name)
+                if extents.exists():
+                    _n.reload("iscsitarget")
                 return JsonResp(
                     request,
-                    message=_("Native dataset successfully edited."))
+                    message=_("Zvol successfully edited."))
             else:
                 for field, err in errors.items():
-                    volume_form._errors[field] = volume_form.error_class([
+                    form._errors[field] = form.error_class([
                         err,
                     ])
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.ZVol_EditForm(name=name)
     return render(request, 'storage/volume_edit.html', {
-        'mp': mp,
-        'form': volume_form
+        'form': form,
     })
 
 
 def mp_permission(request, path):
     path = urllib.unquote_plus(path)
-    #FIXME: dojo cannot handle urls partially urlencoded %2F => /
+    # FIXME: dojo cannot handle urls partially urlencoded %2F => /
     if not path.startswith('/'):
         path = '/' + path
     if request.method == 'POST':
@@ -663,30 +664,6 @@ def clonesnap(request, snapshot):
     })
 
 
-def geom_disk_replace(request, vname):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    if request.method == "POST":
-        form = forms.UFSDiskReplacementForm(request.POST)
-        if form.is_valid():
-            if form.done(volume):
-                return JsonResp(
-                    request,
-                    message=_("Disk replacement has been initiated."))
-            else:
-                return JsonResp(
-                    request,
-                    error=True,
-                    message=_("An error occurred."))
-
-    else:
-        form = forms.UFSDiskReplacementForm()
-    return render(request, 'storage/geom_disk_replace.html', {
-        'form': form,
-        'vname': vname,
-    })
-
-
 def disk_detach(request, vname, label):
 
     volume = models.Volume.objects.get(vol_name=vname)
@@ -783,7 +760,10 @@ def zpool_scrub(request, vid):
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
             notifier().zfs_scrub(str(volume.vol_name), stop=True)
-            return JsonResp(request, message=_("The scrub process has stopped"))
+            return JsonResp(
+                request,
+                message=_("The scrub process has stopped"),
+            )
         else:
             notifier().zfs_scrub(str(volume.vol_name))
             return JsonResp(request, message=_("The scrub process has begun"))
@@ -884,7 +864,7 @@ def disk_wipe(request, devname):
                 form._errors['__all__'] = form.error_class([
                     "Umount the following mount points before proceeding:"
                     "<br /> %s" % (
-                    '<br /> '.join(mounted),
+                        '<br /> '.join(mounted),
                     )
                 ])
             else:
@@ -982,6 +962,7 @@ def volume_lock(request, object_id):
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
+
 
 def volume_unlock(request, object_id):
 

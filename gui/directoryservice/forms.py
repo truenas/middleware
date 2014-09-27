@@ -24,10 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import base64
 import logging
 import os
 import re
 import shutil
+import tempfile
 
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
@@ -41,6 +43,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -245,9 +248,11 @@ class ActiveDirectoryForm(ModelForm):
         'ad_unix_extensions',
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
+        'ad_site',
         'ad_dcname',
         'ad_gcname',
         'ad_kerberos_realm',
+        'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
         'ad_idmap_backend'
@@ -309,6 +314,62 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
+
+    def clean_ad_dcname(self):
+        ad_dcname = self.cleaned_data.get('ad_dcname')
+        ad_dcport = 389 
+
+        if not ad_dcname:
+            return None
+
+        parts = ad_dcname.split(':')
+        ad_dcname = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_dcport = long(parts[1])
+
+        errors = []
+        try:
+            ret = FreeNAS_ActiveDirectory.port_is_listening(
+                host=ad_dcname, port=ad_dcport, errors=errors
+            )
+     
+            if ret is False:
+                raise Exception(
+                    'Invalid Host/Port: %s' % errors[0]
+                )
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_dcname')
+    
+    def clean_ad_gcname(self):
+        ad_gcname = self.cleaned_data.get('ad_gcname')
+        ad_gcport = 3268
+
+        if not ad_gcname:
+            return None
+
+        parts = ad_gcname.split(':')
+        ad_gcname = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_gcport = long(parts[1])
+
+        errors = []
+        try:
+            ret = FreeNAS_ActiveDirectory.port_is_listening(
+                host=ad_gcname, port=ad_gcport, errors=errors
+            )
+     
+            if ret is False:
+                raise Exception(
+                    'Invalid Host/Port: %s' % errors[0]
+                )
+
+        except Exception as e:
+            raise forms.ValidationError('%s.' % e)
+
+        return self.cleaned_data.get('ad_gcname')
 
     def clean(self):
         cdata = self.cleaned_data
@@ -410,12 +471,15 @@ class LDAPForm(ModelForm):
         'ldap_kerberos_keytab',
         'ldap_ssl',
         'ldap_certificate',
-        'ldap_idmap_backend'
+        'ldap_idmap_backend',
+        'ldap_has_samba_schema' 
     ]
 
     class Meta:
         fields = '__all__'
-        exclude = ['ldap_idmap_backend_type']
+        exclude = [
+            'ldap_idmap_backend_type'
+        ]
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
@@ -434,19 +498,57 @@ class LDAPForm(ModelForm):
 
         binddn = cdata.get("ldap_binddn")
         bindpw = cdata.get("ldap_bindpw")
+        basedn = cdata.get("ldap_basedn")
         hostname = cdata.get("ldap_hostname")
         errors = []
 
+        certfile = None
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ('start_tls', 'on'):
+            certificate = cdata["ldap_certificate"]
+            certfile = get_certificateauthority_path(certificate)
+
         ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw, errors=errors
+            hostname, binddn=binddn, bindpw=bindpw, basedn=basedn,
+            certfile=certfile, ssl=ssl, errors=errors
         )
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
+
+    def check_for_samba_schema(self):
+        self.clean_bindpw()
+
+        cdata = self.cleaned_data
+        binddn = cdata.get("ldap_binddn")
+        bindpw = cdata.get("ldap_bindpw")
+        basedn = cdata.get("ldap_basedn")
+        hostname = cdata.get("ldap_hostname")
+
+        certfile = None
+        ssl = cdata.get("ldap_ssl")
+        if ssl in ('start_tls', 'on'):
+            certificate = cdata["ldap_certificate"]
+            certfile = get_certificateauthority_path(certificate)
+
+        fl = FreeNAS_LDAP(
+            host=hostname,
+            binddn=binddn,
+            bindpw=bindpw,
+            basedn=basedn,
+            certfile=certfile,
+            ssl=ssl
+        )
+
+        if fl.has_samba_schema():
+            self.instance.ldap_has_samba_schema = True
+        else:
+            self.instance.ldap_has_samba_schema = False
 
     def clean(self):
         cdata = self.cleaned_data
         ssl = cdata.get("ldap_ssl")
         if ssl in ("off", None):
+            #self.check_for_samba_schema()
             return cdata
 
         certificate = cdata["ldap_certificate"]
@@ -454,6 +556,7 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError(
                 "SSL/TLS specified without certificate")
 
+        #self.check_for_samba_schema()
         return cdata
 
     def save(self):
@@ -476,10 +579,13 @@ class LDAPForm(ModelForm):
             if started == True:
                 started = notifier().stop("ldap")
 
+    def done(self, request, events):
+        events.append("refreshById('tab_LDAP')")
+        super(LDAPForm, self).done(request, events)
+
 
 class KerberosRealmForm(ModelForm):
     advanced_fields = [
-        'krb_kdc',
         'krb_admin_server',
         'krb_kpasswd_server'
     ]
@@ -493,6 +599,10 @@ class KerberosRealmForm(ModelForm):
         if krb_realm:
             krb_realm = krb_realm.upper()
         return krb_realm
+
+    def save(self):
+        super(KerberosRealmForm, self).save()
+        notifier().start("ix-kerberos")
 
 
 class KerberosKeytabForm(ModelForm):
@@ -512,19 +622,27 @@ class KerberosKeytabForm(ModelForm):
                 _("A keytab is required.")
             )
 
-        principal = self.cleaned_data.get("keytab_principal")
-        filename = "/data/%s.keytab" % re.sub('[^a-zA-Z0-9]+', '_', principal)
+        encoded = None
+        if hasattr(keytab_file, 'temporary_file_path'):
+            filename = keytab_file.temporary_file_path()
+            with open(temporary_file_path, "r") as f:
+                keytab_contents = f.read()
+                encoded = base64.b64encode(keytab_contents)
+                f.close()
+        else:
+            filename = tempfile.mktemp(dir='/tmp')
+            with open(filename, 'wb+') as f:
+                for c in keytab_file.chunks():
+                    f.write(c)
+                f.close()
+            with open(filename, "r") as f:
+                keytab_contents = f.read()
+                encoded = base64.b64encode(keytab_contents)
+                f.close()
+            os.unlink(filename)
 
-        if keytab_file and keytab_file != filename:
-            if hasattr(keytab_file, 'temporary_file_path'):
-                shutil.move(keytab_file.temporary_file_path(), filename)
-            else:
-                with open(filename, 'wb+') as f:
-                    for c in keytab_file.chunks():
-                        f.write(c)
-                    f.close()
+        return encoded
 
-            os.chmod(filename, 0400)
-            self.instance.keytab_file = filename
-
-        return filename
+    def save(self):
+        super(KerberosKeytabForm, self).save()
+        notifier().start("ix-kerberos")
