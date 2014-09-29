@@ -32,11 +32,6 @@ use_rrd_dataset()
 	local use
 	local pool
 
-	if ! is_freenas
-	then
-		return 1
-	fi
-
 	pool="$(get_system_pool)"
 	if [ -z "${pool}" ]
 	then
@@ -58,7 +53,12 @@ use_rrd_dataset()
 		then
 			echo "1"
 		else
-			echo "0"
+			local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+			if [ "x${failover}" = "xBACKUP" ]; then
+				echo "1"
+			else
+				echo "0"
+			fi
 		fi
 	done
 	)"
