@@ -20,7 +20,7 @@ Several items have changed since 9.2.1 due to various bug fixes. There were eigh
 
 * 9.2.1.7 fixed `this list of bugs <https://bugs.freenas.org/projects/freenas/issues?query_id=87>`_, and
 
-* 9.2.1.8 fixed this list of bugs.
+* 9.2.1.8 fixed `this list of bugs <https://bugs.freenas.org/projects/freenas/issues?query_id=91>`_.
 
 This Errata provides a listing of screens and features that differ from the 9.2.1 Users Guide. It is organized by the names of the sections which have changed
 in numerical order.
@@ -28,12 +28,14 @@ in numerical order.
 Section 1.1 What's New Since 9.2.1
 ----------------------------------
 
-* Samba has been updated to `version 4.1.11 <http://www.samba.org/samba/history/samba-4.1.11.html>`_ which addresses
-  `this security vulnerability <http://www.samba.org/samba/security/CVE-2014-3560>`_.
+* Incorporates all of the `security releases <http://www.freebsd.org/security/advisories.html>`_ issued since FreeBSD 9.2 RELEASE.
+
+* `Shellshock security vulnerability in 
+  bash <https://securityblog.redhat.com/2014/09/24/bash-specially-crafted-environment-variables-code-injection-attack/>`_ proactively closed.
+
+* Samba has been updated to `version 4.1.12 <http://www.samba.org/samba/history/samba-4.1.12.html>`_.
 
 * Netatalk upgraded to `version 3.1.2 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.2.html>`_.
-
-* Pre-made VMDK images are now available from the FreeNAS® download page.
 
 * :file:`*.usb` files are now available from the FreeNAS® download page. These files can be either burned to CD (like an .iso file) or written directly to USB
   (like an .img file).
@@ -49,18 +51,22 @@ Section 1.1 What's New Since 9.2.1
 
 * A "Share type" drop-down menu has been added to the :menuselection:`Storage -> Volumes --> Create ZFS Dataset` screen.
 
+* The "Permission Type" in the Change Permissions screen has changed to *Unix / Mac* and
+  *Windows*.
+
 * The "Database Path" field has been removed from the :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share` screen and added to the
   :menuselection:`Services --> AFP screen`.
 
 * The "Apply Default Permissions" checkbox has been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
-* The "Use syslog", "Server minimum protocol", "Server maximum protocol", and "Allow execute always" fields have been added to
+* The "Use syslog", "Server minimum protocol", "Server maximum protocol", "Allow execute always", and "Bind IP Addresses" fields have been added to
   :menuselection:`Services --> CIFS`. The "Authentication Model" field has been removed as *Anonymous* is not a valid setting for Samba4. Instead,
-  *Local User* is used unless the system is joined to an Active Directory domain. The "EA Support" and "Support DOS File Attributes" fields have been removed
-  as they are deprecated in Samba4. 
+  *Local User* is used unless the system is joined to an Active Directory domain. The "EA Support" and "Support DOS File Attributes" fields have been removed.
+
+* The "Windbind NSS Info" field has been added to :menuselection:`Services --> Directory Services --> Active Directory`.
 
 * The location of the SSL certificate of the LDAP server can now be browsed to in the "Self signed certificate" field of 
-  :menuselection:`Services --> Directory Services --> LDAP`.
+  :menuselection:`Services --> Directory Services --> LDAP`. 
 
 * The "Enable experimental target" checkbox has been added to :menuselection:`Services --> iSCSI --> Target Global Configuration`. This allows beta testers to
   use the experimental kernel iSCSI which adds support for Windows 2012 clustering. Checking this box requires the system to be rebooted. 
@@ -83,13 +89,6 @@ FreeNAS® 9.2.1.8 can be downloaded from the `download page of the FreeNAS® web
 
 * **USB Image:** this file ends in a :file:`.usb` extension and can either be written to CDROM as described in Installing from CDROM or written to a USB
   device as described in Burning an IMG File.
-
-Section 2.2.1.1: Creating the Virtual Machine
----------------------------------------------
-
-* **VMDK:** select this option if you downloaded the the :file:`.vmdk.xz` file. This file must first be decompressed using :command:`xzcat` or
-  `7-Zip <http://www.7-zip.org/download.html>`_ so that it ends in a :file:`.vmdk` extension. This option can also be used when a :file:`.img` file is
-  converted to VMDK format using the instructions in Running FreeNAS® from a USB Image.
 
 Section 2.3: Installing from CDROM
 ----------------------------------
@@ -230,7 +229,7 @@ Add extra entry to **Table 6.3d: ZFS Dataset Options**:
 +===================+==================+=========================================================================================================+
 | Share type        | drop-down menu   | select the type of share that will be used on the dataset; choices are *UNIX* for an NFS share,         |
 |                   |                  | *Windows* for a CIFS share, or                                                                          |
-|                   |                  | *Mac* for an AFP share                                                                                  |
+|                   |                  | *Apple* for an AFP share                                                                                |
 |                   |                  |                                                                                                         |
 +-------------------+------------------+---------------------------------------------------------------------------------------------------------+
 
@@ -369,6 +368,9 @@ Add these entries to **Table 8.3a: CIFS Configuration Options**:
 | Allow execute     | checkbox         | if checked, Samba will allow the user to execute a file, even if that user's permissions are not set to |
 | always            |                  | execute                                                                                                 |
 +-------------------+------------------+---------------------------------------------------------------------------------------------------------+
+| Bind IP Addresses | checkbox(es)     | used to specify which IP address(es) the CIFS service will listen on                                    |
+|                   |                  |                                                                                                         |
++-------------------+------------------+---------------------------------------------------------------------------------------------------------+
 
 Add new table:
 
@@ -434,6 +436,21 @@ Do not use :command:`chmod` to attempt to fix the permissions on a CIFS share as
 share is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so,
 right-click on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using :command:`chmod`,
 :command:`winacl` can be used to fix them. Type :command:`winacl` from "Shell" for usage instructions.
+
+Section 8.4.1: Active Directory
+-------------------------------
+
+Add the following entry to **Table 8.4a: Active Directory Configuration Options**:
+
++-------------------+------------------+---------------------------------------------------------------------------------------------------------+
+| **Setting**       | **Value**        | **Description**                                                                                         |
+|                   |                  |                                                                                                         |
++===================+==================+=========================================================================================================+
+| Windbind NSS Info | drop-down menu   | select the service for retrieving the user's home directory and login shell; choices are use *sfu*      |
+|                   |                  | (Services for Unix, version 3.x), *sfu20* (Services for Unix, version 2.0), or                          |
+|                   |                  | *rfc2307* (use LDAP)                                                                                    |
+|                   |                  |                                                                                                         |
++-------------------+------------------+---------------------------------------------------------------------------------------------------------+
 
 Section 8.7.5: Target Global Configuration
 ------------------------------------------
