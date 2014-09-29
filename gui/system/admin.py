@@ -8,7 +8,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
     CertificateAuthorityResourceMixin,
-    CertificateResourceMixin
+    CertificateResourceMixin,
+    UpgradeResourceMixin,
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -243,6 +244,13 @@ class CertificateFAdmin(BaseFreeAdmin):
         return func
 
 
-site.register(models.Settings, SettingsFAdmin)
+class UpgradeFAdmin(BaseFreeAdmin):
+
+    deletable = False
+    resource_mixin = UpgradeResourceMixin
+
+
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
 site.register(models.Certificate, CertificateFAdmin)
+site.register(models.Settings, SettingsFAdmin)
+site.register(models.Upgrade, UpgradeFAdmin)

@@ -2457,3 +2457,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
             )
         return bundle
+
+
+class UpgradeResourceMixin(NestedMixin):
+    pass
