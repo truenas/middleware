@@ -2800,7 +2800,9 @@ class notifier:
         return True
 
     def apply_update(self, path):
+        from freenasUI.system.views import INSTALLFILE
         os.chdir(os.path.dirname(path))
+        open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'install'],
@@ -2811,6 +2813,7 @@ class notifier:
         finally:
             os.chdir('/')
             os.unlink(path)
+            os.unlink(INSTALLFILE)
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def umount_filesystems_within(self, path):
