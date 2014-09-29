@@ -194,7 +194,7 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
-def CheckForUpdates(root = None, handler = None):
+def CheckForUpdates(root = None, handler = None, train = None):
     """
     Check for an updated manifest.
     Very simple, uses the configuration module.
@@ -212,7 +212,7 @@ def CheckForUpdates(root = None, handler = None):
     """
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
-    m = conf.FindLatestManifest()
+    m = conf.FindLatestManifest(train = train)
     log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
                                                                              if m is not None else "None"))
     if m is None:
@@ -226,7 +226,7 @@ def CheckForUpdates(root = None, handler = None):
     return m if update else None
 
 
-def Update(root=None, conf=None, check_handler=None, get_handler=None,
+def Update(root=None, conf=None, train = None, check_handler=None, get_handler=None,
            install_handler=None):
     """
     Perform an update.  Calls CheckForUpdates() first, to see if
@@ -243,7 +243,7 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         if check_handler is not None:
             check_handler(op, pkg, old)
 
-    new_man = CheckForUpdates(root, UpdateHandler)
+    new_man = CheckForUpdates(root, handler = UpdateHandler, train = train)
     if new_man is None:
         return
 
@@ -253,7 +253,6 @@ def Update(root=None, conf=None, check_handler=None, get_handler=None,
         # should install the new manifest, and be done -- it
         # may have new release notes, or other issues.
         # Right now, I'm not quite sure how to do this.
-        # I should also learn how to log from python.
         log.debug("Updated manifest but no package differences")
         return
 

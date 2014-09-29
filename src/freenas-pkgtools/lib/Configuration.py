@@ -7,7 +7,7 @@ import tempfile
 import time
 import urllib2
 
-from . import Avatar
+from . import Avatar, UPDATE_SERVER
 import Exceptions
 import Installer
 import Train
@@ -28,7 +28,7 @@ log = logging.getLogger('freenasOS.Configuration')
 # searching any longer.
 # We may want to use a different update server for
 # TrueNAS.
-UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
+#UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
 SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/" + Avatar() ]
 
 # List of trains
@@ -469,7 +469,7 @@ class Configuration(object):
     # The file is a JSON file.
     # This sets self._trains as a dictionary of
     # Train objects (key being the train name).
-    def LoadTrainsConfig(self):
+    def LoadTrainsConfig(self, updatecheck = False):
         import json
         if self._temp is None:
             if not os.path.islink(self._system_pool_link):
@@ -497,6 +497,17 @@ class Configuration(object):
         if sys_mani.Train() not in self._trains:
             temp = Train.Train(sys_mani.Train(), "Installed OS", sys_mani.Sequence())
             self._trains[temp.Name()] = temp
+        if updatecheck:
+            for train in self._trains:
+                new_man = self.FindLatestManifest(train.Name())
+                if new_man:
+                    if new_man.Sequence() != train.LastSequence():
+                        # We have an update
+                        train.SetLastSequence(new_main.Sequence())
+                        train.SetLastCheckedTime()
+                        train.SetNotes(new_man.Notes())
+                        train.SetNotice(new_man.Notice())
+                        train.SetUpdate(True)
         return
 
     # Save the list of currently-watched trains.
@@ -933,23 +944,13 @@ class Configuration(object):
                 return None
         raise Exception("This should not be reached")
 
-    def ManifestNoteURL(self, manifest, note):
-        # This returns the url of the specified note, or
-        # None if it doesn't exist.
-        # This is largely a simple wrapper.
-        path = manifest.NotePath(note)
-        if path:
-            url = "%s/%s" % (UPDATE_SERVER, path)
-            return url
-        return None
-
     def GetManifestNote(self, manifest, note, handler = None):
         # This returns the contents of the specified note,
         # or None if it can't be found.
         # We need the manifest so we can get the train name.
         # Notes are stored at <base>/<train>/Notes, and
         # the path of the note is stored in the manifest.
-        url = self.ManifetNoteURL(manifest, note)
+        url = manifest.NotePath(note)
         if url:
             file = self.TryGetNetworkFile(
                 url = url,

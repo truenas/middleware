@@ -3,6 +3,7 @@ import json
 import hashlib
 import logging
 
+from . import Avatar, UPDATE_SERVER
 import Configuration
 import Exceptions
 import Package
@@ -58,6 +59,8 @@ def CompareManifests(m1, m2):
     the third element of the tuple will be the old version.
     Deleted packages will always be first.
     It assumes m1 is the older, and m2 is the newer.
+    This only compares packages; it does not compare
+    sequence, train names, notices, etc.
     """
     old_packages = m1.Packages()
     new_packages = m2.Packages()
@@ -240,14 +243,37 @@ class Manifest(object):
     def SetNote(self, name, location):
         if self._notes is None:
             self._notes = {}
+        if location.startswith(UPDATE_SERVER):
+            location = location[len(location):]
         self._notes[name] = location
 
     def Notes(self):
-        return self._notes
+        if self._notes:
+            rv = {}
+            for name in self._notes.keys():
+                loc = self._notes[name]
+                if not loc.startswith(UPDATE_SERVER):
+                    loc = UPDATE_SERVER + loc
+                rv[name] = loc
+            return rv
+        return None
 
     def SetNotes(self, notes):
-        self._notes = notes
+        self._notes = {}
+        for name in notes.keys():
+            loc = notes[name]
+            if loc.startswith(UPDATE_SERVER):
+                loc = loc[len(UPDATE_SERVER):]
+            self._notes[name] = loc
         return
+
+    def Note(self, name):
+        if self._notes is None or name not in self._Notes:
+            return None
+        loc = self._notes[name]
+        if not loc.startswith(UPDATE_SERVER):
+            loc = UPDATE_SERVER + loc
+        return loc
 
     def Train(self):
         if self._train is None:
@@ -302,7 +328,3 @@ class Manifest(object):
     def NewTrain(self):
         return self._switch
 
-    def NotePath(self, note_name):
-        if note_name in self.Notes():
-            return "%s/Notes/%s" % (self.Train(), self.Notes()[note_name])
-        return None
