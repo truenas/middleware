@@ -459,20 +459,27 @@ location.
 Tunables
 --------
 
-:menuselection:`System --> Tunables` can be used to either set a FreeBSD
-`sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_ or loader. A sysctl makes changes to the FreeBSD kernel running on a FreeNAS® system and can
-be used to tune the system. A loader is only loaded when a FreeBSD-based system boots and can be used to pass a parameter to the kernel or to load an
-additional kernel module such as a FreeBSD hardware driver.
+:menuselection:`System --> Tunables` can be used to manage the following:
 
-.. warning:: setting a sysctl or a loader is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a loader could
-   adversely affect the ability of the FreeNAS® system to successfully boot.
-   **Do not create a tunable on a production system unless you understand the ramifications of that change.** 
+#. **FreeBSD sysctls:** a `sysctl(8) <http://www.freebsd.org/cgi/man.cgi?query=sysctl>`_ makes changes to the FreeBSD kernel running on a FreeNAS® system and
+   can be used to tune the system.
 
-Since sysctl and loader values are specific to the kernel parameter to be tuned or driver to be loaded, descriptions and suggested values can be found in the
-man page for the specific driver and in many sections of the
+#. **FreeBSD loaders:** a loader is only loaded when a FreeBSD-based system boots and can be used to pass a parameter to the kernel or to load an additional
+   kernel module such as a FreeBSD hardware driver.
+
+#. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ is used to
+   pass system configuration options to the system startup scripts as the system boots. Since FreeNAS® has been optimized for storage, not all of the
+   services mentioned in rc.conf(5) are available for configuration.
+
+.. warning:: adding a sysctl, loader, or rc.conf option is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a
+   loader could adversely affect the ability of the FreeNAS® system to successfully boot.
+   **Do not create a tunable on a production system unless you understand and have tested the ramifications of that change.** 
+
+Since sysctl, loader, and rc.conf values are specific to the kernel parameter to be tuned, the driver to be loaded, or the service to configure, descriptions
+and suggested values can be found in the man page for the specific driver and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_.
 
-To add a loader or sysctl, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
+To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
 
 **Figure 5.7a: Adding a Tunable**
 
@@ -498,7 +505,8 @@ Table 5.7a summarizes the options when adding a tunable.
 |             |                   | to enable the sysctl or driver specified by the "Variable"                          |
 |             |                   |                                                                                     |
 +-------------+-------------------+-------------------------------------------------------------------------------------+
-| Type        | drop-down menu    | choices are *Loader* or                                                             |
+| Type        | drop-down menu    | choices are *Loader*,                                                               |
+|             |                   | *rc.conf*, or                                                                       |
 |             |                   | *Sysctl*                                                                            |
 |             |                   |                                                                                     |
 +-------------+-------------------+-------------------------------------------------------------------------------------+
@@ -509,10 +517,10 @@ Table 5.7a summarizes the options when adding a tunable.
 |             |                   |                                                                                     |
 +-------------+-------------------+-------------------------------------------------------------------------------------+
 
-.. note:: as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. As long as the *Sysctl* is enabled,
-   its value will persist across reboots and upgrades.  However, when you add a *Loader*, the changes you make will not take effect until the system is
-   rebooted as loaders are only read when the kernel is loaded at boot time. As long as the *Loader* is enabled, your changes will persist at each boot and
-   across upgrades.
+.. note:: as soon as you add or edit a *Sysctl*, the running kernel will change that variable to the value you specify. However, when you add a
+   *Loader* or
+   *rc.conf*, the changes you make will not take effect until the system is rebooted. Regardless of the type of tunable, your changes will persist at each
+   boot and across upgrades unless the tunable is deleted or its "Enabled" checkbox is unchecked.
 
 Any tunables that you add will be listed in :menuselection:`System --> Tunables`. To change the value of an existing tunable, click its "Edit" button. To
 remove a tunable, click its "Delete" button.

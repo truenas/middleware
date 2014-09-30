@@ -172,6 +172,9 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ability to manage boot environments has been added to :menuselection:`System --> Boot`.
 
+* The ability to manage :file:`rc.conf` variables has been added to
+  :menuselection:`System --> Tunables`.
+
 * The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
 
 * The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
@@ -248,6 +251,8 @@ The following fields have been added or deleted:
 
 * The "Rebuild LDAP/AD Cache" button has been removed from :menuselection:`System --> Advanced`. It has been renamed to "Rebuild Directory Service Cache" and
   now appears in the configuration screen for each type of directory service.
+
+* The *rc.conf* "Type" has been added to :menuselection:`System --> Tunables`.
 
 * The "HTTP Proxy" field has been added to :menuselection:`Network --> Global Configuration`.
 
