@@ -357,6 +357,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
         m2m_bundle = self.hydrate_m2m(bundle)
         self.save_m2m(m2m_bundle)
 
+        if hasattr(form, 'done') and callable(form.done):
+            form.done(request=bundle.request, events=[])
+
         return bundle
 
     def alter_list_data_to_serialize(self, request, data):
