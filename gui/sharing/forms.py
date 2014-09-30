@@ -383,17 +383,19 @@ class WebDAV_ShareForm(ModelForm):
         cdata = self.cleaned_data
         if not cdata.get("webdav_name"):
             cdata['webdav_name'] = self.instance.webdav_name
-        davname= self.cleaned_data.get("webdav_name")
+        davname = self.cleaned_data.get("webdav_name")
         if not davname.isalnum():
-            raise forms.ValidationError('Only AlphaNumeric characters are allowed.')
+            raise forms.ValidationError(_(
+                'Only AlphaNumeric characters are allowed.'
+            ))
         return cdata
 
     def save(self):
-        ret = super(WebDAV_ShareForm,self).save()
+        ret = super(WebDAV_ShareForm, self).save()
         notifier().reload("webdav")
         return ret
 
-    def done(self,request,events):
+    def done(self, request, events):
         if not services.objects.get(srv_service='webdav').srv_enable:
             events.append('ask_service("webdav")')
-        super(WebDAV_ShareForm, self).done(request,events)
+        super(WebDAV_ShareForm, self).done(request, events)
