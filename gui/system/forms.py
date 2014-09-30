@@ -2532,6 +2532,8 @@ class CertificateCreateCSRForm(ModelForm):
 
         self.instance.cert_CSR = \
             crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
+        self.instance.cert_privatekey = \
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
         super(CertificateCreateCSRForm, self).save()
 
