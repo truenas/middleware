@@ -150,9 +150,9 @@ def main():
                     continue
                 disk = disk[0]
                 if disk.disk_multipath_name:
-                    path = "multipath/%s" % disk.disk_multipath_name
+                    path = "/dev/multipath/%s" % disk.disk_multipath_name
                 else:
-                    path = disk.identifier_to_device()
+                    path = "/dev/%s" % disk.identifier_to_device()
             else:
                 if not path.startswith("/mnt"):
                     path = "/dev/" + path
