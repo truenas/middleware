@@ -920,13 +920,14 @@ class Configuration(object):
                 url = self.PackageUpdatePath(package, curVers),
                 handler = handler,
                 )
-            if h is None:
-                # No checksum, so just accept the file
-                return file
-            else:
-                hash = ChecksumFile(file)
-                if hash == h:
+            if file:
+                if h is None:
+                    # No checksum, so just accept the file
                     return file
+                else:
+                    hash = ChecksumFile(file)
+                    if hash == h:
+                        return file
         # All that, and now we do much of it again with the full version
         file = self.TryGetNetworkFile(
             url = self.PackagePath(package),
