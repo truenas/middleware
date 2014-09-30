@@ -9,13 +9,13 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Volumes`: used to create and manage storage volumes.
 
-* :ref:`Periodic Snapshot Tasks`: used to schedule the automatic creation of ZFS snapshots.
+* :ref:`Periodic Snapshot Tasks`: used to schedule the automatic creation of filesystem snapshots.
 
-* :ref:`Replication Tasks`: used to schedule the replication of snapshots over an encrypted connection.
+* :ref:`Replication Tasks`: used to schedule the replication of snapshots to a remote system.
 
-* :ref:`Scrubs`: used to schedule ZFS scrubs as part of ongoing disk maintenance.
+* :ref:`Scrubs`: used to schedule scrubs as part of ongoing disk maintenance.
 
-* :ref:`Snapshots`:
+* :ref:`Snapshots`: used to manage local snapshots.
 
 These configurations are described in more detail in this section.
 
@@ -24,8 +24,8 @@ These configurations are described in more detail in this section.
 Volumes
 -------
 
-One of the first tasks when configuring a NAS is to properly configure the storage disk(s). The "Volumes" section of the FreeNAS® graphical interface can
-be used to format ZFS pools, import a disk in order to copy its data into an existing pool, or import an existing UFS volume or ZFS pool.
+The "Volumes" section of the FreeNAS® graphical interface can be used to format ZFS pools, import a disk in order to copy its data into an existing pool, or
+import an existing UFS volume or ZFS pool. It can also be used to create ZFS datasets and zvols and to manage their permissions.
 
 .. note:: in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. The FreeNAS® graphical interface uses the term volume to refer to
    either a UFS volume or a ZFS pool.
@@ -48,8 +48,8 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 |zfs1.png|
 
 .. |zfs1.png| image:: images/zfs1.png
-    :width: 4.5in
-    :height: 3.6in
+    :width: 8.5in
+    :height: 4.1in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -71,13 +71,16 @@ Table 8.1a summarizes the configuration options of this screen.
 | Encryption       | checkbox       | read the section on :ref:`Encryption` before choosing to use encryption                    |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Available disks  | display        | displays the size of available disks; hover over "show" to list the available device names |
+| Available disks  | display        | displays the number and size of available disks; hover over "show" to list the available   |
+|                  |                | device names; click the *+* to add all of the disks to the pool                            |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Volume layout    | drag and drop  | click and drag the icon to select the desired number of disks                              |
+| Volume layout    | drag and drop  | click and drag the icon to select the desired number of disks for a vdev; once at least    |
+|                  |                | one disk is selected, the layouts supported by the selected number of disks will be        |
+|                  |                | added to the drop-down menu                                                                |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Add Extra Device | button         | used to configure multiple pools or to add log or cache devices during pool creation       |
+| Add Extra Device | button         | used to configure multiple vdevs or to add log or cache devices during pool creation       |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Manual setup     | button         | used to make a non-optimal pool (not recommended); see :ref:`Manual Setup` for details     |
@@ -177,7 +180,7 @@ FreeNAS® system:
 
 To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
 **it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Refer to
-:ref:`Managing Encrypted Volumes` for instructions on how to perform these tasks.
+:ref:`Managing Encrypted Volumes` for instructions on how to perform those tasks.
 
 .. _Manual Setup:
 
@@ -198,7 +201,7 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 
 .. |manual.png| image:: images/manual.png
     :width: 4.1in
-    :height: 3.3in
+    :height: 3.5in
 
 **Table 8.1b: Manual Setup Options**
 
@@ -233,16 +236,8 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in Figure 8.1c, can be used to add additional
+The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in Figure 8.1a, can be used to add additional
 disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
-
-**Figure 8.1c: Volume to Extend Field**
-
-|volume3.png|
-
-.. |volume3.png| image:: images/volume3.png
-    :width: 4.5in
-    :height: 3.4in
 
 .. note:: if the existing volume is encrypted, a warning message will remind you that the operation of extending a volume will reset the passphrase and
    recovery key. After extending the volume, you should immediately recreate both using the instructions in :ref:`Managing Encrypted Volumes`.
@@ -287,9 +282,9 @@ The chapter on :ref:`Sharing` contains configuration examples for several types 
 is used to set permissions.
 
 Once a volume or dataset is created, it will be listed by its mount point name in :menuselection:`Storage --> Volumes --> View Volumes`. If you click the
-"Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1d. Table 8.1c summarizes the options in this screen.
+"Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1c. Table 8.1c summarizes the options in this screen.
 
-**Figure 8.1d: Changing Permissions on a Volume or Dataset**
+**Figure 8.1c: Changing Permissions on a Volume or Dataset**
 
 |perms1.png|
 
@@ -304,43 +299,44 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |                            |                  |                                                                                                            |
 |                            |                  |                                                                                                            |
 +============================+==================+============================================================================================================+
-| Owner (user)               | drop-down menu   | user to control the volume/dataset; users which were manually created or imported from Active Directory or |
-|                            |                  | LDAP will appear in drop-down menu                                                                         |
+| Owner (user)               | drop-down menu   | user to control the volume/dataset; users which were manually created or imported from a directory service |
+|                            |                  | will appear in the drop-down menu                                                                          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Owner (group)              | drop-down menu   | group to control the volume/dataset; groups which were manually created or imported from Active Directory  |
-|                            |                  | or LDAP will appear in drop-down                                                                           |
+| Owner (group)              | drop-down menu   | group to control the volume/dataset; groups which were manually created or imported from a directory       |
+|                            |                  | service will appear in the drop-down menu                                                                  |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Mode                       | checkboxes       | only applies to the *Unix* "Permission Type" so will be greyed out if                                      |
-|                            |                  | *Mac* or                                                                                                   |
+| Mode                       | checkboxes       | only applies to the *Unix*                                                                                 |
+|                            |                  | or *Mac* "Permission Type" so will be greyed out if                                                        |
 |                            |                  | *Windows* is selected                                                                                      |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Permission Type            | bullet selection | choices are *Unix*,                                                                                        |
 |                            |                  | *Mac* or                                                                                                   |
-|                            |                  | *Windows*; see the paragraphs below this Table for                                                         |
-|                            |                  | more details about which "Permission Type" to choose                                                       |
+|                            |                  | *Windows*; select the type which matches the type of client accessing the volume/dataset                   |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
-| Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume or dataset; if data already exists |
+| Set permission recursively | checkbox         | if checked, permissions will also apply to subdirectories of the volume/dataset; if data already exists    |
 |                            |                  | on the volume/dataset, change the permissions on the **client side** to prevent a performance lag          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 
 
-When in doubt, or if you have a mix of operating systems in your network, select the *Unix* "Permission Type" as all clients understand them.
-*Windows/Mac ACLs* add a superset of permissions that augment those provided by
-*Unix* and are the preferred option within an Active Directory domain. While Windows and Mac clients also understand
-*Unix* permissions, they won't benefit from the extra permissions provided by Active Directory and ACLs when
-*Unix* permissions are used.
+If you have a mix of operating systems or clients will be accessing the volume/dataset using a non-CIFS share, select the *Unix* "Permission Type" as all
+clients understand them. 
 
-If you change your mind about the "Permission Type", you do not have to recreate the volume as existing data is not lost. However, if you change from
-*Windows/Mac ACL* to 
-*Unix*, the extended permissions provided by ACLs will be removed from the existing files.
+The *Windows* "Permission Type" augments traditional
+*Unix* permissions with ACLs. Use the 
+*Windows* "Permission Type" for CIFS shares or when the FreeNAS® system  is a member of an Active Directory domain.
 
-When you select *Windows/Mac ACL*, the ACLs are set to what Windows sets on new files and directories by default. The Windows or Mac client should then be
-used to fine-tune the permissions as required.
+If you change your mind about the "Permission Type", you do not have to recreate the volume/dataset as existing data is not lost. However, if you change from
+*Windows* to 
+*Unix* or
+*Mac*, the extended permissions provided by ACLs will be removed from the existing files.
+
+When you select the *Windows* "Permission Type", the ACLs are set to what Windows sets on new files and directories by default. The Windows client should then
+be used to fine-tune the permissions as required.
 
 .. _Create Dataset:
 
@@ -353,13 +349,13 @@ you can set properties such as quotas and compression as well as create snapshot
 
 .. note:: ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
-If you select an existing :menuselection:`ZFS volume --> Create Dataset`, you will see the screen shown in Figure 8.1e.
+If you select an existing :menuselection:`ZFS volume --> Create Dataset`, you will see the screen shown in Figure 8.1d.
 
 Once a dataset is created, you can click on that dataset and select "Create Dataset", thus creating a nested dataset, or a dataset within a dataset. You can
 also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
 If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
 
-**Figure 8.1e: Creating a ZFS Dataset**
+**Figure 8.1d: Creating a ZFS Dataset**
 
 |dataset.png|
 
@@ -478,13 +474,13 @@ Create zvol
 
 A zvol is a feature of ZFS that creates a block device over ZFS. This allows you to use a zvol as an iSCSI device extent.
 
-To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> Create zvol` which will open the screen shown in Figure 8.1f.
+To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> Create zvol` which will open the screen shown in Figure 8.1e.
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`.
 
-**Figure 8.1f: Creating a zvol**
+**Figure 8.1e: Creating a zvol**
 
 |zvol.png|
 
@@ -521,11 +517,11 @@ Mode" button or configure the system to always display these settings by checkin
 Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1g, is used to import a single disk or partition that has been formatted with a
+The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a single disk or partition that has been formatted with a
 supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
 measure in order to copy the data from a disk to a volume. Only one disk can be imported at a time.
 
-**Figure 8.1g: Importing a Disk**
+**Figure 8.1f: Importing a Disk**
 
 |import.png|
 
@@ -561,9 +557,9 @@ an unmaintained summer of code project which was never integrated into FreeBSD.
 Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported. However, the pool must be decrypted before it can be
 imported.
 
-Figure 8.1h shows the initial pop-up window that appears when you select to import a volume.
+Figure 8.1g shows the initial pop-up window that appears when you select to import a volume.
 
-**Figure 8.1h: Initial Import Volume Screen**
+**Figure 8.1g: Initial Import Volume Screen**
 
 |auto1.png|
 
@@ -571,9 +567,9 @@ Figure 8.1h shows the initial pop-up window that appears when you select to impo
     :width: 2.9in
     :height: 1.7in
 
-If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No: Skip to import" to access the screen shown in Figure 8.1i.
+If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No: Skip to import" to access the screen shown in Figure 8.1h.
 
-**Figure 8.1i: Importing a Non-Encrypted Volume**
+**Figure 8.1h: Importing a Non-Encrypted Volume**
 
 |auto2.png|
 
@@ -581,7 +577,7 @@ If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No
     :width: 2.34in
     :height: 1.7in
 
-Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1i, the FreeNAS® system has an
+Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an
 existing, unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
 FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to :command:`fsck` the volume.
@@ -600,9 +596,9 @@ Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1h, select "Yes: Decrypt disks" to
-access the screen shown in Figure 8.1j.
+access the screen shown in Figure 8.1i.
 
-**Figure 8.1j: Decrypting the Disks Before Importing the ZFS Pool**
+**Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
 
 |Figure81c_png|
 
@@ -621,9 +617,9 @@ View Disks
 ~~~~~~~~~~
 
 :menuselection:`Storage --> Volumes --> View Disks` allows you to view all of the disks recognized by the FreeNAS® system. An example is shown in Figure
-8.1k.
+8.1j.
 
-**Figure 8.1k: Viewing Disks**
+**Figure 8.1j: Viewing Disks**
 
 |view.png|
 
@@ -683,12 +679,12 @@ View Volumes
 ~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
-shown in Figure 8.1l demonstrates one ZFS pool with two datasets and one zvol.
+shown in Figure 8.1k demonstrates one ZFS pool with two datasets and one zvol.
 
 Buttons are provided to provide quick access to "Volume Manager", "Import Volume", "Import Disk", and "View Disks". If the system has multipath-capable
 hardware, an extra button will be added to "View Multipaths".
 
-**Figure 8.1l: Viewing Volumes**
+**Figure 8.1k: Viewing Volumes**
 
 |volume1.png|
 
@@ -699,7 +695,7 @@ hardware, an extra button will be added to "View Multipaths".
 If you click the entry for a volume, four icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
 
 #.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
-    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1m, will show the
+    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1l, will show the
     current used space, provide the checkbox "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
     volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
     will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not
@@ -714,14 +710,14 @@ If you click the entry for a volume, four icons will appear at the bottom of the
     provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub
     left off.
 
-#.  **Volume Status:** as seen in the example in Figure 8.1n, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
+#.  **Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
     write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
-    device's options (shown in Figure 8.1o), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+    device's options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 #.  **Upgrade:** used to upgrade the ZFS version, as described in :ref:`Upgrading a ZFS Pool`.
 
 
-**Figure 8.1m: Detaching or Deleting a Volume**
+**Figure 8.1l: Detaching or Deleting a Volume**
 
 |detach.png|
 
@@ -729,7 +725,7 @@ If you click the entry for a volume, four icons will appear at the bottom of the
     :width: 5.3in
     :height: 4.5in
 
-**Figure 8.1n: Volume Status**
+**Figure 8.1m: Volume Status**
 
 |volume2.png|
 
@@ -740,7 +736,7 @@ If you click the entry for a volume, four icons will appear at the bottom of the
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1o. Table 8.1f summarizes the
 configurable options.
 
-**Figure 8.1o: Editing a Disk**
+**Figure 8.1n: Editing a Disk**
 
 |disk.png|
 
@@ -777,9 +773,9 @@ Managing Encrypted Volumes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you check the "Enable full disk encryption" box during the creation of a ZFS volume, five encryption icons will be added to the icons that are
-typically seen when Viewing Volumes. An example is seen in Figure 8.1p.
+typically seen when Viewing Volumes. An example is seen in Figure 8.1o.
 
-**Figure 8.1p: Encryption Icons Associated with an Encrypted ZFS Volume**
+**Figure 8.1o: Encryption Icons Associated with an Encrypted ZFS Volume**
 
 |encrypt.png|
 
@@ -837,10 +833,10 @@ Multipath hardware adds fault tolerance to a NAS as the data is still available 
 
 FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in
 multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`, as seen in
-the example in Figure 8.1q. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
+the example in Figure 8.1p. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
 multipath-capable hardware.
 
-**Figure 8.1q: Viewing Multipaths**
+**Figure 8.1p: Viewing Multipaths**
 
 |multipath.png|
 
@@ -848,7 +844,7 @@ multipath-capable hardware.
     :width: 6.9252in
     :height: 1.6736in
 
-Figure 8.1q provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
+Figure 8.1p provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.
 
 .. _Replacing a Failed Drive:
@@ -880,9 +876,9 @@ you have located the failed device in the GUI, perform the following steps:
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-In the example shown in Figure 8.1r, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
+In the example shown in Figure 8.1q, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
-**Figure 8.1r: Replacing a Failed Disk**
+**Figure 8.1q: Replacing a Failed Disk**
 
 |replace.png|
 
@@ -890,10 +886,10 @@ In the example shown in Figure 8.1r, a failed disk is being replaced by disk *ad
     :width: 4.9in
     :height: 4.5in
 
-Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1s indicates that the
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1r indicates that the
 disk replacement was successful for this example.
 
-**Figure 8.1s: Disk Replacement is Complete**
+**Figure 8.1r: Disk Replacement is Complete**
 
 |replace2.png|
 
