@@ -331,40 +331,39 @@ class NFS_Share_Path(Model):
 
 class WebDAV_Share(Model):
     webdav_name = models.CharField(
-	    max_length=120,
-	    verbose_name=_("Share Name"),
-	    help_text=_("This will be used to access your WebDAV share."
-	      "<br />For example http(s)://ip-of-freenas-machine:webdav_port/'Share Name'"),
+        max_length=120,
+        verbose_name=_("Share Name"),
+        help_text=_(
+            "This will be used to access your WebDAV share.<br />For example "
+            "http(s)://ip-of-freenas-machine:webdav_port/'Share Name'"
+        ),
     )
-    
     webdav_comment = models.CharField(
-            max_length=120,
-            verbose_name=_("Comment"),
-            blank=True,
+        max_length=120,
+        verbose_name=_("Comment"),
+        blank=True,
     )
-    
     webdav_path = PathField(
-	    verbose_name=_("Path")
+        verbose_name=_("Path")
     )
-    
     webdav_ro = models.BooleanField(
         verbose_name=_('Read Only'),
         help_text=_('Export the share read only. Writes are not permitted.'),
         default=False,
     )
-    
     webdav_perm = models.BooleanField(
-	verbose_name=_('Change User & Group Ownership'),
-	help_text=_("Changes the user & group of the shared folder"
-	  " to 'webdav:webdav' recursively (including all subdirectories)"
-	  "<br />If disabled, you will need to manually" 
-	  "<br />add the 'webdav' user & group to the share."),
-	default=True,
+        verbose_name=_('Change User & Group Ownership'),
+        help_text=_(
+            "Changes the user & group of the shared folder"
+            " to 'webdav:webdav' recursively (including all subdirectories)"
+            "<br />If disabled, you will need to manually"
+            "<br />add the 'webdav' user & group to the share."
+        ),
+        default=True,
     )
-	  
 
     def __unicode__(self):
-      return unicode(self.webdav_name)
+      return self.webdav_name
 
     def delete(self, *args, **kwargs):
         super(WebDAV_Share, self).delete(*args, **kwargs)
