@@ -804,7 +804,7 @@ class SQLiteReleaseDB(ReleaseDB):
         rv = []
         for pkg in packages:
             if debug:  print >> sys.stderr, "Found package %s-%s" % (pkg['PkgName'], pkg['PkgVersion'])
-            p = Package.Package(pkg["PkgName"], pkg["PkgVersion"], None)
+            p = Package.Package(pkg["PkgName"], pkg["PkgVersion"], pkg["Checksum"])
             rv.append(p)
         if rv and name:
             if len(rv) > 1:
