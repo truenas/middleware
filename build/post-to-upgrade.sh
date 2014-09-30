@@ -29,6 +29,12 @@ MKREL="/usr/local/bin/freenas-release -D ${UPDATE_DB} --archive ${UPDATE_DEST} a
 set -e
 set -x
 
+# Copy any release notes and notices
+for note in ReleaseNotes ChangeLog NOTICE
+do
+    test -f ${note} && cp ${note} "${SOURCE}"
+done
+
 TEMP_DEST=$(ssh ${UPDATE_USER}@${UPDATE_HOST} mktemp -d /tmp/update-XXXXXXXXX)
 scp -r "${SOURCE}/." ${UPDATE_USER}@${UPDATE_HOST}:${TEMP_DEST}
 ssh ${UPDATE_USER}@${UPDATE_HOST} "${MKREL} ${TEMP_DEST}"
