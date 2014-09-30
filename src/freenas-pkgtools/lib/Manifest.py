@@ -253,7 +253,7 @@ class Manifest(object):
             for name in self._notes.keys():
                 loc = self._notes[name]
                 if not loc.startswith(UPDATE_SERVER):
-                    loc = UPDATE_SERVER + loc
+                    loc = "%s/%s/Notes/%s" % (UPDATE_SERVER, self.Train(), loc)
                 rv[name] = loc
             return rv
         return None
@@ -264,7 +264,7 @@ class Manifest(object):
             loc = notes[name]
             if loc.startswith(UPDATE_SERVER):
                 loc = loc[len(UPDATE_SERVER):]
-            self._notes[name] = loc
+            self._notes[name] = os.path.basename(loc)
         return
 
     def Note(self, name):
