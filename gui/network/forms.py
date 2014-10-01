@@ -26,8 +26,10 @@
 #####################################################################
 from struct import pack
 import logging
+import os
 import re
 import socket
+import urllib2
 
 from django.core.validators import RegexValidator
 from django.db import transaction
@@ -426,6 +428,15 @@ class GlobalConfigurationForm(ModelForm):
         if self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway'):
             whattoreload = "networkgeneral"
         notifier().reload(whattoreload)
+
+        http_proxy = self.cleaned_data.get('gc_httpproxy')
+        if http_proxy:
+            os.environ['http_proxy'] = http_proxy
+        elif not http_proxy and 'http_proxy' in os.environ:
+            del os.environ['http_proxy']
+
+        # Reset global opener so ProxyHandler can be recalculated
+        urllib2.install_opener(None)
 
         return retval
 
