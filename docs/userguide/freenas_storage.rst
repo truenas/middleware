@@ -343,25 +343,21 @@ be used to fine-tune the permissions as required.
 Create Dataset
 ~~~~~~~~~~~~~~
 
-An existing ZFS volume can be divided into datasets. Permissions, compression, deduplication, and quotas can be set on a per dataset basis, allowing more
+An existing ZFS volume can be divided into datasets. Permissions, compression, deduplication, and quotas can be set on a per-dataset basis, allowing more
 granular control over access to storage data. A dataset is similar to a folder in that you can set permissions; it is also similar to a filesystem in that
 you can set properties such as quotas and compression as well as create snapshots.
 
 .. note:: ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
-If you select an existing :menuselection:`ZFS volume --> Create Dataset`, you will see the screen shown in Figure 8.1d.
-
-Once a dataset is created, you can click on that dataset and select "Create Dataset", thus creating a nested dataset, or a dataset within a dataset. You can
-also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
-If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
+If you select an existing ZFS volume in the tree then click "Create Dataset", you will see the screen shown in Figure 8.1d.
 
 **Figure 8.1d: Creating a ZFS Dataset**
 
 |dataset.png|
 
 .. |dataset.png| image:: images/dataset.png
-    :width: 4.6in
-    :height: 3.1in
+    :width: 7.6in
+    :height: 4.7in
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -373,10 +369,10 @@ click the "Advanced Mode" button or configure the system to always display these
 | **Setting**              | **Value**           | **Description**                                                                                           |
 |                          |                     |                                                                                                           |
 +==========================+=====================+===========================================================================================================+
-| Dataset Name             | string              | mandatory                                                                                                 |
+| Dataset Name             | string              | mandatory; input a name for the dataset                                                                   |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Compression Level        | drop-down menu      | see the section on :ref:`Compression` for a comparison of the available algorithms                        |
+| Compression Level        | drop-down menu      | see the section on :ref:`Compression` for a description of the available algorithms                       |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Share type               | drop-down menu      | select the type of share that will be used on the dataset; choices are *UNIX* for an NFS share,           |
@@ -416,69 +412,73 @@ click the "Advanced Mode" button or configure the system to always display these
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 
+Once a dataset is created, you can click on that dataset and select "Create Dataset", thus creating a nested dataset, or a dataset within a dataset. You can
+also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
+If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
+
 .. _Deduplication:
 
 Deduplication
 ^^^^^^^^^^^^^
 
-Deduplication is the process of eliminating duplicate copies of data in order to save space. Once deduplicaton occurs, it can improve ZFS performance as
-less data is written and stored. However, the process of deduplicating the data is RAM intensive and a general rule of thumb is 5 GB RAM per TB of storage to
-be deduplicated. **In most cases, compression will provide comparable performance.** 
+Deduplication is the process of not creating duplicate copies of data in order to save space. Depending upon the amount of duplicate data, deduplicaton can
+improve storage capacity as less data is written and stored. However, the process of deduplication is RAM intensive and a general rule of thumb is 5 GB RAM
+per TB of storage to be deduplicated.
+**In most cases, using compression instead of deduplication will provide a comparable storage gain with less impact on performance.**
 
-In FreeNAS®, deduplication can be enabled at the dataset level and there is no
-way to undedup data once it is deduplicated: switching deduplication off has **NO AFFECT** on existing data. The more data you write to a deduplicated
-dataset, the more RAM it requires, and there is no upper bound on this. When the system starts storing the DDTs (dedup tables) on disk because they no longer
-fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per TB of deduped data, and if the system doesn't
-have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool. **Think carefully before enabling dedup!** This
-`article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_
-provides a good description of the value v.s. cost considerations for deduplication.
+In FreeNAS®, deduplication can be enabled during dataset creation. Be forewarned that
+**there is no way to undedup the data within a dataset once deduplication is enabled** as disabling deduplication has
+**NO AFFECT** on existing data. The more data you write to a deduplicated dataset, the more RAM it requires and when the system starts storing the DDTs
+(dedup tables) on disk because they no longer fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per
+TB of deduped data, and if the system doesn't have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool.
+**Think carefully before enabling dedup!** This `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_ provides a good description of
+the value versus cost considerations for deduplication.
 
-**Unless you have a lot of RAM and a lot of duplicate data, do not change the default deduplication setting of "Off".** The dedup tables used during
-deduplication need ~8 GB of RAM per 1TB of data to be deduplicated. For performance reasons, consider using compression rather than turning this option on.
+**Unless you have a lot of RAM and a lot of duplicate data, do not change the default deduplication setting of "Off".** For performance reasons, consider
+using compression rather than turning this option on.
 
 If deduplication is changed to *On*, duplicate data blocks are removed synchronously. The result is that only unique data is stored and common components are
 shared among files. If deduplication is changed to *Verify*, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that
-the block contents are identical. Since hash collisions are extremely rare, verify is usually not worth the performance hit.
+the block contents are identical. Since hash collisions are extremely rare, *Verify* is usually not worth the performance hit.
 
-.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from Shell. However, any
-   data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be deduplicated. The
-   only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data back in again.
-   Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original dataset.
+.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from :ref:`Shell`.
+   However, any data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be
+   deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data
+   back in again. Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original
+   dataset.
 
 .. _Compression:
 
 Compression
 ^^^^^^^^^^^
 
-Most media (e.g. :file:`.mp3`, :file:`.mp4`, :file:`.avi`) is already compressed, meaning that you will increase CPU utilization for no gain if you store
-these files on a compressed dataset. However, if you have raw :file:`.wav` rips of CDs or :file:`.vob` rips of DVDs, you will see a performance gain using a
-compressed dataset. When selecting a compression type, you need to balance performance with the amount of compression. The following compression algorithms
-are supported:
+When selecting a compression type, you need to balance performance with the amount of disk space saved by compression. Compression is transparent to the
+client and applications as ZFS automatically compresses data as it is written to a compressed dataset or zvol and automatically decompresses that data as it
+is read. The following compression algorithms are supported:
 
-* **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed.
+* **lz4:** recommended compression method as it allows compressed datasets to operate at near real-time speed. This algorithm only compresses the files that
+  will benefit from compression. By default, ZFS pools made using FreeNAS® 9.2.1 or higher use this compression method, meaning that this algorithm is used
+  if the "Compression level" is left at *Inherit* when creating a dataset or zvol.
 
 * **gzip:** varies from levels 1 to 9 where *gzip fastest* (level 1) gives the least compression and
   *gzip maximum* (level 9) provides the best compression but is discouraged due to its performance impact.
 
-* **zle:** fast and simple algorithm to eliminate runs of zeroes.
+* **zle:** fast but simple algorithm to eliminate runs of zeroes.
 
-* **lzjb:** provides decent data compression, but is considered deprecated as lz4 provides much better performance.
+* **lzjb:** provides decent data compression, but is considered deprecated as 
+  *lz4* provides much better performance.
 
-If you leave the default of *Inherit* or select
-*Off*, compression will not be used on the dataset.
+If you select *Off* as the "Compression level" when creating a dataset or zvol, compression will not be used on the dataset/zvol. This is not recommended as
+using *lz4* has a negligible performance impact and allows for more storage capacity.
 
 .. _Create zvol:
 
 Create zvol
 ~~~~~~~~~~~
 
-A zvol is a feature of ZFS that creates a block device over ZFS. This allows you to use a zvol as an iSCSI device extent.
+A zvol is a feature of ZFS that creates a raw block device over ZFS. This allows you to use a zvol as an :ref:`iSCSI` device extent.
 
-To create a zvol, select an existing :menuselection:`ZFS volume or dataset --> Create zvol` which will open the screen shown in Figure 8.1e.
-
-The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
-Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
+To create a zvol, select an existing ZFS volume or dataset from the tree then click "Create zvol" to open the screen shown in Figure 8.1e.
 
 **Figure 8.1e: Creating a zvol**
 
@@ -488,6 +488,10 @@ Mode" button or configure the system to always display these settings by checkin
     :width: 3.2in
     :height: 2.2in
 
+The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
+Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`.
+
 **Table 8.1e: zvol Configuration Options**
 
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -495,16 +499,17 @@ Mode" button or configure the system to always display these settings by checkin
 |                    |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
 +====================+================+======================================================================================================================+
-| zvol Name          | string         | input a name for the zvol                                                                                            |
+| zvol Name          | string         | mandatory; input a name for the zvol                                                                                 |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Compression level  | drop-down menu | default of *Inherit* means it will use the same compression level as the existing zpool used to create the zvol      |
+| Compression level  | drop-down menu | see the section on :ref:`Compression` for a description of the available algorithms                                  |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Sparse volume      | checkbox       | used to provide thin provisioning; if this option is selected, writes will fail when the pool is low on space        |
+| Sparse volume      | checkbox       | used to provide thin provisioning; use with caution for when this option is selected, writes will fail when the      |
+|                    |                | pool is low on space                                                                                                 |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Block size         | drop-down menu | only available in "Advanced Mode"; can be set to match the block size of the filesystem which will be formatted onto |
@@ -517,17 +522,17 @@ Mode" button or configure the system to always display these settings by checkin
 Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a single disk or partition that has been formatted with a
+The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk or partition that has been formatted with a
 supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
-measure in order to copy the data from a disk to a volume. Only one disk can be imported at a time.
+measure in order to copy the data from a disk to an existing volume. Only one disk can be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
 |import.png|
 
 .. |import.png| image:: images/import.png
-    :width: 2.8in
-    :height: 2.2in
+    :width: 4.2in
+    :height: 3.5in
 
 Input a name for the volume, use the drop-down menu to select the disk or partition that you wish to import, and select the type of filesystem on the disk.
 
@@ -536,9 +541,9 @@ Before importing a disk, be aware of the following caveats:
 * FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to :command:`fsck` or run a disk
   check on the filesystem.
 
-* FreeNAS® can not import dynamic NTFS volumes at this time. A future version of FreeBSD may address this issue.
+* FreeNAS® can not import dynamic NTFS volumes.
 
-* if an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
+* If an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
   drive.
 
 .. _Import Volume:
@@ -547,12 +552,12 @@ Import Volume
 ~~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> Import Volume`, you can configure FreeNAS® to use an
-**existing** software UFS or ZFS RAID volume. This action is typically performed when an existing FreeNAS® system is re-installed (rather than upgraded).
-Since the operating system is separate from the disks, a new installation does not affect the data on the disks; however, the new operating system needs to be
-configured to use the existing volume.
+**existing** software UFS or ZFS volume. This action is typically performed when an existing FreeNAS® system is re-installed. Since the operating system is
+separate from the storage disks, a new installation does not affect the data on the disks. However, the new operating system needs to be configured to use the
+existing volume.
 
-Supported volumes are UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM RAID3, as well as existing ZFS pools. UFS RAID5 is not supported as it is
-an unmaintained summer of code project which was never integrated into FreeBSD.
+The following types of volumes can be imported: UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM RAID3, and ZFS pools. UFS RAID5 is not supported
+as it is an unmaintained summer of code project which was never integrated into FreeBSD.
 
 Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported. However, the pool must be decrypted before it can be
 imported.
@@ -564,31 +569,31 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 2.9in
-    :height: 1.7in
+    :width: 4.3in
+    :height: 3.1in
 
-If you are importing a UFS RAID or an existing, unencrypted ZFS pool, select "No: Skip to import" to access the screen shown in Figure 8.1h.
+If you are importing a UFS RAID or an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
 **Figure 8.1h: Importing a Non-Encrypted Volume**
 
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 2.34in
-    :height: 1.7in
+    :width: 4.3in
+    :height: 3.1in
 
-Existing software RAID volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an
-existing, unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
+Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
+unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
-FreeNAS® will not import a dirty volume. If an existing UFS RAID does not show in the drop-down menu, you will need to :command:`fsck` the volume.
+FreeNAS® will not import a dirty volume. If a supported UFS volume does not show in the drop-down menu, :command:`fsck` the volume and try again.
 
 If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
 
 If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an "in use by another
 machine" error during the import.
 
-If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from Shell. If the disk does not appear in the output, check to see
-if the controller driver is supported or if it needs to be loaded by creating a Tunable.
+If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from :ref:`Shell`. If the disk does not appear in the output, check
+to see if the controller driver is supported or if it needs to be loaded using :ref:`Tunables`.
 
 .. _Importing an Encrypted Pool:
 
@@ -596,7 +601,7 @@ Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1h, select "Yes: Decrypt disks" to
-access the screen shown in Figure 8.1i.
+access the screen shown in Figure 8.1g.
 
 **Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
 
@@ -606,10 +611,10 @@ Select the disks in the encrypted pool, browse to the location of the saved encr
 decrypt the disks.
 
 .. note:: the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost
-   configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. The
-   View Volumes screen is used to manage the keys for encrypted volumes.
+   configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. Refer to
+   :ref:`Managing Encrypted Volumes` for instructions on how to manage the keys for encrypted volumes.
 
-Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1i. Click the "OK" button to finish the volume import.
+Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1h. Click the "OK" button to finish the volume import.
 
 .. _View Disks:
 
@@ -653,15 +658,15 @@ are described in Table 8.1f.
 | Advanced Power Management                              | drop-down menu | default is *Disabled*, can select a power management profile from the menu                                           |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Acoustic Level                                         | drop-down menu | default is*Disabled*; can be modified for disks that understand                                                      |
+| Acoustic Level                                         | drop-down menu | default is *Disabled*; can be modified for disks that understand                                                     |
 |                                                        |                | `AAM <http://en.wikipedia.org/wiki/Automatic_acoustic_management>`_                                                  |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured S.M.A.R.T. Tests |
-|                                                      _ |                | for the disk                                    _                                                                    |
+| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured                  |
+|                                                        |                | :ref:`S.M.A.R.T. Tests` for the disk                                                                                 |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| S.M.A.R.T. extra options                               | string         | `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                            |
+| S.M.A.R.T. extra options                               | string         | additional `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                 |
 |                                                        |                | options                                                                                                              |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -670,8 +675,8 @@ are described in Table 8.1f.
 Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
 option before discarding a disk.
 
-.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within Shell. For example, to determine the
-   serial number of disk ada0, type :command:`smartctl -a /dev/ada0 | grep Serial`.
+.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within :ref:`Shell`. For example, to determine
+   the serial number of disk *ada0*, type :command:`smartctl -a /dev/ada0 | grep Serial`.
 
 .. _View Volumes:
 
