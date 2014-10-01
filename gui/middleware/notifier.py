@@ -5220,6 +5220,9 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return systemdataset
 
+        if not volume.is_decrypted():
+            return None
+
         self.system_dataset_rename(basename, systemdataset)
 
         datasets = [basename]
