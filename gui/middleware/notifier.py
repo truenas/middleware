@@ -5363,7 +5363,7 @@ class notifier:
                     else:
                         # We can get here if item is a dead symlink
                         if os.path.islink(item):
-                            shutil.rmtree(item)
+                            os.unlink(item)
                         self._createlink(SYSTEMPATH, item)
 
     def system_dataset_migrate(self, _from, _to):
