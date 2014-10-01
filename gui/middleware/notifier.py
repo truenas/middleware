@@ -5229,24 +5229,17 @@ class notifier:
         ):
             datasets.append('%s/%s' % (basename, sub))
 
-        assert volume.vol_fstype in ('ZFS', 'UFS')
+        assert volume.vol_fstype in ('ZFS')
 
         createdds = False
         for dataset in datasets:
-            if volume.vol_fstype == 'ZFS':
-                proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
-                proc.communicate()
-                if proc.returncode == 0:
-                    continue
-                self.create_zfs_dataset(dataset, _restart_collectd=False)
-                createdds = True
-                os.chmod('/mnt/%s' % dataset, 0755)
-            else:
-                if not os.path.exists(dataset):
-                    try:
-                        os.makedirs(dataset, mode=0755)
-                    except:
-                        pass
+            proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
+            proc.communicate()
+            if proc.returncode == 0:
+                continue
+            self.create_zfs_dataset(dataset, _restart_collectd=False)
+            createdds = True
+            os.chmod('/mnt/%s' % dataset, 0755)
 
         if createdds:
             self.restart('collectd')
