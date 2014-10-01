@@ -684,43 +684,34 @@ View Volumes
 ~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
-shown in Figure 8.1k demonstrates one ZFS pool with two datasets and one zvol.
+shown in Figure 8.1k demonstrates one ZFS pool (*volume1*) with two datasets
+(the one automatically created with the pool, *volume1*, and
+*dataset1*) and one zvol
+(*zvol1*).
 
-Buttons are provided to provide quick access to "Volume Manager", "Import Volume", "Import Disk", and "View Disks". If the system has multipath-capable
-hardware, an extra button will be added to "View Multipaths".
+Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks". If the system has multipath-capable hardware, an
+extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk space is "Used", how much disk
+space is "Available", the type of "Compression", the "Compression Ratio", and the "Status" of the pool.
 
 **Figure 8.1k: Viewing Volumes**
 
 |volume1.png|
 
 .. |volume1.png| image:: images/volume1.png
-    :width: 5.3in
+    :width: 4.5in
     :height: 4.5in
 
-If you click the entry for a volume, four icons will appear at the bottom of the screen. In order from left to right, these icons allow you to:
+If you click the entry for a pool, four buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
+following:
 
-#.  **Detach Volume:** allows you to either detach a disk before removing it from the system (also known as a ZFS export) or to delete the contents of the
-    volume, depending upon the choice you make in the screen that pops up when you click this button. The pop-up message, seen in Figure 8.1l, will show the
-    current used space, provide the checkbox "Mark the disks as new (destroy data)", prompt you to make sure that you want to do this, warn you if the
-    volume has any associated shares and ask if you wish to delete them, and the browser will turn red to alert you that you are about to do something that
-    will make the data inaccessible. **If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not
-    destroyed and the volume can be re-imported at a later time. If you will be moving a ZFS drive from one system to another, perform this
-    `export <http://docs.huihoo.com/opensolaris/solaris-zfs-administration-guide/html/ch04s06.html>`_
-    action first. This operation flushes any unwritten data to disk, writes data to the disk indicating that the export was done, and removes all knowledge of
-    the pool from the system.
-    **If you do check the box to mark the disks as new, the volume and all of its data, datasets, and zvols will be destroyed and the underlying disks will be returned to their raw state.**
-
-#.  **Scrub Volume:** ZFS scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub.
-    A scrub is I/O intensive and can negatively impact performance, meaning that you should not initiate one while the system is busy. A "cancel" button is
-    provided should you need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub
-    left off.
-
-#.  **Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
-    write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the
-    device's options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
-
-#.  **Upgrade:** used to upgrade the ZFS version, as described in :ref:`Upgrading a ZFS Pool`.
-
+**Detach Volume:** allows you to either export the pool or to delete the contents of the pool, depending upon the choice you make in the screen shown in
+Figure 8.1l. The "Detach Volume" screen displays the current used space and indicates if there are any shares, provides checkboxes to "Mark the disks as new
+(destroy data)" and to "Delete all shares related to this volume", asks if you are sure that you want to do this, and the browser will turn red to alert you
+that you are about to do something that will make the data inaccessible.
+**If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not destroyed and the volume can be
+re-imported at a later time. If you will be moving a ZFS pool from one system to another, perform this export action first as it flushes any unwritten data to
+disk, writes data to the disk indicating that the export was done, and removes all knowledge of the pool from the system.
+**If you do check the box to mark the disks as new, the pool and all the data in its datasets, zvols, and shares will be destroyed and the underlying disks will be returned to their raw state.**
 
 **Figure 8.1l: Detaching or Deleting a Volume**
 
@@ -730,6 +721,17 @@ If you click the entry for a volume, four icons will appear at the bottom of the
     :width: 5.3in
     :height: 4.5in
 
+**Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
+scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
+need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off. To view the
+current status of a running scrub or the statistics from the last completed scrub, click the "Volume Status" button.
+
+**Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
+write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the device's
+options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+
+**Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`.
+
 **Figure 8.1m: Volume Status**
 
 |volume2.png|
@@ -738,7 +740,7 @@ If you click the entry for a volume, four icons will appear at the bottom of the
     :width: 3.2in
     :height: 4.5in
 
-If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1o. Table 8.1f summarizes the
+If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
 configurable options.
 
 **Figure 8.1n: Editing a Disk**
@@ -749,75 +751,74 @@ configurable options.
     :width: 3.5in
     :height: 3.3in
 
-.. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the HDD Standby, Advanced Power Management, and Acoustic Level
-   settings. As of 8.3.1, changes to these settings are applied immediately.
+.. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the "HDD Standby", "Advanced Power Management", and "Acoustic
+   Level" settings. As of 8.3.1, changes to these settings are applied immediately.
 
-If you click the dataset of the volume (the second entry of the same name), or any other dataset, six icons will appear at the bottom of the screen. In order
-from left to right, these icons allow you to:
+If you click a dataset in :menuselection:`Storage --> Volumes --> View Volumes`, six buttons will appear at the bottom of the screen. In order from left to
+right, these buttons allow you to:
 
-#.  **Change Permissions:** allows you to edit the volume's user, group, mode, permission type, and to enable recursive permissions on the volume's
-    subdirectories.
+**Change Permissions:** allows you to edit the dataset's permissions as described in :ref:`Change Permissions`.
 
-#.  **Create Snapshot:** allows you to configure the snapshot's name and whether or not it is recursive before manually creating a one-time snapshot. If you
-    wish to schedule the regular creation of snapshots, instead use :ref:`Periodic Snapshot Tasks`.
+**Create Snapshot:** allows you to create a one-time snapshot. If you wish to schedule the regular creation of snapshots, instead use
+:ref:`Periodic Snapshot Tasks`.
 
-#. **Destroy Dataset:** if you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive action. The pop-up warning
-   message will warn that destroying the dataset will delete all of the files and snapshots associated with that dataset.
+**Destroy Dataset:** if you click the "Destroy Dataset" button, the browser will turn red to indicate that this is a destructive action. The "Destroy
+Dataset" screen forces you to check the box "I'm aware this will destroy all child datasets and snapshots within this dataset" before it will perform this
+action.
 
-#.  **Edit Options:** allows you to edit the volume's compression level, atime setting, dataset quota, and reserved space for quota. If compression is
-    newly enabled on a volume or dataset that already contains data, existing files will not be compressed until they are modified as compression is only
-    applied when a file is written.
+**Edit Options:** allows you to edit the volume's properties described in Table 8.1d. Note that it will not let you change the dataset's name.
 
-#.  **Create Dataset:** allows you to create a dataset.
+**Create Dataset:** used to create a child dataset within this dataset.
 
-#.  **Create zvol:** allows you to create a zvol to use as an iSCSI device extent.
+**Create zvol:** allows you to create a child zvol within this dataset.
+
+If you click a zvol in :menuselection:`Storage --> Volumes --> View Volumes`, three icons will appear at the bottom of the screen: "Create Snapshot", "Edit
+zvol", and "Destroy zvol". Similar to datasets, you can not edit a zvol's name and you will need to confirm that you wish to destroy the zvol.
 
 .. _Managing Encrypted Volumes:
 
 Managing Encrypted Volumes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you check the "Enable full disk encryption" box during the creation of a ZFS volume, five encryption icons will be added to the icons that are
-typically seen when Viewing Volumes. An example is seen in Figure 8.1o.
+If you check the "Encryption" box during the creation of a pool, five additional buttons will be added to the entry for the pool in
+:menuselection:`Storage --> Volumes --> View Volumes`. An example is seen in Figure 8.1o.
 
-**Figure 8.1o: Encryption Icons Associated with an Encrypted ZFS Volume**
+**Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
 
 |encrypt.png|
 
 .. |encrypt.png| image:: images/encrypt.png
-    :width: 5.2in
-    :height: 4.5in
+    :width: 4.3in
+    :height: 4.6in
 
-These icons are used to:
+In order from left to right, these additional encryption buttons are used to:
 
-#. **Create/Change Passphrase:** click this icon to set and confirm the passphrase associated with the GELI encryption key. You will be prompted to input the
-   password used to access the FreeNAS® administrative GUI, and then to input and repeat the desired passphrase. Unlike a password, a passphrase can contain
-   spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece of literature) but hard to guess (people
-   who know you should not be able to guess the passphrase). **Remember this passphrase as you can not re-import an encrypted volume without it.** In other
-   words, if you forget the passphrase, it is possible for the data on the volume to become inaccessible. An example would be a failed USB stick that requires
-   a new installation on a new USB stick and a re-import of the existing pool, or the physical removal of disks when moving from an older hardware system to a
-   new system. Protect this passphrase as anyone who knows it could re-import your encrypted volume, thus thwarting the reason for encrypting the disks in the
-   first place.
+**Create/Change Passphrase:** click this button to set and confirm the passphrase associated with the GELI encryption key. You will be prompted to input and
+repeat the desired passphrase and a red warning reminds you to "Remember to add a new recovery key as this action invalidates the previous recovery key".
+Unlike a password, a passphrase can contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece
+of literature) but hard to guess (people who know you should not be able to guess the passphrase).
+**Remember this passphrase as you can not re-import an encrypted volume without it.** In other words, if you forget the passphrase, the data on the volume can
+become inaccessible if you need to re-import or unlock the pool. Protect this passphrase as anyone who knows it could re-import your encrypted volume,
+thwarting the reason for encrypting the disks in the first place.
 
-   When you click this icon, a red warning is displayed: **Remember to add a new recovery key as this action invalidates the previous recovery key.** as a new
-   passphrase needs a new recovery key. This way, if the passphrase is forgotten, the associated recovery key can be used instead. Once you set the
-   passphrase, immediately click the "Add recovery key" button (second last key icon) to create a new recovery key. Once
-   the passphrase is set, the name of this icon will change to "Change Passphrase".
+Once the passphrase is set, the name of this button will change to "Change Passphrase". After setting or changing the passphrase, it is important to
+immediately create a new recovery key by clicking the "Add recovery key" button. This way, if the passphrase is forgotten, the associated recovery key can be
+used instead.
 
-#. **Download Key:** click this icon to download a backup copy of the GELI encryption key. The encryption key is saved to the client system, not on the
-   FreeNAS® system. You will be prompted to input the password used to access the FreeNAS® administrative GUI before the selecting the directory in which to
-   store the key. Since the GELI encryption key is separate from the FreeNAS® configuration database,
-   **it is highly recommended to make a backup of the key. If the key is every lost or destroyed and there is no backup key, the data on the disks is inaccessible.**
+**Download Key:** click this icon to download a backup copy of the GELI encryption key. The encryption key is saved to the client system, not on the FreeNAS®
+system. You will be prompted to input the password used to access the FreeNAS® administrative GUI before the selecting the directory in which to store the
+key. Since the GELI encryption key is separate from the FreeNAS® configuration database,
+**it is highly recommended to make a backup of the key. If the key is every lost or destroyed and there is no backup key, the data on the disks is inaccessible.**
 
-#. **Encryption Re-key:** generates a new GELI encryption key. Typically this is only performed when the administrator suspects that the current key may be
-   compromised. This action also removes the current passphrase.
+**Encryption Re-key:** generates a new GELI encryption key. Typically this is only performed when the administrator suspects that the current key may be
+compromised. This action also removes the current passphrase.
 
-#. **Add recovery key:** generates a new recovery key. This screen will prompt you to input the password used to access the FreeNAS® administrative GUI and
-   then to select the directory in which to save the key. Note that the recovery key is saved to the client system, not on the FreeNAS® system. This recovery
-   key can be used if the passphrase is forgotten. **Always immediately** add a recovery key whenever the passphrase is changed.
+**Add recovery key:** generates a new recovery key. This screen will prompt you to input the password used to access the FreeNAS® administrative GUI and then
+to select the directory in which to save the key. Note that the recovery key is saved to the client system, not on the FreeNAS® system. This recovery key can
+be used if the passphrase is forgotten. **Always immediately** add a recovery key whenever the passphrase is changed.
 
-#. **Remove recover key:** Typically this is only performed when the administrator suspects that the current recovery key may be compromised.
-   **Immediately** create a new passphrase and recovery key.
+**Remove recover key:** Typically this is only performed when the administrator suspects that the current recovery key may be compromised.
+**Immediately** create a new passphrase and recovery key.
 
 .. note:: the passphrase, recovery key, and encryption key need to be protected. Do not reveal the passphrase to others. On the system containing the
    downloaded keys, take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be
