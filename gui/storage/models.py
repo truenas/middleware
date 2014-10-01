@@ -754,7 +754,6 @@ class MountPoint(Model):
             else:
                 return self._vfs.f_bavail * self._vfs.f_frsize
         except:
-            raise
             if self.mp_volume.is_decrypted():
                 return _(u"Error getting available space")
             else:
