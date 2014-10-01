@@ -2259,7 +2259,7 @@ class CertificateResourceMixin(object):
                     }
                 )
 
-            bundle.data['_view_url'] = reverse('certificate_view',
+            bundle.data['_edit_url'] = reverse('certificate_edit',
                  kwargs={
                     'id': bundle.obj.id
                  }

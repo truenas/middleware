@@ -172,15 +172,28 @@ class CertificateFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-        actions['view'] = {
+	hide_me = """function(evt, actionName, action) {
+              for(var i=0;i < evt.rows.length;i++) {
+                var row = evt.rows[i];
+                if(%s) {
+                  query(".grid" + actionName).forEach(function(item, idx) {
+                    domStyle.set(item, "display", "none");
+                  });
+                  break;
+                }
+              }
+            }"""
+
+        actions['edit'] = {
             'button_name': 'View',
             'on_click': """function() {
                 var mybtn = this;
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
-                    editObject('View', data._view_url, [mybtn,]);
+                    editObject('View', data._edit_url, [mybtn,]);
                 }
             }""",
+            'on_select_after': hide_me % 'row.data.cert_type_CSR',
         }
 
         actions['export_certificate'] = {
@@ -192,6 +205,19 @@ class CertificateFAdmin(BaseFreeAdmin):
                     location.href=data._export_certificate_url;
                 }
             }""",
+            'on_select_after': hide_me % 'row.data.cert_type_CSR',
+        }
+        
+        actions['edit_csr'] = {
+            'button_name': 'Edit',
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Edit',data._CSR_edit_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': hide_me % '!row.data.cert_type_CSR',
         }
 
         actions['export_privatekey'] = {
@@ -203,6 +229,7 @@ class CertificateFAdmin(BaseFreeAdmin):
                     location.href=data._export_privatekey_url;
                 }
             }""",
+            'on_select_after': hide_me % 'row.data.cert_type_CSR',
         }
 
 #        actions['export_certificate_and_privatekey'] = {
