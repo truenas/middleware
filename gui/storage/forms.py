@@ -2095,7 +2095,7 @@ class VolumeExport(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
-                label=_("Delete all shares related to this volume"))
+                label=_("Also delete the share's configuration"))
 
 
 class Dataset_Destroy(Form):
