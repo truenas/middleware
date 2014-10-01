@@ -5174,6 +5174,10 @@ class notifier:
         except:
             systemdataset = SystemDataset.objects.create()
 
+        if not systemdataset.sys_uuid:
+            systemdataset.new_uuid()
+            systemdataset.save()
+
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
         # TODO: Maybe it would be better to use a ForeignKey
