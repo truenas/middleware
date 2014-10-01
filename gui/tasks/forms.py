@@ -1,6 +1,7 @@
 import glob
 import os
 import pwd
+import subprocess
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -110,8 +111,43 @@ class InitShutdownForm(ModelForm):
 
 class RsyncForm(ModelForm):
 
+    rsync_create = forms.BooleanField(
+	initial = False,
+	label = _("Rsync Create"),
+	required = False,
+	help_text = _("Check this if the remotepath specified does"
+		      "<br>not exist, and you want to create it."),
+    )
+
     class Meta:
-        fields = '__all__'
+        
+        fields = [
+	    'rsync_path',
+	    'rsync_user',
+	    'rsync_remotehost',
+	    'rsync_remoteport',
+	    'rsync_mode',
+	    'rsync_remotemodule',
+	    'rsync_remotepath',
+	    'rsync_create',
+	    'rsync_direction',
+	    'rsync_desc',
+	    'rsync_minute',
+	    'rsync_hour',
+	    'rsync_daymonth',
+	    'rsync_month',
+	    'rsync_dayweek',
+	    'rsync_recursive',
+	    'rsync_times',
+	    'rsync_compress',
+	    'rsync_archive',
+	    'rsync_delete',
+	    'rsync_quiet',
+	    'rsync_preserveperm',
+	    'rsync_preserveattr',
+	    'rsync_extra',
+	    'rsync_enabled'
+	] 
         model = models.Rsync
         widgets = {
             'rsync_minute': CronMultiple(
@@ -144,6 +180,20 @@ class RsyncForm(ModelForm):
         self.fields['rsync_mode'].widget.attrs['onChange'] = (
             "rsyncModeToggle();"
         )
+
+    def check_rpath_exists(self):
+	"""A function to check if the rsync_remotepath,
+      	exists or not. Returns TRUE rpath is a directory
+      	and exists, else FALSE"""
+      	
+	ruser = str(self.cleaned_data.get("rsync_user"))
+      	rhost = str(self.cleaned_data.get("rsync_remotehost"))
+      	rport = str(self.cleaned_data.get("rsync_remoteport"))
+      	rpath = str(self.cleaned_data.get("rsync_remotepath"))
+      	proc = subprocess.Popen(
+		'su -m %s -c "ssh -p %s -o "BatchMode yes" %s@%s test -d %s"' % (ruser,rport,ruser,rhost,rpath), shell=True, )
+      	proc.wait()
+      	return proc.returncode == 0
 
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
@@ -208,6 +258,14 @@ class RsyncForm(ModelForm):
                       "with a public key (DSA/ECDSA/RSA) set up in home dir."),
                 ])
                 cdata.pop('rsync_user', None)
+	    if not (self.check_rpath_exists() or self.cleaned_data.get("rsync_create")):
+	      self._errors["rsync_remotepath"] = self.error_class(
+		[_("The Remote Path you specified does not exist or is not a directory."
+		  "<br>Either create one yourself on the remote machine or check the"
+		  "<br>'rsync_create' field."
+		  "<br>**Note**: This could also happen if the remote path entered"
+		  "<br> exceeded 255 characters and was truncated, please restrict it to"
+		  "<br>255. Or it could also be that your SSH credentials (remote host,etc) are wrong.")])  
         return cdata
 
     def save(self):

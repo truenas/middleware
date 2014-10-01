@@ -273,7 +273,7 @@ class Rsync(Model):
         help_text=_("Name of the module defined in the remote rsync daemon"),
     )
     rsync_remotepath = models.CharField(
-        max_length=120,
+        max_length=255,
         verbose_name=_("Remote Path"),
         blank=True,
         help_text=_("Path on remote host to rsync to, e.g. /mnt/tank"),
