@@ -1187,7 +1187,7 @@ define([
             cancelDialog(this);
             commonDialog({
               style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-              name: gettext('ZFS Volume Manager'),
+              name: gettext('Manual Setup'),
               url: me.manualUrl,
               nodes: [registry.byId("tab_Volume")]
             });
