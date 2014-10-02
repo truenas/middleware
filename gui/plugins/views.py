@@ -219,7 +219,12 @@ def plugin_update(request, oid):
 
 
 def install_available(request, oid):
-    jc = JailsConfiguration.objects.all()[0]
+ 
+    try:
+        jc = JailsConfiguration.objects.all()[0]
+    
+    except IndexError:
+        jc = models.JailsConfiguration.objects.create()
 
     try:
         if not jail_path_configured():
