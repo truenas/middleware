@@ -200,26 +200,6 @@ class CIFSForm(ModelForm):
             bind.append(ip)
         return ','.join(bind)
 
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        home = cleaned_data['cifs_srv_homedir_enable']
-        browse = cleaned_data['cifs_srv_homedir_browseable_enable']
-        hdir = cleaned_data.get('cifs_srv_homedir')
-        if (browse or hdir) and not home:
-            self._errors['cifs_srv_homedir_enable'] = self.error_class()
-            if browse:
-                self._errors['cifs_srv_homedir_enable'] += self.error_class([
-                    _("This field is required for \"Enable home directories "
-                        "browsing\"."),
-                ])
-                cleaned_data.pop('cifs_srv_homedir_enable', None)
-            if hdir:
-                self._errors['cifs_srv_homedir_enable'] += self.error_class([
-                    _("This field is required for \"Home directories\"."),
-                ])
-                cleaned_data.pop('cifs_srv_homedir_enable', None)
-        return cleaned_data
-
     def save(self):
         obj = super(CIFSForm, self).save(commit=False)
         obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
