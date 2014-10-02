@@ -112,10 +112,10 @@ class InitShutdownForm(ModelForm):
 class RsyncForm(ModelForm):
 
     rsync_create = forms.BooleanField(
-	initial = False,
-	label = _("Rsync Create"),
-	required = False,
-	help_text = _("Check this if the remotepath specified does"
+        initial = False,
+        label = _("Rsync Create"),
+        required = False,
+        help_text = _("Check this if the remotepath specified does"
 		      "<br>not exist, and you want to create it."),
     )
 
@@ -186,13 +186,14 @@ class RsyncForm(ModelForm):
       	exists or not. Returns TRUE rpath is a directory
       	and exists, else FALSE"""
       	
-	ruser = str(self.cleaned_data.get("rsync_user"))
+	ruser = self.cleaned_data.get("rsync_user").encode('utf8')
       	rhost = str(self.cleaned_data.get("rsync_remotehost"))
       	rport = str(self.cleaned_data.get("rsync_remoteport"))
-      	rpath = str(self.cleaned_data.get("rsync_remotepath"))
-      	proc = subprocess.Popen(
-		'su -m %s -c "ssh -p %s -o "BatchMode yes" %s@%s test -d %s"' % (ruser,rport,ruser,rhost,rpath), shell=True, )
-      	proc.wait()
+        rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
+        proc = subprocess.Popen(
+                """su -m %s -c "ssh -p %s -o 'BatchMode yes' -o 'ConnectTimeout=5' %s@%s test -d %s" """
+                % (ruser,rport,ruser,rhost,rpath), shell=True) 
+        proc.wait()
       	return proc.returncode == 0
 
     def clean_rsync_user(self):
