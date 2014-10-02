@@ -6,6 +6,10 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    depends_on = (
+        ('services', '0147_auto__add_field_cifs_cifs_srv_bindip'),
+    )
+
     def forwards(self, orm):
         for cifs in orm['services.CIFS'].objects.all():
             if not cifs.cifs_srv_homedir_enable:
