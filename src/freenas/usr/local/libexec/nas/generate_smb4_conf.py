@@ -735,37 +735,6 @@ def generate_smb4_conf(smb4_conf, role):
     for line in cifs.cifs_srv_smb_options.split('\n'):
         confset1(smb4_conf, line)
 
-    if cifs.cifs_srv_homedir_enable:
-        valid_users_path = "%U"
-        valid_users = "%U"
-
-        if activedirectory_enabled():
-            try:
-                ad = ActiveDirectory.objects.all()[0]
-                if not ad.ad_use_default_domain:
-                    valid_users_path = "%D/%U"
-                    valid_users = "%D\%U"
-            except:
-                pass
-
-        if cifs.cifs_srv_homedir:
-            cifs_homedir_path = "%s/%s" % (cifs.cifs_srv_homedir, valid_users_path)
-        else:
-            cifs_homedir_path = False
-
-        confset1(smb4_conf, "\n")
-        confset1(smb4_conf, "[homes]", space=0)
-        confset1(smb4_conf, "comment = Home Directories")
-        confset2(smb4_conf, "valid users = %s", valid_users)
-        confset1(smb4_conf, "writable = yes")
-        confset2(smb4_conf, "browseable = %s",
-            "yes" if cifs.cifs_srv_homedir_browseable_enable else "no")
-        if cifs_homedir_path:
-            confset2(smb4_conf, "path = %s", cifs_homedir_path)
-
-        for line in cifs.cifs_srv_homedir_aux.split('\n'):
-            confset1(smb4_conf, line)
-
 
 def generate_smb4_shares(smb4_shares):
     try:
@@ -799,11 +768,35 @@ def generate_smb4_shares(smb4_shares):
                 pass
 
         confset1(smb4_shares, "\n")
-        confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
-        confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
+        if share.cifs_home:
+            confset1(smb4_shares, "[homes]", space=0)
+
+            valid_users_path = "%U"
+            valid_users = "%U"
+
+            if activedirectory_enabled():
+                try:
+                    ad = ActiveDirectory.objects.all()[0]
+                    if not ad.ad_use_default_domain:
+                        valid_users_path = "%D/%U"
+                        valid_users = "%D\%U"
+                except:
+                    pass
+
+            cifs_homedir_path = u"%s/%s" % (share.cifs_path, valid_users_path)
+
+            confset2(smb4_shares, "valid users = %s", valid_users)
+            confset2(smb4_shares, "path = %s", cifs_homedir_path.encode('utf8'))
+            if share.cifs_comment:
+                confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
+            else:
+                confset1(smb4_shares, "comment = Home Directories")
+        else:
+            confset2(smb4_shares, "[%s]", share.cifs_name.encode('utf8'), space=0)
+            confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
+            confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
         confset1(smb4_shares, "printable = no")
         confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
-        confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
         confset2(smb4_shares, "writeable = %s",
             "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
