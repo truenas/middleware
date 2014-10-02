@@ -783,10 +783,11 @@ def generate_smb4_shares(smb4_shares):
                 except:
                     pass
 
-            cifs_homedir_path = u"%s/%s" % (share.cifs_path, valid_users_path)
-
             confset2(smb4_shares, "valid users = %s", valid_users)
-            confset2(smb4_shares, "path = %s", cifs_homedir_path.encode('utf8'))
+
+            if cifs_homedir_path:
+                cifs_homedir_path = u"%s/%s" % (share.cifs_path, valid_users_path)
+                confset2(smb4_shares, "path = %s", cifs_homedir_path.encode('utf8'))
             if share.cifs_comment:
                 confset2(smb4_shares, "comment = %s", share.cifs_comment.encode('utf8'))
             else:

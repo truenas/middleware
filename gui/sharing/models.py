@@ -35,7 +35,8 @@ from freenasUI.middleware.notifier import notifier
 
 class CIFS_Share(Model):
     cifs_path = PathField(
-        verbose_name=_("Path")
+        verbose_name=_("Path"),
+        blank=True,
     )
     cifs_home = models.BooleanField(
         verbose_name=_('Use as home share'),
