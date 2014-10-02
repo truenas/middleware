@@ -181,6 +181,8 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
+* `MineOS <http://minecraft.codeemo.com/>`_
+
 * `minidlna <https://wiki.archlinux.org/index.php/MiniDLNA>`_
 
 * `Mylar <https://github.com/evilhero/mylar>`_
