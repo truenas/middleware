@@ -5102,6 +5102,8 @@ class notifier:
 
     def _restart_system_datasets(self):
         systemdataset = self.system_dataset_create()
+        if systemdataset is None:
+            return None
         if systemdataset.sys_syslog_usedataset:
             self.restart("syslogd")
         self.restart("cifs")
