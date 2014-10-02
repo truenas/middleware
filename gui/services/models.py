@@ -163,27 +163,6 @@ class CIFS(Model):
             help_text=_("These parameters are added to [global] section of "
                 "smb.conf")
             )
-    cifs_srv_homedir_enable = models.BooleanField(
-        verbose_name=_("Enable home directories"),
-        help_text=_("Enable/disable home directories for samba user."),
-        default=False,
-    )
-    cifs_srv_homedir_browseable_enable = models.BooleanField(
-        verbose_name=_("Enable home directories browsing"),
-        help_text=_("Enable/disable home directories browsing for samba "
-            "user."),
-        default=False,
-    )
-    cifs_srv_homedir = PathField(
-            verbose_name=_("Home directories"),
-            blank=True,
-            )
-    cifs_srv_homedir_aux = models.TextField(
-            verbose_name=_("Homes auxiliary parameters"),
-            blank=True,
-            help_text=_("These parameters are added to [homes] section of "
-                "smb.conf")
-            )
     cifs_srv_unixext = models.BooleanField(
             verbose_name=_("Unix Extensions"),
             default=True,
