@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2014-09-20 09:15+0000\n"
+"PO-Revision-Date: 2014-10-01 09:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==0 || ( n%100>1 && n%100<11) "
 "? 1 : (n%100>10 && n%100<20 ) ? 2 : 3);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411204539.0\n"
+"X-POOTLE-MTIME: 1412154873.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10319,4 +10319,20 @@ msgstr ""
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
+msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+msgid "Failed to create %(path)s: %(error)s"
+msgstr ""
+
+#: sharing/forms.py:389
+msgid "Only AlphaNumeric characters are allowed."
+msgstr ""
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
 msgstr ""

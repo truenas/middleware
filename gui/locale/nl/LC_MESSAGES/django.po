@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-09-20 11:21+0000\n"
+"PO-Revision-Date: 2014-10-01 16:33+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411212095.0\n"
+"X-POOTLE-MTIME: 1412181239.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11174,3 +11174,19 @@ msgstr ""
 "iXsystems, Inc. kan niet verantwoordelijk worden gehouden voor enige "
 "verloren of onherstelbare gegevens als gevolg van het gebruik van deze "
 "functie."
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr "rc.conf"
+
+#: sharing/forms.py:94
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "Aanmaken van %(path)s mislukt: %(error)s"
+
+#: sharing/forms.py:389
+msgid "Only AlphaNumeric characters are allowed."
+msgstr "Alleen alfanumerieke tekens zijn toegestaan."
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr "U moet een e-mailadres voor root opgeven"

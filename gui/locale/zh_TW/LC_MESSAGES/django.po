@@ -11285,3 +11285,21 @@ msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
 msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+#, fuzzy
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "刪除複寫"
+
+#: sharing/forms.py:389
+#, fuzzy
+msgid "Only AlphaNumeric characters are allowed."
+msgstr "請使用英文字母、數字和 .  - 和 _ 符號。"
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr ""

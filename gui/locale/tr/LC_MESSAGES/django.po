@@ -11169,3 +11169,21 @@ msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
 msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+#, fuzzy
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+
+#: sharing/forms.py:389
+#, fuzzy
+msgid "Only AlphaNumeric characters are allowed."
+msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr ""
