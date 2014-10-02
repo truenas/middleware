@@ -751,7 +751,7 @@ def generate_smb4_shares(smb4_shares):
         zfsout = []
 
     for share in shares:
-        if not os.path.isdir(share.cifs_path.encode('utf8')):
+        if not os.path.isdir(share.cifs_path.encode('utf8')) and not share.cifs_home:
             continue
 
         task = False
@@ -785,7 +785,7 @@ def generate_smb4_shares(smb4_shares):
 
             confset2(smb4_shares, "valid users = %s", valid_users)
 
-            if cifs_homedir_path:
+            if share.cifs_path:
                 cifs_homedir_path = u"%s/%s" % (share.cifs_path, valid_users_path)
                 confset2(smb4_shares, "path = %s", cifs_homedir_path.encode('utf8'))
             if share.cifs_comment:
