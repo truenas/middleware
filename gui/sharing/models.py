@@ -37,6 +37,10 @@ class CIFS_Share(Model):
     cifs_path = PathField(
         verbose_name=_("Path")
     )
+    cifs_home = models.BooleanField(
+        verbose_name=_('Use as home share'),
+        default=False,
+    )
     cifs_name = models.CharField(
             max_length=120,
             verbose_name=_("Name")
