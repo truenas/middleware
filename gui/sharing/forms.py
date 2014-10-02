@@ -66,6 +66,17 @@ class CIFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.CIFS_Share
 
+    def clean_cifs_home(self):
+        home = self.cleaned_data.get('cifs_home')
+        qs = models.CIFS_Share.objects.filter(cifs_home=True)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_(
+                'Only one share is allowed to be a home share.'
+            ))
+        return home
+
     def clean_cifs_name(self):
         name = self.cleaned_data.get('cifs_name')
         path = self.cleaned_data.get('cifs_path')
