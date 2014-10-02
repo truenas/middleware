@@ -73,7 +73,8 @@ class Migration(SchemaMigration):
             'nfs_maproot_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "''", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'nfs_network': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'nfs_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'nfs_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'nfs_ro': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'nfs_security': ('freenasUI.freeadmin.models.fields.MultiSelectField', [], {'max_length': '200', 'blank': 'True'})
         },
         u'sharing.nfs_share_path': {
             'Meta': {'ordering': "['path']", 'object_name': 'NFS_Share_Path'},
