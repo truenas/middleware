@@ -142,6 +142,7 @@ add_port security/py-openssl
 add_port security/py-htpasswd
 add_port www/apache24
 add_port www/mod_mpm_itk
+add_port devel/py-tabulate
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
