@@ -46,13 +46,36 @@ cifs_restart()
 	return $?
 }
 
+get_bindip()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		cifs_srv_bindip
+	FROM
+		services_cifs
+	ORDER BY
+		-id
+	LIMIT
+		1
+	" | sed 's|,| |g'
+}
+
 resolvconf_start()
 {
-	if [ ! -f /etc/resolv.conf.dc ]
+	local bindip="$(get_bindip)"
+	if [ -z "${bindip}" ]
 	then
-		echo 'nameserver 127.0.0.1' > /etc/resolv.conf.dc
-		chmod 644 /etc/resolv.conf.dc
+		bindip="127.0.0.1"
 	fi
+
+	: > /etc/resolv.conf.dc
+
+	for ip in ${bindip}
+	do
+		echo "nameserver "${ip}"" >> /etc/resolv.conf.dc
+	done
+
+	chmod 644 /etc/resolv.conf.dc
 
 	cp /etc/resolv.conf /etc/resolv.conf.bak
 	cp /etc/resolv.conf.dc /etc/resolv.conf

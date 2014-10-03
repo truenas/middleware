@@ -630,7 +630,7 @@ def generate_smb4_conf(smb4_conf, role):
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
     if cifs.cifs_srv_bindip:
-        confset2(smb4_conf, "interfaces = 127.0.0.1 %s",
+        confset2(smb4_conf, "interfaces = %s",
             cifs.cifs_srv_bindip.replace(',', ' '))
         confset1(smb4_conf, "bind interfaces only = yes")
 
