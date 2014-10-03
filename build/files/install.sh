@@ -1219,7 +1219,6 @@ or RAID sets to which they belong\n${warning_message}" \
 	    15 40
 	then
 	    rv=0
->>>>>>> Much to my surprise, that worked.  At least for a fresh install.
 	else
 	    rv=1
 	fi
