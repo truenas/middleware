@@ -99,6 +99,22 @@ class CIFS_Share(Model):
             verbose_name=_("Hosts Deny"),
             help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings.")
             )
+    cifs_vfsobjects = MultiSelectField(
+        verbose_name=_('VFS Objects'),
+        max_length=255,
+        blank=True,
+        default='aio_pthread,streams_xattr',
+        choices=(
+            ('aio_pthread', 'aio_pthread'),
+            ('audit', 'audit'),
+            ('extd_audit', 'extd_audit'),
+            ('fake_perms', 'fake_perms'),
+            ('netatalk', 'netatalk'),
+            ('streams_depot', 'streams_depot'),
+            ('streams_xattr', 'streams_xattr'),
+        ),
+    )
+
     cifs_auxsmbconf = models.TextField(
             max_length=120,
             verbose_name=_("Auxiliary Parameters"),
