@@ -561,6 +561,16 @@ def dataset_delete(request, name):
     if request.method == 'POST':
         form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
         if form.is_valid():
+            if form.hold:
+                proc = subprocess.Popen(
+                    'zfs release freenas:repl %s' % form.hold,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                retval = proc.communicate()[1]
+                if proc.returncode != 0 and retval:
+                    raise MiddlewareError(retval)
             retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
             if retval == '':
                 notifier().restart("collectd")
