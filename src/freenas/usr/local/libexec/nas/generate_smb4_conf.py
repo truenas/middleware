@@ -810,8 +810,7 @@ def generate_smb4_shares(smb4_shares):
             vfs_objects.append('shadow_copy2')
         if is_within_zfs(share.cifs_path):
             vfs_objects.append('zfsacl')
-        vfs_objects.append('streams_xattr')
-        vfs_objects.append('aio_pthread')
+        vfs_objects.extend(share.cifs_vfsobjects)
 
         confset1(smb4_shares, "recycle:repository = .recycle/%U")
         confset1(smb4_shares, "recycle:keeptree = yes")
