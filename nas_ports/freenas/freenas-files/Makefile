@@ -120,6 +120,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_krb5_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_krb5_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ldap_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ldap_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_nsswitch_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_nsswitch_conf.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_resolv_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_resolv_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_smb4_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_smb4_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ssl_certificates.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ssl_certificates.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_sssd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_sssd_conf.py
@@ -167,6 +168,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-postinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-postinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-proftpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-proftpd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-resolv ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-resolv
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-rsyncd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-rsyncd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pre-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pre-samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-post-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-post-samba

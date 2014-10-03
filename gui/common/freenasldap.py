@@ -25,6 +25,7 @@
 #
 #####################################################################
 import asyncore
+import dns
 import grp
 import hashlib
 import ldap
@@ -786,6 +787,44 @@ class FreeNAS_ActiveDirectory_Base(object):
                     break
 
         return best_host
+
+    @staticmethod 
+    def get_A_records(host):
+        A_records = []
+
+        if not host:
+            return A_records
+  
+        try:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_A_records: "
+                "looking up A records for %s", host)
+            A_records = resolver.query(host, 'A')
+
+        except:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_A_records: "
+                "no A records for %s found, fail!", host)
+            A_records = []
+
+        return A_records
+
+    @staticmethod 
+    def get_AAAA_records(host):
+        AAAA_records = []
+
+        if not host:
+            return AAAA_records
+  
+        try:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
+                "looking up AAAA records for %s", host)
+            AAAA_records = resolver.query(host, 'AAAA')
+
+        except:
+            log.debug("FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
+                "no AAAA records for %s found, fail!", host)
+            AAAA_records = []
+
+        return AAAA_records
 
     @staticmethod
     def get_SRV_records(host):

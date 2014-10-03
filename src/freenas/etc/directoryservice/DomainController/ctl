@@ -60,36 +60,6 @@ get_bindip()
 	" | sed 's|,| |g'
 }
 
-resolvconf_start()
-{
-	local bindip="$(get_bindip)"
-	if [ -z "${bindip}" ]
-	then
-		bindip="127.0.0.1"
-	fi
-
-	: > /etc/resolv.conf.dc
-
-	for ip in ${bindip}
-	do
-		echo "nameserver "${ip}"" >> /etc/resolv.conf.dc
-	done
-
-	chmod 644 /etc/resolv.conf.dc
-
-	cp /etc/resolv.conf /etc/resolv.conf.bak
-	cp /etc/resolv.conf.dc /etc/resolv.conf
-}
-
-resolvconf_stop()
-{
-	if [ -f /etc/resolv.conf.bak ]
-	then
-		cp /etc/resolv.conf.bak /etc/resolv.conf
-		chmod 644 /etc/resolv.conf
-	fi
-}
-
 dcctl_start()
 {
 	local cifs_started=0	
@@ -113,9 +83,7 @@ dcctl_start()
 	echo ${cifs_started} > "${cifs_file}"
 
 	dcctl_cmd ${service} ix-kerberos quietstart
-
-	resolvconf_start
-
+	dcctl_cmd ${service} ix-resolv quietstart
 	dcctl_cmd ${service} ix-nsswitch quietstart
 	dcctl_cmd ${service} ix-pam quietstart
 
@@ -181,7 +149,7 @@ dcctl_stop()
 	fi
 
 	domaincontroller_set 0
-	resolvconf_stop
+	dcctl_cmd ${service} ix-resolv quietstop
 
 	return 0
 }
