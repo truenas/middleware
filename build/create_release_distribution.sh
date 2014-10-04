@@ -25,8 +25,8 @@ __EOF__
 
 # Creating a json generating function
 # It takes 2 params as the input: 
-# 1. The Top Freenas Directory (this is for the Release Notes
-# 2. The Parent path to the build (This is the folder which will contain the x86/x64 dirs)
+# 1. The Parent path to the build (This is the folder which will contain the x86/x64 dirs)
+# 2. The Top Freenas Directory (this is for the Release Notes)
 create_json()
 {
   local dpath=${1}
@@ -54,7 +54,7 @@ create_json()
     "aux_files": [
         {
             "filename": "ReleaseNotes",
-            "hash": "$(sha256 {2}/ReleaseNotes | sed -n -e 's/^.*= //p')"
+            "hash": "$(sha256 ${2}/ReleaseNotes | sed -n -e 's/^.*= //p')"
         },
         {
             "filename": "MANIFEST",
@@ -149,6 +149,9 @@ for ext in GUI_Upgrade.txz iso; do
 		ln ${tfile}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 	fi
 done
+
+sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < ${TOP}/build/README > "${TOP}/${OBJ}/${STAGEDIR}/README"
+cp ${TOP}/FreeBSD/repo-manifest "${TOP}/${OBJ}/${STAGEDIR}/MANIFEST"
 
 echo "Creating the JSON Checksums file..."
 create_json ${TOP}/${OBJ}/${STAGEDIR} ${TOP} 
