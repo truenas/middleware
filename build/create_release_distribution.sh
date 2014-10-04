@@ -4,28 +4,126 @@
 # directory format.
 #
 
+# This is to create the intermediatary JSON blocks for the various
+# different filetypes and so on. It takes 5 params as the input:
+# 1. JSON File to write this to
+# 2. Filename
+# 3. Filetype (iso, usb, ...)
+# 4. Hash of the above file
+# 5. URL of the file on download.freenas.org
+json_block()
+{
+  cat<<-__EOF__>>${1}
+            {
+                "filename": "${2}",
+                "type": "${3}",
+                "hash": "${4}",
+                "url": "${5}/${2}"
+            },
+__EOF__
+}
+
 # Creating a json generating function
+# It takes 2 params as the input: 
+# 1. The Top Freenas Directory (this is for the Release Notes
+# 2. The Parent path to the build (This is the folder which will contain the x86/x64 dirs)
 create_json()
 {
-  local filename=${1}
-  local archbit=${2}
-  local ftype=${3}
-  local hash=${4}
-  local url="http://download.freenas.org/nightlies/$(echo ${VERSION} | sed 's/ *-.*//')/$(echo ${VERSION} | sed -n -e 's/^.*-//p')/${BUILD_TIMESTAMP}/${archbit}/${NANO_NAME%-*}-${archbit}.${ftype}"
+  local dpath=${1}
+  local buildtype=$(echo ${VERSION} | sed -n -e 's/^.*-//p') # Is it RELEASE or nightly milestones
+  local arch # The architecture (x64 or x86)
+  local archbit # The above sans the "x"
+  local ftype # This describes the type (iso, usb, GUI_Upgrade.txz or img)
+  local hash # The Hash of the file
+  local filename # The full name of the file we are dealing with
+  local json_file="$dpath/CHECKSUMS.json" #This is the location of the resulting JSON file
   
-  cat<<-__EOF__>>${filename}.json
+  if [ $buildtype = "RELEASE" ];
+  then
+      local url="http://download.freenas.org/$(echo ${VERSION} | sed 's/ *-.*//')/RELEASE/"
+  else
+      local url="http://download.freenas.org/nightlies/$(echo ${VERSION} | sed 's/ *-.*//')"\
+"/$(echo ${VERSION} | sed -n -e 's/^.*-//p')/${BUILD_TIMESTAMP}/"
+  fi  
+  cat<<-__EOF__>>${json_file}
 {
     "name": "${NANO_LABEL}",
-    "version": "${VERSION}",
-    "arch": "${archbit}",
-    "install_type": "${ftype}",
-    "hash": "${hash}",
+    "version": "$(echo ${VERSION} | sed 's/ *-.*//')",
+    "build_type": "$buildtype",
     "date": "${BUILD_TIMESTAMP}",
-    "url": "${url}"
+    "aux_files": [
+        {
+            "filename": "ReleaseNotes",
+            "hash": "$(sha256 $dpath/../../ReleaseNotes | sed -n -e 's/^.*= //p')"
+        },
+        {
+            "filename": "MANIFEST",
+            "hash": "$(sha256 $dpath/MANIFEST | sed -n -e 's/^.*= //p')"
+        },
+        {
+            "filename": "README",
+            "hash": "$(sha256 $dpath/README | sed -n -e 's/^.*= //p')"
+        }
+    ],
+    "arch": {
+__EOF__
+
+  local archdirs=$(find $dpath -type d -mindepth 1 -maxdepth 1)
+  for x in $archdirs; do
+   archbit=$(basename $x | cut -c 2-)
+   arch=$(basename $x)
+   iso=$(find $x -type f -name \*.iso)
+   usb=$(find $x -type f -name \*.usb)
+   gui_upgrade=$(find $x -type f -name \*.GUI_Upgrade.txz)
+   img=$(find $x -type f -name \*.img)
+   
+   cat<<-__EOF__>>${json_file}
+        "${archbit}": [
+__EOF__
+   
+   if [ ! -z "$iso" ]; then
+      filename=$(basename $iso)
+      hash=$(cat ${iso}.sha256.txt | sed -n -e 's/^.*= //p') 
+      json_block ${json_file} ${filename} "iso" ${hash} ${url}${arch}
+   fi
+   
+   if [ ! -z "$usb" ]; then
+       filename=$(basename $usb)
+       hash=$(cat ${usb}.sha256.txt | sed -n -e 's/^.*= //p') 
+       json_block ${json_file} ${filename} "usb" ${hash} ${url}${arch}
+   fi
+   
+   if [ ! -z "$gui_upgrade" ]; then
+       filename=$(basename $gui_upgrade)
+       hash=$(cat ${gui_upgrade}.sha256.txt | sed -n -e 's/^.*= //p') 
+       json_block ${json_file} ${filename} "gui_upgrade" ${hash} ${url}${arch}
+   fi
+   
+   if [ ! -z "$img" ]; then
+       filename=$(basename $img)
+       hash=$(cat ${img}.sha256.txt | sed -n -e 's/^.*= //p') 
+       json_block ${json_file} ${filename} "img" ${hash} ${url}${arch}
+   fi
+   
+   # Removing the last comma (this is hacky hack)
+   sed -i "" '$s/,$//' ${json_file}
+   
+   cat<<-__EOF__>>${json_file} 
+        ],
+__EOF__
+
+  done
+  
+  # Removing the last comma (this is hacky hack)
+  sed -i "" '$s/,$//' ${json_file}
+  
+  cat<<-__EOF__>>${json_file}
+    }
 }
 __EOF__
 
 }
+
 
 cd "$(dirname "$0")/.."
 TOP="$(pwd)"
