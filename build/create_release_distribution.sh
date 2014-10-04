@@ -54,7 +54,7 @@ create_json()
     "aux_files": [
         {
             "filename": "ReleaseNotes",
-            "hash": "$(sha256 $dpath/../../ReleaseNotes | sed -n -e 's/^.*= //p')"
+            "hash": "$(sha256 {2}/ReleaseNotes | sed -n -e 's/^.*= //p')"
         },
         {
             "filename": "MANIFEST",
@@ -147,6 +147,8 @@ for ext in GUI_Upgrade.txz iso; do
 	if [ -f ${tfile} ]; then
 		ln ${tfile} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 		ln ${tfile}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
-		create_json ${TOP}/${OBJ}/${STAGEDIR}/${arch}/${NANO_NAME%-*}-${arch}.${ext} ${arch} ${ext} $(cat ${tfile}.sha256.txt | sed -n -e 's/^.*= //p') 
 	fi
 done
+
+echo "Creating the JSON Checksums file..."
+create_json ${TOP}/${OBJ}/${STAGEDIR} ${TOP} 
