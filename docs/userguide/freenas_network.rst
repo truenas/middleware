@@ -84,12 +84,12 @@ Figure 7.1a, but can be changed to meet the local network's requirements.
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 
-If you will be using Active Directory, set the IP address of the DNS server used in the realm.
+If you will be using Active Directory, set the IP address of the realm's DNS server in the "Nameserver 1" field.
 
 If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or timeout errors, add an entry for the IP address of
 the FreeNAS® system in the "Host name database" field.
 
-.. note:: in many cases, a FreeNAS® configuration will deliberately exclude default gateway information as a way to make it more difficult for a remote
+.. note:: in many cases, a FreeNAS® configuration does not include default gateway information as a way to make it more difficult for a remote
    attacker to communicate with the server. While this is a reasonable precaution, such a configuration does **not** restrict inbound traffic from sources
    within the local network. However, omitting a default gateway will prevent the FreeNAS® system from communicating with DNS servers, time servers, and mail
    servers that are located outside of the local network. In this case, it is recommended to add :ref:`Static Routes` in order to reach external DNS, NTP, and
@@ -157,12 +157,13 @@ add an interface or edit an already configured interface.
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 
 
-This screen also allows you to configure an alias for the interface. If you wish to set multiple aliases, click the "Add extra alias" link for each alias
-you wish to configure. To delete an alias, highlight the interface in the tree to access its "Edit" screen. Be sure to check the "Delete" checkbox associated
-with the alias. If you instead click the "Delete" button at the bottom of this screen, you will delete the whole interface, not just the alias.
+This screen also allows you to configure an IP alias for the interface, which allows the interface to be configured with multiple IP addresses. If you wish to
+set multiple aliases, click the "Add extra alias" link for each alias you wish to configure. To delete an alias, highlight the interface in the tree to access
+its "Edit" screen. Be sure to check the "Delete" checkbox associated with the alias. If you instead click the "Delete" button at the bottom of this screen,
+you will delete the whole interface, not just the alias.
 
-When configuring multiple interfaces, they can not be members of the same subnet. Check the subnet mask if you receive an error when setting the IP addresses
-on multiple interfaces.
+When configuring multiple interfaces, they can **not** be members of the same subnet. Check the subnet mask if you receive an error when setting the IP
+addresses on multiple interfaces.
 
 When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
 fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
@@ -188,7 +189,7 @@ be a dedicated IPMI interface.
 Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*, a "Type" of
 *Loader* and a "Value" of
 *YES*. This will configure the system to load the driver at bootup. Then, to load the
-*ipmi* kernel module now, without rebooting, type this from Shell::
+*ipmi* kernel module now, without rebooting, type this from :ref:`Shell`::
 
  kldload ipmi
 
@@ -227,9 +228,8 @@ options when configuring IPMI using the FreeNAS® GUI.
 Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
 prompt for a username and the password that you configured. Refer to the documentation for the IPMI device to determine the default administrative username.
 
-The default username is *ADMIN* (in all caps). Once you have logged into the management interface, you can change the administrative username as well as
-create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the
-hardware.
+Once you have logged into the management interface, you can change the default administrative username as well as create additional users. The appearance of
+the utility and the functions that are available within the IPMI management utility will vary depending upon the hardware.
 
 .. _Link Aggregations:
 
@@ -252,8 +252,9 @@ The lagg driver currently supports the following aggregation protocols:
 
 **Failover:** the default protocol. Sends traffic only through the active port. If the master port becomes unavailable, the next active port is used. The
 first interface added is the master port; any interfaces added after that are used as failover devices. By default, received traffic is only accepted when
-received through the active port. This constraint can be relaxed, which is useful for certain bridged network setups, by setting
-*net.link.lagg.failover_rx_all* to a non-zero value in :menuselection:`System --> Sysctls --> Add Sysctl`.
+received through the active port. This constraint can be relaxed, which is useful for certain bridged network setups, by creating a a tunable with a
+"Variable" of *net.link.lagg.failover_rx_all*, a "Value" of a non-zero integer, and a "Type" of
+*Sysctl* in :menuselection:`System --> Tunables --> Add Tunable`.
 
 **FEC:** supports Cisco EtherChannel on older Cisco switches. This is a static setup and does not negotiate aggregation with the peer or exchange frames to
 monitor the link.
@@ -323,10 +324,10 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
     :width: 4.5in
     :height: 3.25in
 
-.. note:: if interfaces are installed but do not appear in the Physical NICs in the LAGG list, check that a FreeBSD driver for the interface exists
+.. note:: if interfaces are installed but do not appear in the "Physical NICs" list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_.
 
-Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the "OK" button.
+To create the link aggregation, select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
 Once the lagg device has been created, click its entry to enable its "Edit", "Delete", and "Edit Members" buttons.
 
@@ -423,7 +424,7 @@ The configurable options are summarized in Table 7.4b.
 
 
 .. note:: options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
-   Typically, changes are made at the lagg level (Figure 5.4c) as each interface member will inherit from the lagg. If you instead configure the interface
+   Typically, changes are made at the lagg level (Figure 7.4c) as each interface member will inherit from the lagg. If you instead configure the interface
    level (Figure 7.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing
    the interface. For instance, the MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
 
@@ -440,7 +441,7 @@ Network Summary
 ---------------
 
 :menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
-configured IP address(es), DNS server(s), and default gateway will be displayed.
+configured IPv4 and IPv6 address(es), DNS server(s), and default gateway will be displayed.
 
 .. _Static Routes:
 
@@ -519,8 +520,8 @@ Table 7.7a summarizes the configurable fields.
 |                   |                | *X* is a number representing the vlan interface                                                   |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
-| Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; if using a newly created |
-|                   |                | Link Aggregation,_it will not appear in the drop-down until the system is rebooted                |
+| Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; note that newly created  |
+|                   |                | :ref:`Link Aggregations` will not appear in the drop-down until the system is rebooted            |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | VLAN Tag          | integer        | should match a numeric tag set up in the switched network                                         |

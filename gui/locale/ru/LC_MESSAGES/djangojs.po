@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-09-19 21:13+0000\n"
+"PO-Revision-Date: 2014-09-22 21:48+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411161232.0\n"
+"X-POOTLE-MTIME: 1411422537.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -306,39 +306,39 @@ msgstr "Название ресурса"
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
-msgstr ""
+msgstr "Это поле может содержать только буквы, цифры и \"_\", \"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Укажите размер используя суфиксы B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Добавить"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Удалить"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Обновить"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Владелец"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Этот пользователь не существует."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Эта группа не существует."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Возврат"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
@@ -346,7 +346,7 @@ msgstr "Мастер"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
-msgstr ""
+msgstr "Пароли не совпадают."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"

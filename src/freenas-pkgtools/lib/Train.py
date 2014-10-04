@@ -10,6 +10,9 @@ class Train(object):
     _descr = None
     _seqno = None
     _time = None
+    _notes = None
+    _notice = None
+    _update = False
 
     def __init__(self, name, description = None, sequence = None, checked = None):
         self._name = name
@@ -49,3 +52,22 @@ class Train(object):
     def SetLastCheckedTime(self, time = str(int(time.time()))):
         self._time = time
         return
+
+    def Notice(self):
+        return self._notice
+
+    def SetNotice(self, notice):
+        self._notice = notice
+
+    def Notes(self):
+        return self._notes
+
+    def SetNotes(self, notes):
+        self._notes = notes
+
+    def SetUpdate(self, u):
+        self._update = u
+
+    def UpdateAvailable(self):
+        return self._update
+

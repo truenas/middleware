@@ -199,3 +199,6 @@ alert is detected. Some of the conditions that trigger an alert include:
 
 *   the system can not find an IP address configured on an iSCSI portal
 
+*   a hot spare is automatically replaced
+
+*   a HA system can not sync to its peer

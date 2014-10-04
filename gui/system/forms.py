@@ -721,15 +721,12 @@ class ManualUpdateWizard(FileWizard):
             'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
-    def done(self, form_list, **kwargs):
-        cleaned_data = self.get_all_cleaned_data()
-        updatefile = cleaned_data.get('updatefile')
-        path = self.file_storage.path(updatefile.file.name)
+    def do_update(self, updatefile, sha256):
 
         # Verify integrity of uploaded image.
-        assert ('sha256' in cleaned_data)
+        path = self.file_storage.path(updatefile.file.name)
         checksum = notifier().checksum(path)
-        if checksum != str(cleaned_data['sha256']).lower().strip():
+        if checksum != sha256.lower().strip():
             self.file_storage.delete(updatefile.name)
             raise MiddlewareError("Invalid update file, wrong checksum")
 
@@ -754,6 +751,14 @@ class ManualUpdateWizard(FileWizard):
             notifier().destroy_upload_location()
         except Exception, e:
             log.warn("Failed to destroy upload location: %s", e.value)
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        assert ('sha256' in cleaned_data)
+        updatefile = cleaned_data.get('updatefile')
+
+        self.do_update(updatefile, cleaned_data['sha256'].encode('ascii', 'ignore'))
+
         self.request.session['allow_reboot'] = True
 
         response = render_to_response('system/done.html', {
@@ -2237,14 +2242,29 @@ class CertificateForm(ModelForm):
         notifier().start("ix-ssl")
 
 
-class CertificateViewForm(ModelForm):
+class CertificateEditForm(ModelForm):
+    cert_name = forms.CharField(
+        label=_("Name"),
+        required=True,
+        help_text=_("Descriptive Name")
+    )
+    cert_certificate = forms.CharField(
+        label=_("Certificate"),
+        widget=forms.Textarea(),
+        required=True,
+        help_text=_("Cut and paste the contents of your certificate here")
+    )
 
     def __init__(self, *args, **kwargs):
-        super(CertificateViewForm, self).__init__(*args, **kwargs)
+        super(CertificateEditForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_certificate'].widget.attrs['readonly'] = True
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
+
+    def save(self):
+        super(CertificateEditForm, self).save()
+        notifier().start("ix-ssl") 
 
     class Meta:
         fields = [
@@ -2527,6 +2547,8 @@ class CertificateCreateCSRForm(ModelForm):
 
         self.instance.cert_CSR = \
             crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
+        self.instance.cert_privatekey = \
+            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
         super(CertificateCreateCSRForm, self).save()
 

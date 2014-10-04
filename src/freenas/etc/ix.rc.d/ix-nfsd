@@ -87,7 +87,7 @@ generate_exports()
 			        line="${line} -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
                         fi
 		fi
-		if [ -n ${nfs_security} -a ${v4} -eq 1 ]; then
+		if [ -n "${nfs_security}" -a ${v4} -eq 1 ]; then
 			security=`echo ${nfs_security} | tr "," ":"`
 			if [ -n "${security}" ]; then
 				line="${line} -sec=${security}"

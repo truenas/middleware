@@ -82,7 +82,7 @@ from freenasUI.system.utils import CheckUpdateHandler, UpdateHandler
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
-DDFILE = '/tmp/.upgrade_dd'
+INSTALLFILE = '/tmp/.upgrade_install'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
@@ -666,27 +666,11 @@ def manualupdate_progress(request):
                     data['percent'] = int(percent)
                 else:
                     data['indeterminate'] = True
-    elif os.path.exists(DDFILE):
-        with open(DDFILE, 'r') as f:
-            pid = f.readline()
-            if pid:
-                pid = int(pid.strip())
-        try:
-            os.kill(pid, signal.SIGINFO)
-            time.sleep(0.5)
-            with open(DDFILE, 'r') as f2:
-                line = f2.read()
-            reg = RE_DD.findall(line)
-            if reg:
-                current = int(reg[-1])
-                size = os.stat("/var/tmp/firmware/firmware.img").st_size
-                percent = int((float(current) / size) * 100)
-                data = {
-                    'step': 3,
-                    'percent': percent,
-                }
-        except OSError:
-            pass
+    elif os.path.exists(INSTALLFILE):
+        data = {
+            'step': 3,
+            'indeterminate': True,
+        }
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
@@ -1214,23 +1198,23 @@ def certificate_create_CSR(request):
     })
 
 
-def certificate_view(request, id):
+def certificate_edit(request, id):
 
     cert = models.Certificate.objects.get(pk=id)
 
     if request.method == "POST":
-        form = forms.CertificateViewForm(request.POST, instance=cert)
+        form = forms.CertificateEditForm(request.POST, instance=cert)
         if form.is_valid():
-            #form.save()
+            form.save()
             return JsonResp(
                 request,
-                message=_("Internal Certificate Viewed.")
+                message=_("Internal Certificate successfully edited.")
             )
 
     else:
-        form = forms.CertificateViewForm(instance=cert)
+        form = forms.CertificateEditForm(instance=cert)
 
-    return render(request, "system/certificate/certificate_view.html", {
+    return render(request, "system/certificate/certificate_edit.html", {
         'form': form
     })
 

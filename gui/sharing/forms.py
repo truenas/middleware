@@ -66,6 +66,18 @@ class CIFS_ShareForm(ModelForm):
         fields = '__all__'
         model = models.CIFS_Share
 
+    def clean_cifs_home(self):
+        home = self.cleaned_data.get('cifs_home')
+        if home:
+            qs = models.CIFS_Share.objects.filter(cifs_home=True)
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists():
+                raise forms.ValidationError(_(
+                    'Only one share is allowed to be a home share.'
+                ))
+        return home
+
     def clean_cifs_name(self):
         name = self.cleaned_data.get('cifs_name')
         path = self.cleaned_data.get('cifs_path')
@@ -83,10 +95,21 @@ class CIFS_ShareForm(ModelForm):
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         return net
 
+    def clean(self):
+        path = self.cleaned_data.get('cifs_path')
+        home = self.cleaned_data.get('cifs_home')
+
+        if not home and not path:
+            self._errors['cifs_path'] = self.error_class([
+                _('This field is required.')
+            ])
+
+        return self.cleaned_data
+
     def save(self):
         obj = super(CIFS_ShareForm, self).save(commit=False)
         path = self.cleaned_data.get('cifs_path').encode('utf8')
-        if not os.path.exists(path):
+        if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
             except OSError, e:
@@ -374,26 +397,28 @@ class NFS_SharePathForm(ModelForm):
         return path
 
 class WebDAV_ShareForm(ModelForm):
- 
+
     class Meta:
-	fields = '__all__'
-	model = models.WebDAV_Share
-	
+        fields = '__all__'
+        model = models.WebDAV_Share
+
     def clean(self):
-	cdata = self.cleaned_data
-	if not cdata.get("webdav_name"):
-	    cdata['webdav_name'] = self.instance.webdav_name
-	davname= self.cleaned_data.get("webdav_name")
-	if not davname.isalnum():
-            raise forms.ValidationError('Only AlphaNumeric characters are allowed.')
-	return cdata
+        cdata = self.cleaned_data
+        if not cdata.get("webdav_name"):
+            cdata['webdav_name'] = self.instance.webdav_name
+        davname = self.cleaned_data.get("webdav_name")
+        if not davname.isalnum():
+            raise forms.ValidationError(_(
+                'Only AlphaNumeric characters are allowed.'
+            ))
+        return cdata
 
     def save(self):
-	ret = super(WebDAV_ShareForm,self).save()
-	notifier().reload("webdav")
-	return ret
+        ret = super(WebDAV_ShareForm, self).save()
+        notifier().reload("webdav")
+        return ret
 
-    def done(self,request,events):
-	if not services.objects.get(srv_service='webdav').srv_enable:
-	    events.append('ask_service("webdav")')
-	super(WebDAV_ShareForm, self).done(request,events)
+    def done(self, request, events):
+        if not services.objects.get(srv_service='webdav').srv_enable:
+            events.append('ask_service("webdav")')
+        super(WebDAV_ShareForm, self).done(request, events)

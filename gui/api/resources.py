@@ -79,7 +79,13 @@ from freenasUI.storage.forms import (
 )
 from freenasUI.storage.models import Disk, Replication
 from freenasUI.system.alert import alertPlugins, Alert
-from freenasUI.system.forms import BootEnvAddForm, BootEnvRenameForm
+from freenasUI.system.forms import (
+    BootEnvAddForm,
+    BootEnvRenameForm,
+    ManualUpdateTemporaryLocationForm,
+    ManualUpdateUploadForm,
+    ManualUpdateWizard,
+)
 from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
@@ -2253,7 +2259,7 @@ class CertificateResourceMixin(object):
                     }
                 )
 
-            bundle.data['_view_url'] = reverse('certificate_view',
+            bundle.data['_edit_url'] = reverse('certificate_edit',
                  kwargs={
                     'id': bundle.obj.id
                  }
@@ -2457,3 +2463,46 @@ class BootEnvResource(NestedMixin, DojoResource):
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
             )
         return bundle
+
+
+class UpgradeResourceMixin(NestedMixin):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/manual%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('manual'),
+                name="api_upgrade_manual"
+            ),
+        ]
+
+    def manual(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        locationform = ManualUpdateTemporaryLocationForm(
+            request.POST,
+        )
+        updateform = ManualUpdateUploadForm(
+            request.POST, request.FILES
+        )
+
+        if not locationform.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, locationform.errors)
+            )
+
+        if not updateform.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, updateform.errors)
+            )
+
+        locationform.done()
+
+        updateview = ManualUpdateWizard()
+        updateview.do_update(
+            updateform.cleaned_data.get('updatefile'),
+            updateform.cleaned_data.get('sha256'),
+        )
+        return HttpResponse('Manual update finished.', status=202)

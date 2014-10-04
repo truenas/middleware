@@ -35,6 +35,7 @@ List resource
         {
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
+                "cifs_home": false,
                 "cifs_default_permissions": true,
                 "cifs_guestok": false,
                 "cifs_showhiddenfiles": false,
@@ -86,6 +87,7 @@ Create resource
         {
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
+                "cifs_home": false,
                 "cifs_default_permissions": true,
                 "cifs_guestok": false,
                 "cifs_showhiddenfiles": false,
@@ -100,6 +102,7 @@ Create resource
         }
 
    :json string cifs_name: name of the share
+   :json string cifs_home: use this share as a special users home directory
    :json string cifs_path: path to share
    :json string cifs_comment: user comment
    :json string cifs_hostsallow: explictly allowed hosts
@@ -145,6 +148,7 @@ Update resource
         {
                 "cifs_hostsallow": "",
                 "cifs_name": "My Test Share",
+                "cifs_home": false,
                 "cifs_default_permissions": true,
                 "cifs_guestok": true,
                 "cifs_showhiddenfiles": false,
@@ -159,6 +163,7 @@ Update resource
         }
 
    :json string cifs_name: name of the share
+   :json string cifs_home: use this share as a special users home directory
    :json string cifs_path: path to share
    :json string cifs_comment: user comment
    :json string cifs_hostsallow: explictly allowed hosts

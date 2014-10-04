@@ -2800,7 +2800,9 @@ class notifier:
         return True
 
     def apply_update(self, path):
+        from freenasUI.system.views import INSTALLFILE
         os.chdir(os.path.dirname(path))
+        open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
                                     ['bin/install_worker.sh', 'install'],
@@ -2811,6 +2813,7 @@ class notifier:
         finally:
             os.chdir('/')
             os.unlink(path)
+            os.unlink(INSTALLFILE)
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def umount_filesystems_within(self, path):
@@ -5099,6 +5102,8 @@ class notifier:
 
     def _restart_system_datasets(self):
         systemdataset = self.system_dataset_create()
+        if systemdataset is None:
+            return None
         if systemdataset.sys_syslog_usedataset:
             self.restart("syslogd")
         self.restart("cifs")
@@ -5171,6 +5176,10 @@ class notifier:
         except:
             systemdataset = SystemDataset.objects.create()
 
+        if not systemdataset.sys_uuid:
+            systemdataset.new_uuid()
+            systemdataset.save()
+
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
         # TODO: Maybe it would be better to use a ForeignKey
@@ -5213,6 +5222,9 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return systemdataset
 
+        if not volume.is_decrypted():
+            return None
+
         self.system_dataset_rename(basename, systemdataset)
 
         datasets = [basename]
@@ -5222,24 +5234,17 @@ class notifier:
         ):
             datasets.append('%s/%s' % (basename, sub))
 
-        assert volume.vol_fstype in ('ZFS', 'UFS')
+        assert volume.vol_fstype in ('ZFS')
 
         createdds = False
         for dataset in datasets:
-            if volume.vol_fstype == 'ZFS':
-                proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
-                proc.communicate()
-                if proc.returncode == 0:
-                    continue
-                self.create_zfs_dataset(dataset, _restart_collectd=False)
-                createdds = True
-                os.chmod('/mnt/%s' % dataset, 0755)
-            else:
-                if not os.path.exists(dataset):
-                    try:
-                        os.makedirs(dataset, mode=0755)
-                    except:
-                        pass
+            proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
+            proc.communicate()
+            if proc.returncode == 0:
+                continue
+            self.create_zfs_dataset(dataset, _restart_collectd=False)
+            createdds = True
+            os.chmod('/mnt/%s' % dataset, 0755)
 
         if createdds:
             self.restart('collectd')
@@ -5317,54 +5322,56 @@ class notifier:
             return None
         return os.path.realpath(SYSTEMPATH)
 
-    def _createlink(self, SYSTEMPATH, item):
-        if not os.path.isfile(os.path.join(SYSTEMPATH, os.path.basename(item))):
-            if os.path.exists(os.path.join(SYSTEMPATH, os.path.basename(item))):
+    def _createlink(self, syspath, item):
+        if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
+            if os.path.exists(os.path.join(syspath, os.path.basename(item))):
                 # There's something here but it's not a file.
-                shutil.rmtree(os.path.join(SYSTEMPATH, os.path.basename(item)))
-            open(os.path.join(SYSTEMPATH, os.path.basename(item)), "w").close()
-        os.symlink(os.path.join(SYSTEMPATH, os.path.basename(item)), item)
+                shutil.rmtree(os.path.join(syspath, os.path.basename(item)))
+            open(os.path.join(syspath, os.path.basename(item)), "w").close()
+        os.symlink(os.path.join(syspath, os.path.basename(item)), item)
 
     def nfsv4link(self):
-        SYSTEMPATH = self.system_dataset_path()
-        if SYSTEMPATH:
-            restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-            if (
-                hasattr(self, 'failover_status') and
-                self.failover_status() == 'BACKUP'
-            ):
-                pass
+        syspath = self.system_dataset_path()
+        if not syspath:
+            return None
+
+        restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
+        if (
+            hasattr(self, 'failover_status') and
+            self.failover_status() == 'BACKUP'
+        ):
+            return None
+
+        for item in restartfiles:
+            if os.path.exists(item):
+                if os.path.isfile(item) and not os.path.islink(item):
+                    # It's an honest to goodness file, this shouldn't ever happen...but
+                    if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
+                        # there's no file in the system dataset, so copy over what we have
+                        # being careful to nuke anything that is there that happens to
+                        # have the same name.
+                        if os.path.exists(os.path.join(syspath, os.path.basename(item))):
+                            shutil.rmtree(os.path.join(syspath, os.path.basename(item)))
+                        shutil.copy(item, os.path.join(syspath, os.path.basename(item)))
+                    # Nuke the original file and create a symlink to it
+                    # We don't need to worry about creating the file on the system dataset
+                    # because it's either been copied over, or was already there.
+                    os.unlink(item)
+                    os.symlink(os.path.join(syspath, os.path.basename(item)), item)
+                elif os.path.isdir(item):
+                    # Pathological case that should never happen
+                    shutil.rmtree(item)
+                    self._createlink(syspath, item)
+                else:
+                    if not os.path.exists(os.readlink(item)):
+                        # Dead symlink or some other nastiness.
+                        shutil.rmtree(item)
+                        self._createlink(syspath, item)
             else:
-                for item in restartfiles:
-                    if os.path.exists(item):
-                        if os.path.isfile(item) and not os.path.islink(item):
-                            # It's an honest to goodness file, this shouldn't ever happen...but
-                            if not os.path.isfile(os.path.join(SYSTEMPATH, os.path.basename(item))):
-                                # there's no file in the system dataset, so copy over what we have
-                                # being careful to nuke anything that is there that happens to
-                                # have the same name.
-                                if os.path.exists(os.path.join(SYSTEMPATH, os.path.basename(item))):
-                                    shutil.rmtree(os.path.join(SYSTEMPATH, os.path.basename(item)))
-                                shutil.copy(item, os.path.join(SYSTEMPATH, os.path.basename(item)))
-                            # Nuke the original file and create a symlink to it
-                            # We don't need to worry about creating the file on the system dataset
-                            # because it's either been copied over, or was already there.
-                            os.unlink(item)
-                            os.symlink(os.path.join(SYSTEMPATH, os.path.basename(item)), item)
-                        elif os.path.isdir(item):
-                            # Pathological case that should never happen
-                            shutil.rmtree(item)
-                            self._createlink(SYSTEMPATH, item)
-                        else:
-                            if not os.path.exists(os.readlink(item)):
-                                # Dead symlink or some other nastiness.
-                                shutil.rmtree(item)
-                                self._createlink(SYSTEMPATH, item)
-                    else:
-                        # We can get here if item is a dead symlink
-                        if os.path.islink(item):
-                            shutil.rmtree(item)
-                        self._createlink(SYSTEMPATH, item)
+                # We can get here if item is a dead symlink
+                if os.path.islink(item):
+                    os.unlink(item)
+                self._createlink(syspath, item)
 
     def system_dataset_migrate(self, _from, _to):
 

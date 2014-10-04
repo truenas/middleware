@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-09-19 21:13+0000\n"
+"PO-Revision-Date: 2014-09-22 21:57+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411161232.0\n"
+"X-POOTLE-MTIME: 1411423024.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -6946,7 +6946,7 @@ msgstr "Архитектура"
 
 #: jails/models.py:380
 msgid "Template must have 0 instances!"
-msgstr "Шаблон не должен экземпляров!"
+msgstr "Шаблон не должен иметь экземпляров!"
 
 #: jails/models.py:395
 #: jails/models.py:396
@@ -8860,9 +8860,8 @@ msgid "LANMAN2"
 msgstr ""
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:176
 msgid "SMB2"
@@ -9139,14 +9138,12 @@ msgid "TLS enable diagnostics"
 msgstr ""
 
 #: services/models.py:1308
-#, fuzzy
 msgid "TLS export certificate data"
-msgstr "Самоподписанный сертификат"
+msgstr ""
 
 #: services/models.py:1312
-#, fuzzy
 msgid "TLS no certificate request"
-msgstr "Самоподписанный сертификат"
+msgstr ""
 
 #: services/models.py:1316
 msgid "TLS no empty fragments"
@@ -9165,9 +9162,8 @@ msgid "TLS use implicit SSL"
 msgstr ""
 
 #: services/models.py:1332
-#, fuzzy
 msgid "TLS DNS name required"
-msgstr "Необходимо число."
+msgstr "Необходимо TLS DNS имя"
 
 #: services/models.py:1336
 msgid "TLS IP address required"
@@ -9194,9 +9190,8 @@ msgid "Use keytab"
 msgstr ""
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Файл Kerberos Keytab"
+msgstr "Файл kerberos keytab"
 
 #: services/models.py:1850
 msgid "Interface Description"
@@ -9257,9 +9252,8 @@ msgid "DNS Forwarder"
 msgstr ""
 
 #: services/models.py:2083
-#, fuzzy
 msgid "DNS Forwarder IP Address"
-msgstr "IP-адрес контроллера"
+msgstr "IP-адрес DNS Forwarder'а"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
@@ -9383,16 +9377,16 @@ msgid "Initialize Safely"
 msgstr "Безопасная инициализация"
 
 #: storage/forms.py:906
-#, fuzzy
 msgid ""
 "The selected disks were not verified for these import rules. Filesystem "
 "check failed."
-msgstr "Выбранные диски не были проверены для этих правил импорта."
+msgstr ""
+"Выбранные диски не были проверены для этих правил импорта. Проверка файловой "
+"системы не удалась."
 
 #: storage/forms.py:1422
-#, fuzzy
 msgid "Share type"
-msgstr "Комментарии к общему ресурсу"
+msgstr "Типа общего ресурса"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
@@ -9732,15 +9726,16 @@ msgid "Upload your certificate file here."
 msgstr "Поместите сюда содержимое файла Вашего сертификата."
 
 #: system/models.py:1148
-#, fuzzy
 msgid "Reporting Database"
-msgstr "Отчёт"
+msgstr "База данных отчётов"
 
 #: system/models.py:1150
 msgid ""
 "Save the Round-Robin Database (RRD) used by system statistics collection "
 "daemon into the system dataset"
 msgstr ""
+"Сохранять базу данных (RRD), используемую демоном сбора статистики в "
+"системный набор данных"
 
 #: system/nav.py:45
 #: templates/system/index.html:3
@@ -9789,7 +9784,7 @@ msgstr "Действительно хотите продолжить?"
 
 #: services/models.py:256
 msgid "Obey pam restrictions"
-msgstr ""
+msgstr "Соблюдать ограничения PAM"
 
 #: services/models.py:258
 msgid ""
@@ -9799,7 +9794,7 @@ msgstr ""
 
 #: services/models.py:591
 msgid "NAA...used only by the initiator"
-msgstr ""
+msgstr "NAA...используется только инициатором"
 
 #: services/models.py:595
 msgid "Enable TPC"
@@ -9813,20 +9808,17 @@ msgstr "Разрешить инициаторами хсору на другие
 #: templates/directoryservice/ldap_edit.html:8
 #: templates/directoryservice/nis_edit.html:8
 #: templates/directoryservice/nt4_edit.html:8
-#, fuzzy
 msgid "Rebuild Directory Service Cache"
-msgstr "Служба каталогов"
+msgstr "Перестроить кеш службы каталогов"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Чтение"
+msgstr "ad"
 
 #: choices.py:788
-#, fuzzy
 msgid "autorid"
-msgstr "автозапуск"
+msgstr "авто-rid"
 
 #: choices.py:789
 msgid "hash"
@@ -9846,9 +9838,8 @@ msgid "rfc2307"
 msgstr ""
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Пятница"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
@@ -10062,9 +10053,8 @@ msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
 
 #: directoryservice/models.py:362
-#, fuzzy
 msgid "CN Realm"
-msgstr "Область"
+msgstr "CN Область"
 
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
@@ -10110,6 +10100,10 @@ msgid ""
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"Определяет пользовательский DN, который будет использоваться для "
+"аутентификации. Секрет для аутентификации этого пользователя должен "
+"храниться с net idmap secret (см net(8)). Если отсутствует, будет выполнено "
+"анонимное подключение."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
@@ -10230,9 +10224,8 @@ msgstr "Имя пула"
 
 # или Автоматический, или Авто
 #: system/forms.py:1223
-#, fuzzy
 msgid "Automatic"
-msgstr "Автозапуск"
+msgstr "Авто"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
@@ -10292,9 +10285,8 @@ msgid "Estimated Total Size"
 msgstr "Ожидаемый общий размер"
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Безопасная инициализация"
+msgstr "Мастер"
 
 #: services/forms.py:302
 msgid "This field is required to enable NFSv4."
@@ -10320,14 +10312,12 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Файл Kerberos Keytab"
+msgstr "Kerberos Keytab"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Требуется файл"
+msgstr "Требуется keytab."
 
 #: directoryservice/models.py:549
 msgid "Kerberos realm."
@@ -10342,9 +10332,8 @@ msgid "KDC for this realm."
 msgstr "KDC для этой области."
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Администратор"
+msgstr "Административный Сервер"
 
 #: directoryservice/models.py:560
 msgid ""
@@ -10390,7 +10379,7 @@ msgstr "CIFS успешно обновлен."
 
 #: sharing/models.py:290
 msgid "Security"
-msgstr ""
+msgstr "Безопасность"
 
 #: storage/forms.py:2052
 #, fuzzy
@@ -10404,9 +10393,8 @@ msgstr ""
 "небезопасных сетях."
 
 #: storage/models.py:819
-#, fuzzy
 msgid "Encryption Cipher"
-msgstr "Тип шифрования"
+msgstr "Шифр"
 
 #: storage/models.py:821
 msgid "Standard"
@@ -10428,18 +10416,16 @@ msgstr ""
 "небезопасных сетях."
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos"
-msgstr "Сервер Kerberos"
+msgstr "Kerberos"
 
 #: templates/directoryservice/index.html:15
 msgid "Kerberos Realms"
 msgstr "Область Kerberos"
 
 #: templates/directoryservice/index.html:18
-#, fuzzy
 msgid "Kerberos Keytabs"
-msgstr "Файл Kerberos Keytab"
+msgstr "Kerberos Keytabs"
 
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
@@ -10554,31 +10540,28 @@ msgid "FQDN of the global catalog server to use."
 msgstr "Имя хоста сервера глобального каталога."
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Суффикс пользователя"
+msgstr "Суффикс SUDO"
 
 #: directoryservice/models.py:996
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Этот параметр указывает суффикс, который используется для пользователей, "
-"если они добавлены в каталог LDAP, например ou=Users"
+"Этот параметр указывает суффикс, который используется для SUDO "
+"пользователей, если они добавлены в каталог LDAP, например, ou=SUDOers"
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Механизм idmap"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
 msgstr ""
 
 #: jails/forms.py:92
-#, fuzzy
 msgid "Template"
-msgstr "Шаблоны"
+msgstr "Шаблон"
 
 #: jails/views.py:492
 msgid "Jail Template successfully created."
@@ -10686,28 +10669,25 @@ msgstr ""
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
-msgstr ""
+msgstr "Ресурс WebDAV"
 
 #: sharing/models.py:375
-#, fuzzy
 msgid "WebDAV Shares"
-msgstr "Активные общие ресурсы"
+msgstr "Ресурсы WebDAV"
 
 #: storage/admin.py:263
 #: storage/admin.py:361
-#, fuzzy
 msgid "Edit Options"
-msgstr "Изменить опции ZFS"
+msgstr "Редактировать параметры"
 
 #: storage/admin.py:268
 #: storage/admin.py:367
-#, fuzzy
 msgid "Create Dataset"
-msgstr "Создание набора данных ZFS"
+msgstr "Создание набора данных"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
-msgstr ""
+msgstr "Учитывать регистр"
 
 #: system/admin.py:49
 msgid "Internal"
@@ -10823,19 +10803,17 @@ msgid "Check Automatically For Updates"
 msgstr "Автоматически проверять обновления"
 
 #: system/utils.py:82
-#, fuzzy
 msgid "Downloading"
-msgstr "Скачать ключ"
+msgstr "Загрузка"
 
 #: system/utils.py:103
-#, fuzzy
 msgid "Installing"
 msgstr "Установка"
 
 #: system/nav.py:32
 #: templates/system/index.html:9
 msgid "Boot"
-msgstr ""
+msgstr "Загрузка"
 
 #: system/models.py:583
 #, fuzzy
@@ -10844,30 +10822,26 @@ msgstr "Описание"
 
 #: system/models.py:600
 msgid "Signing Request"
-msgstr ""
+msgstr "Запрос подписи"
 
 #: system/models.py:601
-#, fuzzy
 msgid "Cut and paste the contents of your CSR here"
 msgstr ""
-"Скопируйте и вставьте сюда содержимое файлов Ваших сертификатов секретного и "
-"открытого ключей."
+"Скопируйте и вставьте сюда содержимое Вашего запроса на подпись сертификата"
 
 #: system/models.py:606
 msgid "Key length"
-msgstr ""
+msgstr "Длина ключа"
 
 #: system/models.py:669
-#, fuzzy
 msgid "Serial for next certificate"
-msgstr "Самоподписанный сертификат"
+msgstr "Порядковый номер следующего сертификата"
 
 #: system/views.py:163
 #: system/views.py:164
 #: system/views.py:165
-#, fuzzy
 msgid "Create"
-msgstr "Создать zvol"
+msgstr "Создать"
 
 #: system/models.py:675
 msgid "Signing Certificate Authority"
@@ -10876,40 +10850,34 @@ msgstr ""
 #: system/views.py:171
 #: system/views.py:172
 #: system/views.py:176
-#, fuzzy
 msgid "Activate"
-msgstr "Активен"
+msgstr "Активировать"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Certificate Authority"
-msgstr "Сертификат SSL"
+msgstr "Удостоверяющий центр"
 
 #: system/views.py:189
-#, fuzzy
 msgid "Created"
-msgstr "Создать zvol"
+msgstr "Создан"
 
 #: system/views.py:203
-#, fuzzy
 msgid "Boot Environment successfully activated."
-msgstr "Набор данных успешно изменен."
+msgstr "Окружение загрузки успешно активировано."
 
 #: system/views.py:207
 msgid "Failed to activate Boot Environment."
-msgstr ""
+msgstr "Не удалось активировать окружение загрузки."
 
 #: system/views.py:221
-#, fuzzy
 msgid "Boot Environment successfully added."
-msgstr "Том успешно добавлен."
+msgstr "Окружение загрузки успешно добавлено."
 
 #: system/views.py:178
 #: system/views.py:179
 #: system/views.py:180
-#, fuzzy
 msgid "Rename"
-msgstr "Имя пользователя"
+msgstr "Переименовать"
 
 #: system/nav.py:83
 #: templates/system/index.html:24
@@ -10917,37 +10885,32 @@ msgid "CAs"
 msgstr ""
 
 #: system/views.py:238
-#, fuzzy
 msgid "Boot Environment successfully deleted."
-msgstr "Снимок успешно удален."
+msgstr "Окружение загрузки успешно удалено."
 
 #: system/views.py:242
 msgid "Failed to delete Boot Environment."
-msgstr ""
+msgstr "Не удалось удалить окружение загрузки."
 
 #: system/views.py:260
-#, fuzzy
 msgid "Boot Environment successfully renamed."
-msgstr "Том успешно добавлен."
+msgstr "Окружение загрузки успешно переименовано."
 
 #: system/views.py:896
-#, fuzzy
 msgid "Certificate Authority successfully imported."
-msgstr "Jail успешно импортирован."
+msgstr "Центр сертификации успешно импортирован."
 
 #: system/views.py:915
-#, fuzzy
 msgid "Internal Certificate Authority successfully created."
-msgstr "Шаблон jail успешно изменен."
+msgstr "Внутренний цетр сертификации успешно создан."
 
 #: system/views.py:934
 msgid "Intermediate Certificate Authority successfully created."
-msgstr ""
+msgstr "Промежуточный центр сертификации успешно создан."
 
 #: system/views.py:1206
-#, fuzzy
 msgid "Internal Certificate Viewed."
-msgstr "Сертификат SSL"
+msgstr "Внутренний сертификат просмотрен."
 
 #: system/views.py:955
 msgid "Certificate Authority successfully edited."
@@ -11056,9 +11019,8 @@ msgstr "Переименовать окружение загрузки %(name)s"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "Применить обновление"
+msgstr "Ручное обновление"
 
 #: services/models.py:268
 msgid ""
@@ -11069,14 +11031,12 @@ msgstr ""
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
 #: templates/storage/volume_datagrid.html:19
-#, fuzzy
 msgid "Import Disk"
-msgstr "Импорт"
+msgstr "Импорт диска"
 
 #: system/forms.py:1852
-#, fuzzy
 msgid "Root E-mail"
-msgstr "E-mail"
+msgstr "E-mail root'а"
 
 #: system/forms.py:1843
 msgid "Administrative email address used for alerts."
@@ -11094,7 +11054,7 @@ msgstr "Показывать консольные сообщения в нижн
 #: system/views.py:164
 #: system/views.py:165
 msgid "Clone"
-msgstr ""
+msgstr "Клонировать"
 
 #: directoryservice/models.py:804
 msgid "Site Name"
@@ -11122,26 +11082,27 @@ msgstr ""
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
-msgstr ""
+msgstr "Только одна репликация разрешена для набора данных."
 
 #: storage/forms.py:1973
 msgid ""
 "Only one replication allowed per dataset, including parent dataset set up "
 "recursively."
 msgstr ""
+"Только одна репликация разрешена для набора данных, в том числе настроенная "
+"рекурсивно для материнского набора."
 
 #: system/forms.py:1889
 msgid "Trains"
 msgstr "Поезда"
 
 #: storage/admin.py:375
-#, fuzzy
 msgid "Edit zvol"
-msgstr "Добавить zvol"
+msgstr "Изменить zvol"
 
 #: storage/forms.py:346
 msgid "Only one row for the vitual device of type %s is allowed."
-msgstr ""
+msgstr "Допускается только одна строка для виртуального устройства типа %s."
 
 #: storage/views.py:494
 msgid "Zvol successfully edited."
@@ -11158,9 +11119,8 @@ msgid ""
 msgstr ""
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
 msgid "IPv6 Autoconfigure"
@@ -11171,17 +11131,20 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For example http(s)://ip-"
 "of-freenas-machine:webdav_port/'Share Name'"
 msgstr ""
+"Эта информация будет использоваться для доступа к вашему WebDAV ресурсу<br />"
+"Например, http(s)://ip-of-freenas-machine:webdav_port/'Share Name'"
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "ПРЕДУПРЕЖДЕНИЕ"
+msgstr "ВНИМАНИЕ!"
 
 #: storage/views.py:205
 msgid ""
 "Always backup the key! If the key is lost, the data on the disks will also "
 "be lost with no hope of recovery."
 msgstr ""
+"Всегда сохраняйте копия ключа! Если ключ будет утерян, данные на дисках "
+"также будут утеряны без надежды на восстановление."
 
 #: storage/views.py:209
 msgid ""
@@ -11189,9 +11152,32 @@ msgid ""
 "sensitive data and want the ability to remove disks from the pool and "
 "dispose of/re-use them without concern for erasure."
 msgstr ""
+"Этот вид шифрования в первую очередь ориентирован на пользователей, хранящих "
+"секретные данные и желающих иметь возможность утилизировать диски не "
+"заботясь об их стирании."
 
 #: storage/views.py:214
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
+msgstr ""
+"Корпорация iXsystems не несет ответственности в случае потери данных при "
+"использовании этой возможности."
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+#, fuzzy
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "Невозможно создать %(name)s: %(error)s"
+
+#: sharing/forms.py:389
+#, fuzzy
+msgid "Only AlphaNumeric characters are allowed."
+msgstr "Используйте буквы, цифры, \".\", \"-\" и \"_\"."
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
 msgstr ""
