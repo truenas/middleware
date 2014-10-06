@@ -861,14 +861,8 @@ class CertificateAuthority(CertificateBase):
     class Meta:
         verbose_name = _("Certificate Authority")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class Certificate(CertificateBase):
 
     class Meta:
         verbose_name = _("Certificate")
-
-    class FreeAdmin:
-        deletable = False
