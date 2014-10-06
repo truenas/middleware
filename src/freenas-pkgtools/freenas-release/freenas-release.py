@@ -988,7 +988,7 @@ def usage():
 def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"):
     """
     Process a directory containing the output from a freenas build.
-    We're looking for source/FreeNAS-MANIFEST, which will tell us
+    We're looking for source/${project}-MANIFEST, which will tell us
     what the contents are.
     """
     global debug, verbose
@@ -1328,9 +1328,10 @@ def main():
     # Locabl variables
     db = None
 
-    options = "a:D:dv"
+    options = "a:D:dP:v"
     long_options = ["archive=", "destination=",
                  "database=",
+                 "project=",
                  "debug", "verbose",
                     ]
 
@@ -1351,7 +1352,7 @@ def main():
             verbose += 1
         elif o in ('-P', '--project'):
             # Not implemented yet, just laying the groundwork
-            if False: project_name = a
+            project_name = a
         else:
             usage()
 
