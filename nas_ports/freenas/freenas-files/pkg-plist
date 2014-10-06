@@ -33,6 +33,7 @@ usr/local/libexec/freenas-debug/ldap/ldap.sh
 usr/local/libexec/freenas-debug/loader/loader.sh
 usr/local/libexec/freenas-debug/network/network.sh
 usr/local/libexec/freenas-debug/nfs/nfs.sh
+usr/local/libexec/freenas-debug/smart/smart.sh
 usr/local/libexec/freenas-debug/ssl/ssl.sh
 usr/local/libexec/freenas-debug/sysctl/sysctl.sh
 usr/local/libexec/freenas-debug/system/system.sh

@@ -93,6 +93,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/nfs
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/smart
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ssl
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system
@@ -110,6 +111,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/loader/loader.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader/loader.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/network/network.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network/network.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/nfs/nfs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/nfs/nfs.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/smart/smart.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/smart/smart.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ssl/ssl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ssl/ssl.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/sysctl/sysctl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl/sysctl.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/system/system.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system/system.sh
