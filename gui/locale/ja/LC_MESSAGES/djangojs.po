@@ -358,3 +358,7 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+msgid "Manual Setup"
+msgstr ""

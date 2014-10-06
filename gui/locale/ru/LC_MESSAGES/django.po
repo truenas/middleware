@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-09-22 21:57+0000\n"
+"PO-Revision-Date: 2014-10-02 11:53+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411423024.0\n"
+"X-POOTLE-MTIME: 1412250780.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -109,12 +109,12 @@ msgstr "SATA 3.0 Гбит/с"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Всегда включён"
+msgstr "Всегда включено"
 
 # или Отключено
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Отключен"
+msgstr "Отключено"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -7656,7 +7656,7 @@ msgstr "Следующие multipath не оптимальны: %s"
 
 #: choices.py:52
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
@@ -11180,4 +11180,47 @@ msgstr "Используйте буквы, цифры, \".\", \"-\" и \"_\"."
 
 #: system/views.py:504
 msgid "You must provide a Root E-mail"
+msgstr ""
+
+#: sharing/forms.py:77
+#, fuzzy
+msgid "Only one share is allowed to be a home share."
+msgstr "Только одна репликация разрешена для набора данных."
+
+#: sharing/models.py:42
+msgid "Use as home share"
+msgstr ""
+
+#: sharing/models.py:103
+#, fuzzy
+msgid "VFS Objects"
+msgstr "Тема"
+
+#: storage/forms.py:2132
+msgid "I'm also aware the snapshots are currently on hold for replication"
+msgstr ""
+
+#: storage/forms.py:2098
+msgid "Also delete the share's configuration"
+msgstr ""
+
+#: tasks/forms.py:116
+#, fuzzy
+msgid "Rsync Create"
+msgstr "Создать"
+
+#: tasks/forms.py:118
+msgid ""
+"Check this if the remotepath specified does<br>not exist, and you want to "
+"create it."
+msgstr ""
+
+#: tasks/forms.py:263
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or check the<br>"
+"'rsync_create' field.<br>**Note**: This could also happen if the remote path "
+"entered<br> exceeded 255 characters and was truncated, please restrict it "
+"to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
+"are wrong."
 msgstr ""
