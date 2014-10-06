@@ -725,9 +725,6 @@ class NT4(DirectoryServiceBase):
         verbose_name = _("NT4 Domain")
         verbose_name_plural = _("NT4 Domain")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class ActiveDirectory(DirectoryServiceBase):
     ad_domainname = models.CharField(
@@ -904,10 +901,6 @@ class ActiveDirectory(DirectoryServiceBase):
         verbose_name = _("Active Directory")
         verbose_name_plural = _("Active Directory")
 
-    class FreeAdmin:
-        deletable = False
-        icon_model = "ActiveDirectoryIcon"
-
 
 class NIS(DirectoryServiceBase):
     nis_domain = models.CharField(
@@ -945,10 +938,6 @@ class NIS(DirectoryServiceBase):
     class Meta:
         verbose_name = _("NIS Domain")
         verbose_name_plural = _("NIS Domain")
-
-    class FreeAdmin:
-        deletable = False
-        icon_model = "NISIcon"
 
 
 class LDAP(DirectoryServiceBase):
@@ -1090,7 +1079,3 @@ class LDAP(DirectoryServiceBase):
     class Meta:
         verbose_name = _("LDAP")
         verbose_name_plural = _("LDAP")
-
-    class FreeAdmin:
-        deletable = False
-        icon_model = "LDAPIcon"
