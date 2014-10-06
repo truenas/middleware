@@ -1090,6 +1090,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         # file.
                         
                         for upd in db.UpdatesForPackage(old_pkg):
+                            if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (upd[0], upd[1])
                             old_pkg.AddUpdate(upd[0], upd[1])
                         old_pkg.SetChecksum(ChecksumFile(pkg1))
                         pkg = old_pkg
@@ -1101,8 +1102,10 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
                         cksum = ChecksumFile(x)
+                        if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (old_pkg.Version(), cksum)
                         pkg.AddUpdate(old_pkg.Version(), cksum)
                 else:
+                    if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
                     pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
 
         pkg_list.append(pkg)
