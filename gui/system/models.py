@@ -500,18 +500,9 @@ class SystemDataset(Model):
 
 
 class Upgrade(Model):
-    upd_train = models.CharField(
-        editable=False,
-        max_length=200,
-        default='stable',
-    )
     upd_autocheck = models.BooleanField(
         verbose_name=_('Check Automatically For Updates'),
         default=True,
-    )
-    upd_location = models.URLField(
-        verbose_name=_('Location'),
-        default='http://download.freenas.org/FreeNAS/',
     )
 
     class Meta:
