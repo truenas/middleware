@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-07-28 18:46+0000\n"
-"Last-Translator: Playerthe12 <a7694987@drdrb.net>\n"
+"PO-Revision-Date: 2014-09-23 12:56+0000\n"
+"Last-Translator: Ιωάννης <izamboukas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1406573172.0\n"
+"X-POOTLE-MTIME: 1411476975.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10677,14 +10677,12 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Πιστοποίηση"
+msgstr "Βασική ταυτοποίηση"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Πιστοποίηση"
+msgstr "Περιληπτική ταυτοποιήση"
 
 #: choices.py:799
 msgid "adex"
@@ -11470,4 +11468,66 @@ msgstr ""
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
+msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+#, fuzzy
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "Δεν μπόρεσα να ανακτήσω το %(url)s: %(error)s"
+
+#: sharing/forms.py:389
+#, fuzzy
+msgid "Only AlphaNumeric characters are allowed."
+msgstr ""
+"Χρησιμοποιήστε αλφαβητικούς και αριθμητικούς χαρακτήρες,\".\", \"-\" και "
+"\"_\"."
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr ""
+
+#: sharing/forms.py:77
+msgid "Only one share is allowed to be a home share."
+msgstr ""
+
+#: sharing/models.py:42
+msgid "Use as home share"
+msgstr ""
+
+#: sharing/models.py:103
+#, fuzzy
+msgid "VFS Objects"
+msgstr "Θέμα e-mail"
+
+#: storage/forms.py:2132
+msgid "I'm also aware the snapshots are currently on hold for replication"
+msgstr ""
+
+#: storage/forms.py:2098
+msgid "Also delete the share's configuration"
+msgstr ""
+
+#: tasks/forms.py:116
+#, fuzzy
+msgid "Rsync Create"
+msgstr "Δημιουργία ZFS zvol"
+
+#: tasks/forms.py:118
+msgid ""
+"Check this if the remotepath specified does<br>not exist, and you want to "
+"create it."
+msgstr ""
+
+#: tasks/forms.py:263
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or check the<br>"
+"'rsync_create' field.<br>**Note**: This could also happen if the remote path "
+"entered<br> exceeded 255 characters and was truncated, please restrict it "
+"to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
+"are wrong."
 msgstr ""

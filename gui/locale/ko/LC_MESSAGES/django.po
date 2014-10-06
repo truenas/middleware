@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2013-07-15 07:31+0000\n"
-"Last-Translator: Richard Peter <shon9178@gmail.com>\n"
+"PO-Revision-Date: 2014-09-26 18:10+0000\n"
+"Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1373873480.0\n"
+"X-POOTLE-MTIME: 1411755055.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -824,7 +824,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "오류"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -4872,7 +4872,7 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "그룹 삭제하기"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
@@ -4889,7 +4889,7 @@ msgstr ""
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "사용자 수정하기"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -4898,7 +4898,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "사용자 제거하기"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
@@ -6340,23 +6340,23 @@ msgstr "전체 이름"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "암호화된, 비밀구문없음"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
 #, fuzzy
@@ -6369,11 +6369,11 @@ msgstr ""
 
 #: choices.py:613
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "자세히"
 
 #: choices.py:683
 msgid "Daemon"
@@ -6386,7 +6386,7 @@ msgstr ""
 #: services/models.py:2104
 #, fuzzy
 msgid "Domain Controller"
-msgstr "도메인 이름"
+msgstr "도메인 컨트롤러"
 
 #: choices.py:709
 msgid "data"
@@ -6394,18 +6394,17 @@ msgstr ""
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "인증"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "ctrl+!data"
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "auth+!data"
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
 msgstr "암호 확인"
 
@@ -7285,19 +7284,19 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "암호화되지 않은"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "암호화 및 비밀구문과 함께"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:307
 #, fuzzy
@@ -7314,21 +7313,21 @@ msgstr ""
 
 #: choices.py:610
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:672
 msgid "Fatal"
-msgstr ""
+msgstr "치명적인"
 
 #: choices.py:677
 #, fuzzy
 msgid "Debug2"
-msgstr "Debug"
+msgstr "Debug2"
 
 #: choices.py:678
 #, fuzzy
 msgid "Debug3"
-msgstr "Debug"
+msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
@@ -7344,21 +7343,20 @@ msgstr "Local User"
 #: choices.py:691
 #, fuzzy
 msgid "Local 5"
-msgstr "Local User"
+msgstr "Local 5"
 
 #: choices.py:701
 #, fuzzy
 msgid "NIS"
-msgstr "네트워크 인터페이스"
+msgstr "NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data"
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "비밀번호 불일치"
+msgstr "비밀번호가 일치하지 않습니다"
 
 #: account/forms.py:398
 #, fuzzy
@@ -8260,33 +8258,32 @@ msgid ""
 msgstr ""
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "중심부"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
@@ -8299,11 +8296,11 @@ msgstr ""
 
 #: choices.py:611
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:612
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 # 로컬 사용자
 #: choices.py:686
@@ -8333,22 +8330,21 @@ msgstr "Local User"
 #: choices.py:692
 #, fuzzy
 msgid "Local 6"
-msgstr "Local User"
+msgstr "로컬 사용자"
 
 # 로컬 사용자
 #: choices.py:693
 #, fuzzy
 msgid "Local 7"
-msgstr "Local User"
+msgstr "Local 7"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:707
-#, fuzzy
 msgid "on"
-msgstr "None"
+msgstr "켜기"
 
 #: choices.py:708
 #, fuzzy
@@ -8361,14 +8357,13 @@ msgstr ""
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "auth+data"
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "새 비밀번호"
 
@@ -9365,7 +9360,7 @@ msgstr ""
 #: choices.py:788
 #, fuzzy
 msgid "Loader"
-msgstr "Loader 추가하기"
+msgstr "Loader"
 
 #: account/forms.py:500
 msgid ""
@@ -9512,7 +9507,7 @@ msgstr "디렉토리 사용권한"
 #: directoryservice/models.py:335
 #, fuzzy
 msgid "ad"
-msgstr "읽기전용"
+msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
@@ -9533,20 +9528,20 @@ msgstr ""
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 #, fuzzy
 msgid "rid"
-msgstr "금요일"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10094,9 +10089,8 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "인증 모델"
+msgstr "기본 인증"
 
 #: choices.py:44
 #, fuzzy
@@ -10105,7 +10099,7 @@ msgstr "인증 모델"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10860,4 +10854,68 @@ msgstr ""
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
+msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+#, fuzzy
+msgid "Failed to create %(path)s: %(error)s"
+msgstr "%(url)s을 가져올 수 없습니다: %(오류)s"
+
+#: sharing/forms.py:389
+#, fuzzy
+msgid "Only AlphaNumeric characters are allowed."
+msgstr "알파벳 문자, \".\", \"-\" 와 \"_\"를 사용해 주십시요."
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr ""
+
+#: sharing/forms.py:77
+msgid "Only one share is allowed to be a home share."
+msgstr ""
+
+#: sharing/models.py:42
+msgid "Use as home share"
+msgstr ""
+
+#: sharing/models.py:103
+msgid "VFS Objects"
+msgstr ""
+
+#: storage/forms.py:2132
+msgid "I'm also aware the snapshots are currently on hold for replication"
+msgstr ""
+
+#: storage/forms.py:2098
+msgid "Also delete the share's configuration"
+msgstr ""
+
+#: system/views.py:1211
+#, fuzzy
+msgid "Internal Certificate successfully edited."
+msgstr "%s가 삭제 되었습니다. "
+
+#: tasks/forms.py:116
+#, fuzzy
+msgid "Rsync Create"
+msgstr "ZFS zvol 생성하기"
+
+#: tasks/forms.py:118
+msgid ""
+"Check this if the remotepath specified does<br>not exist, and you want to "
+"create it."
+msgstr ""
+
+#: tasks/forms.py:263
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or check the<br>"
+"'rsync_create' field.<br>**Note**: This could also happen if the remote path "
+"entered<br> exceeded 255 characters and was truncated, please restrict it "
+"to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
+"are wrong."
 msgstr ""

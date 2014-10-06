@@ -1062,6 +1062,9 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         for older in previous_sequences:
             # Given this sequence, let's look up the package for it
             # Note that for us to have any entries, we must have a valid db.
+            # XXX:  If any of the previous sequences have used the same
+            # version of the package, then we'll end up with a bunch of identical
+            # update entries.
             old_pkg = db.PackageForSequence(older, pkg.Name())
             if old_pkg:
                 if old_pkg.Version() == pkg.Version():

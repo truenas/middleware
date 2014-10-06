@@ -231,11 +231,7 @@ List resource
                 "cifs_srv_unixext": true,
                 "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
-                "cifs_srv_homedir": null,
-                "cifs_srv_homedir_browseable_enable": false,
-                "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
-                "cifs_srv_homedir_aux": "",
                 "cifs_srv_aio_rs": 4096,
                 "cifs_srv_localmaster": true,
                 "cifs_srv_timeserver": true,
@@ -295,11 +291,7 @@ Update resource
                 "cifs_srv_unixext": true,
                 "cifs_srv_obey_pam_restrictions": true,
                 "cifs_srv_domain_logons": false,
-                "cifs_srv_homedir": null,
-                "cifs_srv_homedir_browseable_enable": false,
-                "cifs_srv_homedir_enable": false,
                 "cifs_srv_aio_enable": false,
-                "cifs_srv_homedir_aux": "",
                 "cifs_srv_aio_rs": 4096,
                 "cifs_srv_localmaster": true,
                 "cifs_srv_timeserver": true,
@@ -331,10 +323,6 @@ Update resource
    :json string cifs_srv_min_protocol: lowest protocol version that will be supported by the server
    :json boolean cifs_srv_syslog: use syslog
    :json string cifs_srv_smb_options: auxiliary parameters added to [global] section
-   :json boolean cifs_srv_homedir_enable: enable home directory
-   :json boolean cifs_srv_homedir_browseable_enable: enable home directory browsing
-   :json string cifs_srv_homedir: home directories path
-   :json string cifs_srv_homedir_aux: homes auxiliary parameters
    :json boolean cifs_srv_unixext: unix extensions
    :json boolean cifs_srv_obey_pam_restrictions: obey pam restrictions
    :json boolean cifs_srv_domain_logons: domains logons

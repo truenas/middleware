@@ -31,7 +31,7 @@
 # SUCH DAMAGE.
 #
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 name="django"
 rcvar="django_enable"
@@ -61,6 +61,13 @@ start_command()
 	new_string=`dd if=/dev/random bs=32 count=1 2>/dev/null | /usr/local/bin/base64`
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         echo "SECRET_KEY = '${new_string}'" >> ${django_config}
+
+	local proxy=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_httpproxy FROM network_globalconfiguration ORDER by -id LIMIT 1")
+
+	if [ -n "${proxy}" ]; then
+		export http_proxy="${proxy}"
+	fi
+
 	/usr/local/bin/python ${path}/manage.py runfcgi method=threaded \
 		host=${host} port=${port} pidfile=${pidfile}
 	touch ${logs}

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-09-20 09:15+0000\n"
+"PO-Revision-Date: 2014-10-04 09:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fur\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411204528.0\n"
+"X-POOTLE-MTIME: 1412414048.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10314,4 +10314,64 @@ msgstr ""
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
+msgstr ""
+
+#: choices.py:807
+msgid "rc.conf"
+msgstr ""
+
+#: sharing/forms.py:94
+msgid "Failed to create %(path)s: %(error)s"
+msgstr ""
+
+#: sharing/forms.py:389
+msgid "Only AlphaNumeric characters are allowed."
+msgstr ""
+
+#: system/views.py:504
+msgid "You must provide a Root E-mail"
+msgstr ""
+
+#: sharing/forms.py:77
+msgid "Only one share is allowed to be a home share."
+msgstr ""
+
+#: sharing/models.py:42
+msgid "Use as home share"
+msgstr ""
+
+#: sharing/models.py:103
+msgid "VFS Objects"
+msgstr ""
+
+#: storage/forms.py:2132
+msgid "I'm also aware the snapshots are currently on hold for replication"
+msgstr ""
+
+#: storage/forms.py:2098
+msgid "Also delete the share's configuration"
+msgstr ""
+
+#: system/views.py:1211
+msgid "Internal Certificate successfully edited."
+msgstr ""
+
+#: tasks/forms.py:116
+msgid "Rsync Create"
+msgstr ""
+
+#: tasks/forms.py:118
+msgid ""
+"Check this if the remotepath specified does<br>not exist, and you want to "
+"create it."
+msgstr ""
+
+#: tasks/forms.py:263
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or check the<br>"
+"'rsync_create' field.<br>**Note**: This could also happen if the remote path "
+"entered<br> exceeded 255 characters and was truncated, please restrict it "
+"to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
+"are wrong."
 msgstr ""

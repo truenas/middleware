@@ -86,8 +86,6 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
-	sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < build/README > "objs/${STAGEDIR}/README"
-	cp FreeBSD/repo-manifest "objs/${STAGEDIR}/MANIFEST"
 
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"

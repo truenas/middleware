@@ -46,25 +46,18 @@ cifs_restart()
 	return $?
 }
 
-resolvconf_start()
+get_bindip()
 {
-	if [ ! -f /etc/resolv.conf.dc ]
-	then
-		echo 'nameserver 127.0.0.1' > /etc/resolv.conf.dc
-		chmod 644 /etc/resolv.conf.dc
-	fi
-
-	cp /etc/resolv.conf /etc/resolv.conf.bak
-	cp /etc/resolv.conf.dc /etc/resolv.conf
-}
-
-resolvconf_stop()
-{
-	if [ -f /etc/resolv.conf.bak ]
-	then
-		cp /etc/resolv.conf.bak /etc/resolv.conf
-		chmod 644 /etc/resolv.conf
-	fi
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		cifs_srv_bindip
+	FROM
+		services_cifs
+	ORDER BY
+		-id
+	LIMIT
+		1
+	" | sed 's|,| |g'
 }
 
 dcctl_start()
@@ -90,9 +83,7 @@ dcctl_start()
 	echo ${cifs_started} > "${cifs_file}"
 
 	dcctl_cmd ${service} ix-kerberos quietstart
-
-	resolvconf_start
-
+	dcctl_cmd ${service} ix-resolv quietstart
 	dcctl_cmd ${service} ix-nsswitch quietstart
 	dcctl_cmd ${service} ix-pam quietstart
 
@@ -158,7 +149,7 @@ dcctl_stop()
 	fi
 
 	domaincontroller_set 0
-	resolvconf_stop
+	dcctl_cmd ${service} ix-resolv quietstop
 
 	return 0
 }

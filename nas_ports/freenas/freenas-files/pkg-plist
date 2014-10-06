@@ -33,6 +33,7 @@ usr/local/libexec/freenas-debug/ldap/ldap.sh
 usr/local/libexec/freenas-debug/loader/loader.sh
 usr/local/libexec/freenas-debug/network/network.sh
 usr/local/libexec/freenas-debug/nfs/nfs.sh
+usr/local/libexec/freenas-debug/smart/smart.sh
 usr/local/libexec/freenas-debug/ssl/ssl.sh
 usr/local/libexec/freenas-debug/sysctl/sysctl.sh
 usr/local/libexec/freenas-debug/system/system.sh
@@ -42,6 +43,7 @@ usr/local/libexec/nas/generate_ctl_conf.py
 usr/local/libexec/nas/generate_krb5_conf.py
 usr/local/libexec/nas/generate_ldap_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
+usr/local/libexec/nas/generate_resolv_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
 usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
@@ -85,6 +87,7 @@ etc/ix.rc.d/ix-plugins
 etc/ix.rc.d/ix-postinit
 etc/ix.rc.d/ix-preinit
 etc/ix.rc.d/ix-proftpd
+etc/ix.rc.d/ix-resolv
 etc/ix.rc.d/ix-rsyncd
 etc/ix.rc.d/ix-pre-samba
 etc/ix.rc.d/ix-post-samba

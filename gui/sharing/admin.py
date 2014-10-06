@@ -54,6 +54,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_recyclebin',
         'cifs_ro',
         'cifs_showhiddenfiles',
+        'cifs_vfsobjects',
     )
     fields = (
         'cifs_name',

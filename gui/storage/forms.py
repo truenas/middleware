@@ -49,6 +49,7 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
@@ -2095,7 +2096,7 @@ class VolumeExport(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
-                label=_("Delete all shares related to this volume"))
+                label=_("Also delete the share's configuration"))
 
 
 class Dataset_Destroy(Form):
@@ -2114,6 +2115,27 @@ class Dataset_Destroy(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=False,
                 label=label)
+        names = []
+        for list_ in snaps.values():
+            names.extend([snap.fullname for snap in list_])
+        names = ' '.join(names)
+        proc = pipeopen(
+            'zfs holds %s' % names,
+            logger=log,
+            important=False,
+        )
+        data = proc.communicate()[0]
+        if proc.returncode == 0 and data.find('freenas:repl'):
+            self.hold = names
+            self.fields['replication'] = forms.BooleanField(
+                label=_(
+                    'I\'m also aware the snapshots are currently on hold for '
+                    'replication'
+                ),
+                initial=False,
+            )
+        else:
+            self.hold = None
 
 
 class ScrubForm(ModelForm):
