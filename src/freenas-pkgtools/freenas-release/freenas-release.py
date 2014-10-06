@@ -742,7 +742,7 @@ class SQLiteReleaseDB(ReleaseDB):
             parms = (manifest.Notice(), manifest.Sequence())
             if debug:
                 print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
-                self.cursor().execute(sql, parms)
+            self.cursor().execute(sql, parms)
 
         # Next, the packages.
         for pkg in manifest.Packages():
