@@ -519,6 +519,13 @@ class iSCSITargetExtent(Model):
             te.delete()
         super(iSCSITargetExtent, self).delete()
 
+    def save(self, *args, **kwargs):
+        if not self.iscsi_target_extent_naa:
+            self.iscsi_target_extent_naa = '0x3%s' % (
+                hashlib.sha256(str(uuid.uuid4())).hexdigest()[0:15]
+            )
+        return super(iSCSITargetExtent, self).save(*args, **kwargs)
+
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
