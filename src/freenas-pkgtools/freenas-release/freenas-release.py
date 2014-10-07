@@ -1152,6 +1152,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 if debug or verbose:
                     print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
                 note_file.write(notes[note_name])
+                os.chmod(note_file, 0664)
                 manifest.SetNote(note_name, os.path.basename(note_file.name))
             except OSError as e:
                 print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
