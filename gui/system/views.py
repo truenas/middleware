@@ -37,6 +37,7 @@ import subprocess
 import sysctl
 import time
 import urllib
+import urllib2
 import xmlrpclib
 
 from django.contrib.auth import login, get_backends
@@ -1001,9 +1002,20 @@ def upgrade(request):
                 uuid = request.GET.get('uuid')
                 handler = UpdateHandler(uuid=uuid)
             request.session['upgrade_train'] = form.cleaned_data.get('train')
+            notes = []
+            if update:
+                notes_ = update.Notes()
+                if notes_:
+                    for key, val in notes_.items():
+                        try:
+                            data = urllib2.urlopen(val, timeout=5).read()
+                            notes.append(data)
+                        except urllib2.HTTPError:
+                            pass
             return render(request, 'system/upgrade.html', {
                 'update': update,
                 'handler': handler,
+                'notes': notes,
             })
         else:
             if not uuid:

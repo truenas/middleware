@@ -19,7 +19,16 @@ doSubmit({
 <tr>
   <td>
 {% if update %}
-{% trans "You're about to upgrade. The following packages will be changed:" %}
+{% if update.Notice %}
+<strong>{% trans "NOTICE" %}: {{ update.Notice }}</strong>
+{% endif %}
+{% if notes %}
+{% for note in notes %}
+<pre style="padding: 8px; margin: 4px;">{{ note }}</pre>
+{% endfor %}
+<br />
+{% endif %}
+{% trans "The following packages will be changed:" %}
 <pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
 {% trans "Are you sure you want to continue?" %}
 {% else %}
