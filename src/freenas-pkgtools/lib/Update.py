@@ -345,11 +345,22 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 if ActivateClone(clone_name) is False:
                     log.error("Could not activate clone environment %s" % clone_name)
                 else:
+                    # Downloaded package files are open-unlinked, so don't
+                    # have to be cleaned up.  If there's a cache directory,
+                    # however, we need to get rid of it.
+                    if cache_dir:
+                        import shutil
+                        if os.path.exists(cache_dir):
+                            try:
+                                shutil.rmtree(cache_dir)
+                            except Exception as e:
+                                # If that doesn't work, for now at least we'll
+                                # simply ignore the error.
+                                log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                     rv = True
 
     # Clean up
-    # The package files are open-unlinked, so should be removed
-    # automatically under *nix.  That just leaves the clone, which
+    # That just leaves the clone, which
     # we should unmount, and destroy if necessary.
     # Unmounting attempts to delete the mount point that was created.
     if rv is False:
@@ -357,5 +368,3 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
             log.error("Unable to delete boot environment %s in failure case" % clone_name)
     
     return rv
-
-    
