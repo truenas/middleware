@@ -643,7 +643,7 @@ class notifier:
     def _start_jails(self):
         self._system("/usr/sbin/service ix-warden start")
         from freenasUI.jails.models import Jails
-        for jail in Jails.objects.all():
+        for jail in Jails.objects.filter(jail_autostart=True):
             Warden().start(jail=jail.jail_host)
         self._system("/usr/sbin/service ix-plugins start")
         self.reload("http")
