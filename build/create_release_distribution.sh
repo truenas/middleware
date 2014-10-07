@@ -32,7 +32,7 @@ create_json()
   local dpath=${1}
   local buildtype=$(echo ${VERSION} | sed -n -e 's/^.*-//p') # Is it RELEASE or nightly milestones
   local arch # The architecture (x64 or x86)
-  local archbit # The above sans the "x"
+  #local Archbit # The above sans the "x"
   local ftype # This describes the type (iso, usb, GUI_Upgrade.txz or img)
   local hash # The Hash of the file
   local filename # The full name of the file we are dealing with
@@ -70,7 +70,7 @@ __EOF__
 
   local archdirs=$(find $dpath -type d -mindepth 1 -maxdepth 1)
   for x in $archdirs; do
-   archbit=$(basename $x | cut -c 2-)
+   #archbit=$(basename $x | cut -c 2-)
    arch=$(basename $x)
    iso=$(find $x -type f -name \*.iso)
    usb=$(find $x -type f -name \*.usb)
@@ -78,7 +78,7 @@ __EOF__
    img=$(find $x -type f -name \*.img)
    
    cat<<-__EOF__>>${json_file}
-        "${archbit}": [
+        "${arch}": [
 __EOF__
    
    if [ ! -z "$iso" ]; then
