@@ -58,6 +58,7 @@ from freenasOS.Update import (
     DeleteClone,
     Update,
 )
+from freenasOS import Train
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -986,44 +987,58 @@ def terminal_paste(request):
 def upgrade(request):
 
     if request.method == 'POST':
-        uuid = request.GET.get('uuid')
-        handler = UpdateHandler(uuid=uuid)
-        if not uuid:
-            #FIXME: ugly
-            pid = os.fork()
-            if pid != 0:
-                return HttpResponse(handler.uuid, status=202)
-            else:
-                handler.pid = os.getpid()
-                handler.dump()
-                try:
-                    Update(
-                        get_handler=handler.get_handler,
-                        install_handler=handler.install_handler,
-                    )
-                except Exception, e:
-                    handler.error = unicode(e)
-                handler.finished = True
-                handler.dump()
-                os.kill(handler.pid, 9)
+        form = forms.UpgradeSelectForm(request.POST)
+        if form.is_valid():
+            handler = CheckUpdateHandler()
+            try:
+                update = CheckForUpdates(
+                    handler=handler.call,
+                    train=form.cleaned_data.get('train')
+                )
+            except ValueError:
+                update = False
+                form = forms.UpgradeSelectForm()
+                uuid = request.GET.get('uuid')
+                handler = UpdateHandler(uuid=uuid)
+            request.session['upgrade_train'] = form.cleaned_data.get('train')
+            return render(request, 'system/upgrade.html', {
+                'update': update,
+                'handler': handler,
+            })
         else:
-            if handler.error is not False:
-                raise MiddlewareError(handler.error)
-            if not handler.finished:
-                return HttpResponse(handler.uuid, status=202)
-            handler.exit()
-            request.session['allow_reboot'] = True
-            return render(request, 'system/done.html')
+            if not uuid:
+                #FIXME: ugly
+                pid = os.fork()
+                if pid != 0:
+                    return HttpResponse(handler.uuid, status=202)
+                else:
+                    handler.pid = os.getpid()
+                    handler.dump()
+                    try:
+                        Update(
+                            get_handler=handler.get_handler,
+                            install_handler=handler.install_handler,
+                            train=request.session['upgrade_train'],
+                        )
+                    except Exception, e:
+                        handler.error = unicode(e)
+                    handler.finished = True
+                    handler.dump()
+                    os.kill(handler.pid, 9)
+            else:
+                if handler.error is not False:
+                    raise MiddlewareError(handler.error)
+                if not handler.finished:
+                    return HttpResponse(handler.uuid, status=202)
+                handler.exit()
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
+    else:
+        form = forms.UpgradeSelectForm()
+        return render(request, 'system/upgrade_select.html', {
+            'form': form,
+        })
 
-    handler = CheckUpdateHandler()
-    try:
-        update = CheckForUpdates(handler=handler.call)
-    except ValueError:
-        update = False
-    return render(request, 'system/upgrade.html', {
-        'update': update,
-        'handler': handler,
-    })
 
 
 def upgrade_progress(request):
