@@ -22,11 +22,10 @@ doSubmit({
 {% if update.Notice %}
 <strong>{% trans "NOTICE" %}: {{ update.Notice }}</strong>
 {% endif %}
-{% if notes %}
-{% for note in notes %}
-<pre style="padding: 8px; margin: 4px;">{{ note }}</pre>
+{% if update.Notes %}
+{% for note, url_ in update.Notes.items %}
+<p><a href="{{ url_ }}" target="_blank">{{ note }}</a></p>
 {% endfor %}
-<br />
 {% endif %}
 {% trans "The following packages will be changed:" %}
 <pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
