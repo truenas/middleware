@@ -997,7 +997,6 @@ def upgrade(request):
                 )
             except ValueError:
                 update = False
-                form = forms.UpgradeSelectForm()
             request.session['upgrade_train'] = form.cleaned_data.get('train')
             return render(request, 'system/upgrade.html', {
                 'update': update,
