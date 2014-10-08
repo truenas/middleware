@@ -1890,9 +1890,9 @@ class InitialWizardConfirmForm(Form):
 
 class UpgradeForm(ModelForm):
 
-    trains = forms.MultipleChoiceField(
-        label=_('Trains'),
-        widget=forms.CheckboxSelectMultiple,
+    curtrain = forms.CharField(
+        label=_('Current Train'),
+        widget=forms.TextInput(attrs={'readonly': True, 'disabled': True}),
         required=False,
     )
 
@@ -1904,26 +1904,7 @@ class UpgradeForm(ModelForm):
         super(UpgradeForm, self).__init__(*args, **kwargs)
         self._conf = Configuration.Configuration()
         self._conf.LoadTrainsConfig()
-        self._tchoices = []
-        trains = self._conf.AvailableTrains()
-        if trains:
-            for name in self._conf.AvailableTrains().keys():
-                self._tchoices.append((name, name))
-            self.fields['trains'].choices = self._tchoices
-            self.fields['trains'].initial = self._conf.WatchedTrains()
-
-    def save(self, *args, **kwargs):
-        obj = super(UpgradeForm, self).save(*args, **kwargs)
-
-        watched = self._conf.WatchedTrains() or []
-        for name, desc in self._tchoices:
-            if name in self.cleaned_data.get('trains'):
-                if name not in watched:
-                    self._conf.WatchTrain(Train.Train(name), watch=True)
-            else:
-                if name in watched:
-                    self._conf.WatchTrain(Train.Train(name), watch=False)
-        self._conf.SaveTrainsConfig()
+        self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
 
 class UpgradeSelectForm(Form):
