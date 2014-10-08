@@ -127,6 +127,7 @@ List resource
                 "afp_srv_guest_user": "nobody",
                 "afp_srv_guest": false,
                 "id": 1,
+                "afp_srv_bindip": [],
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
@@ -168,6 +169,7 @@ Update resource
                 "afp_srv_guest_user": "nobody",
                 "afp_srv_guest": true,
                 "id": 1,
+                "afp_srv_bindip": [],
                 "afp_srv_connections_limit": 50,
                 "afp_srv_homedir": null,
                 "afp_srv_homedir_enable": false,
@@ -177,6 +179,7 @@ Update resource
 
    :json string afp_srv_guest_user: guest account
    :json boolean afp_srv_guest: allow guest access
+   :json list(string) afp_srv_bindip: list of ip addresses to listen and advertise
    :json integer afp_srv_connections_limit: maximum number of connections permitted
    :json string afp_srv_homedir: path to home directory
    :json boolean afp_srv_homedir_enable: enable to home directory feature
