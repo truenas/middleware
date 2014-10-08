@@ -1926,6 +1926,20 @@ class UpgradeForm(ModelForm):
         self._conf.SaveTrainsConfig()
 
 
+class UpgradeSelectForm(Form):
+
+    def __init__(self, *args, **kwargs):
+        super(UpgradeSelectForm, self).__init__(*args, **kwargs)
+        self._conf = Configuration.Configuration()
+        self._conf.LoadTrainsConfig()
+        watched = self._conf.WatchedTrains() or []
+        choices = [(name, name) for name in watched]
+        self.fields['train'] = forms.ChoiceField(
+            label=_('Train'),
+            choices=choices,
+            initial=self._conf.CurrentTrain(),
+        )
+
 
 class CertificateAuthorityForm(ModelForm):
     class Meta:

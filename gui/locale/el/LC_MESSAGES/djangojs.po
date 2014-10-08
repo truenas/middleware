@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-09-23 12:35+0000\n"
+"PO-Revision-Date: 2014-09-23 12:56+0000\n"
 "Last-Translator: Ιωάννης <izamboukas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411475732.0\n"
+"X-POOTLE-MTIME: 1411476975.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Αναφορές"
@@ -352,3 +352,8 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
 msgstr "Είστε βέβαιοι ότι θέλετε να το κάνετε αυτό;"
+
+#: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
+#, fuzzy
+msgid "Manual Setup"
+msgstr "Χειροκίνητη ρύθμιση"

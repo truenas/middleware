@@ -742,7 +742,7 @@ class SQLiteReleaseDB(ReleaseDB):
             parms = (manifest.Notice(), manifest.Sequence())
             if debug:
                 print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
-                self.cursor().execute(sql, parms)
+            self.cursor().execute(sql, parms)
 
         # Next, the packages.
         for pkg in manifest.Packages():
@@ -988,7 +988,7 @@ def usage():
 def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"):
     """
     Process a directory containing the output from a freenas build.
-    We're looking for source/FreeNAS-MANIFEST, which will tell us
+    We're looking for source/${project}-MANIFEST, which will tell us
     what the contents are.
     """
     global debug, verbose
@@ -1093,6 +1093,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         # file.
                         
                         for upd in db.UpdatesForPackage(old_pkg):
+                            if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (upd[0], upd[1])
                             old_pkg.AddUpdate(upd[0], upd[1])
                         old_pkg.SetChecksum(ChecksumFile(pkg1))
                         pkg = old_pkg
@@ -1104,8 +1105,10 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
                         cksum = ChecksumFile(x)
+                        if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (old_pkg.Version(), cksum)
                         pkg.AddUpdate(old_pkg.Version(), cksum)
                 else:
+                    if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
                     pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
 
         pkg_list.append(pkg)
@@ -1149,6 +1152,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 if debug or verbose:
                     print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
                 note_file.write(notes[note_name])
+                os.chmod(note_file, 0664)
                 manifest.SetNote(note_name, os.path.basename(note_file.name))
             except OSError as e:
                 print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
@@ -1325,9 +1329,10 @@ def main():
     # Locabl variables
     db = None
 
-    options = "a:D:dv"
+    options = "a:D:dP:v"
     long_options = ["archive=", "destination=",
                  "database=",
+                 "project=",
                  "debug", "verbose",
                     ]
 
@@ -1348,7 +1353,7 @@ def main():
             verbose += 1
         elif o in ('-P', '--project'):
             # Not implemented yet, just laying the groundwork
-            if False: project_name = a
+            project_name = a
         else:
             usage()
 
