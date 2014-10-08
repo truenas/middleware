@@ -222,6 +222,10 @@ class AFPForm(ModelForm):
         fields = '__all__'
         model = models.AFP
 
+    def __init__(self, *args, **kwargs):
+        super(AFPForm, self).__init__(*args, **kwargs)
+        self.fields['afp_srv_bindip'].choices = list(choices.IPChoices())
+
     def save(self):
         super(AFPForm, self).save()
         started = notifier().restart("afp")
