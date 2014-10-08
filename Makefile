@@ -4,7 +4,7 @@
 
 NANO_LABEL?=FreeNAS
 VERSION?=9.3-M4
-TRAIN?=FreeNAS-9.3-Nightlies
+TRAIN?=${NANO_LABEL}-9.3-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
@@ -90,7 +90,7 @@ release: git-verify
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
+	${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
 	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
