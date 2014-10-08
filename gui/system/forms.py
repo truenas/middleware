@@ -1932,7 +1932,7 @@ class UpgradeSelectForm(Form):
         super(UpgradeSelectForm, self).__init__(*args, **kwargs)
         self._conf = Configuration.Configuration()
         self._conf.LoadTrainsConfig()
-        watched = self._conf.WatchedTrains() or []
+        watched = self._conf.AvailableTrains() or []
         choices = [(name, name) for name in watched]
         self.fields['train'] = forms.ChoiceField(
             label=_('Train'),
