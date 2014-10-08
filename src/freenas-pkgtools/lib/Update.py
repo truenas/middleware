@@ -300,71 +300,86 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     # If root is None, then we will try to create a clone
     # environment.  (If the caller wants to install into the
     # current boot environment, set root = "" or "/".)
-    if root is None:
-        # We clone the existing boot environment to
-        # "Avatar()-<sequence>"
-        clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
-        if CreateClone(clone_name) is False:
-            log.error("Unable to create boot-environment %s" % clone_name)
-            raise Exception("Unable to create new boot-environment %s" % clone_name)
+    clone_name = None
+    try:
+        if root is None:
+            # We clone the existing boot environment to
+            # "Avatar()-<sequence>"
+            clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+            if CreateClone(clone_name) is False:
+                log.error("Unable to create boot-environment %s" % clone_name)
+                raise Exception("Unable to create new boot-environment %s" % clone_name)
 
-        mount_point = MountClone(clone_name)
-        if mount_point is None:
-            log.error("Unable to mount boot-environment %s" % clone_name)
-            raise Exception("Unable to mount boot-environment %s" % clone_name)
-        else:
-            root = mount_point
-    else:
-        mount_point = None
-
-    for pkg in deleted_packages:
-        log.debug("Want to delete package %s" % pkg.Name())
-        if conf.PackageDB(root).RemovePackageContents(pkg) == False:
-            log.error("Unable to remove contents package %s" % pkg.Name())
-            UnmountClone(clone_name, mount_point)
-            DestroyClone(clone_name)
-            raise Exception("Unable to remove contents for package %s" % pkg.Name())
-        conf.PackageDB(root).RemovePackage(pkg.Name())
-
-    installer = Installer.Installer(manifest = new_man, root = root, config = conf)
-    installer.GetPackages(process_packages, handler=get_handler)
-
-    log.debug("Packages = %s" % installer._packages)
-
-    # Now let's actually install them.
-    # Only change on success
-    rv = False
-    if installer.InstallPackages(handler=install_handler) is False:
-        log.error("Unable to install packages")
-    else:
-        new_man.Save(root)
-        if mount_point is not None:
-            if UnmountClone(clone_name, mount_point) is False:
-                log.error("Unable to mount clone enivironment %s" % clone_name)
+            mount_point = MountClone(clone_name)
+            if mount_point is None:
+                log.error("Unable to mount boot-environment %s" % clone_name)
+                DeleteClone(clone_name)
+                raise Exception("Unable to mount boot-environment %s" % clone_name)
             else:
-                if ActivateClone(clone_name) is False:
-                    log.error("Could not activate clone environment %s" % clone_name)
-                else:
-                    # Downloaded package files are open-unlinked, so don't
-                    # have to be cleaned up.  If there's a cache directory,
-                    # however, we need to get rid of it.
-                    if cache_dir:
-                        import shutil
-                        if os.path.exists(cache_dir):
-                            try:
-                                shutil.rmtree(cache_dir)
-                            except Exception as e:
-                                # If that doesn't work, for now at least we'll
-                                # simply ignore the error.
-                                log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
-                    rv = True
+                root = mount_point
+        else:
+            mount_point = None
 
+        for pkg in deleted_packages:
+            log.debug("Want to delete package %s" % pkg.Name())
+            if conf.PackageDB(root).RemovePackageContents(pkg) == False:
+                log.error("Unable to remove contents package %s" % pkg.Name())
+                if mount_point:
+                    UnmountClone(clone_name, mount_point)
+                    mount_point = None
+                    DestroyClone(clone_name)
+                raise Exception("Unable to remove contents for package %s" % pkg.Name())
+            conf.PackageDB(root).RemovePackage(pkg.Name())
+
+        installer = Installer.Installer(manifest = new_man, root = root, config = conf)
+        installer.GetPackages(process_packages, handler=get_handler)
+
+        log.debug("Packages = %s" % installer._packages)
+
+        # Now let's actually install them.
+        # Only change on success
+        rv = False
+        if installer.InstallPackages(handler=install_handler) is False:
+            log.error("Unable to install packages")
+        else:
+            new_man.Save(root)
+            if mount_point is not None:
+                if UnmountClone(clone_name, mount_point) is False:
+                    log.error("Unable to mount clone enivironment %s" % clone_name)
+                else:
+                    mount_point = None
+                    if ActivateClone(clone_name) is False:
+                        log.error("Could not activate clone environment %s" % clone_name)
+                    else:
+                        # Downloaded package files are open-unlinked, so don't
+                        # have to be cleaned up.  If there's a cache directory,
+                        # however, we need to get rid of it.
+                        if cache_dir:
+                            import shutil
+                            if os.path.exists(cache_dir):
+                                try:
+                                    shutil.rmtree(cache_dir)
+                                except Exception as e:
+                                    # If that doesn't work, for now at least we'll
+                                    # simply ignore the error.
+                                    log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
+                        rv = True
+
+    except BaseException ase e:
+        log.error("Update got exception during update: %s" % str(e))
+        if clone_name:
+            if mount_point:
+                # Ignore the error here
+                UnmountClone(clone_name, mount_point)
+            DeleteClone(clone_name)
+        raise e
+            
     # Clean up
     # That just leaves the clone, which
     # we should unmount, and destroy if necessary.
     # Unmounting attempts to delete the mount point that was created.
     if rv is False:
-        if DeleteClone(clone_name) is False:
+        if clone_name and DeleteClone(clone_name) is False:
             log.error("Unable to delete boot environment %s in failure case" % clone_name)
     
     return rv
