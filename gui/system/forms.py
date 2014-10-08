@@ -1937,6 +1937,7 @@ class UpgradeSelectForm(Form):
         self.fields['train'] = forms.ChoiceField(
             label=_('Train'),
             choices=choices,
+            initial=self._conf.CurrentTrain(),
         )
 
 

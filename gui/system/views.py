@@ -998,14 +998,14 @@ def upgrade(request):
             except ValueError:
                 update = False
                 form = forms.UpgradeSelectForm()
-                uuid = request.GET.get('uuid')
-                handler = UpdateHandler(uuid=uuid)
             request.session['upgrade_train'] = form.cleaned_data.get('train')
             return render(request, 'system/upgrade.html', {
                 'update': update,
                 'handler': handler,
             })
         else:
+            uuid = request.GET.get('uuid')
+            handler = UpdateHandler(uuid=uuid)
             if not uuid:
                 #FIXME: ugly
                 pid = os.fork()

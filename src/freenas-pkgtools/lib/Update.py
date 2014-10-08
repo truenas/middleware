@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 
+from . import Avatar
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
@@ -29,6 +30,7 @@ def RunCommand(command, args):
 
     proc_args = [ command ]
     if args is not None:  proc_args.extend(args)
+    log.debug("RunCommand(%s, %s)" % (command, args))
     if debug:
         print >> sys.stderr, proc_args
         child = 0
@@ -227,11 +229,18 @@ def CheckForUpdates(root = None, handler = None, train = None):
 
 
 def Update(root=None, conf=None, train = None, check_handler=None, get_handler=None,
-           install_handler=None):
+           install_handler=None, cache_dir = None):
     """
-    Perform an update.  Calls CheckForUpdates() first, to see if
-    there are any. If there are, then magic happens.
+    Perform an update.  If cache_dir is set, and contains a valid
+    set of files (MANIFEST exists, and is for the current train, and
+    the sequence is not the same as the system sequence), it will
+    use that, rather than downloading.  It calls CheckForUpdates() otherwise,
+    to see if there are any. If there are, then magic happens.
     """
+
+    log.debug("Update(root = %s, conf = %s, train = %s, cache_dir = %s)" % (root, conf, train, cache_dir))
+    if conf is None:
+        conf = Configuration.Configuration(root)
 
     deleted_packages = []
     process_packages = []
@@ -243,7 +252,29 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
         if check_handler is not None:
             check_handler(op, pkg, old)
 
-    new_man = CheckForUpdates(root, handler = UpdateHandler, train = train)
+    new_man = None
+    if cache_dir:
+        if os.path.exists(cache_dir + "/MANIFEST"):
+            try:
+                cur = conf.SystemManifest()
+                new_man = Manifest.Manifest()
+                new_man.LoadPath(cache_dir + "/MANIFEST")
+                if new_man.Train() != cur.Train():
+                    new_man = None
+                    cache_dir = None
+                else:
+                    diffs = Manifest.CompareManifests(cur, new_man)
+                    for (pkg, op, old) in diffs:
+                        UpdateHandler(op, pkg, old)
+                    conf.SetPackageDir(cache_dir)
+            except Exception as e:
+                log.debug("Caught exception %s" % str(e))
+                new_man = None
+                cache_dir = None
+
+    if new_man is None:
+        new_man = CheckForUpdates(root, handler = UpdateHandler, train = train)
+
     if new_man is None:
         return
 
@@ -271,8 +302,8 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     # current boot environment, set root = "" or "/".)
     if root is None:
         # We clone the existing boot environment to
-        # "FreeNAS-<sequence>"
-        clone_name = "FreeNAS-%s" % new_man.Sequence()
+        # "Avatar()-<sequence>"
+        clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
         if CreateClone(clone_name) is False:
             log.error("Unable to create boot-environment %s" % clone_name)
             raise Exception("Unable to create new boot-environment %s" % clone_name)
@@ -314,11 +345,22 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 if ActivateClone(clone_name) is False:
                     log.error("Could not activate clone environment %s" % clone_name)
                 else:
+                    # Downloaded package files are open-unlinked, so don't
+                    # have to be cleaned up.  If there's a cache directory,
+                    # however, we need to get rid of it.
+                    if cache_dir:
+                        import shutil
+                        if os.path.exists(cache_dir):
+                            try:
+                                shutil.rmtree(cache_dir)
+                            except Exception as e:
+                                # If that doesn't work, for now at least we'll
+                                # simply ignore the error.
+                                log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                     rv = True
 
     # Clean up
-    # The package files are open-unlinked, so should be removed
-    # automatically under *nix.  That just leaves the clone, which
+    # That just leaves the clone, which
     # we should unmount, and destroy if necessary.
     # Unmounting attempts to delete the mount point that was created.
     if rv is False:
@@ -326,5 +368,3 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
             log.error("Unable to delete boot environment %s in failure case" % clone_name)
     
     return rv
-
-    

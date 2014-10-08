@@ -175,8 +175,6 @@ class PackageDB:
         rv = cur.fetchone()
         self._closedb()
         if rv is None: return None
-        log.debug("rv = %s", rv.keys())
-        m = {}
         return { rv["name"] : rv["version"] }
 
     def UpdatePackage(self, pkgName, curVers, newVers, scripts):
@@ -417,9 +415,10 @@ class Configuration(object):
         if os.path.islink(self._system_pool_link):
             self._temp = os.readlink(self._system_pool_link)
 
-    def TryGetNetworkFile(self, url, handler=None):
+    def TryGetNetworkFile(self, url, handler=None, pathname = None):
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
+        log.debug("TryGetNetworkFile(%s)" % url)
         temp_mani = self.SystemManifest()
         if temp_mani:
             current_version = temp_mani.Sequence()
@@ -437,31 +436,40 @@ class Configuration(object):
         except:
             totalsize = None
         chunk_size = 64 * 1024
-        retval = tempfile.TemporaryFile(dir = self._temp)
+        if pathname:
+            retval = open(pathname, "w+b")
+        else:
+            retval = tempfile.TemporaryFile(dir = self._temp)
         read = 0
         lastpercent = percent = 0
         lasttime = time.time()
-        while True:
-            data = furl.read(chunk_size)
-            tmptime = time.time()
-            downrate = int(chunk_size / (tmptime - lasttime))
-            lasttime = tmptime
-            if not data:
-                break
-            read += len(data)
-            if handler and totalsize:
-                percent = int((float(read) / float(totalsize)) * 100.0)
-                if percent != lastpercent:
-                    handler(
-                        'network',
-                        url,
-                        size=totalsize,
-                        progress=percent,
-                        download_rate=downrate,
-                    )
-                lastpercent = percent
-            retval.write(data)
-
+        try:
+            while True:
+                data = furl.read(chunk_size)
+                tmptime = time.time()
+                downrate = int(chunk_size / (tmptime - lasttime))
+                lasttime = tmptime
+                if not data:
+                    break
+                log.debug("TryGetNetworkFile(%s):  Read %d bytes" % (url, len(data)))
+                read += len(data)
+                if handler and totalsize:
+                    percent = int((float(read) / float(totalsize)) * 100.0)
+                    if percent != lastpercent:
+                        handler(
+                            'network',
+                            url,
+                            size=totalsize,
+                            progress=percent,
+                            download_rate=downrate,
+                        )
+                    lastpercent = percent
+                retval.write(data)
+        except Exception as e:
+            log.debug("Got exception %s" % str(e))
+            if pathname:
+                os.unlink(pathname)
+            raise e
         retval.seek(0)
         return retval
 
@@ -831,7 +839,7 @@ class Configuration(object):
             rv.LoadFile(file)
         return rv
 
-    def FindPackageFile(self, package, upgrade_from=None, handler=None):
+    def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
         # object for the package file.
@@ -850,100 +858,91 @@ class Configuration(object):
         sequence = "unknown"
         if mani:
             sequence = mani.Sequence()
-        # First thing:  if we were given a package path, we use that,
-        # and that only, and delta packages don't matter.
-        if self._package_dir:
-            try:
-                file = open(self.PackagePath(package))
-            except:
-                return None
-            else:
-                if package.Checksum():
-                    h = ChecksumFile(file)
-                    if h != package.Checksum():
-                        return None
-                return file
 
-        # If we got here, then we are using the network to get the
-        # requested package.  In that case, if possible, we want to
-        # try to get a delta package, both to lower network bandwidth,
-        # and to improve speed.  And writes to the filesystem.
-        # So first we see if we can upgrade.
+        # We have at least one, and at most two, files
+        # to look for.
+        # The first file is the full package.
+        package_files = []
+        package_files.append({ "Filename" : package.FileName(), "Checksum" : package.Checksum()})
+        # The next one is the delta package, if it exists.
+        # For that, we look through package.Updates(), looking for one that
+        # has the same version as what is currently installed.
+        # So first we have to get the current version.
+        try:
+            pkgdb = self.PackageDB(create = False)
+            if pkgdb:
+                pkgInfo = pkgdb.FindPackage(package.Name())
+                if pkgInfo:
+                    curVers = pkgInfo[package.Name()]
+                    if curVers and curVers != package.Version():
+                        for upgrade in package.Updates():
+                            if upgrade[Package.VERSION_KEY] == curVers:
+                                tdict = { "Filename" : package.FileName(curVers),
+                                          "Checksum" : None,
+                                      }
 
-        # If upgrade_from was explicitly given, we'll use that.
-        # Otherwise, we check the packagedb.
-        # If we don't have a packagedb on the system,
-        # that's not fatal -- it just means we can't do an upgrade.
-        curVers = None
-        if upgrade_from is None:
-            pkgInfo = None
-            pkgdb = None
+                                if Package.CHECKSUM_KEY in upgrade:
+                                    tdict[Package.CHECKSUM_KEY] = upgrade[Package.CHECKSUM_KEY]
+                                package_files.append(tdict)
+                                break
+        except:
+            # No update packge that matches.
+            pass
+
+        # At this point, package_files now has at least one element.
+        # We want to search in this order:
+        # * Local full copy
+        # * Local delta copy
+        # * Network delta copy
+        # * Network full copy
+
+        # We want to look for each one in _package_dir and off the network.
+        # If we find it, and the checksum matches, we're good to go.
+        # If not, we have to grab it off the network and use that.  We can't
+        # check that checksum until we get it.
+        for search_attempt in package_files:
+            # First try the local copy.
+            log.debug("Searching for %s" % search_attempt["Filename"])
             try:
-                pkgdb = self.PackageDB(create = False)
+                if self._package_dir:
+                    p = "%s/%s" % (self._package_dir, search_attempt["Filename"])
+                    if os.path.exists(p):
+                        file = open(p)
+                        log.debug("Found package file %s" % p)
+                        if search_attempt["Checksum"]:
+                            h = ChecksumFile(file)
+                            if h == search_attempt["Checksum"]:
+                                return file
+                        else:
+                            # No checksum for the file, so we'll just go with it.
+                            return file
             except:
                 pass
-                
-            if pkgdb is not None:
-                pkgInfo = pkgdb.FindPackage(package.Name())
-                if pkgInfo is not None:
-                    curVers = pkgInfo[package.Name()]
-        else:
-            curVers = upgrade_from
 
-        # If it's the same version, then we don't want to look
-        # for an upgrade, obviously.
-        if curVers == package.Version():
-            curVers = None
+        for search_attempt in reversed(package_files):
+            # Next we try to get it from the network.
+            url = "%s/Packages/%s" % (UPDATE_SERVER, search_attempt["Filename"])
+            save_name = None
+            if save_dir:
+                save_name = save_dir + "/" + search_attempt["Filename"]
 
-        if curVers is not None:
-            # We want to look for an old version
-            # o is "old version", h is "hash".
-            o = curVers
-            h = None
-            # If there are no updates listed in the package,
-            # but an upgrade_from was given, or one is listed in
-            # the package database, then we use that.  Otherwise,
-            # iterate through the updates listed for the package,
-            # looking for a version that matches
-            for upgrade in package.Updates():
-                if upgrade[Package.VERSION_KEY] == curVers:
-                    o = upgrade[Package.VERSION_KEY]
-                    h = upgrade[Package.CHECKSUM_KEY]
-                    break
-                    
-            # If we have an old version, look for that.
-            # o is eiter curVers, or a version found in
-            # the Package object.
-            # Figure out the name.
-            upgrade_name = package.FileName(curVers)
             file = self.TryGetNetworkFile(
-                url = self.PackageUpdatePath(package, curVers),
+                url = url,
                 handler = handler,
+                pathname = save_name,
                 )
             if file:
-                if h is None:
-                    # No checksum, so just accept the file
-                    return file
-                else:
-                    hash = ChecksumFile(file)
-                    if hash == h:
+                if search_attempt["Checksum"]:
+                    h = ChecksumFile(file)
+                    if h == search_attempt["Checksum"]:
                         return file
-        # All that, and now we do much of it again with the full version
-        file = self.TryGetNetworkFile(
-            url = self.PackagePath(package),
-            handler = handler,
-            )
-        if package.Checksum() is None:
-            # No checksum, so we just go wit hthe match
-            return file
-        else:
-            hash = ChecksumFile(file)
-            if hash == package.Checksum():
-                return file
-            else:
-                # No match
-                return None
-        raise Exception("This should not be reached")
+                    else:
+                        if save_name: os.unlink(save_name)
+                else:
+                    # No checksum for the file, so we just go with it
+                    return file
+
+        return None
 
     def GetManifestNote(self, manifest, note, handler = None):
         # This returns the contents of the specified note,
