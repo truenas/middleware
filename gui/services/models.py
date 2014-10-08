@@ -44,6 +44,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField
 )
+from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk
@@ -284,6 +285,18 @@ class AFP(Model):
                 "require a valid login. The user root can not be used as guest"
                 " account.")
             )
+    afp_srv_bindip = MultiSelectField(
+        verbose_name=_("Bind IP Addresses"),
+        help_text=_(
+            "IP address(es) to advertise and listens to. If none specified, "
+            "advertise the first IP address of the system, but to listen for "
+            "any incoming request."
+        ),
+        max_length=255,
+        blank=True,
+        choices=list(choices.IPChoices()),
+        default='',
+    )
     afp_srv_connections_limit = models.IntegerField(
             max_length=120,
             verbose_name=_('Max. Connections'),

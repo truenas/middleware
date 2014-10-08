@@ -4,7 +4,7 @@
 
 NANO_LABEL?=FreeNAS
 VERSION?=10.0.0-ALPHA
-TRAIN?=FreeNAS-10-Nightlies
+TRAIN?=${NANO_LABEL}-10-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
@@ -106,9 +106,7 @@ cdrom:
 
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
-	env NANO_LABEL=TrueNAS script -a ${RELEASE_LOGFILE} ${MAKE} build
-	mkdir -p objs/TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
-	mv objs/os-base/amd64/TrueNAS-${VERSION}-* objs/TrueNAS-${VERSION}-${BUILD_TIMESTAMP}
+	env NANO_LABEL=TrueNAS ${MAKE} release
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com

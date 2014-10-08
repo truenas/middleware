@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ "${NANO_LABEL}" != "FreeNAS" ]; then
+	echo Cannot push-to-download for \"${NANO_LABEL}\" 1>&2
+	exit 1
+fi
+
 set -e
 PUSHIT=9.3
 ID=`id -un`

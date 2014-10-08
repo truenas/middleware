@@ -25,7 +25,7 @@ def main():
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
-    afp = AFP.objects.order_by('id')[0]
+    afp = AFP.objects.order_by('-id')[0]
 
     cf_contents.append("[Global]\n")
 
@@ -36,6 +36,8 @@ def main():
     else:
         cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so\n")
 
+    if afp.afp_srv_bindip:
+        cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
     if afp.afp_srv_dbpath:
