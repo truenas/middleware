@@ -297,19 +297,26 @@ class Rsync(Model):
         max_length=100,
         default="00",
         verbose_name=_("Minute"),
-        help_text=_("Values 0-59 allowed."),
+        help_text=_(
+            "Values allowed:"
+            "<br>Slider: 0-30 (as it is every Nth minute)."
+            "<br>Specific Minute: 0-59."),
     )
     rsync_hour = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Hour"),
-        help_text=_("Values 0-23 allowed."),
+        help_text=_("Values allowed:"
+            "<br>Slider: 0-12 (as it is every Nth hour)."
+            "<br>Specific Hour: 0-23."),
     )
     rsync_daymonth = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Day of month"),
-        help_text=_("Values 1-31 allowed."),
+        help_text=_("Values allowed:"
+            "<br>Slider: 0-15 (as its is every Nth day)."
+            "<br>Specific Day: 1-31."),
     )
     rsync_month = models.CharField(
         max_length=100,
