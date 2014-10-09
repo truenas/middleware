@@ -387,7 +387,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                                     log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                         rv = True
 
-    except BaseException ase e:
+    except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
         if clone_name:
             if mount_point:
