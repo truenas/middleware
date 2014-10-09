@@ -853,6 +853,21 @@ class ActiveDirectory(DirectoryServiceBase):
             "home directory and login"
         )
     )
+    ad_ldap_sasl_wrapping = models.CharField(
+        verbose_name=_("SASL wrapping"),
+        choices=choices.LDAP_SASL_WRAPPING_CHOICES,
+        max_length=120,
+        help_text=_("The client ldap sasl wrapping defines whether ldap "
+            "traffic will be signed or signed and encrypted (sealed)."
+            "This option is needed in the case of Domain Controllers "
+            "enforcing the usage of signed LDAP connections (e.g. "
+            "Windows 2000 SP3 or higher). LDAP sign and seal can be "
+            "controlled with the registry key \"HKLM\System\\"
+            "CurrentControlSet\Services\NTDS\Parameters\\"
+            "LDAPServerIntegrity\" on the Windows server side."
+        ),
+        default='plain' 
+    )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False

@@ -504,9 +504,18 @@ prompt_password() {
 
     local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
+    cat << __EOF__ > /tmp/dialogconf
+bindkey formfield TAB ITEM_NEXT
+bindkey formfield DOWN form_NEXT
+bindkey formbox ^A form_NEXT
+__EOF__
+
+    export DIALOGRC="/tmp/dialogconf"
+
     while true; do
 	dialog --insecure \
 	    --output-fd 3 \
+	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
 	    10 50 0 \
 	    "Password:" 1 1 "" 0 20 25 20 \
@@ -529,8 +538,12 @@ prompt_password() {
 	    password="${password1}"
 	    break
 	fi
-	
+
     done
+
+    rm -f ${DIALOGRC}
+    unset DIALOGRC
+
 
     echo -n "${password}" 1>&2
 

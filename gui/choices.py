@@ -918,3 +918,9 @@ NSS_INFO_CHOICES = (
     ('sfu20', 'sfu20'),
     ('rfc2307', 'rfc2307')
 )
+
+LDAP_SASL_WRAPPING_CHOICES = (
+    ('plain', 'plain'),
+    ('sign', 'sign'),
+    ('seal', 'seal'),
+)
