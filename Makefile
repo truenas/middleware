@@ -81,6 +81,10 @@ save-build-env:
 
 freenas: release
 release: git-verify
+	@if [ "${NANO_LABEL}" == "TrueNAS" && "${GIT_LOCATION}" != "INTERNAL" ]; then \
+		echo "You can only run this target from an internal repository."; \
+		exit 1; \
+	fi
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
@@ -90,7 +94,9 @@ release: git-verify
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
+	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
+		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
+	fi
 	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
@@ -103,10 +109,6 @@ rebuild:
 
 cdrom:
 	${ENV_SETUP} sh -x build/create_iso.sh
-
-truenas: git-verify
-	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
-	env NANO_LABEL=TrueNAS ${MAKE} release
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
