@@ -2466,11 +2466,11 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
                 "AD group not in cache")
             ad_group = self.get_group(group)
 
-        if self.use_default_domain:
+        if not ad_group:
+            g = group
+        elif self.use_default_domain:
             g = "{}".format(ad_group[1]['sAMAccountName'][0] \
                 if ad_group else group)
-        elif not ad_group:
-            g = group
         else:
             g = "{}{}{}".format(
                 netbiosname,
@@ -2678,11 +2678,11 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
                 "AD user not in cache")
             ad_user = self.get_user(user)
 
-        if self.use_default_domain:
+        if not ad_user:
+            u = user
+        elif self.use_default_domain:
             u = "{}".format(ad_user[1]['sAMAccountName'][0] \
                 if ad_user else user)
-        elif not ad_user:
-            u = user
         else:
             u = "{}{}{}".format(
                 netbiosname,
