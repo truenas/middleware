@@ -1042,11 +1042,13 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         # Okay, the checksums match.
         # Let's see if a package with this version already exists in the destination.
         pkg_dest = "%s/%s" % (pkg_dest_dir, pkg.FileName())
-        if os.path.exists(pkg_dest):
+        try:
+            pkg_file = open(pkg_dest, "wxb")
+        except:
             # Okay, let's see if the hash is the same
             hash = ChecksumFile(pkg_dest)
             if hash is None or hash != pkg.Checksum():
-                print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match" % (pkg.Name(), pkg.Version())
+                print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match (%s for file, %s for package)" % (pkg.Name(), pkg.Version(), hash, pkg.Checksum())
                 raise Exception("Unsure what to do")
             else:
                 if verbose or debug:
@@ -1054,6 +1056,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         else:
             import shutil
             shutil.copyfile(pkg_path, pkg_dest)
+            pkg_file.close()
             copied = True
             if verbose or debug:
                 print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
@@ -1076,8 +1079,10 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 delta_pkg = "%s/Packages/%s" % (archive, pkg.FileName(old_pkg.Version()))
                 # If the delta package exists, let's just trust it,
                 # since creating delta packages is very time-consuming.
-                if not os.path.exists(delta_pkg):
+                try:
+                    delta_file = open(delta_pkg, "wxb")
                     x = PackageFile.DiffPackageFiles(pkg1, pkg2, delta_pkg)
+                    delta_file.close()
                     if x is None:
                         if debug or verbose:
                             print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
@@ -1107,10 +1112,16 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         cksum = ChecksumFile(x)
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (old_pkg.Version(), cksum)
                         pkg.AddUpdate(old_pkg.Version(), cksum)
-                else:
-                    if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
-                    pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
-
+                except IOError as e:
+                    import errno
+                    if e.errno == errno.EEXIST:
+                        if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
+                        pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
+                    else:
+                        raise e
+                except:
+                    print >> sys.stderr, "Exception while creating delta package"
+                    raise e
         pkg_list.append(pkg)
 
     # Everything goes into the archive, and
