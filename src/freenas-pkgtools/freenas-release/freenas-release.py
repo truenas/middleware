@@ -2,6 +2,8 @@
 import os
 import sys
 import getopt
+import stat
+import fcntl
 
 sys.path.append("/usr/local/lib")
 
@@ -1042,24 +1044,36 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         # Okay, the checksums match.
         # Let's see if a package with this version already exists in the destination.
         pkg_dest = "%s/%s" % (pkg_dest_dir, pkg.FileName())
-        try:
-            pkg_file = open(pkg_dest, "wxb")
-        except:
+        pkg_file = open(pkg_dest, "a+b")
+        # Lock the file before we do anything else
+        fcntl.lockf(pkg_file, fcntl.LOCK_EX, 0, 0)
+        # Now, if we created the file, its size will be 0.
+        if os.stat(pkg_file.name).st_size != 0:
             # Okay, let's see if the hash is the same
             hash = ChecksumFile(pkg_dest)
             if hash is None or hash != pkg.Checksum():
                 print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match (%s for file, %s for package)" % (pkg.Name(), pkg.Version(), hash, pkg.Checksum())
-                raise Exception("Unsure what to do")
+                print >> sys.stderr, "Using archive checksum, note this for debugging bpurposes"
+                pkg.SetChecksum(hash)
             else:
                 if verbose or debug:
                     print >> sys.stderr, "Package %s-%s already exists in the destination, so not copying" % (pkg.Name(), pkg.Version())
         else:
-            import shutil
-            shutil.copyfile(pkg_path, pkg_dest)
-            pkg_file.close()
+            # Okay, we need to copy the file
+            with open(pkg_path, "rb") as pkg_file_src:
+                kBufSize = 1024 * 1024
+                while True:
+                    buf = pkg_file_src.read(kBufSize)
+                    if buf:
+                        pkg_file.write(buf)
+                    else:
+                        break
             copied = True
+            os.chmod(pkg_file.name, 0664)
             if verbose or debug:
                 print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
+
+        pkg_file.close()
 
         # This is where we'd want to go through old versions and see if we can create any delta pachages
         for older in previous_sequences:
@@ -1119,7 +1133,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
                     else:
                         raise e
-                except:
+                except Exception as e:
                     print >> sys.stderr, "Exception while creating delta package"
                     raise e
         pkg_list.append(pkg)
