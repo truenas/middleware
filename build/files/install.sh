@@ -1112,7 +1112,6 @@ select_disks() {
 	    disk_menu="${disk_menu} ${_disk} \"${_desc}\" off"
 	done < /tmp/disks.$$
 	rm -f /tmp/disks.$$
-	echo disk_menu: ${disk_menu}
 	if eval "dialog --title 'Choose destination disk(s)' \
 		--checklist 'Select at least one destination disk' \
 		15 70 ${nitems} \
@@ -1219,7 +1218,6 @@ or RAID sets to which they belong\n${warning_message}" \
 	    15 40
 	then
 	    rv=0
->>>>>>> Much to my surprise, that worked.  At least for a fresh install.
 	else
 	    rv=1
 	fi
