@@ -406,8 +406,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
                 if not self.instance.id:
                     home = "%s/%s" % (home.rstrip('/'), bsdusr_username)
-
-                if not home.endswith(bsdusr_username):
+               
+                if not self.instance.id and not home.endswith(bsdusr_username):
                     raise forms.ValidationError(
                         _('Home directory must end with username')
                     )
