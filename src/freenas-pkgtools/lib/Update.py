@@ -196,7 +196,7 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
-def CheckForUpdates(root = None, handler = None, train = None):
+def CheckForUpdates(root = None, handler = None, train = None, cache_dir = None):
     """
     Check for an updated manifest.
     Very simple, uses the configuration module.
@@ -211,10 +211,32 @@ def CheckForUpdates(root = None, handler = None, train = None):
     arguments:  operation, package, old package.
     operation will be "delete", "upgrade", or "install";
     old package will be None for delete and install.
+    The optional cache_dir parameter indicates that it
+    should look in that directory first, rather than
+    going over the network.  (Unlike the similar code
+    in freenas-update, this will not [at this time]
+    download the package files and store them in
+    cache_dir.)
     """
     conf = Configuration.Configuration(root)
     cur = conf.SystemManifest()
-    m = conf.FindLatestManifest(train = train)
+    m = None
+    # Let's check cache_dir if it is set
+    if cache_dir and (not train or train == cur.Train()):
+        if os.path.exists(cache_dir + "/MANIFEST"):
+            # Okay, let's load it up.
+            m = Manifest.Manifest()
+            try:
+                m.LoadPath(cache_dir + "/MANIFEST")
+                if m.Train() != cur.Train():
+                    # Should we get rid of the cache?
+                    m = None
+            except:
+                m = None
+
+    if m is None:
+        m = conf.FindLatestManifest(train = train)
+
     log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
                                                                              if m is not None else "None"))
     if m is None:
