@@ -183,7 +183,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     rm ${ELECTING_FILE}
 
     # Open every disk for writing once.
-    sysctl -n kern.disks | tr ' ' '\n' | grep ^da | xargs -n 1 echo "false >" | sh
+    sysctl -n kern.disks | tr ' ' '\n' | sed -e 's,^,/dev/,' | grep '^/dev/da' | xargs -n 1 echo "false >" | sh
 
     if [ -e /data/zfs/killcache ]; then
 	rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
