@@ -574,6 +574,9 @@ def add_activedirectory_conf(smb4_conf):
     confset2(smb4_conf, "allow trusted domains = %s",
         "yes" if ad.ad_allow_trusted_doms else "no")
 
+    confset2(smb4_conf, "client ldap sasl wrapping = %s",
+        ad.ad_ldap_sasl_wrapping)
+
     confset1(smb4_conf, "template shell = /bin/sh")
     confset2(smb4_conf, "template homedir = %s",
         "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
