@@ -477,13 +477,23 @@ class Available(object):
         return results
 
     def get_remote(self, repo_id=None, cache=False):
+        log.debug("get_remote:  repod_id = %s, cache = %s", repo_id, cache)
+
         if not repo_id:
             repo_id = self._def_repo_id()
+            log.debug(
+                "get_remote: repo_id not specified, repo_id = %s",
+                 repo_id
+            )
+
         if cache and repo_id in self.__cache:
-            log.debug("Using cached results for %s", repo_id)
+            log.debug("get_remote: Using cached results for %s", repo_id)
             return self.__cache.get(repo_id)
 
-        log.debug("Retrieving available plugins from repo %s", repo_id)
+        log.debug(
+            "get_remote: Retrieving available plugins from repo %s",
+            repo_id
+        )
 
         p = pbi.PBI()
         p.pbid(flags=pbi.PBID_FLAGS_REFRESH, sync=True)
@@ -491,7 +501,7 @@ class Available(object):
         results = p.browser(repo_id=repo_id, flags=pbi.PBI_BROWSER_FLAGS_VIEWALL)
         if not results:
             log.debug(
-                "No results returned for repo %s", repo_id
+                "get_remote: No results returned for repo %s", repo_id
             )
             return results
 
@@ -499,6 +509,8 @@ class Available(object):
 	results.sort(key=lambda x: x['Application'].lower())
 
         for p in results:
+            log.debug("get_remote: p = %s", p)
+
             try:
                 index_entry = self.get_index_entry(
                     repo_id,
@@ -506,21 +518,35 @@ class Available(object):
                     arch=p['Arch'],
                     version=p['Version']
                 )
+
+                log.debug("get_remote: index_entry = %s", index_entry)
                 if not index_entry:
-                    log.debug("not index entry found for %s", p['Application'])
+                    log.debug(
+                        "get_remote: not index entry found for %s",
+                        p['Application']
+                    )
                     continue
 
+
                 urls = self.get_mirror_urls(repo_id)
+                log.debug("get_remote: urls = %s", urls)
 
                 item = self._get_remote_item(repo_id, p, index_entry, urls)
+                log.debug("get_remote: item = %s", item)
+
                 if item is False:
-                    log.debug("unable to create plugin for %s", p['Application'])
+                    log.debug(
+                        "get_remote: unable to create plugin for %s",
+                        p['Application']
+                    )
                     continue
 
                 plugins.append(item)
-            except Exception as e:
-                log.debug("Failed to get remote item: %s", e)
 
+            except Exception as e:
+                log.debug("get_remote: Failed to get remote item: %s", e)
+
+        log.debug("get_remote: plugins = %s", plugins)
         self.__cache[repo_id] = plugins
         return plugins
 
