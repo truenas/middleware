@@ -255,7 +255,8 @@ class ActiveDirectoryForm(ModelForm):
         'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
-        'ad_idmap_backend'
+        'ad_idmap_backend',
+        'ad_ldap_sasl_wrapping'
     ]
 
     class Meta:
