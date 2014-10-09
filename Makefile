@@ -90,7 +90,9 @@ release: git-verify
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"
+	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
+		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}";
+	fi
 	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
@@ -106,7 +108,7 @@ cdrom:
 
 truenas: git-verify
 	@[ "${GIT_LOCATION}" = "INTERNAL" ] || (echo "You can only run this target from an internal repository."; exit 1)
-	env NANO_LABEL=TrueNAS ${MAKE} release
+	env NANO_LABEL=TrueNAS ${MAKE} release-push
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
