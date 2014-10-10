@@ -86,7 +86,7 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.utils import BootEnv
+from freenasUI.system.utils import BootEnv, CheckUpdateHandler
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -2476,6 +2476,13 @@ class UpdateResourceMixin(NestedMixin):
                 self.wrap_view('manual'),
                 name="api_upgrade_manual"
             ),
+            url(
+                r"^(?P<resource_name>%s)/check%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('check'),
+                name="api_upgrade_check"
+            ),
         ]
 
     def manual(self, request, **kwargs):
@@ -2506,3 +2513,41 @@ class UpdateResourceMixin(NestedMixin):
             updateform.cleaned_data.get('sha256'),
         )
         return HttpResponse('Manual update finished.', status=202)
+
+    def check(self, request, **kwargs):
+        self.method_check(request, allowed=['get'])
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        handler = CheckUpdateHandler()
+        update = Update.CheckForUpdates(
+            handler=handler.call,
+            train=deserialized.get('train'),
+        )
+        changes = []
+        if update:
+            for c in handler.changes:
+                if c['operation'] == 'upgrade':
+                    name = '%s-%s -> %s-%s' % (
+                        c['old'].Name(),
+                        c['old'].Version(),
+                        c['new'].Name(),
+                        c['new'].Version(),
+                    )
+                elif c['operation'] == 'install':
+                    name = '%s-%s' % (c['new'].Name(), c['new'].Version())
+                else:
+                    name = '%s-%s' % (c['old'].Name(), c['old'].Version())
+
+                changes.append({
+                    'operation': c['operation'],
+                    'name': name,
+                })
+        return self.create_response(
+            request,
+            changes,
+        )
