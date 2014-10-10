@@ -2517,16 +2517,10 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        deserialized = self.deserialize(
-            request,
-            request.body,
-            format=request.META.get('CONTENT_TYPE', 'application/json'),
-        )
-
         handler = CheckUpdateHandler()
         update = Update.CheckForUpdates(
             handler=handler.call,
-            train=deserialized.get('train'),
+            train=request.GET.get('train'),
         )
         changes = []
         if update:
