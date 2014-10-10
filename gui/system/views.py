@@ -984,6 +984,18 @@ def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
 
 
+def update_index(request):
+
+    try:
+        update = models.Update.objects.order_by('-id')[0]
+    except IndexError:
+        update = models.Update.objects.create()
+
+    return render(request, 'system/update_index.html', {
+        'update': update,
+    })
+
+
 def update(request):
 
     if request.method == 'POST':
