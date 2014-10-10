@@ -140,7 +140,9 @@ class PBIUploadForm(Form):
             #FIXME: Better base name, using pbi_info
             try:
                 jail = new_default_plugin_jail("customplugin")
-            except Exception as e: 
+            except MiddlewareError, e:
+                raise e
+            except Exception, e:
                 raise MiddlewareError(e)
 
             pjail = jail.jail_host
