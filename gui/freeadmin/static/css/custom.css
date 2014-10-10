@@ -402,8 +402,8 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.UpgradeIcon {
-    background-image:url('/static/images/ui/tree/upgrade.png');
+.UpdateIcon {
+    background-image:url('/static/images/ui/tree/update.png');
     width:16px;
     height:16px;
 }

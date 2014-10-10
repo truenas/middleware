@@ -78,12 +78,12 @@ class TunableView(TreeNode):
     append_to = 'system.Tunable'
 
 
-class Upgrade(TreeNode):
+class Update(TreeNode):
 
-    gname = 'Upgrade'
-    name = _('Upgrade')
+    gname = 'Update'
+    name = _('Update')
     type = 'opensystem'
-    icon = 'UpgradeIcon'
+    icon = 'UpdateIcon'
 
 
 class CertificateAuthorityView(TreeNode):

@@ -499,14 +499,14 @@ class SystemDataset(Model):
         self.sys_uuid = uuid.uuid4().hex
 
 
-class Upgrade(Model):
+class Update(Model):
     upd_autocheck = models.BooleanField(
         verbose_name=_('Check Automatically For Updates'),
         default=True,
     )
 
     class Meta:
-        verbose_name = _('Upgrade')
+        verbose_name = _('Updade')
 
 
 CA_TYPE_EXISTING        = 0x00000001

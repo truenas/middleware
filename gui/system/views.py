@@ -379,9 +379,9 @@ def home(request):
         registration = None
 
     try:
-        upgrade = models.Upgrade.objects.order_by("-id")[0]
+        update = models.Update.objects.order_by("-id")[0]
     except:
-        upgrade = models.Upgrade.objects.create()
+        update = models.Update.objects.create()
 
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
@@ -391,7 +391,7 @@ def home(request):
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
-        'upgrade': upgrade,
+        'update': update,
     })
 
 
@@ -984,10 +984,10 @@ def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
 
 
-def upgrade(request):
+def update(request):
 
     if request.method == 'POST':
-        form = forms.UpgradeSelectForm(request.POST)
+        form = forms.UpdateSelectForm(request.POST)
         if form.is_valid():
             handler = CheckUpdateHandler()
             try:
@@ -997,8 +997,8 @@ def upgrade(request):
                 )
             except ValueError:
                 update = False
-            request.session['upgrade_train'] = form.cleaned_data.get('train')
-            return render(request, 'system/upgrade.html', {
+            request.session['update_train'] = form.cleaned_data.get('train')
+            return render(request, 'system/update.html', {
                 'update': update,
                 'handler': handler,
             })
@@ -1017,7 +1017,7 @@ def upgrade(request):
                         Update(
                             get_handler=handler.get_handler,
                             install_handler=handler.install_handler,
-                            train=request.session['upgrade_train'],
+                            train=request.session['update_train'],
                         )
                     except Exception, e:
                         handler.error = unicode(e)
@@ -1033,14 +1033,14 @@ def upgrade(request):
                 request.session['allow_reboot'] = True
                 return render(request, 'system/done.html')
     else:
-        form = forms.UpgradeSelectForm()
-        return render(request, 'system/upgrade_select.html', {
+        form = forms.UpdateSelectForm()
+        return render(request, 'system/update_select.html', {
             'form': form,
         })
 
 
 
-def upgrade_progress(request):
+def update_progress(request):
     handler = UpdateHandler()
     return HttpResponse(
         json.dumps(handler.load()),

@@ -465,40 +465,23 @@ def nt4_objects():
 
 
 def nis_enabled():
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
-    h = sqlite3.connect(db)
-    c = h.cursor()
+    from freenasUI.directoryservice.models import NIS
 
     enabled = False
-    sql = "select nis_enable from directoryservice_nis"
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0] != 0:
-        enabled = True
+    try:
+        nis = NIS.objects.all()[0]
+        enabled = nis.nis_enable
 
-    c.close()
-    h.close()
+    except: 
+        enabled = False
 
     return enabled
 
 
 def nis_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
+    from freenasUI.directoryservice.models import NIS
 
-    results = c.execute("SELECT * FROM directoryservice_nis ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in row.keys():
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
+    return NIS.objects.all()
 
 
 def get_avatar_conf():

@@ -571,7 +571,8 @@ class FreeNAS_UserCache(FreeNAS_BaseCache):
 
         obj = None
         if ldap_enabled() or activedirectory_enabled() or \
-            nt4_enabled() or nis_enabled() or domaincontroller_enabled():
+            nt4_enabled() or nis_enabled() or \
+            domaincontroller_enabled() or nis_enabled():
             obj = FreeNAS_Directory_LocalUserCache(**kwargs)
 
         else:
@@ -587,7 +588,8 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
 
         obj = None
         if ldap_enabled() or activedirectory_enabled() or \
-            nt4_enabled() or nis_enabled() or domaincontroller_enabled():
+            nt4_enabled() or nis_enabled() \
+            or domaincontroller_enabled() or nis_enabled():
             obj = FreeNAS_Directory_LocalGroupCache(**kwargs)
 
         else:

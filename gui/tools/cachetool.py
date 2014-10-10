@@ -44,6 +44,7 @@ cache.get_apps()
 from freenasUI.common.system import (
     activedirectory_enabled,
     ldap_enabled,
+    nis_enabled,
     nt4_enabled
 )
 
@@ -64,6 +65,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_CACHE_WRITE_GROUP
 )
 
+from freenasUI.common.freenasnis import FreeNAS_NIS
 from freenasUI.common.freenasnt4 import FreeNAS_NT4
 from freenasUI.common.freenasusers import (
     FreeNAS_Users,
@@ -162,6 +164,33 @@ def _cache_keys_ActiveDirectory(**kwargs):
             for key in dgcache.keys():
                 print "dg key: %s" % key
 
+def _cache_keys_NIS(**kwargs):
+    nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
+    domains = nis.get_domains()
+    for d in domains:
+        print "d: %s" % d
+
+        ucache = FreeNAS_UserCache(dir=d)
+        if ucache: 
+            for key in ucache.keys():
+                print "u key: %s" % key
+
+        gcache = FreeNAS_GroupCache(dir=d)
+        if gcache:
+            for key in gcache.keys():
+                print "g key: %s" % key
+
+        ducache = FreeNAS_Directory_UserCache(dir=d)
+        if ducache:
+            for key in ducache.keys():
+                print "du key: %s" % key
+
+        dgcache = FreeNAS_Directory_GroupCache(dir=d)
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg key: %s" % key
+
+
 def _cache_keys_NT4(**kwargs):
     nt4 = FreeNAS_NT4()
     domains = nt4.get_domains()
@@ -215,6 +244,9 @@ def cache_keys(**kwargs):
     if activedirectory_enabled():
         _cache_keys_ActiveDirectory(**kwargs)
 
+    elif nis_enabled():
+        _cache_keys_NIS(**kwargs)
+
     elif nt4_enabled():
         _cache_keys_NT4(**kwargs)
 
@@ -249,6 +281,32 @@ def _cache_rawdump_ActiveDirectory(**kwargs):
                 print "du: %s=%s" % (key, ducache[key])
 
         dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
+        if dgcache:
+            for key in dgcache.keys():
+                print "dg: %s=%s" % (key, dgcache[key])
+
+def _cache_rawdump_NIS(**kwargs):
+    nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
+    domains = nis.get_domains()
+    for d in domains:
+        print "d: %s" % d
+
+        ucache = FreeNAS_UserCache(dir=d)
+        if ucache:
+            for key in ucache.keys():
+                print "u: %s=%s" % (key, ucache[key])
+
+        gcache = FreeNAS_GroupCache(dir=d)
+        if gcache:
+            for key in gcache.keys():
+                print "g: %s=%s" % (key, gcache[key])
+
+        ducache = FreeNAS_Directory_UserCache(dir=d)
+        if ducache:
+            for key in ducache.keys():
+                print "du: %s=%s" % (key, ducache[key])
+
+        dgcache = FreeNAS_Directory_GroupCache(dir=d)
         if dgcache:
             for key in dgcache.keys():
                 print "dg: %s=%s" % (key, dgcache[key])
@@ -304,6 +362,9 @@ def _cache_rawdump_default(**kwargs):
 def cache_rawdump(**kwargs):
     if activedirectory_enabled():
         _cache_rawdump_ActiveDirectory(**kwargs)
+
+    elif nis_enabled():
+        _cache_rawdump_NIS(**kwargs)
 
     elif nt4_enabled():
         _cache_rawdump_NT4(**kwargs)
@@ -378,6 +439,77 @@ def _cache_check_ActiveDirectory(**kwargs):
                 gcache = FreeNAS_GroupCache(dir=workgroup)
                 ducache = FreeNAS_Directory_UserCache(dir=workgroup)
                 dgcache = FreeNAS_Directory_GroupCache(dir=workgroup)
+
+                if key == 'du':
+                    if ducache and ducache.has_key(val) and ducache[val]:
+                        print "%s: %s" % (val, ducache[val])
+
+                elif key == 'dg':
+                    if dgcache and dgache.has_key(val) and dgcache[val]:
+                        print "%s: %s" % (val, dgcache[val])
+
+def _cache_check_NIS(**kwargs):
+    if not kwargs.has_key('args') and kwargs['args']:
+        return
+
+    valid = {}
+    ad = FreeNAS_NIS(flags=FLAGS_DBINIT)
+    domains = nis.get_domains()
+    for d in domains:
+        valid[d] = True
+
+    for arg in kwargs['args']:
+        key = val = None
+
+        if arg.startswith("u="): 
+            key = "u"
+            val = arg.partition("u=")[2]
+
+        elif arg.startswith("g="): 
+            key = "g"
+            val = arg.partition("g=")[2]
+
+        elif arg.startswith("du="): 
+            key = "du"
+            val = arg.partition("du=")[2]
+
+        elif arg.startswith("dg="): 
+            key = "dg"
+            val = arg.partition("dg=")[2]
+
+        else:
+            continue
+
+
+        if key in ('u', 'g'):
+            parts = val.split('\\')
+            if len(parts) < 2:
+                continue
+
+            d = parts[0]
+            if not valid.has_key(d):
+                continue
+
+            ucache = FreeNAS_UserCache(dir=d)
+            gcache = FreeNAS_GroupCache(dir=d)
+            ducache = FreeNAS_Directory_UserCache(dir=d)
+            dgcache = FreeNAS_Directory_GroupCache(dir=d)
+
+            if key == 'u':
+                if ucache and ucache.has_key(val) and ucache[val]:
+                    print "%s: %s" % (val, ucache[val])
+
+            elif key == 'g':
+                if gcache and gcache.has_key(val) and gcache[val]:
+                    print "%s: %s" % (val, gcache[val])
+
+
+        elif key in ('du', 'dg'):
+            for d in valid.keys():
+                ucache = FreeNAS_UserCache(dir=d)
+                gcache = FreeNAS_GroupCache(dir=d)
+                ducache = FreeNAS_Directory_UserCache(dir=d)
+                dgcache = FreeNAS_Directory_GroupCache(dir=d)
 
                 if key == 'du':
                     if ducache and ducache.has_key(val) and ducache[val]:
@@ -499,6 +631,9 @@ def cache_check(**kwargs):
     if activedirectory_enabled():
         _cache_check_ActiveDirectory(**kwargs) 
 
+    elif nis_enabled():
+        _cache_check_NIS(**kwargs) 
+
     elif nt4_enabled():
         _cache_check_NT4(**kwargs) 
 
@@ -520,6 +655,17 @@ def _cache_count_ActiveDirectory(**kwargs):
         print "g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=workgroup))
         print "du: %ld" % _cachelen(FreeNAS_Directory_UserCache(dir=workgroup))
         print "dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache(dir=workgroup))
+        print "\n"
+
+def _cache_count_NIS(**kwargs):
+    nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
+    domains = nis.get_domains()
+    for d in domains:
+        print "d:  %s" % d
+        print "u:  %ld" % _cachelen(FreeNAS_UserCache(dir=d))
+        print "g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=d))
+        print "du: %ld" % _cachelen(FreeNAS_Directory_UserCache(dir=d))
+        print "dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache(dir=d))
         print "\n"
 
 def _cache_count_NT4(**kwargs):
@@ -545,6 +691,9 @@ def _cache_count_default(**kwargs):
 def cache_count(**kwargs):
     if activedirectory_enabled():
         _cache_count_ActiveDirectory(**kwargs)
+
+    elif nis_enabled():
+        _cache_count_NIS(**kwargs)
 
     elif nt4_enabled():
         _cache_count_NT4(**kwargs)

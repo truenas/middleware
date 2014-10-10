@@ -2465,7 +2465,7 @@ class BootEnvResource(NestedMixin, DojoResource):
         return bundle
 
 
-class UpgradeResourceMixin(NestedMixin):
+class UpdateResourceMixin(NestedMixin):
 
     def prepend_urls(self):
         return [

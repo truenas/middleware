@@ -505,9 +505,12 @@ prompt_password() {
     local values value password="" password1 password2 _counter _tmpfile="/tmp/pwd.$$"
 
     cat << __EOF__ > /tmp/dialogconf
-bindkey formfield TAB ITEM_NEXT
-bindkey formfield DOWN form_NEXT
-bindkey formbox ^A form_NEXT
+bindkey formfield TAB FORM_NEXT
+bindkey formfield DOWN FORM_NEXT
+bindkey formfield UP FORM_PREV
+bindkey formbox DOWN FORM_NEXT
+bindkey formbox TAB FORM_NEXT
+bindkey formbox UP FORM_PREV
 __EOF__
 
     export DIALOGRC="/tmp/dialogconf"
