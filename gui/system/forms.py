@@ -796,6 +796,7 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_syslogserver = (
             self.instance.stg_syslogserver
         )
+        self.instance._original_stg_guicertificate = self.instance.stg_guicertificate
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
@@ -837,7 +838,8 @@ class SettingsForm(ModelForm):
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
             self.instance._original_stg_guiport != self.instance.stg_guiport or
             self.instance._original_stg_guihttpsport != self.instance.stg_guihttpsport or
-            self.instance._original_stg_guihttpsredirect != self.instance.stg_guihttpsredirect
+            self.instance._original_stg_guihttpsredirect != self.instance.stg_guihttpsredirect or
+            self.instance._original_stg_guicertificate != self.instance.stg_guicertificate
         ):
             if self.instance.stg_guiaddress == "0.0.0.0":
                 address = request.META['HTTP_HOST'].split(':')[0]
