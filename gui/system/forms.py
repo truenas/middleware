@@ -1888,7 +1888,7 @@ class InitialWizardConfirmForm(Form):
     pass
 
 
-class UpgradeForm(ModelForm):
+class UpdateForm(ModelForm):
 
     curtrain = forms.CharField(
         label=_('Current Train'),
@@ -1898,19 +1898,19 @@ class UpgradeForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        model = models.Upgrade
+        model = models.Update
 
     def __init__(self, *args, **kwargs):
-        super(UpgradeForm, self).__init__(*args, **kwargs)
+        super(UpdateForm, self).__init__(*args, **kwargs)
         self._conf = Configuration.Configuration()
         self._conf.LoadTrainsConfig()
         self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
 
-class UpgradeSelectForm(Form):
+class UpdateSelectForm(Form):
 
     def __init__(self, *args, **kwargs):
-        super(UpgradeSelectForm, self).__init__(*args, **kwargs)
+        super(UpdateSelectForm, self).__init__(*args, **kwargs)
         self._conf = Configuration.Configuration()
         self._conf.LoadTrainsConfig()
         trains = self._conf.AvailableTrains() or []

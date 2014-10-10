@@ -10,7 +10,7 @@ doSubmit({
          {"label": gettext("Downloading packages")},
          {"label": gettext("Installing packages")}
       ],
-      poolUrl: '{% url "system_upgrade_progress" %}',
+      poolUrl: '{% url "system_update_progress" %}',
       fileUpload: false
     }
 });
@@ -38,14 +38,14 @@ doSubmit({
 {% endblock %}
 
 {% block oklabel %}
-{% trans "Upgrade" %}
+{% trans "Update" %}
 {% endblock %}
 
 {% block buttons %}
 {% if update %}
 {{ block.super }}
 {% else %}
-<button id="btn_Upgrade_Close" data-dojo-type="dijit.form.Button"type="button">
+<button id="btn_Update_Close" data-dojo-type="dijit.form.Button"type="button">
     {% trans "Close" %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
         cancelDialog(this);
