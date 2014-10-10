@@ -87,7 +87,17 @@ define([
         disabled: true
       }, me.dapApplyPendintBtn);
 
+      var options = [];
+
+      for(var i in me.initial.trains) {
+        var name = me.initial.trains[i];
+        var entry = {label: name, value: name};
+        if(name == me.initial.currentTrain) entry['selected'] = true;
+        options.push(entry);
+      }
+
       me._applyPending = new Select({
+        options: options
       }, me.dapSelectTrain);
 
       me._store = new Memory({
