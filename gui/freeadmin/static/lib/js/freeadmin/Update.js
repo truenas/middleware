@@ -65,9 +65,18 @@ define([
     postCreate: function() {
       var me = this;
 
-      me._autoCheck = new CheckBox({
+      var autochecked;
+      if(me.initial.autoCheck !== undefined) {
+        autochecked = me.initial.autoCheck;
+      } else {
+        autochecked = false;
+      }
 
+      me._autoCheck = new CheckBox({
+        checked: autochecked
       }, me.dapAutoCheck);
+
+      me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
 
       me._checkUpdate = new Button({
         label: gettext("Check For Updates")
