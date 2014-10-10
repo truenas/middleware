@@ -97,7 +97,7 @@ def main():
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
         disc_authmethod = gconf.iscsi_discoveryauthmethod
-        if disc_authmethod == "None" or (disc_authmethod == "auto" and gconf.iscsi_discoveryauthgroup is None):
+        if disc_authmethod == "None" or (disc_authmethod == "Auto" and gconf.iscsi_discoveryauthgroup is None):
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
             cf_contents.append("\tdiscovery-auth-group ag%s\n" %
