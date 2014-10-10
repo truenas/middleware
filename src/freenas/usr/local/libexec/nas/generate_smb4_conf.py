@@ -552,10 +552,6 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "domain master = no")
     confset1(smb4_conf, "preferred master = no")
 
-    confset1(smb4_conf, "acl check permissions = true")
-    confset1(smb4_conf, "acl map full control = true")
-    confset1(smb4_conf, "dos filemode = yes")
-
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
     confset1(smb4_conf, "winbind enum users = yes")
@@ -679,6 +675,8 @@ def generate_smb4_conf(smb4_conf, role):
         "yes" if cifs.cifs_srv_nullpw else False)
     confset2(smb4_conf, "acl allow execute always = %s",
         "true" if cifs.cifs_srv_allow_execute_always else "false")
+    confset1(smb4_conf, "acl check permissions = true")
+    confset1(smb4_conf, "dos filemode = yes")
 
     if not smb4_ldap_enabled():
         confset2(smb4_conf, "domain logons = %s",
@@ -981,7 +979,7 @@ def do_migration(old_samba4_datasets):
     return True
 
 
-def import_users(smb_conf_path, importfile, exportfile=None):
+def smb4_import_users(smb_conf_path, importfile, exportfile=None):
     args = [
         "/usr/local/bin/pdbedit",
         "-d 0",
@@ -994,9 +992,59 @@ def import_users(smb_conf_path, importfile, exportfile=None):
 
     p = pipeopen(string.join(args, ' '))
     pdbedit_out = p.communicate()
-    if pdbedit_out and pdbedit_out[1]:
-        for line in pdbedit_out[1].split('\n'):
+    if pdbedit_out and pdbedit_out[0]:
+        for line in pdbedit_out[0].split('\n'):
             print line
+
+
+def smb4_grant_user_rights(user):
+    args = [
+        "/usr/local/bin/net",
+        "sam",
+        "rights",
+        "grant"
+    ]
+
+    rights = [
+        "SeTakeOwnershipPrivilege",
+        "SeBackupPrivilege",
+        "SeRestorePrivilege"
+    ] 
+
+    net_cmd = "%s %s %s" % (
+        string.join(args, ' '),
+        user,
+        string.join(rights, ' ')
+    )
+
+    p = pipeopen(net_cmd)
+    net_out = p.communicate()
+    if net_out and net_out[0]:
+        for line in net_out[0].split('\n'):
+            print line 
+
+    if p.returncode != 0:
+        return False
+
+    return True
+
+    
+def smb4_grant_rights():
+    args = [
+        "/usr/local/bin/pdbedit",
+        "-L"
+    ]
+
+    p = pipeopen(string.join(args, ' '))
+    pdbedit_out = p.communicate()
+    if pdbedit_out and pdbedit_out[0]:
+        for line in pdbedit_out[0].split('\n'):
+            if not line:
+                continue
+
+            parts = line.split(':')
+            user = parts[0]
+            smb4_grant_user_rights(user)
 
 
 def get_groups():
@@ -1115,9 +1163,10 @@ def main():
     os.close(fd)
 
     if role != 'dc':
-        import_users(smb_conf_path, tmpfile,
+        smb4_import_users(smb_conf_path, tmpfile,
             "tdbsam:/var/etc/private/passdb.tdb")
         smb4_map_groups()
+        smb4_grant_rights()
 
     os.unlink(tmpfile)
 
