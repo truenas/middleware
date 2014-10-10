@@ -68,6 +68,8 @@ from freenasUI.common.ssl import (
     create_certificate,
     sign_certificate,
     load_certificate,
+    load_privatekey,
+    export_privatekey,
     generate_key
 )
 
@@ -1978,11 +1980,35 @@ class CertificateAuthorityImportForm(ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text,
     )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False, 
+        help_text=_("Passphrase for encrypted private keys")
+    )
     cert_serial = forms.IntegerField(
         label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
+
+    def clean_cert_passphrase(self):
+        cdata = self.cleaned_data
+
+        passphrase = cdata.get('cert_passphrase')
+        privatekey = cdata.get('cert_privatekey')
+
+        if not privatekey:
+            return passphrase
+
+        try:
+            privatekey = load_privatekey(
+                privatekey,
+                passphrase
+            )
+        except Exception as e:
+            raise forms.ValidationError(_("Incorrect passphrase"))
+
+        return passphrase
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
@@ -1996,6 +2022,16 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
+        cert_privatekey = self.cleaned_data.get('cert_privatekey')
+        cert_passphrase = self.cleaned_data.get('cert_passphrase')
+ 
+        if cert_passphrase and cert_privatekey:
+            privatekey = export_privatekey(
+                cert_privatekey,
+                cert_passphrase
+            )
+            self.instance.cert_privatekey = privatekey
+
         super(CertificateAuthorityImportForm, self).save()
 
         notifier().start("ix-ssl")
@@ -2005,6 +2041,7 @@ class CertificateAuthorityImportForm(ModelForm):
             'cert_name',
             'cert_certificate',
             'cert_privatekey',
+            'cert_passphrase',
             'cert_serial'
         ]
         model = models.CertificateAuthority
@@ -2195,10 +2232,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         signing_cert = self.instance.cert_signedby
 
         publickey = generate_key(self.instance.cert_key_length)
-        signkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            signing_cert.cert_privatekey
-        )
+        signkey = load_privatekey(signing_cert.cert_privatekey)
 
         cert = create_certificate(cert_info)
         cert.set_pubkey(publickey)
@@ -2331,6 +2365,30 @@ class CertificateImportForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False, 
+        help_text=_("Passphrase for encrypted private keys")
+    )
+
+    def clean_cert_passphrase(self):
+        cdata = self.cleaned_data
+
+        passphrase = cdata.get('cert_passphrase')
+        privatekey = cdata.get('cert_privatekey')
+
+        if not privatekey:
+            return passphrase
+
+        try:
+            pkey = load_privatekey(
+                privatekey,
+                passphrase
+            )
+        except Exception as e:
+            raise forms.ValidationError(_("Incorrect passphrase"))
+
+        return passphrase
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
@@ -2344,6 +2402,16 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
+        cert_privatekey = self.cleaned_data.get('cert_privatekey')
+        cert_passphrase = self.cleaned_data.get('cert_passphrase')
+ 
+        if cert_passphrase and cert_privatekey:
+            privatekey = export_privatekey(
+                cert_privatekey,
+                cert_passphrase
+            )
+            self.instance.cert_privatekey = privatekey
+
         super(CertificateImportForm, self).save()
 
         notifier().start("ix-ssl")
@@ -2352,7 +2420,8 @@ class CertificateImportForm(ModelForm):
         fields = [
             'cert_name',
             'cert_certificate',
-            'cert_privatekey'
+            'cert_privatekey',
+            'cert_passphrase'
         ]
         model = models.Certificate
 
