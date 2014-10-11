@@ -1,34 +1,16 @@
-Release Notes for FreeNAS 9.2.1.8-RELEASE
+Release Notes for FreeNAS 9.2.1.9-RELEASE
 
-o Fix bug where use of NONE cipher in replication erroneously reported an
-  error on a successful replication.
+o Fix a bug preventing Directory Server mode from working.
 
-o Don't enable lz4 compression on replication by default if upgrading from
-  a pre-9.2.1.7 release.
+o Fix a memory leak in ZFS that is triggered by having
+  a compressed dataset and an L2ARC device.
 
-o Multiple kernel iSCSI / CTL improvements.  This includes VMWare VAAI and
-  Microsoft ODX acceleration support, improved performance and fixes for
-  number of bugs. Kernel iSCSI can be activated by checking the experimental
-  target checkbox under services -> iSCSI.
+o Preserve the Samba SID across reboots and upgrades.
 
-o Improve performance of viewing snapshots when replication tasks are set up.
+o Fix two problems in the config file generator for CTL:
+  1) Unbreak device extents when using physical devices
+     or multipath devices.
+  2) Unbreak the case when target auth or discover auth
+     is set to Auto.
 
-o Allow binding CIFS to specific IPs.
-
-o Fix LDAP bind URL when using TLS.
-
-o Validate AD advanced settings.  If the GC or DC are manually specified
-  make sure they are reachable.
-
-o Set UNIX permissions when the Mac permissions radio button is selected.
-  Netatalk does not play nicely with ACLs.
-
-o Fix a bug in the mail sending routines used by FreeNAS. With some mailserver
-  configurations the To: address could've been set to root instead of the
-  address specified in the root user.
-
-o Fix a bug that prevented  the system from showing the replicated status of
-  a snapshot if the remote path differed from the local path.
-
-o "Shellshock" security vulnerability in bash (which is not the system shell
-  FreeNAS or FreeBSD) proactively closed.
+o Fix a priviledge escalation.
