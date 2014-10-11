@@ -603,7 +603,7 @@ class CertificateBase(Model):
             null=True,
             max_length=120,
             verbose_name=_("Common Name"),
-            help_text=_("Common Name (eg, YOUR name)")
+            help_text=_("Common Name (eg, FQDN of FreeNAS server or service)")
             )
     cert_serial = models.IntegerField(
             blank=True,

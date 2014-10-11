@@ -56,17 +56,27 @@ class BootEnv(object):
 class CheckUpdateHandler(object):
 
     def __init__(self):
-        self.output = ''
+        self.changes = []
 
     def call(self, op, newpkg, oldpkg):
-        if op == 'upgrade':
-            self.output += '%s: %s-%s -> %s-%s\n' % (
-                _('Upgrade'),
-                oldpkg.Name(),
-                oldpkg.Version(),
-                newpkg.Name(),
-                newpkg.Version(),
-            )
+        self.changes.append({
+            'operation': op,
+            'old': oldpkg,
+            'new': newpkg,
+        })
+
+    @property
+    def output(self):
+        output = ''
+        for c in self.changes:
+            if c['operation'] == 'upgrade':
+                output += '%s: %s-%s -> %s-%s\n' % (
+                    _('Upgrade'),
+                    c['old'].Name(),
+                    c['old'].Version(),
+                    c['new'].Name(),
+                    c['new'].Version(),
+                )
 
 
 class UpdateHandler(object):

@@ -127,14 +127,40 @@ def load_certificate_signing_request(buf):
     return cert_info 
 
 
+#
+# This will raise an exception if it's an encrypted private key
+# and no password is provided. Unfortunately, the exception type
+# is generic and no error string is provided. The purpose here is 
+# to determine if this is an encrypted private key or not. If it not,
+# then the key will load and return fine. If it is encrypted, then it 
+# will load if the correct passphrase is provided, otherwise it will
+# throw an exception.
+#
+def load_privatekey(buf, passphrase=None):
+    return crypto.load_privatekey(
+        crypto.FILETYPE_PEM,
+        buf,
+        passphrase=lambda x: str(passphrase) if passphrase else ''
+    )
+
+
 def export_certificate(buf):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
     return crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
 
 
-def export_privatekey(buf):
-    key = crypto.load_privatekey(crypto.FILETYPE_PEM, buf)
-    return crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+def export_privatekey(buf, passphrase=None):
+    key = crypto.load_privatekey(
+        crypto.FILETYPE_PEM,
+        buf,
+        passphrase=str(passphrase) if passphrase else None
+    )
+
+    return crypto.dump_privatekey(
+        crypto.FILETYPE_PEM,
+        key,
+        passphrase=str(passphrase) if passphrase else None
+    )
 
 
 def write_certificate(certificate, path):
@@ -143,9 +169,13 @@ def write_certificate(certificate, path):
     )
 
 
-def write_privatekey(privatekey, path):
+def write_privatekey(privatekey, path, passphrase=None):
     open(path, "w").write(
-        crypto.dump_privatekey(crypto.FILETYPE_PEM, privatekey)
+        crypto.dump_privatekey(
+            crypto.FILETYPE_PEM,
+            privatekey,
+            passphrase=str(passphrase) if passphrase else None
+        )
     )
 
 

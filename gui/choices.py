@@ -233,7 +233,6 @@ TARGET_BLOCKSIZE_CHOICES = (
 
 AUTHMETHOD_CHOICES = (
         ('None',  _('None')),
-        ('Auto',  _('Auto')),
         ('CHAP',  _('CHAP')),
         ('CHAP Mutual', _('Mutual CHAP')),
         )

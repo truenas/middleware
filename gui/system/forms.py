@@ -68,6 +68,8 @@ from freenasUI.common.ssl import (
     create_certificate,
     sign_certificate,
     load_certificate,
+    load_privatekey,
+    export_privatekey,
     generate_key
 )
 
@@ -796,6 +798,7 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_syslogserver = (
             self.instance.stg_syslogserver
         )
+        self.instance._original_stg_guicertificate = self.instance.stg_guicertificate
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
@@ -837,7 +840,8 @@ class SettingsForm(ModelForm):
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or
             self.instance._original_stg_guiport != self.instance.stg_guiport or
             self.instance._original_stg_guihttpsport != self.instance.stg_guihttpsport or
-            self.instance._original_stg_guihttpsredirect != self.instance.stg_guihttpsredirect
+            self.instance._original_stg_guihttpsredirect != self.instance.stg_guihttpsredirect or
+            self.instance._original_stg_guicertificate != self.instance.stg_guicertificate
         ):
             if self.instance.stg_guiaddress == "0.0.0.0":
                 address = request.META['HTTP_HOST'].split(':')[0]
@@ -1934,20 +1938,20 @@ class CertificateAuthorityForm(ModelForm):
 
 class CertificateAuthorityEditForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_certificate = forms.CharField(
-        label=_("Certificate"),
+        label=models.CertificateAuthority._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
+        help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text
     )
     cert_serial = forms.IntegerField(
-        label=_("Serial"),
+        label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
         required=True,
-        help_text=_("Serial for next Certificate")
+        help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
     def save(self):
@@ -1966,21 +1970,45 @@ class CertificateAuthorityEditForm(ModelForm):
 
 class CertificateAuthorityImportForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_certificate = forms.CharField(
-        label=_("Certificate"),
+        label=models.CertificateAuthority._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
+        help_text=models.CertificateAuthority._meta.get_field('cert_certificate').help_text,
+    )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False, 
+        help_text=_("Passphrase for encrypted private keys")
     )
     cert_serial = forms.IntegerField(
-        label=_("Serial"),
+        label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
         required=True,
-        help_text=_("Serial for next Certificate")
+        help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
+
+    def clean_cert_passphrase(self):
+        cdata = self.cleaned_data
+
+        passphrase = cdata.get('cert_passphrase')
+        privatekey = cdata.get('cert_privatekey')
+
+        if not privatekey:
+            return passphrase
+
+        try:
+            privatekey = load_privatekey(
+                privatekey,
+                passphrase
+            )
+        except Exception as e:
+            raise forms.ValidationError(_("Incorrect passphrase"))
+
+        return passphrase
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
@@ -1994,6 +2022,16 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
+        cert_privatekey = self.cleaned_data.get('cert_privatekey')
+        cert_passphrase = self.cleaned_data.get('cert_passphrase')
+ 
+        if cert_passphrase and cert_privatekey:
+            privatekey = export_privatekey(
+                cert_privatekey,
+                cert_passphrase
+            )
+            self.instance.cert_privatekey = privatekey
+
         super(CertificateAuthorityImportForm, self).save()
 
         notifier().start("ix-ssl")
@@ -2003,6 +2041,7 @@ class CertificateAuthorityImportForm(ModelForm):
             'cert_name',
             'cert_certificate',
             'cert_privatekey',
+            'cert_passphrase',
             'cert_serial'
         ]
         model = models.CertificateAuthority
@@ -2010,57 +2049,58 @@ class CertificateAuthorityImportForm(ModelForm):
 
 class CertificateAuthorityCreateInternalForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=_("Key Length"),
+        label=models.CertificateAuthority._meta.get_field('cert_key_length').verbose_name,
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=_("Digest Algorithm"),
+        label=models.CertificateAuthority._meta.get_field('cert_digest_algorithm').verbose_name,
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=_("Lifetime"),
+        label=models.CertificateAuthority._meta.get_field('cert_lifetime').verbose_name,
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=_("Country"),
+        label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
         choices=choices.COUNTRY_CHOICES(), 
         initial='US',
-        help_text=_("Country Name (2 letter code)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
     cert_state = forms.CharField(
-        label=_("State"),
+        label=models.CertificateAuthority._meta.get_field('cert_state').verbose_name,
         required=True,
-        help_text=_("State or Province Name (full name)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_state').help_text
     )
     cert_city = forms.CharField(
-        label=_("City"),
+        label=models.CertificateAuthority._meta.get_field('cert_city').verbose_name,
         required=True,
-        help_text=_("Locality Name (eg, city)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_city').help_text
     )
     cert_organization = forms.CharField(
-        label=_("Organization"),
+        label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
         required=True,
-        help_text=_("Organization Name (eg, company)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
     cert_email = forms.CharField(
-        label=_("Email Address"),
-        required=True
+        label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
+        required=True,
+        help_text=models.CertificateAuthority._meta.get_field('cert_email').help_text,
     )
     cert_common = forms.CharField(
-        label=_("Common Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_common').verbose_name,
         required=True,
-        help_text=_("Common Name (eg, YOUR name)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
     def save(self):
@@ -2106,57 +2146,58 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
 
 class CertificateAuthorityCreateIntermediateForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.CertificateAuthority._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=_("Key Length"),
+        label=models.CertificateAuthority._meta.get_field('cert_key_length').verbose_name,
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=_("Digest Algorithm"),
+        label=models.CertificateAuthority._meta.get_field('cert_digest_algorithm').verbose_name,
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=_("Lifetime"),
+        label=models.CertificateAuthority._meta.get_field('cert_lifetime').verbose_name,
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=_("Country"),
+        label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
         choices=choices.COUNTRY_CHOICES(), 
         initial='US',
-        help_text=_("Country Name (2 letter code)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
     cert_state = forms.CharField(
-        label=_("State"),
+        label=models.CertificateAuthority._meta.get_field('cert_state').verbose_name,
         required=True,
-        help_text=_("State or Province Name (full name)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_state').help_text,
     )
     cert_city = forms.CharField(
-        label=_("City"),
+        label=models.CertificateAuthority._meta.get_field('cert_city').verbose_name,
         required=True,
-        help_text=_("Locality Name (eg, city)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_city').help_text
     )
     cert_organization = forms.CharField(
-        label=_("Organization"),
+        label=models.CertificateAuthority._meta.get_field('cert_organization').verbose_name,
         required=True,
-        help_text=_("Organization Name (eg, company)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_organization').help_text
     )
     cert_email = forms.CharField(
-        label=_("Email Address"),
-        required=True
+        label=models.CertificateAuthority._meta.get_field('cert_email').verbose_name,
+        required=True,
+        help_text=models.CertificateAuthority._meta.get_field('cert_email').help_text
     )
     cert_common = forms.CharField(
-        label=_("Common Name"),
+        label=models.CertificateAuthority._meta.get_field('cert_common').verbose_name,
         required=True,
-        help_text=_("Common Name (eg, YOUR name)")
+        help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2191,10 +2232,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         signing_cert = self.instance.cert_signedby
 
         publickey = generate_key(self.instance.cert_key_length)
-        signkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            signing_cert.cert_privatekey
-        )
+        signkey = load_privatekey(signing_cert.cert_privatekey)
 
         cert = create_certificate(cert_info)
         cert.set_pubkey(publickey)
@@ -2239,15 +2277,15 @@ class CertificateForm(ModelForm):
 
 class CertificateEditForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_certificate = forms.CharField(
-        label=_("Certificate"),
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
+        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2272,20 +2310,21 @@ class CertificateEditForm(ModelForm):
 
 class CertificateCSREditForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_CSR = forms.CharField(
-        label=_("Certificate Signing Request"),
-        widget=forms.Textarea(),
-        required=True
-    )
-    cert_certificate = forms.CharField(
-        label=_("Certificate"),
+        label=models.Certificate._meta.get_field('cert_CSR').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
+        help_text=models.Certificate._meta.get_field('cert_CSR').help_text
+    )
+    cert_certificate = forms.CharField(
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
+        widget=forms.Textarea(),
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2310,22 +2349,46 @@ class CertificateCSREditForm(ModelForm):
 
 class CertificateImportForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_certificate = forms.CharField(
-        label=_("Certificate"),
+        label=models.Certificate._meta.get_field('cert_certificate').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your certificate here")
+        help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
     cert_privatekey = forms.CharField(
-        label=_("Private Key"),
+        label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
         widget=forms.Textarea(),
         required=True,
-        help_text=_("Cut and paste the contents of your private key here"),
+        help_text=models.Certificate._meta.get_field('cert_privatekey').help_text
     )
+    cert_passphrase = forms.CharField(
+        label=_("Passphrase"),
+        required=False, 
+        help_text=_("Passphrase for encrypted private keys")
+    )
+
+    def clean_cert_passphrase(self):
+        cdata = self.cleaned_data
+
+        passphrase = cdata.get('cert_passphrase')
+        privatekey = cdata.get('cert_privatekey')
+
+        if not privatekey:
+            return passphrase
+
+        try:
+            pkey = load_privatekey(
+                privatekey,
+                passphrase
+            )
+        except Exception as e:
+            raise forms.ValidationError(_("Incorrect passphrase"))
+
+        return passphrase
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
@@ -2339,6 +2402,16 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
+        cert_privatekey = self.cleaned_data.get('cert_privatekey')
+        cert_passphrase = self.cleaned_data.get('cert_passphrase')
+ 
+        if cert_passphrase and cert_privatekey:
+            privatekey = export_privatekey(
+                cert_privatekey,
+                cert_passphrase
+            )
+            self.instance.cert_privatekey = privatekey
+
         super(CertificateImportForm, self).save()
 
         notifier().start("ix-ssl")
@@ -2347,64 +2420,66 @@ class CertificateImportForm(ModelForm):
         fields = [
             'cert_name',
             'cert_certificate',
-            'cert_privatekey'
+            'cert_privatekey',
+            'cert_passphrase'
         ]
         model = models.Certificate
 
 
 class CertificateCreateInternalForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=_("Key Length"),
+        label=models.Certificate._meta.get_field('cert_key_length').verbose_name,
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=_("Digest Algorithm"),
+        label=models.Certificate._meta.get_field('cert_digest_algorithm').verbose_name,
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_lifetime = forms.IntegerField(
-        label=_("Lifetime"),
+        label=models.Certificate._meta.get_field('cert_lifetime').verbose_name,
         required=True,
         initial=3650
     )
     cert_country = forms.ChoiceField(
-        label=_("Country"),
+        label=models.Certificate._meta.get_field('cert_country').verbose_name,
         required=True,
         choices=choices.COUNTRY_CHOICES(), 
         initial='US',
-        help_text=_("Country Name (2 letter code)")
+        help_text=models.Certificate._meta.get_field('cert_country').help_text
     )
     cert_state = forms.CharField(
-        label=_("State"),
+        label=models.Certificate._meta.get_field('cert_state').verbose_name,
         required=True,
-        help_text=_("State or Province Name (full name)")
+        help_text=models.Certificate._meta.get_field('cert_state').help_text
     )
     cert_city = forms.CharField(
-        label=_("City"),
+        label=models.Certificate._meta.get_field('cert_city').verbose_name,
         required=True,
-        help_text=_("Locality Name (eg, city)")
+        help_text=models.Certificate._meta.get_field('cert_city').help_text
     )
     cert_organization = forms.CharField(
-        label=_("Organization"),
+        label=models.Certificate._meta.get_field('cert_organization').verbose_name,
         required=True,
-        help_text=_("Organization Name (eg, company)")
+        help_text=models.Certificate._meta.get_field('cert_organization').help_text
     )
     cert_email = forms.CharField(
-        label=_("Email Address"),
-        required=True
+        label=models.Certificate._meta.get_field('cert_email').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_email').help_text
     )
     cert_common = forms.CharField(
-        label=_("Common Name"),
+        label=models.Certificate._meta.get_field('cert_common').verbose_name,
         required=True,
-        help_text=_("Common Name (eg, YOUR name)")
+        help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
 
     def __init__(self, *args, **kwargs):
@@ -2477,52 +2552,53 @@ class CertificateCreateInternalForm(ModelForm):
 
 class CertificateCreateCSRForm(ModelForm):
     cert_name = forms.CharField(
-        label=_("Name"),
+        label=models.Certificate._meta.get_field('cert_name').verbose_name,
         required=True,
-        help_text=_("Descriptive Name")
+        help_text=models.Certificate._meta.get_field('cert_name').help_text
     )
     cert_key_length = forms.ChoiceField(
-        label=_("Key Length"),
+        label=models.Certificate._meta.get_field('cert_key_length').verbose_name,
         required=True,
         choices=choices.CERT_KEY_LENGTH_CHOICES,
         initial=2048
     )
     cert_digest_algorithm = forms.ChoiceField(
-        label=_("Digest Algorithm"),
+        label=models.Certificate._meta.get_field('cert_digest_algorithm').verbose_name,
         required=True,
         choices=choices.CERT_DIGEST_ALGORITHM_CHOICES,
         initial='SHA256'
     )
     cert_country = forms.ChoiceField(
-        label=_("Country"),
+        label=models.Certificate._meta.get_field('cert_country').verbose_name,
         required=True,
         choices=choices.COUNTRY_CHOICES(), 
         initial='US',
-        help_text=_("Country Name (2 letter code)")
+        help_text=models.Certificate._meta.get_field('cert_country').help_text
     )
     cert_state = forms.CharField(
-        label=_("State"),
+        label=models.Certificate._meta.get_field('cert_state').verbose_name,
         required=True,
-        help_text=_("State or Province Name (full name)")
+        help_text=models.Certificate._meta.get_field('cert_state').help_text
     )
     cert_city = forms.CharField(
-        label=_("City"),
+        label=models.Certificate._meta.get_field('cert_city').verbose_name,
         required=True,
-        help_text=_("Locality Name (eg, city)")
+        help_text=models.Certificate._meta.get_field('cert_city').help_text,
     )
     cert_organization = forms.CharField(
-        label=_("Organization"),
+        label=models.Certificate._meta.get_field('cert_organization').verbose_name,
         required=True,
-        help_text=_("Organization Name (eg, company)")
+        help_text=models.Certificate._meta.get_field('cert_organization').help_text
     )
     cert_email = forms.CharField(
-        label=_("Email Address"),
-        required=True
+        label=models.Certificate._meta.get_field('cert_email').verbose_name,
+        required=True,
+        help_text=models.Certificate._meta.get_field('cert_email').help_text
     )
     cert_common = forms.CharField(
-        label=_("Common Name"),
+        label=models.Certificate._meta.get_field('cert_common').verbose_name,
         required=True,
-        help_text=_("Common Name (eg, YOUR name)")
+        help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
 
     def save(self):

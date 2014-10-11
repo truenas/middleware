@@ -58,7 +58,7 @@ from freenasOS.Update import (
     DeleteClone,
     Update,
 )
-from freenasOS import Train
+from freenasOS import Configuration, Train
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -982,6 +982,23 @@ def terminal(request):
 
 def terminal_paste(request):
     return render(request, "system/terminal_paste.html")
+
+
+def update_index(request):
+
+    try:
+        update = models.Update.objects.order_by('-id')[0]
+    except IndexError:
+        update = models.Update.objects.create()
+
+    conf = Configuration.Configuration()
+    conf.LoadTrainsConfig()
+
+    return render(request, 'system/update_index.html', {
+        'update': update,
+        'current_train': conf.CurrentTrain(),
+        'trains': json.dumps(conf.AvailableTrains().keys() or []),
+    })
 
 
 def update(request):
