@@ -427,7 +427,7 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_discoveryauthmethod = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
-            default='Auto',
+            default='None',
             verbose_name=_("Discovery Auth Method")
             )
     iscsi_discoveryauthgroup = models.IntegerField(
@@ -739,10 +739,9 @@ class iSCSITarget(Model):
     iscsi_target_authtype = models.CharField(
             max_length=120,
             choices=choices.AUTHMETHOD_CHOICES,
-            default="Auto",
+            default="None",
             verbose_name=_("Auth Method"),
-            help_text=_("The method can be accepted by the target. Auto means "
-                "both none and authentication."),
+            help_text=_("The authentication method accepted by the target."),
             )
     iscsi_target_authgroup = models.IntegerField(
             max_length=120,
