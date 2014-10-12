@@ -65,6 +65,7 @@ if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
 fi
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
+add_port comms/lrzsz
 add_port devel/pkgconf
 add_port devel/m4
 

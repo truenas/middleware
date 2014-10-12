@@ -1,16 +1,78 @@
-Release Notes for FreeNAS 9.3-ALPHA
+Release Notes for FreeNAS 9.3-BETA
 
-FreeNAS now uses ZFS for the boot device, also supporting mirroring of boot
+There are so many new features and enhancements in FreeNAS 9.3 that this
+BETA release requires us to break them into categories.  In no particular
+order, FreeNAS 9.3-BETA offers the following improvements:
+
+
+** Booting: **
+
+  FreeNAS now uses ZFS for the boot device, also supporting mirroring of boot
 devices for greater reliabilty.  The features of ZFS are also utilized to
 provide "boot environments" which allow the system to be rolled back (or even
 forked) to different OS versions. A boot-time menu is provided for selecting
-and booting from a specific boot environment as well as a new system->boot
-UI screen provided to create, delete and select default boot environments.
+and booting from a specific boot environment and a new system->boot UI screen
+allows the user to create, name, delete, and select boot environments.
 
-WebDAV file sharing is now supported
+  Both the installer and the system now use the grub2 boot loader to provide
+boot menus and boot-time UI.
 
-Samba upgraded to 4.1.12
 
-NFSv4 support added, including kerberized NFS.
+** Updating: **
 
-Kernel iSCSI target with support for VMWare VAAI, MS ODX and Windows 2012 Clustering.
+  While the monolithic Manual update system is still offered, the FreeNAS
+project has now broken its releases into cryptographically signed packges,
+also offering a secure update server which can be regularly polled
+(default: once per day) and updates downloaded from it automatically, after
+which the user will receive an alert and be given the opportunity to apply 
+the updates.
+
+  Updates are also offered along multiple, parallel "trains" that the user
+can elect to follow.  Older stable trains will offer minimal number of updates,
+more current trains offer new features and a faster rate of change, and
+completely experimental trains with new, untested features under development
+can all be offered simultaneously.
+
+  Any train can be selected at the user's discretion at any time, trains can
+be jumped between and, combined with the ZFS boot environment roll-back
+feature, the user can even experiment with booting between multiple trains.
+
+** File sharing: **
+
+  WebDAV file sharing is now supported.
+
+  Samba upgraded to 4.1.12.
+
+  NFSv4 support added, including kerberized NFS.
+
+  Kernel iSCSI (CTL) replacing the old iSCSI code, with support for
+  VMWare VAAI, MS ODX and Windows 2012 Clustering.
+
+
+** Directory Services **
+
+  AD / LDAP configurations are validated immediately after input.
+
+  Kerberos Realms and Keytabs have joined the Direcory Services UI.
+
+  Directory Services now based on SSSD (System Security Services Daemon).
+
+
+** User Interface: **
+
+  The much hated interface tabs are completely gone.
+
+  Settings and Directory Services UIs completely revamped and streamlined.
+
+  Many hitherto difficult to discover or navigate to features have been
+moved into their own sub-categories, new icons also being added where
+applicable.  The tree menu and the top-level icons have also been harmonized.
+
+  New UI for CA and Certificate management.
+
+  New setup Wizard can handle most common types of configuration at
+installation time or, as desired, later in the setup process.
+
+  All tunables have been merged - loader, sysctl and rc.conf variables can
+be managed from the same UI.
+
