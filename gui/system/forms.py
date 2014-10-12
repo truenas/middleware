@@ -339,6 +339,8 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_serialconsole = (
             self.instance.adv_serialconsole
         )
+        self.instance._original_adv_serialspeed = self.instance.adv_serialspeed
+        self.instance._original_adv_serialport = self.instance.adv_seriaport
         self.instance._original_adv_consolescreensaver = (
             self.instance.adv_consolescreensaver
         )
@@ -361,6 +363,11 @@ class AdvancedForm(ModelForm):
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
             notifier().start("ttys")
             notifier().start("ix-sercons")
+            if not loader_reloaded:
+                notifier().reload("loader")
+                loader_reloaded = True
+        elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
+                self.instance._original_adv_serialport != self.instance.adv_seriaport):
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
