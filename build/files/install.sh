@@ -167,7 +167,7 @@ get_media_description()
     _media=$1
     VAL=""
     if [ -n "${_media}" ]; then
-        _description=`pc-sysinstall disk-list -c |grep "^${_media}"\
+        _description=`pc-sysinstall disk-list -c |grep "^${_media}:"\
             | awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
 	# if pc-sysinstall doesn't know anything about the device
 	# (raid drives) then fill in for it.
