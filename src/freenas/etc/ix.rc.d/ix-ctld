@@ -31,7 +31,7 @@ generate_ctl()
 	/usr/local/libexec/nas/generate_ctl_conf.py
 }
 
-name="ix-afpd"
+name="ix-ctld"
 start_precmd='check_service'
 start_cmd='generate_ctl'
 stop_cmd=':'
