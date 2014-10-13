@@ -386,6 +386,8 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                                     # simply ignore the error.
                                     log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                         rv = True
+                        # Start a scrub.  We ignore the return value.
+                        RunCommand("/sbin/zfs", ["freenas-boot"])
 
     except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
