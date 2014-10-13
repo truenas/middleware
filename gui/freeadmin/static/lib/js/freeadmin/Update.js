@@ -1,5 +1,6 @@
 define([
   "dojo/_base/declare",
+  "dojo/_base/lang",
   "dojo/data/ItemFileReadStore",
   "dojo/data/ObjectStore",
   "dojo/dom",
@@ -11,8 +12,10 @@ define([
   "dojo/query",
   "dojo/request/xhr",
   "dojo/store/Memory",
+  "dijit/_base/manager",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
+  "dijit/Dialog",
   "dijit/form/CheckBox",
   "dijit/form/ComboBox",
   "dijit/form/TextBox",
@@ -30,6 +33,7 @@ define([
   "freeadmin/form/UnixPerm"
   ], function(
   declare,
+  lang,
   ItemFileReadStore,
   ObjectStore,
   dom,
@@ -41,8 +45,10 @@ define([
   query,
   xhr,
   Memory,
+  manager,
   _Widget,
   _Templated,
+  Dialog,
   CheckBox,
   ComboBox,
   TextBox,
@@ -82,6 +88,10 @@ define([
         label: gettext("Check For Updates")
       }, me.dapCheckUpdateBtn);
 
+      on(me._checkUpdate, "click", function() {
+        me.update(me._selectTrain.get("value"));
+      });
+
       me._applyPending = new Button({
         label: gettext("Apply Pending Updates"),
         disabled: true
@@ -99,9 +109,50 @@ define([
       me._selectTrain = new Select({
         options: options
       }, me.dapSelectTrain);
+      me._selectTrain.set('oldvalue', me.initial.currentTrain);
 
       on(me._selectTrain, "change", function(val) {
-        me.update(val);
+
+        if(me._selectTrain.get('internalchange') === true) {
+          me._selectTrain.set('internalchange', false);
+          return;
+        }
+
+        var confirmDialog;
+
+        var ok = new Button({
+          label: gettext("Yes"),
+          onClick: function() {
+            confirmDialog.hide();
+            me._selectTrain.set('oldvalue', val);
+            me.update(val);
+          }
+        });
+
+        var cancel = new Button({
+          label: gettext("No"),
+          onClick: function() {
+            me._selectTrain.set('internalchange', true);
+            me._selectTrain.set('value', me._selectTrain.get('oldvalue'));
+            confirmDialog.hide();
+          }
+        });
+
+        confirmDialog = new Dialog({
+          title: gettext("Confirm"),
+          style: "background-color: white;",
+          content: "Are you sure you want to change trains?",
+          onHide: function() {
+            ok.destroy();
+            cancel.destroy();
+            setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+          }
+        });
+
+        confirmDialog.domNode.appendChild(ok.domNode);
+        confirmDialog.domNode.appendChild(cancel.domNode);
+        confirmDialog.show();
+
       });
 
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
