@@ -96,11 +96,11 @@ define([
         options.push(entry);
       }
 
-      me._applyPending = new Select({
+      me._selectTrain = new Select({
         options: options
       }, me.dapSelectTrain);
 
-      on(me._applyPending, "change", function(val) {
+      on(me._selectTrain, "change", function(val) {
         me.update(val);
       });
 
@@ -120,6 +120,11 @@ define([
     update: function(train) {
 
       var me = this;
+
+      me._applyPending.set('disabled', true);
+      me._updatesGrid.set('store', null);
+      me._updatesGrid.refresh();
+
       xhr.get("/api/v1.0/system/update/check/?format=json", {
         handleAs: "json",
         headers: {
@@ -130,9 +135,15 @@ define([
         var newstore = new Memory({data: results});
         me._updatesGrid.set('store', newstore);
         me._updatesGrid.refresh();
+        if(results.length > 0) {
+          me._applyPending.set('disabled', false);
+        } else {
+          me._applyPending.set('disabled', true);
+        }
       }, function(err) {
         me._updatesGrid.set('store', null);
         me._updatesGrid.refresh();
+        me._applyPending.set('disabled', true);
       });
 
     }
