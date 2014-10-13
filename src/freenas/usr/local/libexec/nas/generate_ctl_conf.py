@@ -25,7 +25,7 @@ def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
     for auth in auth_list:
         if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
             auth_type = "Mutual"
-            cf_contents.append("\tchap-mutual %s %s %s %s\n" % (
+            cf_contents.append("\tchap-mutual %s \"%s\" %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
                 auth.iscsi_target_auth_peeruser,
@@ -33,7 +33,7 @@ def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
             ))
         elif auth_type != "Mutual":
             auth_type = "CHAP"
-            cf_contents.append("\tchap %s %s\n" % (
+            cf_contents.append("\tchap %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
             ))
