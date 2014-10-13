@@ -107,7 +107,7 @@ define([
       }
 
       me._selectTrain = new Select({
-        options: options
+        options: options,
       }, me.dapSelectTrain);
       me._selectTrain.set('oldvalue', me.initial.currentTrain);
 
