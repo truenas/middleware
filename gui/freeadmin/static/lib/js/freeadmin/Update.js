@@ -100,6 +100,9 @@ define([
         options: options
       }, me.dapSelectTrain);
 
+      on(me._applyPending, "change", function(val) {
+        me.update(val);
+      });
 
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
@@ -109,19 +112,28 @@ define([
         className: "dgrid-wizardshare"
       }, me.dapUpdateGrid);
 
+      me.update(me.initial.currentTrain);
+
+      this.inherited(arguments);
+
+    },
+    update: function(train) {
+
+      var me = this;
       xhr.get("/api/v1.0/system/update/check/?format=json", {
         handleAs: "json",
         headers: {
           'Content-Type': 'application/json'
         },
-        query: {train: me.initial.currentTrain}
+        query: {train: train}
       }).then(function(results) {
         var newstore = new Memory({data: results});
         me._updatesGrid.set('store', newstore);
         me._updatesGrid.refresh();
+      }, function(err) {
+        me._updatesGrid.set('store', null);
+        me._updatesGrid.refresh();
       });
-
-      this.inherited(arguments);
 
     }
   });
