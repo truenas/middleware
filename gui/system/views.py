@@ -1001,6 +1001,28 @@ def update_index(request):
     })
 
 
+def update_save(request):
+
+    assert request.method == 'POST'
+
+    try:
+        update = models.Update.objects.order_by('-id')[0]
+    except IndexError:
+        update = models.Update.objects.create()
+
+    log.error("%r", request.POST)
+    if request.POST.get('autocheck'):
+        if request.POST.get('autocheck') == 'true':
+            update.upd_autocheck = True
+        else:
+            update.upd_autocheck = False
+        update.save()
+
+    return HttpResponse(
+        content_type='application/json',
+    )
+
+
 def update(request):
 
     if request.method == 'POST':
