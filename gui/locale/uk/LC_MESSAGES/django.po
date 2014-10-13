@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2014-01-24 01:19+0000\n"
+"PO-Revision-Date: 2014-10-12 18:33+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1390526379.0\n"
+"X-POOTLE-MTIME: 1413138802.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10354,14 +10354,12 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Аутентифікація"
+msgstr "Проста Аутентифікація"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Аутентифікація"
+msgstr "Дайджест Аутентифікація"
 
 #: choices.py:799
 msgid "adex"
