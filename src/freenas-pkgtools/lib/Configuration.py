@@ -447,7 +447,10 @@ class Configuration(object):
             while True:
                 data = furl.read(chunk_size)
                 tmptime = time.time()
-                downrate = int(chunk_size / (tmptime - lasttime))
+                if tmptime - lasttime > 0:
+                    downrate = int(chunk_size / (tmptime - lasttime))
+                else:
+                    downrate = chunk_size
                 lasttime = tmptime
                 if not data:
                     break

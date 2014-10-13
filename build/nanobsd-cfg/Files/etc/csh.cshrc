@@ -53,3 +53,13 @@ unset noglob
 bindkey -k up history-search-backward
 bindkey -k down history-search-forward
 bindkey "^W" backward-delete-word
+
+#Bind Delete, Home, End and Insert keys
+if ($?tcsh && $?prompt) then
+bindkey "\e[1~" beginning-of-line # Home
+bindkey "\e[7~" beginning-of-line # Home rxvt
+bindkey "\e[2~" overwrite-mode # Ins
+bindkey "\e[3~" delete-char # Delete
+bindkey "\e[4~" end-of-line # End
+bindkey "\e[8~" end-of-line # End rxvt
+endif
