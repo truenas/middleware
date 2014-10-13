@@ -61,7 +61,7 @@ start_command()
 	new_string=`dd if=/dev/random bs=32 count=1 2>/dev/null | /usr/local/bin/base64`
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         echo "SECRET_KEY = '${new_string}'" >> ${django_config}
-	/usr/local/bin/python ${path}/manage.py runfcgi method=threaded \
+	/usr/local/bin/python -R ${path}/manage.py runfcgi method=threaded \
 		host=${host} port=${port} pidfile=${pidfile}
 	touch ${logs}
 	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
