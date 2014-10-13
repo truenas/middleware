@@ -67,6 +67,7 @@ define([
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
+    updateUrl: "",
     initial: {},
     postCreate: function() {
       var me = this;
@@ -81,6 +82,23 @@ define([
       me._autoCheck = new CheckBox({
         checked: autochecked
       }, me.dapAutoCheck);
+
+      on(me._autoCheck, "change", function(val) {
+
+        xhr.post(me.updateUrl, {
+          handleAs: "json",
+          headers: {"X-CSRFToken": CSRFToken},
+          data: {autocheck: val}
+        }).then(function(data) {
+          if(data) {
+
+          } else {
+
+          }
+        }, function(error) {
+
+        });
+      });
 
       me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
 
@@ -107,7 +125,7 @@ define([
       }
 
       me._selectTrain = new Select({
-        options: options
+        options: options,
       }, me.dapSelectTrain);
       me._selectTrain.set('oldvalue', me.initial.currentTrain);
 

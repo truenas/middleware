@@ -1408,3 +1408,7 @@ table.layoutTable > tr:first-child > td {
 .dgrid-wizardshare {
     height: 100px !important;
 }
+
+table.update > tbody > tr > td {
+    padding: 5px;
+}

@@ -1,25 +1,25 @@
 <div data-dojo-attach-point="dapContainer" style="overflow: hidden;">
   <div data-dojo-attach-point="dapMain">
-      <table style="padding: 0;" width="100%">
+      <table width="500px;" class="update">
         <tr>
-          <td>
+          <td colspan="2">
             <span data-dojo-attach-point="dapAutoCheck"></span> Automatically check for updates
           </td>
         </tr>
         <tr>
-          <td>
+          <td colspan="2">
             Current Train: <span data-dojo-attach-point="dapCurrentTrain"></span>
           </td>
         </tr>
         <tr>
           <td>
-            <span data-dojo-attach-point="dapApplyPendintBtn"></span> <span data-dojo-attach-point="dapCheckUpdateBtn"></span><span data-dojo-attach-point="dapSelectTrain"></span>
+            <span data-dojo-attach-point="dapApplyPendintBtn"></span> <span data-dojo-attach-point="dapCheckUpdateBtn"></span></td><td align="right"><span data-dojo-attach-point="dapSelectTrain"></span>
           </td>
         </tr>
         <tr>
-          <td>
+          <td colspan="2">
             Pending Updates
-            <div data-dojo-attach-point="dapUpdateGrid" style="width: 500px;"></div>
+            <div data-dojo-attach-point="dapUpdateGrid" style="max-width: 500px;"></div>
           </td>
         </tr>
       </table>
