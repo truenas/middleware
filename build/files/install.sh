@@ -122,7 +122,7 @@ find_raid_devices() {
 }
 
 #
- # Return a list of SATA DOMs used in TrueNAS systems.
+# Return a list of SATA DOMs used in TrueNAS systems.
 # This calls find_disk_devices, and then filters out
 # only the ones we care about.
 # Options:
@@ -487,6 +487,7 @@ disk_is_raid_part() {
 	echo "usage: disk_is_raid_part -R raid_list_file [-O output] disk_name" 1>&2
 	exit 1
     fi
+    # Now iterate through the disks
 
     printf "" > "${output}"
     disk_name="$1"
@@ -1048,6 +1049,7 @@ select_disks() {
 		else
 		    disk_list=${menu_item}
 		fi
+		rm -f /tmp/raid_name.$$
 	    fi
 	fi
     elif ${raid} ; then
@@ -1112,7 +1114,6 @@ select_disks() {
 	    disk_menu="${disk_menu} ${_disk} \"${_desc}\" off"
 	done < /tmp/disks.$$
 	rm -f /tmp/disks.$$
-	echo disk_menu: ${disk_menu}
 	if eval "dialog --title 'Choose destination disk(s)' \
 		--checklist 'Select at least one destination disk' \
 		15 70 ${nitems} \
@@ -1438,227 +1439,6 @@ prepare_disks() {
 	    echo "Unknown device type ${disk}" 1>&2
 	    exit 1
 	fi
-	else
-	    rv=1
-	fi
-    else
-	rv=0
-    fi
-    return ${rv}
-}
-
-#
-# Select a FreeNAS system to migrate from.
-# Options:
-# -o <file>	The device to migrate from.
-#		This will be something like
-#		ada0s1a, raid/r0s2a, or
-#		freenas-boot/default
-#		Note that it will have a "/"
-#		in it only if it is a raid
-#		or ZFS pool.
-# Arguments:
-# disk [...]	A list of disk devices (or zfs
-#		pools) to search.
-#
-# Return values:
-# 0 if one is selected (or there's only one choice)
-# 1 if none is selected (interrupt or cancelled).
-#
-# If there is only one choice (i.e., only one device
-# given, and it only has one FreeNAS OS to choose
-# from), it won't ask the user to choose.  It will
-# return 0, and store the device in the output file
-# (if any).
-
-select_migration_source() {
-    local rv=1
-    local opt
-    local disk_list
-    local disk
-    local num_versions=0
-    local output="/dev/null"
-    local default_versions=""
-    local menu_count=0
-    local menu_items=""
-
-    while getopts "o:" opt; do
-	case "${opt}" in
-	    o)	output=${OPTARG} ;;
-	    *)	echo "Usage:  select_migration_source [-o output] disk [...]" 1>&2 ; exit 1;;
-	esac
-    done
-    shift $((OPTIND - 1))
-    if [ $# -eq 0 ]; then
-	echo "usage:  select_migration_source [-o output] disk [...]" 1>&2
-	exit 1
-    fi
-
-    rm -f /tmp/version.$$
-    rm -f /tmp/all-versions.$$
-    
-    printf "" > ${output}
-
-    for disk in "$@"
-    do
-	# See if there is a freenas install on the disk
-	if find_freenas_versions -o /tmp/version.$$ ${disk}
-	then
-	    # /tmp/version.$$ has the list of versions.
-	    # We'd like to get the default version, but
-	    # i'm not sure how we represent that.
-	    cat /tmp/version.$$ >> /tmp/all-versions.$$
-	    default_versions="${default_versions} $(find_default_fs -o /dev/stdout ${disk})"
-	fi
-    done
-
-    # Now /tmp/all-versions.$$ has all of the freenas versions
-    # we found.  ${default_versions} has the default for each
-    # disk we iterated over.
-    # First, let's see if we only have one item
-    num_versions=$(awk 'END { print NR; }' /tmp/all-versions.$$)
-
-    if [ ${num_versions} -eq 0 ]
-    then
-	rv=0
-    elif [ ${num_versions} -eq 1 ]
-    then
-	# That was easy.  There's only one choice.
-	awk ' { print $2; }' /tmp/all-versions.$$ > ${output}
-	rv=0
-    else
-	# We have multiple items, so let's construct
-	# a menu list for it.
-	while read type disk version timestamp
-	do
-	    menu_count=$((menu_count + 1))
-	    menu_items="${disk} \"${version} $(date -r ${timestamp})\" ${menu_items}"
-	done < /tmp/all-versions.$$
-	eval "dialog --title 'Select Version' \
-		--menu 'Choose version from which to migrate configuration data' \
-		15 70 $((menu_count + 1)) \
-		${menu_items} \
-		none 'Do not migrate (clean install)'" \
-	    2> /tmp/menu.item
-	if [ $? -ne 0 -o "$(cat /tmp/menu.item)" = "none" ]; then
-	    return 1
-	else
-	    cat /tmp/menu.item > ${output}
-	    rm -f /tmp/menu.item
-	    rv=0
-	fi
-    fi
-    # Should not get here
-    return ${rv}
-}
-
-#
-# Start destroying raids and pools, and
-# partitioning disks.
-# Options:
-# -l <file>	A list of the disks to be used.
-# -R <file>	List of raids on the system.
-# -Z <file>	A list of zpools on the system.
-# Arguments:
-# disk [...]
-#
-# disk is expected to be either:
-# raid/<raid_name> (e.g., raid/r0)
-# zfs/<pool_name> (e.g., zfs/freenas-boot)
-# <device_name> (e.g., ada0)
-# Because of raid and zfs pools, the list of disks
-# may not be the same as the install media.
-# In order to work, this requires that find_raid_devices
-# and find_zfs_pools have run, so that the *.subdisks
-# files are around.
-#
-# This is just a helper function to make it easier to read.
-partition_disk() {
-    local disk
-
-    disk=$1
-
-    set -e
-
-    gpart destroy -F ${disk} > /dev/null 2>&1 || true
-    # Get rid of any MBR.  This shouldn't be necessary,
-    # but there were some problems possibly caused by caching.
-    dd if=/dev/zero of=/dev/${disk} bs=1m count=1 > /dev/null
-    # Create a GPT partition
-    gpart create -s gpt ${disk} > /dev/null
-    # For grub
-    gpart add -t bios-boot -i 1 -s 512k ${disk} > /dev/null
-    # Should we do something special for truenas?
-    if is_truenas; then
-	# This does assume the disk is larger than 16g.
-	# We should check that.
-	gpart add -t freebsd-swap -i 3 -s 16g ${disk}
-    fi
-    # Now give the rest of the disk to freenas-boot
-    gpart add -t freebsd-zfs -i 2 -a 4k ${disk} > /dev/null
-    # Now we make it active, for legacy support.
-    gpart set -a active ${disk}
-    set +e
-    return 0
-}
-
-prepare_disks() {
-    local output="/dev/null"
-    local opt
-    local disk
-    local pool
-    local raid
-    local disk_list
-    local raid_list=/dev/null
-    local pool_list=/dev/null
-
-    while getopts "l:R:Z:" opt; do
-	case "${opt}" in
-	    l)	output="${OPTARG}" ;;
-	    R)	raid_list="${OPTARG}" ;;
-	    Z)	pool_list="${OPTARG}" ;;
-	    *)	echo "Usage: prepare_disks [-l disk_list] disk [...]" 1>&2 ; exit 1 ;;
-	esac
-    done
-    shift $((OPTIND - 1 ))
-    if [ $# -eq 0 ]; then
-	echo "usage: prepare_disks [-l disk_list] disk [... ]" 1>&2
-	exit 1
-    fi
-
-    for disk
-    do
-	if pool=$(expr "${disk}" : "^zfs/\(.*\)")
-	then
-	    # need to get the disks for ${pool}
-	    # With zpools, we'll just repartition the
-	    # disks.
-	    disk_list="$(cat /tmp/pool-${pool}.subdisks) ${disk_list}"
-	elif raid=$(expr "${disk}" : "^raid/\(r[0-9]*\)")
-	then
-	    # Need to get the disks for ${raid}
-	    disk_list="$(cat /tmp/raid-${raid}.subdisks) ${disk_list}"
-	    graid delete ${disk}
-	elif [ -c /dev/${disk} ]
-	then
-	    # Let's see if it is part of a raid.
-	    if [ -f ${raid_list} ]; then
-		if disk_is_raid_part -R ${raid_list} -o /tmp/raid_name.$$
-		then
-		    graid remove $(cat /tmp/raid_name.$$) ${disk} || true
-		fi
-		rm -f /tmp/raid_name.$$
-	    fi
-	    # If it's a zpool member, we'll just
-	    # go with repartitioning it.  Nothing can go wrong with
-	    # that plan, right?
-	    disk_list="${disk} ${disk_list}"
-	else
-	    echo "Unknown device type ${disk}" 1>&2
-	    exit 1
-	fi
->>>>>>> Much to my surprise, that worked.  At least for a fresh install.
->>>>>>> Much to my surprise, that worked.  At least for a fresh install.
     done
     # Now ${disk_list} has all the disks we need to partition
     for disk in ${disk_list}
@@ -1741,7 +1521,7 @@ __EOF__
     fi
 
     while true; do
-	env DIALOGRC="/tmp/dialogconf" dialog --insecure \
+	env DIALOGRC=/tmp/dialogconf dialog --insecure \
 	    --output-fd 3 \
 	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
@@ -1770,6 +1550,27 @@ __EOF__
     done
 
     rm -f ${DIALOGRC}
+
+    echo -n "${password}" > ${outfile}
+    return 0
+}
+
+#
+# Install grub into the specified mountpoint.
+# No options; must be at least two arguments:
+# mountpoint, and disk.  Multiple disks can
+# be specified.
+install_grub() {
+	local _disk _disks
+	local _mnt
+
+	if [ $# -lt 2 ]; then
+	    echo "Usage: install_grub <mntpoint> disk [...]" 1>&2
+	    return 1
+	fi
+	_mnt="$1"
+	shift
+
     echo -n "${password}" > ${outfile}
     return 0
 }
@@ -1810,49 +1611,6 @@ install_grub() {
 	return 0
 }
 
-=======
-
-    echo -n "${password}" > ${outfile}
-    return 0
-}
-
-#
-# Install grub into the specified mountpoint.
-# No options; must be at least two arguments:
-# mountpoint, and disk.  Multiple disks can
-# be specified.
-install_grub() {
-	local _disk _disks
-	local _mnt
-
-	if [ $# -lt 2 ]; then
-	    echo "Usage: install_grub <mntpoint> disk [...]" 1>&2
-	    return 1
-	fi
-	_mnt="$1"
-	shift
-
-	# Install grub
-	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
-	chroot ${_mnt} /etc/rc.d/ldconfig start
-	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/usr/local/etc/grub.d/10_ktrueos
-	# Having 10_ktruos.bak in place causes grub-mkconfig to
-	# create two boot menu items.  So let's move it out of place
-	mkdir -p /tmp/bakup
-	mv ${_mnt}/usr/local/etc/grub.d/10_ktrueos.bak /tmp/bakup
-	for _disk
-	do
-	    chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
-	done
-	chroot ${_mnt} /usr/local/sbin/beadm activate default
-	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
-	# And now move the backup files back in place
-	mv ${_mnt}/usr/local/sbin/beadm.bak ${_mnt}/usr/local/sbin/beadm
-	mv /tmp/bakup/10_ktrueos.bak ${_mnt}/usr/local/etc/grub.d/10_ktrueos
-	return 0
-}
-
->>>>>>> Much to my surprise, that worked.  At least for a fresh install.
 #
 # Do the install.
 # Options:
