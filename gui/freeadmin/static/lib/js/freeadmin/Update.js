@@ -1,71 +1,41 @@
 define([
   "dojo/_base/declare",
   "dojo/_base/lang",
-  "dojo/data/ItemFileReadStore",
-  "dojo/data/ObjectStore",
-  "dojo/dom",
-  "dojo/dom-attr",
-  "dojo/dom-construct",
-  "dojo/dom-style",
-  "dojo/json",
   "dojo/on",
-  "dojo/query",
   "dojo/request/xhr",
   "dojo/store/JsonRest",
-  "dojo/store/Memory",
+  "dojo/store/Observable",
   "dijit/_base/manager",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/Dialog",
   "dijit/form/CheckBox",
-  "dijit/form/ComboBox",
-  "dijit/form/TextBox",
   "dijit/form/Button",
-  "dijit/form/RadioButton",
   "dijit/form/Select",
-  "dijit/form/ValidationTextBox",
-  "dijit/layout/TabContainer",
-  "dijit/layout/ContentPane",
   "dgrid/OnDemandGrid",
   "dgrid/Selection",
   "dojox/timing",
   "dojox/string/sprintf",
   "dojo/text!freeadmin/templates/update.html",
-  "freeadmin/form/UnixPerm"
   ], function(
   declare,
   lang,
-  ItemFileReadStore,
-  ObjectStore,
-  dom,
-  domAttr,
-  domConstruct,
-  domStyle,
-  json,
   on,
-  query,
   xhr,
   JsonRest,
-  Memory,
+  Observable,
   manager,
   _Widget,
   _Templated,
   Dialog,
   CheckBox,
-  ComboBox,
-  TextBox,
   Button,
-  RadioButton,
   Select,
-  ValidationTextBox,
-  TabContainer,
-  ContentPane,
   OnDemandGrid,
   Selection,
   timing,
   sprintf,
-  template,
-  UnixPerm) {
+  template) {
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
@@ -183,9 +153,9 @@ define([
 
       });
 
-      me._store = JsonRest({
+      me._store = new Observable(new JsonRest({
         target: "/api/v1.0/system/update/check/"
-      })
+      }));
 
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
@@ -198,6 +168,16 @@ define([
         className: "dgrid-wizardshare"
       }, me.dapUpdateGrid);
 
+      on(me._updatesGrid, "dgrid-refresh-complete", function(e) {
+        e.results.then(function(data) {
+          if(data.length > 0) {
+            me._applyPending.set('disabled', false);
+          } else {
+            me._applyPending.set('disabled', true);
+          }
+        });
+      });
+
       me.update(me.initial.currentTrain);
 
 
@@ -207,23 +187,8 @@ define([
     update: function(train) {
 
       var me = this;
-
       me._applyPending.set('disabled', true);
-      if(me._updatesGrid.get('store') === null)
-        me._updatesGrid.set('store', me._store);
-
-      me._store.query("?train=" + train).then(function(results) {
-        console.log(results);
-        if(results.length > 0) {
-          me._applyPending.set('disabled', false);
-        } else {
-          me._applyPending.set('disabled', true);
-        }
-      }, function(err) {
-        me._updatesGrid.set('store', null);
-        me._updatesGrid.refresh();
-        me._applyPending.set('disabled', true);
-      });
+      me._updatesGrid.set("query", "?train=" + train);
 
     }
   });
