@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-10-06 21:11+0000\n"
+"PO-Revision-Date: 2014-10-12 18:21+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1412629910.0\n"
+"X-POOTLE-MTIME: 1413138096.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -367,3 +367,11 @@ msgstr "Вы уверены, что хотите сделать это?"
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
 msgstr "Ручная настройка"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:82
+msgid "Check For Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:86
+msgid "Apply Pending Updates"
+msgstr ""

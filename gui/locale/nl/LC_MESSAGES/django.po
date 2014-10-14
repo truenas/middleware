@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-10-12 18:43+0000\n"
+"PO-Revision-Date: 2014-10-13 16:08+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413139412.0\n"
+"X-POOTLE-MTIME: 1413216497.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11240,3 +11240,96 @@ msgstr ""
 "externe pad<br> langer is dan 255 tekens en is afgekapt; beperk dit tot<br>"
 "255. Het kan ook zo zijn dat uw SSH-referenties (externe host, etc.) onjuist "
 "zijn."
+
+#: directoryservice/models.py:857
+msgid "SASL wrapping"
+msgstr "SASL-wrapping"
+
+#: directoryservice/models.py:860
+msgid ""
+"The client ldap sasl wrapping defines whether ldap traffic will be signed or "
+"signed and encrypted (sealed).This option is needed in the case of Domain "
+"Controllers enforcing the usage of signed LDAP connections (e.g. Windows "
+"2000 SP3 or higher). LDAP sign and seal can be controlled with the registry "
+"key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
+"Integrity\" on the Windows server side."
+msgstr ""
+
+#: services/models.py:291
+msgid ""
+"IP address(es) to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+"IP-adres(sen) voor aankondigingen en waarop wordt geluisterd. Als niets is "
+"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
+"alle inkomende aanvragen geluisterd."
+
+#: services/models.py:744
+msgid "The authentication method accepted by the target."
+msgstr "De door het doel geaccepteerde authenticatiemethode."
+
+#: system/forms.py:1905
+msgid "Current Train"
+msgstr "Huidige trein"
+
+#: system/forms.py:1930
+msgid "Train"
+msgstr "Trein"
+
+#: system/forms.py:1993
+#: system/forms.py:2378
+msgid "Passphrase for encrypted private keys"
+msgstr "Wachtwoordzin voor versleutelde privésleutels"
+
+#: system/forms.py:2016
+#: system/forms.py:2396
+msgid "Incorrect passphrase"
+msgstr "Onjuiste wachtwoordzin"
+
+#: system/models.py:509
+msgid "Updade"
+msgstr "Bijwerken"
+
+#: system/models.py:606
+msgid "Common Name (eg, FQDN of FreeNAS server or service)"
+msgstr "Algemene naam (bv. FQDN van FreeNAS-server of -service)"
+
+#: tasks/models.py:301
+msgid ""
+"Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
+"Minute: 0-59."
+msgstr ""
+"Toegestane waarden:<br>Schuifknop: 0-30 (aangezien dit elke n-de minuut "
+"is).<br>Specifieke minuut: 0-59."
+
+#: tasks/models.py:309
+msgid ""
+"Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
+"0-23."
+msgstr ""
+"Toegestane waarden:<br>Schuifknop: 0-12 (aangezien dit elk n-de uur is).<br>"
+"Specifiek uur: 0-23."
+
+#: tasks/models.py:317
+msgid ""
+"Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
+"1-31."
+msgstr ""
+"Toegestane waarden:<br>Schuifknop: 0-15 (aangezien dit elke n-de dag is).<br>"
+"Specifieke dag: 1-31."
+
+#: templates/system/update.html:23
+msgid "NOTICE"
+msgstr "MELDING"
+
+#: templates/system/update.html:30
+msgid "The following packages will be changed:"
+msgstr "De volgende pakketten zullen worden gewijzigd:"
+
+#: templates/system/update_select.html:13
+msgid "Choose which train you would like to check for updates"
+msgstr "Kies voor welke trein u wilt controleren op updates"
+
+#: templates/system/update_select.html:20
+msgid "Check For Update"
+msgstr "Controleren op update"

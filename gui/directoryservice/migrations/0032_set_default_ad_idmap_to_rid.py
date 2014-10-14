@@ -15,6 +15,8 @@ class Migration(DataMigration):
             ad.save()
 
         if not ad.ad_domainname:
+            orm.idmap_rid.objects.filter(idmap_ds_id=ad.id).delete()
+
             idmap = orm.idmap_rid()
 
             # DS_TYPE_ACTIVEDIRECTORY

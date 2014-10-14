@@ -1,1 +1,1 @@
-<div data-dojo-type="freeadmin/Update" data-dojo-props='initial: {currentTrain: "{{ current_train }}", trains: {{ trains|safe }}, autoCheck: {% if update.upd_autocheck %}true{% else %}false{% endif %}}, updateUrl: "{% url "system_update_save" %}"'></div>
+<div data-dojo-type="freeadmin/Update" data-dojo-props='initial: {currentTrain: "{{ current_train }}", trains: {{ trains|safe }}, autoCheck: {% if update.upd_autocheck %}true{% else %}false{% endif %}}, updateUrl: "{% url "system_update_save" %}", manualUrl: "{% url "system_manualupdate" %}"'></div>

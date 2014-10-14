@@ -858,6 +858,10 @@ def provision_smb4():
         print >> sys.stderr, "Failed to disable password complexity"
         return False
 
+    if not Samba4().set_min_pwd_length():
+        print >> sys.stderr, "Failed to set minimum password length"
+        return False
+
     if not Samba4().set_administrator_password():
         print >> sys.stderr, "Failed to set administrator password"
         return False

@@ -357,3 +357,11 @@ msgstr "Είστε βέβαιοι ότι θέλετε να το κάνετε α�
 #, fuzzy
 msgid "Manual Setup"
 msgstr "Χειροκίνητη ρύθμιση"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:82
+msgid "Check For Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:86
+msgid "Apply Pending Updates"
+msgstr ""

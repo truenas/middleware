@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-10-02 09:15+0000\n"
+"PO-Revision-Date: 2014-10-13 09:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ne\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1412241302.0\n"
+"X-POOTLE-MTIME: 1413191675.0\n"
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
@@ -337,4 +337,12 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:82
+msgid "Check For Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:86
+msgid "Apply Pending Updates"
 msgstr ""

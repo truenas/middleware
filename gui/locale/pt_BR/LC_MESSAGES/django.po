@@ -11348,3 +11348,92 @@ msgid ""
 "to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
 "are wrong."
 msgstr ""
+
+#: directoryservice/models.py:857
+msgid "SASL wrapping"
+msgstr ""
+
+#: directoryservice/models.py:860
+msgid ""
+"The client ldap sasl wrapping defines whether ldap traffic will be signed or "
+"signed and encrypted (sealed).This option is needed in the case of Domain "
+"Controllers enforcing the usage of signed LDAP connections (e.g. Windows "
+"2000 SP3 or higher). LDAP sign and seal can be controlled with the registry "
+"key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
+"Integrity\" on the Windows server side."
+msgstr ""
+
+#: services/models.py:291
+msgid ""
+"IP address(es) to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+
+#: services/models.py:744
+#, fuzzy
+msgid "The authentication method accepted by the target."
+msgstr "O método pode ser aceito na controladora."
+
+#: system/forms.py:1905
+msgid "Current Train"
+msgstr ""
+
+#: system/forms.py:1930
+msgid "Train"
+msgstr ""
+
+#: system/forms.py:1993
+#: system/forms.py:2378
+#, fuzzy
+msgid "Passphrase for encrypted private keys"
+msgstr "Frase secreta criada"
+
+#: system/forms.py:2016
+#: system/forms.py:2396
+#, fuzzy
+msgid "Incorrect passphrase"
+msgstr "Senha para bind raíz"
+
+#: system/models.py:509
+#, fuzzy
+msgid "Updade"
+msgstr "Update"
+
+#: system/models.py:606
+msgid "Common Name (eg, FQDN of FreeNAS server or service)"
+msgstr ""
+
+#: tasks/models.py:301
+msgid ""
+"Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
+"Minute: 0-59."
+msgstr ""
+
+#: tasks/models.py:309
+msgid ""
+"Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
+"0-23."
+msgstr ""
+
+#: tasks/models.py:317
+msgid ""
+"Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
+"1-31."
+msgstr ""
+
+#: templates/system/update.html:23
+msgid "NOTICE"
+msgstr ""
+
+#: templates/system/update.html:30
+#, fuzzy
+msgid "The following packages will be changed:"
+msgstr "Os seguintes discos falharam em atachar: %s"
+
+#: templates/system/update_select.html:13
+msgid "Choose which train you would like to check for updates"
+msgstr ""
+
+#: templates/system/update_select.html:20
+msgid "Check For Update"
+msgstr ""

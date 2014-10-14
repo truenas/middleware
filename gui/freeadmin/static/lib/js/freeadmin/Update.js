@@ -11,6 +11,7 @@ define([
   "dojo/on",
   "dojo/query",
   "dojo/request/xhr",
+  "dojo/store/JsonRest",
   "dojo/store/Memory",
   "dijit/_base/manager",
   "dijit/_Widget",
@@ -44,6 +45,7 @@ define([
   on,
   query,
   xhr,
+  JsonRest,
   Memory,
   manager,
   _Widget,
@@ -67,6 +69,7 @@ define([
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
+    manualUrl: "",
     updateUrl: "",
     initial: {},
     postCreate: function() {
@@ -101,6 +104,13 @@ define([
       });
 
       me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
+
+      me._manualUpdate = new Button({
+        label: gettext("Manual Update"),
+        onClick: function() {
+          editObject(gettext("Manual Update"), me.manualUrl, [me.domNode]);
+        }
+      }, me.dapManualUpdate);
 
       me._checkUpdate = new Button({
         label: gettext("Check For Updates")
@@ -173,15 +183,23 @@ define([
 
       });
 
+      me._store = JsonRest({
+        target: "/api/v1.0/system/update/check/"
+      })
+
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
+        store: me._store,
         columns: {
           name: "Name"
         },
+        loadingMessage: gettext("Loading..."),
+        noDataMessage: gettext("No pending updates have been found."),
         className: "dgrid-wizardshare"
       }, me.dapUpdateGrid);
 
       me.update(me.initial.currentTrain);
+
 
       this.inherited(arguments);
 
@@ -191,19 +209,11 @@ define([
       var me = this;
 
       me._applyPending.set('disabled', true);
-      me._updatesGrid.set('store', null);
-      me._updatesGrid.refresh();
+      if(me._updatesGrid.get('store') === null)
+        me._updatesGrid.set('store', me._store);
 
-      xhr.get("/api/v1.0/system/update/check/?format=json", {
-        handleAs: "json",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        query: {train: train}
-      }).then(function(results) {
-        var newstore = new Memory({data: results});
-        me._updatesGrid.set('store', newstore);
-        me._updatesGrid.refresh();
+      me._store.query("?train=" + train).then(function(results) {
+        console.log(results);
         if(results.length > 0) {
           me._applyPending.set('disabled', false);
         } else {
