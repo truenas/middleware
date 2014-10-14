@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2014-10-04 09:14+0000\n"
+"PO-Revision-Date: 2014-10-13 09:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cy\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n==2) ? 1 : 0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1412414042.0\n"
+"X-POOTLE-MTIME: 1413191643.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10374,4 +10374,88 @@ msgid ""
 "entered<br> exceeded 255 characters and was truncated, please restrict it "
 "to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
 "are wrong."
+msgstr ""
+
+#: directoryservice/models.py:857
+msgid "SASL wrapping"
+msgstr ""
+
+#: directoryservice/models.py:860
+msgid ""
+"The client ldap sasl wrapping defines whether ldap traffic will be signed or "
+"signed and encrypted (sealed).This option is needed in the case of Domain "
+"Controllers enforcing the usage of signed LDAP connections (e.g. Windows "
+"2000 SP3 or higher). LDAP sign and seal can be controlled with the registry "
+"key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
+"Integrity\" on the Windows server side."
+msgstr ""
+
+#: services/models.py:291
+msgid ""
+"IP address(es) to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+
+#: services/models.py:744
+msgid "The authentication method accepted by the target."
+msgstr ""
+
+#: system/forms.py:1905
+msgid "Current Train"
+msgstr ""
+
+#: system/forms.py:1930
+msgid "Train"
+msgstr ""
+
+#: system/forms.py:1993
+#: system/forms.py:2378
+msgid "Passphrase for encrypted private keys"
+msgstr ""
+
+#: system/forms.py:2016
+#: system/forms.py:2396
+msgid "Incorrect passphrase"
+msgstr ""
+
+#: system/models.py:509
+msgid "Updade"
+msgstr ""
+
+#: system/models.py:606
+msgid "Common Name (eg, FQDN of FreeNAS server or service)"
+msgstr ""
+
+#: tasks/models.py:301
+msgid ""
+"Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
+"Minute: 0-59."
+msgstr ""
+
+#: tasks/models.py:309
+msgid ""
+"Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
+"0-23."
+msgstr ""
+
+#: tasks/models.py:317
+msgid ""
+"Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
+"1-31."
+msgstr ""
+
+#: templates/system/update.html:23
+msgid "NOTICE"
+msgstr ""
+
+#: templates/system/update.html:30
+msgid "The following packages will be changed:"
+msgstr ""
+
+#: templates/system/update_select.html:13
+msgid "Choose which train you would like to check for updates"
+msgstr ""
+
+#: templates/system/update_select.html:20
+msgid "Check For Update"
 msgstr ""
