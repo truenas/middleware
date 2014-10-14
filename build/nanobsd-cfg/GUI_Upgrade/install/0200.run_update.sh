@@ -86,6 +86,7 @@ standard_upgrade()
 	else
 	    beadm activate ${NEW_VERSION}
 	fi
+	zpool scrub freenas-boot || true
 	set +x
 }
 

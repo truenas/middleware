@@ -895,6 +895,9 @@ menu_install()
 	# Set the root password
 	chroot /tmp/data /etc/netcli reset_root_pw ${_password}
     fi
+    # Finally, before we unmount, start a srub.
+    zpool scrub freenas-boot || true
+
     umount /tmp/data/boot/grub
     umount /tmp/data/dev
     umount /tmp/data/var

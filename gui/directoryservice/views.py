@@ -132,18 +132,37 @@ def directoryservice_kerberoskeytab_add(request):
 
 def get_directoryservice_status():
     data = {}
+    ad_enable = False
+    dc_enable = False
+    ldap_enable = False
+    nis_enable = False
+    nt4_enable = False
 
-    ad = models.ActiveDirectory.objects.all()[0] 
-    ldap = models.LDAP.objects.all()[0]
-    nis = models.NIS.objects.all()[0]
-    nt4 = models.NT4.objects.all()[0]
+    ad = models.ActiveDirectory.objects.all()
+    if ad and ad[0]:
+        ad_enable = ad[0].ad_enable
+
+    ldap = models.LDAP.objects.all()
+    if ldap and ldap[0]:
+        ldap_enable = ldap[0].ldap_enable
+
+    nis = models.NIS.objects.all()
+    if nis and nis[0]:
+        nis_enable = nis[0].nis_enable
+
+    nt4 = models.NT4.objects.all()
+    if nt4 and nt4[0]:
+        nt4_enable = nt4[0].nt4_enable
+
     svc = services.objects.get(srv_service='domaincontroller')
+    if svc:
+        dc_enable = svc.srv_enable
 
-    data['ad_enable'] = ad.ad_enable
-    data['dc_enable'] = svc.srv_enable
-    data['ldap_enable'] = ldap.ldap_enable
-    data['nis_enable'] = nis.nis_enable
-    data['nt4_enable'] = nt4.nt4_enable 
+    data['ad_enable'] = ad_enable
+    data['dc_enable'] = dc_enable
+    data['ldap_enable'] = ldap_enable
+    data['nis_enable'] = nis_enable
+    data['nt4_enable'] = nt4_enable 
 
     return data
 
