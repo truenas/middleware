@@ -2390,6 +2390,54 @@ class notifier:
         grnam = self.___getgrnam(name)
         return grnam.gr_gid
 
+    def groupmap_list(self):
+        command = "/usr/local/bin/net groupmap list"
+        groupmap = []
+
+        proc = self._pipeopen(command)
+        out = proc.communicate()
+        if proc.returncode != 0:
+            return None
+
+        out = out[0]
+        lines = out.splitlines()
+        for line in lines:
+            m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+            if m:
+                groupmap.append(m.groupdict())
+
+        return groupmap
+
+    def groupmap_add(self, unixgroup, ntgroup, type='local'):
+        command = "/usr/local/bin/net groupmap add type=%s unixgroup='%s' ntgroup='%s'"
+
+        ret = False
+        proc = self._pipeopen(command % (type, unixgroup, ntgroup))
+        proc.communicate()
+        if proc.returncode == 0:
+            ret = True
+
+        return ret
+
+    def groupmap_delete(self, ntgroup=None, sid=None):
+        command = "/usr/local/bin/net groupmap delete "
+
+        ret = False
+        if not ntgroup and not sid:
+            return ret
+
+        if ntgroup:
+            command = "%s ntgroup='%s'" % (command, ntgroup)
+        elif sid:
+            command = "%s sid='%s'" % (command, sid)
+
+        proc = self._pipeopen(command)
+        proc.communicate()
+        if proc.returncode == 0:
+            ret = True
+
+        return ret
+
     def user_lock(self, username):
         self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
         self._system('/usr/sbin/pw lock "%s"' % (username))

@@ -56,29 +56,6 @@ group_membership()
 		bsdgrpmember_group_id=$1" | tr \\n ,
 }
 
-samba_groupmap()
-{
-	local group="${1}"
-	local net="/usr/local/bin/net"
-
-	#
-	# Don't map groups with a name the same as the username,
-	# it really pisses windows off.
-	#
-	/usr/bin/getent passwd "${group}" >/dev/null 2>&1
-	if [ "$?" = "0" ] ; then
-		return
-	fi
-
-	${net} groupmap list ntgroup="${group}" >/dev/null 2>&1
-	if [ "$?" = "0" ] ; then
-		return
-	fi
-
-	${net} groupmap add type="local" \
-		unixgroup="${group}" ntgroup="${group}" >/dev/null 2>&1
-}
-
 samba_add_group()
 {
 	local group="${1}"
@@ -115,11 +92,6 @@ generate_group()
 		local members="$(group_membership ${id} | \
 			sed -e 's/,$//g' | tr -d \\n)"
 		echo -n "${members}"
-		if [ "${bsdgrp_builtin}" = "0" ] ; then
-			if ! dirsrv_enabled domaincontroller ; then
-				samba_groupmap "${bsdgrp_group}"
-			fi
-		fi
 		echo
 	done > /etc/group
 
