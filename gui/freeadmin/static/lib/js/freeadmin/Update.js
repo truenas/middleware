@@ -67,6 +67,7 @@ define([
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
+    manualUrl: "",
     updateUrl: "",
     initial: {},
     postCreate: function() {
@@ -101,6 +102,13 @@ define([
       });
 
       me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
+
+      me._manualUpdate = new Button({
+        label: gettext("Manual Update"),
+        onClick: function() {
+          editObject(gettext("Manual Update"), me.manualUrl, [me.domNode]);
+        }
+      }, me.dapManualUpdate);
 
       me._checkUpdate = new Button({
         label: gettext("Check For Updates")
