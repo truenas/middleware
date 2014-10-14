@@ -93,7 +93,8 @@ release: git-verify
 
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	mv "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	cp ReleaseNotes "objs/${STAGEDIR}/"
+	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
 	fi
