@@ -9,6 +9,7 @@ from . import Avatar
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
+from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
 
 log = logging.getLogger('freenasOS.Update')
 
@@ -407,3 +408,327 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
             log.error("Unable to delete boot environment %s in failure case" % clone_name)
     
     return rv
+
+def DownloadUpdate(train, directory, get_handler = None):
+    """
+    Download, if necessary, the LATEST update for train; download
+    delta packages if possible.  Checks to see if the existing content
+    is the right version.  In addition to the current caching code, it
+    will also stash the current sequence when it downloads; this will
+    allow it to determine if a reboot into a different boot environment
+    has happened.  This will remove the existing content if it decides
+    it has to redownload for any reason.
+    """
+    import shutil
+    import fcntl
+
+    conf = Configuration.Configuration()
+    # First thing, let's get the latest manifest
+    latest_mani = conf.FindLatestManifest(train)
+    if latest_mani is None:
+        # That really shouldnt happen
+        log.error("Unable to find latest manifest for train %s" % train)
+        return False
+
+    cache_mani = Manifest.Manifest()
+    try:
+        mani_file = VerifyUpdate(directory)
+        if mani_file:
+            cache_mani.LoadFile(mani_file)
+            if cache_mani.Sequence() == latest_mani.Sequence():
+                # Woohoo!
+                mani_file.close()
+                return True
+            # Not the latest
+            mani_file.close()
+        RemoveUpdate(directory)
+        mani_file = None
+    except UpdateBusyCacheException:
+        log.debug("Cache directory %s is busy, so no update available" % directory)
+        return False
+    except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+        # It's incomplete, so we need to remove it
+        RemoveUpdate(directory)
+    except BaseException as e:
+        log.debug("Got exception %s while trying to prepare update cache" % str(e))
+        raise e
+    # If we're here, then we don't have a (valid) cached update.
+    RemoveUpdate(directory)
+    try:
+        os.makedirs(directory)
+    except BaseException as e:
+        log.error("Unable to create directory %s: %s" % (directory, str(e)))
+        return False
+
+    try:
+        mani_file = open(directory + "/MANIFEST", "wxb")
+    except (IOError, Exception) as e:
+        log.error("Unale to create manifest file in directory %s" % (directory, str(e)))
+        return False
+    try:
+        fcntl.lockf(mani_file, fcntl.LOCK_EX | fcntl.LOCK_NB, 0, 0)
+    except (IOError, Exception) as e:
+        log.debug("Unable to lock manifest file: %s" % str(e))
+        mani_file.close()
+        return False
+
+    # Next steps:  download the package files.
+    for pkg in latest_mani.Packages():
+        pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
+        if pkg_file is None:
+            log.error("Could not download package file for %s" % pkg.Name())
+            RemoveUpdate(directory)
+            return False
+
+    # Then save the manifest file.
+    latest_mani.StoreFile(mani_file)
+    # Create the SEQUENCE file.
+    with open(directory + "/SEQUENCE", "w") as f:
+        f.write("%s" % conf.SystemManifest().Sequence())
+    # Then return True!
+    mani_file.close()
+    return True
+
+def PendingUpdates(directory):
+    """
+    Return a list (a la CheckForUpdates handler right now) of
+    changes between the currently installed system and the
+    downloaded contents in <directory>.  If <directory>'s values
+    are incomplete or invalid for whatever reason, return
+    None.  "Incomplete" means a necessary file for upgrading
+    from the current system is not present; "Invalid" means that
+    one part of it is invalid -- manifest is not valid, signature isn't
+    valid, checksum for a file is invalid, or the stashed sequence
+    number does not match the current system's sequence.
+    """
+    mani_file = None
+    conf = Configuration.Configuration()
+    try:
+        mani_file = VerifyUpdate(directory)
+    except UpdateBusyCacheException:
+        log.debug("Cache directory %s is busy, so no update available" % directory)
+        return None
+    except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+        log.error(str(e))
+        RemoveUpdate(directory)
+        return None
+    except BaseException as e:
+        log.error("Got exception %s while trying to determine pending updates" % str(e))
+        return None
+    if mani_file:
+        new_manifest = Manifest.Manifest()
+        new_manifest.LoadFile(mani_file)
+        diffs = Manifest.CompareManifests(new_manifest, conf.SystemManifest())
+        return diffs
+    return None
+
+def ApplyUpdate(directory, install_handler = None):
+    """
+    Apply the update in <directory>.  As with PendingUpdates(), it will
+    have to verify the contents before it actually installs them, so
+    it has the same behaviour with incomplete or invalid content.
+    """
+    rv = False
+    conf = Configuration.Configuration()
+    changes = PendingUpdates(directory)
+    if changes is None:
+        # That could have happened for multiple reasons.
+        # PendingUpdates should probably throw an exception
+        # on error
+        return False
+    # Do I have to worry about a race condition here?
+    new_manifest = Manifest.Manifest()
+    new_manifest.LoadPath(directory + "/MANIFEST")
+    conf.SetPackageDir(directory)
+
+    deleted_packages = []
+    updated_packages = []
+    for (pkg, op, old) in changes:
+        if op == "delete":
+            deleted_packages.append(pkg)
+        else:
+            updated_packages.append(pkg)
+
+    if len(deleted_packages) == 0 and len(updated_packages):
+        # The manifest may have other differences, so we should
+        # probably do something.
+        log.debug("New manifest has no package changes, what should we do?")
+        RemoveUpdate(directory)
+        return True
+
+    # Now we start doing the update!
+    clone_name = None
+    mount_point = None
+    try:
+        clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
+        if CreateClone(clone_name) is False:
+            s = "Unable to create boot-environment %s" % clone_name
+            log.error(s)
+            raise Exception(s)
+        mount_point = MountClone(clone_name)
+        if mount_point is None:
+            s = "Unable to mount boot-environment %s" % clone_name
+            log.error(s)
+            DeleteClone(clone_name)
+            raise Exception(s)
+
+        # Remove any deleted packages
+        for pkg in deleted_packages:
+            log.debug("About to delete package %s" % pkg.Name())
+            if conf.PackageDB(mount_point).RemovePackageContents(pkg) == False:
+                s = "Unable to remove contents for packate %s" % pkg.Name()
+                if mount_point:
+                    UnmountClone(clone_name, mount_point)
+                    mount_point = None
+                    DestroyClone(clone_name)
+                raise Exception(s)
+            conf.PackageDB(mount_point).RemovePackage(pkg.Name())
+
+        installer = Installer.Installer(manifest = new_manifest,
+                                        root = mount_point,
+                                        config = conf)
+        installer.GetPackages(updated_packages)
+        log.debug("Installer got packages %s" % installer._packages)
+        # Now to start installing them
+        rv = False
+        if installer.InstallPackages(handler = install_handler) is False:
+            log.error("Unable to install packages")
+            raise Exception("Unable to install packages")
+        else:
+            new_manifest.Save(mount_point)
+            if mount_point:
+                if UnmountClone(clone_name, mount_point) is False:
+                    s = "Unable to unmount clone environment %s from mount point %s" % (clone_name, mount_point)
+                    log.error(s)
+                    raise Exception(s)
+                mount_point = None
+                if ActivateClone(clone_name) is False:
+                    s = "Unable to activate clone environment %s" % clone_name
+                    log.error(s)
+                    raise Exception(s)
+                RemoveUpdate(directory)
+                rv = True
+                RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+    except BaseException as e:
+        log.error("Update got exception during update: %s" % str(e))
+        if mount_point:
+            UnmountClone(clone_name, mount_point)
+        if clone_name:
+            DestroyClone(clone_name)
+        raise e
+
+    return rv
+
+def VerifyUpdate(directory):
+    """
+    Verify the update in the directory is valid -- the manifest
+    is sane, any signature is valid, the package files necessary to
+    update are present, and have a valid checksum.  Returns either
+    a file object if it's valid (the file object is locked), None
+    if it doesn't exist, or it raises an exception -- one of
+    UpdateIncompleteCacheException or UpdateInvalidCacheException --
+    if necessary.
+    """
+    import fcntl
+
+    # First thing we do is get the systen configuration and
+    # systen manifest
+    conf = Configuration.Configuration()
+    mani = conf.SystemManifest()
+
+    # Next, let's see if the directory exists.
+    if not os.path.exists(directory):
+        return None
+    # Open up the manifest file.  Assuming it exists.
+    try:
+        mani_file = open(directory + "/MANIFEST", "r+")
+    except:
+        # Doesn't exist.  Or we can't get to it, which would be weird.
+        return None
+    # Let's try getting an exclusive lock on the manifest
+    try:
+        fcntl.lockf(mani_file, fcntl.LOCK_EX | fcntl.LOCK_NB, 0, 0)
+    except:
+        # Well, if we can't acquire the lock, someone else has it.
+        # Throw an incomplete exception
+        raise UpdateBusyCacheException("Cache directory %s is being modified" % directory)
+    cached_mani = Manifest.Manifest()
+    try:
+        cached_mani.LoadFile(mani_file)
+    except Exception as e:
+        # If we got an exception, it's invalid.
+        log.error("Could not load cached manifest file: %s" % str(e))
+        raise UpdateInvalidCacheException
+    
+    # First easy thing to do:  look for the SEQUENCE file.
+    try:
+        cached_sequence = open(directory + "/SEQUENCE", "r").read().rstrip()
+    except (IOError, Exception) as e:
+        log.error("Could not sequence file in cache directory %s: %s" % (directory, str(e)))
+        raise UpdateIncompleteException("Cache directory %s does not have a sequence file" % directory)
+
+    # Now let's see if the sequence matches us.
+    if cached_sequence != mani.Sequence():
+        log.error("Cached sequence, %s, does not match system sequence, %s" % (cached_sequence, mani.Sequence()))
+        raise UpdateInvalidCacheException("Cached sequence does not match system sequence")
+
+    # Next thing to do is go through the manifest, and decide which package files we need.
+    # For each package, we want to see if we have a delta package that matches, and
+    # has the right checksum, or the full package, that has the right checksum.
+    # If neither file exists, then we have an incomplete situation; if both exist,
+    # but don't have a valid checksum, we have an invalid situation.  If only one
+    # exists, but has an invalid checksum, then we'll call it incomplete.
+    for pkg in cached_mani.Packages():
+        cur_vers = conf.CurrentPackageVersion(pkg.Name())
+        new_vers = pkg.Version()
+        if not os.path.exists(directory + "/" + pkg.FileName())  and \
+           not os.path.exists(directory + "/" + pkg.FileName(curVers)):
+            # Neither exists, so incoplete
+            log.error("Cache %s  directory missing files for package %s" % (directory, pkg.Name()))
+            raise UpdateIncompleteCacheException("Cache directory %s missing files for package %s" % (directory, pkg.Name()))
+        # Okay, at least one of them exists.
+        # Let's try the full file first
+        try:
+            with open(directory + "/" + pkg.FileName()) as f:
+                if pkg.Checksum():
+                    cksum = Configuration.ChecksumFile(f)
+                    if cksum == pkg.Checksum():
+                        continue
+                else:
+                    continue
+        except:
+            pass
+
+        # Now we try the delta file
+        # To do that, we need to find the right dictionary in the pkg
+        upd_cksum = None
+        found = False
+        for update_dict in pkg.Updates():
+            if update_dict[Package.VERSION_KEY] == curVers:
+                if Package.CHECKSUM_KEY in update_dict:
+                    upd_cksum = update_dict[Package.CHECKSUM_KEY]
+                    try:
+                        with open(directory + "/" + pkg.FileName(curVers)) as f:
+                            cksum = Configuration.ChecksumFile(f)
+                            if upd_cksum == cksum:
+                                continue
+                    except:
+                        pass
+                else:
+                    continue
+        # If we got here, we are missing this file
+        log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
+        log.error(log_msg)
+        raise UpdateIncompleteCacheException(log_msg)
+    # And if we got here, then we have found all of the packages, the manifest is fine,
+    # and the sequence tag is correct.
+    mani_file.seek(0)
+    return mani_file
+
+def RemoveUpdate(directory):
+    import shutil
+    try:
+        shutil.rmtree(directory)
+    except:
+        pass
+    return

@@ -842,6 +842,17 @@ class Configuration(object):
             rv.LoadFile(file)
         return rv
 
+    def CurrentPackageVersion(self, pkgName):
+        try:
+            pkgdb = self.PackageDB(create = False)
+            if pkgdb:
+                pkgInfo = pkgdb.FindPackage(pkgName)
+                if pkgInfo:
+                    return pkgInfo[pkgName]
+        except:
+            pass
+        return None
+
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
