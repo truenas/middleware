@@ -2,7 +2,7 @@
 {% load freeadmin %}
 
 {% block post_form %}
-{% if not instance.ldap_has_samba_schema %}
+{% if not instance.ldap_has_samba_schema and instance.ldap_enable %}
 
     <div>
     <span style="color:red;font-weight:bold;">
