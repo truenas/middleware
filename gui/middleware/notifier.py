@@ -3785,10 +3785,15 @@ class notifier:
         return True
 
     def zfs_snapshot_list(self, path=None, replications=None):
+        from freenasUI.storage.models import Volume
         fsinfo = dict()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name -H")
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
+
+        volnames = [
+            o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
+        ]
 
         if path:
             zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot -H -S creation '%s'" % path)
@@ -3802,6 +3807,10 @@ class notifier:
                 used = _list[1]
                 refer = _list[3]
                 fs, name = snapname.split('@')
+
+                # Do not list snapshots from the root pool
+                if fs.split('/')[0] not in volnames:
+                    continue
                 try:
                     snaplist = fsinfo[fs]
                     mostrecent = False
