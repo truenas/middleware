@@ -103,6 +103,9 @@ class Samba4(object):
     def disable_password_complexity(self):
         return self.samba_tool("domain passwordsettings set", { 'complexity': 'off'})
 
+    def set_min_pwd_length(self):
+        return self.samba_tool("domain passwordsettings set", { 'min-pwd-length': '1'})
+
     def set_administrator_password(self):
         try:
             dc = DomainController.objects.all()[0]
