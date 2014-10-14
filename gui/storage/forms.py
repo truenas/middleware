@@ -1678,8 +1678,13 @@ class PeriodicSnapForm(ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        self.fields['task_filesystem'].choices = (
-            notifier().list_zfs_fsvols().items())
+        volnames = [
+            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
+        ]
+        self.fields['task_filesystem'].choices = filter(
+            lambda y: y[0].split('/')[0] in volnames,
+            notifier().list_zfs_fsvols().items()
+        )
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
     def clean_task_byweekday(self):
