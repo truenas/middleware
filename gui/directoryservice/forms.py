@@ -261,7 +261,7 @@ class ActiveDirectoryForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['ad_ssl', 'ad_idmap_backend_type']
+        exclude = ['ad_ssl', 'ad_certificate', 'ad_idmap_backend_type']
         model = models.ActiveDirectory
         widgets = {
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
