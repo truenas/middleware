@@ -96,18 +96,6 @@ ldapctl_start()
 		return 1
 	fi
 
-	res1=0
-	if cifs_enabled
-	then
-		res1=1
-	fi
-
-	res2=0
-	if LDAP_has_samba_schema
-	then
-		res2=1
-	fi
-
 	if cifs_enabled && LDAP_has_samba_schema 
 	then
 		cifs_restart
