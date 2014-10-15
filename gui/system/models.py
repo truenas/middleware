@@ -40,6 +40,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 
+from freenasOS import Configuration
 from freenasUI import choices
 from freenasUI.common.ssl import (
     write_certificate,
@@ -504,9 +505,24 @@ class Update(Model):
         verbose_name=_('Check Automatically For Updates'),
         default=True,
     )
+    upd_train = models.CharField(
+        max_length=50,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _('Updade')
+
+    def get_train(self):
+        conf = Configuration.Configuration()
+        conf.LoadTrainsConfig()
+        if (
+            not self.upd_train or
+            self.upd_train not in conf.AvailableTrains().keys()
+        ):
+            return self._conf.CurrentTrain()
+        return self.upd_train
+
 
 
 CA_TYPE_EXISTING        = 0x00000001
