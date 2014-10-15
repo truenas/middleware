@@ -164,6 +164,7 @@ define([
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
         store: me._store,
+        query: "?train=" + me.initial.currentTrain,
         columns: {
           name: "Name"
         },
@@ -181,9 +182,6 @@ define([
           }
         });
       });
-
-      me.update(me.initial.currentTrain);
-
 
       this.inherited(arguments);
 
