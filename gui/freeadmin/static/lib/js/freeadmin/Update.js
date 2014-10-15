@@ -128,6 +128,20 @@ define([
             confirmDialog.hide();
             me._selectTrain.set('oldvalue', val);
             me.update(val);
+
+            xhr.post(me.updateUrl, {
+              handleAs: "json",
+              headers: {"X-CSRFToken": CSRFToken},
+              data: {train: val}
+            }).then(function(data) {
+              if(data) {
+
+              } else {
+
+              }
+            }, function(error) {
+
+            });
           }
         });
 
