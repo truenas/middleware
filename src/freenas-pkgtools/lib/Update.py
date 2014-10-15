@@ -350,7 +350,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 if mount_point:
                     UnmountClone(clone_name, mount_point)
                     mount_point = None
-                    DestroyClone(clone_name)
+                    DeleteClone(clone_name)
                 raise Exception("Unable to remove contents for package %s" % pkg.Name())
             conf.PackageDB(root).RemovePackage(pkg.Name())
 
@@ -519,7 +519,7 @@ def PendingUpdates(directory):
     if mani_file:
         new_manifest = Manifest.Manifest()
         new_manifest.LoadFile(mani_file)
-        diffs = Manifest.CompareManifests(new_manifest, conf.SystemManifest())
+        diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
         return diffs
     return None
 
@@ -546,11 +546,15 @@ def ApplyUpdate(directory, install_handler = None):
     updated_packages = []
     for (pkg, op, old) in changes:
         if op == "delete":
+            log.debug("Delete package %s" % pkg.Name())
             deleted_packages.append(pkg)
+        elif op == "install":
+            log.debug("Install package %s" % pkg.Name())
         else:
+            log.debug("Upgrade package %s-%s to %s-%s" % (old.Name(), old.Version(), pkg.Name(), pkg.Version()))
             updated_packages.append(pkg)
 
-    if len(deleted_packages) == 0 and len(updated_packages):
+    if len(deleted_packages) == 0 and len(updated_packages) == 0:
         # The manifest may have other differences, so we should
         # probably do something.
         log.debug("New manifest has no package changes, what should we do?")
@@ -581,14 +585,14 @@ def ApplyUpdate(directory, install_handler = None):
                 if mount_point:
                     UnmountClone(clone_name, mount_point)
                     mount_point = None
-                    DestroyClone(clone_name)
+                    DeleteClone(clone_name)
                 raise Exception(s)
             conf.PackageDB(mount_point).RemovePackage(pkg.Name())
 
         installer = Installer.Installer(manifest = new_manifest,
                                         root = mount_point,
                                         config = conf)
-        installer.GetPackages(updated_packages)
+        installer.GetPackages(pkgList = updated_packages)
         log.debug("Installer got packages %s" % installer._packages)
         # Now to start installing them
         rv = False
@@ -615,7 +619,7 @@ def ApplyUpdate(directory, install_handler = None):
         if mount_point:
             UnmountClone(clone_name, mount_point)
         if clone_name:
-            DestroyClone(clone_name)
+            DeleteClone(clone_name)
         raise e
 
     return rv
