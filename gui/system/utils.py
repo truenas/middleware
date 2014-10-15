@@ -123,12 +123,13 @@ class UpdateHandler(object):
     def get_file_handler(
         self, method, filename, size=None, progress=None, download_rate=None
     ):
-        if progress is not None and self._pkgname:
+        filename = filename.rsplit('/', 1)[-1]
+        if progress is not None:
             self.progress = (progress * self._baseprogress) / 100
             if self.progress == 0:
                 self.progress = 1
             self.details = '%s<br />%s(%d%%)%s' % (
-                self._pkgname,
+                filename,
                 '%s ' % humanize_size(size)
                 if size else '',
                 progress,
