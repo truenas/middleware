@@ -1004,7 +1004,7 @@ def update_index(request):
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': conf.CurrentTrain(),
+        'current_train': update.get_train(),
         'trains': json.dumps(conf.AvailableTrains().keys() or []),
     })
 
