@@ -2517,31 +2517,35 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        handler = CheckUpdateHandler()
-        update = Update.CheckForUpdates(
-            handler=handler.call,
-            train=request.GET.get('train'),
-        )
-        changes = []
-        if update:
-            for c in handler.changes:
-                if c['operation'] == 'upgrade':
+        path = notifier().system_dataset_path()
+        if not path:
+            raise MiddlewareError("System dataset not configured")
+        changes = Update.PendingUpdates("%s/update" % path)
+        log.error("%r", changes)
+        data = []
+        if changes:
+            for change in changes:
+                log.error("%r -",change)
+                old = change[0]
+                op = change[1]
+                new = change[2]
+                if op == 'upgrade':
                     name = '%s-%s -> %s-%s' % (
-                        c['old'].Name(),
-                        c['old'].Version(),
-                        c['new'].Name(),
-                        c['new'].Version(),
+                        old.Name(),
+                        old.Version(),
+                        new.Name(),
+                        new.Version(),
                     )
-                elif c['operation'] == 'install':
-                    name = '%s-%s' % (c['new'].Name(), c['new'].Version())
+                elif op == 'install':
+                    name = '%s-%s' % (new.Name(), new.Version())
                 else:
-                    name = '%s-%s' % (c['old'].Name(), c['old'].Version())
+                    name = '%s-%s' % (old.Name(), old.Version())
 
-                changes.append({
-                    'operation': c['operation'],
+                data.append({
+                    'operation': op,
                     'name': name,
                 })
         return self.create_response(
             request,
-            changes,
+            data,
         )
