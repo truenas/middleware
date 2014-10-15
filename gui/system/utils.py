@@ -77,6 +77,7 @@ class CheckUpdateHandler(object):
                     c['new'].Name(),
                     c['new'].Version(),
                 )
+        return output
 
 
 class UpdateHandler(object):
@@ -122,12 +123,13 @@ class UpdateHandler(object):
     def get_file_handler(
         self, method, filename, size=None, progress=None, download_rate=None
     ):
-        if progress is not None and self._pkgname:
+        filename = filename.rsplit('/', 1)[-1]
+        if progress is not None:
             self.progress = (progress * self._baseprogress) / 100
             if self.progress == 0:
                 self.progress = 1
             self.details = '%s<br />%s(%d%%)%s' % (
-                self._pkgname,
+                filename,
                 '%s ' % humanize_size(size)
                 if size else '',
                 progress,
@@ -137,7 +139,7 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
-        self.step = 2
+        self.step = 1
         self.indeterminate = False
         total = len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)

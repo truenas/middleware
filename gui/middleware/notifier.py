@@ -3934,7 +3934,7 @@ class notifier:
                 dval[data[1]] = (data[2], data[2], data[3])
         return retval
 
-    def zfs_set_option(self, name, item, value):
+    def zfs_set_option(self, name, item, value, recursive=False):
         """
         Set a ZFS attribute using zfs set
 
@@ -3946,7 +3946,10 @@ class notifier:
         name = str(name)
         item = str(item)
         value = str(value)
-        zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
+        if recursive:
+            zfsproc = self._pipeopen("zfs set -r '%s'='%s' '%s'" % (item, value, name))
+        else:
+            zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None
@@ -5263,20 +5266,20 @@ class notifier:
         basename = '%s/.system' % volume.vol_name
         return systemdataset, volume, basename
 
-    def system_dataset_create(self):
+    def system_dataset_create(self, mount=True):
 
         if (
             hasattr(self, 'failover_status') and
             self.failover_status() == 'BACKUP'
         ):
-            if os.path.lexists(SYSTEMPATH):
+            if os.path.exists(SYSTEMPATH):
                 os.unlink(SYSTEMPATH)
             return None
 
         systemdataset, volume, basename = self.system_dataset_settings()
         if not volume:
-            if os.path.lexists(SYSTEMPATH):
-                os.unlink(SYSTEMPATH)
+            if os.path.exists(SYSTEMPATH):
+                os.rmdir(SYSTEMPATH)
             return systemdataset
 
         if not volume.is_decrypted():
@@ -5295,28 +5298,36 @@ class notifier:
 
         createdds = False
         for dataset in datasets:
-            proc = self._pipeopen('/sbin/zfs list \'%s\'' % dataset)
-            proc.communicate()
+            proc = self._pipeopen('/sbin/zfs get -H -o value mountpoint "%s"' % dataset)
+            stdout, stderr = proc.communicate()
             if proc.returncode == 0:
+                if stdout.strip() != 'legacy':
+                    self._system('/sbin/zfs set mountpoint=legacy "%s"' % dataset)
+
                 continue
-            self.create_zfs_dataset(dataset, _restart_collectd=False)
+
+            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"}, _restart_collectd=False)
             createdds = True
-            os.chmod('/mnt/%s' % dataset, 0755)
 
         if createdds:
             self.restart('collectd')
 
-        corepath = '/mnt/%s/cores' % basename
-        if os.path.exists(corepath):
-            self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
-                corepath,
-            ))
-            os.chmod(corepath, 0775)
+        if not os.path.isdir(SYSTEMPATH):
+            if os.path.exists(SYSTEMPATH):
+                os.unlink(SYSTEMPATH)
+            os.mkdir(SYSTEMPATH)
 
-        if os.path.lexists(SYSTEMPATH):
-            os.unlink(SYSTEMPATH)
-        os.symlink('/mnt/%s' % basename, SYSTEMPATH)
-        self.nfsv4link()
+        if mount:
+            self.system_dataset_mount(volume.vol_name, SYSTEMPATH)
+
+            corepath = '%s/cores' % SYSTEMPATH
+            if os.path.exists(corepath):
+                self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
+                    corepath,
+                ))
+                os.chmod(corepath, 0775)
+
+            self.nfsv4link()
 
         return systemdataset
 
@@ -5377,7 +5388,38 @@ class notifier:
     def system_dataset_path(self):
         if not os.path.exists(SYSTEMPATH):
             return None
-        return os.path.realpath(SYSTEMPATH)
+
+        if not os.path.ismount(SYSTEMPATH):
+            return None
+
+        return SYSTEMPATH
+
+    def system_dataset_mount(self, pool, path=SYSTEMPATH):
+        systemdataset, volume, basename = self.system_dataset_settings()
+        sub = [
+            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
+            'rrd-%s' % systemdataset.sys_uuid
+        ]
+
+        self._system('/sbin/mount -t zfs "%s/.system" "%s"' % (pool, path))
+
+        for i in sub:
+            if not os.path.isdir('%s/%s' % (path, i)):
+                os.mkdir('%s/%s' % (path, i))
+
+            self._system('/sbin/mount -t zfs "%s/.system/%s" "%s/%s"' % (pool, i, path, i))
+
+    def system_dataset_umount(self, pool):
+        systemdataset, volume, basename = self.system_dataset_settings()
+        sub = [
+            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
+            'rrd-%s' % systemdataset.sys_uuid
+        ]
+
+        for i in sub:
+            self._system('/sbin/umount -f "%s/.system/%s"' % (pool, i))
+
+        self._system('/sbin/umount -f "%s/.system"' % pool)
 
     def _createlink(self, syspath, item):
         if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
@@ -5433,8 +5475,11 @@ class notifier:
     def system_dataset_migrate(self, _from, _to):
 
         rsyncs = (
-            ('/mnt/%s/.system/' % _from, '/mnt/%s/.system/' % _to),
+            (SYSTEMPATH, '/tmp/system.new'),
         )
+
+        os.mkdir('/tmp/system.new')
+        self.system_dataset_mount(_to, '/tmp/system.new')
 
         restart = []
         if os.path.exists('/var/run/syslog.pid'):
@@ -5456,12 +5501,17 @@ class notifier:
             ))
 
         if _from and rv == 0:
+            self.system_dataset_umount(_from)
+            self.system_dataset_umount(_to)
+            self.system_dataset_mount(_to, SYSTEMPATH)
             proc = self._pipeopen(
                 '/sbin/zfs list -H -o name %s/.system|xargs zfs destroy -r' % (
                     _from,
                 )
             )
             proc.communicate()
+
+        os.rmdir('/tmp/system.new')
 
         for service in restart:
             self.start(service)

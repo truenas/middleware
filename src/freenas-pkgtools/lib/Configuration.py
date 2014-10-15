@@ -404,7 +404,7 @@ class Configuration(object):
     _config_path = "/data/update.conf"
     _trains = None
     _temp = "/tmp"
-    _system_pool_link = "/var/db/system"
+    _system_dataset = "/var/db/system"
     _package_dir = None
 
     def __init__(self, root = None, file = None):
@@ -412,8 +412,8 @@ class Configuration(object):
         if file is not None: self._config_path = file
         self.LoadConfigurationFile(self._config_path)
         # Set _temp to the system pool, if it exists.
-        if os.path.islink(self._system_pool_link):
-            self._temp = os.readlink(self._system_pool_link)
+        if os.path.exists(self._system_dataset):
+            self._temp = self._system_dataset
 
     def TryGetNetworkFile(self, url, handler=None, pathname = None):
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
@@ -482,11 +482,6 @@ class Configuration(object):
     # Train objects (key being the train name).
     def LoadTrainsConfig(self, updatecheck = False):
         import json
-        if self._temp is None:
-            if not os.path.islink(self._system_pool_link):
-                log.error("No system pool, cannot load trains configuration")
-            else:
-                self._temp = os.readlink(self._system_pool_link)
         self._trains = {}
         if self._temp:
             train_path = self._temp + "/Trains.json"
@@ -529,11 +524,6 @@ class Configuration(object):
         if self._trains is None: self._trains = {}
         if current_train not in self._trains:
             self._trains[current_train] = Train.Train(current_train, "Installed OS", sys_mani.Sequence())
-        if self._temp is None:
-            if not os.path.islink(self._system_pool_link):
-                log.error("No system pool, cannot load trains configuration")
-            else:
-                self._temp = os.readlink(self._system_pool_link)
         if self._temp:
             obj = {}
             for train_name in self._trains.keys():
@@ -723,7 +713,8 @@ class Configuration(object):
         return self._temp
 
     def SetTemporaryDirectory(self, path):
-        self._temp = path
+        if path:
+            self._temp = path
         return
 
     def CreateTemporaryFile(self):

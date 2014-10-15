@@ -54,8 +54,10 @@ from django.views.decorators.cache import never_cache
 
 from freenasOS.Update import (
     ActivateClone,
+    ApplyUpdate,
     CheckForUpdates,
     DeleteClone,
+    DownloadUpdate,
     Update,
 )
 from freenasOS import Configuration, Train
@@ -1029,7 +1031,7 @@ def update_save(request):
     )
 
 
-def update(request):
+def update_apply(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
@@ -1077,6 +1079,56 @@ def update(request):
             'handler': handler,
         })
 
+
+def update_check(request):
+    if request.method == 'POST':
+        uuid = request.GET.get('uuid')
+        handler = UpdateHandler(uuid=uuid)
+        if not uuid:
+            #FIXME: ugly
+            pid = os.fork()
+            if pid != 0:
+                return HttpResponse(handler.uuid, status=202)
+            else:
+                handler.pid = os.getpid()
+                handler.dump()
+                path = '%s/update' % notifier().system_dataset_path()
+                if not path:
+                    raise MiddlewareError(_('System dataset not configured'))
+                try:
+                    DownloadUpdate(
+                        'FreeNAS-9.3-Nightlies',
+                        path,
+                        get_handler=handler.get_file_handler,
+                    )
+                except Exception, e:
+                    handler.error = unicode(e)
+                handler.finished = True
+                handler.dump()
+                os.kill(handler.pid, 9)
+        else:
+            if handler.error is not False:
+                raise MiddlewareError(handler.error)
+            if not handler.finished:
+                return HttpResponse(handler.uuid, status=202)
+            handler.exit()
+            return JsonResp(
+                request,
+                message=_('Packages downloaded'),
+            )
+    else:
+        handler = CheckUpdateHandler()
+        try:
+            update = CheckForUpdates(
+                handler=handler.call,
+                #train=form.cleaned_data.get('train')
+            )
+        except:
+            update = None
+        return render(request, 'system/update_check.html', {
+            'update': update,
+            'handler': handler,
+        })
 
 
 def update_progress(request):

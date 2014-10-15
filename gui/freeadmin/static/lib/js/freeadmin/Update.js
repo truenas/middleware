@@ -39,6 +39,8 @@ define([
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
+    applyUrl: "",
+    checkUrl: "",
     manualUrl: "",
     updateUrl: "",
     initial: {},
@@ -83,16 +85,18 @@ define([
       }, me.dapManualUpdate);
 
       me._checkUpdate = new Button({
-        label: gettext("Check For Updates")
+        label: gettext("Check For Updates"),
+        onClick: function() {
+          editObject(gettext("Check For Updates"), me.checkUrl, [me.domNode]);
+        }
       }, me.dapCheckUpdateBtn);
-
-      on(me._checkUpdate, "click", function() {
-        me.update(me._selectTrain.get("value"));
-      });
 
       me._applyPending = new Button({
         label: gettext("Apply Pending Updates"),
-        disabled: true
+        disabled: true,
+        onClick: function() {
+          editObject(gettext("Apply Pending Updates"), me.applyUrl, [me.domNode]);
+        }
       }, me.dapApplyPendintBtn);
 
       var options = [];
