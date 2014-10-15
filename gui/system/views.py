@@ -1004,7 +1004,7 @@ def update_index(request):
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': conf.CurrentTrain(),
+        'current_train': update.get_train(),
         'trains': json.dumps(conf.AvailableTrains().keys() or []),
     })
 
@@ -1018,7 +1018,6 @@ def update_save(request):
     except IndexError:
         update = models.Update.objects.create()
 
-    log.error("%r", request.POST)
     if request.POST.get('autocheck'):
         if request.POST.get('autocheck') == 'true':
             update.upd_autocheck = True
@@ -1026,12 +1025,22 @@ def update_save(request):
             update.upd_autocheck = False
         update.save()
 
+    if request.POST.get('train'):
+        update.upd_train = request.POST.get('train')
+        update.save()
+
     return HttpResponse(
+        json.dumps(True),
         content_type='application/json',
     )
 
 
 def update_apply(request):
+
+    try:
+        updateobj = models.Update.objects.order_by('-id')[0]
+    except IndexError:
+        updateobj = models.Update.objects.create()
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
@@ -1070,7 +1079,7 @@ def update_apply(request):
         try:
             update = CheckForUpdates(
                 handler=handler.call,
-                #train=form.cleaned_data.get('train')
+                train=updateobj.get_train(),
             )
         except:
             update = None
@@ -1081,6 +1090,12 @@ def update_apply(request):
 
 
 def update_check(request):
+
+    try:
+        updateobj = models.Update.objects.order_by('-id')[0]
+    except IndexError:
+        updateobj = models.Update.objects.create()
+
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
         handler = UpdateHandler(uuid=uuid)
@@ -1121,7 +1136,7 @@ def update_check(request):
         try:
             update = CheckForUpdates(
                 handler=handler.call,
-                #train=form.cleaned_data.get('train')
+                train=updateobj.get_train(),
             )
         except:
             update = None
