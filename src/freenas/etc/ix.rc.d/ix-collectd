@@ -50,7 +50,7 @@ use_rrd_dataset()
 
 get_rrd_dataset()
 {
-	if [ -L "${FREENAS_SYSTEMDATASET}" -a -e "${FREENAS_SYSTEMDATASET}" ]
+	if system_dataset_enabled
 	then
 		echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd-$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select sys_uuid from system_systemdataset"))"
 	fi

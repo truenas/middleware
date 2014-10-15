@@ -1278,11 +1278,9 @@ class SystemDatasetForm(ModelForm):
         super(SystemDatasetForm, self).save()
         if self.instance.sys_pool:
             try:
-                notifier().system_dataset_create()
+                notifier().system_dataset_create(mount=False)
             except:
                 raise MiddlewareError(_("Unable to create system dataset!"))
-            if self.instance._original_sys_pool != self.instance.sys_pool:
-                notifier().restart("system_datasets")
 
         if self.instance._original_sys_pool != self.instance.sys_pool:
             try:
@@ -1291,6 +1289,8 @@ class SystemDatasetForm(ModelForm):
                 )
             except:
                 raise MiddlewareError(_("Unable to migrate system dataset!"))
+
+        notifier().restart("system_datasets")
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")

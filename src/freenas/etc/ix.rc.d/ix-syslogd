@@ -72,7 +72,7 @@ use_syslog_dataset()
 get_system_dataset()
 {
 
-	if [ -L "${FREENAS_SYSTEMDATASET}" -a -e "${FREENAS_SYSTEMDATASET}" ]
+	if system_dataset_enabled
 	then
 		echo "$(realpath ${FREENAS_SYSTEMDATASET})"
 	else
