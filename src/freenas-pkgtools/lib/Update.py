@@ -665,7 +665,7 @@ def VerifyUpdate(directory):
         cached_sequence = open(directory + "/SEQUENCE", "r").read().rstrip()
     except (IOError, Exception) as e:
         log.error("Could not sequence file in cache directory %s: %s" % (directory, str(e)))
-        raise UpdateIncompleteException("Cache directory %s does not have a sequence file" % directory)
+        raise UpdateIncompleteCacheException("Cache directory %s does not have a sequence file" % directory)
 
     # Now let's see if the sequence matches us.
     if cached_sequence != mani.Sequence():
