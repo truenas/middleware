@@ -523,7 +523,7 @@ class CertificateBase(Model):
     cert_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
-            help_text=_("Descriptive Name)"),
+            help_text=_("Descriptive Name"),
             unique=True
             )
     cert_certificate = models.TextField(
