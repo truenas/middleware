@@ -48,7 +48,7 @@ def main():
 
     else:
         try:
-            gc = GlobalConfiguration.objects.all() 
+            gc = GlobalConfiguration.objects.all()[0]
             if gc.gc_domain:
                 domain = gc.gc_domain
             if gc.gc_nameserver1:

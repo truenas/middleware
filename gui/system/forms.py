@@ -1918,21 +1918,6 @@ class UpdateForm(ModelForm):
         self.fields['curtrain'].initial = self._conf.CurrentTrain()
 
 
-class UpdateSelectForm(Form):
-
-    def __init__(self, *args, **kwargs):
-        super(UpdateSelectForm, self).__init__(*args, **kwargs)
-        self._conf = Configuration.Configuration()
-        self._conf.LoadTrainsConfig()
-        trains = self._conf.AvailableTrains() or []
-        choices = [(name, name) for name in trains]
-        self.fields['train'] = forms.ChoiceField(
-            label=_('Train'),
-            choices=choices,
-            initial=self._conf.CurrentTrain(),
-        )
-
-
 class CertificateAuthorityForm(ModelForm):
     class Meta:
         fields = '__all__'

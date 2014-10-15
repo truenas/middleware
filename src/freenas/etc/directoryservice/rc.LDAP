@@ -141,7 +141,6 @@ LDAP_load_database_values()
 		ldap_anonbind,
 		ldap_binddn,
 		ldap_bindpw,
-		ldap_pwencryption,
 		ldap_usersuffix,
 		ldap_groupsuffix,
 		ldap_passwordsuffix,

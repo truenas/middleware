@@ -1032,55 +1032,49 @@ def update_save(request):
 def update(request):
 
     if request.method == 'POST':
-        form = forms.UpdateSelectForm(request.POST)
-        if form.is_valid():
-            handler = CheckUpdateHandler()
-            try:
-                update = CheckForUpdates(
-                    handler=handler.call,
-                    train=form.cleaned_data.get('train')
-                )
-            except ValueError:
-                update = False
-            request.session['update_train'] = form.cleaned_data.get('train')
-            return render(request, 'system/update.html', {
-                'update': update,
-                'handler': handler,
-            })
-        else:
-            uuid = request.GET.get('uuid')
-            handler = UpdateHandler(uuid=uuid)
-            if not uuid:
-                #FIXME: ugly
-                pid = os.fork()
-                if pid != 0:
-                    return HttpResponse(handler.uuid, status=202)
-                else:
-                    handler.pid = os.getpid()
-                    handler.dump()
-                    try:
-                        Update(
-                            get_handler=handler.get_handler,
-                            install_handler=handler.install_handler,
-                            train=request.session['update_train'],
-                        )
-                    except Exception, e:
-                        handler.error = unicode(e)
-                    handler.finished = True
-                    handler.dump()
-                    os.kill(handler.pid, 9)
+        uuid = request.GET.get('uuid')
+        handler = UpdateHandler(uuid=uuid)
+        if not uuid:
+            #FIXME: ugly
+            pid = os.fork()
+            if pid != 0:
+                return HttpResponse(handler.uuid, status=202)
             else:
-                if handler.error is not False:
-                    raise MiddlewareError(handler.error)
-                if not handler.finished:
-                    return HttpResponse(handler.uuid, status=202)
-                handler.exit()
-                request.session['allow_reboot'] = True
-                return render(request, 'system/done.html')
+                handler.pid = os.getpid()
+                handler.dump()
+                path = notifier().system_dataset_path()
+                if not path:
+                    raise MiddlewareError(_('System dataset not configured'))
+                try:
+                    ApplyUpdate(
+                        '%s/update' % path,
+                        install_handler=handler.install_handler,
+                    )
+                except Exception, e:
+                    handler.error = unicode(e)
+                handler.finished = True
+                handler.dump()
+                os.kill(handler.pid, 9)
+        else:
+            if handler.error is not False:
+                raise MiddlewareError(handler.error)
+            if not handler.finished:
+                return HttpResponse(handler.uuid, status=202)
+            handler.exit()
+            request.session['allow_reboot'] = True
+            return render(request, 'system/done.html')
     else:
-        form = forms.UpdateSelectForm()
-        return render(request, 'system/update_select.html', {
-            'form': form,
+        handler = CheckUpdateHandler()
+        try:
+            update = CheckForUpdates(
+                handler=handler.call,
+                train=form.cleaned_data.get('train')
+            )
+        except:
+            update = None
+        return render(request, 'system/update.html', {
+            'update': update,
+            'handler': handler,
         })
 
 

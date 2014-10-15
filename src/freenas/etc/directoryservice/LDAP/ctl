@@ -53,50 +53,18 @@ cifs_enabled()
 	return 1
 }
 
-cifs_start()
-{
-	ldapctl_cmd ${python} ${notifier} start cifs
-	return $?
-}
-
-cifs_stop()
-{
-	local val="${1}"
-	local res=0
-
-	ldapctl_cmd ${python} ${notifier} stop cifs
-	res=$?
-
-	if [ -n "${val}" ]
-	then
-		srv_set cifs "${val}"
-	fi
-
-	return ${res}
-}
-
 cifs_restart()
 {
-	if LDAP_has_samba_schema
-	then
-		ldapctl_cmd ${python} ${notifier} stop cifs
-		ldapctl_cmd ${python} ${notifier} start cifs
-	fi
+	ldapctl_cmd ${python} ${notifier} stop cifs
+	ldapctl_cmd ${python} ${notifier} start cifs
 	return $?
 }
 
 ldapctl_start()
 {
-	local cifs_started=0	
 	local ldap_started=0
 
-	if cifs_enabled
-	then
-		cifs_started=1
-		cifs_stop
-	else
-		srv_set cifs 1
-	fi
+	LDAP_init
 
 	if ldap_enabled
 	then
@@ -104,9 +72,6 @@ ldapctl_start()
 	else		
 		ldap_set 1
 	fi
-
-	echo ${cifs_started} > "${cifs_file}"
-
 
 	if ! ldapctl_cmd ${service} ix-ldap quietstart
 	then
@@ -125,15 +90,16 @@ ldapctl_start()
 		sssd_start
 	fi
 
-	cifs_start
-
 	if ! ldapctl_cmd ${service} ix-ldap status
 	then
 		ldap_set 0
 		return 1
 	fi
 
-	cifs_restart
+	if cifs_enabled && LDAP_has_samba_schema 
+	then
+		cifs_restart
+	fi
 
 	ldapctl_cmd "${service} ix-cache quietstart &"
 	touch "${status_file}"
@@ -143,22 +109,11 @@ ldapctl_start()
 
 ldapctl_stop()
 {
-	local cifs_started=1
-	local prev_cifs_started=0
-	if [ -s "${cifs_file}" ]
-	then
-		prev_cifs_started="$(cat "${cifs_file}")"
-	fi
+	LDAP_init
 
 	if ! ldap_enabled
 	then
 		ldap_set 1
-	fi
-
-	if cifs_enabled 
-	then
-		cifs_started=1
-		cifs_stop
 	fi
 
 	if sssd_running
@@ -172,32 +127,13 @@ ldapctl_stop()
 	ldapctl_cmd ${service} ix-pam quietstop
 	ldapctl_cmd "${service} ix-cache quietstop &"
 
-	if [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "0" ]
-	then
-		cifs_stop 0
-		ldap_set 0
-		ldapctl_cmd ${service} ix-pre-samba start
+	ldap_set 0
 
-	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
+	if cifs_enabled && LDAP_has_samba_schema
 	then
-		cifs_stop 0
-		ldap_set 0
-		ldapctl_cmd ${service} ix-pre-samba start
-
-	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
-	then
-		cifs_stop 1
-		ldap_set 0
-		cifs_start
-
-	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
-	then
-		cifs_stop 1
-		ldap_set 0
-		cifs_start
+		cifs_restart
 	fi
 
-	ldap_set 0
 	rm -f "${status_file}"
 
 	return 0
