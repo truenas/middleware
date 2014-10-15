@@ -5,75 +5,41 @@ import logging
 import logging.config
 import os
 import sys
-
-def CacheUpdate(update, cachedir):
-    import shutil
-    import freenasOS.Configuration as Configuration
-
-    if os.path.exists(cachedir):
-        shutil.rmtree(cachedir)
-    os.makedirs(cachedir)
-    conf = Configuration.Configuration()
-    # Now we want to save the manifest, and then get the package files.
-    try:
-        # First, save the manifest
-        update.StorePath(cachedir + "/MANIFEST")
-        for pkg in update.Packages():
-            # Now we want to fetch each of the packages,
-            # and store them in the cachedir
-            pkg_file = conf.FindPackageFile(pkg, save_dir = cachedir)
-            if pkg_file is None:
-                raise Exception("Could not get package %s" % pkg.Name())
-    except Exception as e:
-        # Just clean up on all exceptions
-        log.debug("Caught exception %s" % str(e))
-        if os.path.exists(cachedir):
-            shutil.rmtree(cachedir)
-    return
+import tempfile
 
 def main():
     global log
     def usage():
-        print >> sys.stderr, "Usage: %s [-R root] [-M manifest_file] [-c dir] <cmd>, where cmd is one of:" % sys.argv[0]
-        print >> sys.stderr, "\tcheck\tCheck for updates"
-        print >> sys.stderr, "\tupdate\tDo an update"
-        print >> sys.stderr, "\tinstall\tInstall"
+        print >> sys.stderr, """Usage: %s [-C cache_dir] [-d] [-T train] [-v] <cmd>, where cmd is one of:
+        check\tCheck for updates
+        update\tDo an update""" % sys.argv[0]
         sys.exit(1)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "qvdR:M:T:C:c:")
+        opts, args = getopt.getopt(sys.argv[1:], "C:dT:v")
     except getopt.GetoptError as err:
         print str(err)
         usage()
 
-    root = None
-    manifile = None
-    verbose = 0
+    verbose = False
     debug = 0
-    tmpdir = None
-    config_file = None
     config = None
-    cachedir = None
+    cache_dir = None
+    train = None
 
     for o, a in opts:
         if o == "-v":
-            verbose += 1
-        elif o == "-q":
-            quiet = True
+            verbose = True
         elif o == "-d":
             debug += 1
-        elif o == "-R":
-            root = a
-        elif o == "-M":
-            manifile = a
         elif o == '-C':
-            config_file = a
+            cache_dir = a
         elif o == "-T":
-            tmpdir = a
+            train = a
         elif o == '-c':
             cachedir = a
         else:
-            assert False, "unhandled option"
+            assert False, "unhandled option %s" % o
 
     logging.config.dictConfig({
         'version': 1,
@@ -105,64 +71,94 @@ def main():
 
     import freenasOS.Configuration as Configuration
     import freenasOS.Manifest as Manifest
-    from freenasOS.Update import CheckForUpdates, Update
+    import freenasOS.Update as Update
 
-    if root is not None and os.path.isdir(root) is False:
-        print >> sys.stderr, "Specified root (%s) does not exist" % root
-        sys.exit(1)
-
-    if config_file is not None:
-        # We want the system configuration file
-        config = Configuration.Configuration(file = config_file, root = None)
-    else:
-        config = Configuration.Configuration(root = root)
+    config = Configuration.Configuration()
+    if train is None:
+        train = config.SystemManifest().Train()
 
     if len(args) != 1:
         usage()
 
     if args[0] == "check":
-        def Handler(op, pkg, old):
-            if op == "upgrade":
-                print "%s:  %s -> %s" % (pkg.Name(), old.Version(), pkg.Version())
-            else:
-                print "%s:  %s %s" % (pkg.Name(), op, pkg.Version())
-                
-        if verbose > 0 or debug > 0:
-            pfcn = Handler
+        # To see if we have an update available, we
+        # call Update.DownloadUpdate.  If we have been
+        # given a cache directory, we pass that in; otherwise,
+        # we make a temporary directory and use that.  We
+        # have to clean up afterwards in that case.
+        
+        if cache_dir is None:
+            download_dir = tempfile.mkdtemp(prefix = "UpdateCheck-", dir = config.TemporaryDirectory())
+            if download_dir is None:
+                print >> sys.stderr, "Unable to create temporary directory"
+                sys.exit(1)
         else:
-            pfcn = None
-        try:
-            update = CheckForUpdates(root, pfcn)
-        except ValueError:
-            print >> sys.stderr, "No manifest found"
-            return 1
-        if update is not None:
-            print >> sys.stderr, "Newer manifest found"
-            # If we're given a root, we can't cache.
-            if root is None and cachedir:
-                # First thing:  is the cached version the same
-                # as this version?
-                if os.path.exists(cachedir + "/MANIFEST"):
-                    cached_manifest = Manifest.Manifest()
-                    cached_manifest.LoadPath(cachedir + "/MANIFEST")
-                    if cached_manifest.Train() == update.Train() and \
-                       cached_manifest.Sequence() == update.Sequence():
-                        # This is the same version, so nothing else to do!
-                        log.debug("Local cache manifest is same as remote LATEST, stopping happy")
-                        return 0
-                # If it doesn't exist, or the train/sequence are different,
-                # we let CacheUpdate clean up and then save the update.
-                CacheUpdate(update, cachedir)
-            return 0
+            download_dir = cache_dir
+
+        rv = Update.DownloadUpdate(train, download_dir)
+        if rv is False:
+            if verbose:
+                print "No updates available"
+                if cache_dir is None:
+                    Update.RemoveUpdate(download_dir)
+                sys.exit(1)
         else:
-            print >> sys.stderr, "No newer manifest found"
-            return 1
+            if verbose:
+                diffs = Update.PendingUpdates(download_dir)
+                for (pkg, op, old) in diffs:
+                    if op == "delete":
+                        print >> sys.stderr, "Delete package %s" % pkg.Name()
+                    elif op == "install":
+                        print >> sys.stderr, "Install package %s-%s" % (pkg.Name(), pkg.Version())
+                    elif op == "upgrade":
+                        print >> sys.stderr, "Upgrade package %s %s->%s" % (pkg.Name(), old.Version(), pkg.Version())
+            if cache_dir is None:
+                Update.RemoveUpdate(download_dir)
+            sys.exit(0)
+
     elif args[0] == "update":
-        r = Update(root, config, cache_dir = cachedir)
-        if r:
-            return 0
+        # This will attempt to apply an update.
+        # If cache_dir is given, then we will only check that directory,
+        # not force a download if it is already there.  If cache_dir is not
+        # given, however, then it downloads.  (The reason is that you would
+        # want to run "freenas-update -c /foo check" to look for an update,
+        # and it will download the latest one as necessary, and then run
+        # "freenas-update -c /foo update" if it said there was an update.
+        if cache_dir is None:
+            download_dir = tempfile.mkdtemp(prefix = "UpdateUpdate-", dir = config.TemporaryDirectory())
+            if download_dir is None:
+                print >> sys.stderr, "Unable to create temporary directory"
+                sys.exit(1)
+            rv = Update.DownloadUpdate(train, download_dir)
+            if rv is False:
+                if verbose or debug:
+                    print >> sys.stderr, "DownloadUpdate returned False"
+                sys.exit(1)
         else:
-            return 1
+            download_dir = cache_dir
+        
+        diffs = Update.PendingUpdates(download_dir)
+        if diffs is None or diffs == {}:
+            if verbose:
+                print >> sys.stderr, "No updates to apply"
+        else:
+            if verbose:
+                for (pkg, op, old) in diffs:
+                    if op == "delete":
+                        print >> sys.stderr, "Delete package %s" % pkg.Name()
+                    elif op == "install":
+                        print >> sys.stderr, "Install package %s-%s" % (pkg.Name(), pkg.Version())
+                    elif op == "upgrade":
+                        print >> sys.stderr, "Upgrade package %s %s -> %s" % (pkg.Name(), old.Version(), pkg.Version())
+            rv = Update.ApplyUpdate(download_dir)
+            if rv is False:
+                if verbose:
+                    print >> sys.stderr, "ApplyUpdates failed"
+                if cache_dir is None:
+                    Update.RemoveUpdate(download_dir)
+                sys.exit(1)
+            Update.RemoveUpdate(download_dir)
+            sys.exit(0)
     else:
         usage()
 
