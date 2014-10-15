@@ -5468,6 +5468,40 @@ class notifier:
 
         self.nfsv4link()
 
+    def boot_zpool_status(self):
+        """
+        Function to find out the status of the freenas boot zpool
+        It takes no arugments (except for self)
+        It returns with a tuple of (status, message)
+        """
+        status = ''
+        message = ""
+        p1 = self._pipeopen("zpool status -x freenas-boot")
+        zpool_result = p1.communicate()[0]
+        if zpool_result.find("pool 'freenas-boot' is healthy") != -1:
+            status = 'HEALTHY'
+        else:
+            reg1 = re.search('^\s*state: (\w+)', stdout, re.M)
+            if reg1:
+                status = reg1.group(1)
+            else:
+                # The default case doesn't print out anything helpful,
+                # but instead coredumps ;).
+                status = 'UNKNOWN'
+                reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
+                                 stdout, re.S | re.M)
+                reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
+                                 stdout, re.S | re.M)
+                if reg1:
+                    msg = reg1.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+                if reg2:
+                    msg = reg2.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+        return (status, message)
+
 
 def usage():
     usage_str = """usage: %s action command
