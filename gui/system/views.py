@@ -233,6 +233,12 @@ def bootenv_add(request, source=None):
         'source': source,
     })
 
+def bootenv_scrub(request):
+    if request.method == "POST":
+        notifier().scrub_boot_zpool()
+        return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
+
+    return render(request, 'system/boot_scrub.html')
 
 def bootenv_delete(request, name):
     if request.method == 'POST':

@@ -9,5 +9,11 @@
           editObject('{% trans "Create Boot"|escapejs %}', '{% url "system_bootenv_add" %}', [this,]);
       </script>
       </button>
+      <button id="datagridBtn_Boot_Scrub" data-dojo-type="dijit.form.Button" type="button">
+          {% blocktrans %}Scrub Boot{% endblocktrans %}
+      <script type="dojo/method" data-dojo-event="onClick">
+          editObject('Boot Scrub', '{% url "system_bootenv_scrub" %}', [this,]);
+      </script>
+      </button>
     </div>
 {% endblock %}

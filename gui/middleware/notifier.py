@@ -2390,6 +2390,54 @@ class notifier:
         grnam = self.___getgrnam(name)
         return grnam.gr_gid
 
+    def groupmap_list(self):
+        command = "/usr/local/bin/net groupmap list"
+        groupmap = []
+
+        proc = self._pipeopen(command)
+        out = proc.communicate()
+        if proc.returncode != 0:
+            return None
+
+        out = out[0]
+        lines = out.splitlines()
+        for line in lines:
+            m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
+            if m:
+                groupmap.append(m.groupdict())
+
+        return groupmap
+
+    def groupmap_add(self, unixgroup, ntgroup, type='local'):
+        command = "/usr/local/bin/net groupmap add type=%s unixgroup='%s' ntgroup='%s'"
+
+        ret = False
+        proc = self._pipeopen(command % (type, unixgroup, ntgroup))
+        proc.communicate()
+        if proc.returncode == 0:
+            ret = True
+
+        return ret
+
+    def groupmap_delete(self, ntgroup=None, sid=None):
+        command = "/usr/local/bin/net groupmap delete "
+
+        ret = False
+        if not ntgroup and not sid:
+            return ret
+
+        if ntgroup:
+            command = "%s ntgroup='%s'" % (command, ntgroup)
+        elif sid:
+            command = "%s sid='%s'" % (command, sid)
+
+        proc = self._pipeopen(command)
+        proc.communicate()
+        if proc.returncode == 0:
+            ret = True
+
+        return ret
+
     def user_lock(self, username):
         self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
         self._system('/usr/sbin/pw lock "%s"' % (username))
@@ -3737,10 +3785,15 @@ class notifier:
         return True
 
     def zfs_snapshot_list(self, path=None, replications=None):
+        from freenasUI.storage.models import Volume
         fsinfo = dict()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name -H")
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
+
+        volnames = [
+            o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
+        ]
 
         if path:
             zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot -H -S creation '%s'" % path)
@@ -3754,6 +3807,10 @@ class notifier:
                 used = _list[1]
                 refer = _list[3]
                 fs, name = snapname.split('@')
+
+                # Do not list snapshots from the root pool
+                if fs.split('/')[0] not in volnames:
+                    continue
                 try:
                     snaplist = fsinfo[fs]
                     mostrecent = False
@@ -5410,6 +5467,46 @@ class notifier:
             self.start(service)
 
         self.nfsv4link()
+
+    def boot_zpool_status(self):
+        """
+        Function to find out the status of the freenas boot zpool
+        It takes no arugments (except for self)
+        It returns with a tuple of (status, message)
+        """
+        status = ''
+        message = ""
+        p1 = self._pipeopen("/sbin/zpool status -x freenas-boot")
+        zpool_result = p1.communicate()[0]
+        if zpool_result.find("pool 'freenas-boot' is healthy") != -1:
+            status = 'HEALTHY'
+        else:
+            reg1 = re.search('^\s*state: (\w+)', stdout, re.M)
+            if reg1:
+                status = reg1.group(1)
+            else:
+                # The default case doesn't print out anything helpful,
+                # but instead coredumps ;).
+                status = 'UNKNOWN'
+                reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
+                                 stdout, re.S | re.M)
+                reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
+                                 stdout, re.S | re.M)
+                if reg1:
+                    msg = reg1.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+                if reg2:
+                    msg = reg2.group(1)
+                    msg = re.sub(r'\s+', ' ', msg)
+                    message += msg
+        return (status, message)
+
+    def scrub_boot_zpool(self):
+        """
+        Function to scrub the boot freenas volume
+        """
+        self._system("/sbin/zpool scrub freenas-boot")
 
 
 def usage():

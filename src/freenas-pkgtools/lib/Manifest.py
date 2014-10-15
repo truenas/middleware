@@ -179,9 +179,12 @@ class Manifest(object):
             self.LoadFile(f)
         return
 
+    def StoreFile(self, f):
+        f.write(self.String())
+
     def StorePath(self, path):
         with open(path, "w") as f:
-            f.write(self.String())
+            self.StoreFile(f)
         return
 
     def Save(self, root):

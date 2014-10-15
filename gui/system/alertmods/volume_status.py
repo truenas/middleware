@@ -82,9 +82,11 @@ class VolumeStatusAlert(BaseAlert):
                         message += msg
 
             if status == 'HEALTHY':
-                alerts.append(Alert(
-                    Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
-                ))
+               #alerts.append(Alert(
+               #     Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
+               # )) 
+               # Do not alert the user and then state all is well!
+               pass
             elif status == 'DEGRADED':
                 degraded = self.on_volume_status_degraded(vol, status, message)
                 if degraded:

@@ -726,6 +726,8 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
 
     def save(self):
         ins = super(bsdGroupsForm, self).save()
+        notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
+            ntgroup=self.instance.bsdgrp_group)
         notifier().reload("user")
         return ins
 
@@ -826,3 +828,4 @@ class DeleteGroupForm(forms.Form):
     def done(self, *args, **kwargs):
         if self.cleaned_data.get("cascade") is True:
             models.bsdUsers.objects.filter(bsdusr_group=self.instance).delete()
+        notifier().groupmap_delete(self.instance.bsdgrp_group)
