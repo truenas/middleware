@@ -39,6 +39,7 @@ define([
 
   var Update = declare("freeadmin.Update", [ _Widget, _Templated ], {
     templateString : template,
+    applyUrl: "",
     checkUrl: "",
     manualUrl: "",
     updateUrl: "",
@@ -92,7 +93,10 @@ define([
 
       me._applyPending = new Button({
         label: gettext("Apply Pending Updates"),
-        disabled: true
+        disabled: true,
+        onClick: function() {
+          editObject(gettext("Apply Pending Updates"), me.applyUrl, [me.domNode]);
+        }
       }, me.dapApplyPendintBtn);
 
       var options = [];

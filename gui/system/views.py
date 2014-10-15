@@ -54,6 +54,7 @@ from django.views.decorators.cache import never_cache
 
 from freenasOS.Update import (
     ActivateClone,
+    ApplyUpdate,
     CheckForUpdates,
     DeleteClone,
     DownloadUpdate,
@@ -1030,7 +1031,7 @@ def update_save(request):
     )
 
 
-def update(request):
+def update_apply(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
