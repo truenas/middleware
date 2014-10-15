@@ -1070,7 +1070,7 @@ def update_apply(request):
         try:
             update = CheckForUpdates(
                 handler=handler.call,
-                train=form.cleaned_data.get('train')
+                #train=form.cleaned_data.get('train')
             )
         except:
             update = None
