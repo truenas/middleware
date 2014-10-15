@@ -2521,14 +2521,9 @@ class UpdateResourceMixin(NestedMixin):
         if not path:
             raise MiddlewareError("System dataset not configured")
         changes = Update.PendingUpdates("%s/update" % path)
-        log.error("%r", changes)
         data = []
         if changes:
-            for change in changes:
-                log.error("%r -",change)
-                old = change[0]
-                op = change[1]
-                new = change[2]
+            for old, op, new in changes:
                 if op == 'upgrade':
                     name = '%s-%s -> %s-%s' % (
                         old.Name(),
