@@ -448,9 +448,10 @@ def DownloadUpdate(train, directory, get_handler = None):
         return False
     except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
         # It's incomplete, so we need to remove it
+        log.error("DownloadUpdate(%s, %s):  Got exception %s; removing cache" % (train, directory, str(e)))
         RemoveUpdate(directory)
     except BaseException as e:
-        log.debug("Got exception %s while trying to prepare update cache" % str(e))
+        log.error("Got exception %s while trying to prepare update cache" % str(e))
         raise e
     # If we're here, then we don't have a (valid) cached update.
     RemoveUpdate(directory)
