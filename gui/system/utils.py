@@ -77,6 +77,7 @@ class CheckUpdateHandler(object):
                     c['new'].Name(),
                     c['new'].Version(),
                 )
+        return output
 
 
 class UpdateHandler(object):
@@ -137,7 +138,7 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
-        self.step = 2
+        self.step = 1
         self.indeterminate = False
         total = len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)
