@@ -5476,7 +5476,7 @@ class notifier:
         """
         status = ''
         message = ""
-        p1 = self._pipeopen("zpool status -x freenas-boot")
+        p1 = self._pipeopen("/sbin/zpool status -x freenas-boot")
         zpool_result = p1.communicate()[0]
         if zpool_result.find("pool 'freenas-boot' is healthy") != -1:
             status = 'HEALTHY'
@@ -5501,6 +5501,12 @@ class notifier:
                     msg = re.sub(r'\s+', ' ', msg)
                     message += msg
         return (status, message)
+
+    def scrub_boot_zpool(self):
+        """
+        Function to scrub the boot freenas volume
+        """
+        self._system("/sbin/zpool scrub freenas-boot")
 
 
 def usage():
