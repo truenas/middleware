@@ -1121,7 +1121,7 @@ def update_check(request):
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
                     DownloadUpdate(
-                        'FreeNAS-9.3-Nightlies',
+                        updateobj.get_train(),
                         '%s/update' % path,
                         get_handler=handler.get_file_handler,
                     )
