@@ -40,7 +40,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from OpenSSL import crypto
 
-from freenasOS import Configuration
 from freenasUI import choices
 from freenasUI.common.ssl import (
     write_certificate,
@@ -514,6 +513,8 @@ class Update(Model):
         verbose_name = _('Updade')
 
     def get_train(self):
+        #FIXME: lazy import, why?
+        from freenasOS import Configuration
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
         if (
