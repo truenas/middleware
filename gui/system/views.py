@@ -1116,13 +1116,13 @@ def update_check(request):
             else:
                 handler.pid = os.getpid()
                 handler.dump()
-                path = '%s/update' % notifier().system_dataset_path()
+                path = notifier().system_dataset_path()
                 if not path:
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
                     DownloadUpdate(
                         'FreeNAS-9.3-Nightlies',
-                        path,
+                        '%s/update' % path,
                         get_handler=handler.get_file_handler,
                     )
                 except Exception, e:
