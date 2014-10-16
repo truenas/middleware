@@ -1013,7 +1013,7 @@ def update_index(request):
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': update.get_train(),
+        'current_train': conf.CurrentTrain(),
         'trains': json.dumps(trains),
     })
 
