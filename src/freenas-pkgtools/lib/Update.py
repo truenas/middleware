@@ -717,15 +717,18 @@ def VerifyUpdate(directory):
                         with open(directory + "/" + pkg.FileName(cur_vers)) as f:
                             cksum = Configuration.ChecksumFile(f)
                             if upd_cksum == cksum:
-                                continue
+                                found = True
+                                break
                     except:
                         pass
                 else:
-                    continue
-        # If we got here, we are missing this file
-        log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
-        log.error(log_msg)
-        raise UpdateIncompleteCacheException(log_msg)
+                    found = True
+                    break
+        if found is False:
+            # If we got here, we are missing this file
+            log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
+            log.error(log_msg)
+            raise UpdateIncompleteCacheException(log_msg)
     # And if we got here, then we have found all of the packages, the manifest is fine,
     # and the sequence tag is correct.
     mani_file.seek(0)
