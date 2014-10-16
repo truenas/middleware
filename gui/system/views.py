@@ -1007,11 +1007,14 @@ def update_index(request):
 
     conf = Configuration.Configuration()
     conf.LoadTrainsConfig()
+    trains = conf.AvailableTrains() or []
+    if trains:
+        trains = trains.keys()
 
     return render(request, 'system/update_index.html', {
         'update': update,
         'current_train': update.get_train(),
-        'trains': json.dumps(conf.AvailableTrains().keys() or []),
+        'trains': json.dumps(trains),
     })
 
 
