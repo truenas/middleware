@@ -1007,11 +1007,14 @@ def update_index(request):
 
     conf = Configuration.Configuration()
     conf.LoadTrainsConfig()
+    trains = conf.AvailableTrains() or []
+    if trains:
+        trains = trains.keys()
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': update.get_train(),
-        'trains': json.dumps(conf.AvailableTrains().keys() or []),
+        'current_train': conf.CurrentTrain(),
+        'trains': json.dumps(trains),
     })
 
 
@@ -1113,13 +1116,13 @@ def update_check(request):
             else:
                 handler.pid = os.getpid()
                 handler.dump()
-                path = '%s/update' % notifier().system_dataset_path()
+                path = notifier().system_dataset_path()
                 if not path:
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
                     DownloadUpdate(
-                        'FreeNAS-9.3-Nightlies',
-                        path,
+                        updateobj.get_train(),
+                        '%s/update' % path,
                         get_handler=handler.get_file_handler,
                     )
                 except Exception, e:

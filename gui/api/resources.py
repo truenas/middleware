@@ -2523,7 +2523,7 @@ class UpdateResourceMixin(NestedMixin):
         changes = Update.PendingUpdates("%s/update" % path)
         data = []
         if changes:
-            for old, op, new in changes:
+            for new, op, old in changes:
                 if op == 'upgrade':
                     name = '%s-%s -> %s-%s' % (
                         old.Name(),
