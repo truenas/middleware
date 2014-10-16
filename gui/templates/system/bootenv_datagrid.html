@@ -16,4 +16,17 @@
       </script>
       </button>
     </div>
+    {% if bootme %}
+      <div class="gridAdd left" style="padding-left: 10px">
+        <strong>{% trans "Boot Voume Condition" %}: {{ stats.0 }} {{ stats.1 }}</strong><br />
+          {% if bootme.scrub.status == "IN_PROGRESS" %}
+            <p style="padding: 3px;">{% trans "Scrub Status" %}: {{ bootme.scrub.status_verbose }}</p>
+            <p style="padding: 3px;">
+              {% if bootme.scrub.progress %}{% trans "Progress" %}: {{ bootme.scrub.progress }}% &nbsp; &nbsp; {% endif %}
+              {% if bootme.scrub.scanned %}{% trans "Scan" %}: {% blocktrans with scanned=bootme.scrub.scanned total=bootme.scrub.total %}{{ scanned }} out of {{ total }}{% endblocktrans %} &nbsp; &nbsp; {% endif %}
+            </p>
+          {% endif %}
+        <p>{% if bootme.scrub.date %}{% trans "Last Scrub Run on" %}: {{ bootme.scrub.date }} &nbsp; &nbsp; {% endif %}</p>
+      </div>
+    {% endif %}
 {% endblock %}

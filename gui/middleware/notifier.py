@@ -5518,20 +5518,20 @@ class notifier:
 
         self.nfsv4link()
 
-    def boot_zpool_status(self):
+    def zpool_status(self,pool_name):
         """
-        Function to find out the status of the freenas boot zpool
-        It takes no arugments (except for self)
-        It returns with a tuple of (status, message)
+        Function to find out the status of the zpool
+        It takes the name of the zpool (as a string) as the
+        argument. It returns with a tuple of (status, message)
         """
         status = ''
         message = ""
-        p1 = self._pipeopen("/sbin/zpool status -x freenas-boot")
+        p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name)
         zpool_result = p1.communicate()[0]
-        if zpool_result.find("pool 'freenas-boot' is healthy") != -1:
+        if zpool_result.find("pool '%s' is healthy" % pool_name) != -1:
             status = 'HEALTHY'
         else:
-            reg1 = re.search('^\s*state: (\w+)', stdout, re.M)
+            reg1 = re.search('^\s*state: (\w+)', zpool_result, re.M)
             if reg1:
                 status = reg1.group(1)
             else:
@@ -5539,9 +5539,9 @@ class notifier:
                 # but instead coredumps ;).
                 status = 'UNKNOWN'
                 reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
-                                 stdout, re.S | re.M)
+                                 zpool_result, re.S | re.M)
                 reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-                                 stdout, re.S | re.M)
+                                 zpool_result, re.S | re.M)
                 if reg1:
                     msg = reg1.group(1)
                     msg = re.sub(r'\s+', ' ', msg)
@@ -5552,11 +5552,6 @@ class notifier:
                     message += msg
         return (status, message)
 
-    def scrub_boot_zpool(self):
-        """
-        Function to scrub the boot freenas volume
-        """
-        self._system("/sbin/zpool scrub freenas-boot")
 
 
 def usage():

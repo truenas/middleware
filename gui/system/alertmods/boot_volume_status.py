@@ -32,7 +32,7 @@ class BootVolumeStatusAlert(BaseAlert):
 
     def run(self):
         alerts = []
-        status, message = notifier().boot_zpool_status()
+        status, message = notifier().zpool_status('freenas-boot')
         
         if status == 'HEALTHY':
             #alerts.append(Alert(

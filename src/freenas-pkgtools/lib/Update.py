@@ -687,7 +687,7 @@ def VerifyUpdate(directory):
         cur_vers = conf.CurrentPackageVersion(pkg.Name())
         new_vers = pkg.Version()
         if not os.path.exists(directory + "/" + pkg.FileName())  and \
-           not os.path.exists(directory + "/" + pkg.FileName(curVers)):
+           not os.path.exists(directory + "/" + pkg.FileName(cur_vers)):
             # Neither exists, so incoplete
             log.error("Cache %s  directory missing files for package %s" % (directory, pkg.Name()))
             raise UpdateIncompleteCacheException("Cache directory %s missing files for package %s" % (directory, pkg.Name()))
@@ -709,11 +709,11 @@ def VerifyUpdate(directory):
         upd_cksum = None
         found = False
         for update_dict in pkg.Updates():
-            if update_dict[Package.VERSION_KEY] == curVers:
+            if update_dict[Package.VERSION_KEY] == cur_vers:
                 if Package.CHECKSUM_KEY in update_dict:
                     upd_cksum = update_dict[Package.CHECKSUM_KEY]
                     try:
-                        with open(directory + "/" + pkg.FileName(curVers)) as f:
+                        with open(directory + "/" + pkg.FileName(cur_vers)) as f:
                             cksum = Configuration.ChecksumFile(f)
                             if upd_cksum == cksum:
                                 continue

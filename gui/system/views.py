@@ -132,6 +132,8 @@ def system_info(request):
 
 
 def bootenv_datagrid(request):
+    bootzvolstats = notifier().zpool_status('freenas-boot')
+    bootme = notifier().zpool_parse('freenas-boot')
     return render(request, 'system/bootenv_datagrid.html', {
         'actions_url': reverse('system_bootenv_datagrid_actions'),
         'resource_url': reverse('api_dispatch_list', kwargs={
@@ -139,6 +141,8 @@ def bootenv_datagrid(request):
             'resource_name': 'system/bootenv',
         }),
         'structure_url': reverse('system_bootenv_datagrid_structure'),
+        'bootme': bootme,
+        'stats': bootzvolstats,
     })
 
 
@@ -237,9 +241,11 @@ def bootenv_add(request, source=None):
 
 def bootenv_scrub(request):
     if request.method == "POST":
-        notifier().scrub_boot_zpool()
-        return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
-
+        try:
+            notifier().zfs_scrub('freenas-boot')
+            return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
+        except Exception, e:
+            return JsonResp(request, error=True, message = repr(e))
     return render(request, 'system/boot_scrub.html')
 
 def bootenv_delete(request, name):
