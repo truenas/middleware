@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
+from freenasUI.middleware.notifier import notifier
 
 
 class VolumeStatusAlert(BaseAlert):
@@ -53,40 +54,13 @@ class VolumeStatusAlert(BaseAlert):
             status = vol.status
             message = ""
             if vol.vol_fstype == 'ZFS':
-                p1 = subprocess.Popen(
-                    ["zpool", "status", "-x", vol.vol_name],
-                    stdout=subprocess.PIPE
-                )
-                stdout = p1.communicate()[0]
-                if stdout.find("pool '%s' is healthy" % vol.vol_name) != -1:
-                    status = 'HEALTHY'
-                else:
-                    reg1 = re.search('^\s*state: (\w+)', stdout, re.M)
-                    if reg1:
-                        status = reg1.group(1)
-                    else:
-                        # The default case doesn't print out anything helpful,
-                        # but instead coredumps ;).
-                        status = 'UNKNOWN'
-                    reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
-                                     stdout, re.S | re.M)
-                    reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-                                     stdout, re.S | re.M)
-                    if reg1:
-                        msg = reg1.group(1)
-                        msg = re.sub(r'\s+', ' ', msg)
-                        message += msg
-                    if reg2:
-                        msg = reg2.group(1)
-                        msg = re.sub(r'\s+', ' ', msg)
-                        message += msg
+                status, message = notifier().zpool_status(vol.vol_name)
 
             if status == 'HEALTHY':
-               #alerts.append(Alert(
-               #     Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
-               # )) 
-               # Do not alert the user and then state all is well!
-               pass
+                #alerts.append(Alert(
+                #    Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
+                #))
+                pass
             elif status == 'DEGRADED':
                 degraded = self.on_volume_status_degraded(vol, status, message)
                 if degraded:
