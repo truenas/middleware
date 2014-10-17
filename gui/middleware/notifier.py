@@ -5552,6 +5552,13 @@ class notifier:
                     message += msg
         return (status, message)
 
+    def get_train(self):
+        from freenasUI.system.models import Update
+        try:
+            update = Update.objects.order_by('-id')[0]
+        except IndexError:
+            update = Update.objects.create()
+        return update.get_train() or ''
 
 
 def usage():
