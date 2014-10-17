@@ -31,7 +31,7 @@ def usage(subopt = None):
     print >> sys.stderr, "Usage: %s [-M manifest] [-C config] [-R remote] cmd [args]"
     print >> sys.stderr, "cmd is one of:\n"
     print >> sys.stderr, "\tlist\tList the package contents of the manifest"
-    print >> sys.stderr, "\tsign\tSign the manifest"
+    print >> sys.stderr, "\tsign key\tSign the manifest with the given key file"
     print >> sys.stderr, "\ttrain\tPrint the train name"
     print >> sys.stderr, "\tsequence\tPrint the sequence number"
     print >> sys.stderr, "\tversion\tPrint the version name (if any)"
@@ -139,6 +139,17 @@ def list_cmd(mani, args):
     return
 
 def sign_manifest(mani, args):
+    key_file = None
+    output_file = sys.stdout
+
+    if len(args) == 0:
+        print >> sys.stderr, "Signing requires a key file"
+        usage()
+    key_file = args[0]
+    key_data = open(key_file).read()
+    mani.SignWithKey(key_data)
+    mani.StoreFile(output_file)
+
     return
 
 def main():
