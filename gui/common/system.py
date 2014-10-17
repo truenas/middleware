@@ -297,7 +297,13 @@ def umount(path):
 
     if proc.returncode != 0:
         log.debug("Umount failed (%s): %s", proc.returncode, output)
-        return False
+        raise ValueError(_(
+            "Unmount Failed (%(retcode)s) -> %(output)s" % {
+                'retcode': proc.returncode,
+                'output': output,
+            }
+        ))
+        #return False
     else:
         return True
 

@@ -696,14 +696,12 @@ class JailMountPoint(Model):
         mntopts = None
         if self.readonly:
             mntopts = 'ro'
-        mount(
+        return mount(
             self.source,
             self.destination_jail,
             fstype="nullfs",
             mntopts=mntopts,
         )
-        return self.mounted
 
     def umount(self):
-        umount(self.destination_jail)
-        return not self.mounted
+        return umount(self.destination_jail)
