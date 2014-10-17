@@ -410,7 +410,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     
     return rv
 
-def DownloadUpdate(train, directory, get_handler = None):
+def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     """
     Download, if necessary, the LATEST update for train; download
     delta packages if possible.  Checks to see if the existing content
@@ -475,7 +475,9 @@ def DownloadUpdate(train, directory, get_handler = None):
         return False
 
     # Next steps:  download the package files.
-    for pkg in latest_mani.Packages():
+    for indx, pkg in enumerate(latest_mani.Packages()):
+        if check_handler:
+            check_handler(indx + 1,  pkg = pkg, pkgList = latest_mani.Packages())
         pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
         if pkg_file is None:
             log.error("Could not download package file for %s" % pkg.Name())

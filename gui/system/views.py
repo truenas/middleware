@@ -1033,6 +1033,7 @@ def update_save(request):
         else:
             update.upd_autocheck = False
         update.save()
+        notifier().restart("cron")
 
     if request.POST.get('train'):
         update.upd_train = request.POST.get('train')
@@ -1123,6 +1124,7 @@ def update_check(request):
                     DownloadUpdate(
                         updateobj.get_train(),
                         '%s/update' % path,
+                        check_handler=handler.get_handler,
                         get_handler=handler.get_file_handler,
                     )
                 except Exception, e:

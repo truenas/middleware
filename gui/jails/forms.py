@@ -1062,10 +1062,15 @@ class JailMountPointForm(ModelForm):
                         'error': e,
                     }
                 )
-        elif obj.umount():
-            #FIXME better error handling, show the user why
-            raise MiddlewareError(_("The path could not be umounted %s") % (
-                obj.source,
-            ))
+        else:
+            try:
+                obj.umount()
+            except ValueError, e:
+                raise MiddlewareError(_(
+                    "The path could not be umounted %(source)s: %(error)s" % {
+                        'source': obj.source,
+                        'error': e,
+                    }
+                ))
 
         return obj

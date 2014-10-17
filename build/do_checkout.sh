@@ -163,7 +163,7 @@ generic_checkout_git()
     fi
     echo $spl | grep -q x || set +x
     mkdir -p $(dirname ${SRCS_MANIFEST})
-    echo "${my_repo}" `cd ${checkout_path} && git rev-parse HEAD` >> ${SRCS_MANIFEST}
+    echo "${my_repo}" `cd ${checkout_path} && git rev-parse --short HEAD` >> ${SRCS_MANIFEST}
     )
 }
 
@@ -174,7 +174,7 @@ checkout_source()
     # First try to get the freenas repo which we're building from
     if [ -f .git/config ]; then
         mkdir -p $(dirname ${SRCS_MANIFEST})
-        echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%H"` > ${SRCS_MANIFEST}
+        echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%h"` > ${SRCS_MANIFEST}
     fi
 
     for repo in ${REPOS}; do
