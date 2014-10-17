@@ -1123,6 +1123,7 @@ def update_check(request):
                     DownloadUpdate(
                         updateobj.get_train(),
                         '%s/update' % path,
+                        check_handler=handler.get_handler,
                         get_handler=handler.get_file_handler,
                     )
                 except Exception, e:
