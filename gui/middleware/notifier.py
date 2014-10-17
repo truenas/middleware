@@ -5558,6 +5558,8 @@ class notifier:
             update = Update.objects.order_by('-id')[0]
         except IndexError:
             update = Update.objects.create()
+        if not update.upd_autocheck:
+            return ''
         return update.get_train() or ''
 
 
