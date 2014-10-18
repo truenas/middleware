@@ -5,7 +5,7 @@ BETA release will break them into categories.  In no particular order,
 FreeNAS 9.3-BETA offers the following improvements:
 
 
-** Booting: **
+** Installation / Booting: **
 
   FreeNAS now uses ZFS for the boot device(s), also supporting selection
 and mirroring of one or more boot devices for greater reliabilty.
@@ -20,6 +20,13 @@ boot pool.
 
   Both the installer and the installed system use the grub2 boot loader to
 provide boot menus and boot-time UI.
+
+  An install-time "Setup Wizard" is now provided to lead users who may be
+new to FreeNAS through the installation and setup process.  Everything
+from the pool, shares, directory services, and initial settings can be
+set up through the Wizard.  The Wizard is also careful to make no actual
+changes to the system until a final confirmation step, making it harmless
+to enter/exit the wizard at any time and simply explore its capabilities.
 
 
 ** Updating: **
@@ -79,9 +86,6 @@ own sub-categories, new icons also being added where applicable.  The
 tree menu and the top-level icons have also been synchronized.
 
   New UI for CA and Certificate management.
-
-  New setup Wizard can handle most common types of configuration at
-installation time or, as desired, later in the setup process.
 
   All tunables have been merged - loader, sysctl and rc.conf variables can
 be managed from the same UI.
