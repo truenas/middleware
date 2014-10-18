@@ -67,6 +67,14 @@ generate_crontab()
 		echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 	fi
 
+	local train=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py get_train)
+	if [ -n "${train}" ]; then
+		local r1 r2
+		r1=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%60))
+		r2=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%4+1))
+		echo "${r1}	${r2}	*	*	*	root	/usr/local/bin/freenas-update -C /var/db/system/update -T ${train} check" >> /etc/crontab
+	fi
+
 	# Ugly and dirty custom crontab scripts
 	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
 	while read -r cron; do

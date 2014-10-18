@@ -9,6 +9,7 @@ from . import Avatar
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
+import freenasOS.Package as Package
 from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
 
 log = logging.getLogger('freenasOS.Update')
@@ -409,7 +410,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     
     return rv
 
-def DownloadUpdate(train, directory, get_handler = None):
+def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     """
     Download, if necessary, the LATEST update for train; download
     delta packages if possible.  Checks to see if the existing content
@@ -474,7 +475,9 @@ def DownloadUpdate(train, directory, get_handler = None):
         return False
 
     # Next steps:  download the package files.
-    for pkg in latest_mani.Packages():
+    for indx, pkg in enumerate(latest_mani.Packages()):
+        if check_handler:
+            check_handler(indx + 1,  pkg = pkg, pkgList = latest_mani.Packages())
         pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
         if pkg_file is None:
             log.error("Could not download package file for %s" % pkg.Name())
@@ -716,15 +719,18 @@ def VerifyUpdate(directory):
                         with open(directory + "/" + pkg.FileName(cur_vers)) as f:
                             cksum = Configuration.ChecksumFile(f)
                             if upd_cksum == cksum:
-                                continue
+                                found = True
+                                break
                     except:
                         pass
                 else:
-                    continue
-        # If we got here, we are missing this file
-        log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
-        log.error(log_msg)
-        raise UpdateIncompleteCacheException(log_msg)
+                    found = True
+                    break
+        if found is False:
+            # If we got here, we are missing this file
+            log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
+            log.error(log_msg)
+            raise UpdateIncompleteCacheException(log_msg)
     # And if we got here, then we have found all of the packages, the manifest is fine,
     # and the sequence tag is correct.
     mani_file.seek(0)

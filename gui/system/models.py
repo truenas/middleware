@@ -517,11 +517,11 @@ class Update(Model):
         from freenasOS import Configuration
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
-        if (
-            not self.upd_train or
-            self.upd_train not in conf.AvailableTrains().keys()
-        ):
-            return self._conf.CurrentTrain()
+        trains = conf.AvailableTrains() or []
+        if trains:
+            trains = trains.keys()
+        if not self.upd_train or self.upd_train not in trains:
+            return conf.CurrentTrain()
         return self.upd_train
 
 

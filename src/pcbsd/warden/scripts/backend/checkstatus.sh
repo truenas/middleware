@@ -42,7 +42,7 @@ done
 
 # Check if the jail is active
 jls | grep -w "${JAILNAME}"$ >/dev/null 2>/dev/null
-if [ "$?" = "0" -o "$hasmount" = "1" ]; then
+if [ "$?" = "0" ]; then
   exit 0
 else
   exit 1

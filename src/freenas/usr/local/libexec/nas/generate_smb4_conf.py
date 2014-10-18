@@ -907,7 +907,7 @@ def smb4_setup():
         return
 
     systemdataset, volume, basename = notifier().system_dataset_settings()
-    basename_realpath = notifier().system_dataset_path()
+    basename_realpath = os.path.join(notifier().system_dataset_path(), 'samba4')
     statedir_realpath = os.path.realpath(statedir)
 
     if not volume or not volume.is_decrypted():
