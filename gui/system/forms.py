@@ -1611,19 +1611,19 @@ class InitialWizardVolumeForm(Form):
             ),
             (
                 'raid10',
-                _('VMWare (RAID 10: Good Reliability, Good Performance)')
+                _('Virtualization (RAID 10: Good Reliability, Good Performance, Less Storage)')
             ),
             (
                 'raidz2',
-                _('Backups (RAID Z2: Best Reliability, Less Storage)')
+                _('Backups (RAID Z2: Good Reliability, Medium Performance, Less Storage)')
             ),
             (
                 'raidz1',
-                _('Media (RAID Z1: Less Reliability, More Storage)')
+                _('Media (RAID Z1: Medium Reliability, OK Performance, More Storage)')
             ),
             (
                 'stripe',
-                _('Logs (RAID 0: No Reliability, Max Performance / Storage)')
+                _('Logs (RAID 0: No Reliability, Best Performance, Best Storage)')
             ),
         )
 
