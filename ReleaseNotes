@@ -93,7 +93,16 @@ be managed from the same UI.
 
 ** Security **
 
-  Software updates are now cryptographically signed, rendering the hashes
-obsolete.
+  Software updates are cryptographically signed, rendering the hashes
+unnecessary for anything but manual updates.
 
-  Numerous security updates to various components (CVE list should go here)
+
+** Miscellaneous **
+
+  Jail templates have been simplified and only optional templates are
+now listed.
+
+  Jails can now use DHCP to acquire their IPv4 configuration.
+
+  ZFS features added: Embedded Data feature flag, general performance
+improvements.
