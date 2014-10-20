@@ -68,42 +68,50 @@ named *jail1*, it will be installed into its own dataset named :file:`/mnt/volum
 .. warning:: if you have already installed a plugin, all of the fields in this screen will automatically be filled in. You should still double-check that
    the pre-configured IP addressing values are appropriate for your jails and will not conflict with addresses used by other systems on the network.
 
-Table 13.1a summarizes the fields in this configuration screen. Some settings are only available in "Advanced Mode". To see these settings, either click the
-"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
+Table 13.1a summarizes the fields in this configuration screen. Refer to the text below the table for more details on how to properly configure the "Jail
+Root" and network settings.  Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure
+the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
 **Table 13.1a: Jail Configuration Options**
 
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| **Setting**                | **Value**     | **Description**                                                          |
-|                            |               |                                                                          |
-|                            |               |                                                                          |
-+============================+===============+==========================================================================+
-| Jail Root                  | browse button | see explanation below table; mandatory as you cannot add a jail until    |
-|                            |               | this is set                                                              |
-|                            |               |                                                                          |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network               | string        | see explanation below table; format is IP address of *network/CIDR mask* |
-|                            |               |                                                                          |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network Start Address | string        | see explanation below table; format is IP address of *host/CIDR mask*    |
-|                            |               |                                                                          |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv4 Network End Address   | string        | see explanation below table; format is IP address of *host/CIDR mask*    |
-|                            |               |                                                                          |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv6 Network               | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
-|                            |               | over a properly configured IPv6 network                                  |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv6 Network Start Address | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
-|                            |               | over a properly configured IPv6 network                                  |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| IPv6 Network End Address   | string        | only available in "Advanced Mode"; only set if jails are to be accessed  |
-|                            |               | over a properly configured IPv6 network                                  |
-+----------------------------+---------------+--------------------------------------------------------------------------+
-| Collection URL             | string        | only available in "Advanced Mode"; changing the default may break the    |
-|                            |               | ability to install jails                                                 |
-+----------------------------+---------------+--------------------------------------------------------------------------+
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| **Setting**                | **Value**     | **Description**                                                                |
+|                            |               |                                                                                |
+|                            |               |                                                                                |
++============================+===============+================================================================================+
+| Jail Root                  | browse button | mandatory as you cannot add a jail until this is set                           |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv4 DHCP                  | checkbox      | check this box if the network has a DHCP server                                |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv4 Network               | string        | only available in "Advanced Mode"; format is IP address of *network/CIDR mask* |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv4 Network Start Address | string        | only available in "Advanced Mode"; input the first IP address in the           |
+|                            |               | reserved range in the format *host/CIDR mask*                                  |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv4 Network End Address   | string        | only available in "Advanced Mode"; input the last IP address in the reserved   |
+|                            |               | range in the format *host/CIDR mask*                                           |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv6 Autoconfigure         | checkbox      | check this box if the network has a DHCPv6 server and you plan to use          |
+|                            |               | IPv6 to access jails                                                           |
+|                            |               |                                                                                |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv6 Network               | string        | only available in "Advanced Mode"; input the network address                   |
+|                            |               | for a properly configured IPv6 network                                         |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv6 Network Start Address | string        | only available in "Advanced Mode"; input the first IP address in the reserved  |
+|                            |               | range for a properly configured IPv6 network                                   |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| IPv6 Network End Address   | string        | only available in "Advanced Mode"; input the last IP address in the reserved   |
+|                            |               | range for a properly configured IPv6 network                                   |
++----------------------------+---------------+--------------------------------------------------------------------------------+
+| Collection URL             | string        | only available in "Advanced Mode"; changing the default may break the          |
+|                            |               | ability to install jails                                                       |
++----------------------------+---------------+--------------------------------------------------------------------------------+
 
 
 When selecting the "Jail Root", ensure that the size of the selected volume or dataset is sufficient to hold the number of jails to be installed as well
@@ -113,33 +121,27 @@ than 2GB in size.
 .. note:: if you plan to add storage to a jail, be aware that the path size is limited to 88 characters. Make sure that the length of your volume name plus the
    dataset name plus the jail name does not exceed this limit.
 
-FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the IPv4
-network must be :command:`ping` able from the FreeNAS® system in order for your jails and any installed software to be accessible. If your network topology
-requires you to change the default value, you will also need to configure a default gateway, and possibly a static route, to the specified network. If you
+If the network contains a DHCP server, it is recommended to check the box "IPv4 DHCP" (or "IPv6 Autoconfigure, for a properly configured IPv6 network). This
+will prevent IP address conflicts on the network as the DHCP server will automatically assign the jail the next available lease and record the lease as in
+use.
+
+If a static IP address is needed so that users always know the IP address of the jail, input the start and end address for the IPv4 and/or IPv6 network. The
+range that you define by the start and end addresses will be automatically assigned as you create jails. For example, if you plan to create 5 jails on the
+192.168.1.0 network, you could input a "IPv4 Network Start Address" of 
+*192.168.1.100* and a "IPv4 Network End Address" of
+*192.168.1.104*.
+**If you create a start and end range on a network that contains a DHCP server, it is very important that you also reserve those addresses on the DHCP server.**
+Otherwise, the DHCP server will not be aware that those addresses are being used by jails and there will be IP address conflicts and weird networking errors
+on the network. When troubleshooting jails that do not install or which are unavailable, double-check that the IP address being used by the jail is not also
+being used by another jail or system in the network.
+
+FreeNAS® will automatically detect and display the "IPv4 Network" that the administrative interface is connected to. This setting is important as the IPv4 as
+the IP address(es) used by your jails must be :command:`ping` able from the FreeNAS® system in order for your jails and any installed software to be
+accessible. If your network topology requires you to change the default value, you will also need to configure a default gateway, and possibly a static route, to the specified network. If you
 change this value, ensure that the subnet mask value is correct as an incorrect mask can make the IP network unreachable. When in doubt, keep the default
 setting for "IPv4 Network". If you are using VMware, make sure that the vswitch is set to "promiscuous mode".
 
-Review the default values of the "IPv4 Network Start Address" and "IPv4 Network End Address" to determine if that range is appropriate for the number of jails
-that you will create. If there is a DHCP server on the network, make sure that this range of addresses is excluded from the scope of the DHCP server. As jails
-are created, they will automatically be assigned the next free IP address within the range specified by these two values.
-
-.. note:: these 4 fields are necessary for the proper operation of jails. If you are unable to add, start, or access the software installed into jails,
-   double-check the values in these fields. In particular, make sure that the specified IPv4 settings are reachable by clients and that the specified
-   addresses are not in use by any other clients in the network.
-
-The "Advanced Mode" fields only need to be completed if jails are to be accessible by IPv6 clients. You should not need to change the "Collection URL".
-
-Once you click the "Save" button to save the configuration, the "Jails" tab will change, as seen in the example shown in Figure 13.1b.
-
-**Figure 13.1b: Jails Tab**
-
-|jails2.png|
-
-.. |jails2.png| image:: images/jails2.png
-    :width: 4.2in
-    :height: 2.4in
-
-You can now create and manage jails as described in the rest of this chapter.
+Once you click the "Save" button to save the configuration, you are now ready to create and manage jails as described in the rest of this chapter.
 
 .. _Adding Jails:
 
@@ -155,11 +157,10 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |jails3.png|
 
 .. |jails3.png| image:: images/jails3.png
-    :width: 4.2in
-    :height: 2.4in
+    :width: 3.5in
+    :height: 2.9in
 
-By default, the only required value to create a jail is to give it a name and to double-check that the suggested IP address will not conflict with any other
-address being used on the network. The default is to create a FreeBSD jail.
+By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
 Table 13.2a summarizes the available options. Most settings are only available in "Advanced Mode" and are not needed if the intent is to create a FreeBSD
 jail. To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show
@@ -175,61 +176,78 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 | Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Template                  | drop-down menu | by default, contains the *VirtualBox* template for creating an instance of phpVirtualBox; advanced users can |
-|                           |                | create and install custom templates as described in `Managing Jail Templates`_                               |
+| Template                  | drop-down menu | only available in "Advanced Mode"; contains the *VirtualBox* template for creating an instance of            |
+|                           |                | phpVirtualBox; advanced users can create and install custom templates as described in                        |
+|                           |                | `Managing Jail Templates`_                                                                                   |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 address              | integer        | will be automatically assigned the next free address from the range specified in "Jails Configuration"; if   |
-|                           |                | you change the default address, make sure it is reachable within the local network and is not in use by any  |
-|                           |                | other host on the network                                                                                    |
+| IPv4 DHCP                 | checkbox       | only available in "Advanced Mode"; if unchecked, make sure that the defined address does not conflict with   |
+|                           |                | the DHCP server's pool of available addresses                                                                |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 netmask              | drop-down menu | select the subnet mask associated with "IPv4 address"                                                        |
+| IPv4 address              | integer        | only available in "Advanced Mode"; this and the other IPv4 settings will be greyed out if "IPv4 DHCP" is     |
+|                           |                | checked; input IP address that is reachable within the local network and is not in use by any other host in  |
+|                           |                | the network                                                                                                  |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| IPv4 netmask              | drop-down menu | only available in "Advanced Mode"; select the subnet mask associated with "IPv4 address"                     |
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge address       | integer        | see NOTE below; will be greyed out if "VIMAGE" is unchecked                                                  |
+| IPv4 bridge address       | integer        | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; see NOTE below            |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 bridge netmask       | drop-down menu | select the subnet mask associated with "IPv4 bridge address"; will be greyed if "VIMAGE" is unchecked        |
+| IPv4 bridge netmask       | drop-down menu | only available in "Advanced Mode"; select the subnet mask associated with "IPv4 bridge address"; will be     |
+|                           |                | greyed if "VIMAGE" is unchecked                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv4 default gateway      | string         | used to set the jail's default gateway IPv4 address; will be greyed out if "VIMAGE" is unchecked             |
+| IPv4 default gateway      | string         | only available in "Advanced Mode"; will be greyed out if "VIMAGE" is unchecked                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 address              | integer        | if IPv6 has been configured, will be automatically assigned the next free address from the range specified   |
-|                           |                | in "Jails Configuration"_                                                                                    |
+| IPv6 Autoconfigure        | checkbox       | only available in "Advanced Mode"; if unchecked, make sure that the defined address does not conflict with   |
+|                           |                | the DHCP server's pool of available addresses                                                                |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 prefix length        | drop-down menu | select the prefix length associated with "IPv6 address"                                                      |
+| IPv6 address              | integer        | only available in "Advanced Mode"; this and the other IPv6 settings will be greyed out if "IPv6              |
+|                           |                | Autoconfigure" is checked; input IPv6 address that is reachable within the local network and is not in use   |
+|                           |                | by any other host in the network                                                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge address       | integer        | see NOTE below; will be greyed if "VIMAGE" is unchecked                                                      |
+| IPv6 prefix length        | drop-down menu | only available in "Advanced Mode"; select the prefix length associated with "IPv6 address"                   |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 bridge prefix length | drop-down menu | select the prefix length associated with "IPv6 address"; will be greyed out if "VIMAGE" is unchecked         |
+| IPv6 bridge address       | integer        | only available in "Advanced Mode" and will be greyed if "VIMAGE" is unchecked; see NOTE below                |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| IPv6 default gateway      | string         | used to set the jail's default gateway IPv6 address; will be greyed out if "VIMAGE" is unchecked             |
+| IPv6 bridge prefix length | drop-down menu | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; select the prefix length  |
+|                           |                | associated with "IPv6 address"                                                                               |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | if a static MAC address is needed, input it here; will be greyed out if "VIMAGE" is unchecked                |
+| IPv6 default gateway      | string         | only available in "Advanced Mode" and will be greyed if "VIMAGE" is unchecked; used to set the jail's        |
+|                           |                | default gateway IPv6 address                                                                                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| NIC                       | drop-down menu | can be used to specify the interface to use for jail connections; will be greyed out if "VIMAGE" is checked  |
-|                           |                | as you cannot bind to an interface when using "VIMAGE"                                                       |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Sysctls                   | string         | comma-delimited list of sysctls to set inside jail (e.g. *allow.sysvipc=1,allow.raw_sockets=1*)              |
+| MAC                       | string         | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; if a static MAC address   |
+|                           |                | is needed, input it here                                                                                     |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Autostart                 | checkbox       | uncheck if you want to start the jail manually                                                               |
+| NIC                       | drop-down menu | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; can be used to specify    |
+|                           |                | the interface to use for jail connections                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| VIMAGE                    | checkbox       | gives a jail its own virtualized network stack; requires promiscuous mode to be enabled on the interface     |
+| Sysctls                   | string         | only available in "Advanced Mode"; comma-delimited list of sysctls to set inside jail (e.g.                  |
+|                           |                | *allow.sysvipc=1,allow.raw_sockets=1*)                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| NAT                       | checkbox       | enables Network Address Translation for the jail; will be greyed out for Linux jails or if "VIMAGE" is       |
-|                           |                | unchecked                                                                                                    |
+| Autostart                 | checkbox       | only available in "Advanced Mode"; uncheck if you want to start the jail manually                            |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| VIMAGE                    | checkbox       | only available in "Advanced Mode"; gives a jail its own virtualized network stack; requires promiscuous mode |
+|                           |                | to be enabled on the interface                                                                               |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| NAT                       | checkbox       | only available in "Advanced Mode" and will be greyed out for Linux jails or if "VIMAGE" is unchecked;        |
+|                           |                | enables Network Address Translation for the jail                                                             |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 

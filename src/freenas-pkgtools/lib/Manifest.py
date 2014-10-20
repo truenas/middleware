@@ -310,15 +310,31 @@ class Manifest(object):
     def Signature(self):
         return self._signature
 
-    def SetSignature(self, hash = None):
-        if hash is None:
+    def SetSignature(self, signed_hash):
+        self._signature = signed_hash
+        return
+
+    def SignWithKey(self, key_data):
+        if key is None:
+            # We'll cheat, and say this means "get rid of the signature"
+            self._signature = None
+        else:
+            import OpenSSL.crypto as Crypto
+            from base64 import b64encode as base64
+
+            # Load the key.  This is most likely to fail.
+            key = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_data)
+
+            # Generate a canonical representation of the manifest
             temp = self.dict()
             if SIGNATURE_KEY in temp: temp.pop(SIGNATURE_KEY)
             tstr = MakeString(temp)
-            thash = hashlib.sha256(tstr).hexdigest()
-            self._signature = thash
-        else:
-            self._signature = hash
+
+            # Sign it.
+            signed_value = base64(Crypto.sign(key, tstr, "sha256"))
+
+            # And now set the signature
+            self._signature = signed_value
         return
 
     def Version(self):

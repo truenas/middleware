@@ -45,7 +45,7 @@ To install a plugin, click "Plugins". As seen in Figure 12.1a, the list of avail
 |plugins1.png|
 
 .. |plugins1.png| image:: images/plugins1.png
-    :width: 11.1in
+    :width: 5.9in
     :height: 4.5in
 
 .. note:: if the list of available plugins is not displayed, open :ref:`Shell` and verify that the FreeNAS® system can :command:`ping` an address on the
@@ -59,7 +59,7 @@ installation.
 |plugins2.png|
 
 .. |plugins2.png| image:: images/plugins2.png
-    :width: 6.0in
+    :width: 5.9in
     :height: 4.5in
 
 The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the

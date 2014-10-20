@@ -439,7 +439,7 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 | Administrator password | string         | password to be used for the Active Directory administrator account                                                                                                                        |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Realm         | drop-down menu |                                                                                                                                                                                           |
+| Kerberos Realm         | drop-down menu | select the realm created using the instructions in :ref:`Kerberos Realms`                                                                                                                 |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
@@ -1811,7 +1811,7 @@ the following steps.
     |chroot.png|
 
     .. |chroot.png| image:: images/chroot.png
-       :width: 3.6in
+       :width: 3.4in
        :height: 3.5in
 
     **Example 11.13a: Creating a User's Home Directory**

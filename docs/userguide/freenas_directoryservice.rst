@@ -60,7 +60,11 @@ display these settings by checking the box "Show advanced fields by default" in 
 
 **Figure 9.1a: Configuring Active Directory**
 
-|Figure91a_png|
+|ad1.png|
+
+.. |ad1.png| image:: images/ad1.png
+    :width: 4.5in
+    :height: 2.3in
 
 **Table 9.1a: Active Directory Configuration Options**
 
@@ -81,7 +85,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | not connect to the domain controller using this password                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | automatically populated with the hostname of the system; **use caution when changing this setting**                                        |
+| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**     |
 |                          |               | as setting an                                                                                                                              |
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
@@ -90,13 +94,6 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Kerberos keytab          | browse button | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Encryption Mode          | drop-down     |                                                                                                                                            |
-|                          | menu          |                                                                                                                                            |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------|
-| Certificate              | browse button |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
@@ -118,13 +115,16 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Site Name                | string        | only available in "Advanced Mode";                                                                                                         |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Global Catalog Server    | string        | only available in "Advanced Mode"; if the hostname of the global catalog server to use is specified, make sure it is resolvable            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Realm           | drop-down     | only available in "Advanced Mode";                                                                                                         |
+| Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                              |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
@@ -137,7 +137,15 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Idmap backend            | drop-down     | only available in "Advanced Mode";                                                                                                         |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable                   | checkbox      |                                                                                                                                            |
+| Windbind NSS Info        | drop-down     | only available in "Advanced Mode";                                                                                                         |
+|                          | menu          |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| SASL wrapping            | drop-down     | only available in "Advanced Mode";                                                                                                         |
+|                          | menu          |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
@@ -234,7 +242,11 @@ Figure 9.2a shows the LDAP Configuration screen that is seen when you click :men
 
 **Figure 9.2a: Configuring LDAP**
 
-|Figure92a_png|
+|ldap1.png|
+
+.. |ldap1.png| image:: images/ldap1.png
+    :width: 4.5in
+    :height: 2.6in
 
 Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -340,7 +352,11 @@ options.
 
 **Figure 9.3a: NIS Configuration**
 
-|Figure93a_png|
+|nis1.png|
+
+.. |nis1.png| image:: images/nis1.png
+    :width: 4.5in
+    :height: 2.6in
 
 **Table 9.3a: NIS Configuration Options**
 
@@ -385,7 +401,11 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 
 **Figure 9.4a: NT4 Configuration Options**
 
-|Figure94a_png|
+|nt1.png|
+
+.. |nt1.png| image:: images/nt1.png
+    :width: 4.5in
+    :height: 3.3in
 
 **Table 9.4a: NT4 Configuration Options**
 
@@ -415,7 +435,7 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 | Idmap backend          | drop-down | only available in "Advanced Mode";                                  |
 |                        | menu      |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
-| Enable                 | checkbox  |                                                                     |
+| Enable                 | checkbox  | uncheck to disable the configuration without deleting it            |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 
@@ -427,29 +447,29 @@ automatically once a day as a cron job.
 Kerberos Realms
 ---------------
 
-Beginning with FreeNAS® 9.3, a default Kerberos realm is created when...  :menuselection:`Directory Service --> Kerberos Realms` can be used to view and add
-Kerberos realms. Figure 9.5a shows the information for the default Kerberos realm.
+Beginning with FreeNAS® 9.3, a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
+view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
+shown in Figure 9.5a.
 
 **Figure 9.5a: Viewing Kerberos Realms**
 
-|Figure95a_png|
+|realm1.png|
 
-If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is shown in Figure 9.5b and Table
-9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or
-configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
+.. |realm1.png| image:: images/realm1.png
+    :width: 4.5in
+    :height: 3.3in
 
-**Figure 9.5b: Adding a Kerberos Realm**
+Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
+button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
-|Figure95b_png|
-
-**Table 9.4a: Kerberos Realm Options**
+**Table 9.5a: Kerberos Realm Options**
 
 +------------------------+-----------+---------------------------------------------------------------------+
 | **Setting**            | **Value** | **Description**                                                     |
 |                        |           |                                                                     |
 |                        |           |                                                                     |
 +========================+===========+=====================================================================+
-| Realm                  | string    |                                                                     |
+| Realm                  | string    | mandatory; name of the realm                                        |
 |                        |           |                                                                     |
 +------------------------+-----------+---------------------------------------------------------------------+
 | KDC                    | string    |                                                                     |

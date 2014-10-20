@@ -23,9 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import json
+import logging
 import os
+import time
+from datetime import timedelta
 from uuid import uuid4
 
 from django.utils.translation import ugettext as _
@@ -37,13 +39,12 @@ log = logging.getLogger('system.utils')
 
 class BootEnv(object):
 
-
     def __init__(
         self, name=None, active=None, mountpoint=None, space=None, created=None
     ):
         self._id = name
         self.active = active
-        self.created = created
+        self._created = created
         self.mountpoint = mountpoint
         self.name = name
         self.space = space
@@ -51,6 +52,18 @@ class BootEnv(object):
     @property
     def id(self):
         return self._id
+
+    @property
+    def created(self):
+        offset = time.strftime('%z')
+        hours = int(offset[1:3])
+        minutes = int(offset[3:5])
+        delta = timedelta(hours=hours, minutes=minutes)
+        if offset[0] == '+':
+            date = self._created + delta
+        else:
+            date = self._created - delta
+        return date.strftime('%Y-%m-%d %H:%M:%S GMT')
 
 
 class CheckUpdateHandler(object):

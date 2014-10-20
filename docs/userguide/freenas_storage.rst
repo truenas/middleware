@@ -1190,8 +1190,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 | **Setting**    | **Value**                  | **Description**                                                                                              |
 |                |                            |                                                                                                              |
 +================+============================+==============================================================================================================+
-| Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol; if you select a volume, separate snapshots will also be     |
-|                |                            | created for each of its datasets                                                                             |
+| Volume/Dataset | drop-down menu             | select an existing ZFS volume, dataset, or zvol                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
@@ -1225,7 +1224,7 @@ that there is no way to exclude certain datasets from being included in a recurs
 Once you click the "OK" button, a snapshot will be taken and this task will be repeated according to your settings.
 
 After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks", as seen in the example in Figure 8.2b.
-Click an entry to access its "Modify" and "Delete" buttons.
+Click an entry to access its "Edit" and "Delete" buttons.
 
 **Figure 8.2b: View Periodic Snapshot Tasks**
 
