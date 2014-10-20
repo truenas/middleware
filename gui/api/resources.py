@@ -2292,7 +2292,7 @@ class BootEnvResource(NestedMixin, DojoResource):
     name = fields.CharField(attribute='name')
     active = fields.CharField(attribute='active')
     space = fields.CharField(attribute='space')
-    created = fields.DateTimeField(attribute='created')
+    created = fields.CharField(attribute='created')
 
     class Meta:
         object_class = BootEnv
