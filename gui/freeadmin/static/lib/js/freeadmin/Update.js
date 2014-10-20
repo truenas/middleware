@@ -85,9 +85,9 @@ define([
       }, me.dapManualUpdate);
 
       me._checkUpdate = new Button({
-        label: gettext("Check For Updates"),
+        label: gettext("Check Now"),
         onClick: function() {
-          editObject(gettext("Check For Updates"), me.checkUrl, [me.domNode]);
+          editObject(gettext("Check Now"), me.checkUrl, [me.domNode]);
         }
       }, me.dapCheckUpdateBtn);
 
