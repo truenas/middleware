@@ -28,6 +28,7 @@ doSubmit({
 {% endif %}
 {% trans "The following packages will be downloaded:" %}
 <pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
+<p><input data-dojo-type="dijit.form.CheckBox" name="apply" type="checkbox" checked="checked" /> {% trans "Apply updates after downloading" %}</p>
 {% trans "Do you want to continue?" %}
 {% else %}
     <p>{% trans "No updates available" %}</p>
