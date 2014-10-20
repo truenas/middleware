@@ -97,7 +97,7 @@ class UpdateHandler(object):
 
     DUMPFILE = '/tmp/.upgradeprogress'
 
-    def __init__(self, uuid=None):
+    def __init__(self, uuid=None, apply_=None):
         if uuid:
             try:
                 self.load()
@@ -106,6 +106,7 @@ class UpdateHandler(object):
             except:
                 raise ValueError("UUID not found")
         else:
+            self.apply = apply_
             self.uuid = uuid4().hex
             self.details = ''
             self.indeterminate = False
@@ -152,7 +153,10 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
-        self.step = 1
+        if self.apply:
+            self.step = 2
+        else:
+            self.step = 1
         self.indeterminate = False
         total = len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)
@@ -167,6 +171,7 @@ class UpdateHandler(object):
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
             data = {
+                'apply': self.apply,
                 'error': self.error,
                 'finished': self.finished,
                 'indeterminate': self.indeterminate,
@@ -184,6 +189,7 @@ class UpdateHandler(object):
             return None
         with open(self.DUMPFILE, 'rb') as f:
             data = json.loads(f.read())
+        self.apply = data.get('apply', '')
         self.details = data.get('details', '')
         self.error = data['error']
         self.finished = data['finished']

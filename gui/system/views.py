@@ -1117,7 +1117,11 @@ def update_check(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
-        handler = UpdateHandler(uuid=uuid)
+        if request.POST.get('apply') == '1':
+            apply_ = True
+        else:
+            apply_ = False
+        handler = UpdateHandler(uuid=uuid, apply_=apply_)
         if not uuid:
             #FIXME: ugly
             pid = os.fork()
@@ -1130,13 +1134,23 @@ def update_check(request):
                 if not path:
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
-                    DownloadUpdate(
-                        updateobj.get_train(),
-                        '%s/update' % path,
-                        check_handler=handler.get_handler,
-                        get_handler=handler.get_file_handler,
-                    )
+                    if handler.apply:
+                        Update(
+                            train=updateobj.get_train(),
+                            get_handler=handler.get_handler,
+                            install_handler=handler.install_handler,
+                            cache_dir='%s/update' % path,
+                        )
+                    else:
+                        DownloadUpdate(
+                            updateobj.get_train(),
+                            '%s/update' % path,
+                            check_handler=handler.get_handler,
+                            get_handler=handler.get_file_handler,
+                        )
                 except Exception, e:
+                    from freenasUI.common.log import log_traceback
+                    log_traceback(log=log)
                     handler.error = unicode(e)
                 handler.finished = True
                 handler.dump()
@@ -1147,10 +1161,14 @@ def update_check(request):
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
-            return JsonResp(
-                request,
-                message=_('Packages downloaded'),
-            )
+            if handler.apply:
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
+            else:
+                return JsonResp(
+                    request,
+                    message=_('Packages downloaded'),
+                )
     else:
         handler = CheckUpdateHandler()
         try:
