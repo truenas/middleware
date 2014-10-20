@@ -722,10 +722,11 @@ def perftest(request):
             _('System dataset is required to perform this action.')
         )
 
-    dump = '/mnt/%s/perftest.txz' % basename
+    dump = os.path.join(notifier().system_dataset_path(), 'perftest.txz')
     perftestdataset = '%s/perftest' % basename
+    perftestdir = os.path.join(notifier().system_dataset_path(), 'perftest')
 
-    with mntlock(mntpt='/mnt/%s' % basename):
+    with mntlock(mntpt=notifier().system_dataset_path()):
 
         _n = notifier()
 
@@ -734,17 +735,23 @@ def perftest(request):
             props={
                 'primarycache': 'metadata',
                 'secondarycache': 'metadata',
+                'mountpoint': 'legacy',
                 'compression': 'off',
             },
             _restart_collectd=False,
         )
 
         currdir = os.getcwd()
-        os.chdir('/mnt/%s' % perftestdataset)
+	if not os.isdir(perftestdir):
+	        os.mkdir(perftestdir)
+
+        os.chdir(perftestdir)
+
+	os.system('/sbin/mount -t zfs %s %s' % (perftestdataset, perftestdir))
 
         p1 = subprocess.Popen([
             '/usr/local/bin/perftests-nas',
-            '-o', ('/mnt/%s' % perftestdataset).encode('utf8'),
+            '-o', perftestdataset.encode('utf8'),
             '-s', str(PERFTEST_SIZE),
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         p1.communicate()
@@ -756,6 +763,8 @@ def perftest(request):
 
         os.chdir(currdir)
 
+        os.system('/sbin/umount -f %s' % perftestdataset)
+        os.rmdir(perftestdir)
         _n.destroy_zfs_dataset(perftestdataset)
 
         return JsonResp(
@@ -787,8 +796,11 @@ def perftest_download(request):
 
 
 def perftest_progress(request):
-    systemdataset, volume, basename = notifier().system_dataset_settings()
-    progressfile = '/mnt/%s/perftest/.progress' % basename
+    progressfile = os.path.join(
+        notifier().system_dataset_path(),
+        'perftest',
+        '.progress'
+    )
 
     data = ''
     try:
@@ -841,13 +853,10 @@ def debug(request):
     zfs = zfs.split()
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
-    systemdataset, volume, basename = notifier().system_dataset_settings()
-    if basename:
-        mntpoint = '/mnt/%s' % basename
-        if os.path.exists(mntpoint):
-            direc = '%s/ixdiagnose' % mntpoint
-            mntpt = mntpoint
-    dump = "%s/ixdiagnose.tgz" % direc
+    if notifier().system_dataset_path() is not None:
+        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
+        mntpt = notifier().system_dataset_path()
+    dump = os.path.join(direc, 'ixdiagnose.tgz')
 
     with mntlock(mntpt=mntpt):
 
