@@ -2602,8 +2602,8 @@ class notifier:
             log.debug("XXX: CMD = %s", cmd)
             self._system(cmd)
 
-    def mp_change_permission(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False, acl='unix',
+    def mp_change_permission(self, path='/mnt', user=None, group=None,
+                             mode=None, recursive=False, acl='unix',
                              exclude=None):
 
         if exclude is None:
@@ -2643,10 +2643,13 @@ class notifier:
                 os.unlink(macacl)
 
         if winexists:
-            if not mode:
-                mode = '0755'
             script = "/usr/local/bin/winacl"
-            args = " -O '%s' -G '%s' -a reset " % (user, group)
+            args = ''
+            if user is not None:
+                args += " -O '%s'" % user
+            if group is not None:
+                args += " -G '%s'" % group
+            args += " -a reset "
             if recursive:
                 apply_paths = exclude_path(path, exclude)
                 apply_paths = map(lambda y: (y, ' -r '), apply_paths)
@@ -2669,8 +2672,14 @@ class notifier:
             else:
                 apply_paths = [(path, '')]
             for apath, flags in apply_paths:
-                self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
-                self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
+                if user is not None and group is not None:
+                    self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
+                elif user is not None:
+                    self._system("/usr/sbin/chown %s '%s' '%s'" % (flags, user, apath))
+                elif group is not None:
+                    self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
+                if mode is not None:
+                    self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
