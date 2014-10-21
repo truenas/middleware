@@ -37,7 +37,7 @@ all:	build
 .endif
 
 build: git-verify
-	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
+	@if [ `id -u` -ne 0 ]; then echo "Sorry, you must be running as root to build this."; exit 1; fi
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
 	${ENV_SETUP} build/do_build.sh

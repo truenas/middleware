@@ -926,11 +926,11 @@ class notifier:
 
     def _restart_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
-        self._system("/usr/sbin/service syslogd restart")
+        self._system("/etc/local/rc.d/syslog-ng restart")
 
     def _start_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
-        self._system("/usr/sbin/service syslogd start")
+        self._system("/etc/local/rc.d/syslog-ng start")
 
     def _reload_tftp(self):
         self._system("/usr/sbin/service ix-inetd quietstart")

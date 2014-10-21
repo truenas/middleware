@@ -1607,23 +1607,23 @@ class InitialWizardVolumeForm(Form):
         self.fields['volume_type'].choices = (
             (
                 'auto',
-                _('Automatic')
+                _('Automatic - Pick reasonable defaults for available drives')
             ),
             (
                 'raid10',
-                _('Virtualization (RAID 10: Good Reliability, Good Performance, Less Storage)')
+                _('Virtualization (RAID 10: Good Reliability, Better Performance, Minimum Storage)')
             ),
             (
                 'raidz2',
-                _('Backups (RAID Z2: Good Reliability, Medium Performance, Less Storage)')
+                _('Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)')
             ),
             (
                 'raidz1',
-                _('Media (RAID Z1: Medium Reliability, OK Performance, More Storage)')
+                _('Media (RAID Z1: Medium Reliability, Good Performance, More Storage)')
             ),
             (
                 'stripe',
-                _('Logs (RAID 0: No Reliability, Best Performance, Best Storage)')
+                _('Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)')
             ),
         )
 
