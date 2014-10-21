@@ -1639,11 +1639,6 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
-        systemdataset, volume, basename = notifier().system_dataset_settings()
-
-        exclude = []
-        if basename:
-            exclude = ['/mnt/%s' % basename]
 
         kwargs = {}
 
@@ -1658,7 +1653,6 @@ class MountPointAccessForm(Form):
 
         notifier().mp_change_permission(
             path=path,
-            exclude=exclude,
             recursive=self.cleaned_data['mp_recursive'],
             acl=self.cleaned_data['mp_acl'],
             **kwargs
