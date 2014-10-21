@@ -424,6 +424,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     import fcntl
 
     conf = Configuration.Configuration()
+    mani = conf.SystemManifest()
     # First thing, let's get the latest manifest
     latest_mani = conf.FindLatestManifest(train)
     if latest_mani is None:
@@ -474,10 +475,18 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
         mani_file.close()
         return False
 
+    # Find out what differences there are
+    diffs = Manifest.CompareManifests(mani, latest_mani)
+    download_packages = []
+    for pkg, op, old in diffs:
+        if op == "delete":
+            continue
+        download_packages.append(pkg)
+
     # Next steps:  download the package files.
-    for indx, pkg in enumerate(latest_mani.Packages()):
+    for indx, pkg in enumerate(download_packages):
         if check_handler:
-            check_handler(indx + 1,  pkg = pkg, pkgList = latest_mani.Packages())
+            check_handler(indx + 1,  pkg = pkg, pkgList = download_packages)
         pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
         if pkg_file is None:
             log.error("Could not download package file for %s" % pkg.Name())
@@ -681,14 +690,21 @@ def VerifyUpdate(directory):
         raise UpdateInvalidCacheException("Cached sequence does not match system sequence")
 
     # Next thing to do is go through the manifest, and decide which package files we need.
-    # For each package, we want to see if we have a delta package that matches, and
-    # has the right checksum, or the full package, that has the right checksum.
-    # If neither file exists, then we have an incomplete situation; if both exist,
-    # but don't have a valid checksum, we have an invalid situation.  If only one
-    # exists, but has an invalid checksum, then we'll call it incomplete.
-    for pkg in cached_mani.Packages():
-        cur_vers = conf.CurrentPackageVersion(pkg.Name())
+    diffs = Manifest.CompareManifests(mani, cached_mani)
+    # This gives us an array to examine.
+    for (pkg, op, old) in diffs:
+        if op == "delete":
+            # Deleted package, so we don't need to do any verification here
+            continue
+        if op == "install":
+            # New package, being installed, so we need the full package
+            cur_vers = None
+        if op == "upgrade":
+            # Package being updated, so we can look for the delta package.
+            cur_vers = old.Version()
         new_vers = pkg.Version()
+        # This is slightly redundant -- if cur_vers is None, it'll check
+        # the same filename twice.
         if not os.path.exists(directory + "/" + pkg.FileName())  and \
            not os.path.exists(directory + "/" + pkg.FileName(cur_vers)):
             # Neither exists, so incoplete
@@ -707,6 +723,11 @@ def VerifyUpdate(directory):
         except:
             pass
 
+        if cur_vers is None:
+            e = "Cache directory %s missing files for package %s" % (directory, pkg.Name())
+            log.error(e)
+            raise UpdateIncompleteCacheException(e)
+        
         # Now we try the delta file
         # To do that, we need to find the right dictionary in the pkg
         upd_cksum = None
