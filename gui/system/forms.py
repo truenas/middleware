@@ -1983,6 +1983,16 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def clean_cert_passphrase(self):
         cdata = self.cleaned_data
 
@@ -2095,6 +2105,16 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERNAL
         cert_info = {
@@ -2206,6 +2226,16 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
+
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
@@ -2382,6 +2412,16 @@ class CertificateImportForm(ModelForm):
 
         return passphrase
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
 
@@ -2489,6 +2529,16 @@ class CertificateCreateInternalForm(ModelForm):
             "javascript:certificate_autopopulate();"
         )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_INTERNAL
         cert_info = {
@@ -2592,6 +2642,16 @@ class CertificateCreateCSRForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
+
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_CSR
