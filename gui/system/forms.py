@@ -1986,7 +1986,7 @@ class CertificateAuthorityImportForm(ModelForm):
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
         if certs:
             raise forms.ValidationError(
                 "A certificate with this name already exists."
@@ -2108,7 +2108,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
         if certs:
             raise forms.ValidationError(
                 "A certificate with this name already exists."
@@ -2230,7 +2230,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
         if certs:
             raise forms.ValidationError(
                 "A certificate with this name already exists."
