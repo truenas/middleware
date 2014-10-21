@@ -60,9 +60,9 @@ class BootEnv(object):
         minutes = int(offset[3:5])
         delta = timedelta(hours=hours, minutes=minutes)
         if offset[0] == '+':
-            date = self._created + delta
-        else:
             date = self._created - delta
+        else:
+            date = self._created + delta
         return date.strftime('%Y-%m-%d %H:%M:%S GMT')
 
 
