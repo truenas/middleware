@@ -25,6 +25,7 @@
 #
 #####################################################################
 from collections import OrderedDict
+from datetime import datetime
 import cPickle as pickle
 import json
 import logging
@@ -66,6 +67,7 @@ from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
+    get_sw_login_version,
     send_mail
 )
 from freenasUI.common.pipesubr import pipeopen
@@ -107,12 +109,18 @@ def _system_info(request=None):
     )
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
-    freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
     try:
-        with open(VERSION_FILE) as d:
-            freenas_build = d.read()
+        freenas_build = '%s %s' % (get_sw_name(), get_sw_login_version())
     except:
-        pass
+        freenas_build = "Unrecognized build"
+
+    try:
+        conf = Configuration.Configuration()
+        manifest = conf.SystemManifest()
+        builddate = datetime.utcfromtimestamp(int(manifest.Sequence()))
+    except:
+        raise
+        builddate = None
 
     return {
         'hostname': hostname,
@@ -122,6 +130,7 @@ def _system_info(request=None):
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
+        'builddate': builddate,
     }
 
 
