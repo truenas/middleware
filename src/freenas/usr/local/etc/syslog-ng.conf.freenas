@@ -126,9 +126,6 @@ log { source(src); filter(f_lpr); filter(f_info); destination(lpd-errs); };
 #
 # ftp.info						/var/log/xferlog
 #
-# suraj edit : in freenas we have ftp.* instead of ftp.info so below is commented
-#log { source(src); filter(f_ftp); filter(f_info); destination(xferlog); };
-# suraj edit : and the below line is appropriate (i think)
 log { source(src); filter(f_ftp); destination(xferlog); };
 
 #
