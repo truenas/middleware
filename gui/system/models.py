@@ -894,6 +894,10 @@ class VMWarePlugin(Model):
     username = models.CharField(
         verbose_name=_('Username'),
         max_length=200,
+        help_text=_(
+            'Username on the above VMWare host with enough privileges to '
+            'snapshot virtual machines.'
+        ),
     )
     password = models.CharField(
         verbose_name=_('Password'),
@@ -906,7 +910,14 @@ class VMWarePlugin(Model):
     datastore = models.CharField(
         verbose_name=_('Datastore'),
         max_length=200,
+        help_text=_(
+            'The datastore on the VMWare side that the filesystem corresponds '
+            'to.'
+        ),
     )
 
     class Meta:
         verbose_name = _('VMWare Plugin')
+
+    def __unicode__(self):
+        return self.hostname
