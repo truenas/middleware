@@ -119,7 +119,6 @@ def _system_info(request=None):
         manifest = conf.SystemManifest()
         builddate = datetime.utcfromtimestamp(int(manifest.Sequence()))
     except:
-        raise
         builddate = None
 
     return {
