@@ -1504,3 +1504,28 @@ def certificate_info(request, id):
     return certificate_to_json(
         models.Certificate.objects.get(pk=int(id))
     ) 
+
+
+def vmwareplugin_datastores(request):
+    from pysphere import VIServer
+    data = {
+        'error': False,
+    }
+    log.error("post %r", request.POST)
+    try:
+        server = VIServer()
+        server.connect(
+            request.POST.get('hostname'),
+            request.POST.get('username'),
+            request.POST.get('password'),
+            sock_timeout=7,
+        )
+        data['value'] = server.get_datastores().values()
+        server.disconnect()
+    except Exception, e:
+        data['error'] = True
+        data['errmsg'] = unicode(e).encode('utf8')
+    return HttpResponse(
+        json.dumps(data),
+        content_type='application/json',
+    )
