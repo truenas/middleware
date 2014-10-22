@@ -278,7 +278,9 @@ class UpdateFAdmin(BaseFreeAdmin):
 
 
 class VMWarePluginFAdmin(BaseFreeAdmin):
-    pass
+    exclude_fields = (
+        'password',
+    )
 
 
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
