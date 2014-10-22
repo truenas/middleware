@@ -2700,3 +2700,16 @@ class VMWarePluginForm(ModelForm):
         widgets = {
             'password': forms.widgets.PasswordInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(VMWarePluginForm, self).__init__(*args, **kwargs)
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        volnames = [
+            o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
+        ]
+        self.fields['filesystem'].choices = filter(
+            lambda y: y[0].split('/')[0] in volnames,
+            notifier().list_zfs_fsvols().items()
+        )
