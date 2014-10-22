@@ -1,0 +1,33 @@
+#
+# $FreeBSD$
+# $Id$
+#
+
+PORTNAME=       freenas-datastore
+PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
+PORTREVISION=	${REVISION}
+
+CATEGORIES=     freenas
+VALID_CATEGORIES+= freenas
+
+MAINTAINER=     dev@ixsystems.com
+COMMENT=        FreeNAS data store layer
+
+USE_XZ=		yes
+USE_PYTHON=	yes
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}psycopg2:${PORTSDIR}/databases/py-psycopg2
+
+EXTRACT_ONLY=
+
+NO_BUILD= 	yes
+MAKE_JOBS_UNSAFE= yes
+ALL_TARGET=	obj all
+WRKSRC=		/usr/nas_source2/datastore
+
+checksum fetch:
+	echo ${.TARGET} not needed because building direct
+
+do-install:
+	${MAKE} -C ${WRKSRC} install PREFIX=${STAGEDIR}${PREFIX} PYTHON=${PYTHON_CMD}
+
+.include <bsd.port.mk>

@@ -1,0 +1,37 @@
+#!/bin/sh
+datadir=$1
+cmd=$2
+driverdir=$(dirname $0)
+dbdir=${datadir}/freenas.db
+
+run_user()
+{
+    su -m pgsql -c "$*"
+}
+
+case ${cmd} in
+    init)
+        mkdir -p ${dbdir}
+        chown pgsql ${dbdir}
+        run_user initdb -E utf-8 -D ${dbdir} -U freenas
+        run_user pg_ctl start -w -D ${dbdir}
+        run_user psql -f ${driverdir}/init.sql -U freenas postgres
+        run_user pg_ctl stop -D ${dbdir}
+        ;;
+
+    start)
+        run_user pg_ctl start -w -D ${dbdir}
+        ;;
+
+    stop)
+        run_user pg_ctl stop -D ${dbdir}
+        ;;
+
+    defragment)
+        ;;
+
+    *)
+        echo "Unknown command"
+        exit 1
+        ;;
+esac

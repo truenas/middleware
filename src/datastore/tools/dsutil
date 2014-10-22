@@ -1,0 +1,104 @@
+#!/usr/bin/env python
+from __future__ import print_function
+import argh
+import json
+import sys
+import datastore
+
+DEFAULT_CONFIGFILE = '/conf/middleware.conf'
+ds = None
+
+def init_datastore(filename):
+    global ds
+
+    try:
+        f = open(filename)
+        conf = json.load(f)
+        f.close()
+    except IOError, err:
+        return
+    except ValueError, err:
+        return
+
+    if not 'datastore' in conf:
+        pass
+
+    try:
+        ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
+    except datastore.DatastoreException, err:
+        pass
+
+def json_select(obj, selector=None):
+    result = []
+    if selector is None:
+        return obj
+
+    for path in selector.split(','):
+        ptr = obj
+        path = path.strip()
+
+        for elem in path.split('.'):
+            if not elem in ptr:
+                result.append(None)
+                break
+
+            ptr = ptr[elem]
+
+        result.append(ptr)
+
+    return result
+
+def create(name):
+    try:
+        ds.collection_create(name)
+    except datastore.DatastoreException:
+        print("err")
+
+def list():
+    global ds
+    for coll in ds.collection_list():
+        print(coll)
+
+@argh.arg('--select')
+def get(name, id, select=None):
+    obj = ds.get_by_id(id)
+    if obj is None:
+        print("Object {0} not found in collection {1}".format(id, name), file=sys.stderr)
+        sys.exit(1)
+
+    print(json.dumps(json_select(obj, select)))
+
+def set(name, id, fields):
+    pass
+
+@argh.arg('--select')
+@argh.arg('--sort')
+@argh.arg('--limit', type=int)
+@argh.arg('filter', nargs='*')
+def query(name, filter, select=None, sort=None, limit=None):
+    params = []
+    for i in filter:
+        params.append(i.split())
+
+    for row in ds.query(name, params, sort=sort, limit=limit):
+        print(json.dumps(json_select(row, select)))
+
+def config_list(key, mask=None):
+    pass
+
+def config_get(key):
+    pass
+
+def config_set(key):
+    pass
+
+def main():
+    parser = argh.ArghParser()
+    parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    parser.add_commands([create, list, get, set, query, config_list, config_get, config_set])
+    args = parser.parse_args()
+    init_datastore(args.c)
+    parser.dispatch()
+
+if __name__ == '__main__':
+    main()

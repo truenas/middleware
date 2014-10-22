@@ -1,0 +1,10 @@
+PREFIX ?= /usr/local
+PYTHON ?= python
+
+install:
+	install -d ${PREFIX}/lib/datastore
+	install -d ${PREFIX}/lib/datastore/drivers
+	install tools/dsutil ${PREFIX}/sbin/
+	install etc/datastore ${PREFIX}/etc/rc.d/
+	cp -R drivers/ ${PREFIX}/lib/datastore/drivers/
+	${PYTHON} setup.py install --prefix=${PREFIX}
