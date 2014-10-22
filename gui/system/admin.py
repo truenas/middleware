@@ -279,6 +279,7 @@ class UpdateFAdmin(BaseFreeAdmin):
 
 class VMWarePluginFAdmin(BaseFreeAdmin):
     exclude_fields = (
+        'id',
         'password',
     )
 
