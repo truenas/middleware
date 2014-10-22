@@ -2694,13 +2694,6 @@ class CertificateCreateCSRForm(ModelForm):
 
 class VMWarePluginForm(ModelForm):
 
-    password2 = forms.CharField(
-        max_length=50,
-        label=_('Confirm Password'),
-        widget=forms.widgets.PasswordInput(),
-        required=False,
-    )
-
     class Meta:
         fields = '__all__'
         model = models.VMWarePlugin
@@ -2710,7 +2703,6 @@ class VMWarePluginForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VMWarePluginForm, self).__init__(*args, **kwargs)
-        self.fields['password'].required = False
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
@@ -2721,27 +2713,3 @@ class VMWarePluginForm(ModelForm):
             lambda y: y[0].split('/')[0] in volnames,
             notifier().list_zfs_fsvols().items()
         )
-
-    def clean_password(self):
-        password1 = self.cleaned_data.get('password')
-        if not password1:
-            if self.instance.id:
-                return self.instance.password
-            else:
-                raise forms.ValidationError(_('This field is required.'))
-        return password1
-
-    def clean_password2(self):
-        password1 = self.cleaned_data.get('password')
-        password2 = self.cleaned_data.get('password2')
-        if not password1:
-            return None
-        if password1 == self.instance.password:
-            return None
-        if password1 != password2:
-            raise forms.ValidationError(
-                _("The two password fields didn't match.")
-            )
-        return password2
-VMWarePluginForm.base_fields.keyOrder.remove('password2')
-VMWarePluginForm.base_fields.keyOrder.insert(3, 'password2')
