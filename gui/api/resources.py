@@ -1805,8 +1805,8 @@ class PluginsResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         try:
-            err, errmsg = obj.service_start(request)
-            if err is True:
+            success, errmsg = obj.service_start(request)
+            if success is not True:
                 raise ValueError(errmsg)
         except Exception, e:
             raise ImmediateHttpResponse(
@@ -1823,8 +1823,8 @@ class PluginsResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         try:
-            err, errmsg = obj.service_stop(request)
-            if err is True:
+            success, errmsg = obj.service_stop(request)
+            if success is not True:
                 raise ValueError(errmsg)
         except Exception, e:
             raise ImmediateHttpResponse(
