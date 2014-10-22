@@ -2739,6 +2739,12 @@ class VMWarePluginForm(ModelForm):
                     cdata.get('password'),
                     sock_timeout=7,
                 )
+                ds = server.get_datastores()
+                if not(ds and cdata.get('datastore') in ds.values()):
+                    self._errors['datastore'] = self.error_class([_(
+                        'Datastore not found in the server.'
+                    )])
+                server.disconnect()
             except Exception, e:
                 self._errors['__all__'] = self.error_class([_(
                     'Failed to connect: %s'
