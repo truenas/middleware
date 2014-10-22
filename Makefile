@@ -37,7 +37,7 @@ all:	build
 .endif
 
 build: git-verify
-	@[ `id -u` -ne 0 ] || echo "Sorry, you must be running as root to build this."; exit 1
+	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
 	${ENV_SETUP} build/do_build.sh
@@ -81,7 +81,7 @@ save-build-env:
 
 freenas: release
 release: git-verify
-	@[ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" = "EXTERNAL" ] || echo "You can only run this target from an internal repository."; exit 1
+	@[ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" = "INTERNAL" ] || ( echo "You can only run this target from an internal repository."; exit 2)
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
