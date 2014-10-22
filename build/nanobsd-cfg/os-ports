@@ -44,6 +44,12 @@ add_port freenas/pcbsd-pbi PRODUCT_VERSION=${VERSION} \
 add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
+add_port freenas/freenas-datastore PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
+add_port freenas/freenas-dispatcher PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 if ! is_truenas ; then
 	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
@@ -131,6 +137,15 @@ fi
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
+add_port databases/postgresql93-client
+add_port databases/postgresql93-server
+add_port databases/postgresql93-contrib
+add_port databases/py-psycopg2
+add_port devel/py-gevent
+add_port devel/py-argh
+add_port devel/py-fusepy
+add_port devel/py-texttable
+add_port devel/py-pip
 add_port devel/py-sysctl
 add_port www/py-flup
 add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
