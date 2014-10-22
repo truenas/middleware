@@ -2690,3 +2690,13 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_common'
         ]
         model = models.Certificate
+
+
+class VMWarePluginForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.VMWarePlugin
+        widgets = {
+            'password': forms.widgets.PasswordInput(),
+        }

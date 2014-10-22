@@ -883,3 +883,30 @@ class Certificate(CertificateBase):
 
     class Meta:
         verbose_name = _("Certificate")
+
+
+class VMWarePlugin(Model):
+
+    hostname = models.CharField(
+        verbose_name=_('Hostname'),
+        max_length=200,
+    )
+    username = models.CharField(
+        verbose_name=_('Username'),
+        max_length=200,
+    )
+    password = models.CharField(
+        verbose_name=_('Password'),
+        max_length=200,
+    )
+    filesystem = models.CharField(
+        verbose_name=_('ZFS Filesystem'),
+        max_length=200,
+    )
+    datastore = models.CharField(
+        verbose_name=_('Datastore'),
+        max_length=200,
+    )
+
+    class Meta:
+        verbose_name = _('VMWare Plugin')

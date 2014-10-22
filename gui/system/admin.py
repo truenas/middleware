@@ -277,7 +277,12 @@ class UpdateFAdmin(BaseFreeAdmin):
     resource_mixin = UpdateResourceMixin
 
 
+class VMWarePluginFAdmin(BaseFreeAdmin):
+    pass
+
+
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
 site.register(models.Certificate, CertificateFAdmin)
 site.register(models.Settings, SettingsFAdmin)
 site.register(models.Update, UpdateFAdmin)
+site.register(models.VMWarePlugin, VMWarePluginFAdmin)
