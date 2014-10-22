@@ -1282,14 +1282,14 @@ require([
       var datastore = registry.byId("id_datastore");
       button.set('disabled', true);
 
-      if(!data['hostname'] || !data['username'] || !data['password']) {
+      if(!data['hostname'] || !data['username'] || (!data['password'] && !data['oid'])) {
         if(!data['hostname']) {
           Tooltip.show(gettext("Hostname cannot be blank."), button.domNode);
         }
         if(!data['username']) {
           Tooltip.show(gettext("Username cannot be blank."), button.domNode);
         }
-        if(!data['password']) {
+        if(!data['password'] && !data['oid']) {
           Tooltip.show(gettext("Password cannot be blank."), button.domNode);
         }
         on.once(button.domNode, mouse.leave, function() {
@@ -1301,6 +1301,7 @@ require([
 
       xhr.post(url, {
         data: {
+          oid: data['oid'],
           hostname: data['hostname'],
           username: data['username'],
           password: data['password']

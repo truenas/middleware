@@ -1511,12 +1511,22 @@ def vmwareplugin_datastores(request):
     data = {
         'error': False,
     }
+    if request.POST.get('oid'):
+        vmware = models.VMWarePlugin.objects.get(id=request.POST.get('oid'))
+    else:
+        vmware = None
     try:
+        if request.POST.get('password'):
+            password = request.POST.get('password')
+        elif not request.POST.get('password') and vmware:
+            password = vmware.password
+        else:
+            password = ''
         server = VIServer()
         server.connect(
             request.POST.get('hostname'),
             request.POST.get('username'),
-            request.POST.get('password'),
+            password,
             sock_timeout=7,
         )
         data['value'] = server.get_datastores().values()

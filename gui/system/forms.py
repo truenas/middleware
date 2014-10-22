@@ -2694,6 +2694,11 @@ class CertificateCreateCSRForm(ModelForm):
 
 class VMWarePluginForm(ModelForm):
 
+    oid = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+        required=False,
+    )
+
     class Meta:
         fields = '__all__'
         model = models.VMWarePlugin
@@ -2714,6 +2719,8 @@ class VMWarePluginForm(ModelForm):
             lambda y: y[0].split('/')[0] in volnames,
             notifier().list_zfs_fsvols().items()
         )
+        if self.instance.id:
+            self.fields['oid'].initial = self.instance.id
 
     def clean_password(self):
         password = self.cleaned_data.get('password')
