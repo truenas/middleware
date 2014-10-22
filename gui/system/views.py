@@ -1511,7 +1511,6 @@ def vmwareplugin_datastores(request):
     data = {
         'error': False,
     }
-    log.error("post %r", request.POST)
     try:
         server = VIServer()
         server.connect(
