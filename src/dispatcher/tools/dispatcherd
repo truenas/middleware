@@ -1,0 +1,4 @@
+#!/bin/sh
+PYTHON=/usr/local/bin/python
+LIBDIR=/usr/local/lib/dispatcher/src
+exec $PYTHON $LIBDIR/main.py $*

@@ -1,0 +1,94 @@
+{% extends "bootstrap/base.html" %}
+{% import "nav.html" as nav %}
+{% block title %}System events{% endblock %}
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+        body { margin: 20px; }
+    </style>
+{% endblock %}
+{% block scripts %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+    <script src="/static/engine.io.js"></script>
+    <script src="/static/emitter.js"></script>
+    <script src="/static/middleware.js"></script>
+    <script id="service-template" type="text/x-handlebars-template">
+    {% raw %}
+        <div class="panel-heading"><b>{{service_name}}</b></div>
+        <div class="panel-body">
+            Available methods:
+            <ul>
+            {{#methods}}
+                <li><a href="#" class="method-label" data-fullname="{{../service_name}}.{{this}}">{{this}}</a></li>
+            {{/methods}}
+            </ul>
+        </div>
+    {% endraw %}
+    </script>
+    <script type="text/javascript">
+        var sock = new Middleware("http://marian.oxidev.eu:5000/");
+        var template = Handlebars.compile($("#service-template").html());
+        sock.connect("http://marian.oxidev.eu:5000/");
+
+        $(document).ready(function (){
+            $("#services").on("click", ".method-label", function () {
+                $("#method").val($(this).data("fullname"));
+            });
+
+            $("#call").click(function () {
+                sock.call(
+                    $("#method").val(),
+                    JSON.parse($("#args").val()),
+                    function(result) {
+                        $("#result").val(JSON.stringify(result))
+                    }
+                );
+            });
+
+            sock.on("error", function(err) {
+                alert("Error: " + err.message);
+            });
+
+            sock.on("connected", function() {
+                sock.call("discovery.get_services", null, function (services) {
+                    $.each(services, function(idx, i) {
+                        sock.call("discovery.get_methods", [i], function(methods) {
+                            $("<div/>", {
+                                "class": "panel panel-primary",
+                                style: "width: 40%",
+                                html: template({"service_name": i, "methods": methods})
+                            }).prependTo("#services");
+                        });
+
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ nav.nav() }}
+    <h1>Do a call</h1>
+    <form>
+        <div class="form-group">
+            <label for="method">Method name</label>
+            <input type="text" name="method" id="method" class="form-control"/>
+        </div>
+        <div class="form-group">
+            <label for="method">Args (as JSON array):</label>
+            <textarea class="form-control" id="args" style="font-family:monospace;">[]</textarea>
+        </div>
+       <div class="form-group">
+            <label for="method">Result (JSON encoded):</label>
+            <textarea class="form-control" id="result" style="font-family:monospace;"></textarea>
+        </div>
+        <button type="button" id="call" class="btn btn-default">Submit</button>
+    </form>
+
+    <h1>Available RPC services</h1>
+    <div id="services">
+
+    </div>
+{% endblock %}

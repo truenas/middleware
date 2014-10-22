@@ -1,0 +1,52 @@
+{% extends "bootstrap/base.html" %}
+{% import "nav.html" as nav %}
+{% block title %}System events{% endblock %}
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+        body { margin: 20px; }
+    </style>
+{% endblock %}
+{% block scripts %}
+    <script src="/static/engine.io.js"></script>
+    <script src="/static/emitter.js"></script>
+    <script src="/static/middleware.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+    <script id="event-template" type="text/x-handlebars-template">
+    {% raw %}
+        <div class="panel-heading">New event: <b>{{name}}</b></div>
+        <div class="panel-body">
+            Event data:
+            <pre>{{args}}</pre>
+        </div>
+    {% endraw %}
+    </script>
+    <script type="text/javascript">
+        var template = Handlebars.compile($("#event-template").text());
+        var sock = new Middleware("http://marian.oxidev.eu:5000/");
+        sock.connect("http://marian.oxidev.eu:5000/");
+        sock.on("connected", function() {
+            sock.subscribe("*");
+            sock.on("event", function(data) {
+                ctx = {
+                    name: data.name,
+                    args: JSON.stringify(data.args, undefined, 4)
+                };
+
+                $("<div/>", {
+                    class: "panel panel-primary",
+                    style: "width: 40%",
+                    html: template(ctx)
+                }).prependTo("#events")
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ nav.nav() }}
+    <h1>Events live stream</h1>
+    <div id="events">
+
+    </div>
+{% endblock %}

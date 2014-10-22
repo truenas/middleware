@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: dispatcher
+# REQUIRE: datastore
+
+name="dispatcher"
+command="/usr/local/sbin/dispatcherd"
+pidfile="/var/run/dispatcher.pid"
+
+load_rc_config $name
+run_rc_command $*

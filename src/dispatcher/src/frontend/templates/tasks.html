@@ -1,0 +1,164 @@
+{% extends "bootstrap/base.html" %}
+{% import "nav.html" as nav %}
+{% block title %}System events{% endblock %}
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+        body { margin: 20px; }
+    </style>
+{% endblock %}
+{% block scripts %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+    <script src="/static/engine.io.js"></script>
+    <script src="/static/emitter.js"></script>
+    <script src="/static/middleware.js"></script>
+    <script id="taskclass-template" type="text/x-handlebars-template">
+    {% raw %}
+        <div class="panel-heading"><b>{{task_name}}</b></div>
+        <div class="panel-body">
+
+        </div>
+    {% endraw %}
+    </script>
+    <script id="task-template" type="text/x-handlebars-template">
+    {% raw %}
+            <td>{{id}}</td>
+            <td>{{type}}</td>
+            <td class="status">{{state}}</td>
+            <td>
+                <div class="progress" style="width: 120px;">
+                    <div class="progress-bar" role="progressbar" style="width: 30px; min-width: 30px;">
+                        0%
+                    </div>
+                </div>
+            </td>
+            <td class="message"></td>
+            <td>
+                <button type="button" data-id="{{id}}" class="abort-button btn btn-danger">Abort</button>
+            </td>
+    {% endraw %}
+    </script>
+    <script type="text/javascript">
+        var sock = new Middleware("http://marian.oxidev.eu:5000/");
+        var template_class = Handlebars.compile($("#taskclass-template").html());
+        var template_task = Handlebars.compile($("#task-template").html());
+        sock.connect("http://marian.oxidev.eu:5000/");
+
+        function refresh_tasks()
+        {
+            $("#tasklist tbody").empty();
+
+            sock.call("task.list_active", null, function (tasks) {
+                $.each(tasks, function(idx, i) {
+                    $("<tr/>", {
+                        'data-id': i.id,
+                        'html': template_task(i)
+                    }).appendTo("#tasklist tbody");
+                });
+            });
+
+            sock.call("task.list_failed", null, function (tasks) {
+                $.each(tasks, function(idx, i) {
+                    $("<tr/>", {
+                        'data-id': i.id,
+                        'html': template_task(i)
+                    }).appendTo("#tasklist tbody");
+                });
+            });
+        }
+
+        $(document).ready(function (){
+            $("#services").on("click", ".method-label", function () {
+                $("#method").val($(this).data("fullname"));
+            });
+
+            $("#tasklist").on("click", ".abort-button", function () {
+                sock.call("task.abort", [$(this).data("id")], function () {
+
+                });
+            });
+
+            $("#submit").click(function () {
+                sock.call("task.submit", [$("#task").val()].concat(JSON.parse($("#args").val())), function(result) {
+                    /* empty */
+                });
+            });
+
+            sock.on("error", function(err) {
+                alert("Error: " + err.message);
+            });
+
+            sock.on("event", function(args) {
+                if (args.name == "task.created") {
+                    $("<tr/>", {
+                        'data-id': args.args.id,
+                        'html': template_task(args.args)
+                    }).appendTo("#tasklist tbody");
+                }
+
+                if (args.name == "task.updated") {
+                    var tr = $("#tasklist").find("tr[data-id='" + args.args.id + "']");
+                    tr.find(".status").text(args.args.state);
+                }
+
+                if (args.name == "task.progress") {
+                    var tr = $("#tasklist").find("tr[data-id='" + args.args.id + "']");
+                    tr.find(".progress .progress-bar").css("width", args.args.percentage + "%");
+                    tr.find(".progress .progress-bar").text(args.args.percentage + "%");
+                    tr.find(".message").text(args.args.message);
+                }
+            });
+
+            sock.on("connected", function() {
+                refresh_tasks();
+                sock.subscribe("task.*");
+                sock.call("discovery.get_tasks", null, function (tasks) {
+                    $.each(tasks, function(idx, i) {
+                        $("<div/>", {
+                            "class": "panel panel-primary",
+                            style: "width: 40%",
+                            html: template_class({"task_name": i})
+                        }).prependTo("#tasks");
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ nav.nav() }}
+    <h1>Schedule a task</h1>
+    <form>
+        <div class="form-group">
+            <label for="method">Task class</label>
+            <input type="text" name="method" id="task" class="form-control"/>
+        </div>
+        <div class="form-group">
+            <label for="method">Args (as JSON array):</label>
+            <textarea class="form-control" id="args" style="font-family:monospace;">[]</textarea>
+        </div>
+        <button type="button" id="submit" class="btn btn-default">Submit</button>
+    </form>
+    <h1>Pending tasks</h1>
+    <table class="table" id="tasklist">
+        <thead>
+            <tr>
+                <td>ID</td>
+                <td>Class</td>
+                <td>Status</td>
+                <td>Progress</td>
+                <td>Message</td>
+                <td>Abort</td>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    <h1>Available task classes</h1>
+    <div id="tasks">
+
+    </div>
+{% endblock %}
