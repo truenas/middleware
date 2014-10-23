@@ -32,7 +32,6 @@ import logging
 import os
 import re
 import shutil
-import signal
 import socket
 import subprocess
 import sysctl
@@ -247,14 +246,16 @@ def bootenv_add(request, source=None):
         'source': source,
     })
 
+
 def bootenv_scrub(request):
     if request.method == "POST":
         try:
             notifier().zfs_scrub('freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
         except Exception, e:
-            return JsonResp(request, error=True, message = repr(e))
+            return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
+
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
@@ -750,38 +751,38 @@ def perftest(request):
         )
 
         currdir = os.getcwd()
-	if not os.path.isdir(perftestdir):
-	        os.mkdir(perftestdir)
 
+    if not os.path.isdir(perftestdir):
+        os.mkdir(perftestdir)
         os.chdir(perftestdir)
 
-	os.system('/sbin/mount -t zfs %s %s' % (perftestdataset, perftestdir))
+    os.system('/sbin/mount -t zfs %s %s' % (perftestdataset, perftestdir))
 
-        p1 = subprocess.Popen([
-            '/usr/local/bin/perftests-nas',
-            '-o', perftestdataset.encode('utf8'),
-            '-s', str(PERFTEST_SIZE),
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        p1.communicate()
+    p1 = subprocess.Popen([
+        '/usr/local/bin/perftests-nas',
+        '-o', perftestdataset.encode('utf8'),
+        '-s', str(PERFTEST_SIZE),
+    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p1.communicate()
 
-        os.chdir('..')
+    os.chdir('..')
 
-        p1 = pipeopen('tar -cJf %s perftest' % dump)
-        p1.communicate()
+    p1 = pipeopen('tar -cJf %s perftest' % dump)
+    p1.communicate()
 
-        os.chdir(currdir)
+    os.chdir(currdir)
 
-        os.system('/sbin/umount -f %s' % perftestdataset)
-        os.rmdir(perftestdir)
-        _n.destroy_zfs_dataset(perftestdataset)
+    os.system('/sbin/umount -f %s' % perftestdataset)
+    os.rmdir(perftestdir)
+    _n.destroy_zfs_dataset(perftestdataset)
 
-        return JsonResp(
-            request,
-            message='Performance test has completed.',
-            events=[
-                'window.location=\'%s\'' % reverse('system_perftest_download'),
-            ],
-        )
+    return JsonResp(
+        request,
+        message='Performance test has completed.',
+        events=[
+            'window.location=\'%s\'' % reverse('system_perftest_download'),
+        ],
+    )
 
 
 def perftest_download(request):
@@ -1205,7 +1206,7 @@ def CA_import(request):
     if request.method == "POST":
         form = forms.CertificateAuthorityImportForm(request.POST)
         if form.is_valid():
-            m = form.save()
+            form.save()
             return JsonResp(
                 request,
                 message=_("Certificate Authority successfully imported.")
@@ -1264,7 +1265,7 @@ def CA_edit(request, id):
     if request.method == "POST":
         form = forms.CertificateAuthorityEditForm(request.POST, instance=ca)
         if form.is_valid():
-            m = form.save()
+            form.save()
             return JsonResp(
                 request,
                 message=_("Certificate Authority successfully edited.")
@@ -1277,9 +1278,11 @@ def CA_edit(request, id):
         'form': form
     })
 
+
 def buf_generator(buf):
     for line in buf:
         yield line
+
 
 def CA_export_certificate(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
@@ -1436,8 +1439,8 @@ def certificate_export_privatekey(request, id):
 def certificate_export_certificate_and_privatekey(request, id):
     c = models.Certificate.objects.get(pk=id)
 
-    cert = export_certificate(c.cert_certificate)
-    key = export_privatekey(c.cert_privatekey)
+    export_certificate(c.cert_certificate)
+    export_privatekey(c.cert_privatekey)
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
@@ -1497,13 +1500,13 @@ def certificate_to_json(certtype):
 def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
-    ) 
+    )
 
 
 def certificate_info(request, id):
     return certificate_to_json(
         models.Certificate.objects.get(pk=int(id))
-    ) 
+    )
 
 
 def vmwareplugin_datastores(request):
