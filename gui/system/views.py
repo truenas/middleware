@@ -750,7 +750,7 @@ def perftest(request):
         )
 
         currdir = os.getcwd()
-	if not os.isdir(perftestdir):
+	if not os.path.isdir(perftestdir):
 	        os.mkdir(perftestdir)
 
         os.chdir(perftestdir)
