@@ -25,7 +25,7 @@ class UpdateCheckAlert(BaseAlert):
         if check:
             alerts.append(
                 Alert(
-                    Alert.WARN,
+                    Alert.OK,
                     _(
                         'There is a new update available! Apply it in System '
                         '-> Update tab.'
