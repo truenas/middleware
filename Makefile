@@ -81,7 +81,7 @@ save-build-env:
 
 freenas: release
 release: git-verify
-	@[ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" = "INTERNAL" ] || ( echo "You can only run this target from an internal repository."; exit 2)
+	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
