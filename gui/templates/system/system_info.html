@@ -71,7 +71,7 @@
     </tr>
     <tr>
         <th>{% trans "Build" %}</th>
-        <td>{{ freenas_build }}</td>
+        <td>{{ freenas_build }} {{ builddate|date:"Y-m-d H:i:s" }} GMT</td>
     </tr>
     <tr>
         <th>{% trans "Platform" %}</th>

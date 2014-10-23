@@ -1983,6 +1983,16 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def clean_cert_passphrase(self):
         cdata = self.cleaned_data
 
@@ -2095,6 +2105,16 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERNAL
         cert_info = {
@@ -2206,6 +2226,16 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
+
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.CertificateAuthority.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
@@ -2382,6 +2412,16 @@ class CertificateImportForm(ModelForm):
 
         return passphrase
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
 
@@ -2489,6 +2529,16 @@ class CertificateCreateInternalForm(ModelForm):
             "javascript:certificate_autopopulate();"
         )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_INTERNAL
         cert_info = {
@@ -2593,6 +2643,16 @@ class CertificateCreateCSRForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        return name
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_CSR
         req_info = {
@@ -2630,3 +2690,70 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_common'
         ]
         model = models.Certificate
+
+
+class VMWarePluginForm(ModelForm):
+
+    oid = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.VMWarePlugin
+        widgets = {
+            'password': forms.widgets.PasswordInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(VMWarePluginForm, self).__init__(*args, **kwargs)
+        self.fields['password'].required = False
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        volnames = [
+            o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
+        ]
+        self.fields['filesystem'].choices = filter(
+            lambda y: y[0].split('/')[0] in volnames,
+            notifier().list_zfs_fsvols().items()
+        )
+        if self.instance.id:
+            self.fields['oid'].initial = self.instance.id
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not password:
+            if self.instance.id:
+                return self.instance.password
+            else:
+                raise forms.ValidationError(_('This field is required.'))
+        return password
+
+    def clean(self):
+        from pysphere import VIServer
+        cdata = self.cleaned_data
+        if (
+            cdata.get('hostname') and cdata.get('username') and
+            cdata.get('password')
+        ):
+            try:
+                server = VIServer()
+                server.connect(
+                    cdata.get('hostname'),
+                    cdata.get('username'),
+                    cdata.get('password'),
+                    sock_timeout=7,
+                )
+                ds = server.get_datastores()
+                if not(ds and cdata.get('datastore') in ds.values()):
+                    self._errors['datastore'] = self.error_class([_(
+                        'Datastore not found in the server.'
+                    )])
+                server.disconnect()
+            except Exception, e:
+                self._errors['__all__'] = self.error_class([_(
+                    'Failed to connect: %s'
+                ) % e])
+        return cdata

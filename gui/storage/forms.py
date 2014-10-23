@@ -1572,8 +1572,23 @@ class ZVol_CreateForm(Form):
 
 
 class MountPointAccessForm(Form):
+    mp_user_en = forms.BooleanField(
+        label=_('Apply Owner (user)'),
+        initial=True,
+        required=False,
+    )
     mp_user = UserField(label=_('Owner (user)'))
+    mp_group_en = forms.BooleanField(
+        label=_('Apply Owner (group)'),
+        initial=True,
+        required=False,
+    )
     mp_group = GroupField(label=_('Owner (group)'))
+    mp_mode_en = forms.BooleanField(
+        label=_('Apply Mode'),
+        initial=True,
+        required=False,
+    )
     mp_mode = UnixPermissionField(label=_('Mode'), required=False)
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
@@ -1624,20 +1639,23 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
-        systemdataset, volume, basename = notifier().system_dataset_settings()
 
-        exclude = []
-        if basename:
-            exclude = ['/mnt/%s' % basename]
+        kwargs = {}
+
+        if self.cleaned_data.get('mp_group_en'):
+            kwargs['group'] = self.cleaned_data['mp_group']
+
+        if self.cleaned_data.get('mp_mode_en'):
+            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
+
+        if self.cleaned_data.get('mp_user_en'):
+            kwargs['user'] = self.cleaned_data['mp_user']
 
         notifier().mp_change_permission(
             path=path,
-            exclude=exclude,
-            user=self.cleaned_data['mp_user'],
-            group=self.cleaned_data['mp_group'],
-            mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'],
             acl=self.cleaned_data['mp_acl'],
+            **kwargs
         )
 
 
