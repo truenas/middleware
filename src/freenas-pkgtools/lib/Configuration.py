@@ -56,51 +56,6 @@ def TryOpenFile(path):
     else:
         return f
 
-def TryGetNetworkFile(url, tmp, current_version="1", handler=None):
-    raise Exception("Obsolete")
-    AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
-    try:
-        req = urllib2.Request(url)
-        req.add_header(AVATAR_VERSION, current_version)
-        # Hack for debugging
-        req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
-        furl = urllib2.urlopen(req, timeout=5)
-    except:
-        log.warn("Unable to load %s", url)
-        return None
-    try:
-        totalsize = int(furl.info().getheader('Content-Length').strip())
-    except:
-        totalsize = None
-    chunk_size = 64 * 1024
-    retval = tempfile.TemporaryFile(dir = tmp)
-    read = 0
-    lastpercent = percent = 0
-    lasttime = time.time()
-    while True:
-        data = furl.read(chunk_size)
-        tmptime = time.time()
-        downrate = int(chunk_size / (tmptime - lasttime))
-        lasttime = tmptime
-        if not data:
-            break
-        read += len(data)
-        if handler and totalsize:
-            percent = int((float(read) / float(totalsize)) * 100.0)
-            if percent != lastpercent:
-                handler(
-                   'network',
-                    url,
-                    size=totalsize,
-                    progress=percent,
-                    download_rate=downrate,
-                )
-            lastpercent = percent
-        retval.write(data)
-
-    retval.seek(0)
-    return retval
-
 class PackageDB:
 #    DB_NAME = "var/db/ix/freenas-db"
     DB_NAME = "data/pkgdb/freenas-db"
@@ -436,6 +391,7 @@ class Configuration(object):
         except:
             totalsize = None
         chunk_size = 64 * 1024
+        mbyte = 1024 * 1024
         if pathname:
             retval = open(pathname, "w+b")
         else:
@@ -453,9 +409,12 @@ class Configuration(object):
                     downrate = chunk_size
                 lasttime = tmptime
                 if not data:
+                    log.debug("TryGetNetworkFile(%s):  Read %d bytes total" % (url, read))
                     break
-                log.debug("TryGetNetworkFile(%s):  Read %d bytes" % (url, len(data)))
                 read += len(data)
+                if ((read % mbyte) == 0):
+                    log.debug("TryGetNetworkFile(%s):  Read %d bytes" % (url, read))
+
                 if handler and totalsize:
                     percent = int((float(read) / float(totalsize)) * 100.0)
                     if percent != lastpercent:
