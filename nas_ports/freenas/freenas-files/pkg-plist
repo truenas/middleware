@@ -100,6 +100,7 @@ etc/ix.rc.d/ix-sshd
 etc/ix.rc.d/ix-ssl
 etc/ix.rc.d/ix-sssd
 etc/ix.rc.d/ix-sudoers
+etc/ix.rc.d/ix-swap
 etc/ix.rc.d/ix-syncdisks
 etc/ix.rc.d/ix-sysctl
 etc/ix.rc.d/ix-syslogd

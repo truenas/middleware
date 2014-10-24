@@ -2205,6 +2205,7 @@ class notifier:
 
     def _reload_disk(self):
         self._system("/usr/sbin/service ix-fstab quietstart")
+        self._system("/usr/sbin/service ix-swap quietstart")
         self._system("/usr/sbin/service encswap quietstart")
         self._system("/usr/sbin/service swap1 quietstart")
         self._system("/usr/sbin/service mountlate quietstart")
@@ -4367,10 +4368,17 @@ class notifier:
         else:
             return ''
 
-    def swap_from_diskid(self, diskid):
-        from freenasUI.storage.models import Disk
-        disk = Disk.objects.get(id=diskid)
-        return self.part_type_from_device('swap', disk.devname)
+    def get_allswapdev(self):
+        from freenasUI.storage.models import Volume, Disk
+
+        disks = []
+        for v in Volume.objects.all():
+            disks = disks + v.get_disks()
+
+        result = []
+        for disk in disks:
+            result.append(self.part_type_from_device('swap', disk))
+        return "\n".join(result)
 
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
