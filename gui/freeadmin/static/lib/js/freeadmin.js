@@ -1138,22 +1138,27 @@ require([
     }
 
     webdavprotocolToggle = function() {
-	
-	var select = registry.byId("id_webdav_protocol");
-	var portssl = registry.byId("id_webdav_tcpportssl");
-	var trpossl = portssl.domNode.parentNode.parentNode;
-	var port = registry.byId("id_webdav_tcpport");
-	var trpo = port.domNode.parentNode.parentNode;
-	if (select == 'http') {
-	  domStyle.set(trpo,"display","");
-	  domStyle.set(trpossl,"display","none");
-	} else if (select == 'https') {
-	  domStyle.set(trpo,"display","none");
-	  domStyle.set(trpossl,"display","");
-	} else {
-	  domStyle.set(trpo,"display","");
-	  domStyle.set(trpossl,"display","");
-	}
+
+        var select = registry.byId("id_webdav_protocol");
+        var portssl = registry.byId("id_webdav_tcpportssl");
+        var trpossl = portssl.domNode.parentNode.parentNode;
+        var port = registry.byId("id_webdav_tcpport");
+        var trpo = port.domNode.parentNode.parentNode;
+        var cert = registry.byId("id_webdav_certssl");
+        var trpocert = cert.domNode.parentNode.parentNode;
+        if (select == 'http') {
+            domStyle.set(trpo,"display","");
+            domStyle.set(trpossl,"display","none");
+            domStyle.set(trpocert,"display","none");
+        } else if (select == 'https') {
+            domStyle.set(trpo,"display","none");
+            domStyle.set(trpossl,"display","");
+            domStyle.set(trpocert,"display","");
+        } else {
+            domStyle.set(trpo,"display","");
+            domStyle.set(trpossl,"display","");
+            domStyle.set(trpocert,"display","");
+        }
       
     }
 

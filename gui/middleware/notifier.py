@@ -386,186 +386,22 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
-    # The function below basically recursively changes the user nad group 
-    # ownership of an entire directory. In other words it executes the 
-    # following: chown -r user:group dir/
-    # Please use this function when the depth of directory is small rather
-    # pipeopen and then executing th eshell command.    
-    def _chownrecur(self,path, uid, gid):
-	os.chown(path, uid, gid)
-        for item in os.listdir(path):
-            itempath = os.path.join(path, item)
-            if os.path.isfile(itempath):
-                os.chown(itempath, uid, gid)
-            elif os.path.isdir(itempath):
-                os.chown(itempath, uid, gid)
-                self._chownrecur(itempath, uid, gid)
-    
-    def gen_dav_config(self,*args):
-      
-	[c,conn] = self.__open_db(ret_conn=True)
-	if args:
-	    dav_enabled = args[0]
-	else:
-	  c.execute("select srv_enable from services_services where srv_service='webdav';")
-	  dav_enabled = c.fetchone()
-	  dav_enabled = dav_enabled[0]
-	
-	c.execute("select webdav_htauth from services_webdav;")
-	dav_auth_type=c.fetchone()
-	dav_auth_type=dav_auth_type[0]
-	
-	# Check to see there is a http auth password file if not then create one
-	oscmd="/etc/local/apache24/webdavht%s" % dav_auth_type
-	if not os.path.isfile(oscmd):
-	  dav_passwd=c.execute("select webdav_password from services_webdav;").fetchone()
-	  dav_passwd=dav_passwd[0]
-	  self.dav_passwd_change(dav_passwd,dav_auth_type)
-	
-	# Check to see if there is a webdav lock databse directory, if not create one 
-	# Take care of necessary permissions whilst creating it!
-	oscmd="/etc/local/apache24/var"
-	if not os.path.isdir(oscmd):
-	  os.mkdir(oscmd, 0774)
-	  self._chownrecur(oscmd,pwd.getpwnam("webdav").pw_uid,grp.getgrnam("webdav").gr_gid)
-	
-	# Now, Generating the webdav config file which will be added to apache as a secondary conf file.
-	if dav_enabled:
-	  c.execute("select webdav_tcpport from services_webdav;")
-	  dav_tcpport=c.fetchone()
-	  dav_tcpport=dav_tcpport[0]
-	  c.execute("select webdav_tcpportssl from services_webdav;")
-	  dav_tcpportssl=c.fetchone()
-	  dav_tcpportssl=dav_tcpportssl[0]
-	  c.execute("select webdav_protocol from services_webdav;")
-	  dav_protocol=c.fetchone()
-	  dav_protocol=dav_protocol[0]
-	  c.execute("select * from sharing_webdav_share")
-	  dav_data=c.fetchall()
-	  dav_share_names=[]
-	  dav_share_paths=[]
-	  dav_read_only=[]
-	  dav_perm=[]
-	  dav_auth_text=""
-	  if dav_auth_type == 'digest':
-	      dav_auth_text="AuthDigestProvider file"
-	  
-	  dav_config_pretext = """
-	    DavLockDB "/etc/local/apache24/var/DavLock"
-	    AssignUserId webdav webdav
-	    
-	    <Directory />
-	      AuthType %s
-	      AuthName webdav
-	      AuthUserFile "/etc/local/apache24/webdavht%s"
-	      %s
-	      Require valid-user
-	      
-	      Dav On
-	      AllowOverride None
-	      Order allow,deny
-	      Allow from all
-	      Options Indexes FollowSymLinks
-	    </Directory>\n""" %(dav_auth_type,dav_auth_type,dav_auth_text)
-	  
-	  dav_config_posttext = """
-	    
-	    # The following directives disable redirects on non-GET requests for
-	    # a directory that does not include the trailing slash.  This fixes a 
-	    # problem with several clients that do not appropriately handle 
-	    # redirects for folders with DAV methods.
-	    BrowserMatch "Microsoft Data Access Internet Publishing Provider" redirect-carefully
-	    BrowserMatch "MS FrontPage" redirect-carefully
-	    BrowserMatch "^WebDrive" redirect-carefully
-	    BrowserMatch "^WebDAVFS/1.[01234]" redirect-carefully
-	    BrowserMatch "^gnome-vfs/1.0" redirect-carefully
-	    BrowserMatch "^XML Spy" redirect-carefully
-	    BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
-	    BrowserMatch " Konqueror/4" redirect-carefully
-	  </VirtualHost>""" 
-	   
-	  for i in dav_data:
-	    dav_share_names.append(str(i[1]))
-	    dav_share_paths.append(str(i[3]))
-	    dav_read_only.append(i[4])
-	    dav_perm.append(i[5])
-	  
-	  total_entries=len(dav_data)
-	  if dav_protocol in ['http', 'httphttps']:
-	    if dav_protocol== 'http':
-	      with open('/etc/local/apache24/Includes/webdav-ssl.conf','w') as f2:
-		f2.write("")
-	    with open('/etc/local/apache24/Includes/webdav.conf','w') as f:
-	      f.write(" Listen "+str(dav_tcpport)+"\n")
-	      f.write("\t <VirtualHost *:"+str(dav_tcpport)+">\n") 
-	      f.write(dav_config_pretext)
-
-	      for i in range (0,total_entries):
-		temp_path=""" "%s" """ % dav_share_paths[i]
-		f.write("\t   Alias /"+dav_share_names[i]+temp_path+"\n")
-		f.write("\t   <Directory "+temp_path+">\n")
-		f.write("\t   </Directory>\n")
-		if dav_read_only[i] == 1:
-		  f.write("\t   <Location /"+dav_share_names[i]+">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n")
-	      
-		if dav_perm[i]:
-		  self._pipeopen("chown -R webdav:webdav %s" % dav_share_paths[i])
-	      f.write(dav_config_posttext)
-	  
-	  if dav_protocol in ['https','httphttps']:
-            if  dav_protocol == 'https':
-              with open('/etc/local/apache24/Includes/webdav.conf','w') as f:
-                f.write("")
-	    with open('/etc/local/apache24/Includes/webdav-ssl.conf','w') as f2:
-	      f2.write(" Listen "+str(dav_tcpportssl)+"\n")
-	      f2.write("\t <VirtualHost *:"+str(dav_tcpportssl)+">\n")
-	      f2.write("\t  SSLEngine on\n")
-	      f2.write("\t  SSLCertificateFile /etc/ssl/freenas/nginx/nginx.crt\n")
-	      f2.write("\t  SSLCertificateKeyFile /etc/ssl/freenas/nginx/nginx.key\n")
-	      f2.write("\t  SSLProtocol all\n\t  SSLCipherSuite HIGH:MEDIUM\n")
-	      f2.write(dav_config_pretext)
-	      
-	      for i in range (0,total_entries):
-		temp_path=""" "%s" """ % dav_share_paths[i]
-		f2.write("\t   Alias /"+dav_share_names[i]+temp_path+"\n")
-		f2.write("\t   <Directory "+temp_path+">\n")
-		f2.write("\t   </Directory>\n")
-		if dav_read_only[i] == 1:
-		  f2.write("\t   <Location /"+dav_share_names[i]+">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n")  
-		if (dav_perm[i] and dav_protocol=='https'):
-		  self._pipeopen("chown -R webdav:webdav %s" % dav_share_paths[i])
-	      f2.write(dav_config_posttext)
-	else:
-	  with open('/etc/local/apache24/Includes/webdav.conf','w') as f, open('/etc/local/apache24/Includes/webdav-ssl.conf','w') as f2:
-	    f.write("") # Basically write a blank file if webdav service is turned off
-	    f2.write("")
-     
-	conn.close()
-    
-    def dav_passwd_change(self,passwd,auth_type):
-	if auth_type == 'basic':
-	  cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b /etc/local/apache24/webdavhtbasic webdav %s" % passwd
-	else:
-	  cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /etc/local/apache24/webdavhtdigest""" % passwd
-	self._pipeopen(cmd)
-	self._pipeopen("chown webdav:webdav /etc/local/apache24/webdavht%s" % (auth_type,))
 
     def _start_webdav(self):
-	self.gen_dav_config()
-	self._system("/usr/sbin/service apache24 start")
-    
+        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service apache24 start")
+
     def _stop_webdav(self):
-	self.gen_dav_config()
-	self._system("/usr/sbin/service apache24 stop")
+        self._system("/usr/sbin/service apache24 stop")
 
     def _restart_webdav(self):
-	self.gen_dav_config()
-	self._system("/usr/sbin/service apache24 forcestop")
-	self._system("/usr/sbin/service apache24 restart")
+        self._system("/usr/sbin/service apache24 forcestop")
+        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service apache24 restart")
 
     def _reload_webdav(self):
-	self.gen_dav_config()
-	self._system("/usr/sbin/service apache24 reload")
+        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service apache24 reload")
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
