@@ -315,7 +315,7 @@ class Manifest(object):
         return
 
     def SignWithKey(self, key_data):
-        if key is None:
+        if key_data is None:
             # We'll cheat, and say this means "get rid of the signature"
             self._signature = None
         else:
