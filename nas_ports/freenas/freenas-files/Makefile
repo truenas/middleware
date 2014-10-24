@@ -182,6 +182,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sshd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sshd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ssl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ssl
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sssd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sssd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-swap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-swap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sudoers ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sudoers
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syncdisks ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syncdisks
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sysctl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sysctl

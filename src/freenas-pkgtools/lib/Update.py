@@ -325,6 +325,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     # environment.  (If the caller wants to install into the
     # current boot environment, set root = "" or "/".)
     clone_name = None
+    mount_point = None
     try:
         if root is None:
             # We clone the existing boot environment to

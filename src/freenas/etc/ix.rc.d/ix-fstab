@@ -67,22 +67,6 @@ generate_fstab_real()
 	done
 }
 
-generate_fstab_swap()
-{
-	local IFS=\|
-	local encrypted_swap swap_suffix
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM storage_disk WHERE disk_enabled = 1" | \
-	while read diskid; do
-        devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py swap_from_diskid "${diskid}")
-        if [ -c "/dev/${devname}" ]; then
-       	    echo "/dev/${devname}.eli	none			swap		sw		0	0"
-	    if [ ! -L /dev/dumpdev ]; then
-		/sbin/dumpon /dev/${devname} && ln -sf /dev/${devname} /dev/dumpdev
-	    fi
-        fi 
-	done
-}
-
 generate_fstab()
 {
 	local _doumount=0
@@ -93,7 +77,6 @@ generate_fstab()
 	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
-	generate_fstab_swap >> /etc/fstab
 	if [ "${_doumount}" -eq 1 ]; then
 		if savecore -C /dev/dumpdev > /dev/null; then
 			savecore ${savecore_flags} ${dumpdir} /dev/dumpdev
