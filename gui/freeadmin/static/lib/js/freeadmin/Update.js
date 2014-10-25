@@ -184,7 +184,7 @@ define([
         },
         loadingMessage: gettext("Loading..."),
         noDataMessage: gettext("No pending updates have been found."),
-        className: "dgrid-wizardshare"
+        className: "dgrid-update"
       }, me.dapUpdateGrid);
 
       on(me._updatesGrid, "dgrid-refresh-complete", function(e) {

@@ -47,6 +47,7 @@ usr/local/libexec/nas/generate_resolv_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
 usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
+usr/local/libexec/nas/generate_webdav_conf.py
 usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash

@@ -255,7 +255,7 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
-            'webdav': ('httpd','/var/run/httpd.pid'),
+            'webdav': ('httpd',None),
         }
 
     def _started_notify(self, verb, what):
@@ -388,7 +388,7 @@ class notifier:
             self.start(what)
 
     def _start_webdav(self):
-        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service ix-apache onestart")
         self._system("/usr/sbin/service apache24 start")
 
     def _stop_webdav(self):
@@ -396,11 +396,11 @@ class notifier:
 
     def _restart_webdav(self):
         self._system("/usr/sbin/service apache24 forcestop")
-        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service ix-apache onestart")
         self._system("/usr/sbin/service apache24 restart")
 
     def _reload_webdav(self):
-        self._system("/usr/sbin/service ix-apache quietstart")
+        self._system("/usr/sbin/service ix-apache onestart")
         self._system("/usr/sbin/service apache24 reload")
 
     def _start_webshell(self):

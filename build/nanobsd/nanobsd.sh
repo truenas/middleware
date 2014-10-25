@@ -193,10 +193,9 @@ rm -rf ${NANO_OBJ}/_.packages
 mkdir -p ${NANO_OBJ}/_.packages/Packages
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools obj
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools all
-make -C ${AVATAR_ROOT}/src/freenas-pkgtools install BINDIR=${TOOLDIR}/usr/local/bin \
-    LIBDIR=${TOOLDIR}/usr/local/lib/freenasOS
-make -C ${AVATAR_ROOT}/src/freenas-pkgtools package BINDIR=${TOOLDIR}/usr/local/bin \
-    LIBDIR=${TOOLDIR}/usr/local/lib/freenasOS PACKAGE_DIR=${NANO_OBJ}/_.packages/Packages
+make -C ${AVATAR_ROOT}/src/freenas-pkgtools install DESTDIR=${TOOLDIR} PREFIX=/usr/local
+make -C ${AVATAR_ROOT}/src/freenas-pkgtools package DESTDIR=${TOOLDIR} PREFIX=/usr/local \
+    PACKAGE_DIR=${NANO_OBJ}/_.packages/Packages
 # Now we should have some package tools and even a package.
 if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
     # base-os first
