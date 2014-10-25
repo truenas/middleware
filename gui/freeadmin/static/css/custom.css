@@ -1409,6 +1409,10 @@ table.layoutTable > tr:first-child > td {
     height: 100px !important;
 }
 
+.dgrid-update {
+    height: 150px !important;
+}
+
 table.update > tbody > tr > td {
     padding: 5px;
 }
