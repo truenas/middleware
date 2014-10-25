@@ -12,6 +12,9 @@ log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
+CA_CERTS_FILE = "/etc/certs/ix-CA.pem"
+PUB_CERT_FILE = "/etc/certs/%s.pem" % Avatar()
+
 # The keys are as follows:
 # SEQUENCE_KEY:  A string, uniquely identifying this manifest.
 # PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.
@@ -106,10 +109,12 @@ class Manifest(object):
     _scheme = SCHEME_V1
     _notice = None
     _switch = None
+    _ignoreSignature = False
 
-    def __init__(self, configuration = None):
+    def __init__(self, configuration = None, ignore_signature = False):
         if configuration is None:
             self._config = Configuration.Configuration()
+        self._ignoreSignature = ignore_signature
         return
 
     def dict(self):
@@ -209,13 +214,9 @@ class Manifest(object):
         if self._packages is None or len(self._packages) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
         if self._signature is not None:
-            temp = self.dict()
-            if SIGNATURE_KEY in temp:  temp.pop(SIGNATURE_KEY)
-            tstr = MakeString(temp)
-            # This needs to do something real with signatures
-            thash = hashlib.sha256(tstr).hexdigest()
-            if thash != self._signature:
-                raise ChecksumFailException
+            if not self.VerifySignature():
+                if not self._ignoreSignature:
+                    raise ChecksumFailException
         return True
 
     def Notice(self):
@@ -305,6 +306,56 @@ class Manifest(object):
         return
 
     def VerifySignature(self):
+        if self.Signature() is None:
+            return True
+        # Probably need a way to ignore the signature
+        else:
+            from . import ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER
+            from . import SIGNATURE_FAILURE
+            import subprocess
+            import tempfile
+
+            if not os.path.isfile(ROOT_CA_FILE) or \
+               not os.path.isfile(UPDATE_CERT_FILE) or \
+               not os.path.isfile(VERIFIER_HELPER):
+                log.debug("VerifySignature:  Cannot find a required file")
+                return True
+
+            tdata = None
+            verify_cmd = [VERIFIER_HELPER,
+                          "-K", UPDATE_CERT_FILE,
+                          "-C", ROOT_CA_FILE,
+                          "-S", self.Signature()]
+            log.debug("Verify command = %s" % verify_cmd)
+
+            temp = self.dict()
+            if SIGNATURE_KEY in temp:  temp.pop(SIGNATURE_KEY)
+            canonical = MakeString(temp)
+            if len(canonical) < 10 * 1024:
+                # I think we can have 10k arguments in freebsd
+                verify_cmd.append(canonical)
+            else:
+                tdata = tempfile.NamedTemporaryFile()
+                tdata.write(canonical)
+                verify_cmd.extend(["-D", tdata.name])
+            
+            rv = False
+            try:
+                subprocess.check_call(verify_cmd)
+                log.debug("Signature check succeeded")
+                rv = True
+            except CallProcessError as e:
+                rv = False
+                log.error("Signature check failed, exit value %d" % e.returncode)
+
+            if tdata:
+                tdata.close()
+                os.remove(tdata.name)
+
+            if SIGNATURE_FAILURE is True:
+                return rv
+            else:
+                return True
         return False
 
     def Signature(self):

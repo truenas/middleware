@@ -1,7 +1,6 @@
 .include <bsd.own.mk>
 
-LIBDIR=	/usr/local/lib/freenasOS
-
+LIBDIR=	${PREFIX}/lib/freenasOS
 FILESDIR= ${LIBDIR}
 
 FILES=	Configuration.py \

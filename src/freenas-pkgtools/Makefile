@@ -3,7 +3,6 @@
 .include "Makefile.inc"
 
 SUBDIR= create_manifest \
-	create_manifest \
 	create_package \
 	diff_packages \
 	freenas-install \
@@ -11,7 +10,9 @@ SUBDIR= create_manifest \
 	manifest_util \
 	pkgify \
 	freenas-update \
-	freenas-release
+	freenas-release \
+	verify_signature \
+	certificates
 
 beforeinstall:
 	${INSTALL} -d ${DESTDIR}${BINDIR}
@@ -25,8 +26,10 @@ PORTREVISION=	1
 CATEGORIES= sysutils
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	FreeNAS package tools
-LIB_DEPENDS=	libsqlite3.so:${PORTSDIR}/databases/sqlite3
+LIB_DEPENDS=	libsqlite3.so:${PORTSDIR}/databases/sqlite3 \
+		libopenssl.so libcrypto.so
 USE_PYTHON=     yes
+USE_OPENSSL=	yes
 
 .ORDER:	install package
 
