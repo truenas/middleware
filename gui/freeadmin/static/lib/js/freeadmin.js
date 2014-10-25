@@ -1146,11 +1146,11 @@ require([
         var trpo = port.domNode.parentNode.parentNode;
         var cert = registry.byId("id_webdav_certssl");
         var trpocert = cert.domNode.parentNode.parentNode;
-        if (select == 'http') {
+        if (select.get('value') == 'http') {
             domStyle.set(trpo,"display","");
             domStyle.set(trpossl,"display","none");
             domStyle.set(trpocert,"display","none");
-        } else if (select == 'https') {
+        } else if (select.get('value') == 'https') {
             domStyle.set(trpo,"display","none");
             domStyle.set(trpossl,"display","");
             domStyle.set(trpocert,"display","");

@@ -2,6 +2,9 @@
 
 import os
 import sys
+import pwd
+import grp
+
 from subprocess import Popen, PIPE
 import logging
 log = logging.getLogger('generate_webdav_config')
@@ -107,7 +110,7 @@ def main():
     oscmd="/etc/local/apache24/var"
     if not os.path.isdir(oscmd):
         os.mkdir(oscmd, 0774)
-        _chownrecur(oscmd,pwd.getpwnam("webdav").pw_uid,grp.getgrnam("webdav").gr_gid)
+    _chownrecur(oscmd,pwd.getpwnam("webdav").pw_uid,grp.getgrnam("webdav").gr_gid)
 
     # Now getting to the actual webdav share details and all
     webshares = WebDAV_Share.objects.all()
