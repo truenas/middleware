@@ -547,5 +547,8 @@ main(int ac, char **av)
 	EVP_cleanup();
 	ERR_free_strings();
 
-	return (retval == 1);
+	if (retvall == 1)
+		exit(0);
+	else
+		exit(1);
 }
