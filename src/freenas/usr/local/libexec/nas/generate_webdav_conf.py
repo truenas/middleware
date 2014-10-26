@@ -60,8 +60,9 @@ def main():
     dav_protocol = webby.webdav_protocol
     dav_auth_type = webby.webdav_htauth
     dav_passwd = webby.webdav_password
-    dav_ssl_certfile = webby.webdav_certssl.cert_certificate_path
-    dav_ssl_keyfile = webby.webdav_certssl.cert_privatekey_path
+    if dav_protocol != 'http':
+        dav_ssl_certfile = webby.webdav_certssl.cert_certificate_path
+        dav_ssl_keyfile = webby.webdav_certssl.cert_privatekey_path
 
     # Declaring the config file locations as well as making some
     # generic config-text blocks
