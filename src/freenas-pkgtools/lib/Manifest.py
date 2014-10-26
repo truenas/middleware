@@ -344,7 +344,7 @@ class Manifest(object):
                 subprocess.check_call(verify_cmd)
                 log.debug("Signature check succeeded")
                 rv = True
-            except CallProcessError as e:
+            except subprocess.CalledProcessError as e:
                 rv = False
                 log.error("Signature check failed, exit value %d" % e.returncode)
 
