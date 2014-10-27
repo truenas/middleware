@@ -1805,7 +1805,9 @@ class PluginsResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         try:
-            obj.service_start(request)
+            success, errmsg = obj.service_start(request)
+            if success is not True:
+                raise ValueError(errmsg)
         except Exception, e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
@@ -1821,7 +1823,9 @@ class PluginsResourceMixin(NestedMixin):
         bundle, obj = self._get_parent(request, kwargs)
 
         try:
-            obj.service_stop(request)
+            success, errmsg = obj.service_stop(request)
+            if success is not True:
+                raise ValueError(errmsg)
         except Exception, e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
@@ -2292,7 +2296,7 @@ class BootEnvResource(NestedMixin, DojoResource):
     name = fields.CharField(attribute='name')
     active = fields.CharField(attribute='active')
     space = fields.CharField(attribute='space')
-    created = fields.DateTimeField(attribute='created')
+    created = fields.CharField(attribute='created')
 
     class Meta:
         object_class = BootEnv

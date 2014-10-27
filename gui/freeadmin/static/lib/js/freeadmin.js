@@ -52,6 +52,7 @@ require([
     "dojo/request/iframe",
     "dojo/request/xhr",
     "dojo/rpc/JsonService",
+    "dojo/store/Memory",
     "dojo/NodeList-traverse",
     "dojo/NodeList-manipulate",
     "freeadmin/tree/Tree",
@@ -70,6 +71,7 @@ require([
     "dijit/_base/manager",
     "dijit/form/Button",
     "dijit/form/CheckBox",
+    "dijit/form/ComboBox",
     "dijit/form/FilteringSelect",
     "dijit/form/Form",
     "dijit/form/MultiSelect",
@@ -128,6 +130,7 @@ require([
     iframe,
     xhr,
     JsonService,
+    Memory,
     NodeListTraverse,
     NodeListManipulate,
     Tree,
@@ -146,6 +149,7 @@ require([
     manager,
     Button,
     CheckBox,
+    ComboBox,
     FilteringSelect,
     Form,
     MultiSelect,
@@ -1134,22 +1138,27 @@ require([
     }
 
     webdavprotocolToggle = function() {
-	
-	var select = registry.byId("id_webdav_protocol");
-	var portssl = registry.byId("id_webdav_tcpportssl");
-	var trpossl = portssl.domNode.parentNode.parentNode;
-	var port = registry.byId("id_webdav_tcpport");
-	var trpo = port.domNode.parentNode.parentNode;
-	if (select == 'http') {
-	  domStyle.set(trpo,"display","");
-	  domStyle.set(trpossl,"display","none");
-	} else if (select == 'https') {
-	  domStyle.set(trpo,"display","none");
-	  domStyle.set(trpossl,"display","");
-	} else {
-	  domStyle.set(trpo,"display","");
-	  domStyle.set(trpossl,"display","");
-	}
+
+        var select = registry.byId("id_webdav_protocol");
+        var portssl = registry.byId("id_webdav_tcpportssl");
+        var trpossl = portssl.domNode.parentNode.parentNode;
+        var port = registry.byId("id_webdav_tcpport");
+        var trpo = port.domNode.parentNode.parentNode;
+        var cert = registry.byId("id_webdav_certssl");
+        var trpocert = cert.domNode.parentNode.parentNode;
+        if (select.get('value') == 'http') {
+            domStyle.set(trpo,"display","");
+            domStyle.set(trpossl,"display","none");
+            domStyle.set(trpocert,"display","none");
+        } else if (select.get('value') == 'https') {
+            domStyle.set(trpo,"display","none");
+            domStyle.set(trpossl,"display","");
+            domStyle.set(trpocert,"display","");
+        } else {
+            domStyle.set(trpo,"display","");
+            domStyle.set(trpossl,"display","");
+            domStyle.set(trpocert,"display","");
+        }
       
     }
 
@@ -1271,6 +1280,65 @@ require([
             }
         });
     };
+
+    vmwareDatastores = function(url, button) {
+      var form = getForm(button);
+      var data = form.get('value')
+      var datastore = registry.byId("id_datastore");
+      button.set('disabled', true);
+
+      if(!data['hostname'] || !data['username'] || (!data['password'] && !data['oid'])) {
+        if(!data['hostname']) {
+          Tooltip.show(gettext("Hostname cannot be blank."), button.domNode);
+        }
+        if(!data['username']) {
+          Tooltip.show(gettext("Username cannot be blank."), button.domNode);
+        }
+        if(!data['password'] && !data['oid']) {
+          Tooltip.show(gettext("Password cannot be blank."), button.domNode);
+        }
+        on.once(button.domNode, mouse.leave, function() {
+          Tooltip.hide(button.domNode);
+        });
+        button.set('disabled', false);
+        return;
+      }
+
+      xhr.post(url, {
+        data: {
+          oid: data['oid'],
+          hostname: data['hostname'],
+          username: data['username'],
+          password: data['password']
+        },
+        handleAs: "json",
+        headers: {"X-CSRFToken": CSRFToken}
+      }).then(function(data) {
+        if(!data.error) {
+           var tempdata = [];
+           for(var i=0;i<data.value.length;i++) {
+               tempdata.push({name: data.value[i], id: data.value[i]});
+           }
+           var memory = new Memory({data: tempdata});
+           var combo = new ComboBox({
+             store: memory,
+             name: 'datastore'
+           }, datastore.domNode);
+           combo.startup();
+           combo.toggleDropDown();
+        } else {
+          Tooltip.show(data.errmsg, button.domNode);
+          on.once(button.domNode, mouse.leave, function() {
+            Tooltip.hide(button.domNode);
+          });
+        }
+        button.set('disabled', false);
+
+      }, function(err) {
+         console.log("error", err);
+         button.set('disabled', false);
+      });
+    }
 
     setMessage = function(msg, css) {
 

@@ -48,7 +48,8 @@ LoadModule dir_module libexec/apache24/mod_dir.so
 
 # Third party modules
 IncludeOptional etc/apache24/modules.d/[0-9][0-9][0-9]_*.conf
- 
+ServerName localhost
+
 <IfModule unixd_module>
 User www
 Group www
@@ -148,7 +149,24 @@ __EOF__
 
 generate_webdav_conf ()
 {
-    /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py gen_dav_config
+    # First check if the webdav service is enabled or not.
+    # We do this here as executing a django query just for this one value
+    # would be expensive.
+    ison=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'webdav'")
+    if [ ${ison} -eq 0 ]; then
+        # webdav is disabled, we now write blanks to the webdav config files
+        echo "" > /etc/local/apache24/Includes/webdav.conf
+        echo "" > /etc/local/apache24/Includes/webdav-ssl.conf
+        # Note: This (below) is a hack. We bind apache to some random port when webdav shares are absent
+        # The purpose of this is to facilitate apache to run even in the absence of a secondary config
+        # file. Else, it will try to bind to port 80 and fail as nginx is using it and thus spit out a
+        # mesaage stating that unable to bind to port, cannot create logs.
+        echo "Listen 8080" > /etc/local/apache24/httpd.conf
+    elif [ ${ison} -eq 1 ]; then
+        # The service is enabled so call its python-based config generator
+        /usr/local/bin/python /usr/local/libexec/nas/generate_webdav_conf.py
+    fi
+
 }
 
 ix_apache_start()

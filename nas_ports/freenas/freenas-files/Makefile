@@ -126,6 +126,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_smb4_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_smb4_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ssl_certificates.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ssl_certificates.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_sssd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_sssd_conf.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_webdav_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_webdav_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/register_mdns.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/register_mdns.py
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
@@ -182,6 +183,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sshd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sshd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ssl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ssl
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sssd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sssd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-swap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-swap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sudoers ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sudoers
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syncdisks ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syncdisks
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sysctl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sysctl

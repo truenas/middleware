@@ -72,7 +72,7 @@ generate_crontab()
 		local r1 r2
 		r1=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%60))
 		r2=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%4+1))
-		echo "${r1}	${r2}	*	*	*	root	/usr/local/bin/freenas-update -C /var/db/system/update -T ${train} check" >> /etc/crontab
+		echo "${r1}	${r2}	*	*	*	root	/usr/local/bin/freenas-update -C /var/db/system/update -T ${train} check > /dev/null 2>&1" >> /etc/crontab
 	fi
 
 	# Ugly and dirty custom crontab scripts

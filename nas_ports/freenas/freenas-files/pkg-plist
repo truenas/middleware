@@ -47,6 +47,7 @@ usr/local/libexec/nas/generate_resolv_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py
 usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
+usr/local/libexec/nas/generate_webdav_conf.py
 usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
@@ -100,6 +101,7 @@ etc/ix.rc.d/ix-sshd
 etc/ix.rc.d/ix-ssl
 etc/ix.rc.d/ix-sssd
 etc/ix.rc.d/ix-sudoers
+etc/ix.rc.d/ix-swap
 etc/ix.rc.d/ix-syncdisks
 etc/ix.rc.d/ix-sysctl
 etc/ix.rc.d/ix-syslogd

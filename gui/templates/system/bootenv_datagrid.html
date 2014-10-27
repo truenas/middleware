@@ -18,7 +18,7 @@
     </div>
     {% if bootme %}
       <div class="gridAdd left" style="padding-left: 10px">
-        <strong>{% trans "Boot Voume Condition" %}: {{ stats.0 }} {{ stats.1 }}</strong><br />
+        <strong>{% trans "Boot Volume Condition" %}: {{ stats.0 }} {{ stats.1 }}</strong><br />
           {% if bootme.scrub.status == "IN_PROGRESS" %}
             <p style="padding: 3px;">{% trans "Scrub Status" %}: {{ bootme.scrub.status_verbose }}</p>
             <p style="padding: 3px;">

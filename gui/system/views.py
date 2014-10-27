@@ -25,13 +25,13 @@
 #
 #####################################################################
 from collections import OrderedDict
+from datetime import datetime
 import cPickle as pickle
 import json
 import logging
 import os
 import re
 import shutil
-import signal
 import socket
 import subprocess
 import sysctl
@@ -66,6 +66,7 @@ from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
+    get_sw_login_version,
     send_mail
 )
 from freenasUI.common.pipesubr import pipeopen
@@ -107,12 +108,17 @@ def _system_info(request=None):
     )
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
-    freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
     try:
-        with open(VERSION_FILE) as d:
-            freenas_build = d.read()
+        freenas_build = '%s %s' % (get_sw_name(), get_sw_login_version())
     except:
-        pass
+        freenas_build = "Unrecognized build"
+
+    try:
+        conf = Configuration.Configuration()
+        manifest = conf.SystemManifest()
+        builddate = datetime.utcfromtimestamp(int(manifest.Sequence()))
+    except:
+        builddate = None
 
     return {
         'hostname': hostname,
@@ -122,6 +128,7 @@ def _system_info(request=None):
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
+        'builddate': builddate,
     }
 
 
@@ -239,14 +246,16 @@ def bootenv_add(request, source=None):
         'source': source,
     })
 
+
 def bootenv_scrub(request):
     if request.method == "POST":
         try:
             notifier().zfs_scrub('freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
         except Exception, e:
-            return JsonResp(request, error=True, message = repr(e))
+            return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
+
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
@@ -722,10 +731,11 @@ def perftest(request):
             _('System dataset is required to perform this action.')
         )
 
-    dump = '/mnt/%s/perftest.txz' % basename
+    dump = os.path.join(notifier().system_dataset_path(), 'perftest.txz')
     perftestdataset = '%s/perftest' % basename
+    perftestdir = os.path.join(notifier().system_dataset_path(), 'perftest')
 
-    with mntlock(mntpt='/mnt/%s' % basename):
+    with mntlock(mntpt=notifier().system_dataset_path()):
 
         _n = notifier()
 
@@ -734,37 +744,45 @@ def perftest(request):
             props={
                 'primarycache': 'metadata',
                 'secondarycache': 'metadata',
+                'mountpoint': 'legacy',
                 'compression': 'off',
             },
             _restart_collectd=False,
         )
 
         currdir = os.getcwd()
-        os.chdir('/mnt/%s' % perftestdataset)
 
-        p1 = subprocess.Popen([
-            '/usr/local/bin/perftests-nas',
-            '-o', ('/mnt/%s' % perftestdataset).encode('utf8'),
-            '-s', str(PERFTEST_SIZE),
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        p1.communicate()
+    if not os.path.isdir(perftestdir):
+        os.mkdir(perftestdir)
+        os.chdir(perftestdir)
 
-        os.chdir('..')
+    os.system('/sbin/mount -t zfs %s %s' % (perftestdataset, perftestdir))
 
-        p1 = pipeopen('tar -cJf %s perftest' % dump)
-        p1.communicate()
+    p1 = subprocess.Popen([
+        '/usr/local/bin/perftests-nas',
+        '-o', perftestdataset.encode('utf8'),
+        '-s', str(PERFTEST_SIZE),
+    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p1.communicate()
 
-        os.chdir(currdir)
+    os.chdir('..')
 
-        _n.destroy_zfs_dataset(perftestdataset)
+    p1 = pipeopen('tar -cJf %s perftest' % dump)
+    p1.communicate()
 
-        return JsonResp(
-            request,
-            message='Performance test has completed.',
-            events=[
-                'window.location=\'%s\'' % reverse('system_perftest_download'),
-            ],
-        )
+    os.chdir(currdir)
+
+    os.system('/sbin/umount -f %s' % perftestdataset)
+    os.rmdir(perftestdir)
+    _n.destroy_zfs_dataset(perftestdataset)
+
+    return JsonResp(
+        request,
+        message='Performance test has completed.',
+        events=[
+            'window.location=\'%s\'' % reverse('system_perftest_download'),
+        ],
+    )
 
 
 def perftest_download(request):
@@ -787,8 +805,11 @@ def perftest_download(request):
 
 
 def perftest_progress(request):
-    systemdataset, volume, basename = notifier().system_dataset_settings()
-    progressfile = '/mnt/%s/perftest/.progress' % basename
+    progressfile = os.path.join(
+        notifier().system_dataset_path(),
+        'perftest',
+        '.progress'
+    )
 
     data = ''
     try:
@@ -841,13 +862,10 @@ def debug(request):
     zfs = zfs.split()
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
-    systemdataset, volume, basename = notifier().system_dataset_settings()
-    if basename:
-        mntpoint = '/mnt/%s' % basename
-        if os.path.exists(mntpoint):
-            direc = '%s/ixdiagnose' % mntpoint
-            mntpt = mntpoint
-    dump = "%s/ixdiagnose.tgz" % direc
+    if notifier().system_dataset_path() is not None:
+        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
+        mntpt = notifier().system_dataset_path()
+    dump = os.path.join(direc, 'ixdiagnose.tgz')
 
     with mntlock(mntpt=mntpt):
 
@@ -1108,7 +1126,11 @@ def update_check(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
-        handler = UpdateHandler(uuid=uuid)
+        if request.POST.get('apply') == '1':
+            apply_ = True
+        else:
+            apply_ = False
+        handler = UpdateHandler(uuid=uuid, apply_=apply_)
         if not uuid:
             #FIXME: ugly
             pid = os.fork()
@@ -1121,13 +1143,23 @@ def update_check(request):
                 if not path:
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
-                    DownloadUpdate(
-                        updateobj.get_train(),
-                        '%s/update' % path,
-                        check_handler=handler.get_handler,
-                        get_handler=handler.get_file_handler,
-                    )
+                    if handler.apply:
+                        Update(
+                            train=updateobj.get_train(),
+                            get_handler=handler.get_handler,
+                            install_handler=handler.install_handler,
+                            cache_dir='%s/update' % path,
+                        )
+                    else:
+                        DownloadUpdate(
+                            updateobj.get_train(),
+                            '%s/update' % path,
+                            check_handler=handler.get_handler,
+                            get_handler=handler.get_file_handler,
+                        )
                 except Exception, e:
+                    from freenasUI.common.log import log_traceback
+                    log_traceback(log=log)
                     handler.error = unicode(e)
                 handler.finished = True
                 handler.dump()
@@ -1138,10 +1170,14 @@ def update_check(request):
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
-            return JsonResp(
-                request,
-                message=_('Packages downloaded'),
-            )
+            if handler.apply:
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
+            else:
+                return JsonResp(
+                    request,
+                    message=_('Packages downloaded'),
+                )
     else:
         handler = CheckUpdateHandler()
         try:
@@ -1170,7 +1206,7 @@ def CA_import(request):
     if request.method == "POST":
         form = forms.CertificateAuthorityImportForm(request.POST)
         if form.is_valid():
-            m = form.save()
+            form.save()
             return JsonResp(
                 request,
                 message=_("Certificate Authority successfully imported.")
@@ -1229,7 +1265,7 @@ def CA_edit(request, id):
     if request.method == "POST":
         form = forms.CertificateAuthorityEditForm(request.POST, instance=ca)
         if form.is_valid():
-            m = form.save()
+            form.save()
             return JsonResp(
                 request,
                 message=_("Certificate Authority successfully edited.")
@@ -1242,9 +1278,11 @@ def CA_edit(request, id):
         'form': form
     })
 
+
 def buf_generator(buf):
     for line in buf:
         yield line
+
 
 def CA_export_certificate(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
@@ -1401,8 +1439,8 @@ def certificate_export_privatekey(request, id):
 def certificate_export_certificate_and_privatekey(request, id):
     c = models.Certificate.objects.get(pk=id)
 
-    cert = export_certificate(c.cert_certificate)
-    key = export_privatekey(c.cert_privatekey)
+    export_certificate(c.cert_certificate)
+    export_privatekey(c.cert_privatekey)
 
     response = StreamingHttpResponse(
         buf_generator(combined), content_type='application/octet-stream'
@@ -1462,10 +1500,44 @@ def certificate_to_json(certtype):
 def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
-    ) 
+    )
 
 
 def certificate_info(request, id):
     return certificate_to_json(
         models.Certificate.objects.get(pk=int(id))
-    ) 
+    )
+
+
+def vmwareplugin_datastores(request):
+    from pysphere import VIServer
+    data = {
+        'error': False,
+    }
+    if request.POST.get('oid'):
+        vmware = models.VMWarePlugin.objects.get(id=request.POST.get('oid'))
+    else:
+        vmware = None
+    try:
+        if request.POST.get('password'):
+            password = request.POST.get('password')
+        elif not request.POST.get('password') and vmware:
+            password = vmware.password
+        else:
+            password = ''
+        server = VIServer()
+        server.connect(
+            request.POST.get('hostname'),
+            request.POST.get('username'),
+            password,
+            sock_timeout=7,
+        )
+        data['value'] = server.get_datastores().values()
+        server.disconnect()
+    except Exception, e:
+        data['error'] = True
+        data['errmsg'] = unicode(e).encode('utf8')
+    return HttpResponse(
+        json.dumps(data),
+        content_type='application/json',
+    )

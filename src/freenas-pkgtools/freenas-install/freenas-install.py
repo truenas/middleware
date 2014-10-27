@@ -45,9 +45,11 @@ if __name__ == "__main__":
     if mani_file is None:
         manifest = config.SystemManifest()
     else:
-        manifest = Manifest.Manifest(config)
+        # We ignore the signature because freenas-install is
+        # called from the ISO install, and the GUI install, which
+        # have their own checksums elsewhere.
+        manifest = Manifest.Manifest(config, ignore_signature = True)
         manifest.LoadPath(mani_file)
-        manifest.Validate()
 
     installer = Installer.Installer(manifest = manifest, root = root, config = config)
 

@@ -19,6 +19,32 @@ show	Print out the sequence number, train name, and version number
 """
 
 import os, sys, getopt
+import logging, logging.config
+
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'simple': {
+            'format': '[%(name)s:%(lineno)s] %(message)s',
+        },
+    },
+    'handlers': {
+        'std': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'stream': 'ext://sys.stdout',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['std'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+})
+log = logging.getLogger("manifest_util")
 
 sys.path.append("/usr/local/lib")
 
@@ -31,7 +57,7 @@ def usage(subopt = None):
     print >> sys.stderr, "Usage: %s [-M manifest] [-C config] [-R remote] cmd [args]"
     print >> sys.stderr, "cmd is one of:\n"
     print >> sys.stderr, "\tlist\tList the package contents of the manifest"
-    print >> sys.stderr, "\tsign\tSign the manifest"
+    print >> sys.stderr, "\tsign key\tSign the manifest with the given key file"
     print >> sys.stderr, "\ttrain\tPrint the train name"
     print >> sys.stderr, "\tsequence\tPrint the sequence number"
     print >> sys.stderr, "\tversion\tPrint the version name (if any)"
@@ -138,7 +164,46 @@ def list_cmd(mani, args):
                 print "\t\tUpdate from %s: checksum %s" % (upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
     return
 
-def sign_manifest(mani, args):
+def sign_manifest(mani, path, a):
+    key_file = None
+    output_file = sys.stdout
+    overwrite = False
+    output_path = None
+
+    try:
+        opts, args = getopt.getopt(a, "WO:")
+    except getopt.GetoptError as err:
+        print str(err)
+        print >> sys.stderr, "sign [-W | -O <file>] key"
+        usage()
+
+    for o, a in opts:
+        if o == '-W':
+            overwrite = True
+        elif o == 'O':
+            output_path = a
+        else:
+            print >> sys.stderr, "sign [-W | -O <file>] key"
+            usage()
+
+    if len(args) == 0:
+        print >> sys.stderr, "Signing requires a key file"
+        usage()
+
+    if output_path and overwrite:
+        print >> sys.stderr, "sign [-W | -O <file>] key"
+        usage()
+
+    if overwrite:
+        output_file = open(path, "w+")
+    if output_path:
+        output_file = open(output_path, "wx")
+
+    key_file = args[0]
+    key_data = open(key_file).read()
+    mani.SignWithKey(key_data)
+    mani.StoreFile(output_file)
+
     return
 
 def main():
@@ -197,7 +262,7 @@ def main():
     elif args[0] == "show":
         show_cmd(mani, args[1:])
     elif args[0] == "sign":
-        sign_manifest(mani, args[1:])
+        sign_manifest(mani, mani_file, args[1:])
     else:
         usage()
 

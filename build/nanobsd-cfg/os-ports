@@ -157,9 +157,10 @@ add_port devel/py-asn1-modules
 add_port security/openssl
 add_port security/py-openssl
 add_port security/py-htpasswd
-add_port www/apache24
+add_port www/apache24 WITH_OPENSSL_PORT=yes 
 add_port www/mod_mpm_itk
 add_port devel/py-tabulate
+add_port sysutils/syslog-ng
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_SSL \
 		OPTIONS_FILE_SET+=HTTP_UPLOAD \
@@ -339,6 +340,7 @@ add_port_debug net/samba41 \
 
 add_port sysutils/grub2-pcbsd
 add_port sysutils/beadm-devel
+add_port net/py-pysphere
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite

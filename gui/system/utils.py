@@ -23,9 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import json
+import logging
 import os
+import time
+from datetime import timedelta
 from uuid import uuid4
 
 from django.utils.translation import ugettext as _
@@ -37,13 +39,12 @@ log = logging.getLogger('system.utils')
 
 class BootEnv(object):
 
-
     def __init__(
         self, name=None, active=None, mountpoint=None, space=None, created=None
     ):
         self._id = name
         self.active = active
-        self.created = created
+        self._created = created
         self.mountpoint = mountpoint
         self.name = name
         self.space = space
@@ -51,6 +52,18 @@ class BootEnv(object):
     @property
     def id(self):
         return self._id
+
+    @property
+    def created(self):
+        offset = time.strftime('%z')
+        hours = int(offset[1:3])
+        minutes = int(offset[3:5])
+        delta = timedelta(hours=hours, minutes=minutes)
+        if offset[0] == '+':
+            date = self._created - delta
+        else:
+            date = self._created + delta
+        return date.strftime('%Y-%m-%d %H:%M:%S GMT')
 
 
 class CheckUpdateHandler(object):
@@ -84,7 +97,7 @@ class UpdateHandler(object):
 
     DUMPFILE = '/tmp/.upgradeprogress'
 
-    def __init__(self, uuid=None):
+    def __init__(self, uuid=None, apply_=None):
         if uuid:
             try:
                 self.load()
@@ -93,6 +106,7 @@ class UpdateHandler(object):
             except:
                 raise ValueError("UUID not found")
         else:
+            self.apply = apply_
             self.uuid = uuid4().hex
             self.details = ''
             self.indeterminate = False
@@ -139,7 +153,10 @@ class UpdateHandler(object):
         self.dump()
 
     def install_handler(self, index, name, packages):
-        self.step = 1
+        if self.apply:
+            self.step = 2
+        else:
+            self.step = 1
         self.indeterminate = False
         total = len(packages)
         self.progress = int((float(index) / float(total)) * 100.0)
@@ -154,6 +171,7 @@ class UpdateHandler(object):
     def dump(self):
         with open(self.DUMPFILE, 'wb') as f:
             data = {
+                'apply': self.apply,
                 'error': self.error,
                 'finished': self.finished,
                 'indeterminate': self.indeterminate,
@@ -171,6 +189,7 @@ class UpdateHandler(object):
             return None
         with open(self.DUMPFILE, 'rb') as f:
             data = json.loads(f.read())
+        self.apply = data.get('apply', '')
         self.details = data.get('details', '')
         self.error = data['error']
         self.finished = data['finished']
