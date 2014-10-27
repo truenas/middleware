@@ -1022,9 +1022,26 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         except:
             pass
     
-    if os.path.exists(source + "/ReleaseNotes"):
+    # Everything goes into the archive, and
+    # most is relative to the name of the train.
+    try:
+        os.makedirs("%s/%s" % (archive, manifest.Train()))
+    except:
+        pass
+    # First, let's try creating the manifest file.
+    # If it already exists, log this and return.
+    try:
+        mani_file = open("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()), "wxb", 0622)
+    except (IOError, OSError) as e:
+        import errno
+        if e.errno == errno.EEXIST:
+            print >> sys.stderr, "Warning:  Sequence %s already exists, assuming duplicate" % manifest.Sequence()
+            return
+        else:
+            raise e
+    except Exception as e:
+        raise e
 
-        notes["ReleaseNotes"]
     # Okay, let's see if this train has any prior entries in the database
     previous_sequences = db.RecentSequencesForTrain(manifest.Train())
 
@@ -1138,12 +1155,6 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                     raise e
         pkg_list.append(pkg)
 
-    # Everything goes into the archive, and
-    # most is relative to the name of the train.
-    try:
-        os.makedirs("%s/%s" % (archive, manifest.Train()))
-    except:
-        pass
     # Now let's go over the possible notes.
     # Right now, we only support three:
     # ReleaseNotes, ChangeLog, and NOTICE.
@@ -1184,7 +1195,8 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
-    manifest.StorePath("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()))
+    manifest.StorePath(mani_file.name)
+    mani_file.close()
     try:
         os.unlink("%s/%s/LATEST" % (archive, manifest.Train()))
     except:
