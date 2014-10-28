@@ -2,8 +2,10 @@ To build the system (experts only):
 
 Requirements:
 
-- Your build environment must be FreeBSD 9.2-RELEASE (building on
-  FreeBSD 10 or 11 is not supported at this time).
+- Your build environment must be FreeBSD 9.3-RELEASE or 9.3-STABLE
+  (building on FreeBSD 9.x older than 9.3-RELEASE or
+  FreeBSD 10.x or 11.x is not supported at this time.  FreeBSD 8.x
+  is right out).
 
 - amd64 or i386 for i386 builds; an amd64 for amd64 builds.  8GB of
   memory, or an equal/greater amount of swap space, is also required
