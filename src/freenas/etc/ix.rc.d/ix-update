@@ -11,7 +11,7 @@
 readonly UPDATE_FAILED_LOG="/data/update.failed"
 
 # The function below takes two arguments
-# 1. The path you want it to write its output to (the .crt nad .key files)
+# 1. The path you want it to write its output to (the .crt and .key files)
 # 2. The old pre-certui database (do not give it the post certmanager migrated db as it will fail)
 # It writes the cert file as "precertman.crt" and key file as "precertman.key"
 upgrade_cert_migration()
