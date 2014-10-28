@@ -45,7 +45,6 @@ from freenasUI.common.ssl import (
     load_privatekey,
     export_privatekey,
 )
-#from freenasUI.system import models
 from freenasUI.system.models import (
     Settings,
     Certificate,
@@ -57,10 +56,10 @@ log = logging.getLogger('tools.updatessl')
 
 def main(certfile,keyfile):
     """ This function reads the certificates that were ported form
-    9.2.1.x to 9.3 in the update and trues to imports and save them
-    into the new Cert UI model db. Once it has done so successfully,
-    it then goes ahead to set the webui setting's certfile to the 
-    above cert object"""
+    pre-certmanager to 9.3 post-certmanager in the update and
+    tries to parse, import and save them into the new Cert UI model db.
+    Once it has done so successfully,it then goes ahead to set the webui
+    setting's certfile to the above created cert object"""
 
     # Try to read the certfile and private keyfile and parse them
     # into respective vars, throw appropriate errors if files notice
@@ -82,7 +81,7 @@ def main(certfile,keyfile):
     # as well as the creation of the new cert object in the django db
     cert_info = load_certificate(crt)
     created_cert = Certificate.objects.create(
-                       cert_name = "freenaspre9.3",
+                       cert_name = "freenas-pre-certui",
                        cert_type = CERT_TYPE_EXISTING,
                        cert_certificate = crt,
                        cert_privatekey = export_privatekey(key), 
@@ -102,7 +101,7 @@ def main(certfile,keyfile):
     
     # Note we do not need ot call ix-ssl as this python program is called
     # by ix-update which is higher up in the rcorder than ix-ssl, as a result
-    # of which ix-ssl will be called either ways.
+    # of which ix-ssl will be called later-on either ways.
     # HOWEVER, if you do run this file as a standalone do call ix-ssl service
     # yourself as well as ix-nginx and the works.
     
