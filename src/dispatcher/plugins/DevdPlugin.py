@@ -70,10 +70,8 @@ class DevdEventSource(EventSource):
         self.register_event_type("fs.zfs.scrub.start")
         self.register_event_type("fs.zfs.scrub.finish")
 
-
     def __tokenize(self, line):
         return {i.split("=")[0]: i.split("=")[1] for i in line.split()}
-
 
     def __process_devfs(self, args):
         if args["subsystem"] == "CDEV":
@@ -83,9 +81,11 @@ class DevdEventSource(EventSource):
             }
 
             if args["type"] == "CREATE":
+                params["description"] = "Device {0} attached".format(args["cdev"])
                 self.emit_event("system.device.attached", **params)
 
             if args["type"] == "DESTROY":
+                params["description"] = "Device {0} detached".format(args["cdev"])
                 self.emit_event("system.device.detached", **params)
 
     def __process_ifnet(self, args):
@@ -95,16 +95,17 @@ class DevdEventSource(EventSource):
 
     def __process_zfs(self, args):
         event_mapping = {
-            "misc.fs.zfs.scrub_start": "fs.zfs.scrub.start",
-            "misc.fs.zfs.scrub_finish": "fs.zfs.scrub.finish"
+            "misc.fs.zfs.scrub_start": ("fs.zfs.scrub.start", "Scrub on volume {0} started"),
+            "misc.fs.zfs.scrub_finish": ("fs.zfs.scrub.finish", "Scrub on volume {0} finished")
         }
 
         params = {
             "pool": args["pool_name"],
-            "guid": args["pool_guid"]
+            "guid": args["pool_guid"],
+            "description": event_mapping[args["type"]][1].format(args["pool_name"])
         }
 
-        self.emit_event(event_mapping[args["type"]], **params)
+        self.emit_event(event_mapping[args["type"]][0], **params)
 
     def run(self):
         self.socket = socket.socket(family=socket.AF_UNIX)

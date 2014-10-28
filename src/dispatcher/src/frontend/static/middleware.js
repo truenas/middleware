@@ -19,13 +19,9 @@ function uuid()
 Middleware.prototype.connect = function(url)
 {
     var self = this;
-    this.socket = new eio.Socket(url, {"path": "/socket"});
-    this.socket.on("message", function(data) {
-        self.on_message(data);
-    });
-    this.socket.on("open", function() {
-        self.emit("connected");
-    });
+    this.socket = new WebSocket(url);
+    this.socket.onmessage = function(msg) { self.on_message(msg.data); };
+    this.socket.onopen = function() { self.emit("connected"); };
 };
 
 Middleware.prototype.subscribe = function(event_masks)
@@ -45,7 +41,7 @@ Middleware.prototype.call = function(method, args, callback)
     var payload = {
         "method": method,
         "args": args,
-    }
+    };
 
     this.pendingCalls[id] = {
         "method": method,

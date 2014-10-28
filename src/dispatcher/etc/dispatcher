@@ -6,6 +6,8 @@
 # PROVIDE: dispatcher
 # REQUIRE: datastore
 
+. /etc/rc.subr
+
 name="dispatcher"
 command="/usr/local/sbin/dispatcherd"
 pidfile="/var/run/dispatcher.pid"

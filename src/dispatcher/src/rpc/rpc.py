@@ -10,9 +10,10 @@ class RpcContext(object):
         self.logger = logging.getLogger('RpcContext')
         self.services = {}
         self.instances = {}
-        self.register_service("management", ManagementService)
-        self.register_service("discovery", DiscoveryService)
-        self.register_service("task", TaskService)
+        self.register_service('server', ManagementService)
+        self.register_service('discovery', DiscoveryService)
+        self.register_service('task', TaskService)
+        self.register_service('event', EventService)
 
     def register_service(self, name, clazz):
         self.services[name] = clazz
@@ -34,28 +35,36 @@ class RpcContext(object):
             args = {}
 
         if not service:
-            pass
+            raise RpcException(errno.EINVAL, "Invalid function path")
 
         if service not in self.services.keys():
-            pass
+            raise RpcException(errno.ENOENT, "Service {0} not found".format(service))
 
         try:
             func = getattr(self.instances[service], name)
         except AttributeError:
-            return
+            raise RpcException(errno.ENOENT, "Method not found")
 
-        #try:
-        return func(*args)
-        #except TypeError:
-        #    raise RpcException(errno.EINVAL, "Invalid function parameters")
+        try:
+            if type(args) is dict:
+                return func(**args)
+            elif type(args) is list:
+                return func(*args)
+            else:
+                raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
+        except TypeError:
+            raise RpcException(errno.EINVAL, "Invalid function parameters")
 
 
 class RpcService(object):
     def enumerate_methods(self):
         for i in inspect.getmembers(self, predicate=inspect.ismethod):
             method = i[0]
+
+            if method.startswith('_'):
+                continue
+
             if method in (
-                "__init__",
                 "initialize",
                 "enumerate_methods"):
                 continue
@@ -105,8 +114,28 @@ class ManagementService(RpcService):
     def restart(self):
         pass
 
+    def get_connected_clients(self):
+        return self.__context.dispatcher.ws_server.clients.keys()
+
     def die_you_gravy_sucking_pig_dog(self):
         self.__context.dispatcher.die()
+
+
+class EventService(RpcService):
+    def initialize(self, context):
+        self.__datastore = context.dispatcher.datastore
+        self.__dispatcher = context.dispatcher
+        pass
+
+    def query(self, mask, start=None, end=None, limit=None):
+        where = []
+        if start is not None:
+            where.append(('timestamp', '>=', start))
+
+        if end is not None:
+            where.append(('timestamp', '<=', end))
+
+        return list(self.__datastore.query('events', where, limit))
 
 
 class TaskService(RpcService):

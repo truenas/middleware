@@ -30,7 +30,7 @@
     <script type="text/javascript">
         var sock = new Middleware("http://marian.oxidev.eu:5000/");
         var template = Handlebars.compile($("#service-template").html());
-        sock.connect("http://marian.oxidev.eu:5000/");
+        sock.connect("ws://marian.oxidev.eu:5000/socket");
 
         $(document).ready(function (){
             $("#services").on("click", ".method-label", function () {
