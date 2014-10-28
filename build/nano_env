@@ -305,6 +305,8 @@ fi
 : ${WITH_PKGNG:="yes"}
 export WITH_PKGNG
 
+: ${DEFAULT_VERSIONS:="python=2.7 pgsql=9.3"}
+
 # NB: leave c++ enabled so devd can be built
 CONF_BUILD="
 #WITHOUT_ACPI=true
@@ -354,7 +356,7 @@ WITHOUT_SYSINSTALL=true
 WITHOUT_WIRELESS=true
 WITHOUT_WPA_SUPPLICANT_EAPOL=true
 
-DEFAULT_VERSIONS=python=2.7
+DEFAULT_VERSIONS=${DEFAULT_VERSIONS}
 
 NOPORTDOCS=true
 
