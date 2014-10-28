@@ -14,6 +14,7 @@ class PostgresSelectQuery(object):
         self.table = table
         self.connect = 'AND'
         self.where_conditions = []
+        self.projection_func = None
         self.sort_field = None
         self.sort_dir = PostgresSelectQuery.DESC
         self.limit_value = None
@@ -30,7 +31,7 @@ class PostgresSelectQuery(object):
         return self.connect.join(items)
 
     def projection(self, projection):
-        pass
+        self.projection_func = projection
 
     def where(self, left, op, right):
         self.where_conditions.append((left, op, right))
@@ -43,7 +44,13 @@ class PostgresSelectQuery(object):
         self.limit_value = limit
 
     def sql(self):
-        result = ['SELECT id, data FROM {0}'.format(self.table)]
+        result = []
+
+        if self.projection_func:
+            result.append('SELECT {0}(id, data) FROM {1}'.format(self.projection_func, self.table))
+        else:
+            result.append('SELECT id, data FROM {0}'.format(self.table))
+
         if self.where_conditions:
             result.append('WHERE {0}'.format(self.__build_where()))
 
@@ -152,7 +159,7 @@ class PostgresDatastore(object):
     def upsert(self, collection, pkey, obj):
         if self.exists(collection, [('id', '=', pkey)]):
             return self.update(collection, pkey, obj)
-        else
+        else:
             return self.insert(collection, pkey, obj)
 
     def exists(self, collection, args=[]):

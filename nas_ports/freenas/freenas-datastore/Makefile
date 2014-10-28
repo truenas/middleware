@@ -15,9 +15,13 @@ COMMENT=        FreeNAS data store layer
 
 USE_XZ=		yes
 USE_PYTHON=	yes
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}psycopg2:${PORTSDIR}/databases/py-psycopg2
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}psycopg2:${PORTSDIR}/databases/py-psycopg2 \
+		postgresql93-server:${PORTSDIR}/databases/postgresql93-server \
+		postgresql93-contrib:${PORTSDIR}/databases/postgresql93-contrib
 
 EXTRACT_ONLY=
+
+SUB_FILES=	pkg-install
 
 NO_BUILD= 	yes
 MAKE_JOBS_UNSAFE= yes

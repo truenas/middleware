@@ -7,17 +7,26 @@
 
 name="datastore"
 start_cmd="datastore_start"
+start_precmd="precmd"
+init_cmd="datastore_init"
+init_precmd="precmd"
 stop_cmd="datastore_stop"
 status_cmd="datastore_status"
+extra_commands="init"
 libdir="/usr/local/lib/datastore"
 
-. /etc/rc.freenas
+. /etc/rc.subr
 
-check_driver()
+precmd()
 {
     if [ ! -d ${libdir}/drivers/${datastore_driver} ]; then
-	warn "Could not find specified driver"
-	return 1
+        warn "Could not find specified driver"
+        return 1
+    fi
+
+    if [ ! -n ${datastore_dbdir} ]; then
+        warn "dbdir is not set"
+        return 1
     fi
 
     driver_ctl="${libdir}/drivers/${datastore_driver}/control"
@@ -25,25 +34,21 @@ check_driver()
 
 datastore_start()
 {
-   check_driver
    ${driver_ctl} ${datastore_dbdir} start
 }
 
 datastore_stop()
 {
-    check_driver
     ${driver_ctl} ${datastore_dbdir} stop
 }
 
 datastore_status()
 {
-    check_driver
     ${driver_ctl} ${datastore_dbdir} status
 }
 
 datastore_init()
 {
-    check_driver
     ${driver_ctl} ${datastore_dbdir} init
 }
 
