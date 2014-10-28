@@ -23,7 +23,7 @@ post-install()
 	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data
 	cp freenas-v1.db factory-v1.db
-	chown -R www:www /data
+	chown www:www . freenas-v1.db factory-v1.db
 }
 
 backupwarning()
