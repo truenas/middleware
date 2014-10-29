@@ -175,7 +175,7 @@ issued since FreeBSD 9.3 RELEASE.
 * The ability to manage :file:`rc.conf` variables has been added to
   :menuselection:`System --> Tunables`.
 
-* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
+* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Update`.
 
 * The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
 
@@ -243,7 +243,7 @@ The following fields have been added or deleted:
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
 
-* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade -> Manual Update`.
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Update -> Manual Update`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_

@@ -375,7 +375,7 @@ Upgrading to a Major Release From the GUI
 
 To perform an upgrade to a major release using this method, `download <http://www.freenas.org/download-releases.html>`_ the latest version of the :file:`.txz`
 file for the release and its associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to
-:menuselection:`System --> Upgrade`. Click the "Manual Update" button to open the screen shown in Figure 2.5c.
+:menuselection:`System --> Update`. Click the "Manual Update" button to open the screen shown in Figure 2.5c.
 
 **Figure 2.5c: Upgrading FreeNAS® From the GUI**
 
@@ -419,7 +419,7 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 Updating Between Major Releases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To update the system between major releases, use :menuselection:`System --> Upgrade`.
+To update the system between major releases, use :menuselection:`System --> Update`.
 
 In the screen shown in Figure 2.5e, select which "Trains" you would like to track updates to.
 
