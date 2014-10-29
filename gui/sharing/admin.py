@@ -19,6 +19,8 @@ class AFPShareFAdmin(BaseFreeAdmin):
         'afp_deny',
         'afp_dperm',
         'afp_fperm',
+        'afp_hostsallow',
+        'afp_hostsdeny',
         'afp_nodev',
         'afp_nofileid',
         'afp_nohex',

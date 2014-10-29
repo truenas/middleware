@@ -510,7 +510,7 @@ class Update(Model):
     )
 
     class Meta:
-        verbose_name = _('Updade')
+        verbose_name = _('Update')
 
     def get_train(self):
         #FIXME: lazy import, why?

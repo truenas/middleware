@@ -61,6 +61,10 @@ def main():
             cf_contents.append("\tvalid users = %s\n" % share.afp_allow)
         if share.afp_deny:
             cf_contents.append("\tinvalid users = %s\n" % share.afp_deny)
+        if share.afp_hostsallow:
+            cf_contents.append("\thosts allow = %s\n" % share.afp_hostsallow)
+        if share.afp_hostsdeny:
+            cf_contents.append("\thosts deny = %s\n" % share.afp_hostsdeny)
         if share.afp_ro:
             cf_contents.append("\trolist = %s\n" % share.afp_ro)
         if share.afp_rw:
