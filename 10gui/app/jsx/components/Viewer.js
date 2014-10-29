@@ -37,7 +37,8 @@ var IconViewer = React.createClass({
   render: function() {
     var createItem = function( rawItem ) {
       return (
-        <TWBS.Col xs={2}>
+        <TWBS.Col xs  = {2}
+                  key = { rawItem.id } >
           <h6>{ rawItem[ this.props.displayData.primary ] }</h6>
           <small className="text-muted">{ rawItem[ this.props.displayData.secondary ] }</small>
         </TWBS.Col>
