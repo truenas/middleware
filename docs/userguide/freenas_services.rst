@@ -2026,9 +2026,9 @@ options.
 
 **Figure 11.16a: WebDAV Configuration Screen**
 
-|webdav.png|
+|webdav2.png|
 
-.. |webdav.png| image:: images/webdav.png
+.. |webdav2.png| image:: images/webdav2.png
     :width: 3.6in
     :height: 2.4in
 
@@ -2044,8 +2044,21 @@ options.
 |                           |                | *HTTP+HTTPS* (both types of connections allowed)                                                      |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| HTTP Port                 | string         | specify the port to be used for the connection; the default of *8080* should work, if you change it,  |
+| HTTP Port                 | string         | only appears if the selected "Protocol" is *HTTP* or                                                  |
+|                           |                | *HTTP+HTTPS* and is used to specify the port to be used for unencrypted connections; the default      |
+|                           |                | of *8080* should work, if you change it,                                                              |
 |                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTPS Port                | string         | only appears if the selected "Protocol" is *HTTPS* or                                                 |
+|                           |                | *HTTP+HTTPS* and is used to specify the port to be used for encrypted connections; the default        |
+|                           |                | of *8081* should work, if you change it,                                                              |
+|                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Webdav SSL Certificate    | drop-down menu | only appears if the selected "Protocol" is *HTTPS* or                                                 |
+|                           |                | *HTTP+HTTPS*; select the the SSL certificate to be used for encrypted connections; to create a        |
+|                           |                | certificate, use `System --> Certificates`                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | HTTP Authentication       | drop-down menu | choices are *Basic Authentication* (unencrypted) or                                                   |
