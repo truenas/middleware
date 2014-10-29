@@ -1029,18 +1029,39 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     except:
         pass
     # First, let's try creating the manifest file.
-    # If it already exists, log this and return.
-    try:
-        mani_file = open("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()), "wxb", 0622)
-    except (IOError, OSError) as e:
-        import errno
-        if e.errno == errno.EEXIST:
-            print >> sys.stderr, "Warning:  Sequence %s already exists, assuming duplicate" % manifest.Sequence()
-            return
-        else:
-            raise e
-    except Exception as e:
-        raise e
+    # If there's a duplicate, let's change the sequence by adding a digit.
+    # Then loop until we're done
+    suffix = None
+    name = manifest.Sequence()
+    while True:
+        if suffix is not None:
+            name = "%s-%d" % (manifest.Sequence(), suffix)
+            print >> sys.stderr, "Due to conflict, trying sequence %s" % name
+        new_mani_path = "%s/%s/%s-%s" % (archive, manifest.Train(), project, name)
+        try:
+            mani_file = open(new_mani_path, "wxb", 0622)
+            break
+        except (IOError, OSError) as e:
+            import errno
+            if e.errno == errno.EEXIST:
+                # Should we instead compare the manifests, and
+                temp_mani = Manifest.Manifest()
+                temp_mani.LoadPath(new_mani_path)
+                if len(Manifest.CompareManifests(manifest, temp_mani)) == 0:
+                    print >> sys.stderr, "New manifest seems to be the same as the old one, doing nothing"
+                    return
+                if suffix is None:
+                    suffix = 1
+                else:
+                    suffix += 1
+                continue
+            else:
+                print >> sys.stderr, "Cannot create manifest file %s: %s" % (name, str(e))
+                raise e
+        except Exception as e:
+                raise e
+
+    manifest.SetSequence(name)
 
     # Okay, let's see if this train has any prior entries in the database
     previous_sequences = db.RecentSequencesForTrain(manifest.Train())
