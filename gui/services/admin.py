@@ -52,7 +52,7 @@ class FTPFAdmin(BaseFreeAdmin):
 
 class ISCSITargetFAdmin(BaseFreeAdmin):
 
-    menu_child_of = "services.ISCSI"
+    menu_child_of = "sharing.ISCSI"
     icon_object = u"TargetIcon"
     icon_model = u"TargetIcon"
     icon_add = u"AddTargetIcon"
@@ -70,7 +70,7 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
 
 class ISCSIPortalFAdmin(BaseFreeAdmin):
 
-    menu_child_of = "services.ISCSI"
+    menu_child_of = "sharing.ISCSI"
     icon_object = u"PortalIcon"
     icon_model = u"PortalIcon"
     icon_add = u"AddPortalIcon"
@@ -97,7 +97,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
 
 class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
-    menu_child_of = "services.ISCSI"
+    menu_child_of = "sharing.ISCSI"
     icon_object = u"AuthorizedAccessIcon"
     icon_model = u"AuthorizedAccessIcon"
     icon_add = u"AddAuthorizedAccessIcon"
@@ -115,7 +115,7 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
 class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 
-    menu_child_of = "services.ISCSI"
+    menu_child_of = "sharing.ISCSI"
     icon_object = u"TargetExtentIcon"
     icon_model = u"TargetExtentIcon"
     icon_add = u"AddTargetExtentIcon"
@@ -129,7 +129,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
 
     delete_form = "ExtentDelete"
     delete_form_filter = {'iscsi_target_extent_type__exact': 'File'}
-    menu_child_of = "services.ISCSI"
+    menu_child_of = "sharing.ISCSI"
     icon_object = u"ExtentIcon"
     icon_model = u"ExtentIcon"
     icon_add = u"AddExtentIcon"

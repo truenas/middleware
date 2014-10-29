@@ -34,3 +34,12 @@ class ViewWebDAV(TreeNode):
     type = 'opensharing'
     append_app = False
     append_to = 'sharing.WebDAV_Share'
+
+
+class ISCSI(TreeNode):
+
+    order = 40
+    gname = 'ISCSI'
+    name = _(u'Block (iSCSI)')
+    type = u'iscsi'
+    icon = u'iSCSIIcon'
