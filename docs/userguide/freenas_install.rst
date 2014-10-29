@@ -259,9 +259,7 @@ Once the installation is complete, you should see a message similar to Figure 2.
 
 Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM.
 As the system reboots, make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from it.
-
-The first time the FreeNAS® system boots, it will apply the system configuration database then reboot again. During the second reboot, FreeNAS® should boot
-into the "Console Setup" menu described in :ref:`Initial Configuration Wizard`.
+FreeNAS® should boot into the "Console Setup" menu described in :ref:`Initial Configuration Wizard`.
 
 .. _Installation Troubleshooting:
 
