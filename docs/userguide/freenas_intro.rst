@@ -243,7 +243,7 @@ The following fields have been added or deleted:
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
 
-* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade -> Manual Update`.
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade --> Manual Update`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
@@ -275,11 +275,11 @@ The following fields have been added or deleted:
 * The "Volume Status" screen now shows the resilvering status when a disk is replaced.
   
 * The "Enable High Speed Ciphers" checkbox has been replaced by the "Encryption Cipher" drop-down menu in 
-  :menuselection:`Storage --> Replication Tasks -> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
+  :menuselection:`Storage --> Replication Tasks --> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
   can significantly reduce the time needed for the initial replication.
 
 * The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Enable" and "Site Name"
-  fields and the "Idmap backend", "Windbind NSS Info", and "SASL wrapping drop-down menus have been added to
+  fields and the "Idmap backend", "Windbind NSS Info", and "SASL wrapping" drop-down menus have been added to
   :menuselection:`Directory Service --> Active Directory`. The "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos
   Realm" drop-down menu.
 
@@ -290,8 +290,8 @@ The following fields have been added or deleted:
 
 * The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
 
-* :menuselection:`Directory Service --> Kerberos Realms` and `Directory Service --> Kerberos Keytabs` have been added. Added keytabs are stored in the
-  configuration database so that they persist across reboots and system upgrades.
+* :menuselection:`Directory Service --> Kerberos Realms` and :menuselection:`Directory Service --> Kerberos Keytabs` have been added. Added keytabs are stored
+  in the configuration database so that they persist across reboots and system upgrades.
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
@@ -310,8 +310,9 @@ The following fields have been added or deleted:
 
 * The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
 
-* The "TLS use implicit SSL" checkbox has been removed from `Services --> FTP` as this feature is deprecated. The "Certificate and private key" field has
-  been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own certificates.
+* The "TLS use implicit SSL" checkbox has been removed from :menuselection:`Services --> FTP` as this feature is deprecated. The "Certificate and private key"
+  field has been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own
+  certificates.
 
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
@@ -335,7 +336,7 @@ Known Issues
 Before installing FreeNAS® you should be aware of the following known issues:
 
 * **UPGRADES FROM FreeNAS® 0.7x ARE NOT SUPPORTED.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
-  will have to manually recreate your configuration. However, you should be able to import_supported FreeNAS® 0.7x volumes.
+  will have to manually recreate your configuration. However, you should be able to import supported FreeNAS® 0.7x volumes.
 
 * **The ZFS upgrade procedure is non-reversible.** Do not upgrade your ZFS version unless you are absolutely sure that you will never want to go back to the
   previous version. There is no reversing a ZFS pool upgrade, and there is no way for a system with an older version of ZFS to access pools that have been
@@ -415,7 +416,7 @@ When determining the type and size of device to install the operating system to,
 - the recommended bare minimum size is 4GB. This provides room for the operating system and two boot environments. The recommended minimum is 8GB or 16GB as
   this provides more room for boot environments.
 
-- If you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
+- if you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
 
 - when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
