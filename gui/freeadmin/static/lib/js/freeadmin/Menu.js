@@ -443,6 +443,8 @@ define([
                 openurl = this.urlISCSI;
                 if(tab) {
                     openurl += '?tab='+tab;
+                } else {
+                    openurl += '?tab=services.ISCSI';
                 }
 
                 var pane = new ContentPane({
