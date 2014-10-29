@@ -81,8 +81,8 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |afp1.png|
 
 .. |afp1.png| image:: images/afp1.png
-    :width: 4.6in
-    :height: 3.3in
+    :width: 5.2in
+    :height: 4.2in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -95,6 +95,10 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Guest account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
 |                         |                | shared                                                                                                          |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Bind IP Addresses       | selection      | used to specify the IP address(es) to listen for FTP connections; highlight the desired IP address(es) in the   |
+|                         |                | "Available" list and use the ">>" button to add to the "Selected" list                                          |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Max Connections         | integer        | maximum number of simultaneous connections                                                                      |

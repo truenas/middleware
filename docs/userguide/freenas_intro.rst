@@ -295,7 +295,7 @@ The following fields have been added or deleted:
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
-* A "Global auxiliary parameters" field has been added to :menuselection:`Services --> AFP`.
+* The "Bind IP Addresses" and "Global auxiliary parameters" fields have been added to :menuselection:`Services --> AFP`.
 
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 

@@ -705,7 +705,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
+| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -823,7 +823,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
+| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
