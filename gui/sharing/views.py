@@ -24,10 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
+
+log = logging.getLogger('sharing.views')
 
 
 def home(request):
@@ -37,6 +40,18 @@ def home(request):
     if view:
         return view[0]
 
+    tab = request.GET.get('tab', '')
+
+    # Redirect from services node
+    if tab == 'services.ISCSI':
+        tab = 'sharing.ISCSI.iSCSITargetGlobalConfiguration'
+
+    if tab.startswith('sharing.ISCSI'):
+        ntab = 'sharing.ISCSI'
+    else:
+        ntab = ''
+
     return render(request, 'sharing/index.html', {
-        'focus_form': request.GET.get('tab', ''),
+        'focus_form': tab,
+        'ntab': ntab,
     })

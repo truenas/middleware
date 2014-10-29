@@ -25,8 +25,8 @@
   </div>
 
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Block (iSCSI)"|escapejs %}'
-  {% if focus_form == "sharing.iSCSI" %}, selected: true{% endif %},
-  href: '{% url "services_iscsi" %}',
+  {% if focus_form == "sharing.ISCSI" or ntab == "sharing.ISCSI" %}, selected: true{% endif %},
+  href: '{% url "services_iscsi" %}{% if focus_form %}?tab={{ focus_form }}{% endif %}',
   refreshOnShow: true" class="objrefresh data_services_iSCSI" tab="sharing.iSCSI" id="tab_iSCSI">
   
 </div>

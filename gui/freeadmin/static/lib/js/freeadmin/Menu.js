@@ -446,12 +446,12 @@ define([
                 }
 
                 var pane = new ContentPane({
-                    title: 'iSCSI',
+                    title: 'Sharing',
                     closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
-                pane.tab = 'iscsi';
+                pane.tab = 'shares';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
