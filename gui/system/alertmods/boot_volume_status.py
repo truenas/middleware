@@ -34,7 +34,7 @@ class BootVolumeStatusAlert(BaseAlert):
         alerts = []
         status, message = notifier().zpool_status('freenas-boot')
         
-        if status == 'ONLINE':
+        if status == 'HEALTHY':
             pass
         elif status == 'DEGRADED':
              alerts.append(Alert(Alert.CRIT,_('The boot volume status is DEGRADED')))
