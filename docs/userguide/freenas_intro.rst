@@ -301,8 +301,12 @@ The following fields have been added or deleted:
 
 * The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
 
+* The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
+
 * The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
-  :menuselection:`Services --> CIFS`.
+  :menuselection:`Services --> CIFS`. The "Enable home directories", "Enable home directories browsing", "Home directories", and "Homes auxiliary parameters"
+  fields have been removed from :menuselection:`Services --> CIFS` as they have been replaced by the "Use as home share" checkbox in
+  :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
 

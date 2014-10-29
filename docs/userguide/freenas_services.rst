@@ -228,19 +228,6 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | for additional settings                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable home directories          | checkbox       | if checked, a folder with the same name as the user account will be created for each user             |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable home directories browsing | checkbox       | users can browse (but not write to) other users' home directories                                     |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Home directories                 | browse button  | select volume/dataset where the home directories will be created                                      |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Homes auxiliary parameters       | string         | options specific to the [homes] section of :file:`smb4.conf`; for example,                            |
-|                                  |                | *hide dot files = yes* hides files beginning with a dot in home directories                           |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows     |
 |                                  |                | clients                                                                                               |
 |                                  |                |                                                                                                       |

@@ -660,8 +660,8 @@ Figure 10.3a shows the configuration screen that appears when you click :menusel
 |cifs2.png|
 
 .. |cifs2.png| image:: images/cifs2.png
-    :width: 5.4in
-    :height: 3.5in
+    :width: 3.9in
+    :height: 2.4in
 
 Table 10.3a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -679,6 +679,9 @@ started.
 |                              |               |                                                                                                             |
 +==============================+===============+=============================================================================================================+
 | Path                         | browse button | select volume/dataset/directory to share                                                                    |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Use as home share            | checkbox      | check this box if the share is meant to hold user home directories; only one share can be the homes share   |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | mandatory; name of share                                                                                    |
@@ -721,6 +724,9 @@ started.
 | Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
 |                              |               | "Hosts Allow"; see NOTE below                                                                               |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| VFS Objects                  | selection     | only available in "Advanced Mode";                                                                          |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters         | string        | only available in "Advanced Mode"; add additional smb4.conf parameters not covered by other option fields   |
