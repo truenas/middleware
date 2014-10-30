@@ -623,6 +623,13 @@ class TaskFAdmin(BaseFreeAdmin):
             'label': _('Keep snapshot for'),
             'sortable': False,
         })
+
+        columns.insert(5, {
+            'name': 'vmwaresync',
+            'label': _('VMWare Sync'),
+            'sortable': False,
+        })
+
         return columns
 
 

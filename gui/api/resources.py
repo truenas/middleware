@@ -77,7 +77,7 @@ from freenasUI.storage.forms import (
     VolumeManagerForm,
     ZFSDiskReplacementForm,
 )
-from freenasUI.storage.models import Disk, Replication
+from freenasUI.storage.models import Disk, Replication, VMWarePlugin
 from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
@@ -984,6 +984,17 @@ class TaskResourceMixin(object):
             bundle.obj.task_ret_count,
             bundle.obj.task_ret_unit,
         )
+        if bundle.obj.task_recursive:
+            lookup = (
+                Q(filesystem=bundle.obj.task_filesystem) |
+                Q(filesystem__startswith=bundle.obj.task_filesystem + '/')
+            )
+        else:
+            lookup = Q(filesystem=bundle.obj.task_filesystem)
+        if VMWarePlugin.objects.filter(lookup).exists():
+            bundle.data['vmwaresync'] = True
+        else:
+            bundle.data['vmwaresync'] = False
         return bundle
 
 
