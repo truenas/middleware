@@ -13,7 +13,7 @@ var Viewer = require("../components/Viewer");
 // Dummy data from API call on relatively unmolested system
 // TODO: Update to use data from Flux store
 var inputData  = require("../../fakedata/accounts.json");
-var formatData = require("../../middleware-keys/accounts-translation.json")[0];
+var formatData = require("../../middleware-keys/accounts-display.json")[0];
 
 var Users = React.createClass({
     render: function() {
