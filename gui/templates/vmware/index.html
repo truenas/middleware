@@ -1,11 +1,5 @@
 <div data-dojo-type="dijit.layout.TabContainer" id="tab_sharing" data-dojo-props="nested:true, doLayout:true">
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Configure"|escapejs %}'
-  {% if focus_form == "vmware.Settings" %}, selected: true{% endif %},
-  href: '{{ settings.get_edit_url }}?inline=true',
-  refreshOnShow: true" class="objrefresh data_vmware_Settings" tab="vmware.Settings" id="tab_Settings">
-  </div>
-
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Snapshots"|escapejs %}'
   {% if focus_form == "vmware.Snapshots" %}, selected: true{% endif %},
   href: '{% url "vmware_snapshots" %}',

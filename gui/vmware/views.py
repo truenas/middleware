@@ -29,21 +29,13 @@ import logging
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.vmware.models import Settings
 
 log = logging.getLogger('vmware.views')
 
 
 def home(request):
 
-    try:
-        settings = Settings.objects.order_by('-id')[0]
-    except IndexError:
-        settings = Settings.objects.create()
-
-    return render(request, 'vmware/index.html', {
-        'settings': settings,
-    })
+    return render(request, 'vmware/index.html')
 
 
 def snapshots(request):
