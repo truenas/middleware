@@ -4,6 +4,8 @@
 
 var React = require("react");
 
+var _ = require("lodash");
+
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
@@ -17,6 +19,7 @@ var DetailViewer = React.createClass({
                  { rawItem[ this.props.displayData.secondary ] }
                </TWBS.ListGroupItem> );
     }.bind(this);
+
     return (
       <TWBS.Row>
         <TWBS.Col xs={4}>
@@ -44,10 +47,57 @@ var IconViewer = React.createClass({
         </TWBS.Col>
       );
     }.bind(this);
+
     return (
       <TWBS.Row>
         { this.props.displayData.inputData.map( createItem ) }
       </TWBS.Row>
+    );
+  }
+});
+
+// Table Viewer
+var TableViewer = React.createClass({
+  render: function() {
+    var createHeader = function( key ) {
+      return(
+        <th key={ key.id } >
+          { this.props.displayData.translation[key]["name"] }
+        </th>
+      );
+    }.bind(this);
+
+    var createRows = function( rawItem ) {
+      var createCell = function( cellKey ) {
+        var innerContent;
+        if ( typeof rawItem[cellKey] === "boolean" ) {
+          innerContent = ( rawItem ? "Yes" : "No" );
+        } else if ( rawItem[cellKey].length === 0 ) {
+          innerContent = <span className="text-muted">{"--"}</span>;
+        } else {
+          innerContent = rawItem[cellKey];
+        }
+        return ( <td key={ cellKey.key }>{ innerContent }</td> );
+      }.bind( this );
+
+      return(
+        <tr key={ rawItem.id } >
+          { this.props.tableCols.map( createCell ) }
+        </tr>
+      );
+    }.bind(this);
+
+    return(
+      <TWBS.Table striped bordered condensed hover responsive>
+        <thead>
+          <tr>
+            { this.props.tableCols.map( createHeader ) }
+          </tr>
+        </thead>
+        <tbody>
+          { this.props.displayData.inputData.map( createRows ) }
+        </tbody>
+      </TWBS.Table>
     );
   }
 });
@@ -102,8 +152,21 @@ var Viewer = React.createClass({
       // passed in currentMode or defaultMode, falling back to getDefaultProps
       var initialMode = ( this.props.currentMode || this.props.defaultMode || "detail" );
 
+      // Generate an array of keys which TableViewer can use to quickly generate
+      // its internal structure by looping through the returned data from the
+      // middleware and creating cells. Also useful for getting human-friendly
+      // names out of the translation key.
+      var defaultTableCols = [];
+
+      _.filter( this.props.displayData.translation, function( item, key, collection ) {
+        if ( item["defaultCol"] ) {
+          defaultTableCols.push( key );
+        }
+      });
+
       return {
-        currentMode: this.changeViewMode( initialMode )
+          currentMode : this.changeViewMode( initialMode )
+        , tableCols   : defaultTableCols
       };
     }
   , render: function() {
@@ -123,7 +186,7 @@ var Viewer = React.createClass({
         case "icon":
           return( <IconViewer displayData={ this.props.displayData } /> );
         case "table":
-          // TODO: Table Viewer
+          return( <TableViewer displayData={ this.props.displayData } tableCols={ this.state.tableCols } /> );
           break;
         case "heir":
           // TODO: Heirarchical Viewer
