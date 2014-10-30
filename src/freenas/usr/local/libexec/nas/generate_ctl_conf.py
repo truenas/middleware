@@ -69,6 +69,9 @@ def main():
 
     gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
 
+    for server in gconf.iscsi_isns_servers.split(' '):
+        cf_contents.append('isns-server %s\n\n' % server)
+
     # We support multiple authentications for a single group
     auths = defaultdict(list)
     for auth in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
