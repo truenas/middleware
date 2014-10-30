@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -24,28 +24,47 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import dateutil
 import logging
+import os
+import string
+import uuid
 
-from django.shortcuts import render
+from datetime import datetime
+from dateutil import tz, parser as dtparser
 
-from freenasUI.freeadmin.apppool import appPool
-from freenasUI.vmware.models import Settings
+from django.conf import settings
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
-log = logging.getLogger('vmware.views')
+from freenasUI import choices
+from freenasUI.freeadmin.models import Model
+from freenasUI.middleware.notifier import notifier
 
-
-def home(request):
-
-    try:
-        settings = Settings.objects.order_by('-id')[0]
-    except IndexError:
-        settings = Settings.objects.create()
-
-    return render(request, 'vmware/index.html', {
-        'settings': settings,
-    })
+log = logging.getLogger('vmware.models')
 
 
-def snapshots(request):
+class Settings(Model):
 
-    return render(request, 'vmware/snapshots.html')
+    hostname = models.CharField(
+        verbose_name=_('Hostname'),
+        max_length=200,
+    )
+    username = models.CharField(
+        verbose_name=_('Username'),
+        max_length=200,
+        help_text=_(
+            'Username on the above VMWare host with enough privileges to '
+            'snapshot virtual machines.'
+        ),
+    )
+    password = models.CharField(
+        verbose_name=_('Password'),
+        max_length=200,
+    )
+
+    class Meta:
+        verbose_name = _('Configure')
+
+    def __unicode__(self):
+        return self.hostname
