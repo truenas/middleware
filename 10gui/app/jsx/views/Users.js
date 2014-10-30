@@ -9,14 +9,16 @@
 
 var React  = require("react");
 var Viewer = require("../components/Viewer");
+var usersDisplay = require("../../middleware-keys/accounts-translation.json")[0];
 
 var displayData = {
     // Dummy data from API call on relatively unmolested system
     // TODO: Update to use data from Flux store
-    inputData : require("../../fakedata/accounts.json")
-  , primary   : "bsdusr_username"
-  , secondary : "bsdusr_full_name"
-  , sortBy    : ["bsdusr_builtin"]
+    inputData   : require("../../fakedata/accounts.json")
+  , translation : usersDisplay["dataKeys"]
+  , primary     : "bsdusr_username"
+  , secondary   : "bsdusr_full_name"
+  , sortBy      : ["bsdusr_builtin"]
 };
 
 var Users = React.createClass({
