@@ -57,7 +57,8 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (
-    IPAddress, IPNetwork, AddressValueError, NetmaskValueError
+    IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
+    IPv4Address, IPv6Address,
 )
 
 log = logging.getLogger('services.form')
@@ -973,9 +974,39 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
             return None
         return discoverygroup
 
-    def clean(self):
-        cdata = self.cleaned_data
-        return cdata
+    def clean_iscsi_isns_servers(self):
+        servers = self.cleaned_data.get('iscsi_isns_servers')
+        servers = servers.replace('\n', ' ').strip(' ')
+        servers = re.sub(r'\s+', ' ', servers)
+        errors = []
+        for server in servers.split(' '):
+            reg = re.search(r'\[(.+?)\](:[0-9]+)?', server)
+            if reg:
+                ip = reg.group(1)
+                try:
+                    IPv6Address(ip)
+                    continue
+                except AddressValueError:
+                    errors.append(ip)
+            reg = re.search(
+                r'([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(:[0-9]+)?',
+                server,
+            )
+            if reg:
+                ip = reg.group(1)
+                try:
+                    IPv4Address(ip)
+                    continue
+                except AddressValueError:
+                    errors.append(ip)
+            errors.append(server)
+                
+        if errors:
+            raise forms.ValidationError(_(
+                'The following addresses are not valid: %s') % ', '.join(errors)
+            )
+            
+        return servers
 
     def save(self):
         obj = super(iSCSITargetGlobalConfigurationForm, self).save()

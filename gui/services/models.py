@@ -436,6 +436,10 @@ class iSCSITargetGlobalConfiguration(Model):
             blank=True,
             null=True,
             )
+    iscsi_isns_servers = models.TextField(
+        verbose_name=_('iSNS Servers'),
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _(u"Target Global Configuration")
