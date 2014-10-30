@@ -21,11 +21,13 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
-* :ref:`Upgrade`: used to perform upgrades and to check for system updates
+* :ref:`Update`: used to perform upgrades and to check for system updates
 
 * :ref:`CAs`: used to import or create an internal or intermediate CA (Certificate Authority)
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
+
+* :ref:`VMWare Plugin`:
 
 Each of these is described in more detail in this section.
 
@@ -577,10 +579,10 @@ The ZFS version used in 9.3 deprecates the following tunables::
 If you upgrade from an earlier version of FreeNAS® where these tunables are set, they will automatically be deleted for you. You should not try to add these
 tunables back.
 
-.. _Upgrade:
+.. _Update:
 
-Upgrade
--------
+Update
+------
 
 Beginning with version 9.3, FreeNAS® uses signed patches rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
 when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
@@ -588,25 +590,13 @@ release. Combined with boot environments, an administrator can try new features 
 reboot into a previous snapshot of the operating system. Signed patches also mean that the administrator no longer has to manually download the GUI upgrade
 file and its associated checksum in order to perform an upgrade.
 
-Figure 5.8a shows an example of the :menuselection:`System --> Upgrade` screen. 
+Figure 5.8a shows an example of the :menuselection:`System --> Update` screen. 
 
-**Figure 5.8a: Upgrade Options**
+**Figure 5.8a: Update Options**
 
 |update1.png|
 
-This screen provides the following configurable options:
 
-* **Check Automatically for Updates:**
-
-* **Location:**
-
-* **Trains:** this section contains the software tracks that an administrator can synchronize their system with. In this example, *FreeNAS-ALPHA* represents
-  the next major release which is still in alpha stage (FreeNAS® 10.0-ALPHA) and *FreeNAS-9.3-Nightlies* represents the last nightly build of the current
-  release branch (9.3).
-
-To...
-
-The "Manual Update" button is still provided for backwards compatibility.
 
 .. _CAs:
 
@@ -705,7 +695,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
+| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -823,7 +813,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the name of the person responsible for the CA                                  |
+| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -857,3 +847,8 @@ If you click an entry, it will activate the following configuration buttons:
   access the FreeNAS® system.
 
 * **Delete:** used to delete a certificate or certificate signing request.
+
+.. _VMWare Plugin:
+
+VMWare Plugin
+-------------

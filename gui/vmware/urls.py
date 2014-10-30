@@ -24,34 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+from django.conf.urls import patterns, url
 
-from django.shortcuts import render
-
-from freenasUI.freeadmin.apppool import appPool
-
-log = logging.getLogger('sharing.views')
-
-
-def home(request):
-
-    view = appPool.hook_app_index('sharing', request)
-    view = filter(None, view)
-    if view:
-        return view[0]
-
-    tab = request.GET.get('tab', '')
-
-    # Redirect from services node
-    if tab == 'services.ISCSI':
-        tab = 'sharing.ISCSI.iSCSITargetGlobalConfiguration'
-
-    if tab.startswith('sharing.ISCSI'):
-        ntab = 'sharing.ISCSI'
-    else:
-        ntab = ''
-
-    return render(request, 'sharing/index.html', {
-        'focus_form': tab,
-        'ntab': ntab,
-    })
+urlpatterns = patterns('freenasUI.vmware.views',
+    url(r'^home/$', 'home', name="vmware_home"),
+    url(r'^snapshots/$', 'snapshots', name="vmware_snapshots"),
+)

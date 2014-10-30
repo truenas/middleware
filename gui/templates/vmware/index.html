@@ -1,0 +1,9 @@
+<div data-dojo-type="dijit.layout.TabContainer" id="tab_sharing" data-dojo-props="nested:true, doLayout:true">
+
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Snapshots"|escapejs %}'
+  {% if focus_form == "vmware.Snapshots" %}, selected: true{% endif %},
+  href: '{% url "vmware_snapshots" %}',
+  refreshOnShow: true" class="objrefresh data_vmware_Snapshots" tab="vmware.Snapshots" id="tab_Snapshots">
+  </div>
+
+</div>

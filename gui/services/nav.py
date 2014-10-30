@@ -39,42 +39,42 @@ class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITargetAuthorizedInitiator'
+    append_to = 'sharing.ISCSI.iSCSITargetAuthorizedInitiator'
 
 
 class ISCSITargetAuthCredentialView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITargetAuthCredential'
+    append_to = 'sharing.ISCSI.iSCSITargetAuthCredential'
 
 
 class ISCSITargetPortalView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITargetPortal'
+    append_to = 'sharing.ISCSI.iSCSITargetPortal'
 
 
 class ISCSITargetToExtentView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITargetToExtent'
+    append_to = 'sharing.ISCSI.iSCSITargetToExtent'
 
 
 class ISCSITargetView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITarget'
+    append_to = 'sharing.ISCSI.iSCSITarget'
 
 
 class ISCSITargetExtentView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'services.ISCSI.iSCSITargetExtent'
+    append_to = 'sharing.ISCSI.iSCSITargetExtent'
 
 
 class ISCSI(TreeNode):

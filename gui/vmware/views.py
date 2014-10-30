@@ -30,28 +30,14 @@ from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
 
-log = logging.getLogger('sharing.views')
+log = logging.getLogger('vmware.views')
 
 
 def home(request):
 
-    view = appPool.hook_app_index('sharing', request)
-    view = filter(None, view)
-    if view:
-        return view[0]
+    return render(request, 'vmware/index.html')
 
-    tab = request.GET.get('tab', '')
 
-    # Redirect from services node
-    if tab == 'services.ISCSI':
-        tab = 'sharing.ISCSI.iSCSITargetGlobalConfiguration'
+def snapshots(request):
 
-    if tab.startswith('sharing.ISCSI'):
-        ntab = 'sharing.ISCSI'
-    else:
-        ntab = ''
-
-    return render(request, 'sharing/index.html', {
-        'focus_form': tab,
-        'ntab': ntab,
-    })
+    return render(request, 'vmware/snapshots.html')

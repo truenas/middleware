@@ -81,8 +81,8 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |afp1.png|
 
 .. |afp1.png| image:: images/afp1.png
-    :width: 4.6in
-    :height: 3.3in
+    :width: 5.2in
+    :height: 4.2in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -95,6 +95,10 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Guest account           | drop-down menu | select account to use for guest access; the selected account must have permissions to the volume/dataset being  |
 |                         |                | shared                                                                                                          |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Bind IP Addresses       | selection      | used to specify the IP address(es) to listen for FTP connections; highlight the desired IP address(es) in the   |
+|                         |                | "Available" list and use the ">>" button to add to the "Selected" list                                          |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Max Connections         | integer        | maximum number of simultaneous connections                                                                      |
@@ -222,19 +226,6 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | Auxiliary parameters             | string         | :file:`smb.conf` options not covered elsewhere in this screen; see                                    |
 |                                  |                | `the Samba Guide <http://oreilly.com/openbook/samba/book/appb_02.html>`_                              |
 |                                  |                | for additional settings                                                                               |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable home directories          | checkbox       | if checked, a folder with the same name as the user account will be created for each user             |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable home directories browsing | checkbox       | users can browse (but not write to) other users' home directories                                     |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Home directories                 | browse button  | select volume/dataset where the home directories will be created                                      |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Homes auxiliary parameters       | string         | options specific to the [homes] section of :file:`smb4.conf`; for example,                            |
-|                                  |                | *hide dot files = yes* hides files beginning with a dot in home directories                           |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows     |
@@ -2026,9 +2017,9 @@ options.
 
 **Figure 11.16a: WebDAV Configuration Screen**
 
-|webdav.png|
+|webdav2.png|
 
-.. |webdav.png| image:: images/webdav.png
+.. |webdav2.png| image:: images/webdav2.png
     :width: 3.6in
     :height: 2.4in
 
@@ -2044,8 +2035,21 @@ options.
 |                           |                | *HTTP+HTTPS* (both types of connections allowed)                                                      |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| HTTP Port                 | string         | specify the port to be used for the connection; the default of *8080* should work, if you change it,  |
+| HTTP Port                 | string         | only appears if the selected "Protocol" is *HTTP* or                                                  |
+|                           |                | *HTTP+HTTPS* and is used to specify the port to be used for unencrypted connections; the default      |
+|                           |                | of *8080* should work, if you change it,                                                              |
 |                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| HTTPS Port                | string         | only appears if the selected "Protocol" is *HTTPS* or                                                 |
+|                           |                | *HTTP+HTTPS* and is used to specify the port to be used for encrypted connections; the default        |
+|                           |                | of *8081* should work, if you change it,                                                              |
+|                           |                | **do not** pick a port number already being used by another service                                   |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Webdav SSL Certificate    | drop-down menu | only appears if the selected "Protocol" is *HTTPS* or                                                 |
+|                           |                | *HTTP+HTTPS*; select the the SSL certificate to be used for encrypted connections; to create a        |
+|                           |                | certificate, use `System --> Certificates`                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | HTTP Authentication       | drop-down menu | choices are *Basic Authentication* (unencrypted) or                                                   |

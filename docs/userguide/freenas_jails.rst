@@ -701,7 +701,7 @@ Click the "New" button to create virtual machines. You can then install the desi
 Managing Jail Templates
 -----------------------
 
-FreeNAS® 9.3 supports the ability to add custom templates to the "Templates" drop-down menu shown in Figure 13.3a.
+FreeNAS® 9.3 supports the ability to add custom templates to the "Templates" drop-down menu described in Table 13.2a.
 
 By default, FreeNAS® provides the *VirtualBox* template. To view the default and any customized templates, click :menuselection:`Jails --> Templates`. A
 listing showing the default template is seen in Figure 13.4a.
@@ -711,8 +711,8 @@ listing showing the default template is seen in Figure 13.4a.
 |jails9.png|
 
 .. |jails9.png| image:: images/jails9.png
-    :width: 5.3in
-    :height: 4.5in
+    :width: 5.6in
+    :height: 1.98in
 
 The listing contains the following columns:
 
@@ -720,47 +720,30 @@ The listing contains the following columns:
 
 * **URL:** when adding a new jail using this template, the template will be downloaded from this location.
 
-* **Instances:** indicates if the template has been used to create a jail. In this example, the phpVirtualBox has not been used so its "Instances" shows as
+* **Instances:** indicates if the template has been used to create a jail. In this example, the template has not yet been used so its "Instances" shows as
   *0*. 
 
-Click the entry for a template to access its configuration options. If you click a template's "Edit" button, it will open the configuration screen shown in
-the Figure 13.4b.
+To create a custom template, first install the desired operating system and configure it the way you want. The installation can be either to an existing jail
+or on another system.
 
-**Figure 13.4b: Editing a Template's Options**
-
-|jails10.png|
-
-.. |jails10.png| image:: images/jails10.png
-    :width: 5.3in
-    :height: 4.5in
-
-If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
-from the "Templates" drop-down menu and will be no longer available for creating new jails.
-
-Creating your own custom templates allows you to deploy different versions and architectures of FreeBSD or different 32-bit Linux distributions into a
-FreeNAS® jail. Additionally, the template can be pre-configured to include the applications, configurations, and user accounts that you need in order to
-quickly deploy your jails.
-
-To create a template, first install the desired FreeBSD or Linux operating system and configure it the way you want. The installation can be either to an
-existing jail or on another system.
-
-.. note:: if you are installing Linux, make sure to install the 32-bit version of the operating system as 64-bit Linux versions are not supported at this
-   time.
-
-Once your configuration is complete, you need to create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be
-compressed with :command:`gzip` and end in a :file:`.tgz` extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In
-other words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
+Once your configuration is complete, create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be compressed
+with :command:`gzip` and end in a :file:`.tgz` extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other
+words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
 Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
 the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
 Once you have the :file:`.tgz` file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
 in order to add the template to the list of available templates.
 
-To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in Figure 13.4c.
+To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in Figure 13.4b.
 
-**Figure 13.4c: Adding A Custom Jail Template**
+**Figure 13.4b: Adding A Custom Jail Template**
 
-|Figure133b_png|
+|jails11.png|
+
+.. |jails11.png| image:: images/jails11.png
+    :width: 2.6in
+    :height: 2.3in
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -790,6 +773,22 @@ Table 13.4a summarizes the fields in this screen.
 |              |                | *http://*)                                                     |
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
-| Jt system    | checkbox       |                                                                |
+| Jt readonly  | checkbox       |                                                                |
 |              |                |                                                                |
 +--------------+----------------+----------------------------------------------------------------+
+
+Once a template has been added, you can click the entry for the template to access its "Edit" and "Delete" buttons. If you click a template's "Edit" button,
+it will open the configuration screen shown in the Figure 13.4c.
+
+.. note:: the "Delete" button is not available for the built-in *VirtualBox* template and its "Edit" button opens as read-only.
+
+**Figure 13.4c: Editing a Template's Options**
+
+|jails10.png|
+
+.. |jails10.png| image:: images/jails10.png
+    :width: 5.5in
+    :height: 4.5in
+
+If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
+from the "Templates" drop-down menu and will be no longer available for creating new jails.

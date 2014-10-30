@@ -175,7 +175,7 @@ issued since FreeBSD 9.3 RELEASE.
 * The ability to manage :file:`rc.conf` variables has been added to
   :menuselection:`System --> Tunables`.
 
-* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Upgrade`.
+* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Update`.
 
 * The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
 
@@ -243,7 +243,7 @@ The following fields have been added or deleted:
 
 * A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
 
-* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Upgrade --> Manual Update`.
+* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Update --> Manual Update`.
 
 * The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
   `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
@@ -295,14 +295,20 @@ The following fields have been added or deleted:
 
 * The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
 
-* A "Global auxiliary parameters" field has been added to :menuselection:`Services --> AFP`.
+* The "Hosts Allow" and "Hosts Deny" fields have been added to :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
+
+* The "Bind IP Addresses" and "Global auxiliary parameters" fields have been added to :menuselection:`Services --> AFP`.
 
 * The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
 
 * The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
 
+* The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
+
 * The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
-  :menuselection:`Services --> CIFS`.
+  :menuselection:`Services --> CIFS`. The "Enable home directories", "Enable home directories browsing", "Home directories", and "Homes auxiliary parameters"
+  fields have been removed from :menuselection:`Services --> CIFS` as they have been replaced by the "Use as home share" checkbox in
+  :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
 

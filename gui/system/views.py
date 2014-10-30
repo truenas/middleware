@@ -1085,11 +1085,14 @@ def update_apply(request):
                 if not path:
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
+                    log.debug("Starting ApplyUpdate")
                     ApplyUpdate(
                         '%s/update' % path,
                         install_handler=handler.install_handler,
                     )
+                    log.debug("ApplyUpdate finished!")
                 except Exception, e:
+                    log.debug("Exception ApplyUpdate")
                     handler.error = unicode(e)
                 handler.finished = True
                 handler.dump()
@@ -1144,6 +1147,7 @@ def update_check(request):
                     raise MiddlewareError(_('System dataset not configured'))
                 try:
                     if handler.apply:
+                        log.debug("Starting Update")
                         Update(
                             train=updateobj.get_train(),
                             get_handler=handler.get_handler,
@@ -1151,13 +1155,16 @@ def update_check(request):
                             cache_dir='%s/update' % path,
                         )
                     else:
+                        log.debug("Starting DownloadUpdate")
                         DownloadUpdate(
                             updateobj.get_train(),
                             '%s/update' % path,
                             check_handler=handler.get_handler,
                             get_handler=handler.get_file_handler,
                         )
+                    log.debug("Update/DownloadUpdate finished")
                 except Exception, e:
+                    log.debug("Exception on Update/DownloadUpdate")
                     from freenasUI.common.log import log_traceback
                     log_traceback(log=log)
                     handler.error = unicode(e)

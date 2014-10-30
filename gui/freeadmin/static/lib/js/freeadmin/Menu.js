@@ -443,15 +443,17 @@ define([
                 openurl = this.urlISCSI;
                 if(tab) {
                     openurl += '?tab='+tab;
+                } else {
+                    openurl += '?tab=services.ISCSI';
                 }
 
                 var pane = new ContentPane({
-                    title: 'iSCSI',
+                    title: 'Sharing',
                     closable: false,
                     //refreshOnShow: true,
                     href: openurl,
                 });
-                pane.tab = 'iscsi';
+                pane.tab = 'shares';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -529,6 +531,50 @@ define([
                 domClass.add(pane.domNode,["objrefresh", "data_directoryservice_directoryservice"]);
             }
         },
+        openVMWare: function(tab) {
+            var opened = false;
+            var p = registry.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'vmware'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = registry.byId("tab_vmware");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].domNode.getAttribute("tab") == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    } else {
+                        c[i].refresh();
+                    }
+                } else {
+                  p.removeChild(c[i]);
+                  c[i].destroy();
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlVMWare;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+                var pane = new ContentPane({
+                    title: gettext('VMWare'),
+                    closable: false,
+                    href: openurl,
+                });
+                pane.tab = 'vmware';
+                p.addChild(pane);
+                p.selectChild(pane);
+                domClass.add(pane.domNode,["objrefresh", "data_VMWare"]);
+
+            }
+
+        }
 
     });
 

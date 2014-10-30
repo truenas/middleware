@@ -443,7 +443,7 @@ class iSCSITargetGlobalConfiguration(Model):
 
     class FreeAdmin:
         deletable = False
-        menu_child_of = "services.ISCSI"
+        menu_child_of = "sharing.ISCSI"
         icon_model = u"SettingsIcon"
         nav_extra = {'type': 'iscsi', 'order': -10}
         resource_name = 'services/iscsi/globalconfiguration'
@@ -638,7 +638,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         verbose_name = _("Initiator")
 
     class FreeAdmin:
-        menu_child_of = "services.ISCSI"
+        menu_child_of = "sharing.ISCSI"
         icon_object = u"InitiatorIcon"
         icon_model = u"InitiatorIcon"
         icon_add = u"AddInitiatorIcon"
