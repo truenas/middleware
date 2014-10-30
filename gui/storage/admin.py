@@ -656,9 +656,18 @@ class ReplicationFAdmin(BaseFreeAdmin):
         return columns
 
 
+class VMWarePluginFAdmin(BaseFreeAdmin):
+    exclude_fields = (
+        'id',
+        'password',
+    )
+
+
+
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)
 site.register(models.Volume, VolumeFAdmin)
 site.register(models.Replication, ReplicationFAdmin)
+site.register(models.VMWarePlugin, VMWarePluginFAdmin)
 site.register(None, VolumeStatusFAdmin)

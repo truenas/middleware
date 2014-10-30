@@ -2471,3 +2471,70 @@ class ReKeyForm(KeyForm):
 
     def done(self):
         notifier().geli_rekey(self.volume)
+
+
+class VMWarePluginForm(ModelForm):
+
+    oid = forms.CharField(
+        widget=forms.widgets.HiddenInput,
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.VMWarePlugin
+        widgets = {
+            'password': forms.widgets.PasswordInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(VMWarePluginForm, self).__init__(*args, **kwargs)
+        self.fields['password'].required = False
+        self.fields['filesystem'] = forms.ChoiceField(
+            label=self.fields['filesystem'].label,
+        )
+        volnames = [
+            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
+        ]
+        self.fields['filesystem'].choices = filter(
+            lambda y: y[0].split('/')[0] in volnames,
+            notifier().list_zfs_fsvols().items()
+        )
+        if self.instance.id:
+            self.fields['oid'].initial = self.instance.id
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not password:
+            if self.instance.id:
+                return self.instance.password
+            else:
+                raise forms.ValidationError(_('This field is required.'))
+        return password
+
+    def clean(self):
+        from pysphere import VIServer
+        cdata = self.cleaned_data
+        if (
+            cdata.get('hostname') and cdata.get('username') and
+            cdata.get('password')
+        ):
+            try:
+                server = VIServer()
+                server.connect(
+                    cdata.get('hostname'),
+                    cdata.get('username'),
+                    cdata.get('password'),
+                    sock_timeout=7,
+                )
+                ds = server.get_datastores()
+                if not(ds and cdata.get('datastore') in ds.values()):
+                    self._errors['datastore'] = self.error_class([_(
+                        'Datastore not found in the server.'
+                    )])
+                server.disconnect()
+            except Exception, e:
+                self._errors['__all__'] = self.error_class([_(
+                    'Failed to connect: %s'
+                ) % e])
+        return cdata
