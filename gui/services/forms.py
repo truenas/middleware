@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
+from collections import OrderedDict
 import glob
 import logging
 import os
@@ -1058,13 +1058,12 @@ class iSCSITargetExtentForm(ModelForm):
             self._name = self.instance.iscsi_target_extent_name
         else:
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
-        self.fields['iscsi_target_extent_disk'].choices.sort()
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();"
         self.fields['iscsi_target_extent_path'].required = False
 
     def _populate_disk_choices(self, exclude=None):
 
-        diskchoices = dict()
+        diskchoices = OrderedDict()
 
         qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
         if exclude:
@@ -1081,9 +1080,10 @@ class iSCSITargetExtentForm(ModelForm):
             used_disks.extend(v.get_disks())
 
         _notifier = notifier()
-        zsnapshots = _notifier.zfs_snapshot_list()
+        zsnapshots = _notifier.zfs_snapshot_list(sort='name')
+        snaps = []
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
-            zvols = _notifier.list_zfs_vols(volume.vol_name)
+            zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
             for zvol, attrs in zvols.items():
                 if "zvol/" + zvol not in used_zvol:
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
@@ -1091,10 +1091,11 @@ class iSCSITargetExtentForm(ModelForm):
                         humanize_size(attrs['volsize']))
                 if zvol not in zsnapshots:
                     continue
-                for snap in zsnapshots.get(zvol):
-                    diskchoices["zvol/" + snap.fullname] = "%s (%s)" % (
-                        snap.fullname,
-                        humanize_size(attrs['volsize']))
+                snaps.extend(zsnapshots.get(zvol))
+        for snap in snaps:
+            diskchoices["zvol/" + snap.fullname] = "%s (%s) [ro]" % (
+                snap.fullname,
+                humanize_size(attrs['volsize']))
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -1118,7 +1119,6 @@ class iSCSITargetExtentForm(ModelForm):
                 devname, capacity = disk.split('\t')
                 capacity = humanize_size(capacity)
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
-
         return diskchoices.items()
 
     def clean_iscsi_target_extent_name(self):

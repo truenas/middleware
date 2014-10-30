@@ -1600,9 +1600,15 @@ class notifier:
             self.restart("collectd")
         return zfs_error, zfs_err
 
-    def list_zfs_vols(self, volname):
+    def list_zfs_vols(self, volname, sort=None):
         """Return a dictionary that contains all ZFS volumes list"""
-        zfsproc = self._pipeopen("/sbin/zfs list -p -H -o name,volsize,used,avail,refer,compression,compressratio -t volume -r '%s'" % (str(volname),))
+
+        if sort is None:
+            sort = ''
+        else:
+            sort = '-s %s' % sort
+
+        zfsproc = self._pipeopen("/sbin/zfs list -p -H -o name,volsize,used,avail,refer,compression,compressratio %s -t volume -r '%s'" % (sort, str(volname),))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -3630,11 +3636,16 @@ class notifier:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
-    def zfs_snapshot_list(self, path=None, replications=None):
+    def zfs_snapshot_list(self, path=None, replications=None, sort=None):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
 
-        zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name -H")
+        if sort is None:
+            sort = ''
+        else:
+            sort = '-s %s' % sort
+
+        zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
         volnames = [
