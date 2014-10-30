@@ -435,7 +435,7 @@ main(int ac, char **av)
 	int opt;
 	int retval;
 
-	while ((opt = getopt(ac, av, "K:C:H:I:S:dv")) != -1) {
+	while ((opt = getopt(ac, av, "K:C:D:H:I:S:dv")) != -1) {
 		switch (opt) {
 		case 'K':	cert_file = strdup(optarg); break;
 		case 'C':	ca_file = strdup(optarg); break;
