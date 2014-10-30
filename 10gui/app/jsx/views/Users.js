@@ -9,25 +9,20 @@
 
 var React  = require("react");
 var Viewer = require("../components/Viewer");
-var usersDisplay = require("../../middleware-keys/accounts-translation.json")[0];
 
-var displayData = {
-    // Dummy data from API call on relatively unmolested system
-    // TODO: Update to use data from Flux store
-    inputData   : require("../../fakedata/accounts.json")
-  , translation : usersDisplay["dataKeys"]
-  , primary     : "bsdusr_username"
-  , secondary   : "bsdusr_full_name"
-  , sortBy      : ["bsdusr_builtin"]
-};
+// Dummy data from API call on relatively unmolested system
+// TODO: Update to use data from Flux store
+var inputData  = require("../../fakedata/accounts.json");
+var formatData = require("../../middleware-keys/accounts-translation.json")[0];
 
 var Users = React.createClass({
     render: function() {
     return (
       <div>
         <h2>Users View</h2>
-        <Viewer header       = { "User Accounts" }
-                displayData  = { displayData } >
+        <Viewer header     = { "User Accounts" }
+                inputData  = { inputData }
+                formatData = { formatData } >
         </Viewer>
       </div>
     );

@@ -1,5 +1,8 @@
 [{
-  "dataKeys": {
+    "primaryKey"   : "bsdusr_username"
+  , "secondaryKey" : "bsdusr_full_name"
+  , "groups"       : [ "bsdusr_builtin" ]
+  , "dataKeys": {
       "bsdusr_builtin": {
             "name"        : "Built-in User"
           , "type"        : "boolean"

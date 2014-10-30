@@ -14,9 +14,9 @@ var TWBS = require("react-bootstrap");
 var DetailViewer = React.createClass({
   render: function() {
     var createItem = function( rawItem ) {
-      return ( <TWBS.ListGroupItem header = { rawItem[ this.props.displayData.primary ] }
+      return ( <TWBS.ListGroupItem header = { rawItem[ this.props.formatData["primaryKey"] ] }
                                    key    = { rawItem.id }>
-                 { rawItem[ this.props.displayData.secondary ] }
+                 { rawItem[ this.props.formatData["secondaryKey"] ] }
                </TWBS.ListGroupItem> );
     }.bind(this);
 
@@ -24,7 +24,7 @@ var DetailViewer = React.createClass({
       <TWBS.Row>
         <TWBS.Col xs={4}>
           <TWBS.ListGroup>
-            { this.props.displayData.inputData.map( createItem ) }
+            { this.props.inputData.map( createItem ) }
           </TWBS.ListGroup>
         </TWBS.Col>
         <TWBS.Col xs={8}>
@@ -42,15 +42,15 @@ var IconViewer = React.createClass({
       return (
         <TWBS.Col xs  = {2}
                   key = { rawItem.id } >
-          <h6>{ rawItem[ this.props.displayData.primary ] }</h6>
-          <small className="text-muted">{ rawItem[ this.props.displayData.secondary ] }</small>
+          <h6>{ rawItem[ this.props.formatData["primaryKey"] ] }</h6>
+          <small className="text-muted">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
         </TWBS.Col>
       );
     }.bind(this);
 
     return (
       <TWBS.Row>
-        { this.props.displayData.inputData.map( createItem ) }
+        { this.props.inputData.map( createItem ) }
       </TWBS.Row>
     );
   }
@@ -62,7 +62,7 @@ var TableViewer = React.createClass({
     var createHeader = function( key ) {
       return(
         <th key={ key.id } >
-          { this.props.displayData.translation[key]["name"] }
+          { this.props.formatData.dataKeys[key]["name"] }
         </th>
       );
     }.bind(this);
@@ -95,7 +95,7 @@ var TableViewer = React.createClass({
           </tr>
         </thead>
         <tbody>
-          { this.props.displayData.inputData.map( createRows ) }
+          { this.props.inputData.map( createRows ) }
         </tbody>
       </TWBS.Table>
     );
@@ -132,7 +132,8 @@ var Viewer = React.createClass({
    , propTypes: {
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
-      , displayData  : React.PropTypes.object.isRequired
+      , inputData    : React.PropTypes.array.isRequired
+      , formatData   : React.PropTypes.object.isRequired
     }
   , getDefaultProps: function() {
       // Viewer allows all modes by default, except for heirarchical. This list
@@ -158,7 +159,7 @@ var Viewer = React.createClass({
       // names out of the translation key.
       var defaultTableCols = [];
 
-      _.filter( this.props.displayData.translation, function( item, key, collection ) {
+      _.filter( this.props.formatData.dataKeys, function( item, key, collection ) {
         if ( item["defaultCol"] ) {
           defaultTableCols.push( key );
         }
@@ -182,12 +183,15 @@ var Viewer = React.createClass({
       switch ( this.state.currentMode ) {
         default:
         case "detail":
-          return( <DetailViewer displayData={ this.props.displayData } /> );
+          return( <DetailViewer inputData  = { this.props.inputData }
+                                formatData = { this.props.formatData } /> );
         case "icon":
-          return( <IconViewer displayData={ this.props.displayData } /> );
+          return( <IconViewer inputData  = { this.props.inputData }
+                              formatData = { this.props.formatData } /> );
         case "table":
-          return( <TableViewer displayData={ this.props.displayData } tableCols={ this.state.tableCols } /> );
-          break;
+          return( <TableViewer inputData  = { this.props.inputData }
+                               formatData = { this.props.formatData }
+                               tableCols  = { this.state.tableCols } /> );
         case "heir":
           // TODO: Heirarchical Viewer
           break;
