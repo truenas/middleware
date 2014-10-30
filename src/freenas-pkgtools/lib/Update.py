@@ -441,6 +441,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
             if cache_mani.Sequence() == latest_mani.Sequence():
                 # Woohoo!
                 mani_file.close()
+                log.debug("DownloadUpdate:  Cache directory has latest manifest")
                 return True
             # Not the latest
             mani_file.close()
@@ -482,6 +483,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     for pkg, op, old in diffs:
         if op == "delete":
             continue
+        log.debug("DownloadUpdate:  Will %s package %s" % (op, pkg.Name()))
         download_packages.append(pkg)
 
     # Next steps:  download the package files.
