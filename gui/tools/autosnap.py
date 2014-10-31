@@ -241,6 +241,7 @@ if len(mp_to_task_map) > 0:
         server = VIServer()
         qs = VMWarePlugin.objects.filter(filesystem=fs)
         vmsnapname = str(uuid.uuid4())
+        snapvms = []
         for obj in qs:
            try:
                server.connect(obj.hostname, obj.username, obj.password) 
@@ -251,6 +252,7 @@ if len(mp_to_task_map) > 0:
                if vm.startswith("[%s]" % obj.datastore):
                    vm1 = server.get_vm_by_path(vm)
                    vm1.create_snapshot(vmsnapname, memory=False)
+                   snapvms.append(vm1)
         # If there is associated replication task, mark the snapshots as 'NEW'.
         if Replication.objects.filter(repl_filesystem=fs, repl_enabled=True).count() > 0:
             MNTLOCK.lock()
@@ -273,19 +275,8 @@ if len(mp_to_task_map) > 0:
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
         
-        for obj in qs:
-           try:
-               server.connect(obj.hostname, obj.username, obj.password) 
-           except:
-               continue
-           vmlist = server.get_registered_vms(status='poweredOn')
-           for vm in vmlist:
-               if vm.startswith("[%s]" % obj.datastore):
-                   vm1 = server.get_vm_by_path(vm)
-                   snapshot_list = vm1.get_snapshots()
-                   for snap in snapshot_list:
-                       if snap.get_name() == vmsnapname:
-                           vm1.delete_named_snapshot(vmsnapname)
+        for vm in snapvms:
+            vm.delete_named_snapshot(vmsnapname)
 
     MNTLOCK.lock()
     for snapshot in snapshots_pending_delete:
