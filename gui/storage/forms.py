@@ -37,6 +37,7 @@ import uuid
 
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
+from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
@@ -2519,6 +2520,11 @@ class VMWarePluginForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(VMWarePluginForm, self).__init__(*args, **kwargs)
         self.fields['password'].required = False
+        self.fields['password'].widget.attrs['onchange'] = (
+            "vmwareDatastores('%s', dijit.byId('id_datastore'))" % (
+                reverse('system_vmwareplugin_datastores')
+            )
+        )
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )

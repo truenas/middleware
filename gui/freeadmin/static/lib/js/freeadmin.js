@@ -1315,18 +1315,21 @@ require([
         headers: {"X-CSRFToken": CSRFToken}
       }).then(function(data) {
         if(!data.error) {
-           var tempdata = [];
-           for(var i=0;i<data.value.length;i++) {
-               tempdata.push({name: data.value[i], id: data.value[i]});
-           }
-           var memory = new Memory({data: tempdata});
-           datastore.set('store', memory);
-           datastore.toggleDropDown();
+          var tempdata = [];
+          for(var i=0;i<data.value.length;i++) {
+            tempdata.push({name: data.value[i], id: data.value[i]});
+          }
+          var memory = new Memory({data: tempdata});
+          datastore.set('store', memory);
+          datastore.loadAndOpenDropDown();
         } else {
           Tooltip.show(data.errmsg, button.domNode);
           on.once(button.domNode, mouse.leave, function() {
             Tooltip.hide(button.domNode);
           });
+          var memory = new Memory({data: []});
+          datastore.set('store', memory);
+          datastore.set('value', '');
         }
         button.set('disabled', false);
 
