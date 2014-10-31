@@ -1533,7 +1533,38 @@ class ZVol_CreateForm(Form):
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
+        zpool = notifier().zpool_parse(self.vol_name)
+        numdisks = 2
+        for vdev in zpool.data:
+            if vdev.type in (
+                'cache',
+                'spare',
+                'log',
+                'log mirror',
+            ):
+                continue
+            log.error("type %s", vdev.type)
+            if vdev.type == 'raidz':
+                num = len(list(iter(vdev))) - 1
+                if num > numdisks:
+                    numdisks = num
+            elif vdev.type == 'raidz2':
+                num = len(list(iter(vdev))) - 2
+                if num > numdisks:
+                    numdisks = num
+            elif vdev.type == 'raidz3':
+                num = len(list(iter(vdev))) - 3
+                if num > numdisks:
+                    numdisks = num
+            else:
+                num = len(list(iter(vdev)))
+                if num > numdisks:
+                    numdisks = num
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
+        size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
+
+        if size in map(lambda y: y[0], choices.ZFS_RECORDSIZE):
+            self.fields['zvol_blocksize'].initial = size
 
     def clean_zvol_name(self):
         name = self.cleaned_data["zvol_name"]
