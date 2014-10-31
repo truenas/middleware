@@ -36,6 +36,8 @@ actions.
 
 from collections import defaultdict, OrderedDict
 from decimal import Decimal
+import base64
+from Crypto.Cipher import AES
 import ctypes
 import errno
 import glob
@@ -66,6 +68,10 @@ NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
 SYSTEMPATH = '/var/db/system'
+PWENC_BLOCK_SIZE = 32
+PWENC_FILE_SECRET = '/data/pwenc_secret'
+PWENC_PADDING = '{'
+PWENC_CHECK = 'Donuts!'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -5437,6 +5443,48 @@ class notifier:
         if not update.upd_autocheck:
             return ''
         return update.get_train() or ''
+
+    def pwenc_generate_secret(self):
+        from freenasUI.system.models import Settings
+        try:
+            settings = Settings.objects.order_by('-id')[0]
+        except IndexError:
+            settings = Settings.objects.create()
+
+        secret = os.urandom(PWENC_BLOCK_SIZE)
+        with open(PWENC_FILE_SECRET, 'wb') as f:
+            os.chmod(PWENC_FILE_SECRET, 0600)
+            f.write(secret)
+
+        settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
+        settings.save()
+
+    def pwenc_check(self):
+        from freenasUI.system.models import Settings
+        try:
+            settings = Settings.objects.order_by('-id')[0]
+        except IndexError:
+            settings = Settings.objects.create()
+        try:
+            return self.pwenc_decrypt(settings.stg_pwenc_check) == PWENC_CHECK
+        except IOError:
+            return False
+
+    def pwenc_get_secret(self):
+        with open(PWENC_FILE_SECRET, 'rb') as f:
+            secret = f.read()
+        return secret
+
+    def pwenc_encrypt(self, text):
+        pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
+
+        cipher = AES.new(self.pwenc_get_secret())
+        encoded = base64.b64encode(cipher.encrypt(pad(text)))
+        return encoded
+
+    def pwenc_decrypt(self, encrypted):
+        cipher = AES.new(self.pwenc_get_secret())
+        return cipher.decrypt(base64.b64decode(encrypted)).rstrip(PWENC_PADDING)
 
 
 def usage():
