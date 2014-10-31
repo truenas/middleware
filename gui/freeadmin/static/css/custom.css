@@ -1106,6 +1106,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.VMSnapshotIcon {
+    background-image:url('/static/images/ui/tree/vmwaresnapshot.png');
+    width:16px;
+    height:16px;
+}
 .CertificateIcon {
     background-image:url('/static/images/ui/tree/certificate.png');
     width:16px;

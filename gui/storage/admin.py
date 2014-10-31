@@ -668,6 +668,10 @@ class VMWarePluginFAdmin(BaseFreeAdmin):
         'id',
         'password',
     )
+    icon_model = 'VMSnapshotIcon'
+    icon_object = 'VMSnapshotIcon'
+    icon_add = 'VMSnapshotIcon'
+    icon_view = 'VMSnapshotIcon'
 
 
 
