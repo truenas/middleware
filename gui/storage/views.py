@@ -641,12 +641,12 @@ def snapshot_rollback(request, dataset, snapname):
 
 def manualsnap(request, fs):
     if request.method == "POST":
-        form = forms.ManualSnapshotForm(request.POST)
+        form = forms.ManualSnapshotForm(request.POST, fs=fs)
         if form.is_valid():
             form.commit(fs)
             return JsonResp(request, message=_("Snapshot successfully taken."))
     else:
-        form = forms.ManualSnapshotForm()
+        form = forms.ManualSnapshotForm(fs=fs)
     return render(request, 'storage/manualsnap.html', {
         'form': form,
         'fs': fs,

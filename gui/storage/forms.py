@@ -33,6 +33,7 @@ import logging
 import os
 import re
 import tempfile
+import uuid
 
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -64,6 +65,7 @@ from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.system.alert import alertPlugins
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
+from pysphere import VIServer
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -1728,9 +1730,17 @@ class ManualSnapshotForm(Form):
     ms_name = forms.CharField(label=_('Snapshot Name'))
 
     def __init__(self, *args, **kwargs):
+        self._fs = kwargs.pop('fs', None)
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)
         self.fields['ms_name'].initial = datetime.today().strftime(
             'manual-%Y%m%d')
+
+        if models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
+            self.fields['vmwaresync'] = forms.BooleanField(
+                required=False,
+                label=_('VMWare Sync'),
+                initial=True,
+            )
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
@@ -1745,6 +1755,20 @@ class ManualSnapshotForm(Form):
             fs,
             str(self.cleaned_data['ms_name']),
             self.cleaned_data['ms_recursively'])
+        if not self.cleaned_data.get('vmwaresync'):
+            return None
+        vmsnapname = str(uuid.uuid4())
+        for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
+            server = VIServer()
+            try:
+                server.connect(obj.hostname, obj.username, obj.password)
+            except:
+                continue
+            vmlist = server.get_registered_vms(status='poweredOn')
+            for vm in vmlist:
+                if vm.startswith("[%s]" % obj.datastore):
+                    vm1 = server.get_vm_by_path(vm)
+                    vm1.create_snapshot(vmsnapname, memory=False)
 
 
 class CloneSnapshotForm(Form):
