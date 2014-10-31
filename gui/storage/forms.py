@@ -1751,13 +1751,8 @@ class ManualSnapshotForm(Form):
         return self.cleaned_data['ms_name']
 
     def commit(self, fs):
-        notifier().zfs_mksnap(
-            fs,
-            str(self.cleaned_data['ms_name']),
-            self.cleaned_data['ms_recursively'])
-        if not self.cleaned_data.get('vmwaresync'):
-            return None
         vmsnapname = str(uuid.uuid4())
+        snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
             server = VIServer()
             try:
@@ -1769,6 +1764,15 @@ class ManualSnapshotForm(Form):
                 if vm.startswith("[%s]" % obj.datastore):
                     vm1 = server.get_vm_by_path(vm)
                     vm1.create_snapshot(vmsnapname, memory=False)
+                    snapvms.append(vm1)
+
+        notifier().zfs_mksnap(
+            fs,
+            str(self.cleaned_data['ms_name']),
+            self.cleaned_data['ms_recursively'])
+
+        for vm in snapvms:
+            vm.delete_named_snapshot(vmsnapname)
 
 
 class CloneSnapshotForm(Form):
