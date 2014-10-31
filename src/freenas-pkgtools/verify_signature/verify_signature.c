@@ -89,12 +89,12 @@ calcDecodeLength(const char* b64input)
 
 //Decodes a base64 encoded string
 static int
-Base64Decode(const char* b64message, char** buffer, size_t *bufferlenp)
+Base64Decode(const char* b64message, unsigned char** buffer, size_t *bufferlenp)
 {
 	BIO *bio, *b64;
 	int decodeLen = calcDecodeLength(b64message),
 		len = 0;
-	*buffer = (char*)malloc(decodeLen+1);
+	*buffer = (void*)malloc(decodeLen+1);
 	FILE* stream = fmemopen((char*)b64message, strlen(b64message), "r");
  
 	b64 = BIO_new(BIO_f_base64());
@@ -160,7 +160,7 @@ spc_verify_cert_hostname(X509 *cert, char *hostname) {
 	CONF_VALUE            *nval;
 	unsigned char         *data;
 	X509_EXTENSION        *ext;
-	X509V3_EXT_METHOD     *meth;
+	const X509V3_EXT_METHOD     *meth;
 	STACK_OF(CONF_VALUE)  *val;
    
 	if ((extcount = X509_get_ext_count(cert)) > 0) {
@@ -362,7 +362,7 @@ VerifySignature(const char *data,
 	int retval = 0;
 	EVP_MD_CTX_init(ctx);
 	const EVP_MD *digest = EVP_get_digestbyname(hash);
-	char *decoded_signature = NULL;
+	unsigned char *decoded_signature = NULL;
 	size_t decoded_length;
 
 	/*
@@ -506,7 +506,7 @@ main(int ac, char **av)
 		}
 	}
 	// Now try the system CA; we don't care if it fails
-	if (certificate = LoadCertificate(PATH_CA_CERT)) {
+	if ((certificate = LoadCertificate(PATH_CA_CERT)) != NULL) {
 		X509_STORE_add_cert(ocsp.store, certificate);
 		if (verbose)
 			warnx("Added system CA %s to store", PATH_CA_CERT);
@@ -516,7 +516,7 @@ main(int ac, char **av)
 	if ((ocsp.cert = LoadCertificate(cert_file)) == NULL) {
 		errx(1, "Unable to load certificate file %s", cert_file);
 	} else {
-		STACK *ocsp_urls = NULL;
+		void *ocsp_urls = NULL;
 		ocsp_urls = X509_get1_ocsp(ocsp.cert);
 		if (ocsp_urls) {
 			switch (sk_num(ocsp_urls)) {
