@@ -1521,8 +1521,9 @@ class ZVol_CreateForm(Form):
     zvol_blocksize = forms.ChoiceField(
         label=_('Block size'),
         help_text=_(
-            'The default blocksize for volumes is 8 Kbytes. Any power '
-            'of 2 from 512 bytes to 128 Kbytes is valid.'),
+            'The default of the zvol block size is chosen automatically based '
+            'on the number of the disks in the pool for a general use case.'
+        ),
         required=False,
         choices=(('', 'Inherit'), ) + choices.ZFS_RECORDSIZE,
     )
