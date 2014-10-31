@@ -2513,6 +2513,7 @@ class VMWarePluginForm(ModelForm):
         model = models.VMWarePlugin
         widgets = {
             'password': forms.widgets.PasswordInput(),
+            'datastore': forms.widgets.ComboBox(),
         }
 
     def __init__(self, *args, **kwargs):

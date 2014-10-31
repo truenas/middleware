@@ -1320,12 +1320,8 @@ require([
                tempdata.push({name: data.value[i], id: data.value[i]});
            }
            var memory = new Memory({data: tempdata});
-           var combo = new ComboBox({
-             store: memory,
-             name: 'datastore'
-           }, datastore.domNode);
-           combo.startup();
-           combo.toggleDropDown();
+           datastore.set('store', memory);
+           datastore.toggleDropDown();
         } else {
           Tooltip.show(data.errmsg, button.domNode);
           on.once(button.domNode, mouse.leave, function() {
