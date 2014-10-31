@@ -1095,7 +1095,7 @@ class VMWarePlugin(Model):
     )
 
     class Meta:
-        verbose_name = _('VMWare Plugin')
+        verbose_name = _('VMWare-Snapshot')
 
     def __unicode__(self):
         return self.hostname
