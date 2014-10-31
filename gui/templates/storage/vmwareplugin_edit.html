@@ -5,7 +5,7 @@
 <button id="btn_VMWarePlugin_FetchDS" data-dojo-type="dijit.form.Button">
   {% trans "Fetch Datastores" %}
   <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
-      vmwareDatastores('{% url "system_vmwareplugin_datastores" %}', this);
+      vmwareDatastores('{% url "storage_vmwareplugin_datastores" %}', this);
   </script>
 </button>
 {% endblock %}

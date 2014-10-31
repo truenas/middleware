@@ -78,5 +78,6 @@ urlpatterns = patterns('freenasUI.storage.views',
     url(r'^zpool-(?P<vname>[^/]+)/disk/remove/(?P<label>.+)/$', 'zpool_disk_remove', name="storage_zpool_disk_remove"),
     url(r'^multipath/status/$', 'multipath_status', name="storage_multipath_status"),
     url(r'^multipath/status/json/$', 'multipath_status_json', name="storage_multipath_status_json"),
+    url(r'^vmwareplugin/datastores/$', 'vmwareplugin_datastores', name="storage_vmwareplugin_datastores"),
     )
 
