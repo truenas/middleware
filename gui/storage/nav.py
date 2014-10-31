@@ -38,6 +38,13 @@ class ViewSnap(TreeNode):
     icon = u'ViewAllPeriodicSnapIcon'
 
 
+class ViewVMWare(TreeNode):
+
+    gname = 'View'
+    type = 'openstorage'
+    append_to = 'storage.VMWarePlugin'
+
+
 class AddVolume(TreeNode):
 
     gname = 'Add'
