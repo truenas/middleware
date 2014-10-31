@@ -167,15 +167,6 @@ class Migration(SchemaMigration):
             'upd_autocheck': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'upd_train': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
         },
-        u'system.vmwareplugin': {
-            'Meta': {'object_name': 'VMWarePlugin'},
-            'datastore': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'filesystem': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'hostname': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'username': ('django.db.models.fields.CharField', [], {'max_length': '200'})
-        }
     }
 
     complete_apps = ['system']
