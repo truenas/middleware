@@ -1626,15 +1626,20 @@ class notifier:
             }
         return retval
 
-    def list_zfs_fsvols(self):
+    def list_zfs_fsvols(self, system=False):
         proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
         out, err = proc.communicate()
         out = out.split('\n')
         retval = OrderedDict()
+        if system is False:
+            systemdataset, volume, basename = self.system_dataset_settings()
         if proc.returncode == 0:
             for line in out:
                 if not line:
                     continue
+                if system is False and basename:
+                    if line == basename or line.startswith(basename + '/'):
+                        continue
                 retval[line] = line
         return retval
 
