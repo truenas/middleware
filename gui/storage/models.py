@@ -1099,3 +1099,9 @@ class VMWarePlugin(Model):
 
     def __unicode__(self):
         return self.hostname
+
+    def set_password(self, passwd):
+        self.password = notifier().pwenc_encrypt(passwd)
+
+    def get_password(self):
+        return notifier().pwenc_decrypt(self.password)

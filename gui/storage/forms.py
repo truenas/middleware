@@ -1789,7 +1789,7 @@ class ManualSnapshotForm(Form):
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
             server = VIServer()
             try:
-                server.connect(obj.hostname, obj.username, obj.password)
+                server.connect(obj.hostname, obj.username, obj.get_password())
             except:
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
@@ -2554,7 +2554,7 @@ class VMWarePluginForm(ModelForm):
         self.fields['password'].required = False
         self.fields['password'].widget.attrs['onchange'] = (
             "vmwareDatastores('%s', dijit.byId('id_datastore'))" % (
-                reverse('system_vmwareplugin_datastores')
+                reverse('storage_vmwareplugin_datastores')
             )
         )
         self.fields['filesystem'] = forms.ChoiceField(
@@ -2605,3 +2605,10 @@ class VMWarePluginForm(ModelForm):
                     'Failed to connect: %s'
                 ) % e])
         return cdata
+
+    def save(self, *args, **kwargs):
+	kwargs['commit'] = False
+        obj = super(VMWarePluginForm, self).save(*args, **kwargs)
+        obj.set_password(self.cleaned_data.get('password'))
+        obj.save()
+        return obj
