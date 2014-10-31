@@ -17,6 +17,9 @@ notifier()
 system_start()
 {
 	notifier system_dataset_create > /dev/null
+	if [ "$(notifier pwenc_check)" = "False" ]; then
+		notifier pwenc_generate_secret
+	fi
 }
 
 name="ix-system"
