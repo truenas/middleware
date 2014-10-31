@@ -1174,3 +1174,37 @@ def disk_editbulk(request):
         'form': form,
         'disks': ', '.join([disk.disk_name for disk in disks]),
     })
+
+
+def vmwareplugin_datastores(request):
+    from pysphere import VIServer
+    data = {
+        'error': False,
+    }
+    if request.POST.get('oid'):
+        vmware = models.VMWarePlugin.objects.get(id=request.POST.get('oid'))
+    else:
+        vmware = None
+    try:
+        if request.POST.get('password'):
+            password = request.POST.get('password')
+        elif not request.POST.get('password') and vmware:
+            password = vmware.get_password()
+        else:
+            password = ''
+        server = VIServer()
+        server.connect(
+            request.POST.get('hostname'),
+            request.POST.get('username'),
+            password,
+            sock_timeout=7,
+        )
+        data['value'] = server.get_datastores().values()
+        server.disconnect()
+    except Exception, e:
+        data['error'] = True
+        data['errmsg'] = unicode(e).encode('utf8')
+    return HttpResponse(
+        json.dumps(data),
+        content_type='application/json',
+    )
