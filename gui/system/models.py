@@ -133,6 +133,10 @@ class Settings(Model):
         editable=False,
         default=False,
     )
+    stg_pwenc_check = models.CharField(
+        max_length=100,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = _("Settings")
