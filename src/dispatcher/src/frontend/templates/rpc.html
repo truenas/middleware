@@ -28,9 +28,9 @@
     {% endraw %}
     </script>
     <script type="text/javascript">
-        var sock = new Middleware("http://marian.oxidev.eu:5000/");
+        var sock = new Middleware();
         var template = Handlebars.compile($("#service-template").html());
-        sock.connect("ws://marian.oxidev.eu:5000/socket");
+        sock.connect("ws://" + document.domain + ":5000/socket");
 
         $(document).ready(function (){
             $("#services").on("click", ".method-label", function () {

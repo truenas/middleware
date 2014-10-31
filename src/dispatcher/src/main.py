@@ -9,10 +9,9 @@ import logging.config
 import logging.handlers
 import argparse
 import gevent
-import daemon
-import daemon.pidfile
 import signal
 import time
+import setproctitle
 from pyee import EventEmitter
 from gevent import monkey, Greenlet
 from gevent.wsgi import WSGIServer
@@ -22,7 +21,7 @@ from rpc.rpc import RpcContext, RpcException
 from api.handler import ApiHandler
 from balancer import Balancer
 
-DEFAULT_CONFIGFILE = '/conf/middleware.conf'
+DEFAULT_CONFIGFILE = '/data/middleware.conf'
 
 class Dispatcher(object):
     def __init__(self):
@@ -72,9 +71,11 @@ class Dispatcher(object):
             raise
 
         if data['dispatcher']['logging'] == 'syslog':
-            handler = logging.handlers.SysLogHandler('/var/run/log')
+            handler = logging.handlers.SysLogHandler('/var/run/log', facility='local3')
+            logging.root.setLevel(logging.DEBUG)
+            logging.root.handlers = []
+            logging.root.addHandler(handler)
             self.preserved_files.append(handler.socket.fileno())
-            self.logger.addHandler(handler)
             self.logger.info('Initialized syslog logger')
 
         self.config = data
@@ -277,12 +278,13 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.ws.send(json.dumps(obj))
 
 def run(d, args):
-    sys.stdout.flush()
+    setproctitle.setproctitle('server')
     monkey.patch_all()
 
     # Signal handlers
-    gevent.signal(signal.SIGQUIT, gevent.kill)
-    gevent.signal(signal.SIGINT, gevent.kill)
+    gevent.signal(signal.SIGQUIT, d.die)
+    gevent.signal(signal.SIGQUIT, d.die)
+    gevent.signal(signal.SIGINT, d.die)
 
     # WebSockets server
     app = ApiHandler(d)
@@ -311,7 +313,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', type=int, metavar='PORT', default=8180, help="Run debug frontend server on port")
     parser.add_argument('-p', type=int, metavar='PORT', default=5000, help="WebSockets server port")
-    parser.add_argument('-f', action='store_true', help='Do not daemonize')
     parser.add_argument('-c', type=str, metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Configuration file path')
     args = parser.parse_args()
 
@@ -326,20 +327,7 @@ def main():
         logging.fatal("Cannot parse config file {0}: {1}".format(args.c, str(err)))
         sys.exit(1)
 
-    if args.f:
-        run(d, args)
-    else:
-        ctx = daemon.DaemonContext(
-            stdout=open('out.log', 'w+'),
-            stderr=open('err.log', 'w+'),
-            pidfile=daemon.pidfile.PIDLockFile(d.pidfile)
-        )
-
-        ctx.files_preserve = d.preserved_files
-        ctx.open()
-
-        sys.stdout.flush()
-        run(d, args)
+    run(d, args)
 
 
 if __name__ == '__main__':

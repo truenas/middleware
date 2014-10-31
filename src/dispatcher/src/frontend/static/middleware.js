@@ -1,6 +1,6 @@
 
 
-function Middleware(uri)
+function Middleware()
 {
     this.socket = null;
     this.rpcTimeout = 10000;

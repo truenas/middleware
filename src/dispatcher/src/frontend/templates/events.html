@@ -24,8 +24,8 @@
     </script>
     <script type="text/javascript">
         var template = Handlebars.compile($("#event-template").text());
-        var sock = new Middleware("http://marian.oxidev.eu:5000/");
-        sock.connect("http://marian.oxidev.eu:5000/");
+        var sock = new Middleware();
+        sock.connect("ws://" + document.domain + ":5000/socket");
         sock.on("connected", function() {
             sock.subscribe("*");
             sock.on("event", function(data) {

@@ -52,8 +52,8 @@ class RpcContext(object):
                 return func(*args)
             else:
                 raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
-        except TypeError:
-            raise RpcException(errno.EINVAL, "Invalid function parameters")
+        except Exception, err:
+            raise RpcException(errno.EFAULT, str(err))
 
 
 class RpcService(object):

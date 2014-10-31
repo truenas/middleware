@@ -41,10 +41,10 @@
     {% endraw %}
     </script>
     <script type="text/javascript">
-        var sock = new Middleware("http://marian.oxidev.eu:5000/");
+        var sock = new Middleware();
         var template_class = Handlebars.compile($("#taskclass-template").html());
         var template_task = Handlebars.compile($("#task-template").html());
-        sock.connect("http://marian.oxidev.eu:5000/");
+        sock.connect("ws://" + document.domain + ":5000/socket");
 
         function refresh_tasks()
         {

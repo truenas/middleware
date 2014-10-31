@@ -5,7 +5,7 @@ from event import EventSource
 
 class AuditPipeEventSource(EventSource):
     def __init__(self, dispatcher):
-        super(AuditPipeEventSource, self).__init__(dispatcher);
+        super(AuditPipeEventSource, self).__init__(dispatcher)
         self.register_event_type("system.process.start")
         self.register_event_type("system.process.exit")
 
