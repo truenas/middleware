@@ -3641,7 +3641,7 @@ class notifier:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
-    def zfs_snapshot_list(self, path=None, replications=None, sort=None):
+    def zfs_snapshot_list(self, path=None, replications=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
 
@@ -3649,6 +3649,9 @@ class notifier:
             sort = ''
         else:
             sort = '-s %s' % sort
+
+        if system is False:
+            systemdataset, volume, basename = self.system_dataset_settings()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
@@ -3669,6 +3672,10 @@ class notifier:
                 used = _list[1]
                 refer = _list[3]
                 fs, name = snapname.split('@')
+
+                if system is False and basename:
+                    if fs == basename or fs.startswith(basename + '/'):
+                        continue
 
                 # Do not list snapshots from the root pool
                 if fs.split('/')[0] not in volnames:
