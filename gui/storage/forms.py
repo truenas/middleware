@@ -342,7 +342,6 @@ class VdevFormSet(BaseFormSet):
 
 
     def _clean_vdevtype(self, vdevfound, vdevtype):
-        log.error("vdevtype %r", vdevtype)
         if vdevtype in (
             'cache',
             'log',
@@ -353,7 +352,6 @@ class VdevFormSet(BaseFormSet):
                 name = 'log'
             else:
                 name = vdevtype
-            log.error("vdevtype %r - %r", vdevtype, vdevfound[name])
             if vdevfound[name] is True:
                 raise forms.ValidationError(_(
                     'Only one row for the vitual device of type %s'
@@ -1544,7 +1542,6 @@ class ZVol_CreateForm(Form):
                 'log mirror',
             ):
                 continue
-            log.error("type %s", vdev.type)
             if vdev.type == 'raidz':
                 num = len(list(iter(vdev))) - 1
                 if num > numdisks:
