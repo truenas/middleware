@@ -4,6 +4,7 @@
 *.o
 .DS_Store
 /docs/api/_build/
+/docs/userguide/_build/
 /gui/local_settings.py
 /FreeBSD/
 /filtered-patches/
