@@ -83,7 +83,9 @@ the device name representing the device to write to on your system.
    this command, write the :file:`.iso` file to a CD instead.
 
 **Example 2.2a: Writing the :file:`.iso` file to a USB Thumb Drive**
+
 ::
+
  dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/da0 bs=64k
  6117+0 records in
  6117+0 records out
@@ -549,10 +551,9 @@ This section demonstrates how to create and access a virtual machine within the 
 VirtualBox
 ~~~~~~~~~~
 
-`VirtualBox <http://www.virtualbox.org/>`_
-is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD, Linux, Macintosh, and OpenSolaris. It can be
-configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing configurations or learning how to use the
-features provided by FreeNAS®.
+`VirtualBox <http://www.virtualbox.org/>`__ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
+Linux, Macintosh, and OpenSolaris. It can be configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing
+configurations or learning how to use the features provided by FreeNAS®.
 
 To create the virtual machine, start VirtualBox and click the "New" button, seen in Figure 2.6a, to start the new virtual machine wizard.
 
@@ -773,3 +774,4 @@ the amount of storage disks needed to meet your requirements.
 .. |esxi6.png| image:: images/esxi6.png
     :width: 6.7925in
     :height: 5.3339in
+

@@ -556,6 +556,7 @@ Before you can compile a port, the ports collection must be installed within the
 
 This command will download the ports collection and extract it to the jail's :file:`/usr/ports/`
 directory::
+
  portsnap fetch update
 
 .. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using this command:
@@ -792,3 +793,4 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
+

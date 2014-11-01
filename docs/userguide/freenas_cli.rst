@@ -184,6 +184,7 @@ The following command will display the available options for performing tests wi
 `Netperf Manual <http://www.netperf.org/svn/netperf2/tags/netperf-2.6.0/doc/netperf.html>`_
 describes each option in more detail and explains how to perform many types of tests. It is the best reference for understanding how each test works and how
 to interpret your results. When you are finished with your tests, type :command:`killall netserver` to stop the server process.
+
 ::
 
  netperf -h |more
@@ -265,6 +266,7 @@ Alternatively, consider temporarily disabling compression on the ZFS pool or dat
 
 .. note:: if you prefer to visualize the collected data, scripts are available to render IOzone's output in
    `Gnuplot <http://www.gnuplot.info/>`_.
+
 ::
 
  iozone -h | more
@@ -411,7 +413,7 @@ The advantage of these scripts is that they can be used to provide real time (ri
 to only provide graphs charted over time.
 
 This
-`forum post <http://forums.freenas.org/threads/benchmarking-zfs.7928/>`_
+`forum post <http://forums.freenas.org/threads/benchmarking-zfs.7928/>`__
 demonstrates some examples of using these scripts with hints on how to interpret the results.
 
 To view the help for arcstat.py::
@@ -867,7 +869,7 @@ Use the drives to create units and export them to the operating system. When fin
 in the FreeNAS® GUI.
 
 This
-`forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`_
+`forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`__
 contains a handy wrapper script that will notify you of errors.
 
 .. _MegaCli:
@@ -963,3 +965,4 @@ To view the BIOS report, type the command with no arguments::
 
 `dmidecode(8) <http://linux.die.net/man/8/dmidecode>`_
 describes the supported strings and types.
+

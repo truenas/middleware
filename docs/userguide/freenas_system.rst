@@ -134,11 +134,11 @@ wish to return a test system to the original configuration.
 
 **Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
 **Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** This
-`forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`_
+`forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`__
 contains a script to backup the configuration which could be customized and added as a cron job. This
-`forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`_
+`forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`__
 contains an alternate script which only saves a copy of the configuration when it changes. And this
-`forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`_
+`forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`__
 contains a script for backing up the configuration from another system.
 
 **Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
@@ -852,3 +852,4 @@ If you click an entry, it will activate the following configuration buttons:
 
 VMWare Plugin
 -------------
+

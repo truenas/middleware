@@ -372,7 +372,7 @@ Actual hardware requirements will vary depending upon what you are using your Fr
 You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions
 regarding the hardware best suited to meet your requirements. This
-`forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`_
+`forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`__
 provides some specific recommendations if you are planning on purchasing hardware.
 
 .. _RAM:
@@ -449,10 +449,10 @@ spare, which is not supported at this time.
 
 If you need reliable disk alerting and immediate reporting of a failed drive, use a fully manageable hardware RAID controller such as a LSI
 MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
-`forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`_.
+`forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`__.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
-`forum post <http://forums.freenas.org/showthread.php?12082-Checking-new-HDD-s-in-RAID>`_.
+`forum post <http://forums.freenas.org/showthread.php?12082-Checking-new-HDD-s-in-RAID>`__.
 
 `This article <http://technutz.com/purpose-built-nas-hard-drives/>`_
 provides a good overview of hard drives which are well suited for a NAS.
@@ -521,3 +521,4 @@ the following command. In this example, the capabilities line indicates that WOL
 If you find that WOL support is indicated but not working for a particular interface, create a bug report using the instructions in :ref:`Report a Bug`.
 
 .. include:: zfsprimer.rst
+

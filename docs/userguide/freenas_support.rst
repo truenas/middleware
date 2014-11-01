@@ -69,7 +69,7 @@ The following categories are available under **Help and Support:**
 * `Bug Reporting <http://forums.freenas.org/forumdisplay.php?7-Bug-Reporting>`_: use this forum if you think you have found a bug in FreeNAS® and want to
   discuss it before creating a support ticket.
 
-* `Hardware <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_: for the discussion of hardware and tips for getting the most out of your hardware.
+* `Hardware <http://forums.freenas.org/forumdisplay.php?18-Hardware>`__: for the discussion of hardware and tips for getting the most out of your hardware.
 
 * `User Authentication <http://forums.freenas.org/forumdisplay.php?19-User-Authentication>`_: LDAP and Active Directory.
 
@@ -80,7 +80,7 @@ The following categories are available under **Help and Support:**
 * `Networking <http://forums.freenas.org/forumdisplay.php?22-Networking>`_: networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH,
   and TFTP.
 
-* `Installation <http://forums.freenas.org/forumdisplay.php?32-Installation>`_: installing help or advice before performing the installation.
+* `Installation <http://forums.freenas.org/forumdisplay.php?32-Installation>`__: installing help or advice before performing the installation.
 
 * `Plugins <http://forums.freenas.org/forumdisplay.php?34-Plugins>`_: provides a discussion area for creating and troubleshooting PBIs.
 
@@ -99,11 +99,11 @@ The following categories are available under **How-To Guides:**
 
 * `Hacking <http://forums.freenas.org/forumdisplay.php?14-Hacking>`_: undocumented tricks for getting the most out of your FreeNAS® system.
 
-* `Installation <http://forums.freenas.org/forumdisplay.php?15-Installation>`_: specific installation scenarios (hardware and/or software).
+* `Installation <http://forums.freenas.org/forumdisplay.php?15-Installation>`__: specific installation scenarios (hardware and/or software).
 
 * `Configuration <http://forums.freenas.org/forumdisplay.php?16-Configuration>`_: specific configuration scenarios (e.g. software or client configuration).
 
-* `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`_: instructions for setting up specific hardware.
+* `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`__: instructions for setting up specific hardware.
 
 If you are looking for tips on how to test and increase the performance of your system, check out the
 `Performance <http://forums.freenas.org/forumdisplay.php?37-Performance>`_
@@ -250,3 +250,4 @@ and current versions of FreeNAS®, providing them with the insight to provide ex
 team can also configure your FreeNAS® hardware and software to deliver the highest levels of performance, stability, and security. See the
 `iXsystems support page <http://www.ixsystems.com/solutions/support/>`_
 to request a quote.
+

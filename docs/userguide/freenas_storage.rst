@@ -60,7 +60,7 @@ Table 8.1a summarizes the configuration options of this screen.
 |                  |                |                                                                                            |
 +==================+================+============================================================================================+
 | Volume name      | string         | ZFS volumes must conform to these                                                          |
-|                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_;      |
+|                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`__;     |
 |                  |                | it is recommended to choose a name that will stick out in the logs (e.g. **not**           |
 |                  |                | :file:`data` or :file:`freenas`)                                                           |
 |                  |                |                                                                                            |
@@ -148,7 +148,7 @@ FreeNAS® system:
 
 .. warning:: the per-drive GELI master keys are not backed up along with the user keys. If a bit error occurs in the last sector of an encrypted disk, this
    may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
-   `this forum post <http://forums.freenas.org/threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`_
+   `this forum post <http://forums.freenas.org/threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`__
    which explains how to back up your master keys manually.
    `This forum post <http://forums.freenas.org/threads/recover-encryption-key.16593/#post-85497>`_
    gives an in-depth explanation of how the various key types are used by GELI.
@@ -161,7 +161,7 @@ FreeNAS® system:
   or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
   will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
   processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
-  `forum post <http://forums.freenas.org/showthread.php?12157-Encryption-performance-benchmarks>`_
+  `forum post <http://forums.freenas.org/showthread.php?12157-Encryption-performance-benchmarks>`__
   compares the performance of various CPUs.
 
 * Data in the ARC cache and the contents of RAM are unencrypted.
@@ -211,7 +211,7 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 |               |                  |                                                                                                |
 +===============+==================+================================================================================================+
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
-|               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_;         |
+|               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_ ;        |
 |               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
 |               |                  | **not** :file:`data` or :file:`freenas`)                                                       |
 |               |                  |                                                                                                |
@@ -651,7 +651,7 @@ are described in Table 8.1f.
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | HDD Standby                                            | drop-down menu | indicates the time of inactivity (in minutes) before the drive enters standby mode in order to conserve energy; this |
-|                                                        |                | `forum post <http://forums.freenas.org/showthread.php?2068-How-to-find-out-if-a-drive-is-spinning-down-properly>`_   |
+|                                                        |                | `forum post <http://forums.freenas.org/showthread.php?2068-How-to-find-out-if-a-drive-is-spinning-down-properly>`__  |
 |                                                        |                | demonstrates how to determine if a drive has spun down                                                               |
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -1608,3 +1608,4 @@ text "No filter applied"). When creating a filter:
 If you create multiple filters, select the filter you wish to use before leaving the define filter screen. Once a filter is selected, the "No filter
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
 available snapshots will be listed.
+

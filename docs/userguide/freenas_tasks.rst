@@ -320,7 +320,7 @@ Descriptions of the configurable options can be found in `Rsync Modules`.
 To finish the configuration, start the rsync service on *PULL* in :menuselection:`Services --> Control Services`. If the rsync is successful, the contents of
 :file:`/mnt/local/images/` will be mirrored to :file:`/mnt/remote/images/`.
 
-.. _Rsync over SSH Mode
+.. _Rsync over SSH Mode:
 
 Rsync over SSH Mode
 ~~~~~~~~~~~~~~~~~~~
@@ -375,7 +375,7 @@ on another operating system, select a type of key the key generation software su
 .. note:: if a different user account is used for the rsync task, use the :command:`su -` command after mounting the filesystem but before generating the key.
    For example, if the rsync task is configured to use the *user1* user account, use this command to become that user::
 
-   su - user1
+      su - user1
 
 Next, view and copy the contents of the generated public key::
 
@@ -409,9 +409,11 @@ Next, copy the host key of *PULL* using Shell on
 
  ssh-keyscan -t rsa 192.168.2.6 >> /root/.ssh/known_hosts
 
-.. note:: if *PUSH* is a Linux system, use the following command to copy the RSA key to the Linux system::
+.. note:: if *PUSH* is a Linux system, use the following command to copy the RSA key to the Linux system:
 
- cat ~/.ssh/id_rsa.pub | ssh user@192.168.2.6 'cat >> .ssh/authorized_keys'
+   ::
+
+      cat ~/.ssh/id_rsa.pub | ssh user@192.168.2.6 'cat >> .ssh/authorized_keys'
 
 You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
@@ -497,3 +499,4 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 
 
 You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
+
