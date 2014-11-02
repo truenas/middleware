@@ -34,7 +34,7 @@ delta packags we can make.
 """
 
 debug = 0
-verbose = 0
+verbose = 1
 
 
 class ReleaseDB(object):
@@ -1068,8 +1068,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
 
     pkg_list = []
     for pkg in manifest.Packages():
-        if verbose or debug:
-            print "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
+        print >> sys.stderr, "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
 
         copied = False
         pkg_path = "%s/%s" % (pkg_source_dir, pkg.FileName())
@@ -1088,6 +1087,8 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         # Now, if we created the file, its size will be 0.
         if os.stat(pkg_file.name).st_size != 0:
             # Okay, let's see if the hash is the same
+            # Note that I think this destroys the lock, due
+            # to posix stupidity.
             hash = ChecksumFile(pkg_dest)
             if hash is None or hash != pkg.Checksum():
                 print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match (%s for file, %s for package)" % (pkg.Name(), pkg.Version(), hash, pkg.Checksum())
@@ -1098,21 +1099,23 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                     print >> sys.stderr, "Package %s-%s already exists in the destination, so not copying" % (pkg.Name(), pkg.Version())
         else:
             # Okay, we need to copy the file
+            total_bytes = 0
             with open(pkg_path, "rb") as pkg_file_src:
                 kBufSize = 1024 * 1024
                 while True:
                     buf = pkg_file_src.read(kBufSize)
                     if buf:
+                        total_bytes += len(buf)
                         pkg_file.write(buf)
                     else:
                         break
             copied = True
             os.chmod(pkg_file.name, 0664)
-            if verbose or debug:
-                print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
+            print >> sys.stderr, "Package %s-%s copied to archive as %s (%d bytes)" % (pkg.Name(), pkg.Version(), pkg_file.name, total_bytes)
 
         pkg_file.close()
 
+        older_versions = {}
         # This is where we'd want to go through old versions and see if we can create any delta pachages
         for older in previous_sequences:
             # Given this sequence, let's look up the package for it
@@ -1124,22 +1127,39 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
             if old_pkg:
                 if old_pkg.Version() == pkg.Version():
                     # Nothing to do
+                    print >> sys.stderr, "Older version and current version are the same (%s), skipping" % pkg.Version()
                     continue
+                if old_pkg.Version() in older_versions:
+                    print >> sys.stderr, "Duplicate older version %s, skipping" % old_pkg.Version()
+                    continue
+                older_versions[old_pkg.Version()] = True
                 # We would want to create a delta package
                 pkg1 = "%s/Packages/%s" % (archive, old_pkg.FileName())
                 pkg2 = "%s/Packages/%s" % (archive, pkg.FileName())
                 delta_pkg = "%s/Packages/%s" % (archive, pkg.FileName(old_pkg.Version()))
                 # If the delta package exists, let's just trust it,
                 # since creating delta packages is very time-consuming.
+                delta_file = None
                 try:
+                    print >> sys.stderr, "Looking for delta package file %s" % delta_pkg
                     delta_file = open(delta_pkg, "wxb")
+                    print >> sys.stderr, "Created delta package file %s" % delta_pkg
                     x = PackageFile.DiffPackageFiles(pkg1, pkg2, delta_pkg)
+                    print >> sys.stderr, "Package file diffs %s" % x
                     delta_file.close()
+                    delta_file = None
                     if x is None:
-                        if debug or verbose:
-                            print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
-                                pkg.Name(), old_pkg.Version(), pkg.Version()
-                                )
+                        print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
+                            pkg.Name(), old_pkg.Version(), pkg.Version()
+                        )
+                        # If we got here, then we created the potential delta file, but
+                        # we have no diffs, so we should remove it.
+                        if os.stat(delta_pkg).st_size != 0:
+                            print >> sys.stderr, "*** package file we supposedly created is non-zero bytes!"
+                            print >> sys.stderr, "*** INVESTIGATE!  File is %s" % delta_pkg
+                        else:
+                            print >> sys.stderr, "Removing file %s" % delta_pkg
+                            os.remove(delta_pkg)
                         # We set the version to the old version, and then remove it.
                         # But other versions might be using it, so we can't do that
                         # just yet.
@@ -1152,12 +1172,16 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         for upd in db.UpdatesForPackage(old_pkg):
                             if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (upd[0], upd[1])
                             old_pkg.AddUpdate(upd[0], upd[1])
+                        print >> sys.stderr, "\tgetting checksum for %s" % pkg1
                         old_pkg.SetChecksum(ChecksumFile(pkg1))
+                        print >> sys.stderr, "\t\tGot it"
                         pkg = old_pkg
                         # Should I instead verify through the db
                         # that nobody else is using this package?
-                        if copied:
-                            os.unlink(pkg_dest)
+                        # Doing this causes an exception on the next pass
+                        # if copied:
+                        #    os.unlink(pkg_dest)
+                        # I think the whole concept here needs to be re-written.
 
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
@@ -1167,12 +1191,25 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 except IOError as e:
                     import errno
                     if e.errno == errno.EEXIST:
+                        print >> sys.stderr, "Delta package %s already exists" % delta_pkg
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
                         pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
                     else:
+                        if delta_file:
+                            print >> sys.stderr, "Removing delta package file %s" % delta_file.name
+                            try:
+                                os.remove(delta_file.name)
+                            except:
+                                pass
                         raise e
                 except Exception as e:
                     print >> sys.stderr, "Exception while creating delta package"
+                    if delta_file:
+                        print >> sys.stderr, "Removing delta package file %s" % delta_file.name
+                        try:
+                            os.remove(delta_file.name)
+                        except:
+                            pass
                     raise e
         pkg_list.append(pkg)
 
