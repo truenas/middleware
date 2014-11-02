@@ -1111,8 +1111,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         break
             copied = True
             os.chmod(pkg_file.name, 0664)
-            if verbose or debug:
-                print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
+            print >> sys.stderr, "Package %s-%s copied to archive as %s (%d bytes)"  % (pkg.Name(), pkg.Version(), pkg_file.name, total_bytes)
 
         pkg_file.close()
 
