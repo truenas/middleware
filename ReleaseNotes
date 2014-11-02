@@ -106,3 +106,11 @@ now listed.
 
   ZFS features added: Embedded Data feature flag, general performance
 improvements.
+
+  ZFS snapshots can now be coordinated with VMWare such that whenever a
+scheduled or manual snapshot is taken, snapshots of the VMs associated with
+the related datastore are first done, then the ZFS snapshot is taken.  The
+temporary VMWare snapshots are then deleted on the VMWare side, but still
+exist in the ZFS snapshot and can be used as "stable resurrection points" in
+that snapshot.  These "coordinated snapshots" can be found (and are specifically
+marked as such) in the snapshot UI.
