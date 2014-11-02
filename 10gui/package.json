@@ -8,9 +8,9 @@
     "lodash": "^2.4.x",
     "mach": "^0.12.0",
     "node-jsx": "^0.11.x",
-    "react": "^0.11.x",
-    "react-bootstrap": "^0.12.x",
-    "react-router": "^0.9.x",
+    "react": "0.11.x",
+    "react-bootstrap": "0.12.x",
+    "react-router": "0.9.x",
     "velocity-animate": "0.1.x",
     "when": "^3.5.x"
   },
