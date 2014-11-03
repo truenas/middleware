@@ -48,7 +48,7 @@ generate_nss_ldap_conf()
 	local dcname="$(AD_get ad_dcname)"
 	local domainname="$(AD_get ad_domainname)"
 	local bindname="$(AD_get ad_bindname)"
-	local bindpw="$(AD_get ad_bindpw)"
+	local bindpw="$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(AD_get ad_bindpw))"
 	local base="$(get_basename "${domainname}")"
 
 	[ -z "${dcname}" -o -z "${base}" ] && return 1 
