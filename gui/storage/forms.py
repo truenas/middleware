@@ -1554,6 +1554,8 @@ class ZVol_CreateForm(Form):
                 num = len(list(iter(vdev))) - 3
                 if num > numdisks:
                     numdisks = num
+            elif vdev.type == 'mirror':
+                numdisks = 1
             else:
                 num = len(list(iter(vdev)))
                 if num > numdisks:
