@@ -96,21 +96,25 @@ be managed from the same UI.
   Software updates are cryptographically signed, rendering the hashes
 unnecessary for anything but manual updates.
 
+  All passwords for services which have been associated with a FreeNAS/TrueNAS
+storage device (e.g. AD, LDAP, VMWare, etc) are encrypted in the database.
+
 
 ** Miscellaneous **
 
   Jail templates have been simplified and only optional templates are
 now listed.
 
-  Jails can now use DHCP to acquire their IPv4 configuration.
+  Jails can now use DHCP to acquire their IPv4 configuration; they no longer
+require static IP configurations.
 
   ZFS features added: Embedded Data feature flag, general performance
 improvements.
 
-  ZFS snapshots can now be coordinated with VMWare such that whenever a
-scheduled or manual snapshot is taken, snapshots of the VMs associated with
-the related datastore are first done, then the ZFS snapshot is taken.  The
-temporary VMWare snapshots are then deleted on the VMWare side, but still
-exist in the ZFS snapshot and can be used as "stable resurrection points" in
-that snapshot.  These "coordinated snapshots" can be found (and are specifically
-marked as such) in the snapshot UI.
+  ZFS snapshots can now be coordinated with VMWare so that whenever a scheduled
+or manual snapshot is taken, snapshots of the VMs associated with the related
+datastore are first done, then the ZFS snapshot is taken.  The temporary VMWare
+snapshots are then deleted on the VMWare side, so as not to impact performance,
+but still exist in the ZFS snapshot and can be used as "stable resurrection
+points" in that snapshot.  Such "coordinated snapshots" can be found (and are
+specifically marked) in the snapshot UI.
