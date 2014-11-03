@@ -332,8 +332,13 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
             # "Avatar()-<sequence>"
             clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
             if CreateClone(clone_name) is False:
-                log.error("Unable to create boot-environment %s" % clone_name)
-                raise Exception("Unable to create new boot-environment %s" % clone_name)
+                msg = "Unable to create boot-environment %s" % clone_name
+                # We set clone_name to None here because we may have gotten
+                # a failure due to an existing boot environment with that name,
+                # so let's not have the exception handler below delete it.
+                clone_name = None
+                log.error(msg)
+                raise Exception(msg)
 
             mount_point = MountClone(clone_name)
             if mount_point is None:
@@ -352,7 +357,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 if mount_point:
                     UnmountClone(clone_name, mount_point)
                     mount_point = None
-                    DeleteClone(clone_name)
+                DeleteClone(clone_name)
                 raise Exception("Unable to remove contents for package %s" % pkg.Name())
             conf.PackageDB(root).RemovePackage(pkg.Name())
 
