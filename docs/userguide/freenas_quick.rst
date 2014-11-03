@@ -154,6 +154,10 @@ If the disks have already been formatted with UFS or ZFS, the initial wizard scr
 
 |wizard2.png|
 
+.. |wizard2.png| image:: images/wizard2.png
+    :width: 3.0in
+    :height: 1.2in
+
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
 .. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart

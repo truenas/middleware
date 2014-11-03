@@ -939,7 +939,11 @@ screen. This line shows information on the current session and is used to enter 
 
 **Figure 24.9a: tmux Session**
 
-|Figure239a_png|
+|tmux.png|
+
+.. |tmux.png| image:: images/tmux.png
+    :width: 4.5in
+    :height: 3.5in
 
 To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window, type :command:`exit` within the window.
 

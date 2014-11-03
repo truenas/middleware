@@ -60,7 +60,11 @@ resources are laid out in an order that is similar to the tree menu of the FreeN
 
 **Figure 26.1a: FreeNAS® API Documentation**
 
-|Figure251a_png|
+|api.png|
+
+.. |api.png| image:: images/api.png
+    :width: 12.2in
+    :height: 5.5in
 
 .. _A Simple API Example:
 
