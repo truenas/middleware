@@ -594,7 +594,11 @@ class DynamicDNSForm(ModelForm):
         return cdata
 
     def save(self):
-        super(DynamicDNSForm, self).save()
+        obj = super(DynamicDNSForm, self).save(commit=False)
+        obj.ddns_password = notifier().pwenc_encrypt(
+            self.cleaned_data.get('ddns_password')
+        )
+        obj.save()
         started = notifier().restart("dynamicdns")
         if (
             started is False
@@ -746,7 +750,11 @@ class UPSForm(ModelForm):
         return email
 
     def save(self):
-        super(UPSForm, self).save()
+        obj = super(UPSForm, self).save(commit=False)
+        obj.ups_monpwd = notifier().pwenc_encrypt(
+            self.cleaned_data.get('ups_monpwd')
+        )
+        obj.save()
         started = notifier().restart("ups")
         if (
             started is False
@@ -1692,7 +1700,11 @@ class WebDAVForm(ModelForm):
         return cdata
 
     def save(self):
-        super(WebDAVForm,self).save()
+        obj = super(WebDAVForm,self).save(commit=False)
+        obj.webdav_password = notifier().pwenc_encrypt(
+            self.cleaned_data.get('webdav_password')
+        )
+        obj.save()
         if self.__original_changed():
             started = notifier().reload("webdav")
             if (started is False
