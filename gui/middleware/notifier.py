@@ -4692,10 +4692,8 @@ class notifier:
 
         """
 
-        sw_name = get_sw_name()
-
         try:
-            zpool = self.zpool_parse('%s-boot' % sw_name.lower())
+            zpool = self.zpool_parse('freenas-boot')
             return zpool.get_disks()
         except:
             log.warn("Root device not found!")
