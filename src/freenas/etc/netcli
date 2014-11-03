@@ -1064,6 +1064,28 @@ def show_ip():
         print _("No configured interfaces were found. Try to do it manually.")
     print
 
+def system_update():
+    import freenasOS.Update as Update
+    import freenasOS.Configuration as Configuration
+
+    update_dir = notifier().system_dataset_path() + "/update"
+    rv = Update.DownloadUpdate(None, directory = update_dir)
+    if rv is True:
+        diffs = Update.PendingUpdates(update_dir)
+        if diffs and len(diffs) != 0:
+            rv = Update.ApplyUpdate(directory = update_dir)
+            if rv is True:
+                os.system("/sbin/shutdown -r now")
+                time.sleep(60)
+                return False
+            else:
+                print >> sys.stderr, "Unable to apply update"
+        else:
+            print >> sys.stderr, "No updates to apply"
+    else:
+        print >> sys.stderr, "No update available"
+    return True
+
 def main_menu():
     menu = [
         [ _("Configure Network Interfaces"), configure_interface_stub ],
@@ -1074,6 +1096,7 @@ def main_menu():
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
+        [ _("System Update (requires networking)"), system_update ],
         [ _("Shell"), shell ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
