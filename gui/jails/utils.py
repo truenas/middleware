@@ -597,10 +597,16 @@ def new_default_plugin_jail(basename):
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = "%s/warden.log" % jc.jc_path
 
-    if not jc.jc_ipv4_dhcp:
+    if not jc.jc_ipv4_dhcp or not jc.jc_ipv6_autoconf:
         addrs = guess_addresses()
+
+    if not jc.jc_ipv4_dhcp:
         if not addrs['high_ipv4']:
             raise MiddlewareError(_("Unable to determine IPv4 for plugin"))
+
+    if not jc.jc_ipv6_autoconf:
+        if not addrs['high_ipv6']:
+            raise MiddlewareError(_("Unable to determine IPv6 for plugin"))
 
     jailname = None
     for i in xrange(1, 1000):
