@@ -24,7 +24,7 @@ class Migration(DataMigration):
 
     depends_on = (
         ('services', '0152_auto__add_field_iscsitargetglobalconfiguration_iscsi_isns_servers'),
-        ('directoryservice', '0032_set_default_ad_idmap_to_rid'),
+        ('directoryservice', '0033_ad_kerberos_realm'),
     )
 
     def forwards(self, orm):
