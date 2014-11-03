@@ -167,7 +167,7 @@ def UnmountClone(name, mount_point = None):
     # If this fails, we ignore it for now
     if mount_point is not None:
         cmd = "umount"
-        args = [mount_point + grub_dir]
+        args = ["-f", mount_point + grub_dir]
         RunCommand(cmd, args)
 
     # Now we ask beadm to unmount it.
