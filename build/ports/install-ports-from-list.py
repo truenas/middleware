@@ -39,6 +39,12 @@ def parse_ports_txt(ports_file, ports_list):
     return ports_to_install
 
 def install_ports(ports_to_install, chroot):
+    os.system("mkdir -p %s/dev" % chroot)
+    os.system("mount -t devfs devfs %s/dev" % chroot)
+    os.system("devfs -m %s/dev ruleset 1" % chroot)
+    os.system("devfs -m %s/dev rule add path random unhide" % chroot)
+    os.system("devfs -m %s/dev rule add path urandom unhide" % chroot)
+    os.system("devfs -m %s/dev rule applyset" % chroot)
     cmd = "chroot %s /bin/sh -c \"(cd /usr/ports/packages/All ; pkg_add -F " % (chroot)
     for port in ports_to_install:
         cmd = "%s %s.tbz" % (cmd, port)
@@ -48,6 +54,7 @@ def install_ports(ports_to_install, chroot):
     ret = os.system(cmd)
     if ret != 0:
         sys.exit(ret)
+    os.system("umount %s/dev" % chroot)
 
 def main(args):
     parser = argparse.ArgumentParser(description='Get list of packages to install')
