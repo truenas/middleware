@@ -577,7 +577,7 @@ Since this port has configurable options, the first time this command is run the
     :width: 5.7701in
     :height: 2.778in
 
-To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:spacebar` to toggle the selection. Once you are finished, tab
+To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:`spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
 
 .. note:: if you change your mind, the configuration screen will not be displayed again should you stop and restart the build. Type

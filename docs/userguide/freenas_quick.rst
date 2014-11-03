@@ -74,7 +74,7 @@ seen in Example 3a. In this example, the FreeNAS® system has one network interf
  Configure IPv6? (y/n) n
  Restarting network: ok
  You may try the following URLs to access the web user interface:
- `http://192.168.1.108 <http://192.168.1.108/>`_
+ http://192.168.1.108
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the FreeNAS®
 system. You should be prompted to input the password for the root user, as seen in Figure 3b.

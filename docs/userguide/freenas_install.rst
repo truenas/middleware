@@ -82,7 +82,7 @@ the device name representing the device to write to on your system.
    **very sure** that you know the device name to write to and that you do not typo the device name when using :command:`dd`! If you are uncomfortable using
    this command, write the :file:`.iso` file to a CD instead.
 
-**Example 2.2a: Writing the :file:`.iso` file to a USB Thumb Drive**
+**Example 2.2a: Writing the .iso file to a USB Thumb Drive**
 
 ::
 
@@ -130,7 +130,7 @@ the USB stick, remove the device, run the command again, and compare the differe
 TERMINAL, unmount the USB stick, and use the :command:`dd` command to write the image to the USB stick. In Example 2.2b, the USB thumb drive is */dev/disk1*.
 Substitute the name of your uncompressed file and the correct path to your USB thumb drive.
 
-**Example 2.2b: Using :command:`dd` on an OS X System**
+**Example 2.2b: Using dd on an OS X System**
 ::
 
  diskutil unmountDisk /dev/disk1
