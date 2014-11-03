@@ -76,8 +76,7 @@ if [ -d collectd ]
 then
 	if tar jcf ${PERSIST_FILE##*/}.$$ collectd > /dev/null 2>&1
 	then
-		swname='freenas'
-		avail=$(zfs list -H -p ${swname}-boot/ROOT | awk '{print ($3-20*1024)}')
+		avail=$(zfs list -H -p freenas-boot/ROOT | awk '{print ($3-20*1024)}')
 		if [ -f ${PERSIST_FILE} ]; then
 			avail=$((${avail}+$(ls -l ${PERSIST_FILE} | awk '{print $5}')))
 		fi
