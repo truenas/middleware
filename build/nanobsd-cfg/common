@@ -177,10 +177,6 @@ fake_target_host()
 CR()
 {
 	mount -t devfs none $NANO_WORLDDIR/dev
-	devfs -m $NANO_WORLDDIR/dev ruleset 1
-	devfs -m $NANO_WORLDDIR/dev rule add path random unhide
-	devfs -m $NANO_WORLDDIR/dev rule add path urandom unhide
-	devfs -m $NANO_WORLDDIR/dev rule applyset
 	fake_target_host \
 	    chroot ${NANO_WORLDDIR} /bin/sh -exc "$@"
 	umount $NANO_WORLDDIR/dev
