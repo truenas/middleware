@@ -5449,9 +5449,17 @@ class notifier:
             return ''
         return update.get_train() or ''
 
+    def pwenc_reset_model_passwd(self, model, field):
+        for obj in model.objects.all():
+            setattr(obj, field, '')
+            obj.save()
+
     def pwenc_generate_secret(self):
         from Crypto import Random
+        from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
         from freenasUI.system.models import Settings
+        from freenasUI.services.models import DynamicDNS, WebDAV, UPS
+
         try:
             settings = Settings.objects.order_by('-id')[0]
         except IndexError:
@@ -5464,6 +5472,13 @@ class notifier:
 
         settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
         settings.save()
+
+        self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
+        self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
+        self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
+        self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
+        self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
+        self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
 
     def pwenc_check(self):
         from freenasUI.system.models import Settings
