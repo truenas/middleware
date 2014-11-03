@@ -5477,15 +5477,30 @@ class notifier:
         return secret
 
     def pwenc_encrypt(self, text):
+        from Crypto.Random import get_random_bytes
+        from Crypto.Util import Counter
         pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
 
-        cipher = AES.new(self.pwenc_get_secret())
-        encoded = base64.b64encode(cipher.encrypt(pad(text)))
+        nonce = get_random_bytes(8)
+        cipher = AES.new(
+            self.pwenc_get_secret(),
+            AES.MODE_CTR,
+            counter=Counter.new(64, prefix=nonce),
+        )
+        encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
         return encoded
 
     def pwenc_decrypt(self, encrypted):
-        cipher = AES.new(self.pwenc_get_secret())
-        return cipher.decrypt(base64.b64decode(encrypted)).rstrip(PWENC_PADDING)
+        from Crypto.Util import Counter
+        encrypted = base64.b64decode(encrypted)
+        nonce = encrypted[:8]
+        encrypted = encrypted[8:]
+        cipher = AES.new(
+            self.pwenc_get_secret(),
+            AES.MODE_CTR,
+            counter=Counter.new(64, prefix=nonce),
+        )
+        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING)
 
 
 def usage():
