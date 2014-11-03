@@ -59,7 +59,7 @@ def main():
     dav_tcpportssl = webby.webdav_tcpportssl
     dav_protocol = webby.webdav_protocol
     dav_auth_type = webby.webdav_htauth
-    dav_passwd = webby.webdav_password
+    dav_passwd = notifier().pwenc_decrypt(webby.webdav_password)
     if dav_protocol != 'http':
         dav_ssl_certfile = webby.webdav_certssl.cert_certificate_path
         dav_ssl_keyfile = webby.webdav_certssl.cert_privatekey_path

@@ -35,7 +35,7 @@ generate_inadyn_real()
 			echo -n "${ddns_options} "
 		fi
 		# hash and backslash must be escaped
-		ddns_password=$(echo ${ddns_password}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
+		ddns_password=$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${ddns_password}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
 		ddns_username=$(echo ${ddns_username}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
 		echo "--background --syslog --username ${ddns_username} --password ${ddns_password} --alias ${ddns_domain}"
 	done

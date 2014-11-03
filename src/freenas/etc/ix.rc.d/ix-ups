@@ -49,7 +49,7 @@ generate_upsmon()
 	while eval read $f; do
 
 		user=`echo ${ups_monuser}|sed -E 's/([#$])/\\\1/g'`
-		passwd=`echo ${ups_monpwd}|sed -E 's/([#$])/\\\1/g'`
+		passwd=`/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${ups_monpwd}|sed -E 's/([#$])/\\\1/g'`
 		if [ "${ups_mode}" = "master" ]; then
 			ident="${ups_identifier}"
 		else
