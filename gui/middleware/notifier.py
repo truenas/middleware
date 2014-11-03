@@ -3666,10 +3666,11 @@ class notifier:
             o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
         ]
 
+        fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
-            zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot -H -S creation '%s'" % path)
+            zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot %s -H -S creation '%s'" % (fieldsflag, path))
         else:
-            zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation")
+            zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -3677,6 +3678,7 @@ class notifier:
                 snapname = _list[0]
                 used = _list[1]
                 refer = _list[3]
+                vmsynced = _list[5]
                 fs, name = snapname.split('@')
 
                 if system is False and basename:
@@ -3714,7 +3716,8 @@ class notifier:
                         refer=refer,
                         mostrecent=mostrecent,
                         parent_type='filesystem' if fs not in zvols else 'volume',
-                        replication=replication
+                        replication=replication,
+                        vmsynced=(vmsynced == 'Y')
                     ))
                 fsinfo[fs] = snaplist
         return fsinfo
