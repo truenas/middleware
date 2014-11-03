@@ -20,10 +20,6 @@ var Network = React.createClass({
     return (
       <div>
         <h2>Network View</h2>
-        <Viewer header     = { "Network Interfaces" }
-                inputData  = { inputData }
-                formatData = { formatData } >
-        </Viewer>
       </div>
     );
   }
