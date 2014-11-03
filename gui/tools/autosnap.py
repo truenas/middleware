@@ -253,10 +253,16 @@ if len(mp_to_task_map) > 0:
                    vm1 = server.get_vm_by_path(vm)
                    vm1.create_snapshot(vmsnapname, memory=False)
                    snapvms.append(vm1)
+
+        if len(snapvms) > 0:
+            vmflag = '-o freenas:vmsynced=Y '
+        else:
+            vmflag = ''
+
         # If there is associated replication task, mark the snapshots as 'NEW'.
         if Replication.objects.filter(repl_filesystem=fs, repl_enabled=True).count() > 0:
             MNTLOCK.lock()
-            snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s' % (rflag, snapname)
+            snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s%s' % (rflag, vmflag, snapname)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
@@ -269,12 +275,12 @@ if len(mp_to_task_map) > 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
             MNTLOCK.unlock()
         else:
-            snapcmd = '/sbin/zfs snapshot%s %s' % (rflag, snapname)
+            snapcmd = '/sbin/zfs snapshot%s %s%s' % (rflag, vmflag, snapname)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
-        
+
         for vm in snapvms:
             vm.delete_named_snapshot(vmsnapname)
 

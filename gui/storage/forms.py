@@ -1801,7 +1801,8 @@ class ManualSnapshotForm(Form):
         notifier().zfs_mksnap(
             fs,
             str(self.cleaned_data['ms_name']),
-            self.cleaned_data['ms_recursively'])
+            self.cleaned_data['ms_recursively'],
+            len(snapvms))
 
         for vm in snapvms:
             vm.delete_named_snapshot(vmsnapname)
