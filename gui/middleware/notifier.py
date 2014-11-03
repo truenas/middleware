@@ -5445,13 +5445,14 @@ class notifier:
         return update.get_train() or ''
 
     def pwenc_generate_secret(self):
+        from Crypto import Random
         from freenasUI.system.models import Settings
         try:
             settings = Settings.objects.order_by('-id')[0]
         except IndexError:
             settings = Settings.objects.create()
 
-        secret = os.urandom(PWENC_BLOCK_SIZE)
+        secret = Random.new().read(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
             os.chmod(PWENC_FILE_SECRET, 0600)
             f.write(secret)
