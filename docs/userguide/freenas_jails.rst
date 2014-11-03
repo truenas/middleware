@@ -687,7 +687,7 @@ the "OK" button to begin the installation.
 Once installed, input the IP address of the VirtualBox jail into a web browser and enter the username and password of *admin* into the login screen. Once
 authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 
-**Figure 13.3a: The phpVirtualBox Interface**
+**Figure 13.3b: The phpVirtualBox Interface**
 
 |jails8.png|
 
