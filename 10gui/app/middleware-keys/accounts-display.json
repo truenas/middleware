@@ -1,6 +1,7 @@
 [{
     "primaryKey"   : "bsdusr_username"
   , "secondaryKey" : "bsdusr_full_name"
+  , "selectionKey" : "bsdusr_username"
   , "groups"       : [ "bsdusr_builtin" ]
   , "dataKeys": {
       "bsdusr_builtin": {

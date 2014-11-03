@@ -12,25 +12,41 @@ var TWBS = require("react-bootstrap");
 
 // Detail Viewer
 var DetailViewer = React.createClass({
-  render: function() {
+    handleChangeItem: function( key ) {
+      // Pass selected key back to controller for global use
+      this.props.handleItemSelect( key );
+  }
+  , render: function() {
+    // Sidebar navigation for collection
     var createItem = function( rawItem ) {
-      return ( <TWBS.ListGroupItem header = { rawItem[ this.props.formatData["primaryKey"] ] }
-                                   key    = { rawItem.id }>
-                 { rawItem[ this.props.formatData["secondaryKey"] ] }
-               </TWBS.ListGroupItem> );
+      return ( <TWBS.NavItem key={ rawItem[ this.props.formatData["selectionKey"] ] }>
+                 <h4>{ rawItem[ this.props.formatData["primaryKey"] ] }</h4>
+                 <small>{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+               </TWBS.NavItem> );
+    }.bind(this);
+
+    // Populate the editor pane with the object cooresponding to the current selection
+    var getObjectByKey = function( item ) {
+      return item[ this.props.formatData["selectionKey"] ] === this.props.selectedKey;
     }.bind(this);
 
     return (
-      <TWBS.Row>
-        <TWBS.Col xs={4}>
-          <TWBS.ListGroup>
-            { this.props.inputData.map( createItem ) }
-          </TWBS.ListGroup>
-        </TWBS.Col>
-        <TWBS.Col xs={8}>
-          <p>{"TODO: Data for the selected item should display here"}</p>
-        </TWBS.Col>
-      </TWBS.Row>
+      <TWBS.Grid>
+        <TWBS.Row>
+          <TWBS.Col xs={3}>
+            <TWBS.Nav bsStyle   = "pills"
+                      stacked
+                      onSelect  = { this.handleChangeItem }
+                      activeKey = { this.props.selectedKey } >
+              { this.props.inputData.map( createItem ) }
+            </TWBS.Nav>
+          </TWBS.Col>
+          <TWBS.Col xs={9}>
+            <this.props.editor inputData  = { _.find( this.props.inputData, getObjectByKey ) }
+                               formatData = { this.props.formatData } />
+          </TWBS.Col>
+        </TWBS.Row>
+      </TWBS.Grid>
     );
   }
 });
@@ -77,7 +93,7 @@ var TableViewer = React.createClass({
         } else {
           innerContent = rawItem[cellKey];
         }
-        return ( <td key={ cellKey.key }>{ innerContent }</td> );
+        return ( <td>{ innerContent }</td> );
       }.bind( this );
 
       return(
@@ -129,6 +145,9 @@ var Viewer = React.createClass({
         currentMode: this.changeViewMode( this.props.allowedModes[ selectedKey ] )
       });
    }
+   , handleItemSelect: function( selectedKey ) {
+      this.setState({ selectedItem: selectedKey });
+   }
    , propTypes: {
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
@@ -166,8 +185,9 @@ var Viewer = React.createClass({
       });
 
       return {
-          currentMode : this.changeViewMode( initialMode )
-        , tableCols   : defaultTableCols
+          currentMode  : this.changeViewMode( initialMode )
+        , tableCols    : defaultTableCols
+        , selectedItem : this.props.inputData[0][ this.props.formatData.selectionKey ]
       };
     }
   , render: function() {
@@ -183,14 +203,19 @@ var Viewer = React.createClass({
       switch ( this.state.currentMode ) {
         default:
         case "detail":
-          return( <DetailViewer inputData  = { this.props.inputData }
-                                formatData = { this.props.formatData } /> );
+          return( <DetailViewer inputData        = { this.props.inputData }
+                                formatData       = { this.props.formatData }
+                                handleItemSelect = { this.handleItemSelect }
+                                selectedKey      = { this.state.selectedItem }
+                                editor           = { this.props.editor } /> );
         case "icon":
           return( <IconViewer inputData  = { this.props.inputData }
-                              formatData = { this.props.formatData } /> );
+                              formatData = { this.props.formatData }
+                              editor     = { this.props.editor } /> );
         case "table":
           return( <TableViewer inputData  = { this.props.inputData }
                                formatData = { this.props.formatData }
+                               editor     = { this.props.editor }
                                tableCols  = { this.state.tableCols } /> );
         case "heir":
           // TODO: Heirarchical Viewer
