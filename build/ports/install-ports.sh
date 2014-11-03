@@ -44,8 +44,6 @@ if [ -n "$WITH_PKGNG" ]; then
 	fi
 	mkdir -p ${NANO_OBJ}/_.w/dev
 	chroot ${NANO_OBJ}/_.w /sbin/mount -t devfs devfs /dev
-	devfs -m ${NANO_OBJ}/_.w/dev rule add path random unhide
-	devfs -m ${NANO_OBJ}/_.w/dev rule add path urandom unhide
 	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install -f $PACKAGES_TO_INSTALL"
 	rm -f ${NANO_OBJ}/_.w/usr/local/etc/pkg.conf
 	umount ${NANO_OBJ}/_.w/dev
