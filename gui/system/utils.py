@@ -31,6 +31,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 from django.utils.translation import ugettext as _
+from lockfile import LockFile
 
 from freenasUI.common import humanize_size
 
@@ -169,26 +170,28 @@ class UpdateHandler(object):
         self.dump()
 
     def dump(self):
-        with open(self.DUMPFILE, 'wb') as f:
-            data = {
-                'apply': self.apply,
-                'error': self.error,
-                'finished': self.finished,
-                'indeterminate': self.indeterminate,
-                'pid': self.pid,
-                'percent': self.progress,
-                'step': self.step,
-                'uuid': self.uuid,
-            }
-            if self.details:
-                data['details'] = self.details
-            f.write(json.dumps(data))
+        with LockFile(self.DUMPFILE) as lock:
+            with open(self.DUMPFILE, 'wb') as f:
+                data = {
+                    'apply': self.apply,
+                    'error': self.error,
+                    'finished': self.finished,
+                    'indeterminate': self.indeterminate,
+                    'pid': self.pid,
+                    'percent': self.progress,
+                    'step': self.step,
+                    'uuid': self.uuid,
+                }
+                if self.details:
+                    data['details'] = self.details
+                f.write(json.dumps(data))
 
     def load(self):
         if not os.path.exists(self.DUMPFILE):
             return None
-        with open(self.DUMPFILE, 'rb') as f:
-            data = json.loads(f.read())
+        with LockFile(self.DUMPFILE) as lock:
+            with open(self.DUMPFILE, 'rb') as f:
+                data = json.loads(f.read())
         self.apply = data.get('apply', '')
         self.details = data.get('details', '')
         self.error = data['error']
