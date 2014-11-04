@@ -361,7 +361,9 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 raise Exception("Unable to remove contents for package %s" % pkg.Name())
             conf.PackageDB(root).RemovePackage(pkg.Name())
 
+        log.debug("Creating Installer object")
         installer = Installer.Installer(manifest = new_man, root = root, config = conf)
+        log.debug("Getting packages")
         installer.GetPackages(process_packages, handler=get_handler)
 
         log.debug("Packages = %s" % installer._packages)
