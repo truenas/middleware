@@ -2685,7 +2685,7 @@ class notifier:
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
-        return '/var/tmp/update'
+        return '/var/tmp/update/cache'
 
     def validate_update(self, path):
 

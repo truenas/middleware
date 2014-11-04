@@ -1081,13 +1081,11 @@ def update_apply(request):
             else:
                 handler.pid = os.getpid()
                 handler.dump()
-                path = notifier().system_dataset_path()
-                if not path:
-                    raise MiddlewareError(_('System dataset not configured'))
+                path = notifier().get_update_location()
                 try:
                     log.debug("Starting ApplyUpdate")
                     ApplyUpdate(
-                        '%s/update' % path,
+                        path,
                         install_handler=handler.install_handler,
                     )
                     log.debug("ApplyUpdate finished!")
@@ -1142,9 +1140,7 @@ def update_check(request):
             else:
                 handler.pid = os.getpid()
                 handler.dump()
-                path = notifier().system_dataset_path()
-                if not path:
-                    raise MiddlewareError(_('System dataset not configured'))
+                path = notifier().get_update_location()
                 try:
                     if handler.apply:
                         log.debug("Starting Update")
@@ -1152,13 +1148,13 @@ def update_check(request):
                             train=updateobj.get_train(),
                             get_handler=handler.get_handler,
                             install_handler=handler.install_handler,
-                            cache_dir='%s/update' % path,
+                            cache_dir=path,
                         )
                     else:
                         log.debug("Starting DownloadUpdate")
                         DownloadUpdate(
                             updateobj.get_train(),
-                            '%s/update' % path,
+                            path,
                             check_handler=handler.get_handler,
                             get_handler=handler.get_file_handler,
                         )

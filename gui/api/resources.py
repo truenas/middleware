@@ -2532,10 +2532,8 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        path = notifier().system_dataset_path()
-        if not path:
-            raise MiddlewareError("System dataset not configured")
-        changes = Update.PendingUpdates("%s/update" % path)
+        path = notifier().get_upload_location()
+        changes = Update.PendingUpdates(path)
         data = []
         if changes:
             for new, op, old in changes:
