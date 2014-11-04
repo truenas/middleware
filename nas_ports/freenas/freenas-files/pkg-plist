@@ -20,6 +20,7 @@ usr/local/etc/rc.d/ldpbiconfig
 usr/local/etc/rc.d/pbid
 usr/local/etc/samba.gdb
 usr/local/etc/sudoers
+usr/local/etc/syslog-ng.conf.freenas
 usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 usr/local/libexec/freenas-debug/cache/cache.sh
 usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d
