@@ -29,6 +29,7 @@ import logging
 import json
 import psycopg2
 import psycopg2.extras
+from datastore import DuplicateKeyException
 
 class PostgresSelectQuery(object):
     ASC = 'ASC'
@@ -50,8 +51,12 @@ class PostgresSelectQuery(object):
     def __build_where(self):
         items = []
         for left, op, right in self.where_conditions:
-            path = left if left == 'id' else self.__convert_path(left)
-            items.append(self.cur.mogrify("{0} {1} %s".format(path, op), (json.dumps(right),)))
+            if left == 'id':
+                path = left
+                items.append(self.cur.mogrify("{0} {1} %s".format(path, op), (right,)))
+            else:
+                path = self.__convert_path(left)
+                items.append(self.cur.mogrify("{0} {1} %s".format(path, op), (psycopg2.extras.Json(right),)))
 
         return self.connect.join(items)
 
@@ -99,12 +104,30 @@ class PostgresDatastore(object):
 
     def connect(self, dsn):
         self.conn = psycopg2.connect(dsn, cursor_factory=psycopg2.extras.NamedTupleCursor)
+        psycopg2.extras.register_uuid(self.conn)
 
-    def collection_create(self, collection, pkey_type='uuid'):
+    def collection_create(self, collection, pkey_type='uuid', attributes={}):
         with self.conn.cursor() as cur:
             cur.execute("CREATE TABLE {0} (id {1} PRIMARY KEY, data json)".format(collection, pkey_type))
+            self.insert('__collections', attributes, pkey=collection)
 
         self.conn.commit()
+
+    def collection_get_pkey_type(self, collection):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT data_type FROM information_schema.columns WHERE table_name = %s AND column_name = 'id'", [collection])
+            return cur.fetchone()[0]
+
+    def collection_get_max_id(self, collection):
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT max(id) FROM {0}".format(collection))
+            return cur.fetchone()[0]
+
+    def collection_get_attrs(self, collection):
+        return self.get_by_id('__collections', collection)
+
+    def collection_set_attrs(self, collection, attributes):
+        self.update('__collections', collection, attributes)
 
     def collection_exists(self, collection):
         with self.conn.cursor() as cur:
@@ -115,6 +138,9 @@ class PostgresDatastore(object):
         with self.conn.cursor() as cur:
             cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = %s", ('public',))
             for i in cur:
+                if i[0].startswith('__'):
+                    continue
+
                 yield i[0]
 
     def query(self, collection, args=[], sort=None, dir=None, limit=None):
@@ -137,7 +163,16 @@ class PostgresDatastore(object):
                 yield row
 
     def get_count(self, collection, args=[]):
-        pass
+         with self.conn.cursor() as cur:
+            query = PostgresSelectQuery(collection, cur)
+            for i in args:
+                query.where(*i)
+
+            query.projection('count')
+            cur.execute(query.sql())
+
+            i = cur.fetchone()
+            return i[0]
 
     def get_one(self, collection, args=[]):
         with self.conn.cursor() as cur:
@@ -149,6 +184,9 @@ class PostgresDatastore(object):
             cur.execute(query.sql())
 
             i = cur.fetchone()
+            if i is None:
+                return None
+
             row = i.data
             row["id"] = i.id
             return row
@@ -161,11 +199,17 @@ class PostgresDatastore(object):
             obj = obj.__getstate__()
 
         with self.conn.cursor() as cur:
-            pkey = 'default' if pkey is None else cur.mogrify('%s', pkey)
-            cur.execute("INSERT INTO {0} (id, data) VALUES ({1}, %s) RETURNING id".format(
-                collection,
-                pkey
-            ), (psycopg2.extras.Json(obj),))
+            pkey = 'default' if pkey is None else cur.mogrify('%s', [pkey])
+            try:
+                cur.execute("INSERT INTO {0} (id, data) VALUES ({1}, %s) RETURNING id".format(
+                    collection,
+                    pkey
+                ), (psycopg2.extras.Json(obj),))
+            except psycopg2.IntegrityError, e:
+                self.conn.rollback()
+                raise DuplicateKeyException(e)
+            else:
+                self.conn.commit()
 
             result = cur.fetchone()
             self.conn.commit()
@@ -181,11 +225,21 @@ class PostgresDatastore(object):
                 pkey
             ))
 
+            self.conn.commit()
+
     def upsert(self, collection, pkey, obj):
         if self.exists(collection, [('id', '=', pkey)]):
             return self.update(collection, pkey, obj)
         else:
             return self.insert(collection, pkey, obj)
+
+    def delete(self, collection, pkey):
+        with self.conn.cursor() as cur:
+            cur.execute("DELETE FROM {0} WHERE id = %s".format(collection), (
+                pkey
+            ))
+
+            self.conn.commit()
 
     def exists(self, collection, args=[]):
         return self.get_one(collection, args) is not None

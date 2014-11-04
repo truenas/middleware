@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -25,23 +26,52 @@
 #
 #####################################################################
 
-import imp
-import os
+import argparse
+import json
+import datastore
 
-DRIVERS_LOCATION = '/usr/local/lib/datastore/drivers'
+DEFAULT_CONFIGFILE = '/conf/middleware.conf'
+ds = None
+
+def init_datastore(filename):
+    global ds
+
+    try:
+        f = open(filename)
+        conf = json.load(f)
+        f.close()
+    except IOError, err:
+        return
+    except ValueError, err:
+        return
+
+    if not 'datastore' in conf:
+        pass
+
+    try:
+        ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
+    except datastore.DatastoreException, err:
+        pass
+
+def restore_collection(data):
+    metadata = {
+        'name': name,
+        'pkey-type': '???',
+        'last-id': 0
+    }
+
+    return {
+        'metadata': metadata,
+        'data': list(ds.query(name))
+    }
 
 
-class DatastoreException(Exception):
-    pass
+def main():
+    global ds
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    args = parser.parse_args()
+    init_datastore(args.c)
 
-
-class DuplicateKeyException(DatastoreException):
-    pass
-
-
-def get_datastore(type, dsn):
-    mod = imp.load_source(type, os.path.join(DRIVERS_LOCATION, type, type + '.py'))
-    cls = getattr(mod, '{0}Datastore'.format(type.title()))
-    instance = cls()
-    instance.connect(dsn)
-    return instance
+if __name__ == '__main__':
+    main()

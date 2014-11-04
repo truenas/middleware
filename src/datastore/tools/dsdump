@@ -26,10 +26,8 @@
 #
 #####################################################################
 
-from __future__ import print_function
-import argh
+import argparse
 import json
-import sys
 import datastore
 
 DEFAULT_CONFIGFILE = '/conf/middleware.conf'
@@ -55,77 +53,43 @@ def init_datastore(filename):
     except datastore.DatastoreException, err:
         pass
 
-def json_select(obj, selector=None):
-    result = []
-    if selector is None:
-        return obj
+def dump_collection(ds, name):
+    metadata = {
+        'name': name,
+        'pkey-type': ds.collection_get_pkey_type(name),
+        'last-id': ds.collection_get_max_id(name)
+    }
 
-    for path in selector.split(','):
-        ptr = obj
-        path = path.strip()
+    return {
+        'metadata': metadata,
+        'data': list(ds.query(name))
+    }
 
-        for elem in path.split('.'):
-            if not elem in ptr:
-                result.append(None)
-                break
-
-            ptr = ptr[elem]
-
-        result.append(ptr)
-
-    return result
-
-def create(name):
-    try:
-        ds.collection_create(name)
-    except datastore.DatastoreException:
-        print("err")
-
-def list():
-    global ds
-    for coll in ds.collection_list():
-        print(coll)
-
-@argh.arg('--select')
-def get(name, id, select=None):
-    obj = ds.get_by_id(id)
-    if obj is None:
-        print("Object {0} not found in collection {1}".format(id, name), file=sys.stderr)
-        sys.exit(1)
-
-    print(json.dumps(json_select(obj, select)))
-
-def set(name, id, fields):
-    pass
-
-@argh.arg('--select')
-@argh.arg('--sort')
-@argh.arg('--limit', type=int)
-@argh.arg('filter', nargs='*')
-def query(name, filter, select=None, sort=None, limit=None):
-    params = []
-    for i in filter:
-        params.append(i.split())
-
-    for row in ds.query(name, params, sort=sort, limit=limit):
-        print(json.dumps(json_select(row, select)))
-
-def config_list(key, mask=None):
-    pass
-
-def config_get(key):
-    pass
-
-def config_set(key):
-    pass
 
 def main():
-    parser = argh.ArghParser()
+    global ds
+    parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
-    parser.add_commands([create, list, get, set, query, config_list, config_get, config_set])
+    parser.add_argument('-t', metavar='TYPE', help='Collection types to dump')
+    parser.add_argument('-x', metavar='NOMETA', help='Don\'t include metadata')
+    parser.add_argument('collections', metavar='COLLECTION', nargs='*', default='all', help='Collections to dump or "all"')
     args = parser.parse_args()
     init_datastore(args.c)
-    parser.dispatch()
+
+    types = args.t.split(',')
+    result = []
+
+    if 'all' in args.collections:
+        args.collections = ds.collection_list()
+
+    for cname in args.collections:
+        attrs = ds.collection_get_attrs(cname)
+        if 'type' in attrs.keys() and attrs['type'] not in types:
+            continue
+
+        result.append(dump_collection(ds, cname))
+
+    print json.dumps(result, indent=4)
 
 if __name__ == '__main__':
     main()
