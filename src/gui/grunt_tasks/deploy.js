@@ -21,13 +21,16 @@ module.exports = function(grunt) {
     }
 
     // Set and create deployment target's path relative to current working dir
-    targetPath = path.resolve( process.cwd() + "/" + grunt.config("dirTree.deployment") );
+    if ( grunt.config("dirTree.deployment")[0] === "/" ) {
+      targetPath = grunt.config("dirTree.deployment");
+    } else {
+      targetPath = path.resolve( process.cwd() + "/" + grunt.config("dirTree.deployment") );
+    }
     grunt.file.mkdir( targetPath );
 
     console.log( chalk.cyan( "Creating FreeNAS WebGUI deployment in this directory:" ) );
     console.log( targetPath );
 
-    grunt.task.clearQueue();
     grunt.task.run([
         "clean:deployment"
       , "concurrent:buildWorld"
