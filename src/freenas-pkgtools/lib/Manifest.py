@@ -12,9 +12,6 @@ log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
-CA_CERTS_FILE = "/etc/certs/ix-CA.pem"
-PUB_CERT_FILE = "/etc/certs/%s.pem" % Avatar()
-
 # The keys are as follows:
 # SEQUENCE_KEY:  A string, uniquely identifying this manifest.
 # PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.

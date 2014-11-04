@@ -355,8 +355,36 @@ end:
 static int
 VerifyCertificate(spc_ocsprequest_t *ocsp)
 {
-	X509_STORE_CTX *store_ctx = X509_STORE_CTX_new();
+	X509_STORE_CTX *store_ctx = NULL;
 	int i;
+	/*
+	 * First step:  if we've got a url and issuer, let's check
+	 * and see if the key has been revoked.
+	 * Note that I have no idea if this code works.
+	 */
+	if (ocsp->url) {
+		if (ocsp->issuer) {
+			int rv = spc_verify_via_ocsp(ocsp);
+			if (verbose) {
+				if (rv)
+					warnx("OSPC verify returned %d", rv);
+				else
+					warnx("Certificate valid");
+			}
+			if (spc_fatal_error(rv)) {
+				errx(1, "Certificate check failed");
+			}
+		} else if (verbose)
+			warnx("No issuer, cannot check OCSP");
+	} else if (verbose)
+		warnx("No OCSP URL, cannot check OCSP");
+
+	/*
+	 * Now try to verify the certificate.  The store should
+	 * have any CA certificates already.  Also a CRL if
+	 * one exists.
+	 */
+	store_ctx = X509_STORE_CTX_new();
 	if (store_ctx == NULL) {
 		errx(1, "Could not allocate an X509_STORE_CTX");
 	}
@@ -396,27 +424,6 @@ VerifySignature(const char *data,
 	const EVP_MD *digest = EVP_get_digestbyname(hash);
 	unsigned char *decoded_signature = NULL;
 	size_t decoded_length;
-
-	/*
-	 * First step:  if we've got a url and issuer, let's check
-	 * and see if the key has been revoked.
-	 */
-	if (ocsp->url) {
-		if (ocsp->issuer) {
-			int rv = spc_verify_via_ocsp(ocsp);
-			if (verbose) {
-				if (rv)
-					warnx("OSPC verify returned %d", rv);
-				else
-					warnx("Certificate valid");
-			}
-			if (spc_fatal_error(rv)) {
-				errx(1, "Certificate check failed");
-			}
-		} else if (verbose)
-			warnx("No issuer, cannot check OCSP");
-	} else if (verbose)
-		warnx("No OCSP URL, cannot check OCSP");
 
 	pkey = PublicKey(ocsp->cert);
 
