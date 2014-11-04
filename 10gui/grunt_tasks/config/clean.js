@@ -4,6 +4,7 @@
 "use strict";
 
 module.exports = function( grunt ) {
-  this.build = [ "<%= dirTree.build.root %>" ];
-  this.pkgs  = [ "bower_components", "node_modules" ];
+  this.deployment = [ "<%= dirTree.deployment %>" ];
+  this.build      = [ "<%= dirTree.build.root %>" ];
+  this.pkgs       = [ "bower_components", "node_modules" ];
 };

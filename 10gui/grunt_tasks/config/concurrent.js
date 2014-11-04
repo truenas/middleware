@@ -18,7 +18,8 @@ module.exports = function( grunt ) {
   // Initial build of app
   this.buildWorld = [
       "browserify"
-    , "copy"
+    , "copy:images"
+    , "copy:favicons"
     , "less"
   ];
 

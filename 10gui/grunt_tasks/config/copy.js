@@ -25,4 +25,16 @@ module.exports = function( grunt ) {
       , flatten : true
     }]
   };
+
+  this.deployment = {
+    files: [{
+        src: [
+            "<%= dirTree.build.root %>/**"
+          , "bower_components/**"
+          , "package.json"
+        ]
+      , dest    : "<%= dirTree.deployment %>"
+      , expand  : true
+    }]
+  };
 };

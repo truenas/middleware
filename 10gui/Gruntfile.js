@@ -81,6 +81,8 @@ module.exports = function(grunt) {
           , css  : "app/build/css"
           , dist : "app/build/js"
         }
+
+        , deployment : "app-deploy"
     }
 
     // Environment
