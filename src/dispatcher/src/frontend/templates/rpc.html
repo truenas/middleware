@@ -1,6 +1,6 @@
 {% extends "bootstrap/base.html" %}
 {% import "nav.html" as nav %}
-{% block title %}System events{% endblock %}
+{% block title %}RPC{% endblock %}
 {% block styles %}
     {{ super() }}
     <style type="text/css">
@@ -20,7 +20,7 @@
             Available methods:
             <ul>
             {{#methods}}
-                <li><a href="#" class="method-label" data-fullname="{{../service_name}}.{{this}}">{{this}}</a></li>
+                <li><a href="#" class="method-label" data-fullname="{{../service_name}}.{{name}}">{{name}}</a></li>
             {{/methods}}
             </ul>
         </div>
@@ -29,7 +29,7 @@
     <script type="text/javascript">
         var sock = new Middleware();
         var template = Handlebars.compile($("#service-template").html());
-        sock.connect("ws://" + document.domain + ":5000/socket");
+        sock.connect("wss://" + document.domain + ":5000/socket");
 
         $(document).ready(function (){
             $("#services").on("click", ".method-label", function () {
@@ -51,6 +51,10 @@
             });
 
             sock.on("connected", function() {
+                sock.login("jakub", "test");
+            });
+
+            sock.on("login", function() {
                 sock.call("discovery.get_services", null, function (services) {
                     $.each(services, function(idx, i) {
                         sock.call("discovery.get_methods", [i], function(methods) {

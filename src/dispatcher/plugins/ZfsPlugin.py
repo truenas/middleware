@@ -4,7 +4,7 @@ import errno
 from gevent.event import Event
 from lib import zfs
 from lib.system import system, SubprocessException
-from task import Provider, Task, TaskStatus, TaskException
+from task import Provider, Task, TaskStatus, TaskException, schema, description
 from balancer import TaskState
 
 class ZpoolProvider(Provider):
@@ -23,6 +23,7 @@ class ZfsProvider(Provider):
         return []
 
 
+@description("Scrubs ZFS pool")
 class ZpoolScrubTask(Task):
     def __init__(self, dispatcher):
         self.pool = None
@@ -54,6 +55,7 @@ class ZpoolScrubTask(Task):
         except SubprocessException, e:
             raise TaskException(errno.EINVAL, e.err)
 
+        self.finish_event.set()
         return True
 
     def get_status(self):
@@ -61,6 +63,7 @@ class ZpoolScrubTask(Task):
             return TaskStatus(0, "Waiting to start...")
 
         scrub = zfs.zpool_status(self.pool).scrub
+
         if scrub["status"] == "IN_PROGRESS":
             self.progress = float(scrub["progress"])
             return TaskStatus(self.progress, "In progress...")
@@ -84,5 +87,5 @@ class ZpoolScrubTask(Task):
 
 
 def _init(dispatcher):
-    dispatcher.register_provider("zfs.pool", ZpoolProvider)
-    dispatcher.register_task_handler("zfs.pool.scrub", ZpoolScrubTask)
+    dispatcher.register_provider('zfs.pool', ZpoolProvider)
+    dispatcher.register_task_handler('zfs.pool.scrub', ZpoolScrubTask)

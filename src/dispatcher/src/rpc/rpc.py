@@ -57,19 +57,29 @@ class RpcContext(object):
 
 
 class RpcService(object):
-    def enumerate_methods(self):
-        for i in inspect.getmembers(self, predicate=inspect.ismethod):
-            method = i[0]
+    @classmethod
+    def _get_metadata(self):
+        return None
 
-            if method.startswith('_'):
+    def enumerate_methods(self):
+        for name, method in inspect.getmembers(self, predicate=inspect.ismethod):
+            if name.startswith('_'):
                 continue
 
-            if method in (
+            if name in (
                 "initialize",
                 "enumerate_methods"):
                 continue
 
-            yield method
+            result = {'name': name}
+
+            if hasattr(method, '__description'):
+                result['description'] = method.__description
+
+            if hasattr(method, '__schema'):
+                result['schema'] = method.__schema
+
+            yield result
 
 
 class RpcException(Exception):
@@ -92,7 +102,7 @@ class DiscoveryService(RpcService):
         return self.__context.services.keys()
 
     def get_tasks(self):
-        return self.__context.dispatcher.tasks.keys()
+        return {n: x._get_metadata() for n, x in self.__context.dispatcher.tasks.items()}
 
     def get_methods(self, service):
         if not service in self.__context.services.keys():

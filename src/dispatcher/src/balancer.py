@@ -112,7 +112,7 @@ class Balancer(object):
         self.queues = {}
         self.threads = []
         self.logger = logging.getLogger('Balancer')
-        self.dispatcher.require_collection('tasks', pkey_type='serial')
+        self.dispatcher.require_collection('tasks', 'serial', 'log')
         self.create_initial_queues()
 
     def create_initial_queues(self):
@@ -218,7 +218,7 @@ class Worker(object):
             task.set_state(TaskState.EXECUTING)
             try:
                 result = task.run()
-            except TaskException, e:
+            except BaseException, e:
                 task.ended.set()
                 task.set_state(TaskState.FAILED, TaskStatus(0, str(e)))
                 continue

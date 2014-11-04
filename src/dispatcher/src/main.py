@@ -11,6 +11,7 @@ import argparse
 import gevent
 import signal
 import time
+import errno
 import setproctitle
 from pyee import EventEmitter
 from gevent import monkey, Greenlet
@@ -20,6 +21,7 @@ from datastore import get_datastore, DatastoreException
 from rpc.rpc import RpcContext, RpcException
 from api.handler import ApiHandler
 from balancer import Balancer
+from auth import PasswordAuthenticator
 
 DEFAULT_CONFIGFILE = '/data/middleware.conf'
 
@@ -30,7 +32,7 @@ class Dispatcher(object):
         self.event_types = []
         self.event_sources = {}
         self.event_handlers = {}
-        self.plugins = []
+        self.plugins = {}
         self.threads = []
         self.queues = {}
         self.providers = {}
@@ -38,6 +40,7 @@ class Dispatcher(object):
         self.logger = logging.getLogger('Main')
         self.balancer = None
         self.datastore = None
+        self.auth = None
         self.ws_server = None
         self.http_server = None
         self.pidfile = None
@@ -49,10 +52,11 @@ class Dispatcher(object):
         )
 
         self.logger.info('Connected to datastore')
-        self.require_collection('events', 'serial')
-        self.require_collection('tasks', 'serial')
+        self.require_collection('events', 'serial', 'log')
+        self.require_collection('tasks', 'serial', 'log')
 
         self.balancer = Balancer(self)
+        self.auth = PasswordAuthenticator(self)
         self.rpc = RpcContext(self)
 
     def start(self):
@@ -82,20 +86,36 @@ class Dispatcher(object):
         self.plugin_dirs = data['dispatcher']['plugin-dirs']
         self.pidfile = data['dispatcher']['pidfile']
 
+        if 'tls' in data['dispatcher'] and data['dispatcher']['tls'] == True:
+            self.certfile = data['dispatcher']['tls-certificate']
+            self.keyfile = data['dispatcher']['tls-keyfile']
+
     def discover_plugins(self):
         for dir in self.plugin_dirs:
             self.logger.debug("Searching for plugins in %s", dir)
             self.__discover_plugin_dir(dir)
+
+    def reload_plugins(self):
+        # Reload existing modules
+        for i in self.plugins.values():
+                imp.reload(i)
+
+        # And look for new ones
+        self.discover_plugins()
 
     def __discover_plugin_dir(self, dir):
         for i in glob.glob1(dir, "*.py"):
             self.__try_load_plugin(os.path.join(dir, i))
 
     def __try_load_plugin(self, path):
+        if path in self.plugins:
+            return
+
         self.logger.debug("Loading plugin from %s", path)
         plugin = imp.load_source("plugin", path)
         if hasattr(plugin, "_init"):
             plugin._init(self)
+            self.plugins[path] = plugin
 
         self.dispatch_event("server.plugin.loaded", {"name": os.path.basename(path)})
 
@@ -140,9 +160,9 @@ class Dispatcher(object):
         self.providers[name] = clazz
         self.rpc.register_service(name, clazz)
 
-    def require_collection(self, collection, pkey_type='uuid'):
+    def require_collection(self, collection, pkey_type='uuid', type='config'):
         if not self.datastore.collection_exists(collection):
-            self.datastore.collection_create(collection, pkey_type)
+            self.datastore.collection_create(collection, pkey_type, {'type': type})
 
     def die(self):
         self.logger.warning('Exiting from "die" command')
@@ -182,12 +202,14 @@ class Server(WebSocketServer):
         for i in self.connections:
             i.emit_event(event, args)
 
+
 class ServerConnection(WebSocketApplication, EventEmitter):
     def __init__(self, ws, dispatcher):
         super(ServerConnection, self).__init__(ws)
         self.server = ws.handler.server
         self.dispatcher = dispatcher
         self.pending_calls = {}
+        self.user = None
         self.event_masks = set()
 
     def on_open(self):
@@ -216,10 +238,46 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         getattr(self, "on_{}_{}".format(message["namespace"], message["name"]))(message["id"], message["args"])
 
     def on_events_subscribe(self, id, event_masks):
+        if self.user is None:
+            return
+
         self.event_masks = set.union(self.event_masks, event_masks)
 
     def on_events_unsubscribe(self, id, event_masks):
+        if self.user is None:
+            return
+
         self.event_masks = set.difference(self.event_masks, event_masks)
+
+    def on_rpc_auth(self, id, data):
+        username = data["username"]
+        password = data["password"]
+
+        user = self.dispatcher.auth.get_user(username)
+
+        if user is None:
+            self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
+            return
+
+        if not user.check_password(password):
+            self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
+            return
+
+        self.user = user
+
+        self.send_json({
+            "namespace": "rpc",
+            "name": "response",
+            "id": id,
+            "args": []
+        })
+
+        self.dispatcher.dispatch_event('server.client_logged', {
+            'address': self.ws.handler.client_address,
+            'username': username,
+            'description': "Client {0} logged in".format(username)
+        })
+
 
     def on_rpc_call(self, id, data):
         def dispatch_call_async(id, method, args):
@@ -243,10 +301,20 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "args": result
                 })
 
+        if self.user is None:
+            self.emit_rpc_error(id, errno.EACCES, 'Not logged in')
+            return
+
         method = data["method"]
         args = data["args"]
-        greenlet = Greenlet(dispatch_call_async, id, method, args)
 
+        if hasattr(method, '_required_roles'):
+            for i in method._required_roles:
+                if not self.user.has_role(i):
+                    self.emit_rpc_error(id, errno.EACCES, 'Insufficent privileges')
+                    return
+
+        greenlet = Greenlet(dispatch_call_async, id, method, args)
         self.pending_calls[id] = {
             "method": method,
             "args": args,
@@ -274,6 +342,22 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 }
             })
 
+    def emit_rpc_error(self, id, code, message, extra=None):
+        payload = {
+            "namespace": "rpc",
+            "name": "error",
+            "id": id,
+            "args": {
+                "code": code,
+                "message": message
+            }
+        }
+
+        if extra is not None:
+            payload['args'].update(extra)
+
+        return self.send_json(payload)
+
     def send_json(self, obj):
         self.ws.send(json.dumps(obj))
 
@@ -290,7 +374,7 @@ def run(d, args):
     app = ApiHandler(d)
     s = Server(('', args.p), ServerResource({
         '/socket': ServerConnection
-    }, dispatcher=d))
+    }, dispatcher=d), certfile=d.certfile, keyfile=d.keyfile)
 
     d.ws_server = s
     serv_thread = gevent.spawn(s.serve_forever)
@@ -298,7 +382,7 @@ def run(d, args):
     if args.s:
         # Debugging frontend server
         from frontend import frontend
-        http_server = WSGIServer(('', args.s), frontend.app)
+        http_server = WSGIServer(('', args.s), frontend.app, certfile=d.certfile, keyfile=d.keyfile)
         gevent.spawn(http_server.serve_forever)
         logging.info('Frontend server listening on port %d', args.s)
 

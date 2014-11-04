@@ -66,10 +66,6 @@ class ServiceManageTask(Task):
         # We cannot abort that task
         return False
 
-def _compatible():
-    return ["FreeBSD:*"]
-
-
 def _init(dispatcher):
     dispatcher.register_event_source("system.service", ServiceStatusEventSource)
     dispatcher.register_task_handler("system.service", ServiceManageTask)

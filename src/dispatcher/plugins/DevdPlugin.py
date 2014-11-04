@@ -4,7 +4,7 @@ import os
 import logging
 from balancer import QueueClass
 from event import EventSource
-from task import Provider
+from task import Provider, schema, description
 from gevent import socket
 from lib import geom
 from lxml import etree
@@ -22,6 +22,10 @@ class DeviceInfoPlugin(Provider):
             "serial"
         ]
 
+    @schema({
+        'title': 'dev_class',
+        'type': 'string'
+    })
     def get_devices(self, dev_class):
         method = "__get_class_{}".format(dev_class)
         if hasattr(self, method):
