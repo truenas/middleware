@@ -1464,6 +1464,12 @@ class iSCSITargetForm(ModelForm):
         group = self.cleaned_data.get('iscsi_target_authgroup')
         if group in ('', None):
             return None
+        if method == 'CHAP Mutual' and group:
+            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
+            if not auth.iscsi_target_auth_peeruser:
+                raise forms.ValidationError(_(
+                    'This authentication group does not support CHAP MUTUAL'
+                ))
         if method in ('CHAP', 'CHAP Mutual'):
             if group != '' and int(group) == -1:
                 raise forms.ValidationError(_("This field is required."))
