@@ -1096,8 +1096,8 @@ def main_menu():
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
-        [ _("System Update (requires networking)"), system_update ],
         [ _("Shell"), shell ],
+        [ _("System Update (requires networking)"), system_update ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
               ]
