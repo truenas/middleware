@@ -580,6 +580,11 @@ main(int ac, char **av)
 		}
 	}
 			
+	// If we've been given an issuer, we can try OCSP.
+	if (issuer_file) {
+		ocsp.issuer = LoadCertificate(issuer_file);
+	}
+
 	// Now load the actual certificate file
 	if ((ocsp.cert = LoadCertificate(cert_file)) == NULL) {
 		errx(1, "Unable to load certificate file %s", cert_file);
@@ -604,10 +609,6 @@ main(int ac, char **av)
 		}
 	}
 
-	// If we've been given an issuer, we can try OCSP.
-	if (issuer_file) {
-		ocsp.issuer = LoadCertificate(issuer_file);
-	}
 	retval = VerifyCertificate(&ocsp);
 	if (retval == 0) {
 		errx(1, "Could not verify certificate");
