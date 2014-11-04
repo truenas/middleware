@@ -115,7 +115,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Site Name                | string        | only available in "Advanced Mode";                                                                                                         |
+| Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                |
@@ -134,8 +134,9 @@ display these settings by checking the box "Show advanced fields by default" in 
 | DNS timeout              | integer       | only available in "Advanced Mode"; in seconds, increase if AD DNS queries timeout                                                          |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Idmap backend            | drop-down     | only available in "Advanced Mode";                                                                                                         |
-|                          | menu          |                                                                                                                                            |
+| Idmap backend            | drop-down     | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers (SIDs) to UNIX UIDs and GIDs; see Table   |
+|                          | menu and Edit | 9.1b for a summary of the available backends; click the "Edit" link to configure that backend's editable options                           |
+|                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Windbind NSS Info        | drop-down     | only available in "Advanced Mode";                                                                                                         |
 |                          | menu          |                                                                                                                                            |
@@ -148,6 +149,52 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
+Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
+`man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details.
+
+**Table 9.1b: Available ID Mapping Backends**
+
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| **Value**      | **Description**                                                                                                                          |
+|                |                                                                                                                                          |
++================+==========================================================================================================================================+
+| ad             | AD server uses RFC2307/SFU schema extensions; mappings must be provided in advance by adding the uidNumber attributes for users and      |
+|                | gidNumber attributes for groups in the AD                                                                                                |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| adex           | AD server uses RFC2307 schema extensions and supports domain trusts as well as two-way cross-forest trusts; mappings must be provided in |
+|                | advance by adding the POSIX attribute information to the users and groups objects in AD using a tool such as "Identity Services for      |
+|                | Unix" on Windows 2003 R2 and later                                                                                                       |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| autorid        | similar to "rid", but automatically configures the range to be used for each domain, so there is no need to specify a specific range for |
+|                | each domain in the forest; the only needed configuration is the range of UID/GIDs to use for user/group mappings and an optional size    |
+|                | for the ranges                                                                                                                           |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| hash           | uses a hashing algorithm for mapping and can be used to support local name mapping files                                                 |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| ldap           | stores and retrieves mapping tables in an LDAP directory service                                                                         |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| nss            | provides a simple means of ensuring that the SID for a Unix user is reported as the one assigned to the corresponding domain user        |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| rfc2307        |                                                                                                                                          |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| rid            | requires an explicit idmap configuration for each domain, using disjoint ranges; a writeable default idmap range should be defined,      |
+|                | using a backend like "tdb" or "ldap"                                                                                                     |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| tdb            | default backend used by winbindd for storing mapping tables                                                                              |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
+| tdb2           | substitute for "tdb" used by winbindd in clustered environments                                                                          |
+|                |                                                                                                                                          |
++----------------+------------------------------------------------------------------------------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
