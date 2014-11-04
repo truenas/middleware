@@ -2653,39 +2653,10 @@ class notifier:
         return True
 
     def get_update_location(self):
-
         syspath = self.system_dataset_path()
         if syspath:
             return '%s/update' % syspath
-
-        label = 'updatetmp'
-        doc = self._geom_confxml()
-
-        pref = doc.xpath(
-            "//class[name = 'LABEL']/geom/"
-            "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, )
-        )
-        if not pref:
-            proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 1000m")
-            mddev, err = proc.communicate()
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create memory device: %s" % err)
-
-            proc = self._pipeopen("newfs -L %s /dev/%s" % (label, mddev))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not create temporary filesystem: %s" % err)
-
-        proc = self._pipeopen('mount|grep ufs/%s' % label)
-        proc.communicate()
-        if proc.returncode != 0:
-            if not os.path.exists('/var/tmp/update'):
-                os.makedirs('/var/tmp/update')
-            proc = self._pipeopen("mount /dev/ufs/%s /var/tmp/update" % (label, ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
-        return '/var/tmp/update/cache'
+        return '/var/tmp/update'
 
     def validate_update(self, path):
 
