@@ -63,6 +63,9 @@ feature, the user can experiment with hosting multiple trains in parallel.
 for VMWare VAAI, MS ODX and Windows 2012 Clustering as well as much higher
 performance and space efficiency (zero'd blocks can now be reclaimed).
 
+  iSCSI nows supports associating to an iSNS server.
+
+  AFP now allows allowhosts and denyhosts per share.
 
 ** Directory Services **
 
