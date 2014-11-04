@@ -138,12 +138,15 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          | menu and Edit | 9.1b for a summary of the available backends; click the "Edit" link to configure that backend's editable options                           |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Windbind NSS Info        | drop-down     | only available in "Advanced Mode";                                                                                                         |
+| Windbind NSS Info        | drop-down     | only available in "Advanced Mode" and defines the schema to use when querying AD for user/group info; *rfc2307* uses the RFC2307 schema    |
+|                          |               | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
+|                          |               | *sfu* is for Services For Unix 2.0                                                                                                         |
 |                          | menu          |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| SASL wrapping            | drop-down     | only available in "Advanced Mode";                                                                                                         |
-|                          | menu          |                                                                                                                                            |
+| SASL wrapping            | drop-down     | only available in "Advanced Mode" and defines how LDAP traffic is transmitted; choices are *plain* (plain text),                           |
+|                          | menu          | *sign* (signed only),                                                                                                                      |
+|                          |               | or *seal* (signed and encrypted); Windows 2000 SP3 and higher can be configured to enforce signed LDAP connections                         |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                   |
@@ -159,8 +162,8 @@ Table 9.1b summarizes the backends which are available in the "Idmap backend" dr
 | **Value**      | **Description**                                                                                                                          |
 |                |                                                                                                                                          |
 +================+==========================================================================================================================================+
-| ad             | AD server uses RFC2307/SFU schema extensions; mappings must be provided in advance by adding the uidNumber attributes for users and      |
-|                | gidNumber attributes for groups in the AD                                                                                                |
+| ad             | AD server uses RFC2307 or Services For Unix schema extensions; mappings must be provided in advance by adding the uidNumber attributes   |
+|                | for users and gidNumber attributes for groups in the AD                                                                                  |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
 | adex           | AD server uses RFC2307 schema extensions and supports domain trusts as well as two-way cross-forest trusts; mappings must be provided in |
@@ -302,73 +305,76 @@ If you are new to LDAP terminology, skim through the
 
 **Table 9.2a: LDAP Configuration Options**
 
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| **Setting**             | **Value**      | **Description**                                                                                       |
-|                         |                |                                                                                                       |
-+=========================+================+=======================================================================================================+
-| Hostname                | string         | hostname or IP address of LDAP server                                                                 |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Base DN                 | string         | top level of the LDAP directory tree to be used when searching for resources (e.g.                    |
-|                         |                | *dc=test,dc=org*)                                                                                     |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                      |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind password           | string         | password for "Root bind DN"                                                                           |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Allow Anonymous         | checkbox       | only available in "Advanced Mode"; instructs LDAP server to not provide authentication and to allow   |
-| Binding                 |                | read and write access to any client                                                                   |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| User Suffix             | string         | only available in "Advanced Mode" and optional; can be added to name when user account added to LDAP  |
-|                         |                | directory (e.g. dept. or company name)                                                                |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Group Suffix            | string         | only available in "Advanced Mode" and optional; can be added to name when group added to LDAP         |
-|                         |                | directory (e.g. dept. or company name)                                                                |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Password Suffix         | string         | only available in "Advanced Mode" and optional; can be added to password when password added to       |
-|                         |                | LDAP directory                                                                                        |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Machine Suffix          | string         | only available in "Advanced Mode" and optional; can be added to name when system added to LDAP        |
-|                         |                | directory (e.g. server, accounting)                                                                   |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                      |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use default domain      | checkbox       | only available in "Advanced Mode";                                                                    |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Kerberos Realm          | drop-down menu | only available in "Advanced Mode";                                                                    |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Kerberos Keytab         | drop-down menu | only available in "Advanced Mode";                                                                    |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Encryption Mode         | drop-down menu | only available in "Advanced Mode"; choices are *Off*,                                                 |
-|                         |                | *SSL*, or                                                                                             |
-|                         |                | *TLS*                                                                                                 |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if    |
-|                         |                | SSL connections are used                                                                              |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap backend           | drop-down menu | only available in "Advanced Mode";                                                                    |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Samba Schema            | checkbox       | only available in "Advanced Mode";                                                                    |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                              |
-|                         |                |                                                                                                       |
-+-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| **Setting**             | **Value**      | **Description**                                                                                                |
+|                         |                |                                                                                                                |
++=========================+================+================================================================================================================+
+| Hostname                | string         | hostname or IP address of LDAP server                                                                          |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Base DN                 | string         | top level of the LDAP directory tree to be used when searching for resources (e.g.                             |
+|                         |                | *dc=test,dc=org*)                                                                                              |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Bind DN                 | string         | name of administrative account on LDAP server (e.g. *cn=Manager,dc=test,dc=org*)                               |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Bind password           | string         | password for "Root bind DN"                                                                                    |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Allow Anonymous         | checkbox       | only available in "Advanced Mode"; instructs LDAP server to not provide authentication and to allow            |
+| Binding                 |                | read and write access to any client                                                                            |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| User Suffix             | string         | only available in "Advanced Mode" and optional; can be added to name when user account added to LDAP           |
+|                         |                | directory (e.g. dept. or company name)                                                                         |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Group Suffix            | string         | only available in "Advanced Mode" and optional; can be added to name when group added to LDAP                  |
+|                         |                | directory (e.g. dept. or company name)                                                                         |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Password Suffix         | string         | only available in "Advanced Mode" and optional; can be added to password when password added to                |
+|                         |                | LDAP directory                                                                                                 |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Machine Suffix          | string         | only available in "Advanced Mode" and optional; can be added to name when system added to LDAP                 |
+|                         |                | directory (e.g. server, accounting)                                                                            |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                               |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Use default domain      | checkbox       | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username                |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Kerberos Realm          | drop-down menu | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`  |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Kerberos Keytab         | drop-down menu | only available in "Advanced Mode";  browse to the location of the keytab created using the instructions in     |
+|                         |                | :ref:`Kerberos Keytabs`                                                                                        |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Encryption Mode         | drop-down menu | only available in "Advanced Mode"; choices are *Off*,                                                          |
+|                         |                | *SSL*, or                                                                                                      |
+|                         |                | *TLS*                                                                                                          |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if             |
+|                         |                | SSL connections are used                                                                                       |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
+|                         | and Edit       | UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the "Edit" link to configure |
+|                         |                | that backend's editable options                                                                                |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Samba Schema            | checkbox       | only available in "Advanced Mode";                                                                             |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to LDAP who needs immediate access to FreeNAS®; otherwise this occurs automatically once
 a day as a cron job.
@@ -425,7 +431,7 @@ options.
 |             |           | on the same subnet                                                                                                         |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
-| Enable      | checkbox  |                                                                                                                            |
+| Enable      | checkbox  | uncheck to disable the configuration without deleting it                                                                   |
 |             |           |                                                                                                                            |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------+
 
@@ -454,35 +460,37 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 
 **Table 9.4a: NT4 Configuration Options**
 
-+------------------------+-----------+---------------------------------------------------------------------+
-| **Setting**            | **Value** | **Description**                                                     |
-|                        |           |                                                                     |
-|                        |           |                                                                     |
-+========================+===========+=====================================================================+
-| Domain Controller      | string    | hostname of domain controller                                       |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS system                                          |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Workgroup Name         | string    | name of Windows server's workgroup                                  |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Administrator Name     | string    | name of the domain administrator account                            |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Administrator Password | string    | input and confirm the password for the domain administrator account |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Use default domain     | checkbox  | only available in "Advanced Mode";                                  |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Idmap backend          | drop-down | only available in "Advanced Mode";                                  |
-|                        | menu      |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Enable                 | checkbox  | uncheck to disable the configuration without deleting it            |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value** | **Description**                                                                                  |
+|                        |           |                                                                                                  |
+|                        |           |                                                                                                  |
++========================+===========+==================================================================================================+
+| Domain Controller      | string    | hostname of domain controller                                                                    |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| NetBIOS Name           | string    | hostname of FreeNAS system                                                                       |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Workgroup Name         | string    | name of Windows server's workgroup                                                               |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Administrator Name     | string    | name of the domain administrator account                                                         |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Administrator Password | string    | input and confirm the password for the domain administrator account                              |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Use default domain     | checkbox  | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username  |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Idmap backend          | drop-down | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers |
+|                        | and Edit  | (SIDs) to UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the  |
+|                        | menu      | "Edit" link to configure that backend's editable options                                         |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
+| Enable                 | checkbox  | uncheck to disable the configuration without deleting it                                         |
+|                        |           |                                                                                                  |
++------------------------+-----------+--------------------------------------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to FreeNAS®; otherwise this occurs
 automatically once a day as a cron job.
@@ -509,23 +517,22 @@ button or configure the system to always display these settings by checking the 
 
 **Table 9.5a: Kerberos Realm Options**
 
-+------------------------+-----------+---------------------------------------------------------------------+
-| **Setting**            | **Value** | **Description**                                                     |
-|                        |           |                                                                     |
-|                        |           |                                                                     |
-+========================+===========+=====================================================================+
-| Realm                  | string    | mandatory; name of the realm                                        |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| KDC                    | string    |                                                                     |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Admin Server           | string    | only available in "Advanced Mode";                                  |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
-| Password Server        | string    | only available in "Advanced Mode";                                  |
-|                        |           |                                                                     |
-+------------------------+-----------+---------------------------------------------------------------------+
++------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value** | **Description**                                                                                                  |
+|                        |           |                                                                                                                  |
++========================+===========+==================================================================================================================+
+| Realm                  | string    | mandatory; name of the realm                                                                                     |
+|                        |           |                                                                                                                  |
++------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
+| KDC                    | string    | name of the Key Distribution Center                                                                              |
+|                        |           |                                                                                                                  |
++------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
+| Admin Server           | string    | only available in "Advanced Mode"; server where all changes to the database are performed                        |
+|                        |           |                                                                                                                  |
++------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
+| Password Server        | string    | only available in "Advanced Mode"; server where all password changes are performed                               |
+|                        |           |                                                                                                                  |
++------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
 
 .. _Kerberos Keytabs:
 
