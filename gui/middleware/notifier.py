@@ -5515,7 +5515,9 @@ class notifier:
         encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
         return encoded
 
-    def pwenc_decrypt(self, encrypted):
+    def pwenc_decrypt(self, encrypted=None):
+        if not encrypted:
+            return ""
         from Crypto.Util import Counter
         encrypted = base64.b64decode(encrypted)
         nonce = encrypted[:8]
