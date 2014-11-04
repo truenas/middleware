@@ -23,7 +23,8 @@ The following types of shares and services are available:
   (not the home editions) of Windows. It is a good choice if there are many different operating systems in your network. Depending upon the operating system,
   it may require the installation or configuration of client software on the desktop.
   
-* :ref:`WebDAV Shares`:
+* :ref:`WebDAV Shares`: this type of share is accessible using an authenticated web browser (read-only) or
+  `WebDAV client <http://en.wikipedia.org/wiki/WebDAV#Clients>`_ running on any operating system.
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
@@ -353,7 +354,11 @@ Mode" button or configure the system to always display these settings by checkin
 | Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Security            | selection      |  only available in "Advanced Mode";                                                                                |
+| Security            | selection      | only available in "Advanced Mode"; choices are *sys* () or the following Kerberos options:                         |
+|                     |                | *krb5* (authentication only),                                                                                      |
+|                     |                | *krb5i* (authentication and integrity), or                                                                         |
+|                     |                | *krb5p* (authentication and privacy); if multiple security mechanisms are added to the "Selected" column using the |
+|                     |                | arrows, use the "Up" or "Down" buttons to list in order of preference                                              |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
@@ -659,9 +664,9 @@ This section will demonstrate some common configuration scenarios:
 
 * If you are having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
 
-Figure 10.3a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
+Figure 10.4a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
-**Figure 10.3a: Adding a CIFS Share**
+**Figure 10.4a: Adding a CIFS Share**
 
 |cifs2.png|
 
@@ -669,7 +674,7 @@ Figure 10.3a shows the configuration screen that appears when you click :menusel
     :width: 3.9in
     :height: 2.4in
 
-Table 10.3a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
+Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`.
 
@@ -678,7 +683,7 @@ provides more details for each configurable option. Once you press the "OK" butt
 enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
 started.
 
-**Table 10.3a: Options for a CIFS Share**
+**Table 10.4a: Options for a CIFS Share**
 
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**                  | **Value**     | **Description**                                                                                             |
@@ -732,7 +737,8 @@ started.
 |                              |               | "Hosts Allow"; see NOTE below                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| VFS Objects                  | selection     | only available in "Advanced Mode";                                                                          |
+| VFS Objects                  | selection     | only available in "Advanced Mode" and adds virtual file system modules to enhance functionality; Table      |
+|                              |               | 10.4b summarizes the available modules                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters         | string        | only available in "Advanced Mode"; add additional smb4.conf parameters not covered by other option fields   |
@@ -746,6 +752,29 @@ started.
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
 this line and some examples can be found
 `here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_.
+
+**Table 10.4b: Available VFS Modules**
+
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| **Value**     | **Description**                                                                                                                            |
+|               |                                                                                                                                            |
++===============+============================================================================================================================================+
+| audit         | logs share access, connects/disconnects, directory opens/creates/removes, and file opens/closes/renames/unlinks/chmods to syslog           |
+|               |                                                                                                                                            |
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| extd_audit    | sends "audit" logs to both syslog and the Samba log files                                                                                  |
+|               |                                                                                                                                            |
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fake_perms    | allows roaming profile files and directories to be set as read-only                                                                        |
+|               |                                                                                                                                            |
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| netatalk      | eases the co-existence of CIFS and AFP shares                                                                                              |
+|               |                                                                                                                                            |
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| streams_depot | **experimental** module to store alternate data streams in a central directory                                                             |
+|               |                                                                                                                                            |
++---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 .. _Share Configuration:
 
@@ -801,9 +830,9 @@ The process for configuring a share is as follows:
 #.  Test the share.
 
 To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
-share named :file:`backups`. An example is seen in Figure 10.3b:
+share named :file:`backups`. An example is seen in Figure 10.4b:
 
-**Figure 10.3b: Accessing the CIFS Share from a Windows Computer**
+**Figure 10.4b: Accessing the CIFS Share from a Windows Computer**
 
 |100002010000031D000002804075756D_png|
 
@@ -815,9 +844,9 @@ If you click on :file:`backups`, a Windows Security pop-up screen should prompt 
 data to and from the CIFS share.
 
 To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network
-drive..." as seen in Figure 10.3c:
+drive..." as seen in Figure 10.4c:
 
-**Figure 10.3c: Mapping the Share as a Network Drive**
+**Figure 10.4c: Mapping the Share as a Network Drive**
 
 |100002010000031E0000027D2C5F8621_png|
 
@@ -825,9 +854,9 @@ drive..." as seen in Figure 10.3c:
     :width: 6.9252in
     :height: 5.5272in
 
-Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.3d:
+Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.4d:
 
-**Figure 10.3d: Selecting the Network Drive Letter**
+**Figure 10.4d: Selecting the Network Drive Letter**
 
 |1000000000000319000002766C465264_jpg|
 
@@ -907,12 +936,12 @@ In this configuration example, a Windows 7 computer has two users: *user1* and
     *user1* should be able to create, add, and delete files and folders from the
     *user1* share.
 
-Figure 10.3e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
+Figure 10.4e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
 *modified file* and selected "Restore previous versions" from the menu. This particular file has three versions: the current version, plus two previous
 versions stored on the FreeNAS® system. The user can choose to open one of the previous versions, copy a previous version to the current folder, or restore
 one of the previous versions, which will overwrite the existing file on the Windows system.
 
-**Figure 10.3e: Viewing Previous Versions within Explorer**
+**Figure 10.4e: Viewing Previous Versions within Explorer**
 
 |10000201000002FE0000028C18A1102B_png|
 
