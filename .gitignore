@@ -51,7 +51,8 @@ node_modules
 bower_components
 
 # Exclude compiled webapp
-10gui/app/build/
+src/gui/app/build/
+src/gui/app-deploy/
 
 # Exclude config files
 freenas9-conf.json
