@@ -22,6 +22,7 @@ cache.get_apps()
 
 from freenasUI.services.models import WebDAV
 from freenasUI.sharing.models import WebDAV_Share
+from freenasUI.middleware.notifier import notifier
 
 # The below is a function borrowed form the notifier
 def _pipeopen(command):
