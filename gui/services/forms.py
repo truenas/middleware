@@ -988,6 +988,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         servers = re.sub(r'\s+', ' ', servers)
         errors = []
         for server in servers.split(' '):
+            if not server:
+                continue
             reg = re.search(r'\[(.+?)\](:[0-9]+)?', server)
             if reg:
                 ip = reg.group(1)
