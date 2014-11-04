@@ -28,6 +28,7 @@ typedef struct {
 	X509            *issuer;
 	X509_STORE	*store;
 	X509            *sign_cert;
+	X509_CRL	*crl;
 	EVP_PKEY        *sign_key;
 	long            skew;
 	long            maxage;
@@ -348,6 +349,37 @@ end:
 }
 
 /*
+ * Given the OCSP structure (which holds the X509_STORE), let's
+ * verify the certificate.
+ */
+static int
+VerifyCertificate(spc_ocsprequest_t *ocsp)
+{
+	X509_STORE_CTX *store_ctx = X509_STORE_CTX_new();
+	int i;
+	if (store_ctx == NULL) {
+		errx(1, "Could not allocate an X509_STORE_CTX");
+	}
+	if (X509_STORE_CTX_init(store_ctx,
+				ocsp->store,
+				ocsp->cert,
+				NULL) == 0) {
+		errx(1, "Could not initalize store ctx");
+	}
+	i = X509_verify_cert(store_ctx);
+	X509_STORE_CTX_free(store_ctx);
+	if (i > 0) {
+		if (verbose)
+			warnx("%s:  certificate verifies ok", __FUNCTION__);
+		return 1;
+	} else {
+		if (verbose)
+			warnx("Certificate check failed, i = %d", i);
+		return 0;
+	}
+}
+
+/*
  * For OCSP, see
  * http://etutorials.org/Programming/secure+programming/Chapter+10.+Public+Key+Infrastructure/10.12+Checking+Revocation+Status+via+OCSP+with+OpenSSL/
  */
@@ -416,7 +448,7 @@ CreateStore(void)
 static void
 usage(void)
 {
-	errx(1, "Usge: -K certificate_file [-C ca_file] [-H hashtype] -S signature <-D data_file> | <data>");
+	errx(1, "Usge: -K certificate_file [-C ca_file] [-H hashtype] [-R crl_file] -S signature <-D data_file> | <data>");
 }
 
 int
@@ -430,17 +462,19 @@ main(int ac, char **av)
 	X509 *certificate = NULL;
 	char *signature = NULL;
 	char *data_file = NULL;
+	char *crl_file = NULL;
 	char *data = NULL;
 	EVP_PKEY *public_key = NULL;
 	int opt;
 	int retval;
 
-	while ((opt = getopt(ac, av, "K:C:D:H:I:S:dv")) != -1) {
+	while ((opt = getopt(ac, av, "K:C:D:H:I:R:S:dv")) != -1) {
 		switch (opt) {
 		case 'K':	cert_file = strdup(optarg); break;
 		case 'C':	ca_file = strdup(optarg); break;
 		case 'H':	hash_type = strdup(optarg); break;
 		case 'I':	issuer_file = strdup(optarg); break;
+		case 'R':	crl_file = strdup(optarg); break;
 		case 'S':	signature = strdup(optarg); break;
 		case 'D':	data_file = strdup(optarg); break;
 		case 'd':	debug++; break;
@@ -512,6 +546,33 @@ main(int ac, char **av)
 			warnx("Added system CA %s to store", PATH_CA_CERT);
 	}
 		
+	if (crl_file) {
+		FILE *crl = NULL;
+		crl = fopen(crl_file, "r");
+		if (crl) {
+//			ocsp.crl = d2i_X509_CRL_fp(crl, NULL);
+			ocsp.crl = PEM_read_X509_CRL(crl, NULL, NULL, NULL);
+			if (ocsp.crl == NULL) {
+				long e = ERR_get_error();
+				warnx("Could not load CRL file %s:  %s:%s:%s", crl_file,
+				      ERR_lib_error_string( e),
+				      ERR_func_error_string( e),
+				      ERR_reason_error_string( e));
+
+			} else {
+				X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+				X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+				X509_STORE_set1_param(ocsp.store, param);
+				X509_VERIFY_PARAM_free(param);
+				X509_STORE_add_crl(ocsp.store, ocsp.crl);
+				if (verbose)
+					warnx("CRL file %s loaded", crl_file);
+			}
+		} else {
+			warn("Could not open CRL file %s", crl_file);
+		}
+	}
+			
 	// Now load the actual certificate file
 	if ((ocsp.cert = LoadCertificate(cert_file)) == NULL) {
 		errx(1, "Unable to load certificate file %s", cert_file);
@@ -540,6 +601,11 @@ main(int ac, char **av)
 	if (issuer_file) {
 		ocsp.issuer = LoadCertificate(issuer_file);
 	}
+	retval = VerifyCertificate(&ocsp);
+	if (retval == 0) {
+		errx(1, "Could not verify certificate");
+	}
+
 	retval = VerifySignature(data, signature, hash_type, &ocsp);
 	if (verbose)
 		warnx("%s", retval ? "Verified" : "FAILURE");
