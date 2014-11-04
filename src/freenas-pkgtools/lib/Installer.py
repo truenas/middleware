@@ -419,6 +419,11 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
                 hash = hashlib.sha256(entry.linkname).hexdigest()
             if hash != mFileHash:
                 log.error("%s hash does not match manifest" % entry.name)
+                hash = ""
+        else:
+            # Setting it to '-' will let us know why the entry has no
+            # checksum.
+            hash = "-"
         # Try to remove the symlink first.
         # Then create the new one.
         try:
@@ -430,7 +435,6 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         os.symlink(entry.linkname, full_path)
         SetPosix(full_path, meta)
         type = "slink"
-        hash = ""
     elif entry.islnk():
         source_file = root + "/" + entry.linkname
         try:

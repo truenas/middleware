@@ -1,8 +1,40 @@
+### SublimeText ###
+*.sublime-workspace
+
+### OSX ###
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### Windows ###
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+
+### PROJECT SETTINGS ###
+
 *.pyc
 *.swp
 *.mo
 *.o
-.DS_Store
 /docs/api/_build/
 /gui/local_settings.py
 /FreeBSD/
@@ -10,3 +42,17 @@
 /os-base/
 /pbi/
 /sbin/
+
+# Any and all logs
+*.log
+
+# Exclude Grunt and Bower build data
+node_modules
+bower_components
+
+# Exclude compiled webapp
+10gui/app/build/
+
+# Exclude config files
+freenas9-conf.json
+freenas10-conf.json

@@ -1,0 +1,82 @@
+[{
+    "primaryKey"   : "bsdusr_username"
+  , "secondaryKey" : "bsdusr_full_name"
+  , "groups"       : [ "bsdusr_builtin" ]
+  , "dataKeys": {
+      "bsdusr_builtin": {
+            "name"        : "Built-in User"
+          , "type"        : "boolean"
+          , "defaultCol"  : true
+        }
+    , "bsdusr_email": {
+          "name"        : "Email Address"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_full_name": {
+          "name"        : "Full Name"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , "bsdusr_group": {
+          "name"        : "Group"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+    , "bsdusr_home": {
+          "name"        : "Home Directory"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_locked": {
+          "name"        : "Locked Account"
+        , "type"        : "boolean"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_password_disabled": {
+          "name"        : "Password Disabled"
+        , "type"        : "boolean"
+        , "defaultCol"  : true
+      }
+    , "bsdusr_shell": {
+          "name"        : "Shell"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_smbhash": {
+          "name"        : "SMB Hash"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_sshpubkey": {
+          "name"        : "SSH Public Key"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_sudo": {
+          "name"        : "sudo Allowed"
+        , "type"        : "boolean"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_uid": {
+          "name"        : "User ID"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+    , "bsdusr_unixhash": {
+          "name"        : "Unix Hash"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , "bsdusr_username": {
+          "name"        : "Username"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , "id": {
+          "name"        : "ID Number"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+  }
+}]

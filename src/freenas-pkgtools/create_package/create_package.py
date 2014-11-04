@@ -344,11 +344,11 @@ def main():
     mani_file = StringIO.StringIO(manifest_string)
     tf.addfile(mani_file_info, mani_file)
     # Now add all of the files
-    for file in manifest["files"].keys():
+    for file in sorted(manifest["files"]):
         if verbose or debug > 0:  print >> sys.stderr, "Adding file %s to archive" % file
         tf.add(root + file, arcname = file, recursive = False)
     # And now the directories
-    for dir in manifest["directories"].keys():
+    for dir in sorted(manifest["directories"]):
         if verbose or debug > 0:  print >> sys.stderr, "Adding directory %s to archive" % dir
         tf.add(root + dir, arcname = dir, recursive = False)
 

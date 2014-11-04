@@ -15,7 +15,7 @@ start_precmd="prestart"
 
 prestart()
 {
-    rc_flags="-P ${pidfile} -r /usr/local/sbin/dispatcherd ${rc_flags}"
+    rc_flags="-P ${pidfile} -f -r /usr/local/sbin/dispatcherd ${rc_flags}"
 }
 
 load_rc_config $name

@@ -127,7 +127,7 @@ class Balancer(object):
         self.threads.append(gevent.spawn(self.distribution_thread))
         self.logger.info("Started")
 
-    def submit(self, name, args, user):
+    def submit(self, name, args):
         if name not in self.dispatcher.tasks:
             self.logger.warning("Cannot submit task: unknown task type %s", name)
             return None
@@ -136,7 +136,6 @@ class Balancer(object):
         task.created_at = time.time()
         task.clazz = self.dispatcher.tasks[name]
         task.args = args
-        task.user = user
         task.state = TaskState.CREATED
         task.id = self.dispatcher.datastore.insert("tasks", task)
         self.task_list.append(task)

@@ -39,7 +39,7 @@ from freenasUI.services.models import services
 from freenasUI.sharing import models
 from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (
-    IPNetwork, AddressValueError, NetmaskValueError
+    IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 )
 
 log = logging.getLogger('sharing.forms')
@@ -164,6 +164,54 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
+
+    def clean_afp_hostsallow(self):
+        res = self.cleaned_data['afp_hostsallow']
+        res = re.sub(r'\s{2,}|\n', ' ', res).strip()
+        if not res:
+            return res
+        for n in res.split(' '):
+            err_n = False
+            err_a = False
+            try:
+                IPNetwork(n.encode('utf-8'))
+                if n.find("/") == -1:
+                    raise ValueError(n)
+            except (AddressValueError, NetmaskValueError, ValueError):
+                err_n = True
+            try:
+                IPAddress(n.encode('utf-8'))
+            except (AddressValueError, ValueError):
+                err_a = True
+            if (err_n and err_a) or (not err_n and not err_a):
+                raise forms.ValidationError(
+                    _("Invalid IP or Network.")
+                )
+        return res
+
+    def clean_afp_hostsdeny(self):
+        res = self.cleaned_data['afp_hostsdeny']
+        res = re.sub(r'\s{2,}|\n', ' ', res).strip()
+        if not res:
+            return res
+        for n in res.split(' '):
+            err_n = False
+            err_a = False
+            try:
+                IPNetwork(n.encode('utf-8'))
+                if n.find("/") == -1:
+                    raise ValueError(n)
+            except (AddressValueError, NetmaskValueError, ValueError):
+                err_n = True
+            try:
+                IPAddress(n.encode('utf-8'))
+            except (AddressValueError, ValueError):
+                err_a = True
+            if (err_n and err_a) or (not err_n and not err_a):
+                raise forms.ValidationError(
+                    _("Invalid IP or Network.")
+                )
+        return res
 
     def clean_afp_name(self):
         name = self.cleaned_data.get('afp_name')

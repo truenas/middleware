@@ -216,7 +216,19 @@ class AFP_Share(Model):
         default="000",
         blank=True,
         verbose_name=_("Default umask"),
-    )
+        )
+    afp_hostsallow = models.CharField(
+        blank=True,
+        max_length=120,
+        help_text=_("Allow only listed hosts and/or networks access to this volume"),
+        verbose_name=_("Hosts Allow")
+        )
+    afp_hostsdeny = models.CharField(
+        blank=True,
+        max_length=120,
+        help_text=_("Deny listed hosts and/or networks access to this volume"),
+        verbose_name=_("Hosts Deny")
+        )
 
     def __unicode__(self):
         return unicode(self.afp_name)

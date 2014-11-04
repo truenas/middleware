@@ -26,11 +26,9 @@
 /usr/local/lib/dispatcher/plugins/MountPlugin.py
 /usr/local/lib/dispatcher/plugins/SystemInfoPlugin.py
 /usr/local/lib/dispatcher/plugins/ZfsPlugin.py
-/usr/local/lib/dispatcher/plugins/DevdPlugin.pyc
 /usr/local/lib/dispatcher/plugins/DevdPlugin.py
 /usr/local/lib/dispatcher/plugins/VolumePlugin.py
 /usr/local/lib/dispatcher/plugins/ServiceManagePlugin.py
-/usr/local/lib/dispatcher/plugins/ZfsPlugin.pyc
 /usr/local/lib/dispatcher/plugins/ConfigPlugin.py
 /usr/local/lib/dispatcher/plugins/AuditPipePlugin.py
 /usr/local/lib/dispatcher/plugins/UserPlugin.py
