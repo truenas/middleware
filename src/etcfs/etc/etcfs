@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: etcfs
+# REQUIRE: datastore
+
+name="etcfs"
+start_cmd="etcfs_start"
+stop_cmd=":"
+status_cmd=":"
+
+etcfs_start()
+{
+    /usr/local/sbin/etcfs ${etcfs_flags} /etc
+}
+
+load_rc_config $name
+run_rc_command $*
