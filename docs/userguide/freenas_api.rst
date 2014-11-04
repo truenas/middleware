@@ -12,51 +12,7 @@ API which can be used as an alternate mechanism for remotely controlling a FreeN
 reStructuredText is an easy-to-read, lightweight markup language that provides an HTTP implementation of functions, known as resources, which are available
 beneath a specified base URL. Each resource is manipulated using the HTTP methods defined in :rfc:`2616`, such as GET, PUT, POST, or DELETE.
 
-This section demonstrates how to install the necessary software to build a local copy of the reference documentation for the FreeNAS® APIs. It then walks
-through some code examples to get you started using the APIs.
-
-.. note:: an online version of the API is now hosted at
-   `api.freenas.org <http://api.freenas.org>`_.
-
-.. _Building a Local Copy:
-
-Building a Local Copy
----------------------
-
-If you plan to use the APIs, it is recommended that you build a local HTML copy of the API documentation so that you can easily determine which resources are
-available and learn more about how each resource works. This section demonstrates how to install the software and source needed to build the documentation
-using a
-`FreeBSD 9.3 <https://www.freebsd.org/releases/9.3R/announce.html>`_
-system. Users of other operating systems will need to find and install the equivalent packages for their operating system.
-
-On a FreeBSD system, login as root and install the necessary software::
-
- pkg_add -r git
- pkg_add -r py-oauth2
- pkg_add -r py-sphinxcontrib-httpdomain
- rehash
-
-Those commands install the binary packages and add the new binaries to the user's path. If a package is not available,
-`compile the port <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ports-using.html>`_
-instead.
-
-Next, download a local copy of the FreeNAS® source code from github. Run this command in the directory which will store the local copy::
-
- cd /usr/local
- git clone --depth 1 git://github.com/freenas/freenas.git
-
-This will create a subdirectory called :file:`freenas` which contains the cloned source. Once the system has a local copy, it can be updated as needed by
-running this command within :file:`freenas`::
-
- git pull
-
-To build a local copy of the API reference documentation::
-
- cd freenas/docs/api
- make html
-
-Point a web browser to :file:`/usr/local/freenas/docs/api/_build/html/index.html` to view the documentation. As seen in the example in Figure 26.1a, the
-resources are laid out in an order that is similar to the tree menu of the FreeNAS® GUI.
+As seen in Figure 26.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
 
 **Figure 26.1a: FreeNAS® API Documentation**
 
@@ -66,6 +22,8 @@ resources are laid out in an order that is similar to the tree menu of the FreeN
     :width: 12.2in
     :height: 5.5in
 
+The rest of this section walks through some code examples to get you started using the APIs.
+
 .. _A Simple API Example:
 
 A Simple API Example
@@ -74,8 +32,8 @@ A Simple API Example
 .. highlight:: python
    :linenothreshold: 4
 
-The :file:`freenas/examples/api/` directory contains some API usage examples. This section provides a walk-through of the
-:file:`freenas/examples/api/newuser.py` script, shown below, as it provides a simple example that creates a user.
+The `api directory of the FreeNAS® github repository <https://github.com/freenas/freenas/tree/master/examples/api>`_ contains some API usage examples. This
+section provides a walk-through of the :file:`newuser.py` script, shown below, as it provides a simple example that creates a user.
 
 In order to create a customized script based on this example, you will need a FreeNAS® system running at least version 9.2.0. If you would like to test the
 scripts directly on the FreeNAS® system, create a user account. When creating this user account, select an existing volume or dataset for the user's "Home
@@ -126,10 +84,10 @@ to *http*.
 *False* to
 *True*.
 
-**Lines 8-16:** sets the values for the user being created. The "Users" resource, found in :file:`freenas/docs/api/_build/html/resources/account.html#users`,
-describes this resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a
-FreeBSD user, the values that you input must be valid for a FreeBSD user account. Table 26.2a summarizes the valid values. Since this resource is using JSON,
-the possible boolean values are *True*
+**Lines 8-16:** sets the values for the user being created. The `"Users" resource <http://api.freenas.org/resources/account.html#users>`_ describes this
+resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a FreeBSD user, the
+values that you input must be valid for a FreeBSD user account. Table 26.2a summarizes the valid values. Since this resource is using JSON, the possible
+boolean values are *True*
 or *False*.
 
 **Table 26.2a: Valid JSON Parameters for Users Create Resource**
@@ -189,11 +147,10 @@ or *False*.
 A More Complex Example
 ----------------------
 
-This section provides a walk-through of a more complex example found in the :file:`freenas/examples/api/startup.py` script. Use the searchbar within the API
-documentation to quickly locate the JSON parameters used in this example. This example defines a class and several methods which are used to create a ZFS 
-volume, create a ZFS dataset, share this dataset over CIFS, and enable the CIFS service. The responses from some methods are used as parameters in other
-methods. In addition to the import lines seen in the previous example, this example imports two additional Python modules to provide parsing functions for
-command line arguments::
+This section provides a walk-through of a more complex example found in the :file:`startup.py` script. Use the searchbar within the API documentation to
+quickly locate the JSON parameters used in this example. This example defines a class and several methods which are used to create a ZFS volume, create a ZFS
+dataset, share this dataset over CIFS, and enable the CIFS service. The responses from some methods are used as parameters in other methods. In addition to
+the import lines seen in the previous example, this example imports two additional Python modules to provide parsing functions for command line arguments::
 
  import argparse
  import sys
