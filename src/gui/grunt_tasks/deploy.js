@@ -9,9 +9,19 @@ var chalk = require("chalk");
 var path  = require("path");
 
 module.exports = function(grunt) {
+  var targetPath = "";
+
+  // Set and create deployment target's path relative to current working dir
+  var setTarget = function( inputPath ) {
+    if ( inputPath[0] === "/" ) {
+      targetPath = inputPath;
+    } else {
+      targetPath = path.resolve( process.cwd() + "/" + inputPath );
+    }
+  };
+
   grunt.registerTask( "deploy", function() {
     var asyncDone  = this.async();
-    var targetPath = "";
 
     // Use dir specified by `--dir`, if supplied
     if ( grunt.option( "dir" ) ) {
@@ -20,12 +30,7 @@ module.exports = function(grunt) {
       console.log( chalk.yellow( "WARNING: No `--dir=` option was set. Using the default." ) );
     }
 
-    // Set and create deployment target's path relative to current working dir
-    if ( grunt.config("dirTree.deployment")[0] === "/" ) {
-      targetPath = grunt.config("dirTree.deployment");
-    } else {
-      targetPath = path.resolve( process.cwd() + "/" + grunt.config("dirTree.deployment") );
-    }
+    setTarget( grunt.config( "dirTree.deployment" ) );
     grunt.file.mkdir( targetPath );
 
     console.log( chalk.cyan( "Creating FreeNAS WebGUI deployment in this directory:" ) );
@@ -35,8 +40,21 @@ module.exports = function(grunt) {
         "clean:deployment"
       , "concurrent:buildWorld"
       , "copy:deployment"
+      , "deploy-npm"
     ]);
 
     asyncDone();
+  });
+
+  grunt.registerTask( "deploy-npm", function() {
+    // Don't run unless the copy task has already been run
+    grunt.task.requires( "copy:deployment" );
+
+    if ( process.platform !== "freebsd" ) {
+      grunt.fail.warn( "Production deployments must be done on FreeBSD only." );
+    }
+
+    process.chdir( targetPath );
+    grunt.task.run( "shell:npmProduction" );
   });
 };
