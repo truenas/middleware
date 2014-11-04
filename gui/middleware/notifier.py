@@ -4252,6 +4252,11 @@ class notifier:
             result.append(self.part_type_from_device('swap', disk))
         return "\n".join(result)
 
+    def swap_from_diskid(self, diskid):
+        from freenasUI.storage.models import Disk
+        disk = Disk.objects.get(id=diskid)
+        return self.part_type_from_device('swap', disk.devname)
+
     def swap_from_identifier(self, ident):
         return self.part_type_from_device('swap', self.identifier_to_device(ident))
 
