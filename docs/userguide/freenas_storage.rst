@@ -798,8 +798,8 @@ repeat the desired passphrase and a red warning reminds you to "Remember to add 
 Unlike a password, a passphrase can contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece
 of literature) but hard to guess (people who know you should not be able to guess the passphrase).
 **Remember this passphrase as you can not re-import an encrypted volume without it.** In other words, if you forget the passphrase, the data on the volume can
-become inaccessible if you need to re-import or unlock the pool. Protect this passphrase as anyone who knows it could re-import your encrypted volume,
-thwarting the reason for encrypting the disks in the first place.
+become inaccessible if you need to re-import the pool. Protect this passphrase as anyone who knows it could re-import your encrypted volume, thwarting the
+reason for encrypting the disks in the first place.
 
 Once the passphrase is set, the name of this button will change to "Change Passphrase". After setting or changing the passphrase, it is important to
 immediately create a new recovery key by clicking the "Add recovery key" button. This way, if the passphrase is forgotten, the associated recovery key can be

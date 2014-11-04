@@ -18,8 +18,6 @@ Written by users of the FreeNAS® network-attached storage operating system.
 
 Version 9.3
 
-Published XX, 2014
-
 Copyright © 2011-2014
 `iXsystems <http://www.ixsystems.com/>`_
     

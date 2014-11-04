@@ -316,9 +316,8 @@ Before upgrading the operating system or applying a system update, perform the f
 
 #.  **Backup the FreeNAS® configuration** in :menuselection:`System --> General --> Save Config`.
 
-#. **Create a boot environment** in :menuselection:`System --> Boot`.
-
-#.  If any volumes are encrypted, **make sure** that you have set the passphrase and have a copy of the encryption key and the latest recovery key.
+#.  If any volumes are encrypted, **make sure** that you have set the passphrase and have a copy of the encryption key and the latest recovery key. Once the
+    upgrade is complete, use the instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume.
 
 #.  Warn users that the FreeNAS® shares will be unavailable during the upgrade; you should schedule the upgrade for a time that will least impact users.
 
@@ -384,20 +383,20 @@ file for the release and its associated SHA256 hash to the computer that you use
 |upgrade3.png|
 
 .. |upgrade3.png| image:: images/upgrade3.png
-    :width: 7.4in
-    :height: 2.5in
+    :width: 6.5in
+    :height: 3.2in
 
-Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to
-allow the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "Apply Update" button to see the screen
-shown in Figure 2.5d.
+Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to allow
+the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "OK" button to see the screen shown in Figure
+2.5d.
 
 **Figure 2.5d: Step 2 of 2**
 
 |upgrade4.png|
 
 .. |upgrade4.png| image:: images/upgrade4.png
-    :width: 8.2in
-    :height: 2.8in
+    :width: 6.8in
+    :height: 3.4in
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
@@ -438,22 +437,6 @@ In this example, this system has the option to track *FreeNAS-ALPHA*, or the upc
 administrator has selected to track the *FreeNAS-9.3-Nightlies*.
 
 To see if any updates are available, click the "Check for Updates" button.
-
-.. _Unlocking an Encrypted Volume:
-
-Unlocking an Encrypted Volume
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If your disks are encrypted and you have created a passphrase and saved the recovery key, the volume will automatically be locked during an upgrade. This is
-to prevent an unauthorized user from using an upgrade procedure to gain access to the data on the encrypted disks. After the upgrade, the locked volumes will
-be unavailable until they are unlocked with the passphrase and recovery key.
-
-To unlock the volume, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the locked volume. As seen in Figure 2.5f, clicking the
-"Unlock" icon will prompt for the passphrase or recovery key. You can also select which services to start when the volume is unlocked.
-
-**Figure 2.5f: Unlocking an Encrypted Volume**
-
-|Figure27f_png|
 
 .. _If Something Goes Wrong:
 
@@ -510,9 +493,9 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 2.5g.
+"Upgrade" button as seen in Figure 2.5f.
 
-**Figure 2.5g: Upgrading a ZFS Pool**
+**Figure 2.5f: Upgrading a ZFS Pool**
 
 |Figure27g_png|
 
