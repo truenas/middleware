@@ -8,12 +8,6 @@
 
 
 var React  = require("react");
-var Viewer = require("../components/Viewer");
-
-// Dummy data from API call on relatively unmolested system
-// TODO: Update to use data from Flux store
-var inputData  = require("../../fakedata/network-interfaces.json");
-var formatData = require("../../middleware-keys/network-interfaces-display.json")[0];
 
 var Network = React.createClass({
   render: function() {

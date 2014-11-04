@@ -33,7 +33,7 @@ module.exports = function( grunt ) {
       files: [
           "<%= dirTree.client %>.js"
         , "<%= dirTree.routes %>.js"
-        , "<%= env.server %>.js"
+        , "<%= dirTree.server %>.js"
         , "<%= dirTree.source.templates %>/**"
       ]
     , tasks: [ "express:devServer" ]
@@ -44,7 +44,7 @@ module.exports = function( grunt ) {
       files: [
           "<%= dirTree.client %>.js"
         , "<%= dirTree.routes %>.js"
-        , "<%= env.server %>.js"
+        , "<%= dirTree.server %>.js"
         , "<%= dirTree.source.jsx %>/**"
         , "<%= dirTree.source.templates %>/**"
         , "<%= dirTree.build.root %>/**"

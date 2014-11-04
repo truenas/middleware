@@ -30,6 +30,12 @@ module.exports = function( grunt ) {
     files: [{
         src: [
             "<%= dirTree.build.root %>/**"
+          , "<%= dirTree.source.jsx %>/**"
+          , "<%= dirTree.source.templates %>/**"
+          , "<%= dirTree.client %>.js"
+          , "<%= dirTree.server %>.js"
+          , "<%= dirTree.routes %>.js"
+          , "<%= dirTree.data %>/**"
           , "bower_components/**"
           , "package.json"
         ]

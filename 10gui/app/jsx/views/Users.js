@@ -17,8 +17,8 @@ var TWBS = require("react-bootstrap");
 
 // Dummy data from API call on relatively unmolested system
 // TODO: Update to use data from Flux store
-var inputData  = require("../../fakedata/accounts.json");
-var formatData = require("../../middleware-keys/accounts-display.json")[0];
+var inputData  = require("../../data/fakedata/accounts.json");
+var formatData = require("../../data/middleware-keys/accounts-display.json")[0];
 
 var UsersEditor = React.createClass({
     render: function() {

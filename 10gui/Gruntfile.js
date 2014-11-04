@@ -56,7 +56,9 @@ module.exports = function(grunt) {
     // Distributions & Libraries
     , dirTree: {
           client : "app/client"
+        , server : "app/server"
         , routes : "app/routes"
+        , data   : "app/data"
 
         // Distributed libraries
         , libs: {
@@ -66,7 +68,8 @@ module.exports = function(grunt) {
 
         // Sources
         , source: {
-            images    : "app/source/images"
+            root      : "app"
+          , images    : "app/source/images"
           , favicons  : "app/source/favicons"
           , jsx       : "app/jsx"
           , styles    : "app/source/styles"
@@ -88,7 +91,6 @@ module.exports = function(grunt) {
     // Environment
     , env: {
         port   : 4000
-      , server : "server"
     }
 
     // FreeNAS remote config
