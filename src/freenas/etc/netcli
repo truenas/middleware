@@ -1068,7 +1068,7 @@ def system_update():
     import freenasOS.Update as Update
     import freenasOS.Configuration as Configuration
 
-    update_dir = notifier().get_upload_location()
+    update_dir = notifier().get_update_location()
     rv = Update.DownloadUpdate(None, directory = update_dir)
     if rv is True:
         diffs = Update.PendingUpdates(update_dir)
