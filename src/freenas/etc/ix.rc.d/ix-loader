@@ -143,6 +143,9 @@ generate_boot_loader_conf_local()
 	done
 
 	update_persistent_file /boot/loader.conf.local $tmp
+	if [ $? = 0 ]; then
+		/usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+	fi
 }
 
 generate_loader_confs()
@@ -151,7 +154,6 @@ generate_loader_confs()
 
 	do_autotune
 	generate_boot_loader_conf_local
-	/usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
 
 	if $AUTOTUNE_REBOOT && $reboot_now; then
 		shutdown -r now
@@ -162,7 +164,6 @@ generate_loader_confs_noreboot()
 {
 	do_autotune
 	generate_boot_loader_conf_local
-	/usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
 }
 
 name="ix-loader"
