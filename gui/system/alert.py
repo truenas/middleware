@@ -28,6 +28,7 @@ class BaseAlert(object):
     __metaclass__ = BaseAlertMetaclass
 
     alert = None
+    interval = 0
     name = None
 
     def __init__(self, alert):
@@ -145,12 +146,25 @@ class AlertPlugins:
                 except:
                     pass
 
+        if not obj:
+            results = {}
+        else:
+            results = obj['results']
         rvs = []
         for instance in self.mods:
             try:
+                if instance.name in results:
+                    if results.get(instance.name).get(
+                        'lastrun'
+                    ) > time.time() - (instance.interval * 60):
+                        continue
                 rv = instance.run()
                 if rv:
                     rvs.extend(filter(None, rv))
+                results[instance.name] = {
+                    'lastrun': int(time.time()),
+                }
+
             except Exception, e:
                 log.error("Alert module '%s' failed: %s", instance, e)
 
@@ -169,6 +183,7 @@ class AlertPlugins:
             cPickle.dump({
                 'last': time.time(),
                 'alerts': rvs,
+                'results': results,
             }, f)
         return rvs
 
