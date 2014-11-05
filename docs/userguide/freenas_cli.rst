@@ -132,9 +132,9 @@ example of the client running on a Windows system while an SFTP transfer is occu
 
 **Figure 24.1a: Viewing Bandwidth Statistics Using xjperf**
 
-|10000000000003CA000002BC6A5C3D2E_png|
+|iperf.png|
 
-.. |10000000000003CA000002BC6A5C3D2E_png| image:: images/10000000000003CA000002BC6A5C3D2E.png
+.. |iperf.png| image:: images/iperf.png
     :width: 6.9252in
     :height: 4.9965in
 

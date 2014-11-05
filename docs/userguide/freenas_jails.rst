@@ -534,9 +534,9 @@ for audiotag.
 
 **Figure 13.2e: Configuration Options for Audiotag**
 
-|10000000000002E1000002757E7365A6_png|
+|ports1.png|
 
-.. |10000000000002E1000002757E7365A6_png| image:: images/10000000000002E1000002757E7365A6.png
+.. |ports1.png| image:: images/ports1.png
     :width: 6.9252in
     :height: 4.5425in
 
@@ -571,9 +571,9 @@ Since this port has configurable options, the first time this command is run the
 
 **Figure 13.2f: Configuration Options for Audiotag Port**
 
-|10000000000001DF0000012CAAF5492B_png|
+|ports2.png|
 
-.. |10000000000001DF0000012CAAF5492B_png| image:: images/10000000000001DF0000012CAAF5492B.png
+.. |ports2.png| image:: images/ports2.png
     :width: 5.7701in
     :height: 2.778in
 

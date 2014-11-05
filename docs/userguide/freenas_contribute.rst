@@ -82,9 +82,9 @@ in your browser, as seen in Figure 25.2a:
 
 **Figure 25.2a: FreeNAS® Localization System**
 
-|10000000000003E0000002624E582DF2_png|
+|translate.png|
 
-.. |10000000000003E0000002624E582DF2_png| image:: images/10000000000003E0000002624E582DF2.png
+.. |translate.png| image:: images/translate.png
     :width: 6.9252in
     :height: 3.272in
 
@@ -109,9 +109,9 @@ menu screens has been assigned a string number. If you click the number, an edit
 
 **Figure 25.2b: Using the Pootle Interface to Edit a Translation String**
 
-|100000000000047B00000232CA1DFA0A_png|
+|translate2.png|
 
-.. |100000000000047B00000232CA1DFA0A_png| image:: images/100000000000047B00000232CA1DFA0A.png
+.. |translate2.png| image:: images/translate2.png
     :width: 6.9252in
     :height: 3.3929in
 

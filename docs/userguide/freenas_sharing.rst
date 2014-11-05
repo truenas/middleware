@@ -194,17 +194,17 @@ The user can now copy files to and from the share.
 
 **Figure 10.1b: Connect to Server Dialogue**
 
-|100000000000024B000001232956E90B_png|
+|afp3.png|
 
-.. |100000000000024B000001232956E90B_png| image:: images/100000000000024B000001232956E90B.png
+.. |afp3.png| image:: images/afp3.png
     :width: 6.9252in
     :height: 3.4327in
 
 **Figure 10.1c: Viewing the Contents of the Share From a Mac System**
 
-|10000000000001C60000015C9803C256_png|
+|afp4.png|
 
-.. |10000000000001C60000015C9803C256_png| image:: images/10000000000001C60000015C9803C256.png
+.. |afp4.png| image:: images/afp4.png
     :width: 6.9272in
     :height: 3.6102in
 
@@ -265,9 +265,9 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
 
 **Figure 10.1d: Configuring Time Machine on Mac OS X Lion**
 
-|10000000000002A3000001C1F794EDB8_png|
+|afp5.png|
 
-.. |10000000000002A3000001C1F794EDB8_png| image:: images/10000000000002A3000001C1F794EDB8.png
+.. |afp5.png| image:: images/afp5.png
     :width: 6.9252in
     :height: 4.6055in
 
@@ -513,9 +513,9 @@ example :file:`/mnt/data` share of the FreeNAS® system at
 
 **Figure 10.2b: Using the Nekodrive NFSClient from Windows 7 Home Edition**
 
-|1000000000000374000002AEF63058C7_jpg|
+|nfs5.jpg|
 
-.. |1000000000000374000002AEF63058C7_jpg| image:: images/1000000000000374000002AEF63058C7.jpg
+.. |nfs5.jpg| image:: images/nfs5.jpg
     :width: 6.9252in
     :height: 5.3736in
 
@@ -534,17 +534,17 @@ user can now copy files to and from the share.
 
 **Figure 10.2c: Mounting the NFS Share from Mac OS X**
 
-|100000000000024D0000012FE1DE1BD5_png|
+|nfs3.png|
 
-.. |100000000000024D0000012FE1DE1BD5_png| image:: images/100000000000024D0000012FE1DE1BD5.png
+.. |nfs3.png| image:: images/nfs3.png
     :width: 6.9252in
     :height: 3.5618in
 
 **Figure 10.2d: Viewing the NFS Share in Finder**
 
-|10000000000001B9000001650B2A66FA_png|
+|nfs4.png|
 
-.. |10000000000001B9000001650B2A66FA_png| image:: images/10000000000001B9000001650B2A66FA.png
+.. |nfs4.png| image:: images/nfs4.png
     :width: 6.2193in
     :height: 4.5102in
 
@@ -834,9 +834,9 @@ share named :file:`backups`. An example is seen in Figure 10.4b:
 
 **Figure 10.4b: Accessing the CIFS Share from a Windows Computer**
 
-|100002010000031D000002804075756D_png|
+|cifs3.png|
 
-.. |100002010000031D000002804075756D_png| image:: images/100002010000031D000002804075756D.png
+.. |cifs3.png| image:: images/cifs3.png
     :width: 6.9252in
     :height: 5.5602in
 
@@ -848,9 +848,9 @@ drive..." as seen in Figure 10.4c:
 
 **Figure 10.4c: Mapping the Share as a Network Drive**
 
-|100002010000031E0000027D2C5F8621_png|
+|cifs4.png|
 
-.. |100002010000031E0000027D2C5F8621_png| image:: images/100002010000031E0000027D2C5F8621.png
+.. |cifs4.png| image:: images/cifs4.png
     :width: 6.9252in
     :height: 5.5272in
 
@@ -858,9 +858,9 @@ Choose a drive letter from the drop-down menu and click the "Finish" button as s
 
 **Figure 10.4d: Selecting the Network Drive Letter**
 
-|1000000000000319000002766C465264_jpg|
+|cifs5.jpg|
 
-.. |1000000000000319000002766C465264_jpg| image:: images/1000000000000319000002766C465264.jpg
+.. |cifs5.jpg| image:: images/cifs5.jpg
     :width: 6.9252in
     :height: 5.5016in
 
@@ -943,8 +943,8 @@ one of the previous versions, which will overwrite the existing file on the Wind
 
 **Figure 10.4e: Viewing Previous Versions within Explorer**
 
-|10000201000002FE0000028C18A1102B_png|
+|cifs6.png|
 
-.. |10000201000002FE0000028C18A1102B_png| image:: images/10000201000002FE0000028C18A1102B.png
+.. |cifs6.png| image:: images/cifs6.png
     :width: 6.9252in
     :height: 5.8945in
