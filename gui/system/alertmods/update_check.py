@@ -8,6 +8,8 @@ from freenasUI.system.models import Update
 
 class UpdateCheckAlert(BaseAlert):
 
+    interval = 60
+
     def run(self):
         alerts = []
         try:
