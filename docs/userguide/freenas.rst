@@ -30,6 +30,6 @@
    Using the FreeNAS® API <freenas_api>
 
 
-.. |10000201000002A500000156B453E8F1_png| image:: images/10000201000002A500000156B453E8F1.png
+.. |93coverpng| image:: images/93cover.png
     :width: 6.9252in
     :height: 3.4984in
