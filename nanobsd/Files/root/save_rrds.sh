@@ -49,7 +49,7 @@ use_rrd_dataset()
 	" | \
 	while read -r rrd_usedataset
 	do
-		if [ "${rrd_usedataset}" = "0" ]
+		if [ "${rrd_usedataset}" = "1" ]
 		then
 			echo "1"
 		else
