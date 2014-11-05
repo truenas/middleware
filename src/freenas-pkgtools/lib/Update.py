@@ -142,8 +142,13 @@ def MountClone(name, mountpoint = None):
     # to get /boot/grub into the clone's mount
     # point, as a nullfs mount.
     # Let's see if we need to do that
-    if os.path.exists(grub_cfg) is True and \
-       os.path.exists(mount_point + grub_cfg) is False:
+    if os.path.exists(grub_cfg) is True:
+        if os.path.exists(mount_point + grub_cfg) is True:
+            # We had a brief bit of insanity
+            try:
+                os.remove(mount_point + grub_cfg)
+            except:
+                pass
         # Okay, it needs to be ounted
         cmd = "/sbin/mount"
         args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
