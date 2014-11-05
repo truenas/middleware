@@ -1,7 +1,9 @@
 from datetime import datetime
+import ctypes
 import logging
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -37,10 +39,17 @@ def RunCommand(command, args):
         print >> sys.stderr, proc_args
         child = 0
     else:
+        libc = ctypes.cdll.LoadLibrary("libc.so.7")
+        omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        pmask = ctypes.pointer(mask)
+        pomask = ctypes.pointer(omask)
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
             child = subprocess.call(proc_args)
         except:
             return False
+        libc.sigprocmask(signal.SIGQUIT, pomask, None)
 
     if child == 0:
         return True
