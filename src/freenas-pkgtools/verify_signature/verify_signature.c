@@ -50,6 +50,57 @@ typedef enum {
   SPC_OCSPRESULT_CERTIFICATE_REVOKED     = 1
 } spc_ocspresult_t;
  
+static const char *start_cert = "-----BEGIN CERTIFICATE-----\n";
+static const char *end_cert = "-----END CERTIFICATE-----\n";
+
+/*
+ * Given a FILE, search for the start_cert line.
+ * Given that, then look for the end marker.  If found,
+ * return a mallocated buffer containing the gap between
+ * (including the markers).
+ */
+static char *
+GetCertificateBuffer(FILE *fp)
+{
+	char *retval = NULL;
+	char *line;
+	size_t length;
+	enum { STATE_OUTSIDE, STATE_INSIDE } state = STATE_OUTSIDE;
+	off_t start_off, end_off;
+
+	while ((line = fgetln(fp, &length)) != NULL) {
+		if (state == STATE_OUTSIDE) {
+			// Looking for start_cert
+			if (strncmp(line, start_cert, strlen(start_cert)) == 0) {
+				start_off = ftello(fp);
+				state = STATE_INSIDE;
+			}
+		} else if (state == STATE_INSIDE) {
+			// Looking for end_cert
+			if (strncmp(line, end_cert, strlen(end_cert)) == 0) {
+				size_t buflen;
+				end_off = ftello(fp);
+				buflen = (end_off - start_off);
+				buflen += strlen(start_cert);
+				buflen += 1; // For NUL
+				retval = calloc(buflen, 1);
+				if (retval == NULL) {
+					err(1, "cannot allocate %zd bytes", buflen);
+				}
+				strcpy(retval, start_cert);
+				if (pread(fileno(fp),
+					  retval + strlen(start_cert),
+					  buflen - strlen(start_cert) - 1,
+					  start_off) == -1) {
+					err(1, "Could read certificate");
+				}
+				return retval;
+			}
+		}
+	}
+	return NULL;
+}
+
 // Is this failure worth crying over?
 static int
 spc_fatal_error(spc_ocspresult_t err)
@@ -123,6 +174,26 @@ PublicKey(X509 *x509_certificate)
 		errx(1, "Unable to extract public key from x509 certificate");
 	}
 	return pkey;
+}
+
+static X509 *
+ParseCertificateBuffer(const char *buffer)
+{
+	BIO *certbio = NULL;
+	X509 *cert = NULL;
+
+	certbio = BIO_new_mem_buf((void*)buffer, -1);
+	if (certbio == NULL) {
+		errx(1, "%s:  Could not create mem BIO", __FUNCTION__);
+	}
+	cert = PEM_read_bio_X509(certbio, NULL, 0, NULL);
+	if (cert == NULL) {
+		warnx("%s:  Could not read certificate from buffer", __FUNCTION__);
+	}
+	BIO_free_all(certbio);
+	if (verbose)
+		warnx("%s:  %s", __FUNCTION__, cert ? "Success" : "Failure");
+	return cert;
 }
 
 /*
@@ -474,6 +545,8 @@ main(int ac, char **av)
 	EVP_PKEY *public_key = NULL;
 	int opt;
 	int retval;
+	size_t cert_index = 0;
+	FILE *cert_fp = NULL;
 
 	while ((opt = getopt(ac, av, "K:C:D:H:I:R:S:dv")) != -1) {
 		switch (opt) {
@@ -585,44 +658,51 @@ main(int ac, char **av)
 		ocsp.issuer = LoadCertificate(issuer_file);
 	}
 
-	// Now load the actual certificate file
-	if ((ocsp.cert = LoadCertificate(cert_file)) == NULL) {
-		errx(1, "Unable to load certificate file %s", cert_file);
-	} else {
-		void *ocsp_urls = NULL;
-		ocsp_urls = X509_get1_ocsp(ocsp.cert);
-		if (ocsp_urls) {
-			switch (sk_num(ocsp_urls)) {
-			case 1:
-				ocsp.url = sk_value(ocsp_urls, 0);
-				if (verbose)
-					warnx("OCSP URL %s", ocsp.url);
-				break;
-			case 0:
-				break;
-			default:
-				warnx("Too many OCSP URLs (%d), don't know what to do", sk_num(ocsp_urls));
+	if ((cert_fp = fopen(cert_file, "r")) != NULL) {
+		// Now load the actual certificate file
+		char *cert_buffer;
+
+		while (cert_buffer = GetCertificateBuffer(cert_fp)) {
+			if ((ocsp.cert = ParseCertificateBuffer(cert_buffer)) == NULL) {
+				warnx("Unable to load certificate index %zu", cert_index);
+			} else {
+				void *ocsp_urls = NULL;
+				ocsp_urls = X509_get1_ocsp(ocsp.cert);
+				if (ocsp_urls) {
+					switch (sk_num(ocsp_urls)) {
+					case 1:
+						ocsp.url = sk_value(ocsp_urls, 0);
+						if (verbose)
+							warnx("OCSP URL %s", ocsp.url);
+						break;
+					case 0:
+						break;
+					default:
+						warnx("Too many OCSP URLs (%d), don't know what to do", sk_num(ocsp_urls));
+					}
+				} else {
+					if (verbose)
+						warnx("No OCSP URL");
+				}
 			}
-		} else {
+			
+			retval = VerifyCertificate(&ocsp);
+			if (retval == 0) {
+				if (verbose)
+					warnx("Could not verify certificate index %zu", cert_index);
+			}
+			if (VerifySignature(data, signature, hash_type, &ocsp) == 1) {
+				if (verbose)
+					warnx("Signature verified using certificate index %zu", cert_index);
+				exit(0);
+			}
 			if (verbose)
-				warnx("No OCSP URL");
+				warnx("Could not verify signature using certificate index %zu", cert_index);
+			cert_index++;
 		}
 	}
-
-	retval = VerifyCertificate(&ocsp);
-	if (retval == 0) {
-		errx(1, "Could not verify certificate");
-	}
-
-	retval = VerifySignature(data, signature, hash_type, &ocsp);
-	if (verbose)
-		warnx("%s", retval ? "Verified" : "FAILURE");
-
 	EVP_cleanup();
 	ERR_free_strings();
 
-	if (retval == 1)
-		exit(0);
-	else
-		exit(1);
+	exit(1);
 }
