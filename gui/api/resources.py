@@ -2532,7 +2532,7 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        path = notifier().get_upload_location()
+        path = notifier().get_update_location()
         changes = Update.PendingUpdates(path)
         data = []
         if changes:
