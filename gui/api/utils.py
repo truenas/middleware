@@ -45,7 +45,7 @@ from tastypie.authentication import (
 )
 from tastypie import fields
 from tastypie.authorization import Authorization
-from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.exceptions import ImmediateHttpResponse, UnsupportedFormat
 from tastypie.http import HttpUnauthorized
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
@@ -228,7 +228,7 @@ class ResourceMixin(object):
             return super(ResourceMixin, self).dispatch(
                 request_type, request, *args, **kwargs
             )
-        except (MiddlewareError, ServiceFailed), e:
+        except (MiddlewareError, ServiceFailed, UnsupportedFormat), e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error_message': unicode(e),
