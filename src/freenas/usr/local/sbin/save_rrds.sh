@@ -66,7 +66,7 @@ use_rrd_dataset()
 	return ${use}
 }
 
-if use_rrd_dataset
+if ! use_rrd_dataset
 then
 	exit 0
 fi
