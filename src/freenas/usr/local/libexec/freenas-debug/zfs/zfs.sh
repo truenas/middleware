@@ -40,6 +40,10 @@ zfs_func()
 	zpool status
 	section_footer
 
+	section_header "ZFS Pools History"
+	zpool history
+	section_footer
+
 	section_header "ZFS Pools Properties"
 	pools=$(zpool list -H|awk '{ print $1 }'|xargs)
 	for p in ${pools}
