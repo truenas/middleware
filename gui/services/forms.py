@@ -1072,8 +1072,12 @@ class iSCSITargetExtentForm(ModelForm):
             self._name = self.instance.iscsi_target_extent_name
         else:
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
-        self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();"
+        self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
         self.fields['iscsi_target_extent_path'].required = False
+
+        self.fields['iscsi_target_extent_disk'].widget.attrs['onChange'] = (
+            'extentZvolToggle();'
+        )
 
     def _populate_disk_choices(self, exclude=None):
 

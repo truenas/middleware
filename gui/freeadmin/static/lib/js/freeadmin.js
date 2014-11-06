@@ -1137,6 +1137,21 @@ require([
 
     }
 
+    extentZvolToggle = function() {
+
+        var select = registry.byId("id_iscsi_target_extent_disk");
+        var type = registry.byId("id_iscsi_target_extent_type");
+        var threshold = registry.byId("id_iscsi_target_extent_avail_threshold");
+        var trt = threshold.domNode.parentNode.parentNode;
+
+        if(type.get('value') == 'Disk' && select.get('value').indexOf('zvol/') == 0) {
+            domStyle.set(trt, "display", "table-row");
+        } else {
+            domStyle.set(trt, "display", "none");
+        }
+
+    }
+
     webdavprotocolToggle = function() {
 
         var select = registry.byId("id_webdav_protocol");
