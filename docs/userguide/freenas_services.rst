@@ -199,7 +199,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | present                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Domain logons                    | checkbox       |                                                                                                       |
+| Domain logons                    | checkbox       | only check if need to provide the netlogin service for older Windows clients                          |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Time Server for Domain           | checkbox       | determines whether or not the system advertises itself as a time server to Windows clients;           |
@@ -255,13 +255,15 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | domain admins on another forest                                                                       |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Bind IP Addresses                | checkboxes     |                                                                                                       |
+| Bind IP Addresses                | checkboxes     | check the IP address(es) that CIFS should listen on                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap Range Low                  | integer        |                                                                                                       |
+| Idmap Range Low                  | integer        | defines the beginning UID/GID this system is authoritative for; any UID/GID lower than this value is  |
+|                                  |                | ignored, providing a way to avoid accidental UID/GID overlaps between local and remotely defined IDs  |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap Range High                 | integer        |                                                                                                       |
+| Idmap Range High                 | integer        | defines the ending UID/GID this system is authoritative for; any UID/GID higher than this value is    |
+|                                  |                | ignored, providing a way to avoid accidental UID/GID overlaps between local and remotely defined IDs  |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 

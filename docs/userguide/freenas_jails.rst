@@ -750,33 +750,31 @@ Table 13.4a summarizes the fields in this screen.
 
 **Table 13.4a: Jail Template Options**
 
-+--------------+----------------+----------------------------------------------------------------+
-| **Setting**  | **Value**      | **Description**                                                |
-|              |                |                                                                |
-|              |                |                                                                |
-+==============+================+================================================================+
-| Name         | string         | value will appear in the "Name" column of "View Jail Templates"|
-|              |                |                                                                |
-+--------------+----------------+----------------------------------------------------------------+
-| OS           | drop-down menu | choices are  *FreeBSD* or                                      |
-|              |                | *Linux*                                                        |
-|              |                |                                                                |
-|              |                |                                                                |
-+--------------+----------------+----------------------------------------------------------------+
-| Architecture | drop-down menu | choices are *x86* or                                           |
-|              |                | *x64*;                                                         |
-|              |                | *x86* is required if                                           |
-|              |                | *Linux* is selected                                            |
-|              |                |                                                                |
-+--------------+----------------+----------------------------------------------------------------+
-| URL          | string         | input the full URL to the :file:`.tgz` file, including the     |
-|              |                | protocol (*ftp://* or                                          |
-|              |                | *http://*)                                                     |
-|              |                |                                                                |
-+--------------+----------------+----------------------------------------------------------------+
-| Jt readonly  | checkbox       |                                                                |
-|              |                |                                                                |
-+--------------+----------------+----------------------------------------------------------------+
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| **Setting**  | **Value**      | **Description**                                                                               |
+|              |                |                                                                                               |
++==============+================+===============================================================================================+
+| Name         | string         | value will appear in the "Name" column of "View Jail Templates"                               |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| OS           | drop-down menu | choices are  *FreeBSD* or                                                                     |
+|              |                | *Linux*                                                                                       |
+|              |                |                                                                                               |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| Architecture | drop-down menu | choices are *x86* or                                                                          |
+|              |                | *x64*;                                                                                        |
+|              |                | *x86* is required if                                                                          |
+|              |                | *Linux* is selected                                                                           |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| URL          | string         | input the full URL to the :file:`.tgz` file, including the protocol (*ftp://* or              |
+|              |                | or *http://*)                                                                                 |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| Jt readonly  | checkbox       | if this box is checked, the "Name" and "URL" of the template cannot be changed after creation |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
 
 Once a template has been added, you can click the entry for the template to access its "Edit" and "Delete" buttons. If you click a template's "Edit" button,
 it will open the configuration screen shown in the Figure 13.4c.

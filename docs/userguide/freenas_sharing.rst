@@ -741,7 +741,8 @@ started.
 |                              |               | 10.4b summarizes the available modules                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters         | string        | only available in "Advanced Mode"; add additional smb4.conf parameters not covered by other option fields   |
+| Auxiliary Parameters         | string        | only available in "Advanced Mode"; additional :file:`smb4.conf` parameters not covered by other option      |
+|                              |               | fields                                                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
