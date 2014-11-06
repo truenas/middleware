@@ -182,6 +182,34 @@ def bootenv_datagrid_actions(request):
             'on_click': onclick % (_('Delete'), '_delete_url'),
             'button_name': _('Delete'),
         },
+        _('DeleteBulk'): {
+            'on_click': """
+function() {
+    var mybtn = this;
+    var ids = [];
+    for (var i in grid.selection) {
+        var data = grid.row(i).data;
+        ids.push(data.id);
+    }
+    editObject('Delete In Bulk', data._deletebulk_url + '?ids=' + ids.join(","),
+        [mybtn,]);
+}""",
+            'on_select_after': """function(evt, actionName, action) {
+    var numrows = 0;
+    for(var i in evt.grid.selection) numrows++;
+    if(numrows <= 1) {
+        query(".grid" + actionName).forEach(function(item, idx) {
+            domStyle.set(item, "display", "none");
+        });
+    } else {
+        query(".grid" + actionName).forEach(function(item, idx) {
+            domStyle.set(item, "display", "block");
+        });
+    }
+}
+""",
+            'button_name': _('Delete'),
+        },
         _('Activate'): {
             'on_click': onclick % (_('Activate'), '_activate_url'),
             'on_select_after': onselectafter % (
@@ -271,6 +299,29 @@ def bootenv_delete(request, name):
         )
     return render(request, 'system/bootenv_delete.html', {
         'name': name,
+    })
+
+
+def bootenv_deletebulk(request):
+    names = request.GET.get('ids').split(',')
+    if request.method == 'POST':
+        failed = False
+        for name in names:
+            delete = DeleteClone(name)
+            if delete is False:
+                failed = True
+        if failed is not False:
+            return JsonResp(
+                request,
+                message=_('Boot Environments successfully deleted.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to delete Boot Environments.'),
+        )
+    return render(request, 'system/bootenv_deletebulk.html', {
+        'names': names,
+        'ids': request.GET.get('ids'),
     })
 
 
