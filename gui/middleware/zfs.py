@@ -542,11 +542,13 @@ class ZFSVol(object):
     usedchild = None
     avail = None
     refer = None
+    volsize = None
     parent = None
     children = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
-                 usedrefreserv=None, usedchild=None, avail=None, refer=None):
+                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
+                 volsize=None):
         self.path = path
         if path:
             if '/' in path:
@@ -561,6 +563,7 @@ class ZFSVol(object):
         self.usedchild = usedchild
         self.avail = avail
         self.refer = refer
+        self.volsize = volsize
         self.parent = None
         self.children = []
 
@@ -872,7 +875,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "-p",
         "-H",
         "-s", "name",
-        "-o", "space,refer,mountpoint,type",
+        "-o", "space,refer,mountpoint,type,volsize",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -924,6 +927,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 usedrefreserv=int(data[5]) if data[5].isdigit() else None,
                 usedchild=int(data[6]) if data[6].isdigit() else None,
                 refer=int(data[7]) if data[7].isdigit() else None,
+                volsize=int(data[10]) if data[10].isdigit() else None,
             )
         else:
             raise NotImplementedError
