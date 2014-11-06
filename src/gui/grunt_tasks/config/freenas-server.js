@@ -115,8 +115,12 @@ module.exports = function( grunt ) {
           sshObj.commands.unshift( "msg:" + chalk.green( "filesystem mounted successfully" ) );
           break;
 
-        case ( "setenv PORT " + grunt.config( ["env"] )["port"]):
-          sshObj.commands.unshift( "msg:" + chalk.cyan( "Setting $PORT to " + grunt.config( ["env"] )["port"]) );
+        case ( "setenv PORT " + grunt.config( ["env"] )["port"] ):
+          sshObj.commands.unshift( "msg:" + chalk.cyan( "Set $PORT environment variable to " + grunt.config( ["env"] )["port"]) );
+          break;
+
+        case ( "setenv FOREVER_ROOT " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".forever" ):
+          sshObj.commands.unshift( "msg:" + chalk.cyan( "Set $FOREVER_ROOT environment variable to " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".forever" ) );
           break;
 
         case ( "cd " + grunt.config( ["freenasConfig"] )["freeNASPath"] ):

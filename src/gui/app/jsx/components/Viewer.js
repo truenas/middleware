@@ -3,11 +3,10 @@
 "use strict";
 
 var React = require("react");
+var _     = require("lodash");
+var TWBS  = require("react-bootstrap");
 
-var _ = require("lodash");
-
-// Twitter Bootstrap React components
-var TWBS = require("react-bootstrap");
+var Editor = require ("./Editor");
 
 
 // Detail Viewer
@@ -42,7 +41,7 @@ var DetailViewer = React.createClass({
             </TWBS.Nav>
           </TWBS.Col>
           <TWBS.Col xs={9}>
-            <this.props.editor inputData  = { _.find( this.props.inputData, getObjectByKey ) }
+            <Editor inputData  = { _.find( this.props.inputData, getObjectByKey ) }
                                formatData = { this.props.formatData } />
           </TWBS.Col>
         </TWBS.Row>
@@ -50,6 +49,7 @@ var DetailViewer = React.createClass({
     );
   }
 });
+
 
 // Icon Viewer
 var IconViewer = React.createClass({
@@ -72,13 +72,14 @@ var IconViewer = React.createClass({
   }
 });
 
+
 // Table Viewer
 var TableViewer = React.createClass({
   render: function() {
-    var createHeader = function( key ) {
+    var createHeader = function( rawItem ) {
       return(
-        <th key={ key.id } >
-          { this.props.formatData.dataKeys[key]["name"] }
+        <th key={ rawItem.id } >
+          { this.props.formatData.dataKeys[rawItem]["name"] }
         </th>
       );
     }.bind(this);
@@ -118,7 +119,8 @@ var TableViewer = React.createClass({
   }
 });
 
-// Main Viewer Component
+
+// Main Viewer Wrapper Component
 var Viewer = React.createClass({
     changeViewMode: function( targetMode ) {
       var newMode;
@@ -206,16 +208,13 @@ var Viewer = React.createClass({
           return( <DetailViewer inputData        = { this.props.inputData }
                                 formatData       = { this.props.formatData }
                                 handleItemSelect = { this.handleItemSelect }
-                                selectedKey      = { this.state.selectedItem }
-                                editor           = { this.props.editor } /> );
+                                selectedKey      = { this.state.selectedItem } /> );
         case "icon":
           return( <IconViewer inputData  = { this.props.inputData }
-                              formatData = { this.props.formatData }
-                              editor     = { this.props.editor } /> );
+                              formatData = { this.props.formatData } /> );
         case "table":
           return( <TableViewer inputData  = { this.props.inputData }
                                formatData = { this.props.formatData }
-                               editor     = { this.props.editor }
                                tableCols  = { this.state.tableCols } /> );
         case "heir":
           // TODO: Heirarchical Viewer

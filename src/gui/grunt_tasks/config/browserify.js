@@ -22,8 +22,8 @@ module.exports = function( grunt ) {
   // EXTERNAL LIBRARIES
   this.libs = {
       src: [
-        "<%= dirTree.libs.velocity %>/velocity.min.js"
-      , "<%= dirTree.libs.velocity %>/velocity.ui.min.js"
+        "<%= dirTree.bower.velocity %>/velocity.min.js"
+      , "<%= dirTree.bower.velocity %>/velocity.ui.min.js"
     ]
     , dest : "<%= dirTree.build.dist %>/libs.js"
   };
