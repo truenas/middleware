@@ -294,18 +294,22 @@ Upgrading
 
 Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the operating system up-to-date:
 
-#. Upgrades to major releases, for example from version 9.2 to 9.3, can still be performed using either an ISO or the graphical administrative interface.
+#. Upgrades to major releases, for example from version 9.3 to 10.0, can still be performed using either an ISO or the graphical administrative interface.
    Unless the Release Notes for the new major release indicate that your current version requires an ISO upgrade, you can use either upgrade method.
 
 #. Minor releases have been replaced with signed patches. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
    you do not have to wait for a minor release to update the system with a system patch or newer versions of drivers and features and that you no longer have
    to manually download an upgrade file and its associated checksum in order to do so.
 
-#. Boot environments can be used to ensure that upgrading or patching the operating system is a no-risk operation. Before performing any changes to the
-   operating system, create a boot environment using the instructions in :ref:`Boot`. This way, you have the option to return to the previous version of the
-   operating system by rebooting the system and selecting the previous boot environment from the boot menu.
+#. During an upgrade or update, a boot environment is automatically created for you, so that upgrading or patching the operating system becomes a low-risk
+   operation. Boot environments provide the option to return to the previous version of the operating system by rebooting the system and selecting the
+   previous boot environment from the boot menu.
 
-This section describes how to perform an upgrade to a major release as well as how to update the system with newer features between major releases.
+.. note:: upgrades from previous versions of FreeNAS® to version 9.3 are not possible as the boot filesystem has changed from UFS to ZFS. To move from a
+   previous version to 9.3, follow the :ref:`Initial Preparation` steps then perform an installation as described in :ref:`Performing the Installation`.
+
+This section describes how to perform an upgrade of a 9.3 system to the next major release as well as how to update the system with newer features between
+major releases.
 
 .. _Initial Preparation:
 
@@ -422,56 +426,55 @@ Updating Between Major Releases
 
 To update the system between major releases, use :menuselection:`System --> Update`.
 
-In the screen shown in Figure 2.5e, select which "Trains" you would like to track updates to.
+In the screen shown in Figure 2.5e, use the drop-down menu to select which "Train" you would like to track updates to.
 
 **Figure 2.5e: Checking for Updates**
 
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.24in
-    :height: 2.3in
+    :width: 6.6in
+    :height: 3.2in
 
-In this example, this system has the option to track *FreeNAS-ALPHA*, or the upcoming 10.0 release and
-*FreeNAS-9.3-Nightlies* which represents the latest nightly build which includes all new features, drivers, and bug fixes since 9.3 was released. The
-administrator has selected to track the *FreeNAS-9.3-Nightlies*.
+In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release) and
+*FreeNAS-9.3-Nightlies* which represents the latest nightly build of the current release which includes all new features, drivers, and bug fixes since 9.3 was
+released. The administrator has selected to track the *FreeNAS-9.3-Nightlies*.
 
-To see if any updates are available, click the "Check for Updates" button.
+To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
+button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
+
+.. note:: some updates require a system reboot. You should ensure that no clients are currently connected to the FreeNAS® system and that no scrubs are
+   currently in progress before applying an update.
+
+If you choose to apply the updates, a progress bar will indicate the progress of downloading and installing the updates. Before the update process begins,
+FreeNAS® will automatically take a snapshot of the current operating system and add it to the boot menu. If the update requires a system reboot, the system
+will automatically be rebooted immediately after the update is applied.
 
 .. _If Something Goes Wrong:
 
 If Something Goes Wrong
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If the FreeNAS® system does not become available after the upgrade, you will need physical access to the system to find out what went wrong. From the console
-menu you can determine if it received an IP address and use option "1) Configure Network Interfaces" if it did not.
+If an upgrade or update fails, or you wish to return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS®
+console. Reboot the system and watch for the boot menu. In the example shown in Figure 2.5f, the first boot menu entry, *FreeNAS (default)*, refers to the
+initial installation, before the update was applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after
+the update was applied. This second entry is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless
+another entry is manually selected. Both entries include a date and timestamp, indicating when that boot environment was created.
 
-If this does not fix the problem, go into option "9) Shell" and read the system log with this command::
+**Figure 2.5f: Boot Menu**
 
- more /var/log/messages
+|boot1.png|
 
-If the database upgrade failed, a file called :file:`/data/upgrade-failed` should be created with the details.
+.. |boot1.png| image:: images/boot1.png
+    :width: 5.7in
+    :height: 4.1in
 
-If the problem is not obvious or you are unsure how to fix it, see FreeNAS® Support Resources.
+To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
 
-FreeNAS® supports two operating systems on the operating system device: the current operating system and, if you have performed an upgrade, the previously
-installed version of the operating system. This allows you to reboot into the previous version should you experience a problem with the upgraded version.
+Should a boot device fail and the system no longer boots, don't panic. The data is still on your disks and you still have a copy of your saved configuration.
+You can always:
 
-The upgrade process automatically configures the system to boot from the new operating system. If the system remains inaccessible and you wish to revert back
-to the previous installation, type :command:`reboot` from the shell or select "10) Reboot" from the console menu. Watch the boot screens and press the other
-boot option (typically "F2") from the FreeNAS® console when you see the following options at the very beginning of the boot process. In this example,
-"Boot: F1" refers to the default option (the newly upgraded version), so pressing "F2" will boot into the previous version.::
-
- F1 FreeBSD
- F2 FreeBSD
- Boot: F1
-
-.. note:: if a previously working FreeNAS® system hangs after a FreeNAS® upgrade, check to see if there is a BIOS/BMC firmware upgrade available as that
-   may fix the issue.
-
-If the upgrade completely fails, don't panic. The data is still on your disks and you still have a copy of your saved configuration. You can always:
-
-#.  Perform a fresh installation.
+#.  Perform a fresh installation on a new boot device.
 
 #.  Import your volumes in :menuselection:`Storage --> Auto Import Volume`.
 
@@ -486,18 +489,21 @@ Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical admin
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
-* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version** or downgrade to an earlier
-  version of FreeNAS® that does not support feature flags.
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version of FreeNAS® that does not support feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 2.5f.
+"Upgrade" button as seen in Figure 2.5g.
 
-**Figure 2.5f: Upgrading a ZFS Pool**
+**Figure 2.5g: Upgrading a ZFS Pool**
 
-|Figure27g_png|
+|pool1.png|
+
+.. |pool1.png| image:: images/pool1.png
+    :width: 5.5in
+    :height: 3.2in
 
 The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
