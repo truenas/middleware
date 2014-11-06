@@ -952,6 +952,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.iSCSITargetGlobalConfiguration
+        widgets = {
+            'iscsi_pool_avail_threshold': forms.widgets.TextInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
@@ -1048,6 +1051,7 @@ class iSCSITargetExtentForm(ModelForm):
         )
         widgets = {
             'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
+            'iscsi_target_extent_avail_threshold': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):

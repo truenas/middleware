@@ -440,6 +440,12 @@ class iSCSITargetGlobalConfiguration(Model):
         verbose_name=_('iSNS Servers'),
         blank=True,
     )
+    iscsi_pool_avail_threshold = models.IntegerField(
+        verbose_name=_('Pool Available Size Threshold (%)'),
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(99)],
+    )
 
     class Meta:
         verbose_name = _(u"Target Global Configuration")
@@ -478,6 +484,12 @@ class iSCSITargetExtent(Model):
             help_text=_("Size of extent, 0 means auto, a raw number is bytes"
                 ", or suffix with KB, MB, TB for convenience."),
             )
+    iscsi_target_extent_avail_threshold = models.IntegerField(
+        verbose_name=_(' Available Size Threshold (%)'),
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(99)],
+    )
     iscsi_target_extent_comment = models.CharField(
             blank=True,
             max_length=120,
