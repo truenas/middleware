@@ -18,18 +18,23 @@ var TWBS   = require("react-bootstrap");
 var FreeNASWebApp = React.createClass({
   render: function() {
     return (
-      <TWBS.Grid>
+      <div>
+      <div id="navBar">Notification Bar will live here!</div>
+      <div id="leftMenu">
+        <ul>
+          <li><Link to="storage">Storage</Link></li>
+          <li><Link to="users">Users</Link></li>
+          <li><Link to="network">Network</Link></li>
+          <li><Link to="tasks">Tasks</Link></li>
+          <li><Link to="control-panel">Control Panel</Link></li>
+        </ul>
+      </div>
+      <TWBS.Grid className="mainGrid">
         {/* TODO: Add Modal mount div */}
         <TWBS.Row>
           {/* Navigation side menu */}
           <TWBS.Col xs={2} sm={2} md={2} lg={2} xl={2}>
-            <ul>
-              <li><Link to="storage">Storage</Link></li>
-              <li><Link to="users">Users</Link></li>
-              <li><Link to="network">Network</Link></li>
-              <li><Link to="tasks">Tasks</Link></li>
-              <li><Link to="control-panel">Control Panel</Link></li>
-            </ul>
+
           </TWBS.Col>
 
           {/* Primary view */}
@@ -44,6 +49,7 @@ var FreeNASWebApp = React.createClass({
           </TWBS.Col>
         </TWBS.Row>
       </TWBS.Grid>
+      </div>
     );
   }
 });
