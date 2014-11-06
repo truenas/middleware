@@ -603,10 +603,41 @@ def ApplyUpdate(directory, install_handler = None):
     try:
         clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
         if CreateClone(clone_name) is False:
-            s = "Unable to create boot-environment %s" % clone_name
-            log.error(s)
-            raise Exception(s)
-        mount_point = MountClone(clone_name)
+            log.debug("Failed to create BE %s" % clone_name)
+            # It's possible the boot environment already exists.
+            s = None
+            clones = ListClones()
+            if clones:
+                found = False
+                for c in clones:
+                    if c["name"] == clone_name:
+                        found = True
+                        if c["mountpoint"] != "/":
+                            if c["mountpoint"] != "-":
+                                mount_point = c["mountpoint"]
+                                # We also need to see if grub is mounted
+                                # Note:  if mount_point or mount_point/boot/grub don't exist,
+                                # this is going to throw an exception.
+                                try:
+                                    if os.lstat(mount_point).st_dev == os.lstat(mount_point + grub_dir).st_dev:
+                                        if RunCommand("/sbin/mount", ["-t", "nullfs", grub_dir, mount_point + grub_dir]) == False:
+                                            s = "Unable to mount grub into already-existing boot environment %s" % clone_name
+                                except:
+                                    log.debug("Unable to check %s grub mount" % mount_point)
+                                    s = "Unable to set up %s as an installable mount point" % mount_point
+                        else:
+                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % clone_name
+                        break
+                if found is False:
+                    s = "Unable to create boot-environment %s" % clone_name
+            else:    
+                log.debug("Unable to list clones after creation failure")
+                s = "Unable to create boot-environment %s" % clone_name
+            if s:
+                log.error(s)
+                raise Exception(s)
+        if mount_point is None:
+            mount_point = MountClone(clone_name)
         if mount_point is None:
             s = "Unable to mount boot-environment %s" % clone_name
             log.error(s)
