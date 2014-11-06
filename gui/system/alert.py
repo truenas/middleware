@@ -157,12 +157,14 @@ class AlertPlugins:
                     if results.get(instance.name).get(
                         'lastrun'
                     ) > time.time() - (instance.interval * 60):
+                        rvs.extend(results.get(instance.name).get('alerts'))
                         continue
                 rv = instance.run()
                 if rv:
                     rvs.extend(filter(None, rv))
                 results[instance.name] = {
                     'lastrun': int(time.time()),
+                    'alerts': rv,
                 }
 
             except Exception, e:
