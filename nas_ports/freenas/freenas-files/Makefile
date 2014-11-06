@@ -223,7 +223,6 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/kerberos
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/kerberos/krb5.conf ${STAGEDIR}/${PREFIX}/etc/ix/templates/kerberos/krb5.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/README ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/README
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/atrun ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/atrun
@@ -245,12 +244,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/system ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/system
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/telnetd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/telnetd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/xdm ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/xdm
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-delete ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-delete
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-start ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-start
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-stop ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-stop
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-delete ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-delete
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-start ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-start
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-stop ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-stop
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/iso_3166_2_countries.csv ${STAGEDIR}/${PREFIX}/etc/iso_3166_2_countries.csv
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}/${PREFIX}/etc/netcli
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}/${PREFIX}/etc/netcli.sh
