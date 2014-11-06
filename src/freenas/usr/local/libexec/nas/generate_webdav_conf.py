@@ -148,8 +148,8 @@ def main():
             f2.write(" Listen "+str(dav_tcpportssl)+"\n")
             f2.write("\t <VirtualHost *:"+str(dav_tcpportssl)+">\n")
             f2.write("\t  SSLEngine on\n")
-            f2.write("\t  SSLCertificateFile %s\n" % dav_ssl_certfile)
-            f2.write("\t  SSLCertificateKeyFile %s\n" % dav_ssl_keyfile)
+            f2.write("""\t  SSLCertificateFile "%s"\n""" % dav_ssl_certfile)
+            f2.write("""\t  SSLCertificateKeyFile "%s"\n""" % dav_ssl_keyfile)
             f2.write("\t  SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2\n\t  SSLCipherSuite HIGH:MEDIUM\n")
             f2.write(dav_config_pretext)
             # Note: The for loop below is essentially code duplication, but since two 

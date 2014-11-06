@@ -2536,6 +2536,10 @@ class CertificateCreateInternalForm(ModelForm):
             raise forms.ValidationError(
                 "A certificate with this name already exists."
             )
+        if name.find('"') != -1:
+            raise forms.ValidationError(
+                """You cannnot issue a certificate with a `"` in its name"""
+            )
         return name
 
     def save(self):

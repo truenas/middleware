@@ -206,8 +206,8 @@ __EOF__
 	listen			${addr}:${httpsport} default_server ssl spdy;
 	listen			[${addr6}]:${httpsport} default_server ssl spdy;
 
-	ssl_certificate		'${httpdcert}';
-	ssl_certificate_key	'${httpdkey}';
+	ssl_certificate		"${httpdcert}";
+	ssl_certificate_key	"${httpdkey}";
 	ssl_dhparam /data/dhparam.pem;
 
 	ssl_session_timeout	120m;
