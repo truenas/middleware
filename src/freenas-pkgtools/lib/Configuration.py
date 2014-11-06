@@ -454,6 +454,7 @@ class Configuration(object):
             self._temp = self._system_dataset
 
     def TryGetNetworkFile(self, url, handler=None, pathname = None):
+        from . import ROOT_CA_FILE
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
         log.debug("TryGetNetworkFile(%s)" % url)
@@ -461,8 +462,8 @@ class Configuration(object):
         if temp_mani:
             current_version = temp_mani.Sequence()
         try:
-            handler = VerifiedHTTPSHandler(ca_certs = ROOT_CA_FILE)
-            opener = urlib2.build_opener(handler)
+            https_handler = VerifiedHTTPSHandler(ca_certs = ROOT_CA_FILE)
+            opener = urllib2.build_opener(https_handler)
             req = urllib2.Request(url)
             req.add_header(AVATAR_VERSION, current_version)
             # Hack for debugging
