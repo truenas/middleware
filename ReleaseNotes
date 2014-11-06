@@ -55,13 +55,15 @@ feature, the user can experiment with hosting multiple trains in parallel.
 
   WebDAV file sharing is now supported.
 
-  Samba upgraded to 4.1.12.
+  Samba upgraded to 4.1.13.
 
   NFSv4 support added, including kerberized NFS.
 
   Kernel iSCSI (CTL) has completely replaced the old iSCSI code, adding support
-for VMWare VAAI, MS ODX and Windows 2012 Clustering as well as much higher
-performance and space efficiency (zero'd blocks can now be reclaimed).
+for VMWare VAAI (all 7 primitives), MS ODX and Windows 2012 Clustering as well
+as much higher performance and space efficiency (zero'd blocks can now be
+reclaimed).  Support for STUN and pool storage thresholds also makes VMWare
+behavior far more robust when ZFS pools fill up.
 
   iSCSI nows supports associating to an iSNS server.
 
