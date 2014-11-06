@@ -53,17 +53,19 @@ module.exports = function(grunt) {
     // These are some variables that commonly change during development, and
     // will simplify any changes to file structure, ports, etc.
 
-    // Distributions & Libraries
     , dirTree: {
           client : "app/client"
         , server : "app/server"
         , routes : "app/routes"
         , data   : "app/data"
 
-        // Distributed libraries
-        , libs: {
+        // Bower components
+        , bower: {
             velocity : "./bower_components/velocity"
-          , twbs     : "./bower_components/bootstrap/js"
+          , openSans: {
+              less  : "./bower_components/lessfonts-open-sans/src/less"
+            , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
+          }
         }
 
         // Sources
@@ -82,6 +84,7 @@ module.exports = function(grunt) {
           , app  : "app/build/js"
           , img  : "app/build/img"
           , css  : "app/build/css"
+          , font : "app/build/font"
           , dist : "app/build/js"
         }
 

@@ -20,6 +20,7 @@ module.exports = function( grunt ) {
       "browserify"
     , "copy:images"
     , "copy:favicons"
+    , "copy:openSans"
     , "less"
   ];
 
