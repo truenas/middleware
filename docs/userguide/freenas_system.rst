@@ -586,9 +586,9 @@ Update
 
 Beginning with version 9.3, FreeNAS® uses signed patches rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
 when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
-release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they still have the option to
-reboot into a previous snapshot of the operating system. Signed patches also mean that the administrator no longer has to manually download the GUI upgrade
-file and its associated checksum in order to perform an upgrade.
+release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they can revert to a previous
+version of the operating system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to
+manually download the GUI upgrade file and its associated checksum in order to perform an upgrade.
 
 Figure 5.8a shows an example of the :menuselection:`System --> Update` screen. 
 
@@ -596,7 +596,36 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 |update1.png|
 
+.. |update1.png| image:: images/update1.png
+    :width: 6.5in
+    :height: 3.2in
 
+By default, the system will automatically check for updates and will issue an alert and email the administrative address when a new update becomes available.
+To disable this default, uncheck the box "Automatically check for updates".
+
+This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
+a different selection.
+
+To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. In the example shown in Figure 5.8b, three
+updates are available.
+
+|update2.png|
+
+.. |update2.png| image:: images/update2.png
+    :width: 6.5in
+    :height: 2.2in
+
+To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
+button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
+
+Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
+case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
+in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
+reboot after the updates are applied.
+
+The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading to a Major Release From the GUI`. Note that in
+9.3, this button is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead
+apply the necessary updates to upgrade the operating system.
 
 .. _CAs:
 
