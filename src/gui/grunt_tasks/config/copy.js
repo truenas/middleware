@@ -26,6 +26,32 @@ module.exports = function( grunt ) {
     }]
   };
 
+  this.openSans = {
+    files: [{
+      src: [
+          // LIGHT
+          "<%= dirTree.bower.openSans.fonts %>/OpenSans-Light/**"
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-LightItalic/**"
+          // REGULAR
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-Italic/**"
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-Regular/**"
+          // SEMIBOLD
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-Semibold/**"
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-SemiboldItalic/**"
+          // BOLD
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-Bold/**"
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-BoldItalic/**"
+          // EXTRABOLD
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-ExtraBold/**"
+        , "<%= dirTree.bower.openSans.fonts %>/OpenSans-ExtraBoldItalic/**"
+      ]
+      , dest    : "<%= dirTree.build.font %>"
+      , filter  : "isFile"
+      , expand  : true
+      , flatten : true
+    }]
+  };
+
   this.deployment = {
     files: [{
         src: [
