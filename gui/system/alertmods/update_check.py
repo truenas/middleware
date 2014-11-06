@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from freenasOS.Update import CheckForUpdates
+from freenasOS.Update import PendingUpdates
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.system.models import Update
@@ -17,14 +17,15 @@ class UpdateCheckAlert(BaseAlert):
         except IndexError:
             update = Update.objects.create()
 
-        path = notifier().system_dataset_path()
+        path = notifier().get_update_location()
         if not path:
             return None
         try:
-            check = CheckForUpdates(train=update.get_train(), cache_dir=path)
+            updates = PendingUpdates(path)
         except:
-            check = None
-        if check:
+            updates = None
+
+        if updates:
             alerts.append(
                 Alert(
                     Alert.OK,
