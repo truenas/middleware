@@ -699,6 +699,7 @@ main(int ac, char **av)
 			if (verbose)
 				warnx("Could not verify signature using certificate index %zu", cert_index);
 			cert_index++;
+			free(cert_buffer);
 		}
 	}
 	EVP_cleanup();
