@@ -52,6 +52,20 @@ module.exports = function( grunt ) {
     }]
   };
 
+  // NOTE: FontAwesome is NOT A PERMANENT ADDITION. It's going to be removed.
+  // Don't get used to it, don't decide you like it, don't convince others of its
+  // merits. FreeNAS is going to roll its OWN icon font to match our own visual
+  // style. This should be considered extremely temporary.
+  this.fontawesome = {
+    files: [{
+        src     : "<%= dirTree.bower.fontawesome.fonts %>/**"
+      , dest    : "<%= dirTree.build.font %>"
+      , filter  : "isFile"
+      , expand  : true
+      , flatten : true
+    }]
+  };
+
   this.deployment = {
     files: [{
         src: [

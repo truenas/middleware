@@ -21,6 +21,7 @@ module.exports = function( grunt ) {
     , "copy:images"
     , "copy:favicons"
     , "copy:openSans"
+    , "copy:fontawesome"
     , "less"
   ];
 

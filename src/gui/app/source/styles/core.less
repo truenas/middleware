@@ -54,15 +54,23 @@
 
 
 
-// ROTOR LESS
+// FREENAS SPECIFIC
 // =============================================================================
-// To enable and disable component parts of Twitter Bootstrap, comment out the
-// @import declarations above. The theme file below is a copy of TWBS' variables
-// file, and is a good starting point for theming your own app. If you have a
-// LESS theme you'd like to use, @import the files below.
+
+// Typefaces
 @import "open-sans.less";
-@import "variables.less";
+
+// NOTE: FontAwesome is NOT A PERMANENT ADDITION. It's going to be removed.
+// Don't get used to it, don't decide you like it, don't convince others of its
+// merits. FreeNAS is going to roll its OWN icon font to match our own visual
+// style. This should be considered extremely temporary.
+@import "../../../bower_components/fontawesome/less/font-awesome.less";
+
+@fontsPath    : "../font";
+@fa-font-path : "@{fontsPath}";
+
+// Layout
 @import "structure.less";
 
-
-
+// Variables
+@import "variables.less";

@@ -66,6 +66,10 @@ module.exports = function(grunt) {
               less  : "./bower_components/lessfonts-open-sans/src/less"
             , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
           }
+          , fontawesome: {
+              less  : "./bower_components/fontawesome/less"
+            , fonts : "./bower_components/fontawesome/fonts"
+          }
         }
 
         // Sources
