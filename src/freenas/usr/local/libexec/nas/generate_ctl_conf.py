@@ -16,6 +16,9 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 
+from freenasUI.middleware import zfs
+
+
 def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None, initiator=None):
     cf_contents.append("auth-group ag%s {\n" % auth_tag)
     # It is an error to mix CHAP and Mutual CHAP in the same auth group
@@ -108,6 +111,10 @@ def main():
                                                      obj.iscsi_target_portalip_port))
         cf_contents.append("}\n\n")
 
+    # Cache zpool threshold
+    poolthreshold = {}
+    zpoollist = zfs.zpool_list()
+
     # Generate the target section
     target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
@@ -140,6 +147,8 @@ def main():
 
             path = t2e.iscsi_extent.iscsi_target_extent_path
             unmap = False
+            poolname = None
+            lunthreshold = None
             if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
                 disk = Disk.objects.filter(id=path).order_by('disk_enabled')
                 if not disk.exists():
@@ -151,6 +160,19 @@ def main():
                     path = "/dev/%s" % disk.identifier_to_device()
             else:
                 if not path.startswith("/mnt"):
+                    poolname = path.split('/', 2)[1]
+                    if gconf.iscsi_pool_avail_threshold:
+                        if poolname in zpoollist:
+                            poolthreshold[poolname] = int(
+                                zpoollist.get(poolname).get('size') * (
+                                    gconf.iscsi_pool_avail_threshold / 100.0
+                                )
+                            )
+                    if t2e.iscsi_extent.iscsi_target_extent_avail_threshold:
+                        zvolname = path.split('/', 1)[1]
+                        zfslist = zfs.zfs_list(path=zvolname, types=['volume'])
+                        if zfslist:
+                            lunthreshold = int(zfslist[zvolname].volsize * (t2e.iscsi_extent.iscsi_target_extent_avail_threshold / 100.0))
                     path = "/dev/" + path
                     unmap = True
             if os.path.exists(path):
@@ -186,6 +208,11 @@ def main():
                 cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
                 if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
                     cf_contents.append('\t\t\toption insecure_tpc on\n')
+
+                if lunthreshold:
+                    cf_contents.append('\t\t\toption avail-threshold %s\n' % lunthreshold)
+                if poolname is not None and poolname in poolthreshold:
+                    cf_contents.append('\t\t\toption pool-avail-threshold %s\n' % poolthreshold[poolname])
                 cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
