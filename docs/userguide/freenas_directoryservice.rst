@@ -369,7 +369,8 @@ If you are new to LDAP terminology, skim through the
 |                         |                | that backend's editable options                                                                                |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Samba Schema            | checkbox       | only available in "Advanced Mode";                                                                             |
+| Samba Schema            | checkbox       | only available in "Advanced Mode"; only check this box if you need LDAP authentication for CIFS shares **and** |
+|                         |                | you have **already** configured the LDAP server with Samba attributes                                          |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
