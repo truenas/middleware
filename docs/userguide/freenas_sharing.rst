@@ -31,6 +31,9 @@ The following types of shares and services are available:
   containing only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
   the CPU or consider another type of share.
 
+* :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
+  as VMware.
+
 If you are looking for a solution that allows fast access from any operating system, consider configuring the FTP service instead of a share and use a
 cross-platform FTP and file manager client application such as
 `Filezilla <http://filezilla-project.org/>`_. Secure FTP can be configured if the data needs to be encrypted.
@@ -47,7 +50,8 @@ encryption, but the data passing through the network will be encrypted.
    will access that volume, and configure that volume for that one type of share or service. If you need to support multiple types of shares, divide the
    volume into datasets and use one dataset per share.
 
-This section will demonstrate how to create AFP, NFS, and CIFS shares. FTP and SSH configurations are described in :ref:`Services Configuration`.
+This section will demonstrate how to create AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
+:ref:`Services Configuration`.
 
 .. _Apple (AFP) Shares:
 
@@ -1009,8 +1013,8 @@ The rest of this section describes these steps in more detail.
 Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:menuselection:`Services --> iSCSI --> Target Global Configuration`, shown in Figures 10.5a, contains settings that apply to all iSCSI shares. Table 10.5a
-summarizes the settings that can be configured in the Target Global Configuration screen.
+:menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in Figures 10.5a, contains settings that apply to all iSCSI shares. Table
+10.5a summarizes the settings that can be configured in the Target Global Configuration screen.
 
 .. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
    existing extent.
@@ -1061,8 +1065,8 @@ summarizes the settings that can be configured in the Target Global Configuratio
 Portals
 ~~~~~~~
 
-A portal specifies the IP address and port number to be used for iSCSI connections. :menuselection:`Services --> ISCSI --> Portals --> Add Portal` will bring
-up the screen shown in Figure 10.5b.
+A portal specifies the IP address and port number to be used for iSCSI connections. :menuselection:`Sharing --> Block (iSCSI) --> Portals --> Add Portal` will
+bring up the screen shown in Figure 10.5b.
 
 Table 10.5b summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
 "Add extra Portal IP".
@@ -1072,8 +1076,8 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 |portal.png|
 
 .. |portal.png| image:: images/portal.png
-    :width: 2.8in
-    :height: 2.2in
+    :width: 6.0in
+    :height: 3.2in
 
 **Table 10.5b: Portal Configuration Settings**
 
@@ -1121,7 +1125,7 @@ Initiators
 ~~~~~~~~~~
 
 The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the FreeNAS® system. To configure
-which systems can connect, use :menuselection:`Services --> ISCSI --> Initiators --> Add Initiator`, shown in Figure 10.5c.
+which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Initiators --> Add Initiator`, shown in Figure 10.5c.
 
 **Figure 10.5c: Adding an iSCSI Initiator**
 
@@ -1162,8 +1166,8 @@ from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to 
 |initiator2.png|
 
 .. |initiator2.png| image:: images/initiator2.png
-    :width: 5.7in
-    :height: 4.5in
+    :width: 6.1in
+    :height: 2.2in
 
 .. _Authorized Accesses:
 
@@ -1171,7 +1175,7 @@ Authorized Accesses
 ~~~~~~~~~~~~~~~~~~~
 
 If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
-:menuselection:`Services --> ISCSI --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 10.5e.
+:menuselection:`Sharing --> Block (iSCSI) --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 10.5e.
 
 .. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
 
@@ -1225,15 +1229,15 @@ entry to display its "Edit" and "Delete" buttons.
 |authorized2.png|
 
 .. |authorized2.png| image:: images/authorized2.png
-    :width: 5.7in
-    :height: 4.5in
+    :width: 6.1in
+    :height: 2.2in
 
 .. _Targets:
 
 Targets
 ~~~~~~~
 
-Next, create a Target using :menuselection:`Services --> ISCSI --> Targets --> Add Target`, as shown in Figure 10.5g. A target combines a portal ID, allowed
+Next, create a Target using :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target`, as shown in Figure 10.5g. A target combines a portal ID, allowed
 initiator ID, and an authentication method. Table 10.5e summarizes the settings that can be configured when creating a Target.
 
 .. note:: an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
@@ -1349,6 +1353,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Available Size     | string         | only appears if a zvol is selected as the "Device"; when the specified capacity is reached, the system will issue an |
+| Threshold          |                | alert                                                                                                                |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -1362,16 +1370,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 Target/Extents
 ~~~~~~~~~~~~~~
 
-The last step is associating an extent to a target within :menuselection:`Services --> ISCSI --> Target/Extents --> Add Target/Extent`. This screen is shown
-in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
-
-**Figure 10.5i: Associating iSCSI Targets/Extents**
-
-|target2.png|
-
-.. |target2.png| image:: images/target2.png
-    :width: 2.5in
-    :height: 1.8in
+The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
+shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1417,7 +1417,9 @@ is a commercial, easy-to-use Mac initiator.
 
 BSD systems provide command line initiators:
 `iscontrol(8) <http://www.freebsd.org/cgi/man.cgi?query=iscontrol>`_
-comes with FreeBSD,
+comes with FreeBSD versions 9.x and lower,
+`iscsictl(8) <https://www.freebsd.org/cgi/man.cgi?query=iscsictl>`_
+comes with FreeBSD versions 10.0 and higher,
 `iscsi-initiator(8) <http://netbsd.gw.com/cgi-bin/man-cgi?iscsi-initiator++NetBSD-current>`_
 comes with NetBSD, and
 `iscsid(8) <http://www.openbsd.org/cgi-bin/man.cgi?query=iscsid>`_
@@ -1456,25 +1458,21 @@ After the LUN is expanded using one of the methods below, use the tools from the
 Zvol Based LUN
 ^^^^^^^^^^^^^^
 
-Before growing a zvol based LUN, make sure that all initiators are disconnected. Stop the iSCSI service in Control Services.
+Before growing a zvol based LUN, make sure that all initiators are disconnected. Stop the iSCSI service in :ref:`Control Services`.
 
-Open Shell_and identify the zvol to be grown::
+Next, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In the example shown in
+Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
 
- zfs list -t volume
- NAME			USED	AVAIL	REFER	MOUNTPOINT
- tank/iscsi_zvol	4G	17.5G	33.9M	-
+**Figure 10.5j: Editing an Existing Zvol**
 
-Then, grow the zvol. This example grows :file:`tank/iscsi_zvol` from 4G to 6G::
+|grow.png|
 
- zfs set volsize=6G tank/iscsi_zvol
+.. |grow.png| image:: images/grow.png
+    :width: 5.3in
+    :height: 4.0in
 
- zfs set refreservation=6G tank/iscsi_zvol
-
-Verify that the changes have taken effect::
-
- zfs list -t volume
- NAME			USED	AVAIL	REFER	MOUNTPOINT
- tank/iscsi_zvol	6G	17.5G	33.9M	-
+Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
+immediately show in the "Used" column of the "View Volumes" screen.
 
 You can now start the iSCSI service and allow initiators to connect.
 

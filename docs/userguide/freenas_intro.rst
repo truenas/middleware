@@ -188,7 +188,7 @@ issued since FreeBSD 9.3 RELEASE.
   `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
-  2012 clustering.
+  2012 clustering. In addition, Zvol based LUNs can now be grown from the GUI.
 
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.
@@ -307,6 +307,14 @@ The following fields have been added or deleted:
 
 * The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
+* :menuselection:`Storage --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
+  Servers" and "Pool Available Size Threshold" fields have been added.
+
+* The "Available Size Threshold" and "Enable TPC" fields have been added to :menuselection:`Storage --> Block (iSCSI) --> Extents --> Add Extent`.
+
+* The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from
+  :menuselection:`Storage --> (Block) iSCSI --> Targets --> Add Target`.
+
 * The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
   :menuselection:`Services --> CIFS`. The "Enable home directories", "Enable home directories browsing", "Home directories", and "Homes auxiliary parameters"
   fields have been removed from :menuselection:`Services --> CIFS` as they have been replaced by the "Use as home share" checkbox in
@@ -321,13 +329,6 @@ The following fields have been added or deleted:
 * The "TLS use implicit SSL" checkbox has been removed from :menuselection:`Services --> FTP` as this feature is deprecated. The "Certificate and private key"
   field has been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own
   certificates.
-
-* The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
-
-* :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS Servers"
-  and "Pool Available Size Threshold" fields have been added.
-
-* The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
 * The "Enable NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
