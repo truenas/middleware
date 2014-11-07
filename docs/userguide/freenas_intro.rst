@@ -182,6 +182,8 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
+* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMWare Snapshots`.
+
 * The :command:`afpusers` command has been added. Similar to
   `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
 
@@ -221,6 +223,8 @@ The GUI has been reorganized as follows:
 * A new :ref:`Tasks` menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
 
 * A :ref:`Snapshots` menu has been added to Storage.
+
+* iSCSI configuration has been moved to :menuselection:`Storage --> Block (iSCSI)`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -320,7 +324,8 @@ The following fields have been added or deleted:
 
 * The "Enable TPC" field has been added to :menuselection:`Services --> iSCSI --> Extents --> Add Extent`.
 
-* :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to three configuration options used by kernel iSCSI.
+* :menuselection:`Services --> iSCSI --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS Servers"
+  and "Pool Available Size Threshold" fields have been added.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from :menuselection:`Services --> iSCSI --> Targets --> Add Target`.
 
