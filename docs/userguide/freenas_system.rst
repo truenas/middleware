@@ -27,8 +27,6 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
 
-* :ref:`VMWare Plugin`:
-
 Each of these is described in more detail in this section.
 
 .. _Information:
@@ -876,9 +874,4 @@ If you click an entry, it will activate the following configuration buttons:
   access the FreeNAS® system.
 
 * **Delete:** used to delete a certificate or certificate signing request.
-
-.. _VMWare Plugin:
-
-VMWare Plugin
--------------
 

@@ -17,6 +17,8 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Snapshots`: used to manage local snapshots.
 
+* :ref:`VMWare Snapshots`: used to...
+
 These configurations are described in more detail in this section.
 
 .. _Volumes:
@@ -1605,3 +1607,43 @@ If you create multiple filters, select the filter you wish to use before leaving
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
 available snapshots will be listed.
 
+.. _VMWare Snapshots:
+
+VMWare Snapshots
+----------------
+
+:menuselection:`Storage --> VMWare Snapshots` allows you to...
+
+Figure 8.6a shows the menu for adding a VMWare snapshot and Table 8.6a summarizes the available options.
+
+**Figure 8.6a: Adding a VMWare Snapshot**
+
+|vmware1.png|
+
+.. |vmware1.png| image:: images/vmware1.png
+    :width: 5.1in
+    :height: 3.8in
+
+**Table 8.6a: VMWare Snapshot Options**
+
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
+| **Setting**    | **Value**                   | **Description**                                                                                             |
+|                |                             |                                                                                                             |
+|                |                             |                                                                                                             |
++================+=============================+=============================================================================================================+
+| Hostname       | string                      | IP address or hostname of VMware host                                                                       |
+|                |                             |                                                                                                             |
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Username       | string                      | user on VMware host with enough permission to snapshot virtual machines                                     |
+|                |                             |                                                                                                             |
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Password       | string                      | password associated with "Username"                                                                         |
+|                |                             |                                                                                                             |
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
+| ZFS Filesystem | drop-down menu              | the filesystem to snapshot                                                                                  |
+|                |                             |                                                                                                             |
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
+| Datastore      | drop-down menu              | after inputting the "Hostname", "Username", and "Password", click the "Fetch Datastores" button to populate |
+|                |                             | the menu; select the datastore to....                                                                       |
+|                |                             |                                                                                                             |
++----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
