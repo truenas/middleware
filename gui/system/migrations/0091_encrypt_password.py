@@ -35,11 +35,6 @@ class Migration(DataMigration):
         do_encrypt(orm['services.WebDAV'], 'webdav_password')
         do_encrypt(orm['services.UPS'], 'ups_monpwd')
 
-        do_encrypt(orm['directoryservice.NT4'], 'nt4_adminpw')
-        do_encrypt(orm['directoryservice.ActiveDirectory'], 'ad_bindpw')
-        do_encrypt(orm['directoryservice.LDAP'], 'ldap_bindpw')
-
-
     def backwards(self, orm):
         pass
 
