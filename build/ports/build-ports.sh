@@ -31,12 +31,13 @@ EXTRA_PORT_DIRS="freenas truenas"
 mount -t nullfs -o ro ${GIT_FREEBSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/src  || exit 1
 #mount -t nullfs -o ro ${AVATAR_ROOT}/src ${NANO_OBJ}/_.j/usr/nas_source2 || exit 1
 
-for d in /usr/nas_source /usr/nas_source2 /usr/freenasUI; do
+for d in /usr/nas_source /usr/nas_source2 /usr/freenasUI /usr/nas_gui; do
 	[ -e ${NANO_OBJ}/_.j/$d ] && rm -fr ${NANO_OBJ}/_.j/$d
 	mkdir -p ${NANO_OBJ}/_.j/$d
 done
 [ -d ${AVATAR_ROOT}/src ] && cp -a ${AVATAR_ROOT}/src/ ${NANO_OBJ}/_.j/usr/nas_source2
 [ -d ${AVATAR_ROOT}/gui ] && cp -a ${AVATAR_ROOT}/gui/ ${NANO_OBJ}/_.j/usr/freenasUI
+[ -d ${NANO_OBJ}/gui-dest ] && cp -a ${NANO_OBJ}/gui-dest/ ${NANO_OBJ}/_.j/usr/nas_gui
 
 if is_truenas; then
 	if [ -d ${GIT_ZFSD_CHECKOUT_PATH} ]; then
