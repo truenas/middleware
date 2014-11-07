@@ -4,8 +4,8 @@
 #
 
 # PROVIDE: ix_pf_early
-# BEFORE: routing
-# REQUIRE: FILESYSTEMS netif
+# BEFORE: mountd
+# REQUIRE: ipfw
 # KEYWORD: nojail
 
 . /etc/rc.subr

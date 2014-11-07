@@ -4,8 +4,8 @@
 #
 
 # PROVIDE: ix-ldap
-# REQUIRE: root
-# BEFORE: NETWORK
+# REQUIRE: root NETWORK
+# BEFORE: SERVERS
 
 . /etc/rc.freenas
 
