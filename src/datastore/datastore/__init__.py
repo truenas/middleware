@@ -30,7 +30,6 @@ import os
 
 DRIVERS_LOCATION = '/usr/local/lib/datastore/drivers'
 
-
 class DatastoreException(Exception):
     pass
 

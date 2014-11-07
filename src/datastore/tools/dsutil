@@ -31,6 +31,7 @@ import argh
 import json
 import sys
 import datastore
+from datastore.config import ConfigStore
 
 DEFAULT_CONFIGFILE = '/conf/middleware.conf'
 ds = None
@@ -75,9 +76,11 @@ def json_select(obj, selector=None):
 
     return result
 
-def create(name):
+@argh.arg('--pkey')
+@argh.arg('--type')
+def create(name, pkey='uuid', type='config'):
     try:
-        ds.collection_create(name)
+        ds.collection_create(name, pkey_type=pkey, attributes={'type': type})
     except datastore.DatastoreException:
         print("err")
 
@@ -110,14 +113,19 @@ def query(name, filter, select=None, sort=None, limit=None):
     for row in ds.query(name, params, sort=sort, limit=limit):
         print(json.dumps(json_select(row, select)))
 
-def config_list(key, mask=None):
-    pass
+
+def config_list(key=None):
+    cfg = ConfigStore(ds)
+    for row in cfg.list_children(key):
+        print("{0} = {1}".format(row.id, json.dumps(row.data)))
 
 def config_get(key):
-    pass
+    cfg = ConfigStore(ds)
+    print(json.dumps(cfg.get(key)))
 
-def config_set(key):
-    pass
+def config_set(key, value):
+    cfg = ConfigStore(ds)
+    cfg.set(key, json.loads(value))
 
 def main():
     parser = argh.ArghParser()

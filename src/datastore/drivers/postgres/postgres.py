@@ -143,7 +143,7 @@ class PostgresDatastore(object):
 
                 yield i[0]
 
-    def query(self, collection, args=[], sort=None, dir=None, limit=None):
+    def query(self, collection, args=[], sort=None, dir=None, limit=None, wrap=True):
         with self.conn.cursor() as cur:
             query = PostgresSelectQuery(collection, cur)
             for i in args:
@@ -158,6 +158,10 @@ class PostgresDatastore(object):
             cur.execute(query.sql())
 
             for i in cur:
+                if not wrap:
+                    yield i
+                    continue
+
                 row = i.data
                 row["id"] = i.id
                 yield row
@@ -174,7 +178,7 @@ class PostgresDatastore(object):
             i = cur.fetchone()
             return i[0]
 
-    def get_one(self, collection, args=[]):
+    def get_one(self, collection, args=[], wrap=True):
         with self.conn.cursor() as cur:
             query = PostgresSelectQuery(collection, cur)
             for i in args:
@@ -186,6 +190,9 @@ class PostgresDatastore(object):
             i = cur.fetchone()
             if i is None:
                 return None
+
+            if not wrap:
+                return i
 
             row = i.data
             row["id"] = i.id
@@ -231,7 +238,7 @@ class PostgresDatastore(object):
         if self.exists(collection, [('id', '=', pkey)]):
             return self.update(collection, pkey, obj)
         else:
-            return self.insert(collection, pkey, obj)
+            return self.insert(collection, obj, pkey)
 
     def delete(self, collection, pkey):
         with self.conn.cursor() as cur:

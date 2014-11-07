@@ -38,14 +38,6 @@ class DuplicateKeyException(DatastoreException):
     pass
 
 
-class Collection(object):
-    def __init__(self):
-        self.name = None
-        self.pkey_type = None
-        self.attributes = {}
-        self.schema = {}
-
-
 def get_datastore(type, dsn):
     mod = imp.load_source(type, os.path.join(DRIVERS_LOCATION, type, type + '.py'))
     cls = getattr(mod, '{0}Datastore'.format(type.title()))
