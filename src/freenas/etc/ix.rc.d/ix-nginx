@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-nginx
-# REQUIRE: ix-warden django
+# REQUIRE: ix-warden gui
 # BEFORE: nginx
 
 . /etc/rc.freenas
@@ -238,47 +238,16 @@ __EOF__
 	cat << __EOF__
 
         location / {
-            include fastcgi_params;
-            fastcgi_pass 127.0.0.1:9042;
-            fastcgi_pass_header Authorization;
-            fastcgi_intercept_errors off;
-            fastcgi_read_timeout 600m;
-            #fastcgi_temp_path /var/tmp/firmware;
-
-            # track uploads in the 'proxied' zone
-            # remember connections for 30s after they finished
-            track_uploads proxied 30s;
+		proxy_pass http://localhost:3000/;
+		proxy_set_header Host \$host;
         }
 
-        location /progress {
-            # report uploads tracked in the 'proxied' zone
-            report_uploads proxied;
-        }
-
-        location /dojango {
-            alias /usr/local/www/freenasUI/dojango;
-        }
-
-        location /static {
-            alias /usr/local/www/freenasUI/static;
-        }
-
-        location /reporting/graphs {
-            alias /var/db/graphs;
-        }
-
-        location /dojango/dojo-media/release/${dojo} {
-            alias /usr/local/www/dojo;
-        }
-
-        #error_page  404              /404.html;
-
-        # redirect server error pages to the static page /50x.html
-        #
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   /usr/local/www/nginx-dist;
-        }
+	location /socket {
+		proxy_pass http://localhost:5000/;
+		proxy_http_version 1.1;
+        	proxy_set_header Upgrade \$http_upgrade;
+        	proxy_set_header Connection "Upgrade";
+	}
 
         #include plugins.conf;
     }
