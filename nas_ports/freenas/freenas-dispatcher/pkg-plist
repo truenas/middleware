@@ -14,6 +14,7 @@
 /usr/local/lib/dispatcher/src/rpc/rpc.py
 /usr/local/lib/dispatcher/src/rpc/__init__.py
 /usr/local/lib/dispatcher/src/balancer.py
+/usr/local/lib/dispatcher/src/auth.py
 /usr/local/lib/dispatcher/src/frontend/templates/nav.html
 /usr/local/lib/dispatcher/src/frontend/templates/tasks.html
 /usr/local/lib/dispatcher/src/frontend/templates/events.html
@@ -21,7 +22,6 @@
 /usr/local/lib/dispatcher/src/frontend/static/middleware.js
 /usr/local/lib/dispatcher/src/frontend/static/emitter.js
 /usr/local/lib/dispatcher/src/frontend/frontend.py
-/usr/local/lib/dispatcher/src/frontend/watchers.py
 /usr/local/lib/dispatcher/src/frontend/__init__.py
 /usr/local/lib/dispatcher/plugins/MountPlugin.py
 /usr/local/lib/dispatcher/plugins/SystemInfoPlugin.py

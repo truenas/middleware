@@ -24,6 +24,27 @@ Middleware.prototype.connect = function(url)
     this.socket.onopen = function() { self.emit("connected"); };
 };
 
+Middleware.prototype.login = function(username, password)
+{
+    var self = this;
+    var id = uuid();
+    var payload = {
+        "username": username,
+        "password": password
+    };
+
+    this.pendingCalls[id] = {
+        "callback": function() {
+            self.emit("login")
+        },
+        "timeout": setTimeout(function() {
+            self.on_rpc_timeout(id);
+        }, this.rpcTimeout)
+    };
+
+    this.socket.send(this.pack("rpc", "auth", payload, id));
+};
+
 Middleware.prototype.subscribe = function(event_masks)
 {
     this.socket.send(this.pack("events", "subscribe", event_masks));

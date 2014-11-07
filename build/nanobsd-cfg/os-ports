@@ -50,6 +50,14 @@ add_port freenas/freenas-datastore PRODUCT_VERSION=${VERSION} \
 add_port freenas/freenas-dispatcher PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
+add_port freenas/freenas-etcfs PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
+add_port freenas/freenas-10gui PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
+
+
 
 if ! is_truenas ; then
 	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
@@ -147,7 +155,7 @@ add_port www/py-flask
 add_port www/py-flask-bootstrap
 add_port devel/py-argh
 add_port devel/py-fusepy
-#add_port devel/py-texttable
+add_port devel/py-texttable
 add_port devel/py-pip
 add_port devel/py-pyee
 add_port devel/py-sysctl
@@ -158,6 +166,7 @@ add_port www/py-flup
 add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
 add_port www/py-dojango
 add_port www/dojo
+add_port www/node
 add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules

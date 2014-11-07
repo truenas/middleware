@@ -24,8 +24,15 @@
     <script type="text/javascript">
         var template = Handlebars.compile($("#event-template").text());
         var sock = new Middleware();
-        sock.connect("ws://" + document.domain + ":5000/socket");
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
+
         sock.on("connected", function() {
+            var username = prompt("Username:");
+            var password = prompt("Password:");
+            sock.login(username, password);
+        });
+
+        sock.on("login", function() {
             sock.subscribe("*");
             sock.on("event", function(data) {
                 ctx = {

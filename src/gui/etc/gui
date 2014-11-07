@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: gui
+# REQUIRE: dispatcher datastore
+
+. /etc/rc.subr
+
+name="dispatcher"
+pidfile="/var/run/node.pid"
+command="/usr/sbin/daemon"
+start_precmd="prestart"
+server="/usr/local/www/gui/app/server.js"
+
+prestart()
+{
+    rc_flags="-P ${pidfile} -f -r /usr/local/bin/node ${server}"
+}
+
+load_rc_config $name
+run_rc_command $*

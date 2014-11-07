@@ -1,6 +1,6 @@
 {% extends "bootstrap/base.html" %}
 {% import "nav.html" as nav %}
-{% block title %}System events{% endblock %}
+{% block title %}Tasks{% endblock %}
 {% block styles %}
     {{ super() }}
     <style type="text/css">
@@ -15,9 +15,12 @@
     <script src="/static/middleware.js"></script>
     <script id="taskclass-template" type="text/x-handlebars-template">
     {% raw %}
-        <div class="panel-heading"><b>{{task_name}}</b></div>
+        <div class="panel-heading"><b>{{name}}</b></div>
         <div class="panel-body">
-
+        <ul>
+            <li>Description: {{args.description}}</li>
+            <li>Schema:<br/><pre>{{json args.schema}}</pre></li>
+        </ul>
         </div>
     {% endraw %}
     </script>
@@ -40,10 +43,14 @@
     {% endraw %}
     </script>
     <script type="text/javascript">
+        Handlebars.registerHelper('json', function(context) {
+            return JSON.stringify(context, null, 4);
+        });
+
         var sock = new Middleware();
         var template_class = Handlebars.compile($("#taskclass-template").html());
         var template_task = Handlebars.compile($("#task-template").html());
-        sock.connect("ws://" + document.domain + ":5000/socket");
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
         function refresh_tasks()
         {
@@ -111,14 +118,20 @@
             });
 
             sock.on("connected", function() {
+                var username = prompt("Username:");
+                var password = prompt("Password:");
+                sock.login(username, password);
+            });
+
+            sock.on("login", function() {
                 refresh_tasks();
                 sock.subscribe("task.*");
                 sock.call("discovery.get_tasks", null, function (tasks) {
-                    $.each(tasks, function(idx, i) {
+                    $.each(tasks, function(key, value) {
                         $("<div/>", {
                             "class": "panel panel-primary",
                             style: "width: 40%",
-                            html: template_class({"task_name": i})
+                            html: template_class({name: key, args: value})
                         }).prependTo("#tasks");
                     });
                 });
