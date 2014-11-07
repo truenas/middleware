@@ -45,7 +45,6 @@ module.exports = function( grunt ) {
           "<%= dirTree.client %>.js"
         , "<%= dirTree.routes %>.js"
         , "<%= dirTree.server %>.js"
-        , "<%= dirTree.source.jsx %>/**"
         , "<%= dirTree.source.templates %>/**"
         , "<%= dirTree.build.root %>/**"
         , "package.json"
