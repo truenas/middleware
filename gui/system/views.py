@@ -303,9 +303,10 @@ def bootenv_delete(request, name):
 
 
 def bootenv_deletebulk(request):
-    if '/' in names or ' ' in request.GET.get('ids'):
+    names = request.GET.get('ids')
+    if '/' in names or ' ' in names:
         raise ValueError("Invalid name")
-    names = request.GET.get('ids').split(',')
+    names = names.split(',')
     if request.method == 'POST':
         failed = False
         for name in names:
