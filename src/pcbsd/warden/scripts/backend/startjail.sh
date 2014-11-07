@@ -89,7 +89,7 @@ start_jail_vimage()
 
   # Start the jail now
   warden_print "jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet=new"
-  jail -c path="${JAILDIR}" name='"${HOST}"' host.hostname='"${HOST}"' ${jFlags} persist vnet=new
+  jail -c path="${JAILDIR}" name="${HOST}" host.hostname="${HOST}" ${jFlags} persist vnet=new
   if [ $? -ne 0 ] ; then
      echo "ERROR: Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"
@@ -385,7 +385,7 @@ start_jail_standard()
   done
 
   warden_print "jail -c path=${JAILDIR} ${_ipflags} host.hostname=${HOST} ${jFlags} persist"
-  jail -c path="${JAILDIR}" ${_ipflags} name='"${HOST}"' host.hostname='"${HOST}"' ${jFlags} persist
+  jail -c path="${JAILDIR}" ${_ipflags} name="${HOST}" host.hostname="${HOST}" ${jFlags} persist
   if [ $? -ne 0 ] ; then
      warden_error "Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"

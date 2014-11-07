@@ -210,6 +210,15 @@ class JailCreateForm(ModelForm):
         else:
             self.fields['jail_ipv6_autoconf'].initial = True
 
+    def clean_jail_host(self):
+        jail_host = self.cleaned_data.get('jail_host')
+        parts = jail_host.split('.')
+        if len(parts) > 1:
+            raise forms.ValidationError(
+                _("Jail name cannot have '.'") 
+            )
+        return jail_host
+
     def save(self):
         jc = self.jc
 
