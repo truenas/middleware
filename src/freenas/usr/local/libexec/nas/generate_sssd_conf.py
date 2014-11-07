@@ -20,7 +20,6 @@ cache.get_apps()
 
 from django.db.models import Q
 
-from freenasUI.middleware.notifier import notifier
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
@@ -533,7 +532,7 @@ def add_ldap(sc):
 
     ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
-    ldap_section.ldap_default_authtok = notifier().pwenc_decrypt(ldap.ldap_bindpw)
+    ldap_section.ldap_default_authtok = ldap.ldap_bindpw
 
     if ldap.ldap_ssl == 'on':
         certpath = get_certificateauthority_path(ldap.ldap_certificate)

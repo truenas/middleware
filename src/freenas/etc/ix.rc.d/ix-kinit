@@ -21,7 +21,7 @@ kerberos_start()
 		AD_init
 
 		local bindname="$(AD_get ad_bindname)"
-		local bindpw="$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(AD_get ad_bindpw))"
+		local bindpw="$(AD_get ad_bindpw)"
 		local domainname="$(AD_get ad_domainname)"
 		local use_keytab=$(AD_get ad_use_keytab)
 		local keytab="$(AD_get ad_keytab)"
@@ -120,7 +120,7 @@ kerberos_status()
 
 		local domainname=$(AD_get ad_domainname)
 		local bindname=$(AD_get ad_bindname)
-		local bindpw=$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(AD_get ad_bindpw))
+		local bindpw=$(AD_get ad_bindpw)
 
 		if [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
 		then

@@ -255,7 +255,7 @@ NT4_show_config()
 	printf "nt4_dcname:       %s\n" $(NT4_get nt4_dcname)
 	printf "nt4_dchost:       %s\n" $(NT4_get nt4_dchost)
 	printf "nt4_adminname:    %s\n" $(NT4_get nt4_adminname)
-	printf "nt4_adminpw:      %s\n" $(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(NT4_get nt4_adminpw))
+	printf "nt4_adminpw:      %s\n" $(NT4_get nt4_adminpw)
 	printf "nt4_workgroup:    %s\n" $(NT4_get nt4_workgroup)
 	printf "nt4_netbiosname:  %s\n" $(NT4_get nt4_netbiosname)
 	printf "+------------------------------------------+\n"
@@ -268,7 +268,7 @@ NT4_join_domain()
 	local res
 
 	: ${adminname:="$(NT4_get nt4_adminname)"}
-	: ${adminpw:="$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(NT4_get nt4_adminpw))"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	NT4_log "NT4_join_domain: net rpc join -U ${adminname}"
 
@@ -292,7 +292,7 @@ NT4_status_domain()
 	local res
 
 	: ${adminname:="$(NT4_get nt4_adminname)"}
-	: ${adminpw:="$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(NT4_get nt4_adminpw))"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	NT4_log "NT4_status_domain: wbinfo -t"
 
@@ -316,7 +316,7 @@ NT4_leave_domain()
 	local res
 
 	: ${adminname:="$(NT4_get nt4_adminname)"}
-	: ${adminpw:="$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt $(NT4_get nt4_adminpw))"}
+	: ${adminpw:="$(NT4_get nt4_adminpw)"}
 
 	#NT4_log "NT4_leave_domain: net rpc leave -U ${adminname}"
 
