@@ -17,6 +17,12 @@ import Train
 import Package
 import Manifest
 
+from stat import (
+    S_ISDIR, S_ISCHR, S_ISBLK, S_ISREG, S_ISFIFO, S_ISLNK, S_ISSOCK,
+    S_IMODE
+)
+
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 
@@ -1009,6 +1015,126 @@ class Configuration(object):
             if file:
                 return file.read()
         return None
+
+def is_ignore_path(path):
+    for i in VERIFY_SKIP_PATHS:
+        tlen = len(i)
+        if path[:tlen] == i:
+            return True
+    return False
+
+def get_ftype_and_perm(mode):
+    """ Returns a tuple of whether the file is: file(regular file)/dir/slink
+    /char. spec/block spec/pipe/socket and the permission bits of the file.
+    If it does not match any of the cases below (it will return "unknown" twice)"""
+    if S_ISREG(mode):
+        return "file", S_IMODE(mode)
+    if S_ISDIR(mode):
+        return "dir", S_IMODE(mode)
+    if S_ISLNK(mode):
+        return "slink", S_IMODE(mode)
+    if S_ISCHR(mode):
+        return "character special", S_IMODE(mode)
+    if S_ISBLK(mode):
+        return "block special", S_IMODE(mode)
+    if S_ISFIFO(mode):
+        return "pipe", S_IMODE(mode)
+    if S_ISSOCK(mode):
+        return "socket", S_IMODE(mode)
+    return "unknown", "unknown"
+
+def check_ftype(objs):
+    """ Checks the filetype, permissions and uid,gid of the
+    pkgdg object(objs) sent to it. Returns two dicts: ed and pd
+    (the error_dict with a descriptive explanantion of the problem
+    if present, none otherwise, the perm_dict with a description of
+    the incoorect perms if present, none otherwise
+    """
+    ed = None
+    pd = None
+    lst_var = os.lstat(objs["path"])
+    ftype, perm = get_ftype_and_perm(lst_var.st_mode)
+    if ftype != objs["kind"]:
+        ed = dict([('path', objs["path"]),
+                ('problem', 'Expected %s, Got %s' %(objs["kind"], ftype)),
+                ('pkgdb_entry', objs)])
+    pdtmp = ''
+    if perm!=objs["mode"]:
+        pdtmp+="\nExpected MODE: %s, Got: %s" %(oct(objs["mode"]), oct(perm))
+    if lst_var.st_uid!=objs["uid"]:
+        pdtmp+="\nExpected UID: %s, Got: %s" %(objs["uid"], lst_var.st_uid)
+    if lst_var.st_gid!=objs["gid"]:
+        pdtmp+="\nExpected GID: %s, Got: %s" %(objs["gid"], lst_var.st_gid)
+    if pdtmp and not objs["path"].endswith(".pyc"):
+        pd = dict([('path', objs["path"]),
+                ('problem', pdtmp[1:]),
+                ('pkgdb_entry', objs)])
+    return ed, pd
+
+def do_verify(verify_handler=None):
+    """A function that goes through the provided pkgdb filelist and verifies it with
+    the current root filesystem."""
+    error_flag = False
+    error_list = dict([('checksum', []), ('wrongtype',[]), ('notfound',[])])
+    warn_flag = False
+    warn_list = []
+    i=0 # counter for progress indication in the UI
+
+    pkgdb = PackageDB(create = False)
+    if pkgdb is None:
+        raise IOError("Cannot get pkgdb connection")
+    filelist = pkgdb.FindFilesForPackage()
+    total_files  = len(filelist)
+
+    for objs in filelist:
+        i = i+1
+        if verify_handler is not None:
+            verify_handler(i,total_files,objs["path"])
+        tmp = '' # Just a temp. variable to store the text to be hashed
+        if is_ignore_path(objs["path"]):
+            continue
+        if not os.path.lexists(objs["path"]):
+            # This basically just checks if the file/slink/dir exists or not.
+            # Note: not using os.path.exists(path) here as that returns false
+            # even if its a broken symlink and that is a differret problem
+            # and will be caught in one of the if conds below.
+            # For more information: https://docs.python.org/2/library/os.path.html
+            error_flag = True
+            error_list['notfound'].append(dict([('path', objs["path"]),
+                ('problem', 'path does not exsist'),
+                ('pkgdb_entry', objs)]))
+            continue
+
+        ed, pd = check_ftype(objs)
+        if ed:
+            error_flag = True
+            error_list['wrongtype'].append(ed)
+        if pd:
+            warn_flag = True
+            warn_list.append(pd)
+
+        if objs["kind"] == "slink":
+            tmp = os.readlink(objs["path"])
+            if tmp.startswith('/'):
+                tmp = tmp[1:]
+
+        if objs["kind"] == "file":
+            if objs["path"].endswith(".pyc"):
+                continue
+            tmp = open(objs["path"]).read()
+
+        # Do this last (as it needs to be done for all, but dirs, as dirs have no checksum d'oh!)
+        if (
+            objs["kind"] != 'dir' and
+            objs["checksum"] and
+            objs["checksum"] !="-" and
+            hashlib.sha256(tmp).hexdigest()!=objs["checksum"]
+        ):
+            error_flag = True
+            error_list['checksum'].append(dict([('path', objs["path"]),
+                ('problem', 'checksum does not match'),
+                ('pkgdb_entry', objs)]))
+    return error_flag, error_list, warn_flag, warn_list
 
 if __name__ == "__main__":
     conf = Configuration()

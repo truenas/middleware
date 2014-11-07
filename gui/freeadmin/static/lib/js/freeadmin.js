@@ -1671,6 +1671,14 @@ require([
                 mode: "simple",
                 poolUrl: attrs.progressbar
               };
+            } else if(attrs.progressbar.mode == 'single') {
+              pattrs = {
+                steps: attrs.progressbar.steps,
+                fileUpload: attrs.progressbar.fileUpload,
+                uuid: uuid,
+                mode: "single",
+                poolUrl: attrs.progressbar.poolUrl
+              };
             } else {
               pattrs = {
                 steps: attrs.progressbar.steps,

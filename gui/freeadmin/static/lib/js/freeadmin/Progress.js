@@ -65,6 +65,12 @@ define([
         domStyle.set(this.dapETA, "display", "none");
       }
 
+      if(this.mode == "single") {
+        domStyle.set(this.dapMain, "display", "none");
+        domStyle.set(this.dapDetails, "word-wrap", "break-word");
+        domStyle.set(this.dapDetails, "word-break", "break-word");
+      }
+
       this.inherited(arguments);
 
     },

@@ -206,3 +206,64 @@ class UpdateHandler(object):
     def exit(self):
         if os.path.exists(self.DUMPFILE):
             os.unlink(self.DUMPFILE)
+
+
+class VerifyHandler(object):
+
+    DUMPFILE = '/tmp/.verifyprogress'
+
+    def __init__(self, correct_=None):
+        if os.path.exists(self.DUMPFILE):
+            self.load()
+        else:
+            self.details = ''
+            self.indeterminate = False
+            self.progress = 0
+            self.step = 1
+            self.finished = False
+            self.error = False
+            self.mode = "single"
+
+    def verify_handler(self, index, total, fname):
+        self.step = 1
+        self.details = '%s %s' % (
+            _('Verifying'),
+            fname,
+        )
+        self.progress = int((float(index) / float(total)) * 100.0)
+        self.dump()
+
+    def dump(self):
+        with LockFile(self.DUMPFILE) as lock:
+            with open(self.DUMPFILE, 'wb') as f:
+                data = {
+                    'error': self.error,
+                    'finished': self.finished,
+                    'indeterminate': self.indeterminate,
+                    'percent': self.progress,
+                    'step': self.step,
+                    'mode': self.mode,
+                }
+                if self.details:
+                    data['details'] = self.details
+                f.write(json.dumps(data))
+
+    def load(self):
+        if not os.path.exists(self.DUMPFILE):
+            return None
+        with LockFile(self.DUMPFILE) as lock:
+            with open(self.DUMPFILE, 'rb') as f:
+                data = json.loads(f.read())
+        self.details = data.get('details', '')
+        self.error = data['error']
+        self.finished = data['finished']
+        self.indeterminate = data['indeterminate']
+        self.progress = data['percent']
+        self.mode = data['mode']
+        self.step = data['step']
+        return data
+
+    def exit(self):
+        log.debug("VerifyUpdate: handler.exit() was called")
+        if os.path.exists(self.DUMPFILE):
+            os.unlink(self.DUMPFILE)

@@ -81,7 +81,11 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
-from freenasUI.system.utils import CheckUpdateHandler, UpdateHandler
+from freenasUI.system.utils import (
+    CheckUpdateHandler,
+    UpdateHandler,
+    VerifyHandler
+)
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -1257,6 +1261,55 @@ def update_progress(request):
         content_type='application/json',
     )
 
+def update_verify(request):
+    if request.method == 'POST':
+        handler = VerifyHandler()
+        try:
+            log.debug("Starting VerifyUpdate")
+            error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
+        except Exception, e:
+            log.debug("VerifyUpdate Exception ApplyUpdate: %s" %e)
+            handler.error = unicode(e)
+        handler.finished = True
+        handler.dump()
+        log.debug("VerifyUpdate finished!")
+        if handler.error is not False:
+            handler.exit()
+            raise MiddlewareError(handler.error)
+        handler.exit()
+        if error_flag or warn_flag:
+            checksums = None
+            wrongtype = None
+            notfound = None
+            perms = None
+            if ed['checksum']:
+                checksums = ed['checksum']
+            if ed['notfound']:
+                notfound = ed['notfound']
+            if ed['wrongtype']:
+                wrongtype = ed['wrongtype']
+            if warn_flag:
+                perms = wl
+            return render(request, 'system/update_verify.html', {
+                'error': True,
+                'checksums': checksums,
+                'notfound': notfound,
+                'wrongtype': wrongtype,
+                'perms': perms,
+            })
+        else:
+            return render(request, 'system/update_verify.html', {
+                'success': True,
+            })
+    else:
+        return render(request, 'system/update_verify.html')
+
+def verify_progress(request):
+    handler = VerifyHandler()
+    return HttpResponse(
+        json.dumps(handler.load()),
+        content_type='application/json',
+    )
 
 def CA_import(request):
 

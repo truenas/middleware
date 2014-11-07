@@ -10,5 +10,6 @@ usr/local/libexec/verify_signature
 usr/local/bin/freenas-install
 usr/local/bin/manifest_util
 usr/local/bin/freenas-update
+usr/local/bin/freenas-verify
 usr/local/share/certs/freenas-update.pem
 usr/local/share/certs/iX-CA.pem
