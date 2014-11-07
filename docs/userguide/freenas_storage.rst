@@ -1286,8 +1286,8 @@ Key" button and copy its contents. An example is shown in Figure 8.3a.
 |replication1.png|
 
 .. |replication1.png| image:: images/replication1.png
-    :width: 6.8in
-    :height: 2.5in
+    :width: 5.8in
+    :height: 3.0in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1402,12 +1402,8 @@ Once the replication task is created, it will appear in the "View Replication Ta
 
 *PUSH* will immediately attempt to replicate its latest snapshot to
 *PULL*. If the replication is successful, the snapshot will appear in the
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` tab of *PULL*, as seen in Figure 8.3c. If the snapshot
-is not replicated, see :ref:`Troubleshooting Replication` for troubleshooting tips.
-
-**Figure 8.3c: Verifying the Snapshot was Replicated**
-
-|Figure83c_png|
+:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` tab of *PULL*. If the snapshot is not replicated, refer to
+:ref:`Troubleshooting Replication` for troubleshooting tips.
 
 .. _Troubleshooting Replication:
 
