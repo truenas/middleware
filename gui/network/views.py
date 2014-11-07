@@ -60,7 +60,7 @@ def ipmi(request):
         if form.is_valid():
             rv = notifier().ipmi_set_lan(
                 form.cleaned_data,
-                channel=form.cleaned_data.get('channel'),
+                channel=int(form.cleaned_data.get('channel')),
             )
             if rv == 0:
                 return JsonResp(request, message=_("IPMI successfully edited"))
