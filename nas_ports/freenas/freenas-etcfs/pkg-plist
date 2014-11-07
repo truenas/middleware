@@ -1,0 +1,5 @@
+/usr/local/lib/etcfs/renderers.py
+/usr/local/lib/etcfs/main.py
+/usr/local/lib/etcfs/fs.py
+/usr/local/etc/rc.d/etcfs
+/usr/local/sbin/mount_etcfs
