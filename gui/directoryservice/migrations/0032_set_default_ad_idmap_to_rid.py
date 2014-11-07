@@ -19,11 +19,14 @@ class Migration(DataMigration):
 
             idmap = orm.idmap_rid()
 
-            # DS_TYPE_ACTIVEDIRECTORY
-            idmap.idmap_ds_type = 1
+            # DS_TYPE_RID
+            idmap.idmap_ds_type = 7
             idmap.idmap_ds_id = ad.id 
 
             idmap.save() 
+
+            ad.ad_idmap_backend = 'rid'
+            ad.save()
 
 
     def backwards(self, orm):
