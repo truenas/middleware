@@ -16,8 +16,8 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 |console1.png|
 
 .. |console1.png| image:: images/console1.png
-    :width: 5.8in
-    :height: 2.8in
+    :width: 6.4in
+    :height: 3.1in
 
 This menu provides the following options:
 
@@ -43,13 +43,17 @@ need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-
 
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
-**10) Reboot:** reboots the system.
+**10) System Update:** if any system updates are available, they will automatically be downloaded and applied. The functionality is the same as described in
+:ref:`Updating Between Major Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
+required.
 
-**11) Shutdown:** halts the system.
+**11) Reboot:** reboots the system.
+
+**12) Shutdown:** halts the system.
 
 During boot, FreeNAS® will automatically try to connect to a DHCP server from all live interfaces. If it successfully receives an IP address, it will display
 the IP address which can be used to access the graphical console. In the example seen in Figure 2.5b, the FreeNAS® system is accessible from
-*http://192.168.1.97*.
+*http://10.2.1.115*.
 
 If your FreeNAS® server is not connected to a network with a DHCP server, you can use the network configuration wizard to manually configure the interface as
 seen in Example 3a. In this example, the FreeNAS® system has one network interface (*em0*).

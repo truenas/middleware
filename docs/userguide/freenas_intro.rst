@@ -236,7 +236,8 @@ The GUI has been reorganized as follows:
 
 The following fields have been added or deleted:
 
-* The "Reset WebGUI login credentials" entry in the "Console setup" menu has been renamed to "Reset Root Password".
+* The "System Update" option has been added to the "Console setup" menu. The "Reset WebGUI login credentials" entry in the "Console setup" menu has been
+  renamed to "Reset Root Password".
 
 * The "Certificate" drop-down menu and "WebGUI -> HTTPS Port" field have been added to :menuselection:`System --> General`.
 
