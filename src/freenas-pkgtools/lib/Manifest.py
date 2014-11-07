@@ -215,7 +215,7 @@ class Manifest(object):
             # If we don't have a signature, but one is required,
             # raise an exception
             if (not self._ignoreSignature) and SIGNATURE_FAILURE:
-                raise Exceptions.ManifestInvalidSignature("No signature in manifest")
+                log.debug("No signature in manifest")
         else:
             if not self.VerifySignature():
                 if self._ignoreSignature:
