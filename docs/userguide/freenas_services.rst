@@ -1407,14 +1407,6 @@ NFS
 The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
 configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
-Starting this service will open the following ports on the FreeNAS® system:
-
-* TCP and UDP 111 (used by :command:`rpcbind`)
-
-* TCP 2049 (used by :command:`nfsd`)
-
-Additionally, :command:`mountd` and :command:`rpcbind` will each bind to a randomly available UDP port.
-
 Figure 11.9a shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
 
 **Figure 11.9a: Configuring NFS**
@@ -1444,7 +1436,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | Allow non-root mount   | checkbox   | check this box only if the NFS client requires it                                                                   |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Enable NFSv4           | checkbox   |                                                                                                                     |
+| Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | mountd(8) bind port    | integer    | optional; specify port for                                                                                          |
