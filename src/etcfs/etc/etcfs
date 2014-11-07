@@ -13,7 +13,7 @@ status_cmd=":"
 
 etcfs_start()
 {
-    /usr/local/sbin/etcfs ${etcfs_flags} /etc
+    /usr/local/sbin/mount_etcfs ${etcfs_flags} /etc
 }
 
 load_rc_config $name

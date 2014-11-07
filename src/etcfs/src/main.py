@@ -1,30 +1,41 @@
 __author__ = 'jceel'
 
+import os
 import sys
 import signal
-import daemon
 import logging
 import argparse
 import json
-from datastore import get_datastore, DatastoreException
+import datastore
+import renderers
 from fuse import FUSE
 from fs import EtcFS
 
-class TemplateFunctions:
-    def disclaimer(self, comment_style='#'):
-        return "{} WARNING: This file was auto-generated".format(comment_style)
 
+TEMPLATE_RENDERERS = {
+    '.mako': renderers.MakoTemplateRenderer,
+    '.shell': renderers.ShellTemplateRenderer,
+}
 
 class Main:
     def __init__(self):
         self.logger = logging.getLogger('EtcFS')
         self.config = None
         self.datastore = None
+        self.plugin_dirs = []
+        self.renderers = {}
         self.managed_files = {}
 
     def init_datastore(self):
         try:
-            self.datastore = datastore.get(self.config['datastore']['driver'], self.config['datastore'])
+            self.datastore = datastore.get_datastore(self.config['datastore']['driver'], self.config['datastore']['dsn'])
+        except datastore.DatastoreException, err:
+            self.logger.error('Cannot initialize datastore: %s', str(err))
+            sys.exit(1)
+
+    def init_renderers(self):
+        for name, impl in TEMPLATE_RENDERERS.items():
+            self.renderers[name] = impl(self)
 
     def parse_config(self, filename):
         try:
@@ -38,28 +49,53 @@ class Main:
             self.logger.error('Config file has unreadable format (not valid JSON)')
             sys.exit(1)
 
-    def get_template_context(self):
-        return {
-            "disclaimer": TemplateFunctions.disclaimer,
-            "config": None,
-        }
+        self.plugin_dirs = self.config['etcfs']['plugin-dirs']
 
     def scan_plugins(self):
-        pass
+        for i in self.plugin_dirs:
+            self.scan_plugin_dir(i)
+
+    def scan_plugin_dir(self, dir):
+        self.logger.debug('Scanning plugin directory %s', dir)
+        for root, dirs, files in os.walk(dir):
+            for name in files:
+                abspath = os.path.join(root, name)
+                path = os.path.relpath(abspath, dir)
+                name, ext = os.path.splitext(path)
+
+                if name in self.managed_files.keys():
+                    continue
+
+                if ext in TEMPLATE_RENDERERS.keys():
+                    self.managed_files[name] = abspath
+                    self.logger.info('Adding managed file %s [%s]', name, ext)
 
     def generate_file(self, template_path):
-        pass
+        print 'generate file %s' % template_path
+        name, ext = os.path.splitext(template_path)
+        if not ext in self.renderers.keys():
+            print 'no renderer for %s' % ext
+            raise OSError("Cant find renderer")
 
-    def main():
+        renderer = self.renderers[ext]
+        print renderer.render_template(template_path)
+        return renderer.render_template(template_path)
+
+    def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-o', metavar='OVERLAY', help='Overlay directory')
         parser.add_argument('-c', metavar='CONFIG', help='Middleware config file')
         parser.add_argument('mountpoint', metavar='MOUNTPOINT', help='Mount point')
         args = parser.parse_args()
+        logging.basicConfig(level=logging.DEBUG)
+        self.parse_config(args.c)
+        self.scan_plugins()
+        self.init_datastore()
+        self.init_renderers()
 
-        with daemon.DaemonContext():
-            FUSE(EtcFS(args.o), args.mountpoint, foreground=True)
+        FUSE(EtcFS(self, args.o), args.mountpoint, foreground=False)
 
 if __name__ == '__main__':
-    main()
+    m = Main()
+    m.main()
 
