@@ -18,33 +18,11 @@ class VolumeVersionAlert(BaseAlert):
             except:
                 continue
 
-            if version != '-':
+            if vol.is_upgraded != True:
                 alerts.append(Alert(
-                    Alert.CRIT,
+                    Alert.WARN,
                     _('You need to upgrade the volume %s') % vol.vol_name,
                 ))
-            else:
-                proc = subprocess.Popen([
-                    "zpool",
-                    "get",
-                    "-H", "-o", "property,value",
-                    "all",
-                    str(vol.vol_name),
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                data = proc.communicate()[0].strip('\n')
-
-                for line in data.split('\n'):
-                    if not line.startswith('feature') or '\t' not in line:
-                        continue
-                    prop, value = line.split('\t', 1)
-                    if value not in ('active', 'enabled'):
-                        alerts.append(Alert(
-                            Alert.WARN,
-                            _(
-                                'You need to upgrade the volume %s'
-                            ) % vol.vol_name,
-                        ))
-                        break
 
         return alerts
 

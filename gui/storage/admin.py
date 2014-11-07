@@ -169,6 +169,9 @@ class VolumeFAdmin(BaseFreeAdmin):
         else:
             hide_fs = "false"
 
+        if name == "upgrade":
+            hide_cond = "row.data.is_upgraded !== false"
+
         if decrypted is True:
             hide_enc = (
                 "row.data.vol_fstype !== undefined && "

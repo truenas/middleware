@@ -827,6 +827,8 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['compression'] = '-'
             bundle.data['compressratio'] = '-'
 
+        bundle.data['is_upgraded'] = bundle.obj.is_upgraded
+
         is_decrypted = bundle.obj.is_decrypted()
         if bundle.obj.vol_fstype == 'ZFS':
             bundle.data['is_decrypted'] = is_decrypted

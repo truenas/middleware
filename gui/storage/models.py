@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import uuid
+import subprocess
 
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -70,6 +71,26 @@ class Volume(Model):
         blank=True,
         editable=False,
     )
+
+    @property
+    def is_upgraded(self):
+        if notifier().zpool_version(str(self.vol_name)) ==  '-':
+            proc = subprocess.Popen([
+                       "zpool",
+                       "get",
+                       "-H", "-o", "property,value",
+                       "all",
+                       str(self.vol_name),
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            data = proc.communicate()[0].strip('\n')
+            for line in data.split('\n'):
+                if not line.startswith('feature') or '\t' not in line:
+                    continue
+                prop, value = line.split('\t', 1)
+                if value not in ('active', 'enabled'):
+                    return False
+            return True
+        return False 
 
     class Meta:
         verbose_name = _("Volume")
@@ -550,7 +571,6 @@ class Disk(Model):
 
     def get_disk_size(self):
         #FIXME
-        import subprocess
         p1 = subprocess.Popen(
             ["/usr/sbin/diskinfo", self.devname],
             stdout=subprocess.PIPE,
