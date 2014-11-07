@@ -19,7 +19,7 @@ var Accounts = React.createClass({
     render: function() {
     return (
       <div>
-        <h2>Cool people</h2>
+        <h2>Users View</h2>
         <Viewer header     = { "User Accounts" }
                 inputData  = { inputData }
                 formatData = { formatData } >

@@ -37,7 +37,7 @@ var Viewer = React.createClass({
    }
    , handleModeSelect: function( selectedKey ) {
       this.setState({
-        currentMode: this.changeViewMode( this.props.allowedModes[ selectedKey ] )
+        currentMode: this.changeViewMode( selectedKey )
       });
    }
    , handleItemSelect: function( selectedKey ) {
@@ -87,10 +87,25 @@ var Viewer = React.createClass({
     }
   , render: function() {
     // Navigation
+    var modeIcons = {
+        "detail" : "th-list"
+      , "icon"   : "th"
+      , "table"  : "align-justify"
+      , "heir"   : "bell"
+    };
+
     var createModeNav = function( mode ) {
-      return ( <TWBS.NavItem key = { this.props.allowedModes.indexOf( mode ) }>
-                 { mode }
-               </TWBS.NavItem> );
+      var changeMode = function() {
+        this.handleModeSelect( mode );
+      }.bind(this);
+
+      return (
+        <TWBS.Button onClick = { changeMode }
+                     key     = { this.props.allowedModes.indexOf( mode ) }
+                     bsStyle = { ( mode === this.state.currentMode ) ? "primary" : "default" }>
+          <Icon glyph = { modeIcons[ mode ] } />
+        </TWBS.Button>
+      );
     }.bind(this);
 
     // Select view based on current mode
@@ -117,12 +132,9 @@ var Viewer = React.createClass({
 
     return (
       <TWBS.Panel header={ this.props.header }>
-        <TWBS.Nav bsStyle="pills"
-                  justified
-                  onSelect  = { this.handleModeSelect }
-                  activeKey = { this.props.allowedModes.indexOf( this.state.currentMode ) } >
+        <TWBS.ButtonGroup activeMode={ this.state.currentMode } >
           { this.props.allowedModes.map( createModeNav ) }
-        </TWBS.Nav>
+        </TWBS.ButtonGroup>
         { viewerContent() }
       </TWBS.Panel>
     );
