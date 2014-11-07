@@ -7,6 +7,9 @@ class ChecksumFailException(Exception):
 class ManifestInvalidException(Exception):
     pass
 
+class ManifestInvalidSignature(Exception):
+    pass
+
 class UpdateIncompleteCacheException(Exception):
     pass
 

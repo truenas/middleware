@@ -204,16 +204,24 @@ class Manifest(object):
         # A manifest needs to have a sequence number, train,
         # and some number of packages.  If there is a signature,
         # it needs to match the computed signature.
+        from . import SIGNATURE_FAILURE
         if self._sequence is None:
             raise Exceptions.ManifestInvalidException("Sequence is not set")
         if self._train is None:
             raise Exceptions.ManifestInvalidException("Train is not set")
         if self._packages is None or len(self._packages) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
-        if self._signature is not None:
+        if self._signature is None:
+            # If we don't have a signature, but one is required,
+            # raise an exception
+            if (not self._ignoreSignature) or (not SIGNATURE_FAILURE):
+                raise Exceptions.ManifestInvalidSignature("No signature in manifest")
+        else:
             if not self.VerifySignature():
-                if not self._ignoreSignature:
-                    raise ChecksumFailException
+                if self._ignoreSignature:
+                    log.debug("Ignoring invalid signature due to manifest option")
+                elif SIGNATURE_FAILURE:
+                    raise Exceptions.ManifestInvalidSignature("Signature verification failed")
         return True
 
     def Notice(self):
