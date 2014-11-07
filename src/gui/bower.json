@@ -9,7 +9,9 @@
   ],
   "dependencies": {
     "bootstrap": "~3.2.0",
-    "velocity": "~1.1.0"
+    "velocity": "~1.1.0",
+    "fontawesome": "~4.2.0",
+    "lessfonts-open-sans": "~1.0.2"
   },
   "private": true
 }
