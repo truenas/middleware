@@ -13,11 +13,15 @@ module.exports = (
   <Routes location="history">
     <Route name="root" path="/" handler={ require("./jsx/views/FreeNASWebApp") }>
       <Route name="dashboard" handler={ require("./jsx/views/Dashboard") } />
-      <Route name="storage" handler={ require("./jsx/views/Storage") } />
+      <Route name="accounts" handler={ require("./jsx/views/Accounts") } />
       <Route name="tasks" handler={ require("./jsx/views/Tasks") } />
-      <Route name="users" handler={ require("./jsx/views/Users") } />
+      <Route name="network" handler={ require("./jsx/views/Network") } />      
+      <Route name="storage" handler={ require("./jsx/views/Storage") } />
+      <Route name="sharing" handler={ require("./jsx/views/Sharing") } />
+      <Route name="services" handler={ require("./jsx/views/Services") } />    
+      <Route name="system-tools" handler={ require("./jsx/views/SystemTools") } />
       <Route name="control-panel" handler={ require("./jsx/views/ControlPanel") } />
-      <Route name="network" handler={ require("./jsx/views/Network") } />
+      <Route name="power" handler={ require("./jsx/views/Power") } />             
       <DefaultRoute handler={ require("./jsx/views/Dashboard") } />
     </Route>
   </Routes>

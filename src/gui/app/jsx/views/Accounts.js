@@ -15,7 +15,7 @@ var Viewer = require("../components/Viewer");
 var inputData  = require("../../data/fakedata/accounts.json");
 var formatData = require("../../data/middleware-keys/accounts-display.json")[0];
 
-var Users = React.createClass({
+var Accounts = React.createClass({
     render: function() {
     return (
       <div>
@@ -29,4 +29,4 @@ var Users = React.createClass({
   }
 });
 
-module.exports = Users;
+module.exports = Accounts;
