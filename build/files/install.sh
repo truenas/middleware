@@ -295,7 +295,7 @@ partition_disk() {
 	_disks=$*
 
 	_disksparts=$(for _disk in ${_disks}; do
-	    gpart destroy -F ${_disk} >&2 || true
+	    gpart destroy -F ${_disk} > /dev/null 2>&1 || true
 	    # Get rid of any MBR.  Shouldn't be necessary,
 	    # but caching seems to have caused problems.
 	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1 >&2
