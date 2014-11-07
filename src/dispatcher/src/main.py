@@ -44,6 +44,9 @@ class Dispatcher(object):
         self.ws_server = None
         self.http_server = None
         self.pidfile = None
+        self.use_tls = False
+        self.certfile = None
+        self.keyfile = None
 
     def init(self):
         self.datastore = get_datastore(
@@ -87,6 +90,7 @@ class Dispatcher(object):
         self.pidfile = data['dispatcher']['pidfile']
 
         if 'tls' in data['dispatcher'] and data['dispatcher']['tls'] == True:
+            self.use_tls = True
             self.certfile = data['dispatcher']['tls-certificate']
             self.keyfile = data['dispatcher']['tls-keyfile']
 
@@ -372,9 +376,14 @@ def run(d, args):
 
     # WebSockets server
     app = ApiHandler(d)
-    s = Server(('', args.p), ServerResource({
-        '/socket': ServerConnection
-    }, dispatcher=d), certfile=d.certfile, keyfile=d.keyfile)
+    if d.use_tls:
+        s = Server(('', args.p), ServerResource({
+            '/socket': ServerConnection
+        }, dispatcher=d), certfile=d.certfile, keyfile=d.keyfile)
+    else:
+        s = Server(('', args.p), ServerResource({
+            '/socket': ServerConnection
+        }, dispatcher=d))
 
     d.ws_server = s
     serv_thread = gevent.spawn(s.serve_forever)
@@ -382,7 +391,11 @@ def run(d, args):
     if args.s:
         # Debugging frontend server
         from frontend import frontend
-        http_server = WSGIServer(('', args.s), frontend.app, certfile=d.certfile, keyfile=d.keyfile)
+        if d.use_tls:
+            http_server = WSGIServer(('', args.s), frontend.app, certfile=d.certfile, keyfile=d.keyfile)
+        else:
+            http_server = WSGIServer(('', args.s), frontend.app)
+
         gevent.spawn(http_server.serve_forever)
         logging.info('Frontend server listening on port %d', args.s)
 

@@ -50,7 +50,7 @@
         var sock = new Middleware();
         var template_class = Handlebars.compile($("#taskclass-template").html());
         var template_task = Handlebars.compile($("#task-template").html());
-        sock.connect("wss://" + document.domain + ":5000/socket");
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
         function refresh_tasks()
         {
@@ -118,7 +118,9 @@
             });
 
             sock.on("connected", function() {
-                sock.login("jakub", "test");
+                var username = prompt("Username:");
+                var password = prompt("Password:");
+                sock.login(username, password);
             });
 
             sock.on("login", function() {

@@ -29,7 +29,7 @@
     <script type="text/javascript">
         var sock = new Middleware();
         var template = Handlebars.compile($("#service-template").html());
-        sock.connect("wss://" + document.domain + ":5000/socket");
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
         $(document).ready(function (){
             $("#services").on("click", ".method-label", function () {
@@ -51,7 +51,9 @@
             });
 
             sock.on("connected", function() {
-                sock.login("jakub", "test");
+                var username = prompt("Username:");
+                var password = prompt("Password:");
+                sock.login(username, password);
             });
 
             sock.on("login", function() {
