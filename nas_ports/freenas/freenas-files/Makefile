@@ -98,7 +98,8 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ssl
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/verify
+        mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/active_directory/active_directory.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/cache/cache.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache/cache.sh
@@ -117,7 +118,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/sysctl/sysctl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl/sysctl.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/system/system.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system/system.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/zfs/zfs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs/zfs.sh
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/verify/verify.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/verify/verify.sh
+        mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_afpd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_afpd_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ctl_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ctl_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_krb5_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_krb5_conf.py
