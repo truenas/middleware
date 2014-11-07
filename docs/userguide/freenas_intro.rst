@@ -14,7 +14,7 @@
    
 .. centered:: Cover art by Jenny Rosenberg
 
-Written by users of the FreeNAS® network-attached storage operating system.
+Written by users of the FreeNAS® network-attached storage operating system and Cyberjock.
 
 Version 9.3
 
