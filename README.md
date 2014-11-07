@@ -4,7 +4,7 @@ To build the system (experts only):
 
 ## Requirements:
 
-* Your build environment must be FreeBSD 9.2-RELEASE (building on
+* Your build environment must be FreeBSD 9.3-RELEASE (building on
   FreeBSD 10 or 11 is not supported at this time).
 
 * an amd64 capable processor.  8GB of memory, or an equal/greater amount
@@ -50,7 +50,6 @@ This will also fetch TrueOS and ports for the build from github.
 
 ## The End Result:
 
-If your build completes successfully, you'll have both 32 and 64 bit
-release products in the release_stage directory.  You will also have
-a tarball in your build directory containing the entire release for
-easy transport.
+If your build completes successfully, you'll have 64 bit release products in
+the release_stage directory.  You will also have a tarball in your build
+directory containing the entire release for easy transport.
