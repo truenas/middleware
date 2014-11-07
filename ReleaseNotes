@@ -37,8 +37,8 @@ cryptographically signed packages, provided both as "deltas" from previous
 release versions and as full packages, all of which are supplied from a
 secure update server.  This server can be polled automatically (default:
 once per day), any available updates being downloaded automatically.  When
-new packages are available, the user will receive an alert and be given the
-opportunity to apply them.
+new updates have been downloaded, the user will receive an alert and be given
+the opportunity to apply them.
 
   Updates are also offered along multiple, parallel "trains" that the user
 can select from the Update UI.  Older stable trains will offer minimal number
@@ -49,6 +49,11 @@ development will be offered to interested pre-release testers.
   Any train can be selected at the user's discretion at any time, trains can
 be freely jumped between and, combined with the ZFS boot environment roll-back
 feature, the user can experiment with hosting multiple trains in parallel.
+
+Finally, using the new "install manifests" which allow this multi-train model
+to work, it is now possible to verify that your installed bits conform to what
+was originally installed (or last updated), making it possible to detect
+tampering or inadvertent corruption of the system.
 
 
 ** File sharing: **
