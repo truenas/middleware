@@ -42,6 +42,7 @@ define([
     applyUrl: "",
     checkUrl: "",
     manualUrl: "",
+    verifyUrl: "",
     updateUrl: "",
     initial: {},
     postCreate: function() {
@@ -99,7 +100,14 @@ define([
         }
       }, me.dapApplyPendintBtn);
 
-      var options = [];
+      me._verifyInstall = new Button({
+        label: gettext("Verify Install"),
+        onClick: function() {
+          editObject(gettext("Verify Install"), me.verifyUrl, [me.domNode]);
+        }
+      }, me.dapVerifyInstallBtn);
+
+     var options = [];
 
       for(var i in me.initial.trains) {
         var name = me.initial.trains[i];

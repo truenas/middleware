@@ -22,7 +22,7 @@ from stat import (
     S_IMODE
 )
 
-VERIFY_SKIP_PATHS = ['/var/','/etc','/dev']
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 
