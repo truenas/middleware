@@ -1,13 +1,22 @@
+@left-menu-width: 230px;
+
 .leftMenu {
     position: absolute;
+    width: @left-menu-width;
     #gradient > .horizontal(#3d3d3d, #3d3d3d);
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    width: 230px; 
+    top:    0;
+    bottom: 0;
+    left:   0;
+}
+
+.notificationBar {
+  position: fixed;
+  top:   0;
+  right: 0;
+  left:  0;
 }
 
 .mainGrid {
-    padding-left: 240px;
-    width: 100%;
+    padding-left: @left-menu-width;
+    overflow-x: hidden;
 }
