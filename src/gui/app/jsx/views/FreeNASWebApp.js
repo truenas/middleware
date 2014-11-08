@@ -12,6 +12,7 @@ var React  = require("react");
 var Router = require("react-router");
 var Link   = Router.Link;
 
+var Icon   = require("../components/Icon");
 // Twitter Bootstrap React components
 var TWBS   = require("react-bootstrap");
 
@@ -21,18 +22,20 @@ var FreeNASWebApp = React.createClass({
       <div>
       <div className="navBar">Notification Bar will live here!</div>
       <div className="leftMenu">
+      <div className="leftMenuContent">
         <ul>
-          <li><Link to="dashboard" className="ico-dashboard">Dashboard</Link></li>
-          <li><Link to="accounts" className="ico-accounts ">Accounts</Link></li>
-          <li><Link to="tasks" className="ico-tasks ">Tasks</Link></li>          
-          <li><Link to="network" className="ico-network ">Network</Link></li>
-          <li><Link to="storage" className="ico-storage ">Storage</Link></li>
-          <li><Link to="sharing" className="ico-sharing ">Sharing</Link></li>                    
-          <li><Link to="services" className="ico-services">Services</Link></li>          
-          <li><Link to="system-tools" className="ico-system-tools ">System Tools</Link></li>
-          <li><Link to="control-panel" className="ico-control-panel">Control Panel</Link></li>
-          <li><Link to="power" className="ico-power ">Power</Link></li>
+          <li><Icon glyph="dashboard" /><Link to="dashboard">Dashboard</Link></li>
+          <li><Icon glyph="accounts" /><Link to="accounts">Accounts</Link></li>
+          <li><Icon glyph="tasks" /><Link to="tasks">Tasks</Link></li>          
+          <li><Icon glyph="network" /><Link to="network">Network</Link></li>
+          <li><Icon glyph="storage" /><Link to="storage">Storage</Link></li>
+          <li><Icon glyph="sharing" /><Link to="sharing">Sharing</Link></li>                    
+          <li><Icon glyph="services" /><Link to="services">Services</Link></li>          
+          <li><Icon glyph="system-tools" /><Link to="system-tools">System Tools</Link></li>
+          <li><Icon glyph="control-panel" /><Link to="control-panel">Control Panel</Link></li>
+          <li><Icon glyph="power" /><Link to="power">Power</Link></li>
         </ul>
+      </div>
       </div>
       <TWBS.Grid className="mainGrid">
         {/* TODO: Add Modal mount div */}

@@ -1,11 +1,55 @@
+.navBar {
+    position: relative;
+    background-color: #1f1f1f;
+    min-height: 70px;
+    width: 100%;
+    z-index: 200;
+    background-image: url("../img/freenas-logo.png");
+    background-repeat: no-repeat;
+    background-position: 15px 7px;
+}
+
 .leftMenu {
     position: absolute;
-    #gradient > .horizontal(#3d3d3d, #3d3d3d);
+    background-color: #3d3d3d;
+    /* #gradient > .horizontal(#1f1f1f, #3d3d3d); */
     top: 0px;
     bottom: 0px;
     left: 0px;
-    width: 230px; 
+    width: 230px;
+    z-index: 100;
 }
+
+.leftMenuContent {
+    height: 100%;
+    overflow: hidden;
+    padding-top: 80px;
+}
+
+    .leftMenuContent ul {
+        list-style-type: none;
+        width: 100%;
+        padding: 0;
+    }
+
+        .leftMenuContent ul li {
+            /*background-color: fuchsia;*/
+            display: block;
+        }
+
+            .leftMenuContent ul li a, .leftMenuContent ul li i {
+                font-size: 125%;
+                font-weight: 700;
+                text-decoration: none;
+                line-height: 2;
+                color: #f3f3f3;
+            }
+
+            .leftMenuContent ul li i {
+                padding-right: 5px;
+            }
+
+
 
 .mainGrid {
     padding-left: 240px;
