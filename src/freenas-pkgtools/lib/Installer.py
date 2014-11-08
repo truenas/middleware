@@ -400,7 +400,7 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     elif entry.isdir():
         # If the directory already exists, we don't care.
         try:
-            os.mkdir(full_path)
+            os.makedirs(full_path)
         except os.error as e:
             if e[0] != errno.EEXIST:
                 raise e
