@@ -85,13 +85,21 @@ system. You should be prompted to input the password for the root user, as seen 
 
 **Figure 3b: Input the Root Password**
 
-|Figure26b_png|
+|login.png|
+
+.. |login.png| image:: images/login.png
+    :width: 5.8in
+    :height: 3.1in
 
 Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
 **Figure 3c: FreeNAS® Graphical Configuration Menu**
 
-|Figure26c_png|
+|initial.png|
+
+.. |initial.png| image:: images/initial.png
+    :width: 12.2in
+    :height: 4.3in
 
 If you are unable to access the IP address from a browser, check the following:
 

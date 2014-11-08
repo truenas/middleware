@@ -191,6 +191,10 @@ console setup menu seen in Figure 2.3b.
 
 |install2.png|
 
+.. |install2.png| image:: images/install2.png
+    :width: 6.4in
+    :height: 3.4in
+
 Press :kbd:`Enter` to select the default option of "1 Install/Upgrade". The next menu, seen in Figure 2.3c, will list all available drives, including any
 inserted USB thumb drives which will begin with *da*. In this example, the user is performing a test installation using VirtualBox and has created a 8 GB
 virtual disk to hold the operating system.
