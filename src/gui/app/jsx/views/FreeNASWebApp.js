@@ -19,7 +19,9 @@ var FreeNASWebApp = React.createClass({
   render: function() {
     return (
       <div>
-      <div className="notificationBar">Notification Bar will live here!</div>
+      <div className="notificationBar">Notification Bar will live here!
+        <div className="notificationBox">BOX</div>
+      </div>
       <div className="leftMenu">
         <ul>
           <li><Link to="dashboard" className="ico-dashboard">Dashboard</Link></li>
