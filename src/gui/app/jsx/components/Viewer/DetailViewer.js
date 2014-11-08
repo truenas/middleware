@@ -29,7 +29,7 @@ var DetailViewer = React.createClass({
     }.bind(this);
 
     return (
-      <TWBS.Grid>
+      <TWBS.Grid fluid>
         <TWBS.Row>
           <TWBS.Col xs={3}>
             <TWBS.Nav bsStyle   = "pills"

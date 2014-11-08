@@ -102,7 +102,8 @@ var Viewer = React.createClass({
       return (
         <TWBS.Button onClick = { changeMode }
                      key     = { this.props.allowedModes.indexOf( mode ) }
-                     bsStyle = { ( mode === this.state.currentMode ) ? "primary" : "default" }>
+                     bsStyle = { ( mode === this.state.currentMode ) ? "info" : "default" }
+                     active  = { false } >
           <Icon glyph = { modeIcons[ mode ] } />
         </TWBS.Button>
       );
@@ -131,12 +132,51 @@ var Viewer = React.createClass({
     }.bind(this);
 
     return (
-      <TWBS.Panel header={ this.props.header }>
-        <TWBS.ButtonGroup activeMode={ this.state.currentMode } >
-          { this.props.allowedModes.map( createModeNav ) }
-        </TWBS.ButtonGroup>
+      <TWBS.Grid fluid>
+        <TWBS.Row>
+          <TWBS.Navbar fluid>
+            {/* Searchbox for Viewer (1) */}
+            <TWBS.Input type="text"
+                        placeholder="Search"
+                        groupClassName="navbar-form navbar-left"
+                        addonBefore={ <Icon glyph ="search" /> } />
+            {/* Dropdown buttons (2) */}
+            <TWBS.Nav className="navbar-left">
+              {/* Select properties to group by */}
+              <TWBS.DropdownButton title="Group">
+                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+                <TWBS.MenuItem divider />
+                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+              </TWBS.DropdownButton>
+              {/* Select properties to filter by */}
+              <TWBS.DropdownButton title="Filter">
+                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+                <TWBS.MenuItem divider />
+                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+              </TWBS.DropdownButton>
+              {/* Select property to sort by */}
+              <TWBS.DropdownButton title="Sort">
+                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+                <TWBS.MenuItem divider />
+                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+              </TWBS.DropdownButton>
+            </TWBS.Nav>
+            {/* Select view mode (3) */}
+            <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
+              { this.props.allowedModes.map( createModeNav ) }
+            </TWBS.ButtonGroup>
+          </TWBS.Navbar>
+        </TWBS.Row>
+        <TWBS.Row>
         { viewerContent() }
-      </TWBS.Panel>
+        </TWBS.Row>
+      </TWBS.Grid>
     );
   }
 });

@@ -20,37 +20,40 @@ GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
-ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
-ENV_SETUP+= TRAIN=${TRAIN}
-ENV_SETUP+= UPDATE_USER=sef	# For now, just use sef's account
+.export NANO_LABEL
+.export VERSION
+.export GIT_LOCATION
+.export BUILD_TIMESTAMP
+.export TRAIN
+.export UPDATE_USER = sef	# For now, just use sef's account
 
 .if defined(NANO_ARCH)
- ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
+.export NANO_ARCH
 .endif
 
-all:	build
+all:	check-root build
 
 .BEGIN:
-	${ENV_SETUP} build/check_build_host.sh
+	build/check_build_host.sh
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
-	${ENV_SETUP} build/check_sandbox.sh
+	build/check_sandbox.sh
 .endif
 
-build: git-verify
+check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
-	@${ENV_SETUP} ${MAKE} portsjail
-	@${ENV_SETUP} ${MAKE} ports
-	${ENV_SETUP} build/do_build.sh
+
+build: git-verify portsjail ports
+	build/do_build.sh
 
 checkout: git-verify
-	${ENV_SETUP} build/do_checkout.sh
+	build/do_checkout.sh
 
 update: git-verify
 	git pull
-	${ENV_SETUP} build/do_checkout.sh
+	build/do_checkout.sh
 
 clean:
-	${ENV_SETUP} build/build_cleanup.py
+	build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
 	rm -rf objs os-base
 
@@ -77,36 +80,34 @@ distclean: clean
 	rm -fr FreeBSD nas_source
 
 save-build-env:
-	${ENV_SETUP} build/save_build.sh
+	build/save_build.sh
 
 freenas: release
 release: git-verify
 	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
-	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+	script -a ${RELEASE_LOGFILE} ${MAKE} build
+	script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
+	script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	cp ReleaseNotes "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
-		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
+		sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
 	fi
-	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
-	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
-rebuild:
-	@${ENV_SETUP} ${MAKE} checkout
-	@${ENV_SETUP} ${MAKE} all
-	@${ENV_SETUP) sh build/create_release_distribution.sh
+rebuild: checkout all
+	@sh build/create_release_distribution.sh
 
 cdrom:
-	${ENV_SETUP} sh -x build/create_iso.sh
+	sh -x build/create_iso.sh
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
@@ -137,17 +138,16 @@ git-external:
 	@echo "the standard make targets (e.g. build or release) now."
 
 tag:
-	${ENV_SETUP} build/apply_tag.sh
+	build/apply_tag.sh
 
-ports:
-	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
-	${ENV_SETUP} build/ports/create-poudriere-conf.sh
-	${ENV_SETUP} build/ports/create-poudriere-make.conf.sh
-	${ENV_SETUP} build/ports/prepare-jail.sh
-	${ENV_SETUP} build/ports/fetch-ports-srcs.sh
-	${ENV_SETUP} build/ports/create-ports-list.sh
-	${ENV_SETUP} build/ports/build-gui.sh
-	${ENV_SETUP} build/ports/build-ports.sh
+ports: check-root
+	build/ports/create-poudriere-conf.sh
+	build/ports/create-poudriere-make.conf.sh
+	build/ports/prepare-jail.sh
+	build/ports/fetch-ports-srcs.sh
+	build/ports/create-ports-list.sh
+	build/ports/build-gui.sh
+	build/ports/build-ports.sh
 
 portsjail:
-	${ENV_SETUP} build/build_jail.sh
+	build/build_jail.sh

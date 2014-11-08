@@ -1,4 +1,6 @@
-.navBar {
+@left-menu-width: 230px;
+
+.notificationBar {
     position: relative;
     background-color: #1f1f1f;
     min-height: 70px;
@@ -16,7 +18,7 @@
     top: 0px;
     bottom: 0px;
     left: 0px;
-    width: 230px;
+    width: @left-menu-width;
     z-index: 100;
 }
 
@@ -52,6 +54,7 @@
 
 
 .mainGrid {
-    padding-left: 240px;
     width: 100%;
+    padding-left: @left-menu-width;
+    overflow-x: hidden;
 }
