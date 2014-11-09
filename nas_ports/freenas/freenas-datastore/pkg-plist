@@ -1,6 +1,7 @@
 /usr/local/lib/datastore/drivers/postgres/control
 /usr/local/lib/datastore/drivers/postgres/postgres.py
 /usr/local/lib/datastore/drivers/postgres/init.sql
+/usr/local/share/datastore/factory.json
 /usr/local/lib/python2.7/site-packages/datastore/__init__.py
 /usr/local/lib/python2.7/site-packages/datastore/__init__.pyc
 /usr/local/lib/python2.7/site-packages/datastore/config.py
