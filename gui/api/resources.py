@@ -2318,6 +2318,13 @@ class BootEnvResource(NestedMixin, DojoResource):
     def prepend_urls(self):
         return [
             url(
+                r"^(?P<resource_name>%s)/status%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('status'),
+                name="freeadmin_system_bootenv_status"
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/rename%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -2325,6 +2332,156 @@ class BootEnvResource(NestedMixin, DojoResource):
                 name="api_bootenv_rename"
             ),
         ]
+
+    def status(self, request, **kwargs):
+        self.method_check(request, allowed=['get'])
+
+        pool = notifier().zpool_parse('freenas-boot')
+
+        bundle = self.build_bundle(
+            data={}, request=request
+        )
+
+        bundle.data['id'] = 1
+        bundle.data['name'] = 'freenas-boot'
+        bundle.data['children'] = []
+        bundle.data.update({
+            'read': pool.data.read,
+            'write': pool.data.write,
+            'cksum': pool.data.cksum,
+        })
+        uid = Uid(1)
+        for key in ('data', 'cache', 'spares', 'logs'):
+            root = getattr(pool, key, None)
+            if not root:
+                continue
+
+            current = root
+            parent = bundle.data
+            tocheck = []
+            while True:
+
+                if isinstance(current, zfs.Root):
+                    data = {
+                        'name': current.name,
+                        'type': 'root',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                        'children': [],
+                    }
+                elif isinstance(current, zfs.Vdev):
+                    data = {
+                        'name': current.name,
+                        'type': 'vdev',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                        'children': [],
+                    }
+                    if (
+                        current.parent.name == "logs" and
+                        not current.name.startswith("stripe")
+                    ):
+                        data['_remove_url'] = reverse(
+                            'storage_zpool_disk_remove',
+                            kwargs={
+                                'vname': pool.name,
+                                'label': current.name,
+                            })
+                elif isinstance(current, zfs.Dev):
+                    data = {
+                        'name': current.devname,
+                        'label': current.name,
+                        'type': 'dev',
+                        'status': current.status,
+                        'read': current.read,
+                        'write': current.write,
+                        'cksum': current.cksum,
+                    }
+                    if self.is_webclient(bundle.request):
+                        try:
+                            disk = Disk.objects.order_by(
+                                'disk_enabled'
+                            ).filter(disk_name=current.disk)[0]
+                            data['_disk_url'] = "%s?deletable=false" % (
+                                disk.get_edit_url(),
+                            )
+                        except IndexError:
+                            disk = None
+                        if current.status == 'ONLINE':
+                            data['_offline_url'] = reverse(
+                                'storage_disk_offline',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
+
+                        if current.replacing:
+                            data['_detach_url'] = reverse(
+                                'storage_disk_detach',
+                                kwargs={
+                                    'vname': pool.name,
+                                    'label': current.name,
+                                })
+
+                        """
+                        Replacing might go south leaving multiple UNAVAIL
+                        disks, for that reason replace button should be
+                        enable even for disks already under replacing
+                        subtree
+                        """
+                        data['_replace_url'] = reverse(
+                            'storage_zpool_disk_replace',
+                            kwargs={
+                                'vname': pool.name,
+                                'label': current.name,
+                            })
+                        if current.parent.parent.name in (
+                            'spares',
+                            'cache',
+                            'logs',
+                        ):
+                            if not current.parent.name.startswith(
+                                "stripe"
+                            ):
+                                data['_detach_url'] = reverse(
+                                    'storage_disk_detach',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
+                            else:
+                                data['_remove_url'] = reverse(
+                                    'storage_zpool_disk_remove',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
+
+                else:
+                    raise ValueError("Invalid node")
+
+                if key == 'data' and isinstance(current, zfs.Root):
+                    parent.update(data)
+                else:
+                    data['id'] = uid.next()
+                    parent['children'].append(data)
+
+                for child in current:
+                    tocheck.append((data, child))
+
+                if tocheck:
+                    parent, current = tocheck.pop()
+                else:
+                    break
+
+        bundle = self.alter_detail_data_to_serialize(request, bundle)
+        response = self.create_response(request, [bundle.data])
+        response['Content-Range'] = 'items 0-0/1'
+        return response
 
     def rename_detail(self, request, **kwargs):
         self.method_check(request, allowed=['post'])

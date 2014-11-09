@@ -14,6 +14,11 @@
       <script type="dojo/method" data-dojo-event="onClick">
           editObject('Boot Scrub', '{% url "system_bootenv_scrub" %}', [this,]);
       </script>
+      <button id="datagridBtn_Status" data-dojo-type="dijit.form.Button" type="button">
+          {% blocktrans %}Status{% endblocktrans %}
+      <script type="dojo/method" data-dojo-event="onClick">
+          viewModel('Boot Status', '{% url "freeadmin_system_bootstatus_datagrid" %}', [this,]);
+      </script>
       </button>
     </div>
     {% if bootme %}

@@ -3,6 +3,7 @@ import logging
 from collections import OrderedDict
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
@@ -16,6 +17,124 @@ from freenasUI.freeadmin.site import site
 from freenasUI.system import models
 
 log = logging.getLogger('system.admin')
+
+
+class BootStatusFAdmin(BaseFreeAdmin):
+
+    app_label = "system"
+    double_click = False
+    module_name = "bootstatus"
+    verbose_name = "Boot Status"
+    resource = False
+
+    def get_resource_url(self, request):
+        return "%sstatus/" % (
+            reverse('api_dispatch_list', kwargs={
+                'api_name': 'v1.0',
+                'resource_name': 'system/bootenv',
+            }),
+        )
+
+    def get_datagrid_columns(self):
+
+        columns = []
+
+        columns.append({
+            'name': 'name',
+            'label': _('Name'),
+            'tree': True,
+            'sortable': False,
+            'shouldExpand': True,
+        })
+
+        columns.append({
+            'name': 'read',
+            'label': _('Read'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'write',
+            'label': _('Write'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'cksum',
+            'label': _('Checksum'),
+            'sortable': False,
+        })
+
+        columns.append({
+            'name': 'status',
+            'label': _('Status'),
+            'sortable': False,
+        })
+        return columns
+
+    def _action_builder(
+        self, name, label=None, url=None, func="editObject", show=None
+    ):
+
+        if url is None:
+            url = "_%s_url" % (name, )
+
+        hide = "row.data.%s === undefined" % url
+
+        on_select_after = """function(evt, actionName, action) {
+  for(var i=0;i < evt.rows.length;i++) {
+    var row = evt.rows[i];
+    if((%(hide)s)) {
+      query(".grid" + actionName).forEach(function(item, idx) {
+        domStyle.set(item, "display", "none");
+      });
+      break;
+    }
+  }
+}""" % {
+            'hide': hide,
+        }
+
+        on_click = """function() {
+  var mybtn = this;
+  for (var i in grid.selection) {
+    var data = grid.row(i).data;
+    %(func)s('%(label)s', data.%(url)s, [mybtn,]);
+  }
+}""" % {
+            'func': func,
+            'label': escapejs(label),
+            'url': url,
+        }
+
+        data = {
+            'button_name': label,
+            'on_select_after': on_select_after,
+            'on_click': on_click,
+        }
+
+        return data
+
+    def get_actions(self):
+
+        actions = OrderedDict()
+
+        actions['Disk'] = self._action_builder("disk", label=_('Edit Disk'))
+
+        actions['Offline'] = self._action_builder(
+            'offline', label=_('Offline'),
+        )
+
+        actions['Detach'] = self._action_builder("detach", label=_('Detach'))
+
+        actions['Replace'] = self._action_builder(
+            'replace', label=_('Replace'),
+        )
+
+        actions['Remove'] = self._action_builder("remove", label=_('Remove'))
+
+        return actions
+
 
 class SettingsFAdmin(BaseFreeAdmin):
 
@@ -277,6 +396,7 @@ class UpdateFAdmin(BaseFreeAdmin):
     resource_mixin = UpdateResourceMixin
 
 
+site.register(None, BootStatusFAdmin)
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
 site.register(models.Certificate, CertificateFAdmin)
 site.register(models.Settings, SettingsFAdmin)
