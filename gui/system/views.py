@@ -350,6 +350,24 @@ def bootenv_rename(request, name):
     })
 
 
+def bootenv_pool_attach(request):
+    label = request.GET.get('label')
+    if request.method == 'POST':
+        form = forms.BootEnvPoolAttachForm(request.POST, label=label)
+        if form.is_valid():
+            form.done()
+            return JsonResp(
+                request,
+                message=_('Disk successfully attached.'),
+            )
+        return JsonResp(request, form=form)
+    else:
+        form = forms.BootEnvPoolAttachForm(label=label)
+    return render(request, 'system/bootenv_pool_attach.html', {
+        'form': form,
+    })
+
+
 def config_restore(request):
     if request.method == "POST":
         request.session['allow_reboot'] = True

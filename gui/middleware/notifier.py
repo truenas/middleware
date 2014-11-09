@@ -5535,6 +5535,37 @@ class notifier:
         )
         return cipher.decrypt(encrypted).rstrip(PWENC_PADDING)
 
+    def bootenv_attach_disk(self, label, devname):
+        """Attach a new disk to the pool"""
+
+        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        try:
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+        except:
+            log.error("Unable to determine size of %s", devname)
+        else:
+            # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
+            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
+                devname,
+                size / 1024 - 4,
+                ))
+
+        commands = []
+        commands.append("gpart create -s gpt /dev/%s" % (devname, ))
+        commands.append("gpart add -t bios-boot -i 1 -s 512k %s" % devname)
+        commands.append("gpart add -t freebsd-zfs -i 2 -a 4k %s" % devname)
+        commands.append("gpart set -a active %s" % devname)
+
+        for command in commands:
+            proc = self._pipeopen(command)
+            proc.wait()
+            if proc.returncode != 0:
+                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+
+        self._system('/sbin/zpool attach reenas-boot %s %sp2' % (label, devname))
+        return True
+
 
 def usage():
     usage_str = """usage: %s action command

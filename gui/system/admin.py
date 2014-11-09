@@ -119,8 +119,6 @@ class BootStatusFAdmin(BaseFreeAdmin):
 
         actions = OrderedDict()
 
-        actions['Disk'] = self._action_builder("disk", label=_('Edit Disk'))
-
         actions['Offline'] = self._action_builder(
             'offline', label=_('Offline'),
         )
@@ -129,6 +127,10 @@ class BootStatusFAdmin(BaseFreeAdmin):
 
         actions['Replace'] = self._action_builder(
             'replace', label=_('Replace'),
+        )
+
+        actions['Attach'] = self._action_builder(
+            'attach', label=_('Attach'),
         )
 
         actions['Remove'] = self._action_builder("remove", label=_('Remove'))

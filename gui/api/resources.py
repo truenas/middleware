@@ -2381,16 +2381,10 @@ class BootEnvResource(NestedMixin, DojoResource):
                         'cksum': current.cksum,
                         'children': [],
                     }
-                    if (
-                        current.parent.name == "logs" and
-                        not current.name.startswith("stripe")
-                    ):
-                        data['_remove_url'] = reverse(
-                            'storage_zpool_disk_remove',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
+                    if current.name in ('stripe', 'mirror'):
+                        data['_attach_url'] = reverse(
+                            'system_bootenv_pool_attach',
+                        ) + '?label=' + list(iter(current))[0].name
                 elif isinstance(current, zfs.Dev):
                     data = {
                         'name': current.devname,
