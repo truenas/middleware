@@ -20,6 +20,7 @@ To build the system (experts only):
   * emulators/virtualbox-ose
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
+  * www/npm
   (and all the dependencies that these ports/pkgs install, of course)
 
 ## Building the System Quickstart Flow:
