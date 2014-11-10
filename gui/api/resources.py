@@ -2381,7 +2381,10 @@ class BootEnvResource(NestedMixin, DojoResource):
                         'cksum': current.cksum,
                         'children': [],
                     }
-                    if current.name in ('stripe', 'mirror'):
+                    if (
+                        current.name == 'stripe' or
+                        current.name.startswith('mirror')
+                    ):
                         data['_attach_url'] = reverse(
                             'system_bootenv_pool_attach',
                         ) + '?label=' + list(iter(current))[0].name
