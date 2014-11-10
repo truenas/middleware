@@ -5563,7 +5563,10 @@ class notifier:
             if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
-        self._system('/sbin/zpool attach reenas-boot %s %sp2' % (label, devname))
+        proc = self._pipeopen('/sbin/zpool attach freenas-boot %s %sp2' % (label, devname))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            raise MiddlewareError('Failed to attach disk: %s' % err)
         return True
 
 
