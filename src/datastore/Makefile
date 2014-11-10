@@ -6,6 +6,8 @@ install:
 	install -d ${PREFIX}/lib/datastore/drivers
 	install -d ${PREFIX}/share/datastore
 	install tools/dsutil ${PREFIX}/sbin/
+	install tools/dsdump ${PREFIX}/sbin/
+	install tools/dsrestore ${PREFIX}/sbin/
 	install etc/datastore ${PREFIX}/etc/rc.d/
 	install share/factory.json ${PREFIX}/share/datastore/
 	cp -R drivers/ ${PREFIX}/lib/datastore/drivers/
