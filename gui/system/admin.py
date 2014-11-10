@@ -119,10 +119,6 @@ class BootStatusFAdmin(BaseFreeAdmin):
 
         actions = OrderedDict()
 
-        actions['Offline'] = self._action_builder(
-            'offline', label=_('Offline'),
-        )
-
         actions['Detach'] = self._action_builder("detach", label=_('Detach'))
 
         actions['Replace'] = self._action_builder(
