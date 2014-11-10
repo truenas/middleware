@@ -211,6 +211,14 @@ remove_var_cache_pkg()
 	if [ -n "$WITH_PKGNG" ]; then
 		CR "pkg clean -a -y"
 	fi
+	# And now remove the package database
+	echo "Removing pkg package"
+	if [ -n "$WITH_PKGNG" ]; then
+		CR "pkg delete -y -f pkg\* || true"
+		CR "rm -rf var/db/pkg || true"
+	else
+		CR "pkg_delete -f pkg\* || true"
+	fi
 }
 
 create_var_home_symlink()
