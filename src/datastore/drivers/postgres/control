@@ -6,17 +6,17 @@ dbdir=${datadir}/freenas.db
 
 run_user()
 {
+    export TERM=xterm
     su -m pgsql -c "$*"
 }
 
 case ${cmd} in
     init)
-	export PGPORT=11111
         mkdir -p ${dbdir}
         chown pgsql ${dbdir}
         run_user initdb -E utf-8 -D ${dbdir}
         run_user pg_ctl start -s -w -D ${dbdir}
-        run_user psql -h 127.0.0.1 -f ${driverdir}/init.sql postgres
+        run_user psql -h 127.0.0.1 -f ${driverdir}/init.sql template1
         run_user pg_ctl stop -s -D ${dbdir}
         ;;
 

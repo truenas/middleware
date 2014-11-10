@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python2.7
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -36,6 +36,7 @@ from datastore.config import ConfigStore
 DEFAULT_CONFIGFILE = '/conf/middleware.conf'
 ds = None
 
+
 def init_datastore(filename):
     global ds
 
@@ -44,17 +45,22 @@ def init_datastore(filename):
         conf = json.load(f)
         f.close()
     except IOError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
     except ValueError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
 
     if not 'datastore' in conf:
-        pass
+        print("Cannot initialize datastore: configuration not found")
+        sys.exit(1)
 
     try:
         ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
     except datastore.DatastoreException, err:
-        pass
+        print("Cannot initialize datastore: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
+
 
 def json_select(obj, selector=None):
     result = []
@@ -81,13 +87,23 @@ def json_select(obj, selector=None):
 def create(name, pkey='uuid', type='config'):
     try:
         ds.collection_create(name, pkey_type=pkey, attributes={'type': type})
-    except datastore.DatastoreException:
-        print("err")
+    except datastore.DatastoreException, e:
+        print("Cannot create collection: {0}".format(str(e)), file=sys.stderr)
+        sys.exit(1)
+
+
+def destroy(name):
+    try:
+        ds.collection_create(name, pkey_type=pkey, attributes={'type': type})
+    except datastore.DatastoreException, e:
+        print("Cannot destroy collection: {0}".format(str(e)), file=sys.stderr)
+        sys.exit(1)
 
 def list():
     global ds
     for coll in ds.collection_list():
         print(coll)
+
 
 @argh.arg('--select')
 def get(name, id, select=None):
@@ -98,8 +114,6 @@ def get(name, id, select=None):
 
     print(json.dumps(json_select(obj, select)))
 
-def set(name, id, fields):
-    pass
 
 @argh.arg('--select')
 @argh.arg('--sort')
@@ -119,21 +133,25 @@ def config_list(key=None):
     for row in cfg.list_children(key):
         print("{0} = {1}".format(row.id, json.dumps(row.data)))
 
+
 def config_get(key):
     cfg = ConfigStore(ds)
     print(json.dumps(cfg.get(key)))
+
 
 def config_set(key, value):
     cfg = ConfigStore(ds)
     cfg.set(key, json.loads(value))
 
+
 def main():
     parser = argh.ArghParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
-    parser.add_commands([create, list, get, set, query, config_list, config_get, config_set])
+    parser.add_commands([create, destroy, list, get, query, config_list, config_get, config_set])
     args = parser.parse_args()
     init_datastore(args.c)
     parser.dispatch()
+
 
 if __name__ == '__main__':
     main()

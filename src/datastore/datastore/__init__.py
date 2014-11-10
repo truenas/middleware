@@ -40,7 +40,13 @@ class DuplicateKeyException(DatastoreException):
 
 def get_datastore(type, dsn):
     mod = imp.load_source(type, os.path.join(DRIVERS_LOCATION, type, type + '.py'))
+    if mod is None:
+        raise DatastoreException('Datastore driver not found')
+
     cls = getattr(mod, '{0}Datastore'.format(type.title()))
+    if cls is None:
+        raise DatastoreException('Datastore driver not found')
+
     instance = cls()
     instance.connect(dsn)
     return instance

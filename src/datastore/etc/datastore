@@ -11,6 +11,7 @@ start_precmd="precmd"
 init_cmd="datastore_init"
 init_precmd="precmd"
 stop_cmd="datastore_stop"
+stop_precmd="precmd"
 status_cmd="datastore_status"
 extra_commands="init"
 libdir="/usr/local/lib/datastore"
@@ -24,7 +25,7 @@ precmd()
         return 1
     fi
 
-    if [ ! -n ${datastore_dbdir} ]; then
+    if [ ! -n "${datastore_dbdir}" ]; then
         warn "dbdir is not set"
         return 1
     fi

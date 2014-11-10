@@ -134,6 +134,12 @@ class PostgresDatastore(object):
             cur.execute("SELECT exists(SELECT * FROM information_schema.tables WHERE table_name = %s)", (collection,))
             return cur.fetchone()[0]
 
+    def collection_delete(self, collection):
+        with self.conn.cursor() as cur:
+            cur.execute("DROP TABLE {0}".format(collection))
+
+        self.conn.commit()
+
     def collection_list(self):
         with self.conn.cursor() as cur:
             cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = %s", ('public',))
@@ -204,6 +210,9 @@ class PostgresDatastore(object):
     def insert(self, collection, obj, pkey=None):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
+
+        if type(obj) is dict and 'id' in obj:
+            pkey = obj.pop('id')
 
         with self.conn.cursor() as cur:
             pkey = 'default' if pkey is None else cur.mogrify('%s', [pkey])

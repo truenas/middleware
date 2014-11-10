@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python2.7
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -26,6 +26,8 @@
 #
 #####################################################################
 
+from __future__ import print_function
+import sys
 import argparse
 import json
 import datastore
@@ -41,23 +43,29 @@ def init_datastore(filename):
         conf = json.load(f)
         f.close()
     except IOError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
     except ValueError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
 
     if not 'datastore' in conf:
-        pass
+        print("Cannot initialize datastore: configuration not found")
+        sys.exit(1)
 
     try:
         ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
     except datastore.DatastoreException, err:
-        pass
+        print("Cannot initialize datastore: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
+
 
 def dump_collection(ds, name):
     metadata = {
         'name': name,
         'pkey-type': ds.collection_get_pkey_type(name),
-        'last-id': ds.collection_get_max_id(name)
+        'last-id': ds.collection_get_max_id(name),
+        'attributes': ds.collection_get_attrs(name)
     }
 
     return {
@@ -72,6 +80,7 @@ def main():
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
     parser.add_argument('-t', metavar='TYPE', help='Collection types to dump')
     parser.add_argument('-x', metavar='NOMETA', help='Don\'t include metadata')
+    parser.add_argument('-o', metavar='OUTPUT', help='Output file name')
     parser.add_argument('collections', metavar='COLLECTION', nargs='*', default='all', help='Collections to dump or "all"')
     args = parser.parse_args()
     init_datastore(args.c)
@@ -89,7 +98,12 @@ def main():
 
         result.append(dump_collection(ds, cname))
 
-    print json.dumps(result, indent=4)
+    try:
+        fd = open(args.f, 'w') if args.f else sys.stdout
+        json.dump(result, fd, indent=4)
+    except IOError, e:
+        print("Could not open output file: {0}".format(str(e)), file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

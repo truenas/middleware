@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python2.7
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -26,12 +26,15 @@
 #
 #####################################################################
 
+from __future__ import print_function
+import sys
 import argparse
 import json
 import datastore
 
 DEFAULT_CONFIGFILE = '/conf/middleware.conf'
 ds = None
+
 
 def init_datastore(filename):
     global ds
@@ -41,37 +44,60 @@ def init_datastore(filename):
         conf = json.load(f)
         f.close()
     except IOError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
     except ValueError, err:
-        return
+        print("Cannot read config file: {0}".format(str(err)))
+        sys.exit(1)
 
     if not 'datastore' in conf:
-        pass
+        print("Cannot initialize datastore: configuration not found")
+        sys.exit(1)
 
     try:
         ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
     except datastore.DatastoreException, err:
-        pass
+        print("Cannot initialize datastore: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
 
-def restore_collection(data):
-    metadata = {
-        'name': name,
-        'pkey-type': '???',
-        'last-id': 0
-    }
 
-    return {
-        'metadata': metadata,
-        'data': list(ds.query(name))
-    }
+def restore_collection(dump):
+    metadata = dump['metadata']
+    data = dump['data']
+    name = metadata['name']
+
+    if ds.collection_exists(name):
+        ds.collection_delete(name)
+
+    ds.collection_create(name, metadata['pkey-type'], metadata['attributes'])
+
+    for key, row in data.items():
+        ds.insert(name, row, pkey=key)
 
 
 def main():
     global ds
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    parser.add_argument('-f', metavar='FILE', help='Input file name')
+
     args = parser.parse_args()
     init_datastore(args.c)
+
+    try:
+        fd = open(args.f, 'r') if args.f else sys.stdin
+        dump = json.load(fd)
+    except IOError, err:
+        print("Cannot open input file: {0}".format(str(err)))
+        sys.exit(1)
+    except ValueError, err:
+        print("Cannot parse input file: {0}".format(str(err)))
+        sys.exit(1)
+
+    for i in dump:
+        restore_collection(i)
+        print("Restored collection {0}".format(i['metadata']['name']), file=sys.stderr)
+
 
 if __name__ == '__main__':
     main()
