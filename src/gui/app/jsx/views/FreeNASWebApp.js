@@ -12,6 +12,7 @@ var React  = require("react");
 var Router = require("react-router");
 var Link   = Router.Link;
 
+var Icon   = require("../components/Icon");
 // Twitter Bootstrap React components
 var TWBS   = require("react-bootstrap");
 
@@ -23,7 +24,7 @@ var FreeNASWebApp = React.createClass({
       <div className="leftMenu">
         <div className="leftMenuContent">
                 <ul>
-                  <li><Link to="dashboard"><Icon glyph="dashboard" />Dashboard<Icon glyph="warning" sizee="5x"/></Link></li>
+                  <li><Link to="dashboard"><Icon glyph="dashboard" />Dashboard<Icon glyph="warning" icoSize="5x"/></Link></li>
                   <li><Link to="accounts"><Icon glyph="paper-plane" />Accounts</Link></li>
                   <li><Link to="tasks"><Icon glyph="paw" />Tasks</Link></li>          
                   <li><Link to="network"><Icon glyph="moon-o" />Network</Link></li>
