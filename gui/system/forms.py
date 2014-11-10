@@ -56,7 +56,7 @@ from dojango import forms
 from freenasOS import Configuration, Train, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common import humanize_size
+from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
