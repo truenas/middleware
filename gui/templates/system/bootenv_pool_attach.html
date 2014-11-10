@@ -1,2 +1,3 @@
 {% extends "freeadmin/generic_form.html" %}
+{% block formpost %}{{ request.path }}?label={{ label }}{% endblock %}
 {% block oklabel %}{% trans "Attach Disk" %}{% endblock %}

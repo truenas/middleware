@@ -365,6 +365,7 @@ def bootenv_pool_attach(request):
         form = forms.BootEnvPoolAttachForm(label=label)
     return render(request, 'system/bootenv_pool_attach.html', {
         'form': form,
+        'label': label,
     })
 
 
