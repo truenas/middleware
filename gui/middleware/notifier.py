@@ -5567,6 +5567,9 @@ class notifier:
         err = proc.communicate()[1]
         if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
+
+        self._system('/usr/local/sbin/grub-install %s' % devname)
+
         return True
 
     def bootenv_replace_disk(self, label, devname):
@@ -5601,6 +5604,9 @@ class notifier:
         err = proc.communicate()[1]
         if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
+
+        self._system('/usr/local/sbin/grub-install %s' % devname)
+
         return True
 
 
