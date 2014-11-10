@@ -22,6 +22,8 @@ MAKE_JOBS_UNSAFE= yes
 ALL_TARGET=	obj all
 WRKSRC=		/usr/nas_source2/etcfs
 
+USES=		fuse
+
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
 

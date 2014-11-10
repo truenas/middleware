@@ -3,6 +3,9 @@ PYTHON ?= python
 
 install:
 	install etc/etcfs ${PREFIX}/etc/rc.d/
-	install etc/mount_etcfs ${PREFIX}/sbin/
+	install tools/mount_etcfs ${PREFIX}/sbin/
 	install -d ${PREFIX}/lib/etcfs
-	cp -R src/ ${PREFIX}/lib/etcfs/
+	install -d ${PREFIX}/lib/etcfs/src
+	install -d ${PREFIX}/lib/etcfs/plugins
+	cp -a src/ ${PREFIX}/lib/etcfs/src/
+	cp -a plugins/ ${PREFIX}/lib/etcfs/plugins/
