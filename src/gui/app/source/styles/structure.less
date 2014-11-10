@@ -1,4 +1,5 @@
 @left-menu-width: 230px;
+@notification-icons-width: 200px;
 
 .notificationBar {
     position: relative;
@@ -13,12 +14,28 @@
 .notificationBox {
     position: absolute;
     background-color: #cccccc;
-    width: 400px;
-    height: 200px;
+    width: 60%;
+    min-height: 200px;
     top: 0;
-    right: 40px;
+    left: 20%;
+    border-radius: 0 0 10px 10px;
+    padding: 10px;
 }
-
+.notificationArea{
+    float: left;
+    width: calc(~'100% - '@notification-icons-width);
+}
+.notificationIcons{
+    width: @notification-icons-width;
+    float: left;
+}
+.notificationIcons .fa{
+    float: left;
+    text-align: center;
+    margin: 10px;   
+    width: 60px;
+    height: 60px;
+}
 .leftMenu {
     position: absolute;
     background-color: #3d3d3d;
