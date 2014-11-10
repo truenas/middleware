@@ -85,7 +85,7 @@ save-build-env:
 	build/save_build.sh
 
 remote:
-	rsync -al --exclude '.git' --exclude '.idea' . ${host}:${dir}/
+	rsync -al --rsync-path="sudo rsync" --exclude '.git' --exclude '.idea' . ${host}:${dir}/
 	ssh -t ${host} sudo make -C ${dir} ${target}
 
 freenas: release
