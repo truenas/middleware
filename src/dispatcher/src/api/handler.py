@@ -10,6 +10,7 @@ class ApiHandler(object):
 
     def __call__(self, environ, start_response):
         args = urlparse.parse_qs(environ['QUERY_STRING'])
+        path = environ['PATH_INFO'].split('/')
 
         if environ['PATH_INFO'] != '/api':
             start_response('200 OK', [])

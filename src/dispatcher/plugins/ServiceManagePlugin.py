@@ -3,24 +3,15 @@ __author__ = 'jceel'
 import errno
 from gevent import Timeout
 from watchdog import events
-from task import Task, TaskStatus, Provider, TaskException
+from task import Task, TaskStatus, Provider, TaskException, description, schema
 from balancer import TaskState
 from event import EventSource
 from lib.system import system, SubprocessException
 
-class ServiceStatusEventSource(EventSource):
-    def __init__(self, dispatcher):
-        super(ServiceStatusEventSource, self).__init__(dispatcher)
-        self.register_event_type("system.service.started")
-        self.register_event_type("system.service.stopped")
 
-    def __on_process_exit(self):
-        pass
-
-    def run(self):
-        pass
-
+@description("Provides info about available services and their state")
 class ServiceInfoProvider(Provider):
+    @description("Lists available services")
     def list_services(self):
         try:
             out, err = system(["/usr/sbin/service", "-l"])
@@ -30,6 +21,11 @@ class ServiceInfoProvider(Provider):
     def get_service_info(self, service):
         pass
 
+
+@description("Provides functionality to start, stop, restart or reload service")
+@schema({
+
+})
 class ServiceManageTask(Task):
     def __init__(self, dispatcher):
         pass
@@ -67,6 +63,5 @@ class ServiceManageTask(Task):
         return False
 
 def _init(dispatcher):
-    dispatcher.register_event_source("system.service", ServiceStatusEventSource)
     dispatcher.register_task_handler("system.service", ServiceManageTask)
     dispatcher.register_provider("system.service", ServiceInfoProvider)

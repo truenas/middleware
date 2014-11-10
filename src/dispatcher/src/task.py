@@ -23,6 +23,9 @@ class Task(object):
 class TaskException(RpcException):
     pass
 
+class VerifyException(TaskException):
+    pass
+
 class TaskStatus(object):
     def __init__(self, percentage, message=None, extra=None):
         self.percentage = percentage

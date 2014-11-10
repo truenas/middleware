@@ -24,6 +24,10 @@ class ZfsProvider(Provider):
 
 
 @description("Scrubs ZFS pool")
+@schema({
+    'title': 'pool',
+    'type': 'string'
+})
 class ZpoolScrubTask(Task):
     def __init__(self, dispatcher):
         self.pool = None
@@ -35,6 +39,9 @@ class ZpoolScrubTask(Task):
         self.state = TaskState.FINISHED
         if args["pool"] == self.pool:
             self.finish_event.set()
+
+    def describe(self, pool):
+        return "Scrubbing pool {0}".format(pool)
 
     def run(self, pool):
         self.pool = pool
@@ -81,9 +88,6 @@ class ZpoolScrubTask(Task):
     def verify(self, pool):
         pool = zfs.zpool_status(pool)
         return pool.get_disks()
-
-
-
 
 
 def _init(dispatcher):
