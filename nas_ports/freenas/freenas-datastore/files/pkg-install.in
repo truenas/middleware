@@ -1,6 +1,7 @@
 #!/bin/sh
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin::/usr/local/sbin:/usr/local/bin
+FACTORY_DB=/usr/local/share/datastore/factory.json
 
 pre-install()
 {
@@ -15,6 +16,10 @@ post-install()
 
 	mount -t devfs devfs /dev
 	service datastore init
+	service datastore start
+	dsrestore -c /usr/local/etc/middleware.conf -f ${FACTORY_DB}
+	service datastore stop
+	sleep 5
 	umount -f /dev
 }
 

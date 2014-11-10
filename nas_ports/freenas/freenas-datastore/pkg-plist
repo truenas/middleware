@@ -9,3 +9,5 @@
 /usr/local/lib/python2.7/site-packages/datastore-10.0-py2.7.egg-info
 /usr/local/etc/rc.d/datastore
 /usr/local/sbin/dsutil
+/usr/local/sbin/dsdump
+/usr/local/sbin/dsrestore
