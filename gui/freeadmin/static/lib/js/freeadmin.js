@@ -2071,7 +2071,7 @@ require([
                 setTimeout(lang.hitch(this, function() {
                     this.destroyRecursive();
                 }), manager.defaultDuration);
-                refreshTabs(attrs.nodes);
+               // refreshTabs(attrs.nodes);
             },
             onLoad: function() {
                 processStack();
