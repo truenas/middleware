@@ -230,12 +230,61 @@ class BootEnvPoolAttachForm(Form):
         ))
         return choices
 
-
     def done(self):
         devname = self.cleaned_data['attach_disk']
 
-        with transaction.atomic():
-            rv = notifier().bootenv_attach_disk(self.label, devname)
+        rv = notifier().bootenv_attach_disk(self.label, devname)
+        if rv == 0:
+            return True
+        else:
+            return False
+
+
+class BootEnvPoolReplaceForm(Form):
+
+    replace_disk = forms.ChoiceField(
+        choices=(),
+        widget=forms.Select(),
+        label=_('Member disk'))
+
+    def __init__(self, *args, **kwargs):
+        self.label = kwargs.pop('label')
+        super(BootEnvPoolReplaceForm, self).__init__(*args, **kwargs)
+        self.fields['replace_disk'].choices = self._populate_disk_choices()
+        self.fields['replace_disk'].choices.sort(
+            key=lambda a: float(
+                re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
+            )
+        )
+
+    def _populate_disk_choices(self):
+
+        diskchoices = dict()
+        used_disks = []
+        for v in Volume.objects.all():
+            used_disks.extend(v.get_disks())
+
+        # Grab partition list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        disks = notifier().get_disks()
+
+        for disk in disks:
+            if disk in used_disks:
+                continue
+            devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
+            capacity = humanize_number_si(int(capacity))
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+
+        choices = diskchoices.items()
+        choices.sort(key=lambda a: float(
+            re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
+        ))
+        return choices
+
+    def done(self):
+        devname = self.cleaned_data['replace_disk']
+
+        rv = notifier().bootenv_replace_disk(self.label, devname)
         if rv == 0:
             return True
         else:

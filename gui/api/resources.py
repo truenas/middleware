@@ -2428,9 +2428,8 @@ class BootEnvResource(NestedMixin, DojoResource):
                         subtree
                         """
                         data['_replace_url'] = reverse(
-                            'storage_zpool_disk_replace',
+                            'system_bootenv_pool_replace',
                             kwargs={
-                                'vname': pool.name,
                                 'label': current.name,
                             })
                         if current.parent.parent.name in (
