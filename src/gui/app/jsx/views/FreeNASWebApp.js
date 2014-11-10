@@ -21,18 +21,20 @@ var FreeNASWebApp = React.createClass({
       <div>
       <div className="notificationBar">Notification Bar will live here!</div>
       <div className="leftMenu">
-        <ul>
-          <li><Link to="dashboard" className="ico-dashboard">Dashboard</Link></li>
-          <li><Link to="accounts" className="ico-accounts ">Accounts</Link></li>
-          <li><Link to="tasks" className="ico-tasks ">Tasks</Link></li>
-          <li><Link to="network" className="ico-network ">Network</Link></li>
-          <li><Link to="storage" className="ico-storage ">Storage</Link></li>
-          <li><Link to="sharing" className="ico-sharing ">Sharing</Link></li>
-          <li><Link to="services" className="ico-services">Services</Link></li>
-          <li><Link to="system-tools" className="ico-system-tools ">System Tools</Link></li>
-          <li><Link to="control-panel" className="ico-control-panel">Control Panel</Link></li>
-          <li><Link to="power" className="ico-power ">Power</Link></li>
-        </ul>
+        <div className="leftMenuContent">
+                <ul>
+                  <li><Link to="dashboard"><Icon glyph="dashboard" />Dashboard<Icon glyph="warning" sizee="5x"/></Link></li>
+                  <li><Link to="accounts"><Icon glyph="paper-plane" />Accounts</Link></li>
+                  <li><Link to="tasks"><Icon glyph="paw" />Tasks</Link></li>          
+                  <li><Link to="network"><Icon glyph="moon-o" />Network</Link></li>
+                  <li><Link to="storage"><Icon glyph="magic" />Storage</Link></li>
+                  <li><Link to="sharing"><Icon glyph="cut" />Sharing</Link></li>                    
+                  <li><Link to="services"><Icon glyph="bitcoin" />Services</Link></li>          
+                  <li><Link to="system-tools"><Icon glyph="ambulance" />System Tools</Link></li>
+                  <li><Link to="control-panel"><Icon glyph="paragraph" />Control Panel</Link></li>
+                  <li><Link to="power"><Icon glyph="plug" />Power</Link></li>
+                </ul>
+        </div>
       </div>
       <TWBS.Grid fluid className="mainGrid">
         {/* TODO: Add Modal mount div */}
