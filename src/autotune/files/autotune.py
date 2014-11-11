@@ -195,7 +195,7 @@ def guess_vfs_zfs_arc_max():
 
 
 def guess_vfs_zfs_l2arc_headroom():
-    return 16
+    return 4
 
 
 def guess_vfs_zfs_l2arc_noprefetch():
@@ -207,11 +207,11 @@ def guess_vfs_zfs_l2arc_norw():
 
 
 def guess_vfs_zfs_l2arc_write_max():
-    return 400000000
+    return 80000000
 
 
 def guess_vfs_zfs_l2arc_write_boost():
-    return 400000000
+    return 40000000
 
 
 # vfs.zfs.txg.synctime_ms
