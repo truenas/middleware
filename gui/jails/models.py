@@ -516,22 +516,6 @@ class JailsConfiguration(Model):
     def __init__(self, *args, **kwargs):
         super(JailsConfiguration, self).__init__(*args, **kwargs)
 
-        ipv4_iface = notifier().get_default_ipv4_interface()
-        try:
-             iface = Interfaces.objects.filter(int_interface=ipv4_iface)[0]
-             if iface.int_dhcp:
-                 self.jc_ipv4_dhcp = True
-        except:
-            pass
-
-        ipv6_iface = notifier().get_default_ipv6_interface()
-        try:
-             iface = Interfaces.objects.filter(int_interface=ipv6_iface)[0]
-             if iface.int_ipv6auto:  
-                 self.jc_ipv6_autoconf = True
-        except:
-            pass
-
         if not self.jc_ipv4_dhcp:
             self.__configure_ipv4_network()
         if not self.jc_ipv6_autoconf:
