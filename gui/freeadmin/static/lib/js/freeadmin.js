@@ -2077,6 +2077,10 @@ require([
                 processStack();
                 //this.layout(); // dojo 1.7
                 this._position(); // dojo 1.8
+            },
+            onCancel: function() {
+                canceled = true;
+                this.hide();
             }
         });
         if(attrs.onLoad) {
