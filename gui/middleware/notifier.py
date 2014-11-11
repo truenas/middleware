@@ -420,7 +420,7 @@ class notifier:
                 time.sleep(0.2)
         except:
             pass
-        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+        self._system_nolog("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
         self._system("/usr/sbin/service ix-ctld quietstart")
