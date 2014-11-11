@@ -10,7 +10,10 @@ module.exports = function( grunt ) {
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
   this.app = {
-      files: [ "<%= dirTree.source.jsx %>/**" ]
+      files: [
+          "<%= dirTree.source.jsx %>/**"
+        , "<%= dirTree.routes %>.js"
+      ]
     , tasks: [ "browserify:app" ]
   };
 
@@ -43,7 +46,6 @@ module.exports = function( grunt ) {
   this.freenasServer = {
       files: [
           "<%= dirTree.client %>.js"
-        , "<%= dirTree.routes %>.js"
         , "<%= dirTree.server %>.js"
         , "<%= dirTree.source.templates %>/**"
         , "<%= dirTree.build.root %>/**"
