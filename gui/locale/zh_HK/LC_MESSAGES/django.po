@@ -11038,3 +11038,280 @@ msgstr ""
 #: templates/system/update_select.html:20
 msgid "Check For Update"
 msgstr ""
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: jails/forms.py:218
+msgid "Jail name cannot have '.'"
+msgstr ""
+
+#: jails/forms.py:1070
+#, fuzzy
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr "緩存無法重建"
+
+#: jails/utils.py:609
+msgid "Unable to determine IPv6 for plugin"
+msgstr ""
+
+#: services/forms.py:1006
+msgid "The following addresses are not valid: %s"
+msgstr ""
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+#, fuzzy
+msgid "iSNS Servers"
+msgstr "服務"
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1767
+msgid "Webdav SSL Certificate"
+msgstr ""
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+#, fuzzy
+msgid "Invalid IP or Network."
+msgstr "用戶 %s 無效"
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block (iSCSI)"
+msgstr "封鎖使用者"
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+#, fuzzy
+msgid "VMWare Sync"
+msgstr "儲存碟"
+
+#: storage/forms.py:1576
+msgid "Apply Owner (user)"
+msgstr ""
+
+#: storage/forms.py:1582
+msgid "Apply Owner (group)"
+msgstr ""
+
+#: storage/forms.py:1588
+#, fuzzy
+msgid "Apply Mode"
+msgstr "更新"
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMWare-Snapshot"
+msgstr "查看所有用戶"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr ""
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr ""
+
+#: system/forms.py:2757
+#, fuzzy
+msgid "Failed to connect: %s"
+msgstr "無法讀取 %(url)s： %(error)s"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: system/models.py:907
+msgid "ZFS Filesystem"
+msgstr ""
+
+#: system/models.py:911
+#, fuzzy
+msgid "Datastore"
+msgstr "資料庫路徑"
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+
+#: system/models.py:920
+#: templates/system/index.html:33
+#, fuzzy
+msgid "VMWare Plugin"
+msgstr "儲存碟"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr ""
+
+#: system/views.py:1064
+#: system/views.py:1118
+#, fuzzy
+msgid "System dataset not configured"
+msgstr "系統時間"
+
+#: system/views.py:185
+msgid "DeleteBulk"
+msgstr ""
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr ""
+
+#: system/utils.py:230
+msgid "Verifying"
+msgstr ""
+
+#: system/alertmods/boot_volume_status.py:19
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr ""
+
+#: system/views.py:318
+#, fuzzy
+msgid "Boot Environments successfully deleted."
+msgstr "%s 已成功刪除."
+
+#: system/alertmods/boot_volume_status.py:28
+msgid "The boot volume status is %(status)s"
+msgstr ""
+
+#: system/views.py:322
+#, fuzzy
+msgid "Failed to delete Boot Environments."
+msgstr "無法讀取 %(url)s： %(error)s"
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr ""
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+
+#: templates/system/boot_scrub.html:5
+#, fuzzy
+msgid "Do you want to scrub your boot pool now?"
+msgstr "你確定要恢復到出廠配置?"
+
+#: templates/system/bootenv_datagrid.html:13
+#, fuzzy
+msgid "Scrub Boot"
+msgstr "UNIX 字符集"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:23
+#, fuzzy
+msgid "Scrub Status"
+msgstr "UNIX 字符集"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr ""
+
+#: templates/system/bootenv_deletebulk.html:6
+#, fuzzy
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr "你確定要恢復到出廠配置?"
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr ""
+
+#: templates/system/update_check.html:31
+#, fuzzy
+msgid "Do you want to continue?"
+msgstr "你確定要恢復到出廠配置?"
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr ""
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+#, fuzzy
+msgid "Fetch Datastores"
+msgstr "系統時間"
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+#, fuzzy
+msgid "Configure"
+msgstr "設置"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
+msgstr ""

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-07-02 08:56+0000\n"
-"Last-Translator: skimpax <skimpax@gmail.com>\n"
+"PO-Revision-Date: 2014-10-29 13:15+0000\n"
+"Last-Translator: Glenn <cahizer@hotmail.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1404291372.0\n"
+"X-POOTLE-MTIME: 1414588529.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10031,7 +10031,7 @@ msgstr "Services d'annuaires"
 #: directoryservice/models.py:335
 #, fuzzy
 msgid "ad"
-msgstr "Lecture"
+msgstr "pub                          "
 
 #: choices.py:788
 #, fuzzy
@@ -10040,20 +10040,20 @@ msgstr "démarrage automatique"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "Hachage"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "                  rfc2307                "
 
 #: choices.py:793
 #, fuzzy
@@ -10647,18 +10647,18 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Authentification"
+msgstr "Authentification de base"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Authentification"
+msgstr ""
+"                  Authentification en mode \"Digest\" (identifiant + mot de "
+"passe)                "
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10679,7 +10679,9 @@ msgstr ""
 #: choices.py:818
 #, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Certificat SSL"
+msgstr ""
+"                                    Créer une Certification "
+"interne                                "
 
 #: choices.py:819
 #, fuzzy
@@ -11440,7 +11442,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -11586,4 +11588,297 @@ msgstr ""
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
+msgstr ""
+
+#: common/system.py:301
+#, fuzzy
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr "Échec du montage (%(retcode)s) -> %(output)s"
+
+#: jails/forms.py:218
+#, fuzzy
+msgid "Jail name cannot have '.'"
+msgstr "Les noms d'utilisateurs ne peuvent pas contenir d'espaces"
+
+#: jails/forms.py:1070
+#, fuzzy
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr "Le chemin n'a pas pu être monté %(source)s: %(error)s"
+
+#: jails/utils.py:609
+#, fuzzy
+msgid "Unable to determine IPv6 for plugin"
+msgstr "Impossible de déterminer une adresse IPv4 pour le module"
+
+#: services/forms.py:1006
+#, fuzzy
+msgid "The following addresses are not valid: %s"
+msgstr "Les disques suivants ont déjà des tests de ce type: %s"
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+#, fuzzy
+msgid "iSNS Servers"
+msgstr "Serveurs NTP"
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1767
+#, fuzzy
+msgid "Webdav SSL Certificate"
+msgstr "Certificat SSL"
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+#, fuzzy
+msgid "Invalid IP or Network."
+msgstr "Réseau incorrect : %s"
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+#, fuzzy
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr "Supprimer tous les partages relatifs à ce volume"
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block (iSCSI)"
+msgstr "Taille de bloc"
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+#, fuzzy
+msgid "VMWare Sync"
+msgstr "Modules"
+
+#: storage/forms.py:1576
+#, fuzzy
+msgid "Apply Owner (user)"
+msgstr "Propriétaire (utilisateur)"
+
+#: storage/forms.py:1582
+#, fuzzy
+msgid "Apply Owner (group)"
+msgstr "Propriétaire (groupe)"
+
+#: storage/forms.py:1588
+#, fuzzy
+msgid "Apply Mode"
+msgstr "Appliquer la mise à jour"
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMWare-Snapshot"
+msgstr "Instantané"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr ""
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr ""
+
+#: system/forms.py:2757
+#, fuzzy
+msgid "Failed to connect: %s"
+msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: system/models.py:907
+#, fuzzy
+msgid "ZFS Filesystem"
+msgstr "Système de fichiers"
+
+#: system/models.py:911
+#, fuzzy
+msgid "Datastore"
+msgstr "Jeu de données"
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+
+#: system/models.py:920
+#: templates/system/index.html:33
+#, fuzzy
+msgid "VMWare Plugin"
+msgstr "Modules"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr ""
+
+# Quel est l’intérêt du "Native" ?
+#: system/views.py:1064
+#: system/views.py:1118
+#, fuzzy
+msgid "System dataset not configured"
+msgstr "Jeu de données"
+
+#: system/views.py:185
+#, fuzzy
+msgid "DeleteBulk"
+msgstr "Supprimer"
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr ""
+
+#: system/utils.py:230
+#, fuzzy
+msgid "Verifying"
+msgstr "Vérifier"
+
+#: system/alertmods/boot_volume_status.py:19
+#, fuzzy
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr "Le status du volume %(volume)s est %(status)s : %(message)s"
+
+#: system/views.py:318
+#, fuzzy
+msgid "Boot Environments successfully deleted."
+msgstr "Instantané supprimé avec succès."
+
+#: system/alertmods/boot_volume_status.py:28
+#, fuzzy
+msgid "The boot volume status is %(status)s"
+msgstr "Le status du volume %(volume)s est %(status)s"
+
+#: system/views.py:322
+#, fuzzy
+msgid "Failed to delete Boot Environments."
+msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+
+#: system/alertmods/boot_volume_status.py:44
+#, fuzzy
+msgid "The boot volume status is DEGRADED"
+msgstr "Le status du volume %s est DÉGRADÉ"
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+
+#: templates/system/boot_scrub.html:5
+#, fuzzy
+msgid "Do you want to scrub your boot pool now?"
+msgstr "Êtes-vous sûr de vouloir supprimer ?"
+
+#: templates/system/bootenv_datagrid.html:13
+#, fuzzy
+msgid "Scrub Boot"
+msgstr "Nettoyage ZFS"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:23
+#, fuzzy
+msgid "Scrub Status"
+msgstr "Statut"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr ""
+
+#: templates/system/bootenv_deletebulk.html:6
+#, fuzzy
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr "Êtes-vous sûr de vouloir supprimer \"%(name)s\" ?"
+
+#: templates/system/update_check.html:29
+#, fuzzy
+msgid "The following packages will be downloaded:"
+msgstr "Échec du rattachement des disques suivants : %s"
+
+#: templates/system/update_check.html:31
+#, fuzzy
+msgid "Do you want to continue?"
+msgstr "Êtes-vous sûr de vouloir le mettre hors-ligne ?"
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr ""
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+#, fuzzy
+msgid "Fetch Datastores"
+msgstr "Créer un jeu de données ZFS"
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+#, fuzzy
+msgid "Configure"
+msgstr "Configuration"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
 msgstr ""

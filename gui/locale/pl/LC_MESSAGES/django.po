@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2014-03-23 19:50+0000\n"
-"Last-Translator: MaliK <karol_maliglowka@o2.pl>\n"
+"PO-Revision-Date: 2014-10-25 08:02+0000\n"
+"Last-Translator: solarisguy <wowoc@compucom.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1395604210.0\n"
+"X-POOTLE-MTIME: 1414224129.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Zwykły"
+msgstr "bez szyfrowania"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -43,7 +43,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "Automatyczny"
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
@@ -127,7 +127,7 @@ msgstr "Poziom 127 - Średnie zużycie energii z czuwaniem"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Poziom 128 - Minimalne zużycie energii bez czuwania (bez spindown'a)"
+msgstr "Poziom 128 - Minimalne zużycie energii bez czuwania (bez spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -139,7 +139,7 @@ msgstr "Poziom 254 - Maksymalna wydajność, maksymalny pobór energii"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr "Minimalny"
+msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
@@ -151,79 +151,79 @@ msgstr "Maksymalny"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr "Styczeń"
+msgstr "styczeń"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr "Luty"
+msgstr "luty"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr "Marzec"
+msgstr "marzec"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr "Kwiecień"
+msgstr "kwiecień"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr "Maj"
+msgstr "maj"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr "Czerwiec"
+msgstr "czerwiec"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr "Lipiec"
+msgstr "lipiec"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr "Sierpień"
+msgstr "sierpień"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr "Wrzesień"
+msgstr "wrzesień"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr "Październik"
+msgstr "październik"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr "Listopad"
+msgstr "listopad"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr "Grudzień"
+msgstr "grudzień"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr "Poniedziałek"
+msgstr "poniedziałek"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr "Wtorek"
+msgstr "wtorek"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr "Środa"
+msgstr "środa"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr "Czwartek"
+msgstr "czwartek"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr "Piątek"
+msgstr "piątek"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr "Sobota"
+msgstr "sobota"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr "Niedziela"
+msgstr "niedziela"
 
 #: choices.py:163
 msgid "Anonymous"
@@ -239,7 +239,7 @@ msgstr "Normalny"
 
 #: choices.py:190
 msgid "Full"
-msgstr "Pełen"
+msgstr "Pełne"
 
 #: choices.py:191
 msgid "Debug"
@@ -258,15 +258,15 @@ msgstr "Bez wielkich liter"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr "Tolower (małe litery w obu kierunkach)"
+msgstr "nazwy małymi literami w obu kierunkach"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Xlatelower (Klient widzi małe litery, serwer wielkie)"
+msgstr "klient widzi małe litery, serwer wielkie"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Xlateupper (Klient widzi wielkie litery, serwer małe)"
+msgstr "Klient widzi wielkie litery, serwer małe"
 
 #: choices.py:207
 msgid "File"
@@ -278,7 +278,7 @@ msgstr "Urządzenie"
 
 #: choices.py:209
 msgid "ZFS Volume"
-msgstr "Wolumen ZFS"
+msgstr "Wolumin ZFS"
 
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
@@ -291,13 +291,13 @@ msgstr "odczyt-zapis"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "wyłącznie odczyt"
+msgstr "tylko do odczytu"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
-msgstr "Żaden"
+msgstr "Żadne"
 
 #: choices.py:228
 msgid "CHAP"
@@ -309,7 +309,7 @@ msgstr "Uzgodniony CHAP"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "Niski poziom energii UPS"
+msgstr "Niski poziom akumulatora w UPS"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -329,7 +329,7 @@ msgstr "Wymagany"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr "Dziedzicz"
+msgstr "Odziedzicz"
 
 #: choices.py:285
 msgid "On"
@@ -352,7 +352,7 @@ msgstr "gzip (najszybszy)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr "gzip (maksimum, wolny)"
+msgstr "gzip (maksymalna, powolna)"
 
 #: choices.py:489
 msgid "Hour(s)"
@@ -360,11 +360,11 @@ msgstr "Godzina/y"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr "Dzień/Dni"
+msgstr "Dzień(Dni)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr "Tydzień/Tygodnie"
+msgstr "Tydzień(Tygodnie)"
 
 #: choices.py:492
 msgid "Month(s)"
@@ -372,7 +372,7 @@ msgstr "Miesiąc/Miesięcy"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr "Rok/Lat"
+msgstr "Rok(Lata)"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
@@ -386,11 +386,11 @@ msgstr "W wybrane dni"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "Wyłącznie odczyt"
+msgstr "Tylko do odczytu"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Wyłącznie zapis"
+msgstr "tylko do zapisu"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -399,27 +399,27 @@ msgstr "Odczyt i Zapis"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) minut"
+msgstr "%(minutes)s minut"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(godzin) godzina"
+msgstr "%(hour)s godzin"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours) godzin"
+msgstr "%(hours)s godzin"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) dni"
+msgstr "%(day)s dni"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) tydzień"
+msgstr "%(week)s tygodni"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
@@ -436,7 +436,7 @@ msgstr "Standby - Sprawdź urządzenie o ile nie jest w trybie SLEEP lub STANDBY
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Bezczynny - Sprawdź urządzenie o ile nie jest w trybie UŚPIENIA, CZUWANIA "
+"Bezczynny - Sprawdź urządzenie, o ile nie jest w trybie UŚPIENIA, CZUWANIA "
 "lub BEZCZYNNOŚCI"
 
 #: choices.py:530
@@ -445,31 +445,31 @@ msgstr "Długi Auto-Test"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Krótki Auto-Test"
+msgstr "Krótka autodiagnostyka"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Przeniesienie autodiagnostyki (tylko interfejs ATA)"
+msgstr "Autodiagnostyka transportu (tylko ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Test Natychmiastowy (Tylko ATA)"
+msgstr "Bezpośredni test off-line (tylko ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Moduł Rsync"
+msgstr "Moduł rsync"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr "Moduł Rsync przez SSH"
+msgstr "Moduł rsync przez SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr "Naciśnij                "
+msgstr "Wyślij"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Pobierz"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -499,11 +499,11 @@ msgstr "Nazwa użytkownika"
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr ""
-"Wymagane.Nie więcej niż 16 znaków. Wyłącznie litery, cyfry i @/./+/-/_ ."
+"Wymagane.Nie więcej niż 16 znaków. Wyłącznie litery, cyfry oraz znaki ./-/_."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Ta wartość może zawierać wyłącznie litery, cyfry i ./-/_"
+msgstr "Ta wartość może zawierać wyłącznie litery, cyfry oraz znaki ./-/_."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -546,7 +546,7 @@ msgstr "Klucz publiczny SSH"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "Tryb katalogu domowego"
+msgstr "Atrybut katalogu domowego"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -569,19 +569,19 @@ msgstr "To pole jest wymagane"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Hasła nie są identyczne."
+msgstr "Podane hasła się różnią."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Katalog domowy musi zaczynać się od /mnt/ lub /nonexistent"
+msgstr "Katalog domowy musi zaczynać się od /mnt/ albo nie istnieć"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Użytkownik nie może należeć do więcej niż 64 grup podrzędnych"
+msgstr "Użytkownik nie może należeć do więcej niż 64 grup dodatkowych"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Katalog domowy nie posiada uprawnień do zapisu, pozostaw to pole puste"
+msgstr "Nie można pisać do katalogu domowego, pozostaw puste"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -707,7 +707,7 @@ msgid "Users"
 msgstr "Użytkownicy"
 
 #: account/models.py:151
-#, fuzzy, python-format
+#, python-format
 msgid "User %s is built-in and can not be deleted!"
 msgstr "Użytkownik %s jest użytkownikiem systemowym i nie może być usunięty!"
 
@@ -796,9 +796,8 @@ msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr "Wystąpił nieokreślony błąd podczas rozsegregowania %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
-#, fuzzy
 msgid "It was not possible to retrieve the current status"
-msgstr "Nie udało się uzyskać obecnego statusu"
+msgstr "Nie było możliwe uzyskanie bieżącego statusu"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -5078,7 +5077,7 @@ msgstr "Usuń użytkownika"
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
-msgstr "                  Zmień adres E-mail                "
+msgstr "Zmień adres poczty elektronicznej"
 
 #~ msgid "Change Admin Password"
 #~ msgstr "Zmiana hasła administratora"
@@ -6789,15 +6788,15 @@ msgstr "Niezaszyfrowane"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr "Zaszyfrowane, bez hasła               "
+msgstr "Zaszyfrowane, bez hasła"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr "                  Komresja lz4 (zalecana)                "
+msgstr "Zaszyfrowane, z hasłem"
 
 #: choices.py:304
 msgid "lz4 (recommended)"
-msgstr "                  Kompresja lzjb (zalecana)                "
+msgstr "lz4 (zalecana)"
 
 #: choices.py:600
 msgid "9600"
@@ -6821,78 +6820,75 @@ msgstr "115200"
 
 #: choices.py:659
 msgid "Fatal"
-msgstr "                  Błąd krytyczny                "
+msgstr "Krytyczny błąd"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (zalecany)"
+msgstr "lzjb (wychodzący z użycia, niezalecany)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (najlepsza kompresja - równoległy lzip)"
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "Szczegółowo"
 
 #: choices.py:683
 msgid "Daemon"
-msgstr ""
+msgstr "Daemon"
 
 #: choices.py:698
 #: services/models.py:1531
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
-msgstr "Nazwa kontrolera domeny"
+msgstr "kontroler domeny"
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "data"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "auth"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "ctrl+!data"
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "auth+!data"
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "Potwierdź hasło"
+msgstr "Potwierdź nowe hasło"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "Nazwa katalogu domowego nie może zawierać dwukropka"
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "Użytkownik systemowy"
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -6914,7 +6910,7 @@ msgstr ""
 #: jails/admin.py:265
 #: jails/models.py:434
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: jails/forms.py:90
 msgid "type"
@@ -6927,25 +6923,21 @@ msgstr ""
 
 #: jails/forms.py:516
 msgid "autostart"
-msgstr ""
+msgstr "autostart"
 
 #: jails/forms.py:906
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "Ścieżka %s nie mogła zostać zamontowana"
+msgstr "Ścieżka nie mogła zostać zamontowana %(source)s: %(error)s"
 
 #: jails/models.py:103
-#, fuzzy
 msgid "IPv4 bridge address"
-msgstr "Adres IPv4"
+msgstr ""
 
 #: jails/models.py:110
-#, fuzzy
 msgid "IPv4 bridge netmask"
-msgstr "Maska IPv4"
+msgstr ""
 
 #: jails/models.py:128
-#, fuzzy
 msgid "IPv6 address"
 msgstr "Adres IPv6"
 
@@ -6974,23 +6966,20 @@ msgid "IPv4 network end address for jails and plugins"
 msgstr ""
 
 #: jails/models.py:352
-#, fuzzy
 msgid "IPv6 Network"
-msgstr "Maska IPv6"
+msgstr ""
 
 #: jails/models.py:362
-#, fuzzy
 msgid "IPv6 Network End Address"
-msgstr "Adres IPv6"
+msgstr ""
 
 #: jails/models.py:363
 msgid "IPv6 network end address for jails and plugins"
 msgstr ""
 
 #: jails/models.py:366
-#, fuzzy
 msgid "Collection URL"
-msgstr "Połączenia"
+msgstr ""
 
 #: jails/models.py:368
 msgid "URL for the jails index"
@@ -7006,14 +6995,12 @@ msgstr ""
 
 #: jails/models.py:513
 #: jails/models.py:514
-#, fuzzy
 msgid "Jail Templates"
-msgstr "Maska IPv4"
+msgstr ""
 
 #: jails/models.py:533
-#, fuzzy
 msgid "Read-Only"
-msgstr "Wyłącznie odczyt"
+msgstr "Tylko do odczytu"
 
 #: jails/models.py:537
 #, fuzzy
@@ -7022,16 +7009,15 @@ msgstr "System plików"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr ""
+msgstr "Dodaj szablony dla jail"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
 msgstr ""
 
 #: jails/utils.py:714
-#, fuzzy
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "Nie mogę pobrać %(url)s: %(error)s"
+msgstr ""
 
 #: jails/utils.py:739
 #, fuzzy
@@ -7791,76 +7777,67 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (kodowanie zer)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (wszechstronny - równoległy gzip)"
 
 #: choices.py:677
-#, fuzzy
 msgid "Debug2"
-msgstr "Debugowanie"
+msgstr "Debug2"
 
 #: choices.py:678
-#, fuzzy
 msgid "Debug3"
-msgstr "Debugowanie"
+msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
-msgstr ""
+msgstr "Auth"
 
 #: choices.py:688
-#, fuzzy
 msgid "Local 2"
-msgstr "Użytkownik lokalny"
+msgstr "Local 2"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
-msgstr "Użytkownik lokalny"
+msgstr "Local 5"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
-msgstr "Interfejs sieciowy"
+msgstr "NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data"
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Nowe hasło"
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Hasło nie pasuje"
+msgstr "Hasła nie są takie same"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Katalog domowy"
+msgstr "Utwórz katalog domowy w"
 
 #: account/models.py:54
-#, fuzzy
 msgid "Built-in Group"
-msgstr "Grupy dodatkowe"
+msgstr "Grupa systemowa"
 
 #: api/resources.py:437
 #: storage/views.py:778
@@ -7885,33 +7862,28 @@ msgstr "To pole jest wymagane"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "Nieprawidłowe oprogramowanie"
+msgstr "Nieprawidłowy adres: %s"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "Nieprawidłowa suma kontrolna"
+msgstr "Nieprawidłowa sieć: %s"
 
 #: freeadmin/navtree.py:576
-#, fuzzy
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
-msgstr "Wystąpił nieokreślony błąd podczas rozsegregowania %(url)s: %(error)s"
+msgstr "Błąd deserializacji %(url)s (%(error)s), uzyskane dane:"
 
 #: jails/admin.py:75
 #: jails/forms.py:859
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
-#, fuzzy
 msgid "Jail"
-msgstr "Nazwa domeny"
+msgstr "Jail"
 
 #: jails/admin.py:186
-#, fuzzy
 msgid "Edit Jail"
-msgstr "Edytuj portal"
+msgstr "Edytuj jail"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
@@ -7935,26 +7907,23 @@ msgstr ""
 #: jails/forms.py:518
 #: jails/models.py:196
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
 msgstr ""
 
 #: jails/models.py:74
-#, fuzzy
 msgid "Jail Name"
-msgstr "Nazwa domeny"
+msgstr "Nazwa jail"
 
 #: jails/models.py:84
-#, fuzzy
 msgid "IPv4 address"
 msgstr "Adres IPv4"
 
 #: jails/models.py:296
-#, fuzzy
 msgid "This jail is required by %d plugin(s)"
-msgstr "To pole jest wymagane dla logowania anonimowego"
+msgstr ""
 
 #: jails/models.py:337
 #, fuzzy
@@ -7962,14 +7931,12 @@ msgid "IPv4 Network"
 msgstr "Maska IPv4"
 
 #: jails/models.py:347
-#, fuzzy
 msgid "IPv4 Network End Address"
-msgstr "Adres IPv4"
+msgstr ""
 
 #: jails/models.py:357
-#, fuzzy
 msgid "IPv6 Network Start Address"
-msgstr "Adres IPv6"
+msgstr ""
 
 #: jails/models.py:377
 #: jails/models.py:378
@@ -7986,9 +7953,8 @@ msgid "Failed to install plugin: %s"
 msgstr ""
 
 #: jails/views.py:95
-#, fuzzy
 msgid "Jail successfully edited."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr ""
 
 #: jails/views.py:156
 #, fuzzy
@@ -8779,98 +8745,88 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (najszybszy)"
+msgstr "lz4 (najszybsza)"
 
 #: choices.py:569
 msgid "Verify"
-msgstr ""
+msgstr "Sprawdź"
 
 #: choices.py:686
-#, fuzzy
 msgid "Local 0"
-msgstr "Użytkownik lokalny"
+msgstr "Local 0"
 
 #: choices.py:687
-#, fuzzy
 msgid "Local 1"
-msgstr "Użytkownik lokalny"
+msgstr "Local 1"
 
 #: choices.py:689
-#, fuzzy
 msgid "Local 3"
-msgstr "Użytkownik lokalny"
+msgstr "Local 3"
 
 #: choices.py:690
-#, fuzzy
 msgid "Local 4"
-msgstr "Użytkownik lokalny"
+msgstr "Local 4"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
-msgstr "Użytkownik lokalny"
+msgstr "Local 6"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
-msgstr "Użytkownik lokalny"
+msgstr "Local 7"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:707
-#, fuzzy
 msgid "on"
-msgstr "Żaden"
+msgstr "włączony"
 
 #: choices.py:708
-#, fuzzy
 msgid "off"
-msgstr "Wyłączony"
+msgstr "wyłączony"
 
 #: choices.py:710
 msgid "!data"
-msgstr ""
+msgstr "!data"
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "auth+data"
 
 #: account/forms.py:534
-#, fuzzy
 msgid "Home directory must end with username"
-msgstr "Katalog domowy nie posiada uprawnień do zapisu, pozostaw to pole puste"
+msgstr "Nazwa katalogu domowego musi kończyć się nazwą użytkownika"
 
 #: account/models.py:58
 #: account/models.py:154
 msgid "Permit Sudo"
-msgstr ""
+msgstr "Zezwól na sudo"
 
 #: account/models.py:146
 #, fuzzy
@@ -8889,9 +8845,8 @@ msgstr "Nie mogę pobrać %(url)s: %(error)s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
-msgstr "Automatyczny"
+msgstr "Autostart"
 
 #: jails/admin.py:189
 #: jails/nav.py:264
@@ -8901,7 +8856,7 @@ msgstr "Magazyn"
 
 #: jails/admin.py:201
 msgid "Stop"
-msgstr ""
+msgstr "Stop"
 
 #: jails/forms.py:94
 msgid "vanilla"
@@ -8919,7 +8874,7 @@ msgstr ""
 #: jails/forms.py:517
 #: jails/models.py:192
 msgid "VIMAGE"
-msgstr ""
+msgstr "VIMAGE"
 
 #: jails/forms.py:827
 msgid "This shouldn't happen, but the jail could not be found"
@@ -8931,7 +8886,7 @@ msgstr ""
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr ""
+msgstr "Jails"
 
 #: jails/models.py:91
 #, fuzzy
@@ -8948,7 +8903,6 @@ msgid "IPv4 bridge aliases"
 msgstr ""
 
 #: jails/models.py:122
-#, fuzzy
 msgid "IPv4 default gateway"
 msgstr "Domyślna brama IPv4"
 
@@ -8957,14 +8911,12 @@ msgid "IPv6 prefix length"
 msgstr ""
 
 #: jails/models.py:141
-#, fuzzy
 msgid "IPv6 aliases"
-msgstr "Aliasy"
+msgstr ""
 
 #: jails/models.py:147
-#, fuzzy
 msgid "IPv6 bridge address"
-msgstr "Adres IPv6"
+msgstr ""
 
 #: jails/models.py:154
 msgid "IPv6 bridge prefix length"
@@ -8975,7 +8927,6 @@ msgid "IPv6 bridge aliases"
 msgstr ""
 
 #: jails/models.py:167
-#, fuzzy
 msgid "IPv6 default gateway"
 msgstr "Domyślna brama IPv6"
 
@@ -8984,9 +8935,8 @@ msgid "Comma delimited list of sysctl's"
 msgstr ""
 
 #: jails/models.py:342
-#, fuzzy
 msgid "IPv4 Network Start Address"
-msgstr "Adres IPv4"
+msgstr ""
 
 #: jails/models.py:353
 msgid "IPv6 network range for jails and plugins"
@@ -9001,32 +8951,27 @@ msgid "OS"
 msgstr ""
 
 #: jails/nav.py:70
-#, fuzzy
 msgid "Add Jails"
-msgstr "Dodaj %s"
+msgstr "Dodaj jails"
 
 #: jails/nav.py:100
-#, fuzzy
 msgid "View Jails"
-msgstr "Pokaż %s"
+msgstr "Pokaż jails"
 
 #: jails/nav.py:114
-#, fuzzy
 msgid "View Jail Templates"
-msgstr "Zobacz wszystkie zakresy"
+msgstr "Zobacz szablony dla jail"
 
 #: jails/nav.py:129
 #: plugins/models.py:225
 #: templates/jails/index.html:40
 #: templates/plugins/index.html:20
-#, fuzzy
 msgid "Configuration"
-msgstr "Konfiguracja globalna"
+msgstr "Konfiguracja"
 
 #: jails/utils.py:573
-#, fuzzy
 msgid "Unable to determine IPv4 for plugin"
-msgstr "Nie mogę usunąć pluginu."
+msgstr ""
 
 #: jails/views.py:115
 #, fuzzy
@@ -9818,29 +9763,27 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Hasła zawierające znak zapytania (?) obecnie nie są dozwolone ze względu na "
+"problemy z CIFS."
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Nieudane przeładowanie usługi AFP."
+msgstr "Nieudane przeładowanie NT4."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Nieudane przeładowanie usługi activedirectory."
+msgstr "Nieudane przeładowanie Active Directory."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Nieudane przeładowanie usługi AFP."
+msgstr "Nieudane przeładowanie LDAP."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
-msgstr "Włączony"
+msgstr "Włącz"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -9848,9 +9791,8 @@ msgid "Bind DN"
 msgstr "Nazwa Wyróżniająca przypisania Root"
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Stare hasło"
+msgstr ""
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -9961,43 +9903,41 @@ msgstr "Uprawnienia do katalogu"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Odczyt"
+msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
-msgstr ""
+msgstr "autorid"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "hash"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Piątek"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10044,18 +9984,19 @@ msgstr ""
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
-msgstr ""
+msgstr "Rozmiar zakresu"
 
 #: directoryservice/models.py:184
+#, fuzzy
 msgid ""
 "Defines the number of uids/gids available per domain range. The minimum "
 "needed value is 2000. SIDs with RIDs larger than this value will be mapped "
@@ -10064,6 +10005,12 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Określa liczbę UID / GID dostępnych w domenach.Minimalną wartość jest 2000. "
+"SID-y z RID-ami większymi niż ta wartość zostaną odwzorowane w zakresach "
+"dodatkowych, w zależności od liczby dostępnych zakresów. Jeśli silnikowi "
+"autorid zabraknie dostępnych zakresów, żądania mapowania dla nowych domen ("
+"lub zakresów rozszerzenie dla nowych domen już znanych) będą ignorowane i "
+"odpowiednia mapa będzie odrzucana."
 
 #: directoryservice/models.py:197
 msgid ""
@@ -10085,9 +10032,8 @@ msgid "AutoRID Idmap"
 msgstr ""
 
 #: directoryservice/models.py:229
-#, fuzzy
 msgid "Name Map"
-msgstr "Nazwa"
+msgstr ""
 
 #: directoryservice/models.py:231
 msgid ""
@@ -10099,7 +10045,7 @@ msgstr ""
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Hash Idmap"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -10109,9 +10055,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "ID użytkownika"
+msgstr "DN użytkownika"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -10134,12 +10079,11 @@ msgstr ""
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "Pierwszy serwer czasu"
+msgstr "Serwer LDAP"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -10149,7 +10093,7 @@ msgstr ""
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "stand-alone"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
@@ -10172,7 +10116,7 @@ msgstr ""
 #: directoryservice/models.py:355
 #, fuzzy
 msgid "User CN"
-msgstr "Użytkownik &"
+msgstr "Użytkownik CN"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
@@ -10212,9 +10156,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "ID użytkownika"
+msgstr ""
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10241,12 +10184,12 @@ msgstr ""
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "RID Idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "TDB Idmap"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -10261,20 +10204,17 @@ msgid "TDB2 Idmap"
 msgstr ""
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Domain administrator account name"
-msgstr "Hasło konta administratora domeny"
+msgstr "Nazwa konta administratora domeny"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
-msgstr "Hasło konta administratora domeny"
+msgstr "Hasło konta administratora domeny."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Domyślny"
+msgstr "Użyj domyślnej domeny"
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
@@ -10286,7 +10226,7 @@ msgstr ""
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "Idmap back-end dla winbind."
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -10442,9 +10382,8 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Liczba serwerów"
+msgstr "Kerberos Keytab"
 
 #: directoryservice/forms.py:498
 #, fuzzy
@@ -10452,23 +10391,20 @@ msgid "A keytab is required."
 msgstr "To pole jest wymagane"
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Liczba serwerów"
+msgstr ""
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "KDC for this realm."
-msgstr "Przydział  przestrzeni dla tego wolumenu"
+msgstr ""
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Administrator"
+msgstr ""
 
 #: directoryservice/models.py:560
 msgid ""
@@ -10477,9 +10413,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Hasło"
+msgstr "Serwer haseł"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10489,7 +10424,7 @@ msgstr ""
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Podmiot"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
@@ -10548,26 +10483,24 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Autentykacja"
+msgstr "Uwierzytelnianie podstawowe"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Autentykacja"
+msgstr "Uwierzytelnienie funkcją skrótu"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Instalacja istniejącego urzędu certyfikacji"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Utwórz własny urząd certyfikacji"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
@@ -10575,17 +10508,15 @@ msgstr ""
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Instaluj istniejący certyfikat"
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Certyfikat SSL"
+msgstr "Utwórz własny certyfikat"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "Certyfikat podpisany przez siebie"
+msgstr "Utwórz żądanie certyfikacji klucza publicznego                "
 
 #: choices.py:823
 msgid "512"
@@ -10605,23 +10536,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10631,7 +10562,7 @@ msgstr "Nieudane przeładowanie usługi AFP."
 #: api/resources.py:2488
 #, fuzzy
 msgid "On Reboot"
-msgstr "Uruchom ponownie"
+msgstr "Podczas ponownego uruchomienia"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10644,9 +10575,8 @@ msgid "Now"
 msgstr "Nie"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Opis"
+msgstr "Nazwa opisowa."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -11343,7 +11273,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -11486,4 +11416,290 @@ msgstr ""
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
+msgstr ""
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: jails/forms.py:218
+msgid "Jail name cannot have '.'"
+msgstr ""
+
+#: jails/forms.py:1070
+#, fuzzy
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr "Ścieżka %s nie mogła zostać zamontowana"
+
+#: jails/utils.py:609
+#, fuzzy
+msgid "Unable to determine IPv6 for plugin"
+msgstr "Nie mogę usunąć pluginu."
+
+#: services/forms.py:1006
+msgid "The following addresses are not valid: %s"
+msgstr ""
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+#, fuzzy
+msgid "iSNS Servers"
+msgstr "Pierwszy serwer czasu"
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1767
+#, fuzzy
+msgid "Webdav SSL Certificate"
+msgstr "Certyfikat SSL"
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+#, fuzzy
+msgid "Invalid IP or Network."
+msgstr "Nieprawidłowa sieć: %s"
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block (iSCSI)"
+msgstr "Wielkość bloku logicznego"
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+#, fuzzy
+msgid "VMWare Sync"
+msgstr "Pluginy"
+
+#: storage/forms.py:1576
+#, fuzzy
+msgid "Apply Owner (user)"
+msgstr "Właściciel (użytkownik)"
+
+#: storage/forms.py:1582
+#, fuzzy
+msgid "Apply Owner (group)"
+msgstr "Właściciel (grupa)"
+
+#: storage/forms.py:1588
+#, fuzzy
+msgid "Apply Mode"
+msgstr "Aktualizacja"
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMWare-Snapshot"
+msgstr "Migawka"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr ""
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr ""
+
+#: system/forms.py:2757
+#, fuzzy
+msgid "Failed to connect: %s"
+msgstr "Nie mogę pobrać %(url)s: %(error)s"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: system/models.py:907
+#, fuzzy
+msgid "ZFS Filesystem"
+msgstr "System plików"
+
+#: system/models.py:911
+#, fuzzy
+msgid "Datastore"
+msgstr "Zbiór danych"
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+
+#: system/models.py:920
+#: templates/system/index.html:33
+#, fuzzy
+msgid "VMWare Plugin"
+msgstr "Pluginy"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr ""
+
+#: system/views.py:1064
+#: system/views.py:1118
+#, fuzzy
+msgid "System dataset not configured"
+msgstr "Natywny zbiór danych"
+
+#: system/views.py:185
+#, fuzzy
+msgid "DeleteBulk"
+msgstr "Usuń"
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr ""
+
+#: system/utils.py:230
+#, fuzzy
+msgid "Verifying"
+msgstr "Sprawdź"
+
+#: system/alertmods/boot_volume_status.py:19
+#, fuzzy
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr "Wolumen %(volume)s ma status %(status)s: %(message)s"
+
+#: system/views.py:318
+#, fuzzy
+msgid "Boot Environments successfully deleted."
+msgstr "Kopia migawkowa pomyślnie usunięta."
+
+#: system/alertmods/boot_volume_status.py:28
+#, fuzzy
+msgid "The boot volume status is %(status)s"
+msgstr "Wolumen %(volume)s ma status %(status)s: %(message)s"
+
+#: system/views.py:322
+#, fuzzy
+msgid "Failed to delete Boot Environments."
+msgstr "Nie mogę pobrać %(url)s: %(error)s"
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr ""
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+
+#: templates/system/boot_scrub.html:5
+#, fuzzy
+msgid "Do you want to scrub your boot pool now?"
+msgstr "Jesteś pewien że chcesz usunąć?"
+
+#: templates/system/bootenv_datagrid.html:13
+#, fuzzy
+msgid "Scrub Boot"
+msgstr "Udział UNIX"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:23
+#, fuzzy
+msgid "Scrub Status"
+msgstr "Status"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr ""
+
+#: templates/system/bootenv_deletebulk.html:6
+#, fuzzy
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr "Jesteś pewien że chcesz usunąć  \"%(name)s\"?"
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr ""
+
+#: templates/system/update_check.html:31
+#, fuzzy
+msgid "Do you want to continue?"
+msgstr "Jesteś pewien że chcesz przejść w tryb offline?"
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr ""
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+#, fuzzy
+msgid "Fetch Datastores"
+msgstr "Utwórz zbiór danych ZFS"
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+#, fuzzy
+msgid "Configure"
+msgstr "Konfiguracja"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
 msgstr ""

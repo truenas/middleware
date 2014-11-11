@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-10-13 09:14+0000\n"
+"PO-Revision-Date: 2014-11-08 10:14+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413191698.0\n"
+"X-POOTLE-MTIME: 1415441690.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10455,4 +10455,246 @@ msgstr ""
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
+msgstr ""
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: jails/forms.py:218
+msgid "Jail name cannot have '.'"
+msgstr ""
+
+#: jails/forms.py:1070
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr ""
+
+#: jails/utils.py:609
+msgid "Unable to determine IPv6 for plugin"
+msgstr ""
+
+#: services/forms.py:1006
+msgid "The following addresses are not valid: %s"
+msgstr ""
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+msgid "iSNS Servers"
+msgstr ""
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1767
+msgid "Webdav SSL Certificate"
+msgstr ""
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+msgid "Invalid IP or Network."
+msgstr ""
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+msgid "Block (iSCSI)"
+msgstr ""
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+msgid "VMWare Sync"
+msgstr ""
+
+#: storage/forms.py:1576
+msgid "Apply Owner (user)"
+msgstr ""
+
+#: storage/forms.py:1582
+msgid "Apply Owner (group)"
+msgstr ""
+
+#: storage/forms.py:1588
+msgid "Apply Mode"
+msgstr ""
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+msgid "VMWare-Snapshot"
+msgstr ""
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr ""
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr ""
+
+#: system/forms.py:2757
+msgid "Failed to connect: %s"
+msgstr ""
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: system/models.py:907
+msgid "ZFS Filesystem"
+msgstr ""
+
+#: system/models.py:911
+msgid "Datastore"
+msgstr ""
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr ""
+
+#: system/views.py:185
+msgid "DeleteBulk"
+msgstr ""
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr ""
+
+#: system/utils.py:230
+msgid "Verifying"
+msgstr ""
+
+#: system/alertmods/boot_volume_status.py:19
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr ""
+
+#: system/views.py:318
+msgid "Boot Environments successfully deleted."
+msgstr ""
+
+#: system/alertmods/boot_volume_status.py:28
+msgid "The boot volume status is %(status)s"
+msgstr ""
+
+#: system/views.py:322
+msgid "Failed to delete Boot Environments."
+msgstr ""
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr ""
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+
+#: templates/system/boot_scrub.html:5
+msgid "Do you want to scrub your boot pool now?"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:13
+msgid "Scrub Boot"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:23
+msgid "Scrub Status"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr ""
+
+#: templates/system/bootenv_deletebulk.html:6
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr ""
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr ""
+
+#: templates/system/update_check.html:31
+msgid "Do you want to continue?"
+msgstr ""
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr ""
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+msgid "Fetch Datastores"
+msgstr ""
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
 msgstr ""

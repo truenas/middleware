@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-10-13 14:00+0000\n"
+"PO-Revision-Date: 2014-11-08 19:36+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413208854.0\n"
+"X-POOTLE-MTIME: 1415475400.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -378,3 +378,46 @@ msgstr "Controleren op updates"
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
 msgstr "Wachtende updates toepassen"
+
+#: freeadmin/static/lib/js/freeadmin.js:1287
+msgid "Hostname cannot be blank."
+msgstr "Hostnaam kan niet leeg zijn."
+
+#: freeadmin/static/lib/js/freeadmin.js:1290
+msgid "Username cannot be blank."
+msgstr "Gebruikersnaam kan niet leeg zijn."
+
+#: freeadmin/static/lib/js/freeadmin.js:1293
+msgid "Password cannot be blank."
+msgstr "Wachtwoord kan niet leeg zijn."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:79
+#: freeadmin/static/lib/js/freeadmin/Update.js:81
+msgid "Manual Update"
+msgstr "Handmatig bijwerken"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:88
+#: freeadmin/static/lib/js/freeadmin/Update.js:90
+msgid "Check Now"
+msgstr "Nu controleren"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:142
+msgid "Yes"
+msgstr "Ja"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:151
+msgid "No"
+msgstr "Nee"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:166
+msgid "Loading..."
+msgstr "Laden..."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:167
+msgid "No pending updates have been found."
+msgstr "Er zijn geen wachtende updates gevonden."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:104
+#: freeadmin/static/lib/js/freeadmin/Update.js:106
+msgid "Verify Install"
+msgstr "Installatie verifiëren"

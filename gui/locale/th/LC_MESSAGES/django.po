@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2014-01-28 08:08+0000\n"
-"Last-Translator: JerryW. <ratthaninw@gmail.com>\n"
+"PO-Revision-Date: 2014-11-03 06:20+0000\n"
+"Last-Translator: Mr.tanormsak <warnpak@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: th\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1390896505.0\n"
+"X-POOTLE-MTIME: 1414995657.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -34,11 +34,11 @@ msgstr ""
 
 #: choices.py:47
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:48
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
@@ -299,11 +299,11 @@ msgstr ""
 
 #: choices.py:207
 msgid "File"
-msgstr ""
+msgstr "แฟ้ม"
 
 #: choices.py:208
 msgid "Device"
-msgstr ""
+msgstr "อุปกรณ์"
 
 #: choices.py:209
 msgid "ZFS Volume"
@@ -312,12 +312,11 @@ msgstr ""
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr ""
+msgstr "ดิสก์"
 
 #: choices.py:221
-#, fuzzy
 msgid "read-write"
-msgstr "อ่านเขียน"
+msgstr "อ่าน-เขียน"
 
 #: choices.py:222
 #, fuzzy
@@ -328,7 +327,7 @@ msgstr "อ่านอย่างเดียว"
 #: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
-msgstr ""
+msgstr "ไม่มี"
 
 #: choices.py:228
 msgid "CHAP"
@@ -432,7 +431,7 @@ msgstr "อ่านอย่างเดียว"
 #: choices.py:505
 #, fuzzy
 msgid "Write-only"
-msgstr "อ่านอย่างเดียว"
+msgstr "เขียนอย่างเดียว"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -613,7 +612,7 @@ msgstr "ชื่อผู้ใช้มีอยู่แล้ว"
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr ""
+msgstr "จำเป็นต้องป้อนข้อมูล"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -644,7 +643,7 @@ msgstr ""
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr ""
+msgstr "จำเป็นต้องป้อนข้อมูล"
 
 #: account/forms.py:632
 #, fuzzy
@@ -658,7 +657,7 @@ msgstr ""
 #: account/forms.py:739
 #, fuzzy
 msgid "A group with that name already exists."
-msgstr "ชื่อผู้ใช้มีอยู่แล้ว"
+msgstr "ชื่อกลุ่มนี้มีอยู่ในระบบแล้ว"
 
 #: account/forms.py:759
 #, fuzzy
@@ -756,7 +755,7 @@ msgstr "อีเมล์"
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
-msgstr ""
+msgstr "ผู้ใช้"
 
 #: account/models.py:132 templates/account/index.html:19
 msgid "Users"
@@ -819,7 +818,7 @@ msgstr ""
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
 msgid "Error: %s"
-msgstr ""
+msgstr "ผิดพลาด: %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
@@ -837,11 +836,11 @@ msgstr ""
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr ""
+msgstr "บูตระบบใหม่"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr ""
+msgstr "ปิดระบบ"
 
 #: freeadmin/navtree.py:408
 #, python-format
@@ -865,7 +864,7 @@ msgstr ""
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "อัพเดท %s เสร็จสมบูรณ์"
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
@@ -874,7 +873,7 @@ msgstr ""
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "ลบ %s เสร็จสมบูรณ์"
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -891,7 +890,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "ผิดพลาด"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -1062,7 +1061,7 @@ msgstr ""
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "ที่อยู่แบบ IPv4"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
@@ -4724,7 +4723,7 @@ msgstr ""
 #: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
 #: templates/system/tunable.html.py:27
 msgid "Delete"
-msgstr ""
+msgstr "ลบ"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -4879,7 +4878,7 @@ msgstr ""
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "สมาชิก"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
@@ -4893,11 +4892,11 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "แก้ไขกลุ่ม"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "ลบกลุ่ม"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
@@ -4940,7 +4939,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
-msgstr ""
+msgstr "เปลี่ยนอีเมล"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
@@ -5133,7 +5132,7 @@ msgstr ""
 #: templates/system/sysctl.html.py:21 templates/system/tunable.html:19
 #: templates/system/tunable.html.py:21
 msgid "Edit"
-msgstr ""
+msgstr "แก้ไข"
 
 #: templates/network/interface.html:28 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
@@ -5253,7 +5252,7 @@ msgstr ""
 #: templates/plugins/index.html:31
 #, fuzzy
 msgid "Info"
-msgstr "ปกติ"
+msgstr "ข้อมูล"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
@@ -5901,7 +5900,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:63
 msgid "Status"
-msgstr ""
+msgstr "สถานะ"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Detach Volume"
@@ -6295,7 +6294,7 @@ msgstr ""
 
 #: choices.py:613
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:675
 msgid "Verbose"
@@ -6315,7 +6314,7 @@ msgstr ""
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "ข้อมูล"
 
 #: choices.py:711
 msgid "auth"
@@ -6332,7 +6331,7 @@ msgstr ""
 #: account/forms.py:58
 #, fuzzy
 msgid "Confirm New Password"
-msgstr "รหัสผ่าน"
+msgstr "ยืนยันรหัสผ่าน"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
@@ -6374,7 +6373,7 @@ msgstr ""
 
 #: jails/forms.py:516
 msgid "autostart"
-msgstr ""
+msgstr "เริ่มอัตโนมัติ"
 
 #: jails/forms.py:906
 msgid "The path could not be mounted %(source)s: %(error)s"
@@ -7183,7 +7182,7 @@ msgstr ""
 
 #: choices.py:610
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:672
 msgid "Fatal"
@@ -7222,7 +7221,7 @@ msgstr ""
 #: account/forms.py:66
 #, fuzzy
 msgid "Passwords do not match"
-msgstr "ยืนยันรหัสผ่าน"
+msgstr "รหัสผ่านไม่ตรงกัน"
 
 #: account/forms.py:398
 msgid "Create Home Directory In"
@@ -7276,7 +7275,7 @@ msgstr ""
 #: templates/plugins/available_datagrid.html:27
 #, fuzzy
 msgid "Upload Plugin"
-msgstr "อัพเดทปลั๊กอิน"
+msgstr "อัพโหลดปลั๊กอิน"
 
 #: jails/admin.py:200
 msgid "Start"
@@ -8093,11 +8092,11 @@ msgstr ""
 
 #: choices.py:611
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:612
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:686
 #, fuzzy
@@ -8191,7 +8190,7 @@ msgstr ""
 #: jails/models.py:183
 #, fuzzy
 msgid "Autostart"
-msgstr "อัตโนมัติ"
+msgstr "เริ่มอัตโนมัติ"
 
 #: jails/admin.py:186
 #, fuzzy
@@ -8962,7 +8961,7 @@ msgstr ""
 
 #: choices.py:609
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: jails/models.py:147
 msgid "IPv6 bridge address"
@@ -9098,7 +9097,7 @@ msgstr ""
 
 #: directoryservice/forms.py:316
 msgid "LDAP failed to reload."
-msgstr ""
+msgstr "รีโหลด LDAP ไม่สำเร็จ"
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -9106,7 +9105,7 @@ msgstr ""
 #: directoryservice/models.py:358
 #, fuzzy
 msgid "Enable"
-msgstr "ปิดการใช้งาน"
+msgstr "เปิดใช้งาน"
 
 #: directoryservice/models.py:295
 msgid "Bind DN"
@@ -9830,11 +9829,11 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
@@ -9842,11 +9841,11 @@ msgstr ""
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
@@ -10633,4 +10632,265 @@ msgstr ""
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
+msgstr ""
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr ""
+
+#: jails/forms.py:218
+msgid "Jail name cannot have '.'"
+msgstr ""
+
+#: jails/forms.py:1070
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr ""
+
+#: jails/utils.py:609
+msgid "Unable to determine IPv6 for plugin"
+msgstr ""
+
+#: services/forms.py:1006
+msgid "The following addresses are not valid: %s"
+msgstr ""
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+msgid "iSNS Servers"
+msgstr ""
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/models.py:1767
+msgid "Webdav SSL Certificate"
+msgstr ""
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+msgid "Invalid IP or Network."
+msgstr ""
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+msgid "Block (iSCSI)"
+msgstr ""
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+#, fuzzy
+msgid "VMWare Sync"
+msgstr "ข้อมูลปลั๊กอิน"
+
+#: storage/forms.py:1576
+msgid "Apply Owner (user)"
+msgstr ""
+
+#: storage/forms.py:1582
+msgid "Apply Owner (group)"
+msgstr ""
+
+#: storage/forms.py:1588
+msgid "Apply Mode"
+msgstr ""
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMWare-Snapshot"
+msgstr "ข้อมูลปลั๊กอิน"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr ""
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr ""
+
+#: system/forms.py:2757
+#, fuzzy
+msgid "Failed to connect: %s"
+msgstr "อัพเดทปลั๊กอิน"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: system/models.py:907
+msgid "ZFS Filesystem"
+msgstr ""
+
+#: system/models.py:911
+msgid "Datastore"
+msgstr ""
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+
+#: system/models.py:920
+#: templates/system/index.html:33
+#, fuzzy
+msgid "VMWare Plugin"
+msgstr "ข้อมูลปลั๊กอิน"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr ""
+
+#: system/views.py:185
+#, fuzzy
+msgid "DeleteBulk"
+msgstr "ลบ"
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr ""
+
+#: system/utils.py:230
+msgid "Verifying"
+msgstr ""
+
+#: system/alertmods/boot_volume_status.py:19
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr ""
+
+#: system/views.py:318
+#, fuzzy
+msgid "Boot Environments successfully deleted."
+msgstr "ลบ %s เสร็จสมบูรณ์"
+
+#: system/alertmods/boot_volume_status.py:28
+msgid "The boot volume status is %(status)s"
+msgstr ""
+
+#: system/views.py:322
+#, fuzzy
+msgid "Failed to delete Boot Environments."
+msgstr "อัพเดทปลั๊กอิน"
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr ""
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+
+#: templates/system/boot_scrub.html:5
+msgid "Do you want to scrub your boot pool now?"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:13
+msgid "Scrub Boot"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:23
+#, fuzzy
+msgid "Scrub Status"
+msgstr "สถานะ Service"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr ""
+
+#: templates/system/bootenv_deletebulk.html:6
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr ""
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr ""
+
+#: templates/system/update_check.html:31
+msgid "Do you want to continue?"
+msgstr ""
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr ""
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+msgid "Fetch Datastores"
+msgstr ""
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+#, fuzzy
+msgid "Configure"
+msgstr "รหัสผ่าน"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
 msgstr ""

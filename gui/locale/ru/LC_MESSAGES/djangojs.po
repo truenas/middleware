@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-10-12 18:21+0000\n"
+"PO-Revision-Date: 2014-10-25 15:36+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413138096.0\n"
+"X-POOTLE-MTIME: 1414251384.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -374,4 +374,47 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
+msgstr "Применить ожидающие обновления"
+
+#: freeadmin/static/lib/js/freeadmin.js:1287
+msgid "Hostname cannot be blank."
+msgstr "Имя хоста не может быть пустым."
+
+#: freeadmin/static/lib/js/freeadmin.js:1290
+msgid "Username cannot be blank."
+msgstr "Имя пользователя не может быть пустым."
+
+#: freeadmin/static/lib/js/freeadmin.js:1293
+msgid "Password cannot be blank."
+msgstr "Пароль не может быть пустым."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:79
+#: freeadmin/static/lib/js/freeadmin/Update.js:81
+msgid "Manual Update"
+msgstr "Ручное обновление"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:88
+#: freeadmin/static/lib/js/freeadmin/Update.js:90
+msgid "Check Now"
+msgstr "Проверить сейчас"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:142
+msgid "Yes"
+msgstr "Да"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:151
+msgid "No"
+msgstr "Нет"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:166
+msgid "Loading..."
+msgstr "Загрузка…"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:167
+msgid "No pending updates have been found."
+msgstr "Нет ожидающих обновлений."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:104
+#: freeadmin/static/lib/js/freeadmin/Update.js:106
+msgid "Verify Install"
 msgstr ""

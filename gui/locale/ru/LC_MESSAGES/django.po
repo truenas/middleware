@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-10-12 18:21+0000\n"
+"PO-Revision-Date: 2014-10-25 15:36+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413138096.0\n"
+"X-POOTLE-MTIME: 1414251384.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -10398,7 +10398,7 @@ msgstr "Шифр"
 
 #: storage/models.py:821
 msgid "Standard"
-msgstr ""
+msgstr "Стандарт"
 
 #: storage/models.py:822
 msgid "Fast"
@@ -10526,9 +10526,8 @@ msgid "Now"
 msgstr "Сейчас"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Описание"
+msgstr "Описательное имя."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -10819,9 +10818,8 @@ msgid "Boot"
 msgstr "Загрузка"
 
 #: system/models.py:583
-#, fuzzy
 msgid "Descriptive Name)"
-msgstr "Описание"
+msgstr "Описательное имя)"
 
 #: system/models.py:600
 msgid "Signing Request"
@@ -10848,7 +10846,7 @@ msgstr "Создать"
 
 #: system/models.py:675
 msgid "Signing Certificate Authority"
-msgstr ""
+msgstr "Удостоверяющий центр"
 
 #: system/views.py:171
 #: system/views.py:172
@@ -11234,7 +11232,7 @@ msgstr ""
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
-msgstr ""
+msgstr "Обертка SASL"
 
 #: directoryservice/models.py:860
 msgid ""
@@ -11245,42 +11243,45 @@ msgid ""
 "key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
 "Integrity\" on the Windows server side."
 msgstr ""
+"SASL обертка клиента LDAP определяет, будет ли LDAP трафик подписан или "
+"подписан и зашифрован. Это необходимо в случае контроллеров домена, "
+"исполняющих подписанные LDAP соединения (например Windows 2000 SP3 или выше)"
+". Подписыванием и шифрованием LDAP можно управлять с помощью ключа реестра \""
+"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServerIntegr"
+"ity\" на стороне сервера Windows."
 
 #: services/models.py:291
 msgid ""
 "IP address(es) to advertise and listens to. If none specified, advertise the "
 "first IP address of the system, but to listen for any incoming request."
 msgstr ""
+"Анонсируемые и слушаемые IP-адреса. Если никто не указано, анонсируется "
+"первый IP-адрес системы, но слушаются все."
 
 #: services/models.py:744
-#, fuzzy
 msgid "The authentication method accepted by the target."
-msgstr "Метод может быть принят в контроллере."
+msgstr "Метод аутентификации принят целью."
 
 #: system/forms.py:1905
 msgid "Current Train"
-msgstr ""
+msgstr "Текущий поезд"
 
 #: system/forms.py:1930
-#, fuzzy
 msgid "Train"
-msgstr "Поезда"
+msgstr "Поезд"
 
 #: system/forms.py:1993
 #: system/forms.py:2378
-#, fuzzy
 msgid "Passphrase for encrypted private keys"
-msgstr "Пароль создан"
+msgstr "Парольная фраза для расшифровывания закрытого ключа"
 
 # корневая связь - тупой перевод))
 #: system/forms.py:2016
 #: system/forms.py:2396
-#, fuzzy
 msgid "Incorrect passphrase"
-msgstr "Неверный пароль."
+msgstr "Неверный пароль"
 
 #: system/models.py:509
-#, fuzzy
 msgid "Updade"
 msgstr "Обновить"
 
@@ -11293,33 +11294,322 @@ msgid ""
 "Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
 "Minute: 0-59."
 msgstr ""
+"Разрешенные значения:<br>Ползунок: 0-30 (Каждая N-ная минута).<br>Конкретная "
+"минута: 0-59"
 
 #: tasks/models.py:309
 msgid ""
 "Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
 "0-23."
 msgstr ""
+"Разрешенные значения:<br>Ползунок: 0-12 (Каждый N-ный час).<br>Конкретный "
+"час: 0-23"
 
 #: tasks/models.py:317
 msgid ""
 "Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
 "1-31."
 msgstr ""
+"Разрешенные значения:<br>Ползунок: 0-15 (Каждый N-ный день).<br>Конкретный "
+"день: 1-31"
 
 #: templates/system/update.html:23
 msgid "NOTICE"
-msgstr ""
+msgstr "ЗАМЕЧАНИЕ"
 
 #: templates/system/update.html:30
-#, fuzzy
 msgid "The following packages will be changed:"
-msgstr "Вы собираетесь обновить. Следующие пакеты будут изменены:"
+msgstr "Следующие пакеты будут изменены:"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
-msgstr ""
+msgstr "Выберите поезд вы бы хотели проверить на обновления"
 
 #: templates/system/update_select.html:20
-#, fuzzy
 msgid "Check For Update"
 msgstr "Проверить наличие обновлений"
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr "Ошибка демонтирования (%(retcode)s) -> %(output)s"
+
+#: jails/forms.py:218
+#, fuzzy
+msgid "Jail name cannot have '.'"
+msgstr "Имя пользователя не может содержать пробелы"
+
+#: jails/forms.py:1070
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr "Путь не может быть демонтирован %(source)s: %(error)s"
+
+#: jails/utils.py:609
+#, fuzzy
+msgid "Unable to determine IPv6 for plugin"
+msgstr "Невозможно определить адрес IPv4 для плагина"
+
+#: services/forms.py:1006
+#, fuzzy
+msgid "The following addresses are not valid: %s"
+msgstr "Следующие multipath не оптимальны: %s"
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr ""
+
+#: services/models.py:440
+#, fuzzy
+msgid "iSNS Servers"
+msgstr "NTP серверы"
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr ""
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Это порт, на котором будет работать WebDAV.<br>Не используйте порт, который "
+"уже используется другой службой (например, 22 используеься SSH)."
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Это порт, на котором будет работать Безопасный WebDAV.<br>Не используйте "
+"порт, который уже используется другой службой (например, 22 используеься "
+"SSH)."
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+"Тип HTTP-аутентификации для WebDAV<br>Basic Auth: Пароль отправляется по "
+"сети в открытом виде (Избегайте, если HTTPS отключен)<br>Digest Auth: Хэш "
+"пароля отправляется по сети (более безопасный)"
+
+#: services/models.py:1767
+msgid "Webdav SSL Certificate"
+msgstr "WebDAV SSL сертификат"
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+#, fuzzy
+msgid "Invalid IP or Network."
+msgstr "Неверная сеть: %s"
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr ""
+
+#: sharing/models.py:229
+#, fuzzy
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr "Удалить все общие ресурсы, связанные с этим томом"
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block (iSCSI)"
+msgstr "Блочное хранилище (iSCSI)"
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+#, fuzzy
+msgid "VMWare Sync"
+msgstr "Плагин VMWare"
+
+#: storage/forms.py:1576
+msgid "Apply Owner (user)"
+msgstr "Применить владельца (пользователя)"
+
+#: storage/forms.py:1582
+msgid "Apply Owner (group)"
+msgstr "Применить владельца (группу)"
+
+#: storage/forms.py:1588
+msgid "Apply Mode"
+msgstr "Применить режим"
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMWare-Snapshot"
+msgstr "Снимок"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr "Автоматически -- Выбрать разумные умолчания для доступных устройств"
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+"Виртуализация (RAID 10: Хорошие надежность и производительность, минимум "
+"места)"
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr "Резервные копии (RAID Z2: Хорошая надежность, средняя скорость и место)"
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr "Media (RAID Z1: Средняя надежность, хорошая скорость, больше места)"
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr "Журналы (RAID 0: Низкая надежность, максимум скорости и места)"
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr "Ресурс на найден на сервере"
+
+#: system/forms.py:2757
+msgid "Failed to connect: %s"
+msgstr "Не удалось подключиться: %s"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+"Имя пользователя на указанном VMWare хосте с правами для создания снимков "
+"виртуальных машин."
+
+#: system/models.py:907
+msgid "ZFS Filesystem"
+msgstr "Файловая система ZFS"
+
+#: system/models.py:911
+msgid "Datastore"
+msgstr "Хранилище"
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr "Хранилище на стороне VMWare к которому относится файловая система."
+
+#: system/models.py:920
+#: templates/system/index.html:33
+msgid "VMWare Plugin"
+msgstr "Плагин VMWare"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr "Проверяется пул загрузки..."
+
+#: system/views.py:1064
+#: system/views.py:1118
+msgid "System dataset not configured"
+msgstr "Не задан том системного набора данных"
+
+#: system/views.py:185
+#, fuzzy
+msgid "DeleteBulk"
+msgstr "Удалить"
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr "Загруженные пакеты"
+
+#: system/utils.py:230
+#, fuzzy
+msgid "Verifying"
+msgstr "Проверять"
+
+#: system/alertmods/boot_volume_status.py:19
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr "Статус загрузочного тома - %(status)s: %(message)s"
+
+#: system/views.py:318
+#, fuzzy
+msgid "Boot Environments successfully deleted."
+msgstr "Окружение загрузки успешно удалено."
+
+#: system/alertmods/boot_volume_status.py:28
+msgid "The boot volume status is %(status)s"
+msgstr "Состояние загрузочного тома - %(status)s"
+
+#: system/views.py:322
+#, fuzzy
+msgid "Failed to delete Boot Environments."
+msgstr "Не удалось удалить окружение загрузки."
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr "Загрузочный том ДЕГРАДИРОВАН"
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+"Доступно новое обновление. Примените его на закладке Система -> Обновление"
+
+#: templates/system/boot_scrub.html:5
+msgid "Do you want to scrub your boot pool now?"
+msgstr "Вы уверены, что хотите проверить ваш том сейчас?"
+
+#: templates/system/bootenv_datagrid.html:13
+msgid "Scrub Boot"
+msgstr "Проверка загрузки"
+
+#: templates/system/bootenv_datagrid.html:23
+msgid "Scrub Status"
+msgstr "Состояние проверки"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr "Состояне тома загрузки"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr "Последняя проверка"
+
+#: templates/system/bootenv_deletebulk.html:6
+#, fuzzy
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr "Вы уверены, что хотите удалить %(name)s?"
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr "Следующие пакеты будут загружены:"
+
+#: templates/system/update_check.html:31
+msgid "Do you want to continue?"
+msgstr "Действительно желаете продолжить?"
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr "Применить обновления после загрузки"
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+msgid "Fetch Datastores"
+msgstr "Загрузить хранилища"
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+#, fuzzy
+msgid "Configure"
+msgstr "Конфигурация"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr ""
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
+msgstr ""

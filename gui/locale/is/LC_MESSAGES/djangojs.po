@@ -362,3 +362,46 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1287
+msgid "Hostname cannot be blank."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1290
+msgid "Username cannot be blank."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1293
+msgid "Password cannot be blank."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:79
+#: freeadmin/static/lib/js/freeadmin/Update.js:81
+msgid "Manual Update"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:88
+#: freeadmin/static/lib/js/freeadmin/Update.js:90
+msgid "Check Now"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:142
+msgid "Yes"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:151
+msgid "No"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:166
+msgid "Loading..."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:167
+msgid "No pending updates have been found."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:104
+#: freeadmin/static/lib/js/freeadmin/Update.js:106
+msgid "Verify Install"
+msgstr ""

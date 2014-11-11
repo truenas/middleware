@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-10-13 16:08+0000\n"
+"PO-Revision-Date: 2014-11-08 19:52+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413216497.0\n"
+"X-POOTLE-MTIME: 1415476343.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7933,7 +7933,7 @@ msgstr ""
 
 #: plugins/models.py:93
 msgid "Plugin jail name"
-msgstr "Jail-naam van plug-in"
+msgstr "Naam van plug-in-jail"
 
 #: plugins/models.py:94
 msgid "Jail where the plugin is installed"
@@ -11254,6 +11254,13 @@ msgid ""
 "key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
 "Integrity\" on the Windows server side."
 msgstr ""
+"De  client-ldap-sasl-wrapping definieert of ldap-verkeer ondertekend of "
+"ondertekend en versleuteld (verzegeld) zal zijn. Deze optie is nodig in het "
+"geval van domeincontrollers die het gebruik van ondertekende LDAP-"
+"verbindingen afdwingen (zoals Windows 2000 SP3 of hoger). LDAP-ondertekenen "
+"en -verzegelen kan worden beheerd met de registersleutel \"HKLM\\System\\Curr"
+"entControlSet\\Services\\NTDS\\Parameters\\LDAPServerIntegrity\" aan de "
+"Windows-serverzijde."
 
 #: services/models.py:291
 msgid ""
@@ -11333,3 +11340,308 @@ msgstr "Kies voor welke trein u wilt controleren op updates"
 #: templates/system/update_select.html:20
 msgid "Check For Update"
 msgstr "Controleren op update"
+
+#: common/system.py:301
+msgid "Unmount Failed (%(retcode)s) -> %(output)s"
+msgstr "Ontkoppelen mislukt (%(retcode)s) -> %(output)s"
+
+#: jails/forms.py:218
+msgid "Jail name cannot have '.'"
+msgstr "Jailnaam kan geen '.' bevatten"
+
+#: jails/forms.py:1070
+msgid "The path could not be umounted %(source)s: %(error)s"
+msgstr "Het pad kon niet worden ontkoppeld %(source)s: %(error)s"
+
+#: jails/utils.py:609
+msgid "Unable to determine IPv6 for plugin"
+msgstr "Kan IPv6 voor plug-in niet bepalen"
+
+#: services/forms.py:1006
+msgid "The following addresses are not valid: %s"
+msgstr "De volgende adressen zijn niet geldig: %s"
+
+#: services/forms.py:1471
+msgid "This authentication group does not support CHAP MUTUAL"
+msgstr "Deze authenticatiegroep ondersteunt geen CHAP MUTUAL"
+
+#: services/models.py:440
+msgid "iSNS Servers"
+msgstr "iSNS-servers"
+
+#: services/models.py:444
+msgid "Pool Available Size Threshold (%)"
+msgstr "Groottedrempel beschikbare pool (%)"
+
+#: services/models.py:488
+msgid " Available Size Threshold (%)"
+msgstr " Groottedrempel beschikbaar (%)"
+
+#: services/models.py:1736
+msgid ""
+"This is the port at which WebDAV will run on.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Dit is de poort waarop WebDAV zal werken.<br>Gebruik geen poort die al door "
+"een andere service in gebruik is (bv. 22 voor SSH)."
+
+#: services/models.py:1744
+msgid ""
+"This is the port at which Secure WebDAV will run on.<br>Do not use a port "
+"that is already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Dit is de poort waarop Beveiligde WebDAV zal werken.<br>Gebruik geen poort "
+"die al door een andere service in gebruik is (bv. 22 voor SSH)."
+
+#: services/models.py:1760
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+"Type HTTP-authenticatie voor WebDAV<br>Basisauth.: wachtwoord wordt als "
+"platte tekst over het netwerk verzonden (Vermijden als HTTPS is "
+"uitgeschakeld)<br>Digest-auth.: hash van het wachtwoord wordt over het "
+"netwerk verzonden (veiliger)"
+
+#: services/models.py:1767
+msgid "Webdav SSL Certificate"
+msgstr "Webdav-SSL-certificaat"
+
+#: sharing/forms.py:188
+#: sharing/forms.py:212
+msgid "Invalid IP or Network."
+msgstr "Ongeldig IP-nummer of netwerk."
+
+#: sharing/models.py:223
+msgid "Allow only listed hosts and/or networks access to this volume"
+msgstr "Alleen vermelde hosts en/of netwerken toegang tot dit volume geven"
+
+#: sharing/models.py:229
+msgid "Deny listed hosts and/or networks access to this volume"
+msgstr "Vermelde hosts en/of netwerken toegang tot dit volume weigeren"
+
+#: sharing/nav.py:43
+#: templates/sharing/index.html:27
+msgid "Block (iSCSI)"
+msgstr "Blok (iSCSI)"
+
+#: storage/admin.py:629
+#: storage/forms.py:1741
+msgid "VMWare Sync"
+msgstr "VMWare-synchronisatie"
+
+#: storage/forms.py:1576
+msgid "Apply Owner (user)"
+msgstr "Eigenaar toepassen (gebruiker)"
+
+#: storage/forms.py:1582
+msgid "Apply Owner (group)"
+msgstr "Eigenaar toepassen (groep)"
+
+#: storage/forms.py:1588
+msgid "Apply Mode"
+msgstr "Modus toepassen"
+
+#: storage/forms.py:1522
+msgid ""
+"The default of the zvol block size is chosen automatically based on the "
+"number of the disks in the pool for a general use case."
+msgstr ""
+"De standaardwaarde van de zvol-blokgrootte wordt automatisch gekozen op "
+"basis van het aantal schijven in de pool voor een algemene use case."
+
+#: storage/models.py:1098
+#: templates/storage/index.html:38
+msgid "VMWare-Snapshot"
+msgstr "VMWare-momentopname"
+
+#: system/forms.py:1610
+msgid "Automatic - Pick reasonable defaults for available drives"
+msgstr ""
+"Automatisch - Redelijke standaardwaarden voor beschikbare stations kiezen"
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Good Performance, Less Storage)"
+msgstr ""
+"Virtualisatie (RAID 10: goede betrouwbaarheid, goede prestaties, minder "
+"opslag)"
+
+#: system/forms.py:1614
+msgid ""
+"Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
+"Storage)"
+msgstr ""
+"Virtualisatie (RAID 10: goede betrouwbaarheid, betere prestaties, minimale "
+"opslag)"
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Less Storage)"
+msgstr ""
+"Back-ups (RAID Z2: goede betrouwbaarheid, gemiddelde prestaties, minder "
+"opslag)"
+
+#: system/forms.py:1618
+msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
+msgstr ""
+"Back-ups (RAID Z2: goede betrouwbaarheid, gemiddelde prestaties, gemiddelde "
+"opslag)"
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, OK Performance, More Storage)"
+msgstr ""
+"Media (RAID Z1: gemiddelde betrouwbaarheid, prima prestaties, meer opslag)"
+
+#: system/forms.py:1622
+msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
+msgstr ""
+"Media (RAID Z1: gemiddelde betrouwbaarheid, goede prestaties, meer opslag)"
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Best Storage)"
+msgstr "Logs (RAID 0: geen betrouwbaarheid, beste prestaties, beste opslag)"
+
+#: system/forms.py:1626
+msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
+msgstr "Logs (RAID 0: geen betrouwbaarheid, beste prestaties, maximale opslag)"
+
+#: system/forms.py:2752
+msgid "Datastore not found in the server."
+msgstr "Gegevensarchief niet gevonden in de server."
+
+#: system/forms.py:2757
+msgid "Failed to connect: %s"
+msgstr "Verbinden is mislukt: %s"
+
+#: system/models.py:898
+msgid ""
+"Username on the above VMWare host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+"Gebruikersnaam op de bovenstaande VMWare-host met genoeg bevoegdheden voor "
+"het maken van momentopnamen van virtuele machines."
+
+#: system/models.py:907
+msgid "ZFS Filesystem"
+msgstr "ZFS-bestandssysteem"
+
+#: system/models.py:911
+msgid "Datastore"
+msgstr "Gegevensarchief"
+
+#: system/models.py:914
+msgid "The datastore on the VMWare side that the filesystem corresponds to."
+msgstr ""
+"Het gegevensarchief aan de VMWare-zijde waar het bestandssysteem mee "
+"overeenkomt."
+
+#: system/models.py:920
+#: templates/system/index.html:33
+msgid "VMWare Plugin"
+msgstr "VMWare-plug-in"
+
+#: system/views.py:239
+msgid "Scrubbing the Boot Pool..."
+msgstr "De bootpool reinigen..."
+
+#: system/views.py:1064
+#: system/views.py:1118
+msgid "System dataset not configured"
+msgstr "Systeemgegevensset niet geconfigureerd"
+
+#: system/views.py:185
+msgid "DeleteBulk"
+msgstr "DeleteBulk"
+
+#: system/views.py:1138
+msgid "Packages downloaded"
+msgstr "Pakketten gedownload"
+
+#: system/utils.py:230
+msgid "Verifying"
+msgstr "Verifiëren"
+
+#: system/alertmods/boot_volume_status.py:19
+msgid "The boot volume status is %(status)s: %(message)s"
+msgstr "De status van het opstartvolume is %(status)s: %(message)s"
+
+#: system/views.py:318
+msgid "Boot Environments successfully deleted."
+msgstr "Opstartomgevingen met succes verwijderd."
+
+#: system/alertmods/boot_volume_status.py:28
+msgid "The boot volume status is %(status)s"
+msgstr "De status van het opstartvolume is %(status)s"
+
+#: system/views.py:322
+msgid "Failed to delete Boot Environments."
+msgstr "Verwijderen van opstartomgevingen is mislukt."
+
+#: system/alertmods/boot_volume_status.py:44
+msgid "The boot volume status is DEGRADED"
+msgstr "De status van het opstartvolume is VERSLECHTERD"
+
+#: system/alertmods/update_check.py:30
+msgid "There is a new update available! Apply it in System -> Update tab."
+msgstr ""
+"Er is een nieuwe update beschikbaar! Pas deze toe in Systeem -> tabblad "
+"Bijwerken."
+
+#: templates/system/boot_scrub.html:5
+msgid "Do you want to scrub your boot pool now?"
+msgstr "Wilt u uw bootpool nu reinigen?"
+
+#: templates/system/bootenv_datagrid.html:13
+msgid "Scrub Boot"
+msgstr "Boot reinigen"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Voume Condition"
+msgstr "Toestand van opstartvolume"
+
+#: templates/system/bootenv_datagrid.html:23
+msgid "Scrub Status"
+msgstr "Reinigingsstatus"
+
+#: templates/system/bootenv_datagrid.html:21
+msgid "Boot Volume Condition"
+msgstr "Toestand van opstartvolume"
+
+#: templates/system/bootenv_datagrid.html:29
+msgid "Last Scrub Run on"
+msgstr "Laatste reiniging op"
+
+#: templates/system/bootenv_deletebulk.html:6
+msgid "Are you sure you want to delete the following boot environments?"
+msgstr "Weet u zeker dat u de volgende opstartomgevingen wilt verwijderen?"
+
+#: templates/system/update_check.html:29
+msgid "The following packages will be downloaded:"
+msgstr "De volgende pakketten zullen worden gedownload:"
+
+#: templates/system/update_check.html:31
+msgid "Do you want to continue?"
+msgstr "Wilt u doorgaan?"
+
+#: templates/system/update_check.html:32
+msgid "Apply updates after downloading"
+msgstr "Updates toepassen na downloaden"
+
+#: templates/system/vmwareplugin_add.html:5
+#: templates/system/vmwareplugin_edit.html:6
+msgid "Fetch Datastores"
+msgstr "Gegevensarchieven ophalen"
+
+#: templates/vmware/index.html:3
+#: vmware/models.py:67
+msgid "Configure"
+msgstr "Configureren"
+
+#: templates/system/update_verify.html:79
+msgid "<bold>All files verified successfully!</bold>"
+msgstr "<bold>Alle bestanden met succes geverifieerd!</bold>"
+
+#: templates/system/update_verify.html:81
+msgid "Start the Verification process now?"
+msgstr "Het verificatieproces nu starten?"
