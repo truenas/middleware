@@ -195,7 +195,7 @@ def guess_vfs_zfs_arc_max():
 
 
 def guess_vfs_zfs_l2arc_headroom():
-    return 4
+    return 2
 
 
 def guess_vfs_zfs_l2arc_noprefetch():
@@ -207,7 +207,7 @@ def guess_vfs_zfs_l2arc_norw():
 
 
 def guess_vfs_zfs_l2arc_write_max():
-    return 80000000
+    return 10000000
 
 
 def guess_vfs_zfs_l2arc_write_boost():
