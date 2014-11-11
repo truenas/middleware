@@ -17,8 +17,6 @@ var Navigation = React.createClass({
       views : React.PropTypes.array.isRequired
     }
   , createNavItems: function( item ) {
-      console.log(this.props);
-      console.log( item );
       return (
         <Link to              = { item.route }
               className       = "btn btn-default"
@@ -43,7 +41,6 @@ var Sections = React.createClass({
       views: React.PropTypes.array
     }
   , render: function() {
-    console.log(this.props);
     if ( this.props.views.length > 1 ) {
       return (
         <TWBS.Grid fluid>
