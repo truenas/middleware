@@ -1,6 +1,8 @@
 @left-menu-width: 230px;
 @notification-icons-width: 200px;
 
+@almost-white: #f3f3f3;
+
 .notificationBar {
     position: relative;
     background-color: #1f1f1f;
@@ -12,6 +14,20 @@
     background-position: 15px 7px;
 }
 
+    .notificationBar .userInfo {
+        float: right;
+        height: 70px;
+        line-height: 70px;
+        margin-right: 10px;
+        width: 200px;
+        color: @almost-white;
+    }
+
+        .notificationBar .userInfo span {
+            font-size: 150%;
+            padding: 0 15px;
+        }
+
 .notificationBox {
     position: absolute;
     background-color: #3d3d3d;
@@ -22,33 +38,36 @@
     border-radius: 0 0 10px 10px;
     padding: 10px;
 }
-.notificationArea{
+
+.notificationArea {
     float: left;
     width: calc(~'100% - '@notification-icons-width);
 }
-.notificationIcons{
+
+.notificationIcons {
     width: @notification-icons-width;
     float: left;
     padding-left: 10px;
 }
-.notificationIcons i{
-    float: left;
-    text-align: center;
-    margin: 10px;       
-    width: 60px;
-    height: 60px;
-    color: #cccccc;
-}
-.notificationIcons i.circle{
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;    
-    line-height: 60px;
-    border: #3d3d3d  3px solid;
-    box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-    
 
-}
+    .notificationIcons i {
+        float: left;
+        text-align: center;
+        margin: 10px;
+        width: 60px;
+        height: 60px;
+        color: #cccccc;
+    }
+
+        .notificationIcons i.circle {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            line-height: 60px;
+            border: #3d3d3d 3px solid;
+            box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
+        }
+
 .leftMenu {
     position: absolute;
     background-color: #3d3d3d;
@@ -92,7 +111,7 @@
                 font-weight: 400;
                 text-decoration: none;
                 line-height: 2;
-                color: #f3f3f3;
+                color: @almost-white;
             }
 
             .leftMenuContent ul li i {
