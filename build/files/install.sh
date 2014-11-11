@@ -3,12 +3,9 @@
 # vim: noexpandtab ts=8 sw=4 softtabstop=4
 
 # Setup a semi-sane environment
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue
-export PATH
-HOME=/root
-export HOME
-TERM=${TERM:-cons25}
-export TERM
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue
+export HOME=/root
+export TERM=${TERM:-cons25}
 
 . /etc/avatar.conf
 
@@ -816,8 +813,6 @@ menu_install()
 	cp -pR /tmp/data_preserved/. /tmp/data/data
     else
 	cp -R /data/* /tmp/data/data
-	chown -R www:www /tmp/data/data
-        chown -R pgsql:pgsql /tmp/data/data/freenas.db
     fi
 
     local OS=FreeNAS
