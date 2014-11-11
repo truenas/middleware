@@ -19,14 +19,40 @@
         height: 70px;
         line-height: 70px;
         margin-right: 10px;
-        width: 200px;
         color: @almost-white;
     }
 
-        .notificationBar .userInfo span {
+        .notificationBar .userInfo i.fa {
+            font-size: 200%;
+            padding: 0 15px;
+        }
+
+        .notificationBar .userInfo span.userName {
             font-size: 150%;
             padding: 0 15px;
         }
+
+                .userInfo i.icoAlert {
+                    padding-right: 0px;
+                    padding-left: 5px;
+                }
+
+                    .userInfo i.icoAlert > span {
+                        position: absolute;
+                        background-color: rgba(255, 0, 0, 0.65);
+                        border-radius: 50px;
+                        color: white;
+                        display: block;
+                        font-weight: 700;
+                        min-height: 20px;
+                        line-height: 20px;
+                        margin-left: 10px;
+                        margin-top: -38px;
+                        text-align: center;
+                        min-width: 20px;
+                        font-size: 70%;
+                    }
+
 
 .notificationBox {
     position: absolute;

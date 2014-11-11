@@ -35,6 +35,7 @@ var FreeNASWebApp = React.createClass({
           </div>
         </div>
         <div className="userInfo">
+        <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="2" />
         <Icon glyph = "user" icoSize = "3x" />
         <span class="userName"> LaCoVa </span> 
         <Icon glyph = "fire-extinguisher" icoSize = "3x" />
