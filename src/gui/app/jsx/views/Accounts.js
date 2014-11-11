@@ -7,26 +7,27 @@
 "use strict";
 
 
-var React  = require("react");
-var Viewer = require("../components/Viewer");
+var React = require("react");
 
-// Dummy data from API call on relatively unmolested system
-// TODO: Update to use data from Flux store
-var inputData  = require("../../data/fakedata/accounts.json");
-var formatData = require("../../data/middleware-keys/accounts-display.json")[0];
+var SectionNav = require("../components/SectionNav");
+
+var sections = [{
+    route   : "users"
+  , display : "Accounts"
+},{
+    route   : "groups"
+  , display : "Groups"
+}];
 
 var Accounts = React.createClass({
     render: function() {
-    return (
-      <div>
-        <h2>Users View</h2>
-        <Viewer header     = { "User Accounts" }
-                inputData  = { inputData }
-                formatData = { formatData } >
-        </Viewer>
-      </div>
-    );
-  }
+      return (
+        <div>
+          <SectionNav views = { sections } />
+          { this.props.activeRouteHandler() }
+        </div>
+      );
+    }
 });
 
 module.exports = Accounts;
