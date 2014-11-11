@@ -363,12 +363,18 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
-    jc = JailsConfiguration.objects.all()[0]
+    try:  
+        jc = JailsConfiguration.objects.all()[0]
+    except:
+        jc = None
 
     #FIXME: duplicated code with available_install
     try:
         if not jail_path_configured():
             jail_auto_configure()
+
+        if not jc:
+            jc = JailsConfiguration.objects.all()[0]
 
         if not jc.jc_ipv4_dhcp:
             addrs = guess_addresses()
