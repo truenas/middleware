@@ -26,12 +26,12 @@ var FreeNASWebApp = React.createClass({
           <textarea className = "form-control" rows="10" >Notification Bar will live here!</textarea>
           </div>
           <div className = "notificationIcons">
-            <Icon glyph = "camera-retro" icoSize = "3x" icoClass = "circle" />
-            <Icon glyph = "paw" icoSize = "3x" icoClass = "circle" />
-            <Icon glyph="bitcoin" icoSize="3x" icoClass = "circle" />
-            <Icon glyph="moon-o" icoSize="3x" icoClass = "circle" />
-            <Icon glyph="ambulance" icoSize="3x" icoClass = "circle" />
-            <Icon glyph="plug" icoSize="3x" icoClass = "circle" />
+            <Icon glyph = "camera-retro" icoSize = "2x" icoClass = "circle" />
+            <Icon glyph = "paw" icoSize = "2x" icoClass = "circle" />
+            <Icon glyph="bitcoin" icoSize="2x" icoClass = "circle" />
+            <Icon glyph="moon-o" icoSize="2x" icoClass = "circle" />
+            <Icon glyph="ambulance" icoSize="2x" icoClass = "circle" />
+            <Icon glyph="plug" icoSize="2x" icoClass = "circle" />
           </div>
         </div>
         <div className="userInfo">
