@@ -30,21 +30,40 @@ var LeftMenu = React.createClass({
 
    animMenu: function() {
        if (this.state.epxandedClass === "expanded")
-    {
-      Velocity(this.refs.leftMenuRef.getDOMNode()
-      , { width: "44px;" }
-      , { delay: 200,
-          duration: 1500,
-          easing: "linear",
-          complete: this.menuCollapse
-        }
-      );
+      {
+        Velocity(this.refs.leftMenuRef.getDOMNode()
+        , { width: "44px;" }
+        , { duration: 1500,
+            easing: "easeInOutBounce",
+            complete: this.menuCollapse
+          }
+        );
+
+        Velocity(document.getElementsByClassName("anchorText")
+        , "fadeOut"
+        , { duration: 300
+          }
+        );
 
       //this.setState({epxandedClass: "collapsed"});
     }
     else
     {
-      this.setState({epxandedClass: "expanded"});
+        Velocity(this.refs.leftMenuRef.getDOMNode()
+        , { width: "230px;" }
+        , { duration: 1500,
+            easing: "easeInOutBounce",
+            complete: this.menuCollapse
+          }
+        );
+
+        Velocity(document.getElementsByClassName("anchorText")
+        , "fadeIn"
+        , { delay: 1000,
+            duration: 300
+          }
+        );
+      //this.setState({epxandedClass: "expanded"});
     } 
 
 
@@ -58,16 +77,16 @@ var LeftMenu = React.createClass({
         <div className="leftMenuContent">
         <div onClick={this.animMenu}>...</div>
                 <ul>
-                  <li><Link to="dashboard"><Icon glyph="dashboard" icoClass="icoAlert" warningFlag="!" />Dashboard</Link></li>
-                  <li><Link to="accounts"><Icon glyph="paper-plane" />Accounts</Link></li>
-                  <li><Link to="tasks"><Icon glyph="paw" />Tasks</Link></li>          
-                  <li><Link to="network"><Icon glyph="moon-o" />Network</Link></li>
-                  <li><Link to="storage"><Icon glyph="magic" />Storage</Link></li>
-                  <li><Link to="sharing"><Icon glyph="cut" />Sharing</Link></li>                    
-                  <li><Link to="services"><Icon glyph="bitcoin" />Services</Link></li>          
-                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoAlert" warningFlag="!" />System Tools</Link></li>
-                  <li><Link to="control-panel"><Icon glyph="paragraph" />Control Panel</Link></li>
-                  <li><Link to="power"><Icon glyph="plug" />Power</Link></li>
+                  <li><Link to="dashboard"><Icon glyph="dashboard" icoClass="icoAlert" warningFlag="!" /><span ref="anchorTextRef" className="anchorText">Dashboard</span></Link></li>
+                  <li><Link to="accounts"><Icon glyph="paper-plane" /><span ref="anchorTextRef" className="anchorText">Accounts</span></Link></li>
+                  <li><Link to="tasks"><Icon glyph="paw" /><span ref="anchorTextRef" className="anchorText">Tasks</span></Link></li>          
+                  <li><Link to="network"><Icon glyph="moon-o" /><span className="anchorText">Network</span></Link></li>
+                  <li><Link to="storage"><Icon glyph="magic" /><span className="anchorText">Storage</span></Link></li>
+                  <li><Link to="sharing"><Icon glyph="cut" /><span className="anchorText">Sharing</span></Link></li>                    
+                  <li><Link to="services"><Icon glyph="bitcoin" /><span className="anchorText">Services</span></Link></li>          
+                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoAlert" warningFlag="!" /><span className="anchorText">System Tools</span></Link></li>
+                  <li><Link to="control-panel"><Icon glyph="paragraph" /><span className="anchorText">Control Panel</span></Link></li>
+                  <li><Link to="power"><Icon glyph="plug" /><span className="anchorText">Power</span></Link></li>
                 </ul>
         </div>
       </div>
