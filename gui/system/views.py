@@ -313,20 +313,20 @@ def bootenv_deletebulk(request):
         raise ValueError("Invalid name")
     names = names.split(',')
     if request.method == 'POST':
-        with open(BOOTENV_DELETE_PROGRESS, 'w') as f:
-            failed = False
-            for i, name in enumerate(names):
+        failed = False
+        for i, name in enumerate(names):
+            with open(BOOTENV_DELETE_PROGRESS, 'w') as f:
                 f.write(json.dumps({
                     'current': name,
                     'index': i,
                     'total': len(names),
                 }))
-                f.flush()
-                delete = DeleteClone(name)
-                if delete is False:
-                    failed = True
-        os.unlink(BOOTENV_DELETE_PROGRESS)
-        if failed is not False:
+            delete = DeleteClone(name)
+            if delete is False:
+                failed = True
+        if os.path.exists(BOOTENV_DELETE_PROGRESS):
+            os.unlink(BOOTENV_DELETE_PROGRESS)
+        if failed is False:
             return JsonResp(
                 request,
                 message=_('Boot Environments successfully deleted.'),
