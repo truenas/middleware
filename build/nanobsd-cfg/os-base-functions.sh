@@ -519,8 +519,6 @@ install_debug_kernel ( )
 clean_etc()
 {
 	rm -f ${NANO_WORLDDIR}/etc/fstab ${NANO_WORLDDIR}/conf/base/etc/fstab
-	rm -f ${NANO_WORLDDIR}/etc/passwd
-	rm -f ${NANO_WORLDDIR}/etc/group
 }
 
 install_ports()
