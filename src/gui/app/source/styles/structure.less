@@ -1,4 +1,5 @@
 @left-menu-width: 230px;
+@collapsed-left-menu-width: 44px;
 @notification-icons-width: 200px;
 
 @almost-white: #f3f3f3;
@@ -105,6 +106,11 @@
     z-index: 100;
 }
 
+.leftMenu.collapsed {
+    width: @collapsed-left-menu-width;
+}
+
+
 .leftMenuContent {
     height: 100%;
     overflow: hidden;
@@ -125,6 +131,13 @@
                 display: block;
                 padding-left: 15px;
                 transition: all 0.25s ease-in-out;
+            }
+            .collapsed .leftMenuContent ul li a {
+                padding-left: 10px;
+            }
+
+            .collapsed .leftMenuContent ul li a span {
+                display: none;
             }
 
                 .leftMenuContent ul li a:hover {
