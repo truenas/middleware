@@ -18,6 +18,14 @@ class User(object):
         return role in self.groups
 
 
+class Service(object):
+    def __init__(self):
+        self.name = None
+
+    def has_role(self, role):
+        return True
+
+
 class PasswordAuthenticator(object):
     def __init__(self, dispatcher):
         self.datastore = dispatcher.datastore
@@ -27,7 +35,7 @@ class PasswordAuthenticator(object):
         dispatcher.require_collection('groups', pkey_type='serial')
 
     def get_user(self, name):
-        entity = self.datastore.get_one('users', [('name', '=', name)])
+        entity = self.datastore.get_one('users', ('username', '=', name))
         if entity is None:
             if name in self.users:
                 del self.users[name]
@@ -35,8 +43,8 @@ class PasswordAuthenticator(object):
 
         user = User()
         user.uid = entity['id']
-        user.name = entity['name']
-        user.pwhash = entity['password']
+        user.name = entity['username']
+        user.pwhash = entity['unixhash']
 
         #for gid in entity['groups']:
         #    grp = self.datastore.get_by_id('groups', gid)
@@ -47,6 +55,11 @@ class PasswordAuthenticator(object):
 
         self.users[user.name] = user
         return user
+
+    def get_service(self, name):
+        service = Service()
+        service.name = name
+        return service
 
     def invalidate_user(self, name):
         self.get_user(name)

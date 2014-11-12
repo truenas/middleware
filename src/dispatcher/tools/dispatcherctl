@@ -5,7 +5,7 @@ import argh
 import json
 import time
 import socket
-from dispatcherclient import Client, ClientError
+from dispatcher.client import Client, ClientError
 from texttable import Texttable
 
 DEFAULT_SERVER = '127.0.0.1'
@@ -27,7 +27,7 @@ def enumerate(server=DEFAULT_SERVER):
         print "Service: {0}".format(svc)
         print "Methods:"
         for m in c.call_sync('discovery.get_methods', DEFAULT_TIMEOUT, svc):
-            print "\t{0}".format(m)
+            print "\t{0}".format(m['name'])
 
 @argh.arg('--server')
 @argh.arg('events', nargs='*')
@@ -62,7 +62,7 @@ def tasks(server=DEFAULT_SERVER, limit=None, H=False):
         table.add_row([
             task['id'],
             task['name'],
-            ','.join(task['args']),
+            ','.join([str(i) for i in task['args']]),
             task['state'],
             '',
             time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(task['created_at']))
@@ -88,6 +88,7 @@ def create_client(server):
     try:
         c = Client()
         c.connect(server)
+        c.login_service('dispatcherctl', DEFAULT_TIMEOUT)
     except socket.error, err:
         print "Cannot connect: {0}".format(str(err))
         sys.exit(1)

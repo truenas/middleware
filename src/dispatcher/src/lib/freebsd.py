@@ -1,12 +1,12 @@
 __author__ = 'jceel'
 
-import ctypes
+import sysctl
 
-def read_sysctl(name):
-    libc = ctypes.CDLL("libc.so.7")
-    size = ctypes.c_uint(0)
-    libc.sysctlbyname(name, None, ctypes.byref(size), None, 0)
-    buf = ctypes.c_char_p(" " * size.value)
-    libc.sysctlbyname(name, buf, ctypes.byref(size), None, 0)
 
-    return buf.value
+def get_sysctl(name):
+    node = sysctl.filter(name)
+
+    if len(node) == 1:
+        return node[0].value
+
+    return {i.name[len(name) + 1:]: i.value for i in node}

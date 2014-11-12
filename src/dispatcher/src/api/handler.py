@@ -2,7 +2,9 @@ __author__ = 'jceel'
 
 import urlparse
 import json
-from rpc.rpc import RpcException
+
+from dispatcher.rpc import RpcException
+
 
 class ApiHandler(object):
     def __init__(self, dispatcher):
