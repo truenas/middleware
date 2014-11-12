@@ -1013,12 +1013,12 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
                 except AddressValueError:
                     errors.append(ip)
             errors.append(server)
-                
+
         if errors:
             raise forms.ValidationError(_(
                 'The following addresses are not valid: %s') % ', '.join(errors)
             )
-            
+
         return servers
 
     def save(self):
