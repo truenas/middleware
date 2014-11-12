@@ -15,40 +15,38 @@ var TableViewer  = require("./Viewer/TableViewer");
 
 // Main Viewer Wrapper Component
 var Viewer = React.createClass({
-    changeViewMode: function( targetMode ) {
-      var newMode;
+    propTypes: {
+      defaultMode  : React.PropTypes.string
+    , allowedModes : React.PropTypes.array
+    , itemData     : React.PropTypes.object.isRequired
+    , inputData    : React.PropTypes.array.isRequired
+    , formatData   : React.PropTypes.object.isRequired
+  }
+  , changeViewMode: function( targetMode ) {
+    var newMode;
 
-      // See if a disallowed mode has been requested
-      if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
-        console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
-        if ( this.props.defaultMode ) {
-          // Use the default mode, if provided
-          console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
-          newMode = this.props.defaultMode;
-        } else {
-          // If no default, use the first allowed mode in the list
-          newMode = this.props.allowedModes[0];
-        }
+    // See if a disallowed mode has been requested
+    if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
+      console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
+      if ( this.props.defaultMode ) {
+        // Use the default mode, if provided
+        console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
+        newMode = this.props.defaultMode;
       } else {
-        newMode = targetMode;
+        // If no default, use the first allowed mode in the list
+        newMode = this.props.allowedModes[0];
       }
-
-      return newMode;
-   }
-   , handleModeSelect: function( selectedKey ) {
-      this.setState({
-        currentMode: this.changeViewMode( selectedKey )
-      });
-   }
-   , handleItemSelect: function( selectedKey ) {
-      this.setState({ selectedItem: selectedKey });
-   }
-   , propTypes: {
-        defaultMode  : React.PropTypes.string
-      , allowedModes : React.PropTypes.array
-      , inputData    : React.PropTypes.array.isRequired
-      , formatData   : React.PropTypes.object.isRequired
+    } else {
+      newMode = targetMode;
     }
+
+    return newMode;
+  }
+  , handleModeSelect: function( selectedKey ) {
+     this.setState({
+       currentMode: this.changeViewMode( selectedKey )
+     });
+  }
   , getDefaultProps: function() {
       // Viewer allows all modes by default, except for heirarchical. This list
       // can be overwritten by passing allowedModes into your <Viewer />.
@@ -82,7 +80,6 @@ var Viewer = React.createClass({
       return {
           currentMode  : this.changeViewMode( initialMode )
         , tableCols    : defaultTableCols
-        , selectedItem : this.props.inputData[0][ this.props.formatData.selectionKey ]
       };
     }
   , render: function() {
@@ -116,15 +113,17 @@ var Viewer = React.createClass({
         case "detail":
           return( <DetailViewer inputData        = { this.props.inputData }
                                 formatData       = { this.props.formatData }
-                                handleItemSelect = { this.handleItemSelect }
-                                selectedKey      = { this.state.selectedItem } /> );
+                                itemData         = { this.props.itemData }
+                                Editor           = { this.props.Editor } /> );
         case "icon":
           return( <IconViewer inputData  = { this.props.inputData }
-                              formatData = { this.props.formatData } /> );
+                              formatData = { this.props.formatData }
+                              Editor     = { this.props.Editor } /> );
         case "table":
           return( <TableViewer inputData  = { this.props.inputData }
                                formatData = { this.props.formatData }
-                               tableCols  = { this.state.tableCols } /> );
+                               tableCols  = { this.state.tableCols }
+                               Editor     = { this.props.Editor } /> );
         case "heir":
           // TODO: Heirarchical Viewer
           break;

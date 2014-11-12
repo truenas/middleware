@@ -21,7 +21,8 @@ var Groups = React.createClass({
       return (
         <Viewer header     = { "Groups" }
                 inputData  = { inputData }
-                formatData = { formatData } >
+                formatData = { formatData }
+                Editor     = { this.props.activeRouteHandler } >
         </Viewer>
       );
     }

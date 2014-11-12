@@ -2,13 +2,37 @@
 
 "use strict";
 
-var React = require("react");
 var _     = require("lodash");
+var React = require("react");
 
 var Editor = React.createClass({
-    render: function() {
-      var innerstuff = [];
-
+   propTypes: {
+      itemData     : React.PropTypes.object.isRequired
+    , inputData    : React.PropTypes.array.isRequired
+    , formatData   : React.PropTypes.object.isRequired
+  }
+  , getInitialState: function() {
+      return {
+        targetItem: this.changeTargetItem( this.props.params )
+      };
+    }
+  , componentWillReceiveProps: function( nextProps ) {
+      // TODO: Optimize based on changing props. Might need a shouldComponentUpdate.
+      this.setState({
+        targetItem: this.changeTargetItem( nextProps.params )
+      });
+    }
+  , changeTargetItem: function( params ) {
+      return _.find( this.props.inputData, function( item ) {
+          // Returns the first object from the input array whose selectionKey matches
+          // the current route's dynamic portion. For instance, /accounts/users/root
+          // with bsdusr_usrname as the selectionKey would match the first object
+          // in inputData whose username === "root"
+          return params[ this.props.itemData["param"] ] === item[ this.props.formatData["selectionKey"] ];
+        }.bind(this)
+      );
+    }
+  , render: function() {
       // Create line items for editor form
       var createForm = function( item ) {
         var createField = function( inputValue ) {
@@ -20,24 +44,21 @@ var Editor = React.createClass({
           }
         };
 
-        innerstuff.push(
-          <span>
-            <dt><b>{ this.props.formatData.dataKeys[ item ]["name"] }</b></dt>
-            <dd>{ createField( this.props.inputData[ item ] ) }</dd>
+
+        return (
+          <span key={ item["name"] }>
+            <dt><b>{ item["name"] }</b></dt>
+            <dd>{ createField( this.state.targetItem[ item["key"] ] ) }</dd>
             <br />
           </span>
         );
       }.bind(this);
 
-      _.chain( this.props.formatData.dataKeys)
-       .keys()
-       .forEach( createForm );
-
       return (
         <div>
-          <h2>{ this.props.formatData.dataKeys[ this.props.formatData["primaryKey"] ]["name"] }</h2>
+          <h2>{ this.state.targetItem[ this.props.formatData["primaryKey"] ] }</h2>
           <dl>
-            { innerstuff }
+            { this.props.formatData.dataKeys.map( createForm ) }
           </dl>
         </div>
       );
