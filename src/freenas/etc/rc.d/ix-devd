@@ -217,7 +217,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     #mount -uw /
     echo "Restarting services." | logger
     /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py nfsv4link > /dev/null
-    /etc/rc.d/statd quietrestart
+    /etc/rc.d/statd quietstart
     /usr/sbin/service ix-nfsd quietstart
     /usr/sbin/service mountd quietrestart
     /usr/sbin/service nfsd quietrestart
