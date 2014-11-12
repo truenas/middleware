@@ -516,6 +516,9 @@ def varlogmessages(request, lines):
     if lines is None:
         lines = 3
     msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
+    # "\x07 is invalid XML CDATA, do below to escape it, as well as show some
+    # indication of the "console bell" in the webconsole ui
+    msg = msg.replace("\x07","^G")
     return render(request, 'system/status/msg.xml', {
         'msg': msg,
     }, content_type='text/xml')
