@@ -75,11 +75,11 @@ var LeftMenu = React.createClass({
     return (
       <div ref="leftMenuRef" className={"leftMenu "  + this.state.epxandedClass}>
         <div className="leftMenuContent">
-        <div onClick={this.animMenu}>...</div>
+        <div className="ellipsis" onClick={this.animMenu}>{ String.fromCharCode(8230) }</div>
                 <ul>
-                  <li><Link to="dashboard"><Icon glyph="dashboard" icoClass="icoAlert" warningFlag="!" /><span ref="anchorTextRef" className="anchorText">Dashboard</span></Link></li>
-                  <li><Link to="accounts"><Icon glyph="paper-plane" /><span ref="anchorTextRef" className="anchorText">Accounts</span></Link></li>
-                  <li><Link to="tasks"><Icon glyph="paw" /><span ref="anchorTextRef" className="anchorText">Tasks</span></Link></li>          
+                  <li><Link to="dashboard"><Icon glyph="dashboard" icoClass="icoAlert" warningFlag="!" /><span className="anchorText">Dashboard</span></Link></li>
+                  <li><Link to="accounts"><Icon glyph="paper-plane" /><span className="anchorText">Accounts</span></Link></li>
+                  <li><Link to="tasks"><Icon glyph="paw" /><span className="anchorText">Tasks</span></Link></li>          
                   <li><Link to="network"><Icon glyph="moon-o" /><span className="anchorText">Network</span></Link></li>
                   <li><Link to="storage"><Icon glyph="magic" /><span className="anchorText">Storage</span></Link></li>
                   <li><Link to="sharing"><Icon glyph="cut" /><span className="anchorText">Sharing</span></Link></li>                    
