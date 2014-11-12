@@ -813,6 +813,8 @@ menu_install()
 	cp -pR /tmp/data_preserved/. /tmp/data/data
     else
 	cp -R /data/* /tmp/data/data
+	chown -R www:www /tmp/data/data
+	chown -R pgsql:pgsql /tmp/data/data/freenas.db
     fi
 
     local OS=FreeNAS
