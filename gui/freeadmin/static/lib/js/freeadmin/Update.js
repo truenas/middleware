@@ -77,6 +77,7 @@ define([
       });
 
       me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
+      me.dapCurrentTrainDesc.innerHTML = me.initial.trainDesc;
 
       me._manualUpdate = new Button({
         label: gettext("Manual Update"),

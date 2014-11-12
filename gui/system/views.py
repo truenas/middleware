@@ -1126,9 +1126,15 @@ def update_index(request):
     if trains:
         trains = trains.keys()
 
+    curtrain = update.get_train()
+    if curtrain in conf._trains:
+        curtrain = conf._trains.get(curtrain)
+    else:
+        curtrain = Train.Train(curtrain)
+
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': update.get_train(),
+        'current_train': curtrain,
         'trains': json.dumps(trains),
     })
 
