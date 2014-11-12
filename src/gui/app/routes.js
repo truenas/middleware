@@ -7,6 +7,7 @@
 var Router        = require("react-router");
 var Routes        = Router.Routes;
 var Route         = Router.Route;
+var Redirect      = Router.Redirect;
 var DefaultRoute  = Router.DefaultRoute;
 var NotFoundRoute = Router.NotFoundRoute;
 
@@ -27,20 +28,33 @@ var Root = require("./jsx/views/FreeNASWebApp");
 
 var PageNotFound = require("./jsx/views/PageNotFound");
 
+var Editor = require("./jsx/components/Viewer/Editor");
+
 module.exports = (
   <Routes location="history">
     <Route path="/" handler={ Root }>
       <DefaultRoute handler={ Dashboard } />
       <Route name="dashboard" handler={ Dashboard } />
+
+      {/* ACCOUNTS */}
       <Route name="accounts" handler={ Accounts }>
         <DefaultRoute handler={ Users } />
         <Route name    = "users"
                path    = "/accounts/users"
-               handler = { Users } />
+               handler = { Users } >
+          <Route name    = "users-editor"
+                 path    = "/accounts/users/:userID"
+                 handler = { Editor } />
+        </Route>
         <Route name    = "groups"
                path    = "/accounts/groups"
-               handler = { Groups } />
+               handler = { Groups } >
+          <Route name    = "groups-editor"
+                 path    = "/accounts/groups/:groupID"
+                 handler = { Editor } />
+        </Route>
       </Route>
+
       <Route name="tasks" handler={ Tasks } />
       <Route name="network" handler={ Network } />
       <Route name="storage" handler={ Storage } />
