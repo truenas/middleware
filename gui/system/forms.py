@@ -157,6 +157,14 @@ class BootEnvAddForm(Form):
         self._source = kwargs.pop('source', None)
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if not re.search(r'^[a-z0-9_-]+$', name, re.I):
+            raise forms.ValidationError(
+                _('Only alphanumeric, underscores and dashes are allowed.')
+            )
+        return name
+
     def save(self, *args, **kwargs):
         kwargs = {}
         if self._source:
