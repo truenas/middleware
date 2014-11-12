@@ -91,6 +91,7 @@ GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
+BOOTENV_DELETE_PROGRESS = '/tmp/.bootenv_bulkdelete'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
@@ -312,11 +313,19 @@ def bootenv_deletebulk(request):
         raise ValueError("Invalid name")
     names = names.split(',')
     if request.method == 'POST':
-        failed = False
-        for name in names:
-            delete = DeleteClone(name)
-            if delete is False:
-                failed = True
+        with open(BOOTENV_DELETE_PROGRESS, 'w') as f:
+            failed = False
+            for i, name in enumerate(names):
+                f.write(json.dumps({
+                    'current': name,
+                    'index': i,
+                    'total': len(names),
+                }))
+                f.flush()
+                delete = DeleteClone(name)
+                if delete is False:
+                    failed = True
+        os.unlink(BOOTENV_DELETE_PROGRESS)
         if failed is not False:
             return JsonResp(
                 request,
@@ -330,6 +339,36 @@ def bootenv_deletebulk(request):
         'names': names,
         'ids': request.GET.get('ids'),
     })
+
+
+def bootenv_deletebulk_progress(request):
+
+    if not os.path.exists(BOOTENV_DELETE_PROGRESS):
+        return HttpResponse(
+            json.dumps({'indeterminate': True}),
+            content_type='application/json',
+        )
+
+    with open(BOOTENV_DELETE_PROGRESS, 'r') as f:
+        data = f.read()
+
+    try:
+        data = json.loads(data)
+        return HttpResponse(
+            json.dumps({
+                'indeterminate': False,
+                'percent': int((data['index'] / float(data['total'])) * 100.0),
+                'details': data['current'],
+            }),
+            content_type='application/json',
+        )
+    except:
+        log.warn("Unable to load progress status for boot env bulk delete")
+
+    return HttpResponse(
+        json.dumps({'indeterminate': True}),
+        content_type='application/json',
+    )
 
 
 def bootenv_rename(request, name):
