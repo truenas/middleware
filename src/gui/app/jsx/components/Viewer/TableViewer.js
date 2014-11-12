@@ -6,8 +6,6 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
-// var Editor = require("./Editor");
-
 // Table Viewer
 var TableViewer = React.createClass({
   render: function() {
