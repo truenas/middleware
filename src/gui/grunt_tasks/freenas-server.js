@@ -182,7 +182,9 @@ module.exports = function(grunt) {
         sshToFreeNAS( "Starting remote FreeNAS GUI server", this.data );
         break;
 
-      // TODO: Add a handler for restarts
+      case "start-legacy":
+        sshToFreeNAS( "Starting remote FreeNAS GUI server", this.data );
+        break;
     }
   });
 };

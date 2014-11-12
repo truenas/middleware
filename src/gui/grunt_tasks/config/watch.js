@@ -43,15 +43,20 @@ module.exports = function( grunt ) {
   };
 
   // Restarts Forever process on remote FreeNAS when server or client change
-  this.freenasServer = {
-      files: [
-          "<%= dirTree.client %>.js"
-        , "<%= dirTree.server %>.js"
-        , "<%= dirTree.source.templates %>/**"
-        , "<%= dirTree.build.root %>/**"
-        , "package.json"
-        , "bower_components/**"
-      ]
+  var serverWatchFiles = [
+      "<%= dirTree.client %>.js"
+    , "<%= dirTree.server %>.js"
+    , "<%= dirTree.source.templates %>/**"
+    , "<%= dirTree.build.root %>/**"
+    , "package.json"
+    , "bower_components/**"
+  ];
+  this["freenasServer"] = {
+      files: serverWatchFiles
     , tasks: [ "freenas-config:silent", "rsync", "freenas-server:start" ]
+  };
+  this["freenasServer-legacy"] = {
+      files: serverWatchFiles
+    , tasks: [ "freenas-config:silent", "rsync", "freenas-server:start-legacy" ]
   };
 };
