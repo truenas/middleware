@@ -1,6 +1,5 @@
 @left-menu-width: 230px;
 @notification-icons-width: 200px;
-
 @almost-white: #f3f3f3;
 
 .notificationBar {
@@ -144,21 +143,32 @@
                 padding-right: 5px;
             }
 
-
+                    .leftMenuContent ul li i.icoWarning > span,
                     .leftMenuContent ul li i.icoAlert > span {
                         position: absolute;
-                        background-color: rgba(255, 0, 0, 0.65);
-                        border-radius: 50px;
-                        color: white;
+                        border-radius: 4px;
                         display: block;
                         font-weight: 700;
-                        min-height: 20px;
-                        line-height: 20px;
-                        margin-left: 7px;
-                        margin-top: -23px;
+                        min-height: 17px;
+                        line-height: 17px;
+                        margin-left: 15px;
+                        margin-top: -22px;
                         text-align: center;
-                        min-width: 20px;
-                        font-size: 70%;
+                        min-width: 11px;
+                        font-size: 60%;
+                        box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
+
+                    }
+                    .leftMenuContent ul li i.icoAlert > span {
+                        #gradient > .vertical(#fa3c45, #dc0d17);
+                        color: #FFFFFF;
+                        display: block;
+                    }
+
+                    .leftMenuContent ul li i.icoWarning > span {
+                        #gradient > .vertical(#fcca00, #fbe178);
+                        border-radius: 4px;
+                        color: #000000;
                     }
 
 

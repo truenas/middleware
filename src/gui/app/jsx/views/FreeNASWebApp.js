@@ -52,7 +52,7 @@ var FreeNASWebApp = React.createClass({
                   <li><Link to="storage"><Icon glyph="magic" />Storage</Link></li>
                   <li><Link to="sharing"><Icon glyph="cut" />Sharing</Link></li>                    
                   <li><Link to="services"><Icon glyph="bitcoin" />Services</Link></li>          
-                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoAlert" warningFlag="!" />System Tools</Link></li>
+                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoWarning" warningFlag="!" />System Tools</Link></li>
                   <li><Link to="control-panel"><Icon glyph="paragraph" />Control Panel</Link></li>
                   <li><Link to="power"><Icon glyph="plug" />Power</Link></li>
                 </ul>
