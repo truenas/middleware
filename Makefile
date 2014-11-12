@@ -34,7 +34,7 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 all:	check-root build
 
 .BEGIN:
-.if !make(remote)
+.if !make(remote) && !make(sync)
 	build/check_build_host.sh
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	build/check_sandbox.sh
@@ -84,8 +84,10 @@ distclean: clean
 save-build-env:
 	build/save_build.sh
 
-remote:
+sync:
 	rsync -al --rsync-path="sudo rsync" --exclude '.git' --exclude '.idea' . ${host}:${dir}/
+
+remote: sync
 	ssh -t ${host} sudo make -C ${dir} ${target}
 
 freenas: release

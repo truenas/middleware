@@ -56,12 +56,18 @@ main()
 
 	# Create the install ISO based on contents from the installworld tree
 	mkdir -p ${INSTALLUFSDIR}
-	tar -cf - -C ${NANO_OBJ}/_.w --exclude local --exclude workdir . | tar -xf - -C ${INSTALLUFSDIR}
+	
+	MAKEOBJDIRPREFIX=${NANO_OBJ} make -C ${AVATAR_ROOT}/FreeBSD/src \
+	    installworld distribution \
+	    DESTDIR=${INSTALLUFSDIR} \
+	    __MAKE_CONF=${NANO_OBJ}/make.conf.build
+
+	chflags -R 0 ${INSTALLUFSDIR}/
 
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
 
-	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
+	make -C build/pc-sysinstall install DESTDIR=${INSTALLUFSDIR} NO_MAN=t
 	rm -rf ${INSTALLUFSDIR}/usr/local
 	rm -rf ${INSTALLUFSDIR}/usr/include
 	rm -rf ${INSTALLUFSDIR}/boot
@@ -120,13 +126,6 @@ main()
 	mkdir -p ${INSTALLUFSDIR}/conf/default/tmp
 	mkdir -p ${INSTALLUFSDIR}/conf/default/var
 	mkdir -p ${INSTALLUFSDIR}/tank
-
-	# XXX: tied too much to the host system to be of value in the
-	# installer code.
-	rm -f "$INSTALLUFSDIR/etc/rc.conf.local"
-	rm -f "$INSTALLUFSDIR/conf/base/etc/rc.conf.local"
-	rm -f $INSTALLUFSDIR/etc/fstab
-	rm -f $INSTALLUFSDIR/conf/default/etc/remount
 
 	# If it exists in /rescue, create a symlink in one of the
 	# /bin directories for compatibility with scripts.

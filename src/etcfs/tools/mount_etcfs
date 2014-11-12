@@ -1,3 +1,0 @@
-#!/bin/sh
-export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
-exec /usr/local/lib/etcfs/src/main.py $*

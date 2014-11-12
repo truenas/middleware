@@ -149,17 +149,18 @@ class PostgresDatastore(object):
 
                 yield i[0]
 
-    def query(self, collection, args=[], sort=None, dir=None, limit=None, wrap=True):
+    def query(self, collection, *args, **kwargs):
+        wrap = kwargs.pop('wrap', True)
         with self.conn.cursor() as cur:
             query = PostgresSelectQuery(collection, cur)
             for i in args:
                 query.where(*i)
 
-            if sort and dir:
-                query.sort(sort, dir)
+            if 'sort' in kwargs and 'dir' in kwargs:
+                query.sort(kwargs.pop('sort'), kwargs.pop('dir'))
 
-            if limit:
-                query.limit(limit)
+            if 'limit' in kwargs:
+                query.limit(kwargs.pop('limit'))
 
             cur.execute(query.sql())
 
@@ -172,7 +173,7 @@ class PostgresDatastore(object):
                 row["id"] = i.id
                 yield row
 
-    def get_count(self, collection, args=[]):
+    def get_count(self, collection, *args):
          with self.conn.cursor() as cur:
             query = PostgresSelectQuery(collection, cur)
             for i in args:
@@ -184,7 +185,8 @@ class PostgresDatastore(object):
             i = cur.fetchone()
             return i[0]
 
-    def get_one(self, collection, args=[], wrap=True):
+    def get_one(self, collection, *args, **kwargs):
+        wrap = kwargs.pop('wrap', True)
         with self.conn.cursor() as cur:
             query = PostgresSelectQuery(collection, cur)
             for i in args:
@@ -257,5 +259,5 @@ class PostgresDatastore(object):
 
             self.conn.commit()
 
-    def exists(self, collection, args=[]):
-        return self.get_one(collection, args) is not None
+    def exists(self, collection, *args):
+        return self.get_one(collection, *args) is not None

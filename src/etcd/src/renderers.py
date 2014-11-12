@@ -18,7 +18,8 @@ class MakoTemplateRenderer(object):
     def get_template_context(self):
         return {
             "disclaimer": TemplateFunctions.disclaimer,
-            "config": self.config
+            "config": self.config,
+            "ds": self.context.datastore
         }
 
     def render_template(self, path):

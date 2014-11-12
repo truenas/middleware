@@ -1,5 +1,13 @@
 [
     {
+        "metadata": {
+            "last-id": 78,
+            "pkey-type": "integer",
+            "name": "users",
+            "attributes": {
+                "type": "config"
+            }
+        },
         "data": {
             "0": {
                 "username": "root", 
@@ -301,14 +309,6 @@
                 "email": null, 
                 "password_disabled": false
             }
-        }, 
-        "metadata": {
-            "last-id": 78, 
-            "pkey-type": "integer", 
-            "name": "users", 
-            "attributes": {
-                "type": "config"
-            }
         }
     }, 
     {
@@ -321,13 +321,129 @@
             }
         },
         "data": {
+            "0": {
+                "group": "wheel",
+                "builtin": true
+            },
+            "1": {
+                "group": "daemon",
+                "builtin": true
+            },
+            "2": {
+                "group": "kmem",
+                "builtin": true
+            },
+            "3": {
+                "group": "sys",
+                "builtin": true
+            },
+            "4": {
+                "group": "tty",
+                "builtin": true
+            },
+            "5": {
+                "group": "operator",
+                "builtin": true
+            },
+            "6": {
+                "group": "mail",
+                "builtin": true
+            },
+            "7": {
+                "group": "bin",
+                "builtin": true
+            },
+            "8": {
+                "group": "news",
+                "builtin": true
+            },
+            "9": {
+                "group": "man",
+                "builtin": true
+            },
+            "13": {
+                "group": "games",
+                "builtin": true
+            },
+            "14": {
+                "group": "ftp",
+                "builtin": true
+            },
+            "20": {
+                "group": "staff",
+                "builtin": true
+            },
+            "22": {
+                "group": "sshd",
+                "builtin": true
+            },
+            "25": {
+                "group": "smmsp",
+                "builtin": true
+            },
+            "26": {
+                "group": "mailnull",
+                "builtin": true
+            },
+            "31": {
+                "group": "guest",
+                "builtin": true
+            },
+            "53": {
+                "group": "bind",
+                "builtin": true
+            },
+            "62": {
+                "group": "proxy",
+                "builtin": true
+            },
+            "63": {
+                "group": "authpf",
+                "builtin": true
+            },
+            "64": {
+                "group": "_pflogd",
+                "builtin": true
+            },
+            "65": {
+                "group": "_dhcp",
+                "builtin": true
+            },
+            "66": {
+                "group": "uucp",
+                "builtin": true
+            },
+            "68": {
+                "group": "dialer",
+                "builtin": true
+            },
+            "69": {
+                "group": "network",
+                "builtin": true
+            },
+            "77": {
+                "group": "audit",
+                "builtin": true
+            },
+            "80": {
+                "group": "www",
+                "builtin": true
+            },
+            "65533": {
+                "group": "nogroup",
+                "builtin": true
+            },
+            "65534": {
+                "group": "nobody",
+                "builtin": true
+            }
         }
     },
     {
         "metadata": {
-            "last-id": null, 
-            "pkey-type": "ltree", 
-            "name": "config", 
+            "last-id": null,
+            "pkey-type": "ltree",
+            "name": "config",
             "attributes": {
                 "type": "config"
             }

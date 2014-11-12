@@ -1,12 +1,40 @@
-__author__ = 'jceel'
+#+
+# Copyright 2014 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
 
 import os
-import logging
+import re
+import netifaces
 from balancer import QueueClass
 from event import EventSource
-from task import Provider, schema, description
+from task import Provider
+from dispatcher.rpc import schema, description
 from gevent import socket
 from lib import geom
+from lib.freebsd import get_sysctl
 from lxml import etree
 
 class DeviceInfoPlugin(Provider):
@@ -19,7 +47,7 @@ class DeviceInfoPlugin(Provider):
         return [
             "disk",
             "network",
-            "serial"
+            "cpu"
         ]
 
     @schema({
@@ -27,7 +55,7 @@ class DeviceInfoPlugin(Provider):
         'type': 'string'
     })
     def get_devices(self, dev_class):
-        method = "__get_class_{}".format(dev_class)
+        method = "__get_class_{0}".format(dev_class)
         if hasattr(self, method):
             return getattr(self, method)
 
@@ -58,6 +86,18 @@ class DeviceInfoPlugin(Provider):
         return result
 
     def __get_class_network(self):
+        result = []
+        for i in netifaces.interfaces():
+            node = get_sysctl(re.sub('(\w+)([0-9]+)', '\\1.\\2', i))
+            result.append({
+                'name': i,
+                'description': node['%desc'],
+                'pnpinfo': node['%pnpinfo']
+            })
+
+        return result
+
+    def __get_class_cpu(self):
         pass
 
 

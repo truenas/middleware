@@ -6,4 +6,4 @@ gevent-websocket
 argh
 setproctitle
 pyee
-fusepy
+datastore

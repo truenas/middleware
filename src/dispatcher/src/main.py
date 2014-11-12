@@ -1,3 +1,31 @@
+#!/usr/local/bin/python2.7
+#+
+# Copyright 2014 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
+
 import os
 import sys
 import fnmatch
@@ -8,20 +36,26 @@ import logging
 import logging.config
 import logging.handlers
 import argparse
-import gevent
 import signal
 import time
+import uuid
 import errno
 import setproctitle
+
+import gevent
 from pyee import EventEmitter
 from gevent import monkey, Greenlet
+from gevent.event import AsyncResult
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
-from datastore import get_datastore, DatastoreException
-from rpc.rpc import RpcContext, RpcException
+
+from datastore import get_datastore
+from dispatcher.rpc import RpcContext, RpcException
+from services import ManagementService, EventService, TaskService, PluginService
 from api.handler import ApiHandler
 from balancer import Balancer
 from auth import PasswordAuthenticator
+
 
 DEFAULT_CONFIGFILE = '/data/middleware.conf'
 
@@ -38,6 +72,7 @@ class Dispatcher(object):
         self.providers = {}
         self.tasks = {}
         self.logger = logging.getLogger('Main')
+        self.rpc = None
         self.balancer = None
         self.datastore = None
         self.auth = None
@@ -60,7 +95,11 @@ class Dispatcher(object):
 
         self.balancer = Balancer(self)
         self.auth = PasswordAuthenticator(self)
-        self.rpc = RpcContext(self)
+        self.rpc = ServerRpcContext(self)
+        self.rpc.register_service('management', ManagementService)
+        self.rpc.register_service('event', EventService)
+        self.rpc.register_service('task', TaskService)
+        self.rpc.register_service('plugin', PluginService)
 
     def start(self):
         for name, clazz in self.event_sources.items():
@@ -133,7 +172,7 @@ class Dispatcher(object):
 
         if name in self.event_handlers:
             for h in self.event_handlers[name]:
-                h()
+                h(args)
 
         # Persist event
         event_data = args.copy()
@@ -174,6 +213,12 @@ class Dispatcher(object):
         sys.exit(0)
 
 
+class ServerRpcContext(RpcContext):
+    def __init__(self, dispatcher):
+        super(ServerRpcContext, self).__init__()
+        self.dispatcher = dispatcher
+
+
 class ServerResource(Resource):
     def __init__(self, apps=None, dispatcher=None):
         super(ServerResource, self).__init__(apps)
@@ -212,7 +257,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         super(ServerConnection, self).__init__(ws)
         self.server = ws.handler.server
         self.dispatcher = dispatcher
-        self.pending_calls = {}
+        self.server_pending_calls = {}
+        self.client_pending_calls = {}
         self.user = None
         self.event_masks = set()
 
@@ -253,6 +299,23 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         self.event_masks = set.difference(self.event_masks, event_masks)
 
+    def on_rpc_auth_service(self, id, data):
+        service_name = data["name"]
+
+        self.send_json({
+            "namespace": "rpc",
+            "name": "response",
+            "id": id,
+            "args": []
+        })
+
+        self.user = self.dispatcher.auth.get_service(service_name)
+        self.dispatcher.dispatch_event('server.service_logged', {
+            'address': self.ws.handler.client_address,
+            'name': service_name,
+            'description': "Service {0} logged in".format(service_name)
+        })
+
     def on_rpc_auth(self, id, data):
         username = data["username"]
         password = data["password"]
@@ -268,7 +331,6 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             return
 
         self.user = user
-
         self.send_json({
             "namespace": "rpc",
             "name": "response",
@@ -282,11 +344,34 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             'description': "Client {0} logged in".format(username)
         })
 
+    def on_rpc_response(self, id, data):
+        if id not in self.client_pending_calls.keys():
+            return
+
+        call = self.client_pending_calls[id]
+        if call['callback'] is not None:
+            call['callback'](*data)
+
+        if call['event'] is not None:
+            call['event'].set(data)
+
+        del self.client_pending_calls[id]
+
+    def on_rpc_error(self, id, data):
+        if id not in self.client_pending_calls.keys():
+            return
+
+        call = self.client_pending_calls[id]
+        if call['event'] is not None:
+            call['event'].set_exception(RpcException(data['code'], data['message']))
+
+        del self.client_pending_calls[id]
+
 
     def on_rpc_call(self, id, data):
         def dispatch_call_async(id, method, args):
             try:
-                result = self.dispatcher.rpc.dispatch_call(method, args)
+                result = self.dispatcher.rpc.dispatch_call(method, args, sender=self)
             except RpcException as err:
                 self.send_json({
                     "namespace": "rpc",
@@ -312,14 +397,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         method = data["method"]
         args = data["args"]
 
-        if hasattr(method, '_required_roles'):
-            for i in method._required_roles:
-                if not self.user.has_role(i):
-                    self.emit_rpc_error(id, errno.EACCES, 'Insufficent privileges')
-                    return
-
         greenlet = Greenlet(dispatch_call_async, id, method, args)
-        self.pending_calls[id] = {
+        self.server_pending_calls[id] = {
             "method": method,
             "args": args,
             "greenlet": greenlet
@@ -330,6 +409,24 @@ class ServerConnection(WebSocketApplication, EventEmitter):
     def broadcast_event(self, event, args):
         for i in self.server.connections:
             i.emit_event(event, args)
+
+    def call_client(self, method, callback, *args):
+        id = uuid.uuid4()
+        event = AsyncResult()
+        self.client_pending_calls[str(id)] = {
+            "method": method,
+            "args": args,
+            "callback": callback,
+            "event": event
+        }
+
+        self.emit_rpc_call(id, method, args)
+        return event
+
+    def call_client_sync(self, method, *args, **kwargs):
+        timeout = kwargs.pop('timeout', None)
+        event = self.call_client(method, None, *args)
+        return event.get(timeout=timeout)
 
     def emit_event(self, event, args):
         for i in self.event_masks:
@@ -346,11 +443,24 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 }
             })
 
+    def emit_rpc_call(self, id, method, args):
+        payload = {
+            "namespace": "rpc",
+            "name": "call",
+            "id": str(id),
+            "args": {
+                "method": method,
+                "args": args
+            }
+        }
+
+        return self.send_json(payload)
+
     def emit_rpc_error(self, id, code, message, extra=None):
         payload = {
             "namespace": "rpc",
             "name": "error",
-            "id": id,
+            "id": str(id),
             "args": {
                 "code": code,
                 "message": message

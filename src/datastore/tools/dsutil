@@ -124,7 +124,7 @@ def query(name, filter, select=None, sort=None, limit=None):
     for i in filter:
         params.append(i.split())
 
-    for row in ds.query(name, params, sort=sort, limit=limit):
+    for row in ds.query(name, *params, sort=sort, limit=limit):
         print(json.dumps(json_select(row, select)))
 
 
