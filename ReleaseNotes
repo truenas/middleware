@@ -28,6 +28,10 @@ set up through the Wizard.  The Wizard is also careful to make no actual
 changes to the system until a final confirmation step, making it harmless
 to enter/exit the wizard at any time and simply explore its capabilities.
 
+  The ISO installation image can now be used both for USB booting or CD
+booting (the boot blocks allow for both usage scenarios), making a separate
+USB image unnecessary.
+
 
 ** Updating: **
 
