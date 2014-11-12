@@ -3,7 +3,7 @@
 # $Id$
 #
 
-PORTNAME=       freenas-etcfs
+PORTNAME=       freenas-etcd
 PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
 PORTREVISION=	${REVISION}
 
@@ -20,9 +20,9 @@ EXTRACT_ONLY=
 NO_BUILD= 	yes
 MAKE_JOBS_UNSAFE= yes
 ALL_TARGET=	obj all
-WRKSRC=		/usr/nas_source2/etcfs
+WRKSRC=		/usr/nas_source2/etcd
 
-USES=		fuse
+USES=		python
 
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
