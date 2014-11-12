@@ -501,7 +501,7 @@ class iSCSITargetExtent(Model):
             blank=True,
             editable=False,
             unique=True,
-            max_length=18,
+            max_length=34,
             verbose_name=_("NAA...used only by the initiator"),
             )
     iscsi_target_extent_insecure_tpc = models.BooleanField(
