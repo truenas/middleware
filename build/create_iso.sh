@@ -64,6 +64,13 @@ main()
 
 	chflags -R 0 ${INSTALLUFSDIR}/
 
+	# copy passwd and group of the target system
+	cp ${NANO_OBJ}/_.w/etc/passwd ${INSTALLUFSDIR}/etc/
+	cp ${NANO_OBJ}/_.w/etc/master.passwd ${INSTALLUFSDIR}/etc/
+	cp ${NANO_OBJ}/_.w/etc/group ${INSTALLUFSDIR}/etc/
+	cp ${NANO_OBJ}/_.w/etc/pwd.db ${INSTALLUFSDIR}/etc/
+	cp ${NANO_OBJ}/_.w/etc/spwd.db ${INSTALLUFSDIR}/etc/
+
 	# copy /rescue and /boot from the image to the iso
 	tar -c -f - -C ${NANO_OBJ}/_.w --exclude boot/kernel-debug boot | tar -x -f - -C ${ISODIR}
 
