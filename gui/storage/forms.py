@@ -1501,6 +1501,10 @@ class ZVol_CreateForm(Form):
         label=_('Size for this zvol'),
         help_text=_('Example: 1 GiB'),
     )
+    zvol_force = forms.BooleanField(
+        label=_('Force size'),
+        required=False,
+    )
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1532,6 +1536,7 @@ class ZVol_CreateForm(Form):
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
+        self._force = False
         zpool = notifier().zpool_parse(self.vol_name)
         numdisks = 2
         for vdev in zpool.data:
@@ -1583,9 +1588,29 @@ class ZVol_CreateForm(Form):
             raise forms.ValidationError(
                 _('Specify the size with IEC suffixes, e.g. 10 GiB')
             )
+
         number, suffix = reg.groups()
         if suffix.lower().endswith('ib'):
-            return '%s%s' % (number, suffix[0])
+            size = '%s%s' % (number, suffix[0])
+
+        zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
+        log.error("%r zlist", zlist)
+        if zlist:
+            dataset = zlist.get(self.vol_name)
+            log.error("%r -%r", dataset, suffix)
+            _map = {
+                'P': 1125899906842624,
+                'T': 1099511627776,
+                'G': 1073741824,
+                'M': 1048576,
+            }
+            if suffix in _map:
+                cmpsize = Decimal(number) * _map.get(suffix)
+            else:
+                cmpsize = Decimal(number)
+            if cmpsize > dataset.avail * 0.80:
+                self._force = True
+
         return size
 
     def clean(self):
@@ -1597,6 +1622,15 @@ class ZVol_CreateForm(Form):
             msg = _(u"You already have a dataset with the same name")
             self._errors["zvol_name"] = self.error_class([msg])
             del cleaned_data["zvol_name"]
+
+        if self._force:
+            if not cleaned_data.get('zvol_force'):
+                self._errors['zvol_size'] = self.error_class([
+                    'It is not recommended to use more than 80% of your '
+                    'available space for your zvol!'
+                ])
+        else:
+            self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
         return cleaned_data
 
     def set_error(self, msg):
