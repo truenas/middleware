@@ -112,6 +112,14 @@ fi
 if [ -z "${SEQUENCE}" -a -n "${git}" ]; then
     # Get the sequence number from the time of the commit
     SEQUENCE=`$git_cmd show -s --format=%ct ${git}`
+    if [ -n "${TRAIN}" ]; then
+	if expr "${TRAIN}" : "${NANO_LABEL}-" > /dev/null
+	then
+	    SEQUENCE=$(expr "${TRAIN}" : "${NANO_LABEL}"-'\(.*\)')-${SEQUENCE}
+	else
+	    SEQUENCE="${TRAIN}-${SEQUENCE}"
+	fi
+    fi
     export SEQUENCE
 fi
 
