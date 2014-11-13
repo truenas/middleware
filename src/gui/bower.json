@@ -11,7 +11,8 @@
     "bootstrap": "~3.2.0",
     "velocity": "~1.1.0",
     "fontawesome": "~4.2.0",
-    "lessfonts-open-sans": "~1.0.2"
+    "lessfonts-open-sans": "~1.0.2",
+    "packery": "~1.2.4"
   },
   "private": true
 }
