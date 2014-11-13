@@ -212,59 +212,46 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
-def CheckForUpdates(root = None, handler = None, train = None, cache_dir = None):
+def CheckForUpdates(handler = None, train = None, cache_dir = None):
     """
-    Check for an updated manifest.
-    Very simple, uses the configuration module.
-    Returns the new manifest if there is an update,
-    and None otherwise.
-    (It determines if there is an update if the latest-found
-    manifest contains differences from the current system
-    manifest.)
-    The optional argument handler is a function that
-    will be called for each difference in the new manifest
-    (if there is one); it will be called with three
-    arguments:  operation, package, old package.
-    operation will be "delete", "upgrade", or "install";
-    old package will be None for delete and install.
-    The optional cache_dir parameter indicates that it
-    should look in that directory first, rather than
-    going over the network.  (Unlike the similar code
-    in freenas-update, this will not [at this time]
-    download the package files and store them in
-    cache_dir.)
+    Check for an updated manifest.  If cache_dir is none, then we try
+    to download just the latest manifest for the given train, and
+    compare it to the current system.  If cache_dir is set, then we
+    use the manifest in that directory.
     """
-    conf = Configuration.Configuration(root)
-    cur = conf.SystemManifest()
-    m = None
-    # Let's check cache_dir if it is set
-    if cache_dir and (not train or train == cur.Train()):
-        if os.path.exists(cache_dir + "/MANIFEST"):
-            # Okay, let's load it up.
-            m = Manifest.Manifest()
-            try:
-                m.LoadPath(cache_dir + "/MANIFEST")
-                if m.Train() != cur.Train():
-                    # Should we get rid of the cache?
-                    m = None
-            except:
-                m = None
 
-    if m is None:
-        m = conf.FindLatestManifest(train = train)
+    conf = Configuration.Configuration()
+    if cache_dir:
+        try:
+            new_manifest = VerifyUpdate(cache_dir)
+            if new_manifest is None:
+                return None
+        except UpdateBusyCacheException:
+            log.debug("Cache directory %s is busy, so no update available" % cache_dir)
+            return None
+        except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+            log.error("CheckForUpdate(train = %s, cache_dir = %s):  Got exception %s, removing cache" % (train, cache_dir, str(e)))
+            RemoveUpdate(cache_dir)
+            return None
+        except BaseException as e:
+            log.error("CheckForUpdate(train=%s, cache_dir = %s):  Got exception %s" % (train, cache_dir, str(e)))
+            raise e
+    else:
+        new_manifest = conf.FindLatestManifest(train = train)
+        if new_manifest is None:
+            raise ValueError("Manifest could not be found!")
+    # If new_manifest is not the requested train, then we don't have an update to do
+    if train and train != new_manifest.Train():
+        log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
+        return None
 
-    log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
-                                                                             if m is not None else "None"))
-    if m is None:
-        raise ValueError("Manifest could not be found!")
-    diffs = Manifest.CompareManifests(cur, m)
-    update = False
-    for (pkg, op,old) in diffs:
-        update = True
-        if handler is not None:
+    diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
+    if diffs is None or len(diffs) == 0:
+        return None
+    if handler:
+        for (pkg, op, old) in diffs:
             handler(op, pkg, old)
-    return m if update else None
-
+    return new_manifest
 
 def Update(root=None, conf=None, train = None, check_handler=None, get_handler=None,
            install_handler=None, cache_dir = None):

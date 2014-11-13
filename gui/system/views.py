@@ -1251,6 +1251,7 @@ def update_apply(request):
             update = CheckForUpdates(
                 handler=handler.call,
                 train=updateobj.get_train(),
+                cache_dir=notifier().get_update_location(),
             )
         except:
             update = None
