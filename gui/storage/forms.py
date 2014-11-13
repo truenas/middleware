@@ -1594,10 +1594,8 @@ class ZVol_CreateForm(Form):
             size = '%s%s' % (number, suffix[0])
 
         zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
-        log.error("%r zlist", zlist)
         if zlist:
             dataset = zlist.get(self.vol_name)
-            log.error("%r -%r", dataset, suffix)
             _map = {
                 'P': 1125899906842624,
                 'T': 1099511627776,
