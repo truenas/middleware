@@ -13,14 +13,19 @@ var React = require("react");
 var Widget   = require("../components/Widget");
 
 var Dashboard = React.createClass({
+  componentDidMount: function() {
+  },
+
   render: function() {
     return (
       <div>
         <h2>Dashboard View</h2>
+        <div ref="widgetAreaRef" className="widgetArea">
         <Widget positionX="0" positionY="200" title="Widget 1" size="large" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
         <Widget positionX="425" positionY="200" title="Widget 2" size="medium" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
         <Widget positionX="700" positionY="200" title="Widget 3" size="small" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
         <Widget positionX="900" positionY="200" title="Widget 4" size="small" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
+        </div>
       </div>
     );
   }

@@ -69,7 +69,7 @@ module.exports = function(grunt) {
           , fontawesome: {
               less  : "./bower_components/fontawesome/less"
             , fonts : "./bower_components/fontawesome/fonts"
-          }
+          },
         }
 
         // Sources
