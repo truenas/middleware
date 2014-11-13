@@ -48,7 +48,7 @@ module.exports = function(grunt) {
           case 10:
             return grunt.config( ["configFilePath"] )["freenasTen"];
           case 9:
-            return grunt.config( ["configFilePath"] )["freenasTen"];
+            return grunt.config( ["configFilePath"] )["freenasNine"];
           default:
             grunt.fail.fatal( "Unrecognized FreeNAS version: " + grunt.config( ["freenasVersion"] ) );
             return false;
