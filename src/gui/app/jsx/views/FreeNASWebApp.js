@@ -14,32 +14,45 @@ var Link   = Router.Link;
 
 var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
+var WarningBox   = require("../components/WarningBox");
+var QueueBox   = require("../components/QueueBox");
+var InfoBox   = require("../components/InfoBox");
 // Twitter Bootstrap React components
 var TWBS   = require("react-bootstrap");
 
 var FreeNASWebApp = React.createClass({
+  getInitialState: function() {
+    return {
+      WarningBoxState: "hidden"
+    };
+  },
+
+  handleBox: function(e) {
+
+    if (this.state.WarningBoxState === "hidden")
+    {      
+      this.setState({ WarningBoxState: "visible" });
+    }
+    else
+    {
+      this.setState({ WarningBoxState: "hidden" });
+    }
+  },
   render: function() {
     return (
       <div>
       <div className = "notificationBar">
-        <div className = "notificationBox">
-          <div className = "notificationArea">
-          <textarea className = "form-control" rows="10" >Notification Bar will live here!</textarea>
-          </div>
-          <div className = "notificationIcons">
-            <Icon glyph = "camera-retro" icoSize = "2x" icoClass = "circle" />
-            <Icon glyph = "paw" icoSize = "2x" icoClass = "circle" />
-            <Icon glyph="bitcoin" icoSize="2x" icoClass = "circle" />
-            <Icon glyph="moon-o" icoSize="2x" icoClass = "circle" />
-            <Icon glyph="ambulance" icoSize="2x" icoClass = "circle" />
-            <Icon glyph="plug" icoSize="2x" icoClass = "circle" />
-          </div>
-        </div>
-        <div className="userInfo">
-        <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="2" />
-        <Icon glyph = "user" icoSize = "3x" />
-        <span className="userName"> LaCoVa </span>
-        <Icon glyph = "fire-extinguisher" icoSize = "3x" />
+       <WarningBox boxState={this.state.WarningBoxState}/>
+      
+
+
+        <div className="userInfo">        
+        <span onClick={this.handleBox}> <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="1" /></span>        
+        <Icon glyph="info-circle" icoClass="icoInfo" icoSize="3x" warningFlag="2" />
+        <Icon glyph="list-alt" icoClass="icoQueue" icoSize="3x" warningFlag="3" />
+        <Icon glyph = "user" icoSize = "2x" />
+        <span className="userName">Kevin Spacey</span>
+        
 
         </div>
       </div>

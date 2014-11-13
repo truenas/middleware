@@ -84,7 +84,7 @@ var LeftMenu = React.createClass({
                   <li><Link to="storage"><Icon glyph="magic" /><span className="anchorText">Storage</span></Link></li>
                   <li><Link to="sharing"><Icon glyph="cut" /><span className="anchorText">Sharing</span></Link></li>                    
                   <li><Link to="services"><Icon glyph="bitcoin" /><span className="anchorText">Services</span></Link></li>          
-                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoAlert" warningFlag="!" /><span className="anchorText">System Tools</span></Link></li>
+                  <li><Link to="system-tools"><Icon glyph="ambulance" icoClass="icoWarning" warningFlag="!" /><span className="anchorText">System Tools</span></Link></li>
                   <li><Link to="control-panel"><Icon glyph="paragraph" /><span className="anchorText">Control Panel</span></Link></li>
                   <li><Link to="power"><Icon glyph="plug" /><span className="anchorText">Power</span></Link></li>
                 </ul>

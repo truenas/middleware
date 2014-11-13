@@ -24,12 +24,12 @@
 
         .notificationBar .userInfo i.fa {
             font-size: 200%;
-            padding: 0 15px;
+            padding: 0 15px 0 0;
         }
 
         .notificationBar .userInfo span.userName {
-            font-size: 150%;
-            padding: 0 15px;
+            font-size: 100%;
+            padding: 0 5px;
         }
 
                 .userInfo i.icoAlert {
@@ -37,62 +37,66 @@
                     padding-left: 5px;
                 }
 
+                    .userInfo i.icoWarning > span,
+                    .userInfo i.icoInfo > span,
+                    .userInfo i.icoQueue > span,
                     .userInfo i.icoAlert > span {
                         position: absolute;
-                        background-color: rgba(255, 0, 0, 0.65);
-                        border-radius: 50px;
-                        color: white;
+                        border-radius: 4px;
                         display: block;
                         font-weight: 700;
-                        min-height: 20px;
-                        line-height: 20px;
-                        margin-left: 10px;
-                        margin-top: -38px;
+                        min-height: 17px;
+                        line-height: 17px;
+                        margin-left: 20px;
+                        margin-top: -15px;
                         text-align: center;
-                        min-width: 20px;
-                        font-size: 70%;
+                        min-width: 11px;
+                        font-size: 40%;
+                        box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
+                        font-family: sans-serif;
+
+                    }
+                    .userInfo i.icoAlert > span {
+                        #gradient > .vertical(#fa3c45, #dc0d17);
+                        color: #FFFFFF;
+                        display: block;
+                    }
+
+                    .userInfo i.icoWarning > span {
+                        #gradient > .vertical(#fcca00, #fbe178);
+                        border-radius: 4px;
+                        color: #000000;
+                    }
+                    .userInfo i.icoInfo > span {
+                        #gradient > .vertical(#428bca, #5db4ff);
+                        border-radius: 4px;
+                        color: #000000;
+                    }
+                    .userInfo i.icoQueue > span {
+                        #gradient > .vertical(#fcca00, #fbe178);
+                        border-radius: 4px;
+                        color: #000000;
                     }
 
 
-.notificationBox {
+.notifyBoxes{
     position: absolute;
-    background-color: #3d3d3d;
-    width: 60%;
+    background-color: #f8f8f8;
+    border: #e7e7e7 2px solid;
+    width: 600px;
     min-height: 200px;
-    top: 0;
-    left: 20%;
-    border-radius: 0 0 10px 10px;
+    top: 80px;
+    right: 300px;
+    border-radius:10px;
     padding: 10px;
 }
-
-.notificationArea {
-    float: left;
-    width: calc(~'100% - '@notification-icons-width);
+.visible{
+    visibility: visible;
+}
+.hidden{
+    visibility: hidden;
 }
 
-.notificationIcons {
-    width: @notification-icons-width;
-    float: left;
-    padding-left: 10px;
-}
-
-    .notificationIcons i {
-        float: left;
-        text-align: center;
-        margin: 10px;
-        width: 50px;
-        height: 50px;
-        color: #cccccc;
-    }
-
-        .notificationIcons i.circle {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            line-height: 50px;
-            border: #3d3d3d 3px solid;
-            box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-        }
 
 .leftMenu {
     position: absolute;
@@ -148,12 +152,14 @@
                 font-size: 125%;
                 font-weight: 400;
                 text-decoration: none;
-                line-height: 2;
+                line-height: 2;                
                 color: @almost-white;
             }
 
             .leftMenuContent ul li i {
                 padding-right: 5px;
+                width: 30px;
+                text-align: left;
             }
 
                     .leftMenuContent ul li i.icoWarning > span,
