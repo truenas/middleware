@@ -70,7 +70,7 @@ def dump_collection(ds, name):
 
     return {
         'metadata': metadata,
-        'data': list(ds.query(name))
+        'data': {x.id: x.data for x in ds.query(name, wrap=False)}
     }
 
 
@@ -99,7 +99,7 @@ def main():
         result.append(dump_collection(ds, cname))
 
     try:
-        fd = open(args.f, 'w') if args.f else sys.stdout
+        fd = open(args.o, 'w') if args.o else sys.stdout
         json.dump(result, fd, indent=4)
     except IOError, e:
         print("Could not open output file: {0}".format(str(e)), file=sys.stderr)
