@@ -59,16 +59,32 @@ class ManagementService(RpcService):
 class FileGenerationService(RpcService):
     def __init__(self, ctx):
         self.context = ctx
+        self.datastore = ctx.datastore
 
     def generate_all(self):
         for f in self.get_managed_files():
-            self.context.generate_file(f)
+            self.generate_file(f)
 
     def generate_file(self, filename):
-        self.context.generate_file(filename)
+        if filename not in self.context.managed_files.keys():
+            return
 
-    def generate_group(self, group):
-        pass
+        text = self.context.generate_file(filename)
+        fd = open(os.path.join(self.context.root, filename), 'w')
+        fd.write(text)
+        fd.close()
+
+        self.context.emit_event('etcd.file_generated', {
+            'filename': filename
+        })
+
+    def generate_group(self, name):
+        group = self.datastore.get_one('etcd_groups', ('name', '=', name))
+        if not group:
+            raise RpcException(errno.ENOENT, 'Group {0} not found'.format(name))
+
+        for f in group['files']:
+            self.generate_file(f)
 
     def get_managed_files(self):
         return self.context.managed_files
@@ -77,6 +93,7 @@ class FileGenerationService(RpcService):
 class Main:
     def __init__(self):
         self.logger = logging.getLogger('etcd')
+        self.root = None
         self.config = None
         self.datastore = None
         self.client = None
@@ -147,8 +164,10 @@ class Main:
             raise OSError("Cant find renderer")
 
         renderer = self.renderers[ext]
-        print renderer.render_template(template_path)
         return renderer.render_template(template_path)
+
+    def emit_event(self, name, params):
+        pass
 
     def main(self):
         parser = argparse.ArgumentParser()
@@ -157,6 +176,7 @@ class Main:
         parser.add_argument('mountpoint', metavar='MOUNTPOINT', default='/etc', help='/etc mount point')
         args = parser.parse_args()
         logging.basicConfig(level=logging.DEBUG)
+        self.root = args.mountpoint
         self.parse_config(args.c)
         self.scan_plugins()
         self.init_datastore()
