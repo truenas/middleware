@@ -31,18 +31,26 @@ import netifaces
 from balancer import QueueClass
 from event import EventSource
 from task import Provider
-from dispatcher.rpc import schema, description
+from dispatcher.rpc import accepts, returns, description
 from gevent import socket
 from lib import geom
 from lib.freebsd import get_sysctl
 from lxml import etree
 
+@description("Provides information about devices installed in the system")
 class DeviceInfoPlugin(Provider):
     def initialize(self, context):
         # Enumerate disks and create initial disk queues
         for disk in self.__get_class_disk():
             context.dispatcher.balancer.create_queue(QueueClass.DISK, disk["name"])
 
+    @description("Returns list of available device classes")
+    @returns({
+        'type': 'array',
+        'items': {
+            'type': 'string'
+        }
+    })
     def get_classes(self):
         return [
             "disk",
@@ -50,9 +58,17 @@ class DeviceInfoPlugin(Provider):
             "cpu"
         ]
 
-    @schema({
+    @description("Returns list of devices from given class")
+    @accepts({
         'title': 'dev_class',
         'type': 'string'
+    })
+    @returns({
+        'oneOf': [
+            {'$ref': '#/definitions/disk_device'},
+            {'$ref': '#/definitions/network_device'},
+            {'$ref': '#/definitions/cpu_device'}
+        ]
     })
     def get_devices(self, dev_class):
         method = "__get_class_{0}".format(dev_class)
@@ -177,9 +193,31 @@ class DevdEventSource(EventSource):
                 self.__process_zfs(args)
 
 
-def _compatible():
-    return ["FreeBSD:*"]
-
 def _init(dispatcher):
+    dispatcher.register_schema_definition('disk_device', {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'mediasize': {'type': 'integer'},
+            'description': {'type': 'string'}
+        }
+    })
+
+    dispatcher.register_schema_definition('network_device', {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'description': {'type': 'string'}
+        }
+    })
+
+    dispatcher.register_schema_definition('cpu_device', {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'description': {'type': 'string'}
+        }
+    })
+
     dispatcher.register_provider("system.device", DeviceInfoPlugin)
     dispatcher.register_event_source("system.device", DevdEventSource)

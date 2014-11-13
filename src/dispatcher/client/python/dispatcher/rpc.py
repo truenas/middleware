@@ -36,6 +36,7 @@ class RpcContext(object):
         self.logger = logging.getLogger('RpcContext')
         self.services = {}
         self.instances = {}
+        self.schema_definitions = {}
         self.register_service('discovery', DiscoveryService)
 
     def register_service(self, name, clazz):
@@ -53,6 +54,15 @@ class RpcContext(object):
 
         del self.instances[name]
         del self.services[name]
+
+    def register_schema_definition(self, name, definition):
+        self.schema_definitions[name] = definition
+
+    def get_service(self, name):
+        if name not in self.instances.keys():
+            return None
+
+        return self.instances[name]
 
     def dispatch_call(self, method, args, sender=None):
         service, sep, name = method.rpartition(".")
@@ -72,13 +82,13 @@ class RpcContext(object):
         except AttributeError:
             raise RpcException(errno.ENOENT, "Method not found")
 
-        if hasattr(func, '_required_roles'):
-            for i in func._required_roles:
+        if hasattr(func, 'required_roles'):
+            for i in func.required_roles:
                 if not self.user.has_role(i):
                     self.emit_rpc_error(id, errno.EACCES, 'Insufficent privileges')
                     return
 
-        if hasattr(func, '_pass_sender'):
+        if hasattr(func, 'pass_sender'):
             if type(args) is dict:
                 args['sender'] = sender
             elif type(args) is list:
@@ -97,11 +107,24 @@ class RpcContext(object):
         self.instances[service].sender = None
         return result
 
+    def build_schema(self):
+        for name, definition in self.schema_definitions.items():
+            pass
+
 
 class RpcService(object):
     @classmethod
     def _get_metadata(self):
         return None
+
+    def _build_params_schema(self, method):
+        return {
+            'type': 'array',
+            'items': method.params_schema
+        }
+
+    def _build_result_schema(self, method):
+        return method.result_schema
 
     def enumerate_methods(self):
         methods = []
@@ -110,17 +133,21 @@ class RpcService(object):
                 continue
 
             if name in (
-                "initialize",
-                "enumerate_methods"):
+                'initialize',
+                'enumerate_methods'):
                 continue
 
             result = {'name': name}
 
-            if hasattr(method, '__description'):
-                result['description'] = method.__description
+            if hasattr(method, 'description'):
+                result['description'] = method.description
 
-            if hasattr(method, '__schema'):
-                result['schema'] = method.__schema
+            if hasattr(method, 'params_schema'):
+                result['params-schema'] = self._build_params_schema(method)
+
+            if hasattr(method, 'result_schema'):
+                result['result-schema'] = self._build_result_schema(method)
+
 
             methods.append(result)
 
@@ -156,18 +183,34 @@ class DiscoveryService(RpcService):
 
         return list(self.__context.instances[service].enumerate_methods())
 
+    def get_schema(self):
+        return {
+            '$schema': 'http://json-schema.org/draft-04/schema#',
+            'id': 'http://freenas.org/schema/v10#',
+            'type': 'object',
+            'definitions': self.__context.schema_definitions
+        }
+
 
 def description(descr):
     def wrapped(fn):
-        fn._description = descr
+        fn.description = descr
         return fn
 
     return wrapped
 
 
-def schema(*sch):
+def accepts(*sch):
     def wrapped(fn):
-        fn._schema = sch
+        fn.params_schema = sch
+        return fn
+
+    return wrapped
+
+
+def returns(*sch):
+    def wrapped(fn):
+        fn.result_schema = sch
         return fn
 
     return wrapped
@@ -175,12 +218,12 @@ def schema(*sch):
 
 def require_roles(*roles):
     def wrapped(fn):
-        fn._roles_required = roles
+        fn.roles_required = roles
         return fn
 
     return wrapped
 
 
 def pass_sender(fn):
-    fn._pass_sender = True
+    fn.pass_sender = True
     return fn
