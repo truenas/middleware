@@ -29,7 +29,7 @@ import errno
 from gevent import Timeout
 from watchdog import events
 from task import Task, TaskStatus, Provider, TaskException
-from dispatcher.rpc import description, schema
+from dispatcher.rpc import description, accepts, returns
 from balancer import TaskState
 from event import EventSource
 from lib.system import system, SubprocessException
@@ -38,6 +38,12 @@ from lib.system import system, SubprocessException
 @description("Provides info about available services and their state")
 class ServiceInfoProvider(Provider):
     @description("Lists available services")
+    @returns({
+        'type': 'array',
+        'items': {
+            'type': 'string'
+        }
+    })
     def list_services(self):
         try:
             out, err = system(["/usr/sbin/service", "-l"])
@@ -49,8 +55,13 @@ class ServiceInfoProvider(Provider):
 
 
 @description("Provides functionality to start, stop, restart or reload service")
-@schema({
-
+@accepts({
+    'title': 'name',
+    'type': 'string'
+}, {
+    'title': 'action',
+    'type': 'string',
+    'enum': ['start', 'stop', 'restart', 'reload']
 })
 class ServiceManageTask(Task):
     def __init__(self, dispatcher):

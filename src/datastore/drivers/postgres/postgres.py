@@ -207,7 +207,7 @@ class PostgresDatastore(object):
             return row
 
     def get_by_id(self, collection, pkey):
-        return self.get_one(collection, [('id', '=', pkey)])
+        return self.get_one(collection, ('id', '=', pkey))
 
     def insert(self, collection, obj, pkey=None):
         if hasattr(obj, '__getstate__'):
@@ -254,7 +254,7 @@ class PostgresDatastore(object):
     def delete(self, collection, pkey):
         with self.conn.cursor() as cur:
             cur.execute("DELETE FROM {0} WHERE id = %s".format(collection), (
-                pkey
+                pkey,
             ))
 
             self.conn.commit()

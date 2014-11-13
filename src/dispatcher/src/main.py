@@ -203,6 +203,9 @@ class Dispatcher(object):
         self.providers[name] = clazz
         self.rpc.register_service(name, clazz)
 
+    def register_schema_definition(self, name, definition):
+        self.rpc.register_schema_definition(name, definition)
+
     def require_collection(self, collection, pkey_type='uuid', type='config'):
         if not self.datastore.collection_exists(collection):
             self.datastore.collection_create(collection, pkey_type, {'type': type})
@@ -298,6 +301,9 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             return
 
         self.event_masks = set.difference(self.event_masks, event_masks)
+
+    def on_events_event(self, id, data):
+        self.dispatcher.dispatch_event(data["name"], data["args"])
 
     def on_rpc_auth_service(self, id, data):
         service_name = data["name"]

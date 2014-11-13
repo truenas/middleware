@@ -33,8 +33,8 @@ class Task(object):
     @classmethod
     def _get_metadata(cls):
         return {
-            'description': cls._description if hasattr(cls, '_description') else None,
-            'schema': cls._schema if hasattr(cls, '_schema') else None
+            'description': cls.description if hasattr(cls, 'description') else None,
+            'schema': cls.params_schema if hasattr(cls, 'params_schema') else None
         }
 
     def get_status(self):

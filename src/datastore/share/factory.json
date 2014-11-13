@@ -322,119 +322,119 @@
         },
         "data": {
             "0": {
-                "group": "wheel",
+                "name": "wheel",
                 "builtin": true
             },
             "1": {
-                "group": "daemon",
+                "name": "daemon",
                 "builtin": true
             },
             "2": {
-                "group": "kmem",
+                "name": "kmem",
                 "builtin": true
             },
             "3": {
-                "group": "sys",
+                "name": "sys",
                 "builtin": true
             },
             "4": {
-                "group": "tty",
+                "name": "tty",
                 "builtin": true
             },
             "5": {
-                "group": "operator",
+                "name": "operator",
                 "builtin": true
             },
             "6": {
-                "group": "mail",
+                "name": "mail",
                 "builtin": true
             },
             "7": {
-                "group": "bin",
+                "name": "bin",
                 "builtin": true
             },
             "8": {
-                "group": "news",
+                "name": "news",
                 "builtin": true
             },
             "9": {
-                "group": "man",
+                "name": "man",
                 "builtin": true
             },
             "13": {
-                "group": "games",
+                "name": "games",
                 "builtin": true
             },
             "14": {
-                "group": "ftp",
+                "name": "ftp",
                 "builtin": true
             },
             "20": {
-                "group": "staff",
+                "name": "staff",
                 "builtin": true
             },
             "22": {
-                "group": "sshd",
+                "name": "sshd",
                 "builtin": true
             },
             "25": {
-                "group": "smmsp",
+                "name": "smmsp",
                 "builtin": true
             },
             "26": {
-                "group": "mailnull",
+                "name": "mailnull",
                 "builtin": true
             },
             "31": {
-                "group": "guest",
+                "name": "guest",
                 "builtin": true
             },
             "53": {
-                "group": "bind",
+                "name": "bind",
                 "builtin": true
             },
             "62": {
-                "group": "proxy",
+                "name": "proxy",
                 "builtin": true
             },
             "63": {
-                "group": "authpf",
+                "name": "authpf",
                 "builtin": true
             },
             "64": {
-                "group": "_pflogd",
+                "name": "_pflogd",
                 "builtin": true
             },
             "65": {
-                "group": "_dhcp",
+                "name": "_dhcp",
                 "builtin": true
             },
             "66": {
-                "group": "uucp",
+                "name": "uucp",
                 "builtin": true
             },
             "68": {
-                "group": "dialer",
+                "name": "dialer",
                 "builtin": true
             },
             "69": {
-                "group": "network",
+                "name": "network",
                 "builtin": true
             },
             "77": {
-                "group": "audit",
+                "name": "audit",
                 "builtin": true
             },
             "80": {
-                "group": "www",
+                "name": "www",
                 "builtin": true
             },
             "65533": {
-                "group": "nogroup",
+                "name": "nogroup",
                 "builtin": true
             },
             "65534": {
-                "group": "nobody",
+                "name": "nobody",
                 "builtin": true
             }
         }
@@ -451,6 +451,28 @@
         "data": {
             "network.autoconfigure": true,
             "service.sshd.enable": true
+        }
+    },
+    {
+        "metadata": {
+            "last-id": null,
+            "pkey-type": "uuid",
+            "name": "etcd_groups",
+            "attributes": {
+                "type": "persistent"
+            }
+        },
+        "data": {
+            "FDF68C06-1F3F-47F8-AF28-2402F3D45424": {
+                "name": "accounts",
+                "files": [
+                    "passwd",
+                    "group",
+                    "master.passwd",
+                    "pwd.db",
+                    "spwd.db"
+                ]
+            }
         }
     }
 ]

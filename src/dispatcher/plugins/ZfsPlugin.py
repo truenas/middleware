@@ -30,13 +30,25 @@ from gevent.event import Event
 from lib import zfs
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException
-from dispatcher.rpc import schema, description
+from dispatcher.rpc import accepts, returns, description
 from balancer import TaskState
 
+@description("Provides information about ZFS pools")
 class ZpoolProvider(Provider):
+    @description("Lists ZFS pools")
+    @returns({
+        'type': 'array',
+        'items': {
+            'type': {'$ref': '#/definitions/pool'}
+        }
+    })
     def list_pools(self):
         return zfs.list_pools()
 
+    @description("Gets ZFS pool status")
+    @returns({
+        '$ref': '#/definitions/pool'
+    })
     def pool_status(self, pool):
         return str(zfs.zpool_status(pool))
 
@@ -50,7 +62,7 @@ class ZfsProvider(Provider):
 
 
 @description("Scrubs ZFS pool")
-@schema({
+@accepts({
     'title': 'pool',
     'type': 'string'
 })
@@ -88,6 +100,7 @@ class ZpoolScrubTask(Task):
         except SubprocessException, e:
             raise TaskException(errno.EINVAL, e.err)
 
+        self.state = TaskState.ABORTED
         self.finish_event.set()
         return True
 

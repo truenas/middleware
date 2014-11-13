@@ -1,6 +1,10 @@
 /usr/local/lib/python2.7/site-packages/dispatcher_client-10.0-py2.7.egg-info
-/usr/local/lib/python2.7/site-packages/dispatcherclient.py
-/usr/local/lib/python2.7/site-packages/dispatcherclient.pyc
+/usr/local/lib/python2.7/site-packages/dispatcher/rpc.pyc
+/usr/local/lib/python2.7/site-packages/dispatcher/rpc.py
+/usr/local/lib/python2.7/site-packages/dispatcher/client.py
+/usr/local/lib/python2.7/site-packages/dispatcher/__init__.pyc
+/usr/local/lib/python2.7/site-packages/dispatcher/__init__.py
+/usr/local/lib/python2.7/site-packages/dispatcher/client.pyc
 /usr/local/lib/dispatcher/src/main.py
 /usr/local/lib/dispatcher/src/api/__init__.py
 /usr/local/lib/dispatcher/src/api/handler.py
@@ -15,6 +19,7 @@
 /usr/local/lib/dispatcher/src/rpc/__init__.py
 /usr/local/lib/dispatcher/src/balancer.py
 /usr/local/lib/dispatcher/src/auth.py
+/usr/local/lib/dispatcher/src/services.py
 /usr/local/lib/dispatcher/src/frontend/templates/nav.html
 /usr/local/lib/dispatcher/src/frontend/templates/tasks.html
 /usr/local/lib/dispatcher/src/frontend/templates/events.html
