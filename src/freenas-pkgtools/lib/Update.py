@@ -223,8 +223,8 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
     conf = Configuration.Configuration()
     if cache_dir:
         try:
-            new_manifest = VerifyUpdate(cache_dir)
-            if new_manifest is None:
+            mfile = VerifyUpdate(cache_dir)
+            if mfile is None:
                 return None
         except UpdateBusyCacheException:
             log.debug("Cache directory %s is busy, so no update available" % cache_dir)
@@ -237,9 +237,12 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
             log.error("CheckForUpdate(train=%s, cache_dir = %s):  Got exception %s" % (train, cache_dir, str(e)))
             raise e
     else:
-        new_manifest = conf.FindLatestManifest(train = train)
-        if new_manifest is None:
+        mfile = conf.FindLatestManifest(train = train)
+        if mfile is None:
             raise ValueError("Manifest could not be found!")
+
+   new_manifest = Manifest.Manifest()
+   new_manifest.LoadFile(mfile)
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
         log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
