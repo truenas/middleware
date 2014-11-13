@@ -115,10 +115,15 @@ class PostgresDatastore(object):
 
     def collection_get_pkey_type(self, collection):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT data_type FROM information_schema.columns WHERE table_name = %s AND column_name = 'id'", [collection])
-            return cur.fetchone()[0]
+            cur.execute("SELECT data_type, udt_name FROM information_schema.columns " +
+                        "WHERE table_name = %s AND column_name = 'id'", [collection])
+            result = cur.fetchone()
+            return result[0] if result[0] != 'USER-DEFINED' else result[1]
 
     def collection_get_max_id(self, collection):
+        if self.collection_get_pkey_type(collection) != 'integer':
+            return None
+
         with self.conn.cursor() as cur:
             cur.execute("SELECT max(id) FROM {0}".format(collection))
             return cur.fetchone()[0]
@@ -131,7 +136,8 @@ class PostgresDatastore(object):
 
     def collection_exists(self, collection):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT exists(SELECT * FROM information_schema.tables WHERE table_name = %s)", (collection,))
+            cur.execute("SELECT exists(SELECT * FROM information_schema.tables " +
+                        "WHERE table_name = %s)", (collection,))
             return cur.fetchone()[0]
 
     def collection_delete(self, collection):
@@ -142,7 +148,8 @@ class PostgresDatastore(object):
 
     def collection_list(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = %s", ('public',))
+            cur.execute("SELECT table_name FROM information_schema.tables " +
+                        "WHERE table_schema = %s", ('public',))
             for i in cur:
                 if i[0].startswith('__'):
                     continue
