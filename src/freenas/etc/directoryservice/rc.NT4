@@ -373,7 +373,11 @@ __SQL__
 		var=$(echo ${line}|cut -f1 -d=|xargs)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
-		NT4_set "${var}" "${val}"
+		if [ "${var}" = "nt4_adminpw" ]; then
+			NT4_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
+		else
+			NT4_set "${var}" "${val}"
+		fi
 	done
 	exec 0<&3
 	rm "${tmpfile}"

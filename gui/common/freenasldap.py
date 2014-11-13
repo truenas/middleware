@@ -53,6 +53,7 @@ from freenasUI.common.system import (
     activedirectory_objects,
 )
 from freenasUI.common.freenascache import *
+from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('common.freenasldap')
 
@@ -484,6 +485,10 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                     if not 'port' in kwargs:
                         kwargs['port'] = port
             
+                elif newkey == 'bindpw':
+                    if not 'bindpw' in kwargs:
+                        kwargs[newkey] = notifier().pwenc_decrypt(ldap.__dict__[key])
+
                 elif newkey == 'anonbind':
                     if not 'anonbind' in kwargs:
                         kwargs[newkey] = \
@@ -1121,6 +1126,9 @@ class FreeNAS_ActiveDirectory_Base(object):
                     'use_default_domain'):
                     self.__dict__[newkey] = \
                         False if long(ad.__dict__[key]) == 0 else True
+
+                elif newkey == 'bindpw':
+                    self.__dict__['bindpw'] = notifier().pwenc_decrypt(ad.ad_bindpw)
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)

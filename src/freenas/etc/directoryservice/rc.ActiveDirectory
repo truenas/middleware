@@ -724,7 +724,7 @@ AD_query_rootDSE()
 	local dchost="$(AD_get ad_dchost)"
 	local dcport="$(AD_get ad_dcport)"
 	local binddn="$(AD_get ad_binddn)"
-	local bindpw="$(AD_get ad_bindpw)"
+	local bindpw="$(AD_get ad_bindpw))"
 
 	cat<<-__EOF__>"${tmpfile}"
 	/usr/local/bin/ldapsearch \
@@ -1011,7 +1011,7 @@ __SQL__
 		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
 		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
 
-		AD_set "${var}" "${val}"
+		AD_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
 	done
 	exec 0<&3
 	rm "${tmpfile}"

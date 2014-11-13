@@ -171,7 +171,11 @@ __SQL__
 		var=$(echo ${line}|cut -f1 -d=|xargs)
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
-		LDAP_set "${var}" "${val}"
+		if [ "${var}" = "ldap_bindpw" ]; then
+			LDAP_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
+		else
+			LDAP_set "${var}" "${val}"
+		fi
 	done
 	exec 0<&3
 	rm "${tmpfile}"
