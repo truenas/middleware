@@ -3,6 +3,9 @@ datadir=$1
 cmd=$2
 driverdir=$(dirname $0)
 dbdir=${datadir}/freenas.db
+pg_ctl=/usr/local/bin/pg_ctl
+psql=/usr/local/bin/psql
+initdb=/usr/local/bin/initdb
 
 run_user()
 {
@@ -14,18 +17,23 @@ case ${cmd} in
     init)
         mkdir -p ${dbdir}
         chown pgsql ${dbdir}
-        run_user initdb -E utf-8 -D ${dbdir}
-        run_user pg_ctl start -s -w -D ${dbdir}
-        run_user psql -h 127.0.0.1 -f ${driverdir}/init.sql template1
-        run_user pg_ctl stop -s -D ${dbdir}
+        run_user ${initdb} -E utf-8 -D ${dbdir}
+        run_user ${pg_ctl} start -s -w -D ${dbdir}
+        run_user ${psql} -h 127.0.0.1 -f ${driverdir}/init.sql template1
+        run_user ${pg_ctl} stop -s -D ${dbdir}
         ;;
 
     start)
-        run_user pg_ctl start -s -w -D ${dbdir}
+        if run_user ${pg_ctl} status -D ${dbdir}; then
+            echo "Already running"
+            exit 1
+        fi
+
+        run_user ${pg_ctl} start -s -w -D ${dbdir}
         ;;
 
     stop)
-        run_user pg_ctl stop -s -D ${dbdir}
+        run_user ${pg_ctl} stop -s -D ${dbdir}
         ;;
 
     defragment)
