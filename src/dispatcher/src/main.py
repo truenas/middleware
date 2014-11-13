@@ -299,6 +299,9 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         self.event_masks = set.difference(self.event_masks, event_masks)
 
+    def on_events_event(self, id, data):
+        self.dispatcher.dispatch_event(data["name"], data["args"])
+
     def on_rpc_auth_service(self, id, data):
         service_name = data["name"]
 

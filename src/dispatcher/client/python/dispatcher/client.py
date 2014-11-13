@@ -111,6 +111,13 @@ class Client(object):
             pending_call.id
         ))
 
+    def __send_event(self, name, params):
+        self.ws.send(self.__pack(
+            'events',
+            'event',
+            {'name': name, 'args': params}
+        ))
+
     def __send_error(self, id, errno, msg, extra=None):
         payload = {
             'code': errno,
@@ -239,6 +246,9 @@ class Client(object):
         self.__call(call)
         call.completed.wait(timeout)
         return call.result
+
+    def emit_event(self, name, params):
+        self.__send_event(name, params)
 
     def wait_forever(self):
         self.ws.run_forever()
