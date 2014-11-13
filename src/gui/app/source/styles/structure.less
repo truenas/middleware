@@ -4,7 +4,8 @@
 @almost-white: #f3f3f3;
 
 .notificationBar {
-    position: relative;
+    position: fixed;
+    top: 0px;
     background-color: #1f1f1f;
     min-height: 70px;
     width: 100%;
@@ -99,7 +100,7 @@
 
 
 .leftMenu {
-    position: absolute;
+    position: fixed;
     background-color: #3d3d3d;
     /* #gradient > .horizontal(#1f1f1f, #3d3d3d); */
     top: 0px;
@@ -207,6 +208,7 @@
 
 
 .mainGrid {
+    margin-top: 100px;
     width: 100%;
     padding-left: @left-menu-width;
 }
