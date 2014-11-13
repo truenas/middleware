@@ -241,8 +241,8 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
         if mfile is None:
             raise ValueError("Manifest could not be found!")
 
-   new_manifest = Manifest.Manifest()
-   new_manifest.LoadFile(mfile)
+    new_manifest = Manifest.Manifest()
+    new_manifest.LoadFile(mfile)
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
         log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
