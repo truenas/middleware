@@ -46,7 +46,7 @@ from datetime import datetime, time, timedelta
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.locks import mntlock
-from freenasUI.system.models import VMWarePlugin
+from freenasUI.storage.models import VMWarePlugin
 
 log = logging.getLogger('tools.autosnap')
 
