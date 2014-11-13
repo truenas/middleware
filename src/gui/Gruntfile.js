@@ -101,7 +101,11 @@ module.exports = function(grunt) {
     }
 
     // FreeNAS remote config
-    , configFilePath : "./freenas9-conf.json"
+    , configFilePath : {
+        "freenasNine" : "./freenas9-conf.json"
+      , "freenasTen"  : "./freenas10-conf.json"
+    }
+    , freenasVersion : null
     , freenasConfig  : {
       "notConfigured" : true
     , "remoteHost"    : null
