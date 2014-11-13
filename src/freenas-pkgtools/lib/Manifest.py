@@ -19,6 +19,7 @@ SYSTEM_MANIFEST_FILE = "/data/manifest"
 # NOTES_KEY:  An array of name, URL pairs.  Typical names are "README" and "Release Notes".
 # TRAIN_KEY:  A string identifying the train for this maifest.
 # VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
+# TIMESTAMP_KEY:	An integer, being the unix time of the build.
 # SCHEME_KEY:  A string, identifying the layout version.  Only one value for now.
 # NOTICE_KEY:  A string, identifying a message to be displayed before installing this manifest.
 # 	This is mainly intended to be used to indicate a particular train is ended.
@@ -34,6 +35,7 @@ SIGNATURE_KEY = "Signature"
 NOTES_KEY = "Notes"
 TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
+TIMESTAMP_KEY = "BuildTime"
 SCHEME_KEY = "Scheme"
 NOTICE_KEY = "Notice"
 SWITCH_KEY = "NewTrainName"
@@ -122,6 +124,7 @@ class Manifest(object):
         if self._notes is not None: retval[NOTES_KEY] = self._notes
         if self._train is not None: retval[TRAIN_KEY] = self._train
         if self._version is not None: retval[VERSION_KEY] = self._version
+        if self._timestamp is not None: retval[TIMESTAMP_KEY] = self._timestamp
         if self._notice is not None:  retval[NOTICE_KEY] = self._notice
         if self._switch is not None:  retval[SWITCH_KEY] = self._switch
         retval[SCHEME_KEY] = self._scheme
@@ -144,6 +147,7 @@ class Manifest(object):
         self._version = None
         self._notice = None
         self._switch = None
+        self._timestamp = None
 
         for key in tdict.keys():
             if key == SEQUENCE_KEY:
@@ -155,6 +159,8 @@ class Manifest(object):
                         for upd in p[Package.UPGRADES_KEY]:
                             pkg.AddUpdate(upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
                     self.AddPackage(pkg)
+            elif key == TIMESTAMP_KEY:
+                self.SetTimeStamp(tdict[key])
             elif key == SIGNATURE_KEY:
                 self.SetSignature(tdict[key])
             elif key == NOTES_KEY:
@@ -399,6 +405,15 @@ class Manifest(object):
     def SetVersion(self, version):
         self._version = version
         return
+
+    def SetTimeStamp(self, ts):
+        self._timestamp = ts
+
+    def TimeStamp(self):
+        if self._timestamp:
+            return self._timestamp
+        else:
+            return 0
 
     def NewTrain(self):
         return self._switch
