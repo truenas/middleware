@@ -41,7 +41,7 @@
                     $("#method").val(),
                     JSON.parse($("#args").val()),
                     function(result) {
-                        $("#result").val(JSON.stringify(result))
+                        $("#result").val(JSON.stringify(result, null, 4))
                     }
                 );
             });
