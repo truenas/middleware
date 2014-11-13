@@ -204,7 +204,6 @@ class Balancer(object):
             task.set_state(TaskState.WAITING)
             self.logger.debug("Task %d assigned to queues %s", task.id, task.queues)
 
-
     def get_active_tasks(self):
         return filter(lambda x: x.state in (
             TaskState.CREATED,
@@ -247,6 +246,9 @@ class Worker(object):
                 task.ended.set()
                 task.set_state(TaskState.FAILED, TaskStatus(0, str(e)))
                 continue
+
+            if result is None:
+                result = TaskState.FINISHED
 
             status = TaskStatus(100, '') if result == TaskState.FINISHED else None
 
