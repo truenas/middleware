@@ -20,10 +20,12 @@ var LeftMenu = React.createClass({
     if (this.state.epxandedClass === "expanded")
     {
       this.setState({epxandedClass: "collapsed"});
+      this.props.handleMenuChange("expanded");
     }
     else
     {
       this.setState({epxandedClass: "expanded"});
+      this.props.handleMenuChange("collapsed");
     }
     
   },

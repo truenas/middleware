@@ -1,5 +1,6 @@
 @left-menu-width: 230px;
 @collapsed-left-menu-width: 44px;
+@notification-bar-height: 70px;
 @notification-icons-width: 200px;
 @almost-white: #f3f3f3;
 
@@ -7,7 +8,7 @@
     position: fixed;
     top: 0px;
     background-color: #1f1f1f;
-    min-height: 70px;
+    height: @notification-bar-height;
     width: 100%;
     z-index: 200;
     background-image: url("../img/freenas-logo.png");
@@ -212,11 +213,16 @@
 
 
 .mainGrid {
-    margin-top: 100px;
+    margin-top: @notification-bar-height;
     width: 100%;
-    padding-left: @left-menu-width;
 }
 
+.mainGrid.collapsed {
+    padding-left: @left-menu-width + 10;
+}
+.mainGrid.expanded {
+    padding-left: @collapsed-left-menu-width + 10;
+}
 
 /* Widgets */
 .widget {
@@ -236,6 +242,14 @@
     box-shadow: 0 1px 2px #888;
     cursor: pointer;
     padding: 5px;
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.widget header:hover {
+    opacity: 1;
 }
 
 .widget header i.fa {
@@ -248,12 +262,22 @@
     height: 150px;
 }
 
+.widget.longsmall img {
+    width: 315px;
+    height: 150px;
+}
+
+.widget.heightsmall img {
+    width: 150px;
+    height: 315px;
+}
+
 .widget.medium img {
-    width: 250px;
-    height: 250px;
+    width: 315px;
+    height: 315px;
 }
 
 .widget.large img {
-    width: 400px;
-    height: 400px;
+    width: 480px;
+    height: 480px;
 }

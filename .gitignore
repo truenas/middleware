@@ -57,3 +57,5 @@ src/gui/app-deploy/
 # Exclude config files
 freenas9-conf.json
 freenas10-conf.json
+src/gui/freenas9-conf - Copy.json
+src/gui/freenas9-conf - MiniHome.json
