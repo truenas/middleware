@@ -236,13 +236,13 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
         except BaseException as e:
             log.error("CheckForUpdate(train=%s, cache_dir = %s):  Got exception %s" % (train, cache_dir, str(e)))
             raise e
+        new_manifest = Manifest.Manifest()
+        new_manifest.LoadFile(mfile)
     else:
-        mfile = conf.FindLatestManifest(train = train)
-        if mfile is None:
+        new_manifest = conf.FindLatestManifest(train = train)
+        if new_manifest is None:
             raise ValueError("Manifest could not be found!")
 
-    new_manifest = Manifest.Manifest()
-    new_manifest.LoadFile(mfile)
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
         log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
