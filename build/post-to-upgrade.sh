@@ -13,7 +13,7 @@
 : ${UPDATE_USER:=jkh}
 : ${UPDATE_DB:="sqlite:${NANO_LABEL}-updates.db"}
 : ${UPDATE_DEST:=/tank/www/${NANO_LABEL}}
-: ${KEYFILE:=/dev/null}
+: ${FREENAS_KEYFILE:=/dev/null}
 
 prog=$(basename $0)
 usage() {
@@ -26,7 +26,7 @@ if [ $# -ne 1 ]; then
 fi
 
 SOURCE="$1"
-MKREL="/usr/local/bin/freenas-release -P ${NANO_LABEL} -D ${UPDATE_DB} --archive ${UPDATE_DEST} -K ${KEYFILE} add"
+MKREL="/usr/local/bin/freenas-release -P ${NANO_LABEL} -D ${UPDATE_DB} --archive ${UPDATE_DEST} -K ${FREENAS_KEYFILE} add"
 
 set -e
 set -x
