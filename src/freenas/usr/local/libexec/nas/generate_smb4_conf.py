@@ -467,7 +467,7 @@ def set_ldap_password():
 
     if ldap.ldap_bindpw:
         p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % (
-            notifier().pwenc_decrypt(ldap.ldap_bindpw),
+            ldap.ldap_bindpw,
         ))
         out = p.communicate()
         if out and out[1]:

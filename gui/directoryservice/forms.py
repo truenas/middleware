@@ -482,7 +482,7 @@ class LDAPForm(ModelForm):
         'ldap_ssl',
         'ldap_certificate',
         'ldap_idmap_backend',
-        'ldap_has_samba_schema' 
+        'ldap_has_samba_schema',
     ]
 
     class Meta:
@@ -573,11 +573,7 @@ class LDAPForm(ModelForm):
         enable = self.cleaned_data.get("ldap_enable")
 
         started = notifier().started("ldap")
-        obj = super(LDAPForm, self).save(commit=False)
-        obj.ldap_bindpw = notifier().pwenc_encrypt(
-            self.cleaned_data.get('ldap_bindpw')
-        )
-        obj.save()
+        obj = super(LDAPForm, self).save()
 
         if enable:
             if started is True:
@@ -592,6 +588,7 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
+        return obj
 
     def done(self, request, events):
         events.append("refreshById('tab_LDAP')")

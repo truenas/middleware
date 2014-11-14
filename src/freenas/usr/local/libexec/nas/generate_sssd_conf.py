@@ -533,7 +533,7 @@ def add_ldap(sc):
 
     ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
     ldap_section.ldap_default_authtok_type = 'password'
-    ldap_section.ldap_default_authtok = notifier().pwenc_decrypt(ldap.ldap_bindpw)
+    ldap_section.ldap_default_authtok = ldap.ldap_bindpw
 
     if ldap.ldap_ssl == 'on':
         certpath = get_certificateauthority_path(ldap.ldap_certificate)

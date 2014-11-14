@@ -32,6 +32,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import (
     CertificateAuthority,
     Certificate
@@ -1063,7 +1064,7 @@ class LDAP(DirectoryServiceBase):
         default='off'
     )
     ldap_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
@@ -1088,8 +1089,20 @@ class LDAP(DirectoryServiceBase):
     def __init__(self, *args, **kwargs):
         super(LDAP, self).__init__(*args, **kwargs)
 
+        if self.ldap_bindpw:
+            self.ldap_bindpw = notifier().pwenc_decrypt(
+                self.ldap_bindpw
+            )
+
         self.ds_type = DS_TYPE_LDAP
         self.ds_name = enum_to_directoryservice(self.ds_type)
+
+    def save(self, *args, **kwargs):
+        if self.ldap_bindpw:
+            self.ldap_bindpw = notifier().pwenc_encrypt(
+                self.ldap_bindpw
+            )
+        super(LDAP, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("LDAP")
