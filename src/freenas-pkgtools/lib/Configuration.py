@@ -857,7 +857,7 @@ class Configuration(object):
                                  )
         return file_ref
 
-    def FindLatestManifest(self, train = None):
+    def FindLatestManifest(self, train = None, require_signature = False):
         # Gets <UPDATE_SERVER>/<train>/LATEST
         # Returns a manifest, or None.
         rv = None
@@ -880,7 +880,7 @@ class Configuration(object):
         if file is None:
             log.debug("Could not get latest manifest file for train %s" % train)
         else:
-            rv = Manifest.Manifest(self)
+            rv = Manifest.Manifest(self, require_signature = require_signature)
             rv.LoadFile(file)
         return rv
 

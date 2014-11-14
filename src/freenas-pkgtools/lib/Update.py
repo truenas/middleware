@@ -13,6 +13,7 @@ import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 import freenasOS.Package as Package
 from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
+from freenasOS.Exceptions import ManifestInvalidSignature
 
 log = logging.getLogger('freenasOS.Update')
 
@@ -236,10 +237,19 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
         except BaseException as e:
             log.error("CheckForUpdate(train=%s, cache_dir = %s):  Got exception %s" % (train, cache_dir, str(e)))
             raise e
-        new_manifest = Manifest.Manifest()
-        new_manifest.LoadFile(mfile)
+        # We always want a valid signature when doing an update
+        new_manifest = Manifest.Manifest(require_signature = True)
+        try:
+            new_manifest.LoadFile(mfile)
+        except Exception as e:
+            log.error("Could not load manifest due to %s" % str(e))
+            raise e
     else:
-        new_manifest = conf.FindLatestManifest(train = train)
+        try:
+            new_manifest = conf.FindLatestManifest(train = train, require_signature = True)
+        except Exception as e:
+            log.error("Could not find latest manifest due to %s" % str(e))
+
         if new_manifest is None:
             raise ValueError("Manifest could not be found!")
 
@@ -438,13 +448,18 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     conf = Configuration.Configuration()
     mani = conf.SystemManifest()
     # First thing, let's get the latest manifest
-    latest_mani = conf.FindLatestManifest(train)
+    try:
+        latest_mani = conf.FindLatestManifest(train, require_signature = True)
+    except ManifestInvalidSignature as e:
+        log.error("Latest manifest has invalid signature: %s" % str(e))
+        return False
+
     if latest_mani is None:
         # That really shouldnt happen
         log.error("Unable to find latest manifest for train %s" % train)
         return False
 
-    cache_mani = Manifest.Manifest()
+    cache_mani = Manifest.Manifest(require_signature = True)
     try:
         mani_file = VerifyUpdate(directory)
         if mani_file:
@@ -456,15 +471,13 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
                 return True
             # Not the latest
             mani_file.close()
-        RemoveUpdate(directory)
         mani_file = None
     except UpdateBusyCacheException:
         log.debug("Cache directory %s is busy, so no update available" % directory)
         return False
-    except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+    except (UpdateIncompleteCacheException, UpdateInvalidCacheException, ManifestInvalidSignature) as e:
         # It's incomplete, so we need to remove it
         log.error("DownloadUpdate(%s, %s):  Got exception %s; removing cache" % (train, directory, str(e)))
-        RemoveUpdate(directory)
     except BaseException as e:
         log.error("Got exception %s while trying to prepare update cache" % str(e))
         raise e
@@ -543,8 +556,12 @@ def PendingUpdates(directory):
         log.error("Got exception %s while trying to determine pending updates" % str(e))
         return None
     if mani_file:
-        new_manifest = Manifest.Manifest()
-        new_manifest.LoadFile(mani_file)
+        new_manifest = Manifest.Manifest(require_signature = True)
+        try:
+            new_manifest.LoadFile(mani_file)
+        except ManifestInvalidSignature as e:
+            log.error("Invalid signature in cached manifest: %s" % str(e))
+            return None
         diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
         return diffs
     return None
@@ -564,8 +581,13 @@ def ApplyUpdate(directory, install_handler = None):
         # on error
         return False
     # Do I have to worry about a race condition here?
-    new_manifest = Manifest.Manifest()
-    new_manifest.LoadPath(directory + "/MANIFEST")
+    new_manifest = Manifest.Manifest(require_signature = True)
+    try:
+        new_manifest.LoadPath(directory + "/MANIFEST")
+    except ManifestInvalidSignature as e:
+        log.error("Cached manifest has invalid signature: %s" % str(e))
+        return False
+
     conf.SetPackageDir(directory)
 
     deleted_packages = []
@@ -714,7 +736,8 @@ def VerifyUpdate(directory):
         # Well, if we can't acquire the lock, someone else has it.
         # Throw an incomplete exception
         raise UpdateBusyCacheException("Cache directory %s is being modified" % directory)
-    cached_mani = Manifest.Manifest()
+    # We always want a valid signature for an update.
+    cached_mani = Manifest.Manifest(require_signature = True)
     try:
         cached_mani.LoadFile(mani_file)
     except Exception as e:

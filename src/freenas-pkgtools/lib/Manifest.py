@@ -108,12 +108,13 @@ class Manifest(object):
     _scheme = SCHEME_V1
     _notice = None
     _switch = None
-    _ignoreSignature = False
+    _timestamp = None
+    _requireSignature = False
 
-    def __init__(self, configuration = None, ignore_signature = False):
+    def __init__(self, configuration = None, require_signature = False):
         if configuration is None:
             self._config = Configuration.Configuration()
-        self._ignoreSignature = ignore_signature
+        self._requireSignature = require_signature
         return
 
     def dict(self):
@@ -127,6 +128,7 @@ class Manifest(object):
         if self._timestamp is not None: retval[TIMESTAMP_KEY] = self._timestamp
         if self._notice is not None:  retval[NOTICE_KEY] = self._notice
         if self._switch is not None:  retval[SWITCH_KEY] = self._switch
+        retval[TIMESTAMP_KEY] = int(self._timestamp) if self._timestamp else 0
         retval[SCHEME_KEY] = self._scheme
         return retval
 
@@ -220,14 +222,16 @@ class Manifest(object):
         if self._signature is None:
             # If we don't have a signature, but one is required,
             # raise an exception
-            if (not self._ignoreSignature) and SIGNATURE_FAILURE:
+            if self._requireSignature and SIGNATURE_FAILURE:
                 log.debug("No signature in manifest")
         else:
             if not self.VerifySignature():
-                if self._ignoreSignature:
-                    log.debug("Ignoring invalid signature due to manifest option")
-                elif SIGNATURE_FAILURE:
+                if self._requireSignature and SIGNATURE_FAILURE:
                     raise Exceptions.ManifestInvalidSignature("Signature verification failed")
+                if not self._requireSignature:
+                    log.debug("Ignoring invalid signature due to manifest option")
+                elif not SIGNATURE_FAILURE:
+                    log.debug("Ignoring invalid signature due to global configuration")
         return True
 
     def Notice(self):
