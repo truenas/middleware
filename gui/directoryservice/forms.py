@@ -233,11 +233,7 @@ class NT4Form(ModelForm):
             if started == True:
                 started = notifier().stop("nt4")
 
-        obj = super(NT4Form, self).save(commit=False)
-        obj.nt4_adminpw = notifier().pwenc_encrypt(
-            self.cleaned_data.get('nt4_adminpw')
-        )
-        obj.save()
+        obj = super(NT4Form, self).save()
         return obj
 
 
@@ -415,11 +411,7 @@ class ActiveDirectoryForm(ModelForm):
             notifier()._clear_activedirectory_config()
 
         started = notifier().started("activedirectory")
-        obj = super(ActiveDirectoryForm, self).save(commit=False)
-        obj.ad_bindpw = notifier().pwenc_encrypt(
-            self.cleaned_data.get('ad_bindpw')
-        )
-        obj.save()
+        obj = super(ActiveDirectoryForm, self).save()
 
         if enable:
             if started is True:
@@ -434,6 +426,7 @@ class ActiveDirectoryForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("activedirectory")
+        return obj
 
 
 class NISForm(ModelForm):

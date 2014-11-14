@@ -711,6 +711,11 @@ class NT4(DirectoryServiceBase):
     def __init__(self, *args, **kwargs):
         super(NT4, self).__init__(*args, **kwargs)
 
+        if self.nt4_adminpw:
+            self.nt4_adminpw = notifier().pwenc_decrypt(
+                self.nt4_adminpw
+            )
+
         self.ds_type = DS_TYPE_NT4
         self.ds_name = enum_to_directoryservice(self.ds_type)
 
@@ -721,6 +726,13 @@ class NT4(DirectoryServiceBase):
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
                 if m:
                     self.nt4_netbiosname = m.group(0).upper().strip()
+
+    def save(self, *args, **kwargs):
+        if self.nt4_adminpw:
+            self.nt4_adminpw = notifier().pwenc_encrypt(
+                self.nt4_adminpw
+            )
+        super(NT4, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("NT4 Domain")
@@ -877,6 +889,11 @@ class ActiveDirectory(DirectoryServiceBase):
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
 
+        if self.ad_bindpw:
+            self.ad_bindpw = notifier().pwenc_decrypt(
+                self.ad_bindpw
+            )
+
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
         self.ds_name = enum_to_directoryservice(self.ds_type)
 
@@ -889,6 +906,10 @@ class ActiveDirectory(DirectoryServiceBase):
                     self.ad_netbiosname = m.group(0).upper().strip()
 
     def save(self, **kwargs):
+        if self.ad_bindpw:
+            self.ad_bindpw = notifier().pwenc_encrypt(
+                self.ad_bindpw
+            )
         super(ActiveDirectory, self).save(**kwargs)
 
         if not self.ad_kerberos_realm:
