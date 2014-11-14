@@ -105,20 +105,14 @@ var FreeNASWebApp = React.createClass({
         <Icon glyph="list-alt" icoClass="icoQueue" icoSize="3x" warningFlag="3" onClick={this.handleBox} />
         <Icon glyph = "user" icoSize = "2x" />
 
-
-
-
-     <TWBS.SplitButton title="Kevin Spacey" pullRight>
-      <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-      <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-      <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-      <TWBS.MenuItem divider />
-      <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
-    </TWBS.SplitButton>
-
-        
-        
-
+         <TWBS.SplitButton title="Kevin Spacey" pullRight>
+          <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+          <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+          <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+          <TWBS.MenuItem divider />
+          <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
+        </TWBS.SplitButton>
+          
         </div>
       </div>
       <LeftMenu handleMenuChange={this.menuChange} />
