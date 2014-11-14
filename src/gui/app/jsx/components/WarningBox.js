@@ -10,15 +10,14 @@ var Link   = Router.Link;
 var Icon   = require("./Icon");
 
 var WarningBox = React.createClass({
-  getDefaultProps: function() {
+    getDefaultProps: function() {
     return {
-      boxState: "hidden"
+      isVisible: 0
     };
   },
-
-  render: function() {
-    return (      
-      <div className={"notifyBoxes warningBox "  + this.props.boxState}>
+  render: function() {    
+    return (            
+      <div className={"notifyBoxes warningBox "  + ((this.props.isVisible) ? "visible" : "hidden") }>
       Warning warning!
       </div>
     );
