@@ -1,7 +1,6 @@
 @left-menu-width: 230px;
 @collapsed-left-menu-width: 44px;
 @notification-bar-height: 70px;
-@notification-icons-width: 200px;
 @almost-white: #f3f3f3;
 
 .notificationBar {
@@ -84,30 +83,28 @@
 .notifyBoxes{
     position: absolute;
     background-color: #f8f8f8;
-    border: #e7e7e7 2px solid;
+    border: #3d3d3d 2px solid;
     width: 600px;
-    min-height: 200px;
     top: 75px;
     right: 150px;
     border-radius:10px;
     padding: 10px;
+    box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
 }
 
 .notifyBoxes:after {
-    bottom: 100%;
+    bottom: ~"calc(100% + 2px)";
     border: solid transparent;
+    border-bottom-color: #e7e7e7;
     content: " ";
     height: 0;
     width: 0;
     position: absolute;
     pointer-events: none;
-}
-.notifyBoxes:after {
-    border-color: transparent;
-    border-bottom-color: #e7e7e7;
     border-width: 20px;
     margin-left: -20px;
 }
+
 
 .notifyBoxes.warningBox:after
 {
@@ -122,10 +119,34 @@
         right: 38px;
 }
 
-    .notifyBoxes.warningBox{
-        background-color: lime; 
+.notifyBoxes.warningBox
+{
+        background-color: lighten(#dc0d17,30%);
+}
+.notifyBoxes.infoBox
+{
+        background-color: lighten(#5db4ff,15%);
+}       
+.notifyBoxes.queueBox
+{
+        background-color: lighten(#fbe178,15%);
+}
 
-    }
+
+
+.notifyBoxes .item {
+    border: 2px solid #e7e7e7;
+    background-color: #e7e7e7;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 0 5px;
+    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.75);
+}
+
+.notifyBoxes h3 {
+    font-size: 135%;
+}
+
 .visible{
     visibility: visible;
 }

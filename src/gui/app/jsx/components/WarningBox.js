@@ -20,13 +20,13 @@ var WarningBox = React.createClass({
     return (            
       <div className={"notifyBoxes warningBox "  + ((this.props.isVisible) ? "visible" : "hidden") }>
         <div className="item">     
-          <h3><Icon glyph="warning" icoSize="1x" /> Reading Error at position 542 on pool <strong>HONK1</strong></h3>
+          <h3><Icon glyph="warning" icoSize="1x" /> Reading Error at position 542 in pool <strong>HONK1</strong></h3>
           <div className="status">
             {"Error code #1234 Details about this error"}
           </div>
         </div>
         <div className="item">
-          <h3><Icon glyph="warning" icoSize="1x" /> Reading Error at position 432 on pool <strong>HONK1</strong></h3>
+          <h3><Icon glyph="warning" icoSize="1x" /> Reading Error at position 432 in pool <strong>HONK1</strong></h3>
           <div className="status">
             {"Error code #1234 Details about this error"}
           </div>
