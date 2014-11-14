@@ -694,7 +694,7 @@ menu_install()
     fi
     done
 
-    if [ $_satadom = "YES" -a -n "$(echo ${_disks}|grep "raid/")" ]; then
+    if [ "${_satadom}" = "YES" -a -n "$(echo ${_disks}|grep "raid/")" ]; then
 	_realdisks=$(cat ${REALDISKS})
     else
 	_realdisks=$_disks
