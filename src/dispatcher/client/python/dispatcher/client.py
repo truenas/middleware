@@ -83,6 +83,7 @@ class Client(object):
         self.error_callback = None
         self.rpc_callback = None
         self.receive_thread = None
+        self.default_timeout = 10
 
     def __pack(self, namespace, name, args, id=None):
         return json.dumps({
@@ -227,7 +228,7 @@ class Client(object):
             pass
 
         self.rpc.register_service_instance(name, impl)
-        self.call_sync('plugin.register_service', None, name)
+        self.call_sync('plugin.register_service', name)
 
     def unregister_service(self, name):
         if self.rpc is None:
@@ -241,7 +242,7 @@ class Client(object):
         self.pending_calls[call.id] = call
 
     def call_sync(self, name, *args, **kwargs):
-        timeout = kwargs.pop('timeout', None)
+        timeout = kwargs.pop('timeout', self.default_timeout)
         call = self.PendingCall(uuid.uuid4(), name, args)
         self.pending_calls[str(call.id)] = call
         self.__call(call)

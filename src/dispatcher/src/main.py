@@ -61,6 +61,7 @@ DEFAULT_CONFIGFILE = '/data/middleware.conf'
 
 class Dispatcher(object):
     def __init__(self):
+        self.started_at = None
         self.preserved_files = []
         self.plugin_dirs = []
         self.event_types = []
@@ -106,6 +107,7 @@ class Dispatcher(object):
             source = clazz(self)
             self.threads.append(gevent.spawn(source.run))
 
+        self.started_at = time.time()
         self.balancer.start()
 
     def read_config_file(self, file):
@@ -220,6 +222,17 @@ class ServerRpcContext(RpcContext):
     def __init__(self, dispatcher):
         super(ServerRpcContext, self).__init__()
         self.dispatcher = dispatcher
+
+    def call_sync(self, name, *args):
+        svcname, method = name.rpartition('.')
+        svc = self.get_service(svcname)
+        if svc is None:
+            raise RpcException(errno.ENOENT, 'Service {0} not found'.format(svcname))
+
+        if not hasattr(svc, method):
+            raise RpcException(errno.ENOENT, 'Method {0} in service {1} not found'.format(method, svcname))
+
+        return getattr(svc, method)(*args)
 
 
 class ServerResource(Resource):

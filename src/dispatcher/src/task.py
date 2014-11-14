@@ -30,6 +30,10 @@ from dispatcher.rpc import RpcService, RpcException
 class Task(object):
     SUCCESS = (0, "Success")
 
+    def __init__(self, dispatcher):
+        self.dispatcher = dispatcher
+        self.datastore = dispatcher.datastore
+
     @classmethod
     def _get_metadata(cls):
         return {
@@ -40,8 +44,8 @@ class Task(object):
     def get_status(self):
         return TaskStatus(50, 'Executing...')
 
-    def chain(self, task, **kwargs):
-        pass
+    def chain(self, task, *args):
+        self.dispatcher.balancer.submit(task, *args)
 
 
 class TaskException(RpcException):
@@ -67,3 +71,7 @@ class Provider(RpcService):
     def initialize(self, context):
         self.dispatcher = context
 
+
+def query(fn):
+
+    return fn
