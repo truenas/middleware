@@ -50,11 +50,21 @@ function globalNPMInstall( command, response, sshObj ) {
 
 
 module.exports = function( grunt ) {
-  var commonCommands  = {
-      startServer   : "forever start -a -l forever.log -o out.log -e err.log app/server.js"
-    , restartServer : "forever restart app/server.js"
-    , stopServer    : "forever stopall"
-  };
+  var commonCommands = {};
+
+  if ( grunt.config( ["freenasVersion"] ) === 10 ) {
+    commonCommands = {
+        startServer   : "/usr/sbin/service start gui"
+      , stopServer    : "/usr/sbin/service stop gui"
+      , restartServer : "/usr/sbin/service gui restart"
+    };
+  } else {
+    commonCommands = {
+        startServer   : "forever start -a -l forever.log -o out.log -e err.log app/server.js"
+      , stopServer    : "forever stopall"
+      , restartServer : "forever restart app/server.js"
+    };
+  }
 
   // FIXME: This dummy command exists solely because of a bug in ssh2shell
   // which causes an unhandled exception when msg is the last item push()'d
@@ -65,8 +75,12 @@ module.exports = function( grunt ) {
   // Output the server's address, neatly formatted
   function printServerAddress( sshObj, command, response ) {
     // TODO: This function needs to be refactored
-    var hostAddress = "  " + grunt.config( ["freenasConfig"] )["remoteHost"] +
-                       ":" + grunt.config( ["env"] )["port"] + "  ";
+    var hostAddress = "  " + grunt.config( ["freenasConfig"] )["remoteHost"];
+    if ( grunt.config( ["freenasVersion"] ) < 10 ) {
+      hostAddress += ":" + grunt.config( ["env"] )["port"];
+    }
+    hostAddress += "  ";
+
     var spacer = "  ";
     var vert   = "//";
     var horiz  = function( innerstring ) {
@@ -96,8 +110,30 @@ module.exports = function( grunt ) {
   // These constructors define commands which may be run on FreeNAS via SSH
 
   // Start or restart the server
-  // TODO: Add production flag to start on port 80
+  // TODO: Switch to local npm deployment model
   this["start"] = function() {
+    this.commands = [
+        "cd /usr/local/www/gui"
+      , "npm install --production"
+      , commonCommands["startServer"]
+    ];
+
+    this.onCommandComplete = function( command, response, sshObj ) {
+      switch( command ) {
+        case "npm install --production":
+          sshObj.commands.unshift( "msg:" + chalk.green( "npm packages are up to date" ) );
+          break;
+
+        case commonCommands["startServer"]:
+        case commonCommands["restartServer"]:
+            printServerAddress( sshObj, command, response );
+            ssh2DummyFunction( sshObj );
+          break;
+      }
+    };
+  };
+
+  this["start-legacy"] = function() {
     this.commands = [
         "mount -uw /"
       , ( "setenv PORT " + grunt.config( ["env"] )["port"] )
@@ -165,9 +201,85 @@ module.exports = function( grunt ) {
     ];
   };
 
+  this["stop-legacy"] = function() {
+    this.commands = [
+      , ( "msg:" + chalk.cyan( "Stopping FreeNAS GUI webserver" ) )
+      , commonCommands["stopServer"]
+    ];
+  };
+
   this["bootstrap"] = function() {
     this.commands = [
-        "msg:" + chalk.cyan( "Now checking FreeNAS environment and installing any required software" )
+        "msg:" + chalk.cyan( "Now checking FreeNAS 10 environment and installing any required software" )
+      , "rehash"         // Update path
+      // Check if pkg(8) has been initialized
+      , "cat /usr/local/etc/pkg/repos/FreeBSD.conf"
+      // pkgng packages
+      , "which gmake"    // Check if gmake is installed
+      , "which g++"      // Check if g++ (or Clang) is installed
+      , "which npm"      // Check if npm is installed TODO: remove this
+      , "rehash"         // Update path
+      // npm pacakages
+      , "npm -v"         // Update npm to latest; port is usually out of date
+      , "rehash"         // Update path
+      , "npm config set cache /usr/local/www/gui/.npm-cache --global"
+      , "cd /usr/include/"
+    ];
+    this.onCommandComplete = function( command, response, sshObj ) {
+      switch ( command ) {
+        case "cat /usr/local/etc/pkg/repos/FreeBSD.conf":
+          if ( response.indexOf( "enabled: no" ) !== -1 ) {
+            sshObj.commands.unshift(
+                "msg:" + chalk.cyan( "Enabling pkg(8)" )
+              , "sed -i 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf"
+            );
+          } else {
+            sshObj.commands.unshift( "msg:" + chalk.green( "pkg(8) is already enabled" ) );
+          }
+          break;
+
+        case "which gmake":
+          checkAndInstall( "gmake", response, sshObj );
+          break;
+
+        case "which g++":
+          checkAndInstall( "g++", response, sshObj );
+          break;
+
+        case "which npm":
+          checkAndInstall( "npm", response, sshObj );
+          break;
+
+        case "npm -v":
+          if ( response.search("2.1.") !== -1 ) {
+            sshObj.commands.unshift( "msg:" + chalk.green( "npm looks current" ) );
+          } else {
+            sshObj.commands.unshift(
+                "msg:Updating npm to latest version."
+              , "npm update -g npm"
+              , "npm -v"
+            );
+          }
+          break;
+
+        case "cd /usr/include/":
+          if ( response.search("No such file or directory") !== -1 ) {
+            sshObj.commands.push("msg:No header files were found in /usr/include");
+            sshObj.commands.push("mkdir -p ~/.tmp/headerfiles/");
+            grunt.task.run( "freenas-server:headerfiles-copy" );
+            grunt.task.run( "freenas-server:headerfiles-unpack" );
+          } else {
+            sshObj.commands.push("msg:" + chalk.green( "Header files found in /usr/include" ) );
+            ssh2DummyFunction( sshObj );
+          }
+          break;
+      }
+    };
+  };
+
+  this["bootstrap-legacy"] = function() {
+    this.commands = [
+        "msg:" + chalk.cyan( "Now checking FreeNAS 9 environment and installing any required software" )
       , "mount -uw /"    // Mount root filesystem as read-write
       , "rehash"         // Update path
       , "pkg -N"         // Check if pkg(8) has been initialized

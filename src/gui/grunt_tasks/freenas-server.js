@@ -158,7 +158,11 @@ module.exports = function(grunt) {
     // Load config for the specific task
     switch ( this.target ) {
       case "bootstrap":
-        sshToFreeNAS( "Sanity checking remote FreeNAS environment", this.data );
+        sshToFreeNAS( "Checking FreeNAS 10 environment", this.data );
+        break;
+
+      case "bootstrap-legacy":
+        sshToFreeNAS( "Sanity checking legacy FreeNAS environment", this.data );
         break;
 
       case "headerfiles-copy":

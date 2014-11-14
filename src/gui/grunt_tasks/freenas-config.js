@@ -222,6 +222,11 @@ module.exports = function(grunt) {
           answers["keyPath"] = resHome( answers["keyPath"] );
         }
 
+        // Shim path into answers object for modern FreeNAS
+        if ( !answers["freeNASPath"] ) {
+          answers["freeNASPath"] = "/usr/local/www/gui";
+        }
+
         // Load version flag and config file into Grunt's globals
         grunt.config.set( ["freenasConfig"], answers );
         grunt.config.set( ["freenasVersion"], answers["freenasVersion"] );

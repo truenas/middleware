@@ -107,13 +107,13 @@ module.exports = function(grunt) {
     }
     , freenasVersion : null
     , freenasConfig  : {
-      "notConfigured" : true
-    , "remoteHost"    : null
-    , "sshPort"       : null
-    , "authType"      : null
-    , "keyPath"       : null
-    , "rootPass"      : null
-    , "freeNASPath"   : null
+        "notConfigured" : true
+      , "remoteHost"    : null
+      , "sshPort"       : null
+      , "authType"      : null
+      , "keyPath"       : null
+      , "rootPass"      : null
+      , "freeNASPath"   : null
     }
   };
 

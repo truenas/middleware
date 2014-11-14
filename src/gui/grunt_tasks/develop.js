@@ -5,18 +5,12 @@
 
 "use strict";
 
-var chalk = require("chalk");
-
 module.exports = function(grunt) {
   grunt.registerTask( "develop", function() {
     var asyncDone = this.async();
 
     // Sanity check development environment before proceeding
-    if ( grunt.option( "insane" ) ) {
-      console.log( chalk.yellow( "INSANE: Not checking dev environment. Full speed ahead!" ) );
-    } else {
-      grunt.task.run( "check-dev-env" );
-    }
+    grunt.task.run( "check-dev-env" );
 
     // Clean the build directory
     grunt.task.run( "clean:build" );
@@ -33,21 +27,8 @@ module.exports = function(grunt) {
       // Check for a configuration file before proceeding
       grunt.task.run( "freenas-config" );
 
-      // Sanity check remote environment
-      if ( grunt.option( "insane" ) ) {
-        console.log( chalk.yellow( "INSANE: Not checking FreeNAS readiness. Just keep going!" ) );
-      } else {
-        grunt.task.run( "freenas-server:bootstrap" );
-      }
-
-      // rsync initial payload
-      grunt.task.run( "rsync" );
-
-      // Start remote server once app has been built
-      grunt.task.run( "freenas-server:start" );
-
-      // Run concurrent watch operations for remote development
-      grunt.task.run( "concurrent:watchRemoteFreeNAS" );
+      // Begin live development
+      grunt.task.run( "begin-livedev" );
     }
     asyncDone();
   });
