@@ -482,8 +482,7 @@ class LDAPForm(ModelForm):
         'ldap_ssl',
         'ldap_certificate',
         'ldap_idmap_backend',
-        'ldap_has_samba_schema',
-        'ldap_auxiliary_parameters' 
+        'ldap_has_samba_schema' 
     ]
 
     class Meta:
