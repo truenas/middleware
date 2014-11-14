@@ -31,22 +31,26 @@ from dispatcher.rpc import RpcService, RpcException, pass_sender
 
 class ManagementService(RpcService):
     def initialize(self, context):
-        self.__context = context
+        self.context = context
+        self.dispatcher = context.dispatcher
 
     def status(self):
-        pass
+        return {
+            'started-at': self.dispatcher.started_at,
+            'connected-clients': len(self.dispatcher.ws_server.connections)
+        }
 
     def reload_plugins(self):
-        self.__context.dispatcher.discover_plugins()
+        self.dispatcher.reload_plugins()
 
     def restart(self):
         pass
 
     def get_connected_clients(self):
-        return self.__context.dispatcher.ws_server.clients.keys()
+        return self.dispatcher.ws_server.clients.keys()
 
     def die_you_gravy_sucking_pig_dog(self):
-        self.__context.dispatcher.die()
+        self.dispatcher.die()
 
 
 class EventService(RpcService):
@@ -73,7 +77,7 @@ class PluginService(RpcService):
             self.service_name = name
 
         def enumerate_methods(self):
-            return list(self.connection.call_client_sync(self.service_name + '.enumerate_methods', ))
+            return list(self.connection.call_client_sync(self.service_name + '.enumerate_methods'))
 
         def __getattr__(self, name):
             def call_wrapped(*args):

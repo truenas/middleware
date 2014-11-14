@@ -233,14 +233,15 @@ class Client(object):
         if self.rpc is None:
             pass
 
-        self.rpc.register_service(name, cls)
-        self.call_sync('plugin.register_service', name)
+        self.rpc.unregister_service(name)
+        self.call_sync('plugin.unregister_service', name)
 
     def call_async(self, name, callback, *args):
         call = self.PendingCall(uuid.uuid4(), name, args)
         self.pending_calls[call.id] = call
 
-    def call_sync(self, name, timeout=None, *args):
+    def call_sync(self, name, *args, **kwargs):
+        timeout = kwargs.pop('timeout', None)
         call = self.PendingCall(uuid.uuid4(), name, args)
         self.pending_calls[str(call.id)] = call
         self.__call(call)
