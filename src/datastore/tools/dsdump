@@ -32,8 +32,10 @@ import argparse
 import json
 import datastore
 
+
 DEFAULT_CONFIGFILE = '/conf/middleware.conf'
 ds = None
+
 
 def init_datastore(filename):
     global ds
@@ -82,6 +84,7 @@ def main():
     parser.add_argument('-x', metavar='NOMETA', help='Don\'t include metadata')
     parser.add_argument('-o', metavar='OUTPUT', help='Output file name')
     parser.add_argument('collections', metavar='COLLECTION', nargs='*', default='all', help='Collections to dump or "all"')
+
     args = parser.parse_args()
     init_datastore(args.c)
 
