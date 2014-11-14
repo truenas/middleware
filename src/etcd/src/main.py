@@ -34,6 +34,7 @@ import argparse
 import json
 import errno
 import datastore
+import imp
 import renderers
 from dispatcher.client import Client
 from dispatcher.rpc import RpcService, RpcException
@@ -41,6 +42,7 @@ from dispatcher.rpc import RpcService, RpcException
 
 TEMPLATE_RENDERERS = {
     '.mako': renderers.MakoTemplateRenderer,
+    '.py': renderers.PythonRenderer,
     '.shell': renderers.ShellTemplateRenderer,
 }
 
@@ -78,6 +80,17 @@ class FileGenerationService(RpcService):
             'filename': filename
         })
 
+    def generate_plugin(self, name):
+        if name not in self.context.managed_files.keys():
+            return
+
+        plugin = imp.load_source('plugin', self.context.managed_files[name])
+
+        if not hasattr(plugin, 'run'):
+            raise RpcException(errno.EINVAL, 'Invalid plugin source, no run method')
+
+        plugin.run(self.context)
+
     def generate_group(self, name):
         group = self.datastore.get_one('etcd_groups', ('name', '=', name))
         if not group:
@@ -85,6 +98,9 @@ class FileGenerationService(RpcService):
 
         for f in group['files']:
             self.generate_file(f)
+
+        for p in group['plugins']:
+            self.generate_plugin(p)
 
     def get_managed_files(self):
         return self.context.managed_files
@@ -167,7 +183,7 @@ class Main:
         return renderer.render_template(template_path)
 
     def emit_event(self, name, params):
-        pass
+        self.client.emit_event(name, params)
 
     def main(self):
         parser = argparse.ArgumentParser()

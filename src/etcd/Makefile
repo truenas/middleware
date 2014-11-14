@@ -3,6 +3,7 @@ PYTHON ?= python
 
 install:
 	install etc/etcd ${PREFIX}/etc/rc.d/
+	install tools/etcd ${PREFIX}/sbin/
 	install -d ${PREFIX}/lib/etcd
 	install -d ${PREFIX}/lib/etcd/src
 	install -d ${PREFIX}/lib/etcd/plugins

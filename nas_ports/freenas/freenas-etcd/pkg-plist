@@ -8,3 +8,4 @@
 /usr/local/lib/etcd/plugins/rc.conf.mako
 /usr/local/lib/etcd/plugins/resolv.conf.mako
 /usr/local/etc/rc.d/etcd
+/usr/local/sbin/etcd
