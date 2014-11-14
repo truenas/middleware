@@ -25,7 +25,8 @@ var FreeNASWebApp = React.createClass({
     return {
       warningBoxIsVisible: 0,
       infoBoxIsVisible: 0,
-      queueBoxIsVisible: 0
+      queueBoxIsVisible: 0,
+      gridClass: "collapsed"
     };
   },
 
