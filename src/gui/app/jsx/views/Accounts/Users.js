@@ -7,10 +7,8 @@
 "use strict";
 
 
-var _ = require("lodash");
-var React    = require("react");
-
-var Viewer   = require("../../components/Viewer");
+var React  = require("react");
+var Viewer = require("../../components/Viewer");
 
 // Dummy data from API call on relatively unmolested system
 // TODO: Update to use data from Flux store
