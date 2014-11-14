@@ -1214,30 +1214,42 @@ def update_apply(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
-        handler = UpdateHandler(uuid=uuid)
         if not uuid:
-            #FIXME: ugly
-            pid = os.fork()
-            if pid != 0:
-                return HttpResponse(handler.uuid, status=202)
+            # Why not use subprocess module?
+            # Because for some reason it was leaving a zombie process behind
+            # My guess is that its related to fork within a thread and fds
+            readfd, writefd = os.pipe()
+            updated_pid = os.fork()
+            if updated_pid == 0:
+                os.close(readfd)
+                os.dup2(writefd, 1)
+                os.close(writefd)
+                for i in xrange(3, 1024):
+                    try:
+                        os.close(i)
+                    except OSError:
+                        pass
+                os.execv(
+                    "/usr/local/www/freenasUI/tools/updated.py",
+                    [
+                        "/usr/local/www/freenasUI/tools/updated.py",
+                        '-t', str(updateobj.get_train()),
+                        '-c', str(notifier().get_update_location()),
+                        '-a',
+                    ]
+                )
             else:
-                handler.pid = os.getpid()
-                handler.dump()
-                path = notifier().get_update_location()
-                try:
-                    log.debug("Starting ApplyUpdate")
-                    ApplyUpdate(
-                        path,
-                        install_handler=handler.install_handler,
-                    )
-                    log.debug("ApplyUpdate finished!")
-                except Exception, e:
-                    log.debug("Exception ApplyUpdate")
-                    handler.error = unicode(e)
-                handler.finished = True
-                handler.dump()
-                os.kill(handler.pid, 9)
+                os.close(writefd)
+                pid, returncode = os.waitpid(updated_pid, 0)
+                returncode >>= 8
+                uuid = os.read(readfd, 1024)
+                if uuid:
+                    uuid = uuid.strip('\n')
+                if returncode != 0:
+                    raise MiddlewareError(_('Update daemon failed!'))
+                return HttpResponse(uuid, status=202)
         else:
+            handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
@@ -1270,47 +1282,47 @@ def update_check(request):
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
-        if request.POST.get('apply') == '1':
-            apply_ = True
-        else:
-            apply_ = False
-        handler = UpdateHandler(uuid=uuid, apply_=apply_)
         if not uuid:
-            #FIXME: ugly
-            pid = os.fork()
-            if pid != 0:
-                return HttpResponse(handler.uuid, status=202)
+            if request.POST.get('apply') == '1':
+                apply_ = True
             else:
-                handler.pid = os.getpid()
-                handler.dump()
-                path = notifier().get_update_location()
-                try:
-                    if handler.apply:
-                        log.debug("Starting Update")
-                        Update(
-                            train=updateobj.get_train(),
-                            get_handler=handler.get_handler,
-                            install_handler=handler.install_handler,
-                            cache_dir=path,
-                        )
-                    else:
-                        log.debug("Starting DownloadUpdate")
-                        DownloadUpdate(
-                            updateobj.get_train(),
-                            path,
-                            check_handler=handler.get_handler,
-                            get_handler=handler.get_file_handler,
-                        )
-                    log.debug("Update/DownloadUpdate finished")
-                except Exception, e:
-                    log.debug("Exception on Update/DownloadUpdate")
-                    from freenasUI.common.log import log_traceback
-                    log_traceback(log=log)
-                    handler.error = unicode(e)
-                handler.finished = True
-                handler.dump()
-                os.kill(handler.pid, 9)
+                apply_ = False
+            # Why not use subprocess module?
+            # Because for some reason it was leaving a zombie process behind
+            # My guess is that its related to fork within a thread and fds
+            readfd, writefd = os.pipe()
+            updated_pid = os.fork()
+            if updated_pid == 0:
+                os.close(readfd)
+                os.dup2(writefd, 1)
+                os.close(writefd)
+                for i in xrange(3, 1024):
+                    try:
+                        os.close(i)
+                    except OSError:
+                        pass
+                os.execv(
+                    "/usr/local/www/freenasUI/tools/updated.py",
+                    [
+                        "/usr/local/www/freenasUI/tools/updated.py",
+                        '-t', str(updateobj.get_train()),
+                        '-c', str(notifier().get_update_location()),
+                        '-d',
+                    ] + (['-a'] if apply_ else [])
+                )
+            else:
+                os.close(writefd)
+                pid, returncode = os.waitpid(updated_pid, 0)
+                returncode >>= 8
+                uuid = os.read(readfd, 1024)
+                if uuid:
+                    uuid = uuid.strip('\n')
+                if returncode != 0:
+                    raise MiddlewareError(_('Update daemon failed!'))
+                return HttpResponse(uuid, status=202)
+
         else:
+            handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
