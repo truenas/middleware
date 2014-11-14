@@ -201,7 +201,13 @@ def sign_manifest(mani, path, a):
 
     key_file = args[0]
     key_data = open(key_file).read()
-    mani.SignWithKey(key_data)
+    try:
+        mani.SignWithKey(key_data)
+    except:
+        print >> sys.stderr, "Unable to sign file"
+        os.remove(output_file.name)
+        sys.exit(1)
+
     mani.StoreFile(output_file)
 
     return

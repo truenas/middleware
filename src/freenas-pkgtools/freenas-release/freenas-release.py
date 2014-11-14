@@ -987,7 +987,7 @@ def usage():
 """ % sys.argv[0]
     sys.exit(1)
 
-def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"):
+def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS", key_data = None):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/${project}-MANIFEST, which will tell us
@@ -1253,6 +1253,19 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
+    # If we're given a key file, let's sign it
+    if key_data:
+        try:
+            manifest.SignWithKey(key_data)
+        except:
+            print >> sys.stderr, "Could not sign manifest, so removing file"
+            try:
+                os.remove(mani_file.name)
+                mani_file.close()
+            except:
+                pass
+            return
+
     manifest.StorePath(mani_file.name)
     mani_file.close()
     try:
@@ -1420,16 +1433,19 @@ def main():
     project_name = "FreeNAS"
     # Work on this
     Database = None
-
+    # Signing support
+    key_file = None
+    key_data = None
     # Locabl variables
     db = None
 
-    options = "a:D:dP:v"
+    options = "a:D:dK:P:v"
     long_options = ["archive=", "destination=",
-                 "database=",
-                 "project=",
-                 "debug", "verbose",
-                    ]
+                    "database=",
+                    "key=",
+                    "project=",
+                    "debug", "verbose",
+                ]
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], options, long_options)
@@ -1449,6 +1465,8 @@ def main():
         elif o in ('-P', '--project'):
             # Not implemented yet, just laying the groundwork
             project_name = a
+        elif o in ('-K', '--key'):
+            key_file = a
         else:
             usage()
 
@@ -1468,6 +1486,15 @@ def main():
         elif Database.startswith("py:"):
             db = PyReleaseDB(dbfile = Database[len("py:"):])
 
+    if key_file and key_file != "/dev/null" and key_file != "":
+        import OpenSSL.crypto as Crypto
+        try:
+            key_contents = open(key_file).read()
+            key_data = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_contents)
+        except:
+            print >> sys.stderr, "Cannot open key file %s, aborting" % key_file
+            sys.exit(1)
+
     cmd = args[0]
     args = args[1:]
 
@@ -1476,7 +1503,7 @@ def main():
             print >> sys.stderr, "No source directories specified"
             usage()
         for source in args:
-            ProcessRelease(source, archive, db, project = project_name)
+            ProcessRelease(source, archive, db, project = project_name, key_data = key_data)
     elif cmd == "check":
         Check(archive, db, project = project_name)
     else:

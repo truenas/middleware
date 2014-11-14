@@ -388,8 +388,12 @@ class Manifest(object):
             import OpenSSL.crypto as Crypto
             from base64 import b64encode as base64
 
-            # Load the key.  This is most likely to fail.
-            key = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_data)
+            # If it's a PKey, we don't need to load it
+            if isinstance(key_data, Crypto.PKey):
+                key = key_data
+            else:
+                # Load the key.  This is most likely to fail.
+                key = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_data)
 
             # Generate a canonical representation of the manifest
             temp = self.dict()
