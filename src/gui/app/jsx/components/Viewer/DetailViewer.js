@@ -28,20 +28,24 @@ var DetailViewer = React.createClass({
       var params = {};
       params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
       return (
-        <Link key    = { rawItem[ this.props.formatData["selectionKey"] ] }
-              to     = { this.props.itemData.route }
-              params = { params }>
-          <h4>{ rawItem[ this.props.formatData["primaryKey"] ] }</h4>
-          <small>{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
-        </Link>
+        <li role="presentation">
+          <Link key             = { rawItem[ this.props.formatData["selectionKey"] ] }
+                to              = { this.props.itemData.route }
+                params          = { params } >
+            <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>
+            <small className="secondary-text">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+          </Link>
+        </li>
       );
     }.bind(this);
 
     return (
-      <TWBS.Grid fluid>
+      <TWBS.Grid fluid
+                 className = "viewer-detail">
         <TWBS.Row>
           <TWBS.Col xs={3}>
             <TWBS.Nav bsStyle   = "pills"
+                      className = "well"
                       stacked
                       activeKey = { this.props.selectedKey } >
               { this.props.inputData.map( createItem ) }

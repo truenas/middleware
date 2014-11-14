@@ -38,7 +38,8 @@ var TableViewer = React.createClass({
     }.bind(this);
 
     return(
-      <TWBS.Table striped bordered condensed hover responsive>
+      <TWBS.Table striped bordered condensed hover responsive
+                  className = "viewer-table">
         <thead>
           <tr>
             { this.props.tableCols.map( createHeader ) }

@@ -20,7 +20,7 @@ var IconViewer = React.createClass({
     }.bind(this);
 
     return (
-      <TWBS.Row>
+      <TWBS.Row className = "viewer-icon">
         { this.props.inputData.map( createItem ) }
       </TWBS.Row>
     );

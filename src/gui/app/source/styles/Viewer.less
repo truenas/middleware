@@ -1,0 +1,45 @@
+.viewer {
+}
+
+.viewer-detail {
+  .nav-pills {
+    .primary-text {
+      color : @gray-dark;
+    }
+    .secondary-text {
+      color : @gray-light;
+    }
+      .primary-text
+    , .secondary-text {
+      display       : block;
+      overflow      : hidden;
+      white-space   : nowrap;
+      text-overflow : ellipsis;
+    }
+    .active {
+        .primary-text
+      , .secondary-text {
+        color : white;
+      }
+    }
+    &> li > a {
+      color         : @gray-dark;
+      border-radius : 0;
+      &.active {
+        background-color : @brand-info;
+        &:hover {
+          background-color : lighten(@brand-info, 5%)
+        }
+      }
+    }
+  }
+  .well {
+    padding : 0;
+  }
+}
+
+.viewer-icon {
+}
+
+.viewer-table {
+}

@@ -8,90 +8,105 @@
           "key"         : "bsdusr_builtin"
         , "name"        : "Built-in User"
         , "type"        : "boolean"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "bsdusr_email"
         , "name"        : "Email Address"
         , "type"        : "string"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_full_name"
         , "name"        : "Full Name"
         , "type"        : "string"
+        , "mutable"     : true
         , "defaultCol"  : true
       }
     , {
           "key"         : "bsdusr_group"
         , "name"        : "Group"
         , "type"        : "number"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "bsdusr_home"
         , "name"        : "Home Directory"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_locked"
         , "name"        : "Locked Account"
         , "type"        : "boolean"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_password_disabled"
         , "name"        : "Password Disabled"
         , "type"        : "boolean"
+        , "mutable"     : true
         , "defaultCol"  : true
       }
     , {
           "key"         : "bsdusr_shell"
         , "name"        : "Shell"
         , "type"        : "string"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_smbhash"
         , "name"        : "SMB Hash"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_sshpubkey"
         , "name"        : "SSH Public Key"
         , "type"        : "string"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_sudo"
         , "name"        : "sudo Allowed"
         , "type"        : "boolean"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_uid"
         , "name"        : "User ID"
         , "type"        : "number"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "bsdusr_unixhash"
         , "name"        : "Unix Hash"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
           "key"         : "bsdusr_username"
         , "name"        : "Username"
         , "type"        : "string"
+        , "mutable"     : true
         , "defaultCol"  : true
       }
     , {
           "key"         : "id"
         , "name"        : "ID Number"
         , "type"        : "number"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
   ]
