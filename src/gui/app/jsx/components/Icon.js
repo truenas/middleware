@@ -11,19 +11,19 @@ var Icon = React.createClass({
     var flagString = "";
     if (this.props.icoSize !== undefined)
     {
-    	sizeString = " fa-" + this.props.icoSize;
-    } 
+      sizeString = " fa-" + this.props.icoSize;
+    }
     if (this.props.icoClass !== undefined)
     {
-    	classString = " " + this.props.icoClass;
+      classString = " " + this.props.icoClass;
     }
     if (this.props.warningFlag !== undefined)
     {
-    	flagString = <span> { this.props.warningFlag } </span>;
+      flagString = <span> { this.props.warningFlag } </span>;
     }
 
 
-    
+
     return (
       <i onClick={this.props.onClick} className={ "fa fa-" + this.props.glyph + sizeString + classString }>{ flagString }</i>
     );
