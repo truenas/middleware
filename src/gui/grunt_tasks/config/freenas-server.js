@@ -231,7 +231,7 @@ module.exports = function( grunt ) {
           if ( response.indexOf( "enabled: no" ) !== -1 ) {
             sshObj.commands.unshift(
                 "msg:" + chalk.cyan( "Enabling pkg(8)" )
-              , "sed -i 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf"
+              , "sed -i -e 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf"
             );
           } else {
             sshObj.commands.unshift( "msg:" + chalk.green( "pkg(8) is already enabled" ) );
