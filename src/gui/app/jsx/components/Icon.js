@@ -25,7 +25,7 @@ var Icon = React.createClass({
 
     
     return (
-      <i className={ "fa fa-" + this.props.glyph + sizeString + classString }>{ flagString }</i>
+      <i onClick={this.props.onClick} className={ "fa fa-" + this.props.glyph + sizeString + classString }>{ flagString }</i>
     );
   }
 });
