@@ -70,6 +70,8 @@ check_build_tools()
 	check_for_command_from_port poudriere ports-mgmt/poudriere-devel
 	check_for_command_from_port grub-mkrescue sysutils/grub2-pcbsd
 	check_for_command_from_port xorriso sysutils/xorriso
+	check_for_command_from_port npm www/npm
+	check_for_command_from_port gmake devel/gmake
 }
 
 main()

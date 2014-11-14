@@ -21,6 +21,7 @@ To build the system (experts only):
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
   * www/npm
+  * devel/gmake
   (and all the dependencies that these ports/pkgs install, of course)
 
 ## Building the System Quickstart Flow:
