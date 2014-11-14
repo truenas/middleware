@@ -23,7 +23,8 @@ var TWBS   = require("react-bootstrap");
 var FreeNASWebApp = React.createClass({
   getInitialState: function() {
     return {
-      WarningBoxState: "hidden"
+      WarningBoxState: "hidden",
+      gridClass: "collapsed"
     };
   },
 
@@ -38,6 +39,31 @@ var FreeNASWebApp = React.createClass({
       this.setState({ WarningBoxState: "hidden" });
     }
   },
+  menuChange: function(gClass) {
+    if (gClass === "expanded")
+    {
+      Velocity(this.refs.gridRef.getDOMNode()
+      , { paddingLeft: "54px;" }
+      , { duration: 1500,
+          easing: "easeInOutBounce",
+          complete: this.setState({ gridClass: gClass }) 
+        }
+      );
+    }
+    else
+    {
+      Velocity(this.refs.gridRef.getDOMNode()
+      , { paddingLeft: "240px;" }
+      , { duration: 1500,
+          easing: "easeInOutBounce",
+          complete: this.setState({ gridClass: gClass }) 
+        }
+      );
+    }
+
+    
+  },
+
   render: function() {
     return (
       <div>
@@ -56,13 +82,12 @@ var FreeNASWebApp = React.createClass({
 
         </div>
       </div>
-      <LeftMenu />
-      <TWBS.Grid fluid className="mainGrid">
+      <LeftMenu handleMenuChange={this.menuChange} />
+      <TWBS.Grid fluid ref="gridRef" className={"mainGrid " + this.state.gridClass}>
         {/* TODO: Add Modal mount div */}
         <TWBS.Row>
           {/* Primary view */}
-          <TWBS.Col xs={9} sm={9} md={9} lg={9} xl={9}
-                    xsOffset={1} smOffset={1} mdOffset={1} lgOffset={1} xlOffset={1}>
+          <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12} xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
             <h1>FreeNAS WebGUI</h1>
             { this.props.activeRouteHandler() }
           </TWBS.Col>

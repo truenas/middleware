@@ -21,10 +21,17 @@ var Dashboard = React.createClass({
       <div>
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widgetArea">
-        <Widget positionX="0" positionY="200" title="Widget 1" size="large" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
-        <Widget positionX="425" positionY="200" title="Widget 2" size="medium" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
-        <Widget positionX="700" positionY="200" title="Widget 3" size="small" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
-        <Widget positionX="900" positionY="200" title="Widget 4" size="small" content="http://upload.wikimedia.org/wikipedia/commons/5/51/Stoned-virus-hexacode.jpg" />
+        <Widget positionX="15" positionY="150" title="Widget" size="large" content="/img/lg_widget.png" />
+        <Widget positionX="510" positionY="150" title="Widget" size="medium" content="/img/md_widget.png" />
+        <Widget positionX="510" positionY="480" title="Widget" size="small" content="/img/sm_widget.png" />
+        <Widget positionX="675" positionY="480" title="Widget" size="small" content="/img/sm_widget.png" />
+        <Widget positionX="15" positionY="645" title="Widget" size="large" content="/img/lg_widget.png" />
+        <Widget positionX="840" positionY="150" title="Widget" size="medium" content="/img/md_widget.png" />
+        <Widget positionX="840" positionY="480" title="Widget" size="medium" content="/img/md_widget.png" />
+        <Widget positionX="1170" positionY="150" title="Widget" size="small" content="/img/sm_widget.png" />
+        <Widget positionX="1170" positionY="315" title="Widget" size="small" content="/img/sm_widget.png" />
+        <Widget positionX="510" positionY="645" title="Widget" size="longsmall" content="/img/sm_widget.png" />
+        <Widget positionX="1170" positionY="480" title="Widget" size="heightsmall" content="/img/sm_widget.png" />
         </div>
       </div>
     );
