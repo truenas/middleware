@@ -450,7 +450,9 @@
         },
         "data": {
             "network.autoconfigure": true,
-            "service.sshd.enable": true
+            "service.sshd.enable": true,
+            "service.sshd.port": 22,
+            "service.ftp.port": 21
         }
     },
     {
@@ -465,14 +467,72 @@
         "data": {
             "FDF68C06-1F3F-47F8-AF28-2402F3D45424": {
                 "name": "accounts",
-                "files": [
-                    "passwd",
-                    "group",
-                    "master.passwd",
-                    "pwd.db",
-                    "spwd.db"
+                "dependencies": [
+                    "file:passwd",
+                    "file:group",
+                    "file:master.passwd",
+                    "plugin:pubkeys",
+                    "plugin:pwd_database"
+                ]
+            },
+            "B5EF4F4C-6E9C-45E7-B5B6-73A8CD7F7199": {
+                "name": "sshd",
+                "dependencies": [
+                    "file:ssh/sshd_config",
+                    "file:ssh/sshd_host_key"
                 ]
             }
         }
+    },
+    {
+        "metadata": {
+            "last-id": null,
+            "pkey-type": "uuid",
+            "name": "service_definitions",
+            "attributes": {
+                "type": "persistent"
+            }
+        },
+        "data": {
+            "1B3133B1-F8F4-44C0-AFAE-4CEAD5C1F4EA": {
+                "name": "sshd",
+                "service-name": "sshd",
+                "etcd-group": "sshd",
+                "pidfile": "/var/run/sshd.pid",
+                "settings": {
+                    "service.sshd.port": "Port number",
+                    "service.sshd.allow_password_auth": "Allow password authentication",
+                    "service.sshd.allow_root_with_password": "Allow root login with password",
+                    "service.sshd.allow_tcp_forwarding": "Allow TCP port forwarding",
+                    "service.sshd.compression": "Enable compression",
+                    "service.sshd.host_private_key": "Host private key"
+                }
+            },
+            "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
+                "name": "ftp",
+                "service-name": "proftpd",
+                "etcd-group": "ftpd",
+                "pidfile": "/var/run/proftpd.pid",
+                "settings": {
+                    "service.ftp.port": "Port number",
+                    "service.ftp.maxclients": "Maximum numer of simultaneous clients",
+                    "service.ftp.maxconns": "Maximum number of connections per IP address",
+                    "service.ftp.timeout": "Timeout before disconnection"
+                }
+            },
+            "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
+                "name": "snmp",
+                "service-name": "snmpd",
+                "etcd-group": "snmpd",
+                "pidfile": "/var/run/net_snmpd.pid",
+                "settings": {
+                    "service.snmp.location": "Location",
+                    "service.snmp.contact": "Contact person e-mail",
+                    "service.snmp.community": "Community name",
+                    "service.snmp.parameters": "Extra parameters"
+                }
+            }
+        }
     }
+
 ]
