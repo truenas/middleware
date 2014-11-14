@@ -90,6 +90,9 @@ sync:
 remote: sync
 	ssh -t ${host} sudo make -C ${dir} ${target}
 
+reinstall-package:
+	build/reinstall_package.sh ${host} ${p}
+
 freenas: release
 release: git-verify
 	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
