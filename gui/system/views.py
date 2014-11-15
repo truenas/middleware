@@ -1259,14 +1259,11 @@ def update_apply(request):
             return render(request, 'system/done.html')
     else:
         handler = CheckUpdateHandler()
-        try:
-            update = CheckForUpdates(
-                handler=handler.call,
-                train=updateobj.get_train(),
-                cache_dir=notifier().get_update_location(),
-            )
-        except:
-            update = None
+        update = CheckForUpdates(
+            handler=handler.call,
+            train=updateobj.get_train(),
+            cache_dir=notifier().get_update_location(),
+        )
         return render(request, 'system/update.html', {
             'update': update,
             'handler': handler,
@@ -1338,13 +1335,10 @@ def update_check(request):
                 )
     else:
         handler = CheckUpdateHandler()
-        try:
-            update = CheckForUpdates(
-                handler=handler.call,
-                train=updateobj.get_train(),
-            )
-        except:
-            update = None
+        update = CheckForUpdates(
+            handler=handler.call,
+            train=updateobj.get_train(),
+        )
         return render(request, 'system/update_check.html', {
             'update': update,
             'handler': handler,
