@@ -73,7 +73,7 @@ var Viewer = React.createClass({
 
       _.filter( this.props.formatData.dataKeys, function( item, key, collection ) {
         if ( item["defaultCol"] ) {
-          defaultTableCols.push( key );
+          defaultTableCols.push( item["key"] );
         }
       });
 
@@ -111,10 +111,10 @@ var Viewer = React.createClass({
       switch ( this.state.currentMode ) {
         default:
         case "detail":
-          return( <DetailViewer inputData        = { this.props.inputData }
-                                formatData       = { this.props.formatData }
-                                itemData         = { this.props.itemData }
-                                Editor           = { this.props.Editor } /> );
+          return( <DetailViewer inputData  = { this.props.inputData }
+                                formatData = { this.props.formatData }
+                                itemData   = { this.props.itemData }
+                                Editor     = { this.props.Editor } /> );
         case "icon":
           return( <IconViewer inputData  = { this.props.inputData }
                               formatData = { this.props.formatData }

@@ -9,29 +9,30 @@ var TWBS  = require("react-bootstrap");
 // Table Viewer
 var TableViewer = React.createClass({
   render: function() {
-    var createHeader = function( rawItem ) {
+    var createHeader = function( key ) {
+      var targetKey = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
       return(
-        <th key={ rawItem.id } >
-          { this.props.formatData.dataKeys[rawItem]["name"] }
+        <th key={ key.id } >
+          { targetKey["name"] }
         </th>
       );
     }.bind(this);
 
-    var createRows = function( rawItem ) {
+    var createRows = function( item ) {
       var createCell = function( cellKey ) {
         var innerContent;
-        if ( typeof rawItem[cellKey] === "boolean" ) {
-          innerContent = ( rawItem ? "Yes" : "No" );
-        } else if ( rawItem[cellKey].length === 0 ) {
+        if ( typeof item[cellKey] === "boolean" ) {
+          innerContent = ( item ? "Yes" : "No" );
+        } else if ( item[cellKey].length === 0 ) {
           innerContent = <span className="text-muted">{"--"}</span>;
         } else {
-          innerContent = rawItem[cellKey];
+          innerContent = item[cellKey];
         }
-        return ( <td>{ innerContent }</td> );
+        return ( <td key={ cellKey.id }>{ innerContent }</td> );
       }.bind( this );
 
       return(
-        <tr key={ rawItem.id } >
+        <tr key={ item.id } >
           { this.props.tableCols.map( createCell ) }
         </tr>
       );
