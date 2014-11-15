@@ -22,6 +22,7 @@ define([
   "dijit/form/ValidationTextBox",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
+  "dijit/Tooltip",
   "dgrid/OnDemandGrid",
   "dgrid/Selection",
   "dojox/timing",
@@ -52,6 +53,7 @@ define([
   ValidationTextBox,
   TabContainer,
   ContentPane,
+  Tooltip,
   OnDemandGrid,
   Selection,
   timing,
@@ -240,7 +242,7 @@ define([
 
       me._ownershipUserPw2 = new ValidationTextBox({
         type: "password",
-        invalidMessage: gettext("Paswords do not match."),
+        invalidMessage: gettext("Passwords do not match."),
         validator: function() {
           var pw1 = me._ownershipUserPw.get("value");
           var pw2 = me._ownershipUserPw2.get("value");
@@ -262,6 +264,10 @@ define([
           domStyle.set(me.dapOwnershipUserPw2Row, "display", "none");
         }
       });
+      new Tooltip({
+        connectId: ["ownershipUserCreateHelp"], 
+       label: "To create a new user, type in the username and then check this box"
+      }); 
 
       me._ownershipGroup = new ComboBox({
         required: true,
@@ -299,6 +305,10 @@ define([
       on(me._ownershipGroupCreate, "change", function(value) {
         me._ownershipGroup.validate();
       });
+      new Tooltip({
+        connectId: ["ownershipGroupCreateHelp"],
+       label: "To create a new group, type in the group name and then check this box"
+      }); 
 
       me._ownershipMode = new UnixPerm({value: "755"}, me.dapOwnershipMode);
 
