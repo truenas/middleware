@@ -547,6 +547,14 @@ def add_ldap(sc):
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
 
+    if ldap.ldap_auxiliary_parameters:
+        lines = ldap.ldap_auxiliary_parameters.splitlines()
+        for l in lines:
+            parts = l.split('=')
+            if len(parts) < 2:
+                continue
+            setattr(ldap_section, parts[0].strip(), parts[1].strip())
+
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)
     sc['sssd'].add_newline()
