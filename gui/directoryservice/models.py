@@ -1080,12 +1080,6 @@ class LDAP(DirectoryServiceBase):
         verbose_name=_("Samba Schema"),
         default=False
     )
-    ldap_auxiliary_parameters = models.TextField(
-        verbose_name=_("Auxiliary Parameters"),
-        blank=True,
-        help_text=_("These parameters are added to sssd.conf")
-
-    )
     ldap_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False
