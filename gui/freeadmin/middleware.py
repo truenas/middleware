@@ -159,16 +159,28 @@ class RequireLoginMiddleware(object):
 class LocaleMiddleware(object):
 
     def process_request(self, request):
+
+        # Limit language select in the wizard to the wizard
+        if (
+            'wizard_lang' in request.session and
+            request.path == '/system/wizard/'
+        ):
+            translation.activate(request.session['wizard_lang'])
+            return None
+
+        language = None
         if request.method == 'GET' and 'lang' in request.GET:
-            language = request.GET['lang']
-        else:
+            for lang in settings.LANGUAGES:
+                if lang[0] == request.GET['lang']:
+                    language = lang[0]
+                    break
+
+        if not language:
             #FIXME we could avoid this db hit using a cache,
             # invalidated when settings are edited
             language = Settings.objects.order_by('-id')[0].stg_language
 
-        for lang in settings.LANGUAGES:
-            if lang[0] == language:
-                translation.activate(language)
+        translation.activate(language)
 
     def process_response(self, request, response):
         patch_vary_headers(response, ('Accept-Language',))
