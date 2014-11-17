@@ -82,6 +82,13 @@ def home(request):
 
 
 def plugins(request):
+    jc_path = None
+    try:
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        jc_path = jc.jc_path
+
+    except:
+        jc_path = None
 
     Service = namedtuple('Service', [
         'name',
@@ -94,7 +101,14 @@ def plugins(request):
     ])
 
     host = get_base_url(request)
-    plugins = models.Plugins.objects.filter(plugin_enabled=True)
+ 
+    plugins = []
+    temp = models.Plugins.objects.filter(plugin_enabled=True)
+    if jc_path:
+        for t in temp:
+            if os.path.exists("%s/%s" % (jc_path, t.plugin_jail)):
+                plugins.append(t)
+
     args = map(lambda y: (y, host, request), plugins)
 
     pool = eventlet.GreenPool(20)
