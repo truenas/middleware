@@ -67,11 +67,27 @@ class TaskStatus(object):
             'extra': self.extra
         }
 
+
 class Provider(RpcService):
     def initialize(self, context):
         self.dispatcher = context
 
 
 def query(fn):
-
+    fn.params_schema = [
+        {
+            'title': 'filter',
+            'type': 'object',
+        },
+        {
+            'title': 'options',
+            'type': 'object',
+            'properties': {
+                'sort-field': {'type': 'string'},
+                'sort-order': {'type': 'string', 'enum': ['asc', 'desc']},
+                'limit': {'type': 'integer'},
+                'offset': {'type': 'integer'}
+            }
+        }
+    ]
     return fn

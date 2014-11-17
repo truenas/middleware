@@ -161,6 +161,7 @@ add_port devel/py-pyee
 add_port devel/py-sysctl
 add_port devel/py-watchdog
 add_port devel/py-setproctitle
+add_port devel/py-jsonschema
 add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py

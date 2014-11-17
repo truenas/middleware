@@ -29,6 +29,7 @@ import errno
 import inspect
 import logging
 import traceback
+from jsonschema import Draft4Validator, ValidationError
 
 
 class RpcContext(object):
@@ -64,6 +65,37 @@ class RpcContext(object):
 
         return self.instances[name]
 
+    def schema_to_list(self, schema):
+        return {
+            'type': 'array',
+            'items': schema,
+            'minItems': sum([1 for x in schema if 'mandatory' in x and x['mandatory']]),
+            'maxItems': len(schema)
+        }
+
+    def schema_to_dict(self, schema):
+        return {
+            'type': 'object',
+            'properties': {x['title']: x for x in schema.items()},
+            'required': [x['title'] for x in schema.values() if 'mandatory' in x and x['mandatory']]
+        }
+
+    def validate_call(self, args, schema):
+        errors = []
+        if type(args) is dict:
+            validator = Draft4Validator(self.schema_to_dict(schema))
+            errors += validator.iter_errors(args)
+
+        elif type(args) is list:
+            validator = Draft4Validator(self.schema_to_list(schema))
+            errors += validator.iter_errors(args)
+        else:
+            raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
+
+        if len(errors) > 0:
+            print errors
+            raise RpcException(errno.EINVAL, "One or more passed arguments failed schema verification", extra=errors)
+
     def dispatch_call(self, method, args, sender=None):
         service, sep, name = method.rpartition(".")
         self.logger.info('Call: service=%s, method=%s', service, method)
@@ -85,8 +117,10 @@ class RpcContext(object):
         if hasattr(func, 'required_roles'):
             for i in func.required_roles:
                 if not self.user.has_role(i):
-                    self.emit_rpc_error(id, errno.EACCES, 'Insufficent privileges')
-                    return
+                    raise RpcException(errno.EACCES, 'Insufficent privileges')
+
+        if hasattr(func, 'params_schema'):
+            self.validate_call(args, func.params_schema)
 
         if hasattr(func, 'pass_sender'):
             if type(args) is dict:
@@ -99,9 +133,7 @@ class RpcContext(object):
                 result = func(**args)
             elif type(args) is list:
                 result = func(*args)
-            else:
-                raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
-        except Exception, err:
+        except Exception:
             raise RpcException(errno.EFAULT, traceback.format_exc())
 
         self.instances[service].sender = None
@@ -155,9 +187,10 @@ class RpcService(object):
 
 
 class RpcException(Exception):
-    def __init__(self, code, message):
+    def __init__(self, code, message, extra=None):
         self.code = code
         self.message = message
+        self.extra = extra
         self.stacktrace = traceback.format_exc()
 
     def __str__(self):
