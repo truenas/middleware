@@ -309,11 +309,7 @@ Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the 
    operation. Boot environments provide the option to return to the previous version of the operating system by rebooting the system and selecting the
    previous boot environment from the boot menu.
 
-.. note:: upgrades from previous versions of FreeNAS® to version 9.3 are not possible as the boot filesystem has changed from UFS to ZFS. To move from a
-   previous version to 9.3, follow the :ref:`Initial Preparation` steps then perform an installation as described in :ref:`Performing the Installation`.
-
-This section describes how to perform an upgrade of a 9.3 system to the next major release as well as how to update the system with newer features between
-major releases.
+This section describes how to perform an upgrade to the next major release as well as how to update a 9.3 system with newer features between major releases.
 
 .. _Initial Preparation:
 
