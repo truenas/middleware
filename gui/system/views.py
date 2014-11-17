@@ -121,7 +121,8 @@ def _system_info(request=None):
     try:
         conf = Configuration.Configuration()
         manifest = conf.SystemManifest()
-        builddate = datetime.utcfromtimestamp(int(manifest.Sequence()))
+        builddate = manifest.TimeStamp()
+        builddate = datetime.utcfromtimestamp(builddate)
     except:
         builddate = None
 
