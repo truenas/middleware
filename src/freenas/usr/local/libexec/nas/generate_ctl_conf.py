@@ -58,6 +58,8 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
                     continue
                 rv = True
                 cf_contents.append("\tinitiator-portal %s\n" % name)
+        if rv and not auth_list and auth_type == 'None':
+            cf_contents.append("\tauth-type \"none\"\n")
     cf_contents.append("}\n\n")
     return rv
 
@@ -127,7 +129,7 @@ def main():
         cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
             cf_contents.append("\talias %s\n" % target.iscsi_target_name)
-        if target.iscsi_target_authtype == "None" or not has_auth:
+        if not has_auth:
             cf_contents.append("\tauth-group no-authentication\n")
         else:
             cf_contents.append("\tauth-group ag%s\n" % agname)
