@@ -12,8 +12,8 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 # Save some entropy so that /dev/random can re-seed on boot.
 */11	*	*	*	*	operator /usr/libexec/save-entropy
 #
-# Rotate log files every hour, if necessary.
-0	*	*	*	*	root	newsyslog
+# Rotate log files only at midnight.
+0	0	*	*	*	root	newsyslog
 #
 # Perform daily/weekly/monthly maintenance.
 1	3	*	*	*	root	periodic daily
@@ -33,4 +33,4 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 30	3	*	*	*	root 	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1
 0	3	*	*	*	root	find /tmp/ -iname "sessionid*" -ctime +1d -delete
 30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew
-45	3	*	*	*	root	/usr/local/sbin/scrub -t 30 freenas-boot
+45	3	*	*	*	root	/usr/local/sbin/scrub -t 35 freenas-boot
