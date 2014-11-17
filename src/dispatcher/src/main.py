@@ -504,14 +504,15 @@ def run(d, args):
     gevent.signal(signal.SIGINT, d.die)
 
     # WebSockets server
-    app = ApiHandler(d)
     if d.use_tls:
         s = Server(('', args.p), ServerResource({
-            '/socket': ServerConnection
+            '/socket': ServerConnection,
+            '/api': ApiHandler(d)
         }, dispatcher=d), certfile=d.certfile, keyfile=d.keyfile)
     else:
         s = Server(('', args.p), ServerResource({
-            '/socket': ServerConnection
+            '/socket': ServerConnection,
+            '/api': ApiHandler(d)
         }, dispatcher=d))
 
     d.ws_server = s
