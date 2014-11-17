@@ -74,7 +74,7 @@ class Package(object):
 
     def Updates(self):
         if UPGRADES_KEY in self._dict:
-            return self._dict[UPDATES_KEY]
+            return self._dict[UPGRADES_KEY]
         return None
 
     def FileName(self, old = None):
