@@ -645,6 +645,16 @@ class InitialWizard(CommonWizard):
             if em.is_valid():
                 em.save()
 
+            try:
+                settingsm = models.Settings.objects.order_by('-id')[0]
+            except IndexError:
+                settingsm = models.Settings.objects.create()
+
+            settingsm.stg_language = cleaned_data.get('stg_language')
+            settingsm.stg_kbdmap = cleaned_data.get('stg_kbdmap')
+            settingsm.stg_timezone = cleaned_data.get('stg_timezone')
+            settingsm.save()
+
         if ds_form:
 
             curstep += 1
@@ -1969,6 +1979,40 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
         if Volume.objects.all().exists():
             return False
         return len(cls._populate_disk_choices()) > 0
+
+
+class InitialWizardSettingsForm(Form):
+
+    stg_language = forms.ChoiceField(
+        choices=settings.LANGUAGES,
+        label=_('Language'),
+        required=False,
+    )
+    stg_kbdmap = forms.ChoiceField(
+        choices=[('', '------')] + list(choices.KBDMAP_CHOICES()),
+        label=_('Console Keyboard Map'),
+        required=False,
+    )
+    stg_timezone = forms.ChoiceField(
+        choices=choices.TimeZoneChoices(),
+        label=_('Timezone'),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(InitialWizardSettingsForm, self).__init__(*args, **kwargs)
+        try:
+            settingsm = models.Settings.objects.order_by('-id')[0]
+        except IndexError:
+            settingsm = models.Settings.objects.create()
+
+        self.fields['stg_language'].initial = settingsm.stg_language
+        self.fields['stg_kbdmap'].initial = settingsm.stg_kbdmap
+        self.fields['stg_timezone'].initial = settingsm.stg_timezone
+
+    def done(self, request=None, **kwargs):
+        # Save selected language to be used in the wizard
+        request.session['wizard_lang'] = self.cleaned_data.get('stg_language')
 
 
 class InitialWizardSystemForm(Form):
