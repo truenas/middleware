@@ -115,7 +115,7 @@ module.exports = function( grunt ) {
     this.commands = [
         "cd /usr/local/www/gui"
       , "npm install --production"
-      , commonCommands["restartServer"]
+      , "/usr/sbin/service gui restart"
     ];
 
     this.onCommandComplete = function( command, response, sshObj ) {
@@ -124,8 +124,7 @@ module.exports = function( grunt ) {
           sshObj.commands.unshift( "msg:" + chalk.green( "npm packages are up to date" ) );
           break;
 
-        case commonCommands["startServer"]:
-        case commonCommands["restartServer"]:
+        case "/usr/sbin/service gui restart":
             printServerAddress( sshObj, command, response );
             ssh2DummyFunction( sshObj );
           break;
