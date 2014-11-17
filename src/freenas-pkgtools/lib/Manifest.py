@@ -186,12 +186,13 @@ class Manifest(object):
         return True
 
     def Notice(self):
-        if (not NOTICE_KEY in self._dict):
+        if NOTICE_KEY not in self._dict:
             if (SWITCH_KEY in self._dict):
                 # If there's no notice, but there is a train-switch directive,
                 # then make up a notice about it.
                 return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
-        return self._dict[NOTICE_KEY]
+        else:
+            return self._dict[NOTICE_KEY]
 
     def SetNotice(self, n):
         self._dict[NOTICE_KEY] = n
