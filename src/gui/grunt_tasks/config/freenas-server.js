@@ -115,7 +115,7 @@ module.exports = function( grunt ) {
     this.commands = [
         "cd /usr/local/www/gui"
       , "npm install --production"
-      , commonCommands["startServer"]
+      , commonCommands["restartServer"]
     ];
 
     this.onCommandComplete = function( command, response, sshObj ) {
