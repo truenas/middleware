@@ -29,9 +29,9 @@ var DetailViewer = React.createClass({
       params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
       return (
         <li role="presentation">
-          <Link key             = { rawItem[ this.props.formatData["selectionKey"] ] }
-                to              = { this.props.itemData.route }
-                params          = { params } >
+          <Link key    = { rawItem[ this.props.formatData["selectionKey"] ] }
+                to     = { this.props.itemData.route }
+                params = { params } >
             <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>
             <small className="secondary-text">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
           </Link>
@@ -54,7 +54,8 @@ var DetailViewer = React.createClass({
           <TWBS.Col xs={9}>
             <this.props.Editor inputData  = { this.props.inputData }
                                itemData   = { this.props.itemData }
-                               formatData = { this.props.formatData } />
+                               formatData = { this.props.formatData }
+                               ItemView   = { this.props.ItemView } />
           </TWBS.Col>
         </TWBS.Row>
       </TWBS.Grid>

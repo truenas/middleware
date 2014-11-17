@@ -10,7 +10,7 @@
     "bsdusr_shell": "/bin/csh",
     "bsdusr_smbhash": "",
     "bsdusr_sshpubkey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTkxM2O94uvn4DXVG5NbkL/AFN+QeIcSXe2S5C6UJrBe3bPBsRG9TELqLzTE8yeZAWQbNbg7Dpa+jaCEC3v4H0flypNGSvJCv7FOFqCU/ajM7LgK1XbFX/2YxMZLKP3X3RRRL6s36UX4Qf+eNXYfJLfgXJpIdklX5iWmuAG7F2WTmkg+v/koe0+ohzVLPDKG66QhiJ0nRzOImaN+VvL2WAj5nicd+o5SGk1WYI3TUGMdNpujakkdfciK6i05/PgVaiHoQhUWjmXeRfnvAHcd8MLNmFkYx5UR5sT+m8hv11lYdvD5NTWk/VE2QojKZMNWhCPov9goe41GcCFMlwRnzT corey@Coreys-MacBook-Pro.local\n",
-    "bsdusr_sudo": false,
+    "bsdusr_sudo": true,
     "bsdusr_uid": 0,
     "bsdusr_unixhash": "$6$BwZoLLKv1OhkeRQB$LMSEmd5cupoYhQaXVrw5MC760xmgqy5cT7qB2pnJ5xugQf6Qvwv4UhgrUeDmx8oE4KH32wVRl/vTYtb29Vx8x/",
     "bsdusr_username": "root",

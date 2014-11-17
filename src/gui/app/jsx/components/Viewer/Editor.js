@@ -33,34 +33,8 @@ var Editor = React.createClass({
       );
     }
   , render: function() {
-      // Create line items for editor form
-      var createForm = function( item ) {
-        var createField = function( inputValue ) {
-          switch ( typeof inputValue ){
-            case "boolean":
-              return ( inputValue ? "Yes" : "No" );
-            default:
-              return ( inputValue );
-          }
-        };
-
-
-        return (
-          <span key={ item["name"] }>
-            <dt><b>{ item["name"] }</b></dt>
-            <dd>{ createField( this.state.targetItem[ item["key"] ] ) }</dd>
-            <br />
-          </span>
-        );
-      }.bind(this);
-
       return (
-        <div>
-          <h2>{ this.state.targetItem[ this.props.formatData["primaryKey"] ] }</h2>
-          <dl>
-            { this.props.formatData.dataKeys.map( createForm ) }
-          </dl>
-        </div>
+        <this.props.ItemView item={ this.state.targetItem } />
       );
     }
 });
