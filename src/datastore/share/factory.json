@@ -452,6 +452,13 @@
             "network.autoconfigure": true,
             "service.sshd.enable": true,
             "service.sshd.port": 22,
+            "service.sshd.sftp_log_level": "ERROR",
+            "service.sshd.sftp_log_facility": "AUTH",
+            "service.sshd.permit_root_login": false,
+            "service.sshd.allow_port_forwarding": false,
+            "service.sshd.compression": false,
+            "service.sshd.allow_password_auth": true,
+            "service.sshd.allow_pubkey_auth": true,
             "service.ftp.port": 21
         }
     },
@@ -505,7 +512,8 @@
                     "service.sshd.allow_root_with_password": "Allow root login with password",
                     "service.sshd.allow_tcp_forwarding": "Allow TCP port forwarding",
                     "service.sshd.compression": "Enable compression",
-                    "service.sshd.host_private_key": "Host private key"
+                    "service.sshd.host_private_key": "Host private key",
+
                 }
             },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
