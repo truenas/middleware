@@ -459,19 +459,30 @@ class Configuration(object):
         if os.path.exists(self._system_dataset):
             self._temp = self._system_dataset
 
-    def TryGetNetworkFile(self, url, handler=None, pathname = None):
+    def TryGetNetworkFile(self, url, handler=None, pathname = None, reason = None):
         from . import ROOT_CA_FILE
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
+        host_id = None
         log.debug("TryGetNetworkFile(%s)" % url)
         temp_mani = self.SystemManifest()
         if temp_mani:
             current_version = temp_mani.Sequence()
         try:
+            host_id = open("/etc/hostid").read().rstrip()
+        except:
+            host_id = None
+
+        try:
             https_handler = VerifiedHTTPSHandler(ca_certs = ROOT_CA_FILE)
             opener = urllib2.build_opener(https_handler)
             req = urllib2.Request(url)
-            req.add_header(AVATAR_VERSION, current_version)
+            req.add_header("X-iXSystems-Project", Avatar())
+            req.add_header("X-iXSystems-Version", current_version)
+            if host_id:
+                req.add_header("X-iXSystems-HostID", host_id)
+            if reason:
+                req.add_header("X-iXSystems-Reason", reason)
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
             furl = opener.open(req, timeout=5)
@@ -712,7 +723,7 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        fileref = self.TryGetNetworkFile(TRAIN_FILE)
+        fileref = self.TryGetNetworkFile(TRAIN_FILE, reason = "FetchTrains")
 
         if fileref is None:
             return None
@@ -824,6 +835,7 @@ class Configuration(object):
                 file_ref = self.TryGetNetworkFile(
                     full_pathname,
                     handler=handler,
+                    reason = "SearchForFile(%s)" % path,
                 )
             if file_ref is not None:
                 yield file_ref
@@ -853,7 +865,8 @@ class Configuration(object):
             ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
 
         file_ref = self.TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
-                                     handler=handler,
+                                          handler=handler,
+                                          reason = "GetManifest",
                                  )
         return file_ref
 
@@ -876,7 +889,9 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
+        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
+                                      reason = "GetLatestManifest",
+                                  )
         if file is None:
             log.debug("Could not get latest manifest file for train %s" % train)
         else:
@@ -986,6 +1001,7 @@ class Configuration(object):
                 url = url,
                 handler = handler,
                 pathname = save_name,
+                reason = "DownloadPackageFile",
                 )
             if file:
                 if search_attempt["Checksum"]:
