@@ -25,74 +25,35 @@
 #
 #####################################################################
 
-import sys
+
 from texttable import Texttable
+from namespace import Namespace, Command, description
 
 
-def description(descr):
-    def wrapped(fn):
-        fn.description = descr
-        return fn
-
-    return wrapped
+@description("Lists system services")
+class ListCommand(Command):
+    def run(self, context, args):
+        print context.connection.call_sync('system.info.status')
 
 
-class Namespace(object):
-    def __init__(self):
-        self.nslist = {}
-
-    def help(self):
-        pass
-
+@description("Service namespace")
+class ServiceNamespace(Namespace):
     def commands(self):
         return {
-            '?': IndexCommand(self),
-            'help': IndexCommand(self),
-            'exit': ExitCommand()
+            'list': ListCommand()
         }
 
-    def namespaces(self):
-        return self.nslist
 
-    def on_enter(self):
-        pass
+class ServiceItemNamespace(Namespace):
+    def commands(self):
+        return {
+            'start': ListCommand(),
+            'stop': ListCommand(),
+            'restart': ListCommand(),
 
-    def on_leave(self):
-        pass
-
-    def register_namespace(self, name, ns):
-        self.nslist[name] = ns
+        }
 
 
-class Command(object):
-    def run(self, context, args):
-        pass
 
-
-@description("Provides list of commands in this namespace")
-class IndexCommand(Command):
-    def __init__(self, target):
-        self.target = target
-
-    def run(self, context, args):
-        table = Texttable()
-        table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-        table.add_rows([['Command', 'Description']], header=True)
-
-        for name, ns in self.target.namespaces().items():
-            table.add_row([name, ns.description])
-
-        for name, cmd in self.target.commands().items():
-            table.add_row([name, cmd.description])
-
-        print table.draw()
-
-
-@description("Exits the CLI")
-class ExitCommand(Command):
-    def run(self, context, args):
-        sys.exit(0)
-
-
-class RootNamespace(Namespace):
-    pass
+def _init(context):
+    context.attach_namespace('/service', ServiceNamespace())

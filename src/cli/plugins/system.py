@@ -25,74 +25,33 @@
 #
 #####################################################################
 
-import sys
-from texttable import Texttable
+
+from namespace import Namespace, Command, IndexCommand, description
+from utils import print_dict
 
 
-def description(descr):
-    def wrapped(fn):
-        fn.description = descr
-        return fn
-
-    return wrapped
+@description("Provides status information about the server")
+class StatusCommand(Command):
+    def run(self, context, args):
+        print_dict(context.connection.call_sync('management.status'))
 
 
-class Namespace(object):
-    def __init__(self):
-        self.nslist = {}
+@description("Logs in to the server")
+class LoginCommand(Command):
+    def run(self, context, args):
+        context.connection.login_user(args[0], args[1])
+        context.connection.subscribe_events('*')
 
-    def help(self):
-        pass
 
+@description("System namespace")
+class SystemNamespace(Namespace):
     def commands(self):
         return {
             '?': IndexCommand(self),
-            'help': IndexCommand(self),
-            'exit': ExitCommand()
+            'login': LoginCommand(),
+            'status': StatusCommand()
         }
 
-    def namespaces(self):
-        return self.nslist
 
-    def on_enter(self):
-        pass
-
-    def on_leave(self):
-        pass
-
-    def register_namespace(self, name, ns):
-        self.nslist[name] = ns
-
-
-class Command(object):
-    def run(self, context, args):
-        pass
-
-
-@description("Provides list of commands in this namespace")
-class IndexCommand(Command):
-    def __init__(self, target):
-        self.target = target
-
-    def run(self, context, args):
-        table = Texttable()
-        table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-        table.add_rows([['Command', 'Description']], header=True)
-
-        for name, ns in self.target.namespaces().items():
-            table.add_row([name, ns.description])
-
-        for name, cmd in self.target.commands().items():
-            table.add_row([name, cmd.description])
-
-        print table.draw()
-
-
-@description("Exits the CLI")
-class ExitCommand(Command):
-    def run(self, context, args):
-        sys.exit(0)
-
-
-class RootNamespace(Namespace):
-    pass
+def _init(context):
+    context.attach_namespace('/system', SystemNamespace())

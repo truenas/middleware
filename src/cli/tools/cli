@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python2.7 /usr/local/lib/freenascli/src/repl.py $*
