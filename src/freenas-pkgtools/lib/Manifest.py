@@ -191,6 +191,8 @@ class Manifest(object):
                 # If there's no notice, but there is a train-switch directive,
                 # then make up a notice about it.
                 return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
+            else:
+                return None
         else:
             return self._dict[NOTICE_KEY]
 
@@ -216,7 +218,7 @@ class Manifest(object):
         return
 
     def SetNote(self, name, location):
-        if not NOTES_KEY in self._dict:
+        if NOTES_KEY not in self._dict:
             self._dict[NOTES_KEY] = {}
         if location.startswith(UPDATE_SERVER):
             location = location[len(location):]
@@ -273,7 +275,7 @@ class Manifest(object):
         return pkgs
 
     def AddPackage(self, pkg):
-        if not PACKAGES_KEY in self._dict:
+        if PACKAGES_KEY not in self._dict:
             self._dict[PACKAGES_KEY] = []
         self._dict[PACKAGES_KEY].append(pkg.dict())
         return
