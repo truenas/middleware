@@ -3,11 +3,12 @@
 "use strict";
 
 var React = require("react");
-var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
 var Router = require("react-router");
 var Link   = Router.Link;
+
+var viewerUtil = require("./viewerUtil");
 
 // Detail Viewer
 var DetailViewer = React.createClass({
@@ -32,8 +33,15 @@ var DetailViewer = React.createClass({
           <Link key    = { rawItem[ this.props.formatData["selectionKey"] ] }
                 to     = { this.props.itemData.route }
                 params = { params } >
-            <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>
-            <small className="secondary-text">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+            <viewerUtil.ItemIcon primaryString   = { rawItem[ this.props.formatData["secondaryKey"] ] }
+                                 fallbackString  = { rawItem[ this.props.formatData["primaryKey"] ] }
+                                 seedNumber      = { rawItem[ this.props.formatData["uniqueKey"] ] }
+                                 size            = { 40 }
+                                 fontSize        = { 1 } />
+            <div className="text-container">
+              <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>
+              <small className="secondary-text">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+            </div>
           </Link>
         </li>
       );

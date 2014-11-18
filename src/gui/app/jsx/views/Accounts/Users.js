@@ -24,13 +24,13 @@ var itemData = {
   , "param" : "userID"
 };
 
+
 var UserView = React.createClass({
     propTypes: {
       item: React.PropTypes.object.isRequired
     }
   , render: function() {
     var builtInUserAlert = null;
-    var userIcon         = null;
 
     if ( this.props.item["bsdusr_builtin"] ) {
       builtInUserAlert = (
@@ -42,37 +42,6 @@ var UserView = React.createClass({
             </TWBS.Alert>
           </TWBS.Col>
         </TWBS.Row>
-      );
-    }
-
-    if ( this.props.item["user_icon"] ) {
-      // TODO: BASE64 encoded user images from middleware
-      // userIcon = <img />;
-    } else {
-      var initials  = "";
-      var userColor = viewerUtil.getPastelColor( this.props.item["bsdusr_uid"] );
-
-      if ( this.props.item["bsdusr_full_name"] ) {
-        initials = this.props.item["bsdusr_full_name"]
-                     .split(" ")
-                     .map( function( word ) { return word[0]; });
-
-        if ( initials.length > 1 ) {
-          initials = initials[0] + initials.pop();
-        } else {
-          initials = initials[0];
-        }
-      } else {
-        initials = this.props.item["bsdusr_username"][0];
-      }
-
-      userIcon = (
-        <div className = "user-icon"
-             style= {{
-               background: "rgb(" + userColor.join(",") + ")"
-             }} >
-          { initials.toUpperCase() }
-        </div>
       );
     }
 
@@ -88,8 +57,11 @@ var UserView = React.createClass({
 
         {/* User icon and general information */}
         <TWBS.Row>
-          <TWBS.Col xs={3}>
-            { userIcon }
+          <TWBS.Col xs={3}
+                    className="text-center">
+            <viewerUtil.ItemIcon primaryString   = { this.props.item["bsdusr_full_name"] }
+                                 fallbackString  = { this.props.item["bsdusr_username"] }
+                                 seedNumber      = { this.props.item["bsdusr_uid"] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["bsdusr_username"] }</h3>

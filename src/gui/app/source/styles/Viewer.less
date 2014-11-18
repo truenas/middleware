@@ -2,13 +2,11 @@
 }
 
 .viewer-detail {
+  .text-container { display : inline-block; }
+  .user-icon      { margin-right: 15px; }
   .nav-pills {
-    .primary-text {
-      color : @gray-dark;
-    }
-    .secondary-text {
-      color : @gray-light;
-    }
+    .primary-text   { color : @gray-dark; }
+    .secondary-text { color : @gray-light; }
       .primary-text
     , .secondary-text {
       display       : block;
@@ -45,13 +43,19 @@
 }
 
 .user-icon {
-  display        : table-cell;
-  height         : 100px;
-  width          : 100px;
-  vertical-align : middle;
-  border-radius  : 50%;
-  color          : white;
-  text-align     : center;
-  font-size      : 3em;
-  font-weight    : 100;
+  height        : 100px;
+  width         : 100px;
+  display       : inline-block;
+  border-radius : 50%;
+
+  .user-initials {
+    display        : table-cell;
+    height         : inherit;
+    width          : inherit;
+    vertical-align : middle;
+    color          : white;
+    font-size      : 3em;
+    text-align     : center;
+    font-weight    : 100;
+  }
 }

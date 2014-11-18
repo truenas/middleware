@@ -175,6 +175,7 @@ var Viewer = React.createClass({
             </TWBS.ButtonGroup>
           </TWBS.Navbar>
         </TWBS.Row>
+
         <TWBS.Row>
         { viewerContent() }
         </TWBS.Row>
