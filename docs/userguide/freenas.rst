@@ -1,6 +1,5 @@
 .. toctree::
    :numbered:
-   :hidden:
 
    Introduction <freenas_intro>
    Installing and Upgrading FreeNAS® <freenas_install>
