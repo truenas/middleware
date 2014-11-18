@@ -12,80 +12,88 @@ PROGDIR="/usr/local/share/warden"
 start_jail_vimage()
 {
   BRIDGE=
+  NETWORKING=0
 
-  # See if we need to create a new bridge, or use an existing one
-  _bridges=`get_bridge_interfaces`
-  if [ -n "${_bridges}" ] ; then
-     for _bridge in ${_bridges}
-     do
-        _members=`get_bridge_members ${_bridge}`
-        for _member in ${_members}
-        do 
-           if [ "${_member}" = "${IFACE}" ] ; then
-              BRIDGE="${_bridge}"
+  if [ -n "${IP4}" -o -n "${IP6}" ] ; then
+     NETWORKING=1 
+  fi
+
+  if [ "${NETWORKING}" = "1" ] ; then
+
+     # See if we need to create a new bridge, or use an existing one
+     _bridges=`get_bridge_interfaces`
+     if [ -n "${_bridges}" ] ; then
+        for _bridge in ${_bridges}
+        do
+           _members=`get_bridge_members ${_bridge}`
+           for _member in ${_members}
+           do 
+              if [ "${_member}" = "${IFACE}" ] ; then
+                 BRIDGE="${_bridge}"
+                 break
+              fi
+           done
+           if [ -n "${BRIDGE}" ] ; then
               break
            fi
+        done 
+     fi
+
+     if [ -z "${BRIDGE}" ] ; then
+        BRIDGE="`ifconfig bridge create mtu ${MTU}`"
+     fi 
+     if [ -n "${IFACE}" ] ; then
+        if ! is_bridge_member "${BRIDGE}" "${IFACE}" ; then
+           ifconfig "${BRIDGE}" addm "${IFACE}"
+        fi
+     fi
+
+     # create epair for vimage jail
+     EPAIRA="`ifconfig epair create mtu ${MTU}`"
+     ifconfig "${EPAIRA}" up
+
+     EPAIRB="`echo "${EPAIRA}"|sed -E "s/([0-9])a$/\1b/g"`"
+     ifconfig "${BRIDGE}" addm "${EPAIRA}" up
+
+     # If no bridge specified, and IP4 is enabled, lets suggest one
+     if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES" ] ; then
+        BRIDGEIP4="`echo $IP4 | cut -d '.' -f 1-3`.254"
+     fi
+
+     if [ -n "${BRIDGEIP4}" ] ; then
+        if ! ipv4_configured "${BRIDGE}" ; then
+           ifconfig "${BRIDGE}" inet "${BRIDGEIP4}"
+
+        elif ! ipv4_address_configured "${BRIDGE}" "${BRIDGEIP4}" ; then
+           ifconfig "${BRIDGE}" inet alias "${BRIDGEIP4}"
+        fi
+     fi
+     if [ -n "${BRIDGEIPS4}" ] ; then
+        for _ip in ${BRIDGEIPS4}
+        do
+           if ! ipv4_address_configured "${BRIDGE}" "${_ip}" ; then
+              ifconfig "${BRIDGE}" inet alias "${_ip}"
+           fi 
         done
-        if [ -n "${BRIDGE}" ] ; then
-           break
-        fi
-     done 
-  fi
+     fi
 
-  if [ -z "${BRIDGE}" ] ; then
-     BRIDGE="`ifconfig bridge create mtu ${MTU}`"
+     if [ -n "${BRIDGEIP6}" ] ; then
+        if ! ipv6_configured "${BRIDGE}" ; then
+           ifconfig "${BRIDGE}" inet6 "${BRIDGEIP6}"
+
+        elif ! ipv6_address_configured "${BRIDGE}" "${BRIDGEIP6}" ; then
+           ifconfig "${BRIDGE}" inet6 alias "${BRIDGEIP6}"
+        fi
+     fi
+     if [ -n "${BRIDGEIPS6}" ] ; then
+        for _ip in ${BRIDGEIPS6}
+        do
+           if ! ipv6_address_configured "${BRIDGE}" "${_ip}" ; then
+              ifconfig "${BRIDGE}" inet6 alias "${_ip}"
+           fi
+        done
+     fi
   fi 
-  if [ -n "${IFACE}" ] ; then
-     if ! is_bridge_member "${BRIDGE}" "${IFACE}" ; then
-        ifconfig "${BRIDGE}" addm "${IFACE}"
-     fi
-  fi
-
-  # create epair for vimage jail
-  EPAIRA="`ifconfig epair create mtu ${MTU}`"
-  ifconfig "${EPAIRA}" up
-
-  EPAIRB="`echo "${EPAIRA}"|sed -E "s/([0-9])a$/\1b/g"`"
-  ifconfig "${BRIDGE}" addm "${EPAIRA}" up
-
-  # If no bridge specified, and IP4 is enabled, lets suggest one
-  if [ -z "$BRIDGEIP4" -a -n "$IP4" -a "${NATENABLE}" = "YES" ] ; then
-     BRIDGEIP4="`echo $IP4 | cut -d '.' -f 1-3`.254"
-  fi
-
-  if [ -n "${BRIDGEIP4}" ] ; then
-     if ! ipv4_configured "${BRIDGE}" ; then
-        ifconfig "${BRIDGE}" inet "${BRIDGEIP4}"
-
-     elif ! ipv4_address_configured "${BRIDGE}" "${BRIDGEIP4}" ; then
-        ifconfig "${BRIDGE}" inet alias "${BRIDGEIP4}"
-     fi
-  fi
-  if [ -n "${BRIDGEIPS4}" ] ; then
-     for _ip in ${BRIDGEIPS4}
-     do
-        if ! ipv4_address_configured "${BRIDGE}" "${_ip}" ; then
-           ifconfig "${BRIDGE}" inet alias "${_ip}"
-        fi 
-     done
-  fi
-
-  if [ -n "${BRIDGEIP6}" ] ; then
-     if ! ipv6_configured "${BRIDGE}" ; then
-        ifconfig "${BRIDGE}" inet6 "${BRIDGEIP6}"
-
-     elif ! ipv6_address_configured "${BRIDGE}" "${BRIDGEIP6}" ; then
-        ifconfig "${BRIDGE}" inet6 alias "${BRIDGEIP6}"
-     fi
-  fi
-  if [ -n "${BRIDGEIPS6}" ] ; then
-     for _ip in ${BRIDGEIPS6}
-     do
-        if ! ipv6_address_configured "${BRIDGE}" "${_ip}" ; then
-           ifconfig "${BRIDGE}" inet6 alias "${_ip}"
-        fi
-     done
-  fi
 
   # Start the jail now
   warden_print "jail -c path=${JAILDIR} name=${HOST} host.hostname=${HOST} ${jFlags} persist vnet=new"
@@ -94,6 +102,15 @@ start_jail_vimage()
      echo "ERROR: Failed starting jail with above command..."
      umountjailxfs "${JAILNAME}"
      exit 1
+  fi
+
+  #
+  # Configure lo0 interface
+  #
+  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
+
+  if [ "${NETWORKING}" = "0" ] ; then
+     return 0
   fi
 
   JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
@@ -109,11 +126,6 @@ start_jail_vimage()
       echo "${MAC}" > "${JMETADIR}/mac"
     fi
   fi
-
-  #
-  # Configure lo0 interface
-  #
-  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
 
   # Set epairb's MTU
   ifconfig ${EPAIRB} mtu ${MTU}
