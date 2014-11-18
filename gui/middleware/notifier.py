@@ -5465,16 +5465,16 @@ class notifier:
             setattr(obj, field, '')
             obj.save()
 
-    def pwenc_generate_secret(self):
+    def pwenc_generate_secret(self, reset_passwords=True, _settings=None):
         from Crypto import Random
-        from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
-        from freenasUI.system.models import Settings
-        from freenasUI.services.models import DynamicDNS, WebDAV, UPS
+        if _settings is None:
+            from freenasUI.system.models import Settings
+            _settings = Settings
 
         try:
-            settings = Settings.objects.order_by('-id')[0]
+            settings = _settings.objects.order_by('-id')[0]
         except IndexError:
-            settings = Settings.objects.create()
+            settings = _settings.objects.create()
 
         secret = Random.new().read(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
@@ -5484,12 +5484,15 @@ class notifier:
         settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
         settings.save()
 
-        self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
-        self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
-        self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
-        self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
-        self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
-        self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
+        if reset_passwords:
+            from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
+            from freenasUI.services.models import DynamicDNS, WebDAV, UPS
+            self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
+            self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
+            self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
+            self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
+            self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
+            self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
 
     def pwenc_check(self):
         from freenasUI.system.models import Settings

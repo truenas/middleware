@@ -18,7 +18,6 @@ def do_encrypt(model, field):
             continue
         setattr(obj, field, notifier().pwenc_encrypt(getattr(obj, field)))
         obj.save()
-            
 
 class Migration(DataMigration):
 
@@ -29,7 +28,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
 
-        notifier().pwenc_generate_secret()
+        notifier().pwenc_generate_secret(reset_passwords=False, _settings=orm['system.Settings'])
 
         do_encrypt(orm['services.DynamicDNS'], 'ddns_password')
         do_encrypt(orm['services.WebDAV'], 'webdav_password')
