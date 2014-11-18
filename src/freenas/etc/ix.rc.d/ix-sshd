@@ -116,7 +116,7 @@ __EOF__
             echo ${_tmp} | /usr/local/bin/base64 -d > /etc/ssh/${i}
         fi
     done
-    chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key 2>/dev/null
+    chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_ed25519_key 2>/dev/null
 }
 
 name="ix-sshd"
