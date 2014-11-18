@@ -40,6 +40,14 @@ for mountpoint in $(mount | grep -e "${JAILDIR}/" | cut -d" " -f3); do
   hasmount="1"
 done
 
+# Check if a jail with the same name is running
+JAIL="`jls name|awk -v jail="^${JAILNAME}\$" '$1 ~ jail { print $1 }'`"
+if [ -n "${JAIL}" ]; then
+  exit 0
+else
+  exit 1
+fi
+
 # Check if the jail is active
 JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
 if [ -n "${JID}" ]; then
