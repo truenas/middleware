@@ -558,19 +558,23 @@ if [ -e "${JMETADIR}/fstab" ] ; then
 fi
 
 IP4="$(warden_get_ipv4)"
-# Check if somebody snuck in a IP without / on it
-echo $IP4 | grep -q '/'
-if [ $? -ne 0 -a "${IP4}" != "DHCP" ] ; then
-   IP4="${IP4}/24"
+if [ -n "${IP4}" ] ; then
+   # Check if somebody snuck in a IP without / on it
+   echo $IP4 | grep -q '/'
+   if [ $? -ne 0 -a "${IP4}" != "DHCP" ] ; then
+      IP4="${IP4}/24"
+   fi
 fi
 
 IPS4="$(warden_get_ipv4_aliases)"
 
 IP6="$(warden_get_ipv6)"
-# Check if somebody snuck in a IP without / on it
-echo $IP6 | grep -q '/'
-if [ $? -ne 0 -a "${IP6}" != "AUTOCONF" ] ; then
-   IP6="${IP6}/64"
+if [ -n "${IP6}" ] ; then
+   # Check if somebody snuck in a IP without / on it
+   echo $IP6 | grep -q '/'
+   if [ $? -ne 0 -a "${IP6}" != "AUTOCONF" ] ; then
+      IP6="${IP6}/64"
+   fi
 fi
 
 IPS6="$(warden_get_ipv6_aliases)"

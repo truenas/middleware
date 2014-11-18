@@ -2093,9 +2093,6 @@ warden_get_ipv4()
    fi
 
    ipv4="$(eval cat "${dir}/ipv4" 2>/dev/null ${strip})"
-   if [ -z "${ipv4}" ] ; then
-      ipv4="DHCP"
-   fi
 
    echo "${ipv4}"
 }
@@ -2251,9 +2248,6 @@ warden_get_ipv6()
    fi
 
    ipv6="$(eval cat "${dir}/ipv6" 2>/dev/null ${strip})"
-   if [ -z "${ipv6}" ] ; then
-      ipv6="AUTOCONF"
-   fi
 
    echo "${ipv6}"
 }
