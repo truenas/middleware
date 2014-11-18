@@ -11,6 +11,7 @@ var React      = require("react");
 var TWBS       = require("react-bootstrap");
 
 var Viewer     = require("../../components/Viewer");
+var viewerUtil = require("../../components/Viewer/viewerUtil");
 var editorUtil = require("../../components/Viewer/Editor/editorUtil");
 
 
@@ -28,6 +29,53 @@ var UserView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
   , render: function() {
+    var builtInUserAlert = null;
+    var userIcon         = null;
+
+    if ( this.props.item["bsdusr_builtin"] ) {
+      builtInUserAlert = (
+        <TWBS.Row>
+          <TWBS.Col xs={12}>
+            <TWBS.Alert bsStyle   = "info"
+                        className = "text-center">
+              <b>{"This is a built-in FreeNAS user account."}</b>
+            </TWBS.Alert>
+          </TWBS.Col>
+        </TWBS.Row>
+      );
+    }
+
+    if ( this.props.item["user_icon"] ) {
+      // TODO: BASE64 encoded user images from middleware
+      // userIcon = <img />;
+    } else {
+      var initials  = "";
+      var userColor = viewerUtil.getPastelColor( this.props.item["bsdusr_uid"] );
+
+      if ( this.props.item["bsdusr_full_name"] ) {
+        initials = this.props.item["bsdusr_full_name"]
+                     .split(" ")
+                     .map( function( word ) { return word[0]; });
+
+        if ( initials.length > 1 ) {
+          initials = initials[0] + initials.pop();
+        } else {
+          initials = initials[0];
+        }
+      } else {
+        initials = this.props.item["bsdusr_username"][0];
+      }
+
+      userIcon = (
+        <div className = "user-icon"
+             style= {{
+               background: "rgb(" + userColor.join(",") + ")"
+             }} >
+          { initials.toUpperCase() }
+        </div>
+      );
+    }
+
     return (
       <TWBS.Grid fluid>
         {/* "Edit User" Button - Top */}
@@ -41,7 +89,7 @@ var UserView = React.createClass({
         {/* User icon and general information */}
         <TWBS.Row>
           <TWBS.Col xs={3}>
-            <p>User Icon</p>
+            { userIcon }
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["bsdusr_username"] }</h3>
@@ -50,6 +98,9 @@ var UserView = React.createClass({
             <hr />
           </TWBS.Col>
         </TWBS.Row>
+
+        {/* Shows a warning if the user account is built in */}
+        { builtInUserAlert }
 
         {/* Primary user data overview */}
         <TWBS.Row>
