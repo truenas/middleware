@@ -74,6 +74,8 @@ class Volume(Model):
 
     @property
     def is_upgraded(self):
+        if not self.is_decrypted():
+            return True
         if notifier().zpool_version(str(self.vol_name)) ==  '-':
             proc = subprocess.Popen([
                        "zpool",
@@ -90,7 +92,7 @@ class Volume(Model):
                 if value not in ('active', 'enabled'):
                     return False
             return True
-        return False 
+        return False
 
     class Meta:
         verbose_name = _("Volume")
