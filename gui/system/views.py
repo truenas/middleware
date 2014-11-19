@@ -52,6 +52,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
+from freenasOS import Configuration, Train
 from freenasOS.Update import (
     ActivateClone,
     ApplyUpdate,
@@ -60,7 +61,6 @@ from freenasOS.Update import (
     DownloadUpdate,
     Update,
 )
-from freenasOS import Configuration, Train
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -1176,6 +1176,7 @@ def update_index(request):
         'update': update,
         'current_train': curtrain,
         'trains': json.dumps(trains),
+        'updateserver': ', '.join(Configuration.SEARCH_LOCATIONS),
     })
 
 

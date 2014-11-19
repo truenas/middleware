@@ -44,6 +44,7 @@ define([
     manualUrl: "",
     verifyUrl: "",
     updateUrl: "",
+    updateServer: "",
     initial: {},
     postCreate: function() {
       var me = this;
@@ -78,6 +79,7 @@ define([
 
       me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
       me.dapCurrentTrainDesc.innerHTML = me.initial.trainDesc;
+      me.dapUpdateServer.innerHTML = me.updateServer;
 
       me._manualUpdate = new Button({
         label: gettext("Manual Update"),
