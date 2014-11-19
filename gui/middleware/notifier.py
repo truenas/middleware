@@ -225,7 +225,7 @@ class notifier:
 
     def _pipeopen(self, command):
         log.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
 
     def _do_nada(self):
         pass
