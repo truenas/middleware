@@ -62,6 +62,8 @@ class MongodbDatastore(object):
             if op in self.operators_table:
                 result[name][self.operators_table[op]] = value
 
+        return result
+
     def connect(self, dsn):
         self.conn = MongoClient(dsn)
         self.db = self.conn.freenas
