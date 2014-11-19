@@ -715,6 +715,7 @@ class NT4(DirectoryServiceBase):
             self.nt4_adminpw = notifier().pwenc_decrypt(
                 self.nt4_adminpw
             )
+        self._nt4_adminpw_encrypted = False
 
         self.ds_type = DS_TYPE_NT4
         self.ds_name = enum_to_directoryservice(self.ds_type)
@@ -728,10 +729,11 @@ class NT4(DirectoryServiceBase):
                     self.nt4_netbiosname = m.group(0).upper().strip()
 
     def save(self, *args, **kwargs):
-        if self.nt4_adminpw:
+        if self.nt4_adminpw and not self._nt4_adminpw_encrypted:
             self.nt4_adminpw = notifier().pwenc_encrypt(
                 self.nt4_adminpw
             )
+            self._nt4_adminpw_encrypted = True
         super(NT4, self).save(*args, **kwargs)
 
     class Meta:
@@ -893,6 +895,7 @@ class ActiveDirectory(DirectoryServiceBase):
             self.ad_bindpw = notifier().pwenc_decrypt(
                 self.ad_bindpw
             )
+        self._ad_bindpw_encrypted = False
 
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
         self.ds_name = enum_to_directoryservice(self.ds_type)
@@ -906,10 +909,11 @@ class ActiveDirectory(DirectoryServiceBase):
                     self.ad_netbiosname = m.group(0).upper().strip()
 
     def save(self, **kwargs):
-        if self.ad_bindpw:
+        if self.ad_bindpw and not self._ad_bindpw_encrypted:
             self.ad_bindpw = notifier().pwenc_encrypt(
                 self.ad_bindpw
             )
+            self._ad_bindpw_encrypted = True
         super(ActiveDirectory, self).save(**kwargs)
 
         if not self.ad_kerberos_realm:
@@ -1119,15 +1123,17 @@ class LDAP(DirectoryServiceBase):
             self.ldap_bindpw = notifier().pwenc_decrypt(
                 self.ldap_bindpw
             )
+        self._ldap_bindpw_encrypted = False
 
         self.ds_type = DS_TYPE_LDAP
         self.ds_name = enum_to_directoryservice(self.ds_type)
 
     def save(self, *args, **kwargs):
-        if self.ldap_bindpw:
+        if self.ldap_bindpw and not self._ldap_bindpw_encrypted:
             self.ldap_bindpw = notifier().pwenc_encrypt(
                 self.ldap_bindpw
             )
+            self._ldap_bindpw_encrypted = True
         super(LDAP, self).save(*args, **kwargs)
 
     class Meta:
