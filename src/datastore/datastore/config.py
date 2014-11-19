@@ -39,8 +39,8 @@ class ConfigStore(object):
         datastore.collection_create('config', 'ltree', 'config')
 
     def get(self, key, default=None):
-        ret = self.__datastore.get_one('config', [('id', '=', key)], wrap=False)
-        return ret.data if ret is not None else default
+        ret = self.__datastore.get_one('config', [('id', '=', key)])
+        return ret['value'] if ret is not None else default
 
     def set(self, key, value):
         self.__datastore.upsert('config', key, value)

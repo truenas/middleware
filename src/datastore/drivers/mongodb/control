@@ -1,0 +1,31 @@
+#!/bin/sh
+datadir=$1
+cmd=$2
+driverdir=$(dirname $0)
+dbdir=${datadir}/freenas.db
+mongod=/usr/local/bin/mongod
+pidfile=${dbdir}/mongod.lock
+
+
+case ${cmd} in
+    init)
+        mkdir ${dbdir}
+        chown mongodb ${dbdir}
+        ;;
+
+    start)
+        ${mongod} --fork --syslog --dbpath ${dbdir}
+        ;;
+
+    stop)
+        kill `cat ${pidfile}`
+        ;;
+
+    defragment)
+        ;;
+
+    *)
+        echo "Unknown command"
+        exit 1
+        ;;
+esac

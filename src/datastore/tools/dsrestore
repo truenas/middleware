@@ -66,9 +66,7 @@ def restore_collection(dump):
     data = dump['data']
     name = metadata['name']
 
-    if ds.collection_exists(name):
-        ds.collection_delete(name)
-
+    ds.collection_delete(name)
     ds.collection_create(name, metadata['pkey-type'], metadata['attributes'])
 
     for key, row in data.items():
