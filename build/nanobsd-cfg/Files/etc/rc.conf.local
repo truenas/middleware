@@ -538,6 +538,17 @@ _gen_conf()
 		echo "\""
 	done
 
+	if is_freenas; then
+		echo "ataidle_enable=\"YES\""
+		# Needed to use pbi repositories
+		echo "pbid_enable=\"YES\""
+		echo "watchdogd_enable=\"YES\""
+		echo "vboxnet_enable=\"YES\""
+	else
+		echo "ataidle_enable=\"NO\""
+		echo "watchdogd_enable=\"NO\""
+	fi
+
 	local tun_var tun_value
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tun_var, tun_value FROM system_tunable WHERE tun_type = 'rc' ORDER BY id" | \
 	while read -r tun_var tun_value; do
