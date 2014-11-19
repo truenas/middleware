@@ -486,7 +486,7 @@
                 "name": "sshd",
                 "dependencies": [
                     "file:ssh/sshd_config",
-                    "file:ssh/sshd_host_key"
+                    "plugin:ssh/sshd_keys"
                 ]
             }
         }
@@ -505,40 +505,28 @@
                 "name": "sshd",
                 "service-name": "sshd",
                 "etcd-group": "sshd",
-                "pidfile": "/var/run/sshd.pid",
-                "settings": {
-                    "service.sshd.port": "Port number",
-                    "service.sshd.allow_password_auth": "Allow password authentication",
-                    "service.sshd.allow_root_with_password": "Allow root login with password",
-                    "service.sshd.allow_tcp_forwarding": "Allow TCP port forwarding",
-                    "service.sshd.compression": "Enable compression",
-                    "service.sshd.host_private_key": "Host private key",
-
-                }
+                "pidfile": "/var/run/sshd/pid",
+                "settings": [
+                    "service.sshd.*"
+                ]
             },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
                 "name": "ftp",
                 "service-name": "proftpd",
                 "etcd-group": "ftpd",
                 "pidfile": "/var/run/proftpd.pid",
-                "settings": {
-                    "service.ftp.port": "Port number",
-                    "service.ftp.maxclients": "Maximum numer of simultaneous clients",
-                    "service.ftp.maxconns": "Maximum number of connections per IP address",
-                    "service.ftp.timeout": "Timeout before disconnection"
-                }
+                "settings": [
+                    "service.ftp.*"
+                ]
             },
             "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
                 "name": "snmp",
                 "service-name": "snmpd",
                 "etcd-group": "snmpd",
                 "pidfile": "/var/run/net_snmpd.pid",
-                "settings": {
-                    "service.snmp.location": "Location",
-                    "service.snmp.contact": "Contact person e-mail",
-                    "service.snmp.community": "Community name",
-                    "service.snmp.parameters": "Extra parameters"
-                }
+                "settings": [
+                    "service.snmp.*"
+                ]
             }
         }
     }
