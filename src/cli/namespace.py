@@ -78,12 +78,14 @@ class IndexCommand(Command):
         table = Texttable()
         table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
         table.add_rows([['Command', 'Description']], header=True)
+        nss = self.target.namespaces()
+        cmds = self.target.commands()
 
-        for name, ns in self.target.namespaces().items():
-            table.add_row([name, ns.description])
+        for name in sorted(nss.keys()):
+            table.add_row([name, nss[name].description])
 
-        for name, cmd in self.target.commands().items():
-            table.add_row([name, cmd.description])
+        for name in sorted(cmds.keys()):
+            table.add_row([name, cmds[name].description])
 
         print table.draw()
 

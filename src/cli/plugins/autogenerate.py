@@ -25,34 +25,44 @@
 #
 #####################################################################
 
-
-from namespace import Namespace, Command, IndexCommand, description
-from utils import print_dict
-
-
-@description("Provides status information about the server")
-class StatusCommand(Command):
-    def run(self, context, args):
-        print_dict(context.connection.call_sync('management.status'))
+from namespace import Namespace, Command, IndexCommand
+from utils import print_set
 
 
-@description("Logs in to the server")
-class LoginCommand(Command):
-    def run(self, context, args):
-        context.connection.login_user(args[0], args[1])
-        context.connection.subscribe_events('*')
-        context.login_plugins()
+class AutoNamespace(Namespace):
+    def __init__(self, context, service):
+        super(AutoNamespace, self).__init__()
+        self.context = context
+        self.service = service
+        self.description = '???'
 
-
-@description("System namespace")
-class SystemNamespace(Namespace):
     def commands(self):
-        return {
-            '?': IndexCommand(self),
-            'login': LoginCommand(),
-            'status': StatusCommand()
-        }
+        result = {'?': IndexCommand(self)}
+        methods = self.context.connection.call_sync('discovery.get_methods', self.service)
+
+        for m in methods:
+            result[m['name']] = AutoCommand(self.service + '.' + m['name'], m['params-schema'], m['result-schema'])
+
+        return result
+
+
+class AutoCommand(Namespace):
+    def __init__(self, path, params_schema, result_schema):
+        super(AutoCommand, self).__init__()
+        self.path = path
+        self.params_schema = params_schema
+        self.result_schema = result_schema
+        self.description = '???'
+
+
+    def run(self, context, args):
+        result = context.connection.call_sync(self.path, *args)
+        print_set(result)
 
 
 def _init(context):
-    context.attach_namespace('/system', SystemNamespace())
+    pass
+
+
+def _login(context):
+    pass

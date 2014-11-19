@@ -65,6 +65,10 @@ class Context(object):
             self.logger.debug("Searching for plugins in %s", dir)
             self.__discover_plugin_dir(dir)
 
+    def login_plugins(self):
+        for i in self.plugins.values():
+            i._login(self)
+
     def __discover_plugin_dir(self, dir):
         for i in glob.glob1(dir, "*.py"):
             self.__try_load_plugin(os.path.join(dir, i))
@@ -107,7 +111,8 @@ class PathItem(object):
 class MainLoop(object):
     def __init__(self, context):
         self.context = context
-        self.path = [PathItem(self.context.hostname, self.context.root_ns)]
+        self.root_path = [PathItem(self.context.hostname, self.context.root_ns)]
+        self.path = self.root_path[:]
         self.namespaces = []
         self.connection = None
 
@@ -127,8 +132,12 @@ class MainLoop(object):
         while True:
             line = raw_input(self.__get_prompt()).strip()
 
-            if len(line.strip()) == 0:
+            if len(line) == 0:
                 continue
+
+            if line[0] == '/':
+                self.path = self.root_path
+                line = line[1:]
 
             if line == '..':
                 if len(self.path) > 1:
@@ -136,28 +145,34 @@ class MainLoop(object):
                     continue
 
             tokens = line.split()
-            found = False
+            oldpath = self.path[:]
 
-            for token in tokens:
+            while tokens:
+                token = tokens.pop(0)
+                nsfound = False
+                cmdfound = False
+
                 for name, ns in self.cwd.ns.namespaces().items():
                     if token == name:
                         self.cd(token, ns)
-                        found = True
+                        nsfound = True
                         break
 
                 for name, cmd in self.cwd.ns.commands().items():
                     if token == name:
                         cmd.run(self.context, tokens)
-                        found = True
+                        cmdfound = True
                         break
 
-            if not found:
-                print 'Command not found! Type "?" for help.'
+                if not nsfound and not cmdfound:
+                    print 'Command not found! Type "?" for help.'
+                    break
+
+                if cmdfound:
+                    self.path = oldpath
+                    break
 
     def complete(self, text, state):
-        #self.blank_readline()
-        #self.cwd.ns.commands()['?'].run(self.context, [])
-        #self.restore_readline()
         choices = self.cwd.ns.namespaces().keys() + self.cwd.ns.commands().keys()
         options = [i for i in choices if i.startswith(text)]
         if state < len(options):

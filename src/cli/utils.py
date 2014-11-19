@@ -28,6 +28,7 @@
 
 from texttable import Texttable
 
+
 def print_dict(obj, key_label='Key', value_label='Value'):
     table = Texttable()
     table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
@@ -35,5 +36,16 @@ def print_dict(obj, key_label='Key', value_label='Value'):
 
     for k, v in obj.items():
         table.add_row([k, v])
+
+    print table.draw()
+
+
+def print_set(array):
+    table = Texttable()
+    table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
+    table.add_rows([array[0].keys()], header=True)
+
+    for row in array:
+        table.add_row(row.values())
 
     print table.draw()
