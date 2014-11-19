@@ -24,6 +24,6 @@ Need help getting started or want to discuss edits? Join the http://lists.freena
 
 To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
 
-% sphinx-build -b singlehtml . _build
+% sphinx-build -b html . _build
 
 When finished, open _build/freenas.html in a browser to verify the HTML output.
