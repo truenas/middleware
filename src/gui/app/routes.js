@@ -3,6 +3,8 @@
 // FREENAS GUI ROUTES
 "use strict";
 
+var React        = require("react");
+
 // Routing
 var Router        = require("react-router");
 var Routes        = Router.Routes;
