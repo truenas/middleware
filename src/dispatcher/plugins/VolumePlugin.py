@@ -25,32 +25,96 @@
 #
 #####################################################################
 
-from task import Provider, Task, TaskException
+from task import Provider, Task, TaskException, query
+from dispatcher.rpc import description, accepts, returns
 
+
+@description("Provides access to volumes information")
 class VolumeProvider(Provider):
-    def list(self):
+    @query
+    def query(self, filter=None, params=None):
         return [v['name'] for v in self.datastore.query('volumes')]
 
     def get_config(self, vol):
         return self.datastore.get_one('volumes', ('name', '=', vol))
 
-    def get_stats(self, vol):
-        pass
+    def get_capabilities(self, vol):
+        return {
+            'vdev-types': {
+                'disk': {
+                    'min-devices': 1,
+                    'max-devices': 1
+                },
+                'mirror': {
+                    'min-devices': 2
+                },
+                'raidz1': {
+                    'min-devices': 2
+                },
+                'raidz2': {
+                    'min-devices': 3
+                },
+                'raidz3': {
+                    'min-devices': 4
+                },
+                'spare': {
+                    'min-devices': 1
+                }
+            },
+            'vdev-groups': {
+                'data': {
+                    'allowed-vdevs': ['disk', 'file', 'mirror', 'raidz1', 'raidz2', 'raidz3', 'spare']
+                },
+                'log': {
+                    'allowed-vdevs': ['disk', 'mirror']
+                },
+                'cache': {
+                    'allowed-vdevs': ['disk']
+                }
+            }
+        }
 
-
+@description("Creates new volume")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    'type': 'string',
+    'title': 'type'
+}, {
+    'type': 'object',
+    'title': 'topology',
+    'properties': {
+        'groups': {'type': 'object'}
+    }
+})
 class VolumeCreateTask(Task):
     def __init__(self, dispatcher):
         pass
 
-    def verify(self, args):
+    def verify(self, name, type, topology):
+        pass
+
+    def run(self, args):
+        pass
+
+
+class VolumeUpdateTask(Task):
+    def verify(self, name):
         pass
 
 class VolumeImportTask(Task):
     pass
 
+
 class VolumeDetachTask(Task):
     pass
 
+
+class DatasetCreateTask(Task):
+    pass
+
+
 def _init(dispatcher):
-    #dispatcher.register_collection('volumes')
+    dispatcher.require_collection('volumes')
     dispatcher.register_provider('volume.info', VolumeProvider)

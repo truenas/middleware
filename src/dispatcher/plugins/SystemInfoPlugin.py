@@ -25,20 +25,37 @@
 #
 #####################################################################
 
-import struct
-from gevent.subprocess import check_output
+from dispatcher.rpc import description, returns
 from task import Provider
+from lib.system import system
 from lib.freebsd import get_sysctl
 
+@description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
+
     def uname_full(self):
-        return check_output(["/usr/bin/uname", "-a"])
+        out, _ = system(['uname', '-a'])
+        return out
 
     def memory_size(self):
         return get_sysctl("hw.realmem")
 
     def cpu_model(self):
         return get_sysctl("hw.model")
+
+    def logged_users(self):
+        result = []
+        out, err = system('w')
+        for line in out.split('\n'):
+            parts = line.split(None, 6)
+            result.append({
+                'username': parts[0],
+                'tty': parts[1],
+                'host': parts[2],
+                'login-at': parts[3],
+                'idle': parts[4],
+                'command': parts[5]
+            })
 
 
 def _init(dispatcher):

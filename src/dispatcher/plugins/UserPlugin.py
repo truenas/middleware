@@ -27,10 +27,11 @@
 
 import uuid
 import errno
-from task import Provider, Task, TaskException, VerifyException
-from dispatcher.rpc import description, accepts, returns
+from task import Provider, Task, TaskException, VerifyException, query
+from dispatcher.rpc import RpcException, description, accepts, returns
 from balancer import TaskState
 from datastore import DuplicateKeyException, DatastoreException
+
 
 @description("Provides access to users and groups database")
 class UserProvider(Provider):
@@ -38,16 +39,18 @@ class UserProvider(Provider):
         self.datastore = context.dispatcher.datastore
 
     @description("Lists users present in the system")
+    @query
     @returns({
         'type': 'array',
         'items': {
             'type': {'$ref': '#/definitions/user'}
         }
     })
-    def query_users(self, query_params=None):
-        return list(self.datastore.query('users'))
+    def query_users(self, filter=[], params={}):
+        return list(self.datastore.query('users', *filter, **params))
 
     @description("Lists groups present in the system")
+    @query
     @returns({
         'type': 'array',
         'items': {
@@ -89,8 +92,11 @@ class UserCreateTask(Task):
 
         try:
             self.datastore.insert('users', user, pkey=uid)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
             raise TaskException(errno.EBADMSG, 'Cannot add user: {0}'.format(str(e)))
+        except RpcException, e:
+            raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
         return TaskState.FINISHED
 
@@ -117,6 +123,7 @@ class UserDeleteTask(Task):
     def run(self, uid):
         try:
             self.datastore.delete(uid)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete user: {0}'.format(str(e)))
 
@@ -147,12 +154,11 @@ class UserUpdateTask(Task):
             user = self.datastore.get_by_id('users', uid)
             user.update(updated_fields)
             self.datastore.update('users', uid, user)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot update user: {0}'.format(str(e)))
-
-        svc = self.dispatcher.rpc.get_service('etcd.generation')
-        if not svc:
-            raise TaskException(errno.ENXIO, 'Cannot regenerate passwd file, etcd service is offline')
+        except RpcException, e:
+            raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
         svc.generate_group('accounts')
         return TaskState.FINISHED
@@ -185,11 +191,10 @@ class GroupCreateTask(Task):
     def run(self, group):
         try:
             self.datastore.insert('groups', group)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot add group: {0}'.format(str(e)))
-
-        svc = self.dispatcher.rpc.get_service('etcd.generation')
-        if not svc:
+        except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
         svc.generate_group('accounts')
@@ -224,11 +229,10 @@ class GroupUpdateTask(Task):
             group = self.datastore.get_by_id('groups', id)
             group.update(updated_fields)
             self.datastore.update('groups', id, group)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot update group: {0}'.format(str(e)))
-
-        svc = self.dispatcher.rpc.get_service('etcd.generation')
-        if not svc:
+        except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
         svc.generate_group('accounts')
@@ -264,14 +268,12 @@ class GroupDeleteTask(Task):
     def run(self, id, force=False):
         try:
             self.datastore.delete('groups', id)
+            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete group: {0}'.format(str(e)))
+        except RpcException, e:
+            raise TaskException(errno.ENXIO, 'Cannot regenerate config files')
 
-        svc = self.dispatcher.rpc.get_service('etcd.generation')
-        if not svc:
-            raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
-
-        svc.generate_group('accounts')
         return TaskState.FINISHED
 
 

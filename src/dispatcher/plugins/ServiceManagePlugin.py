@@ -29,7 +29,7 @@ import errno
 from gevent import Timeout
 from watchdog import events
 from task import Task, TaskStatus, Provider, TaskException
-from dispatcher.rpc import description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns
 from balancer import TaskState
 from event import EventSource
 from lib.system import system, SubprocessException
@@ -44,15 +44,20 @@ class ServiceInfoProvider(Provider):
             'type': 'string'
         }
     })
-    def list_services(self):
-        try:
-            out, err = system(["/usr/sbin/service", "-l"])
-        except SubprocessException, e:
-            raise TaskException(errno.ENXIO, e.err)
+    def query(self, filter, params):
+        result = []
+        for i in self.datastore.query('service_definitions', *filter, **params):
+            result.append({
+                'name': i['name']
+            })
 
-    def get_service_info(self, service):
-        pass
+        return result
 
+    def get_service_config(self, service):
+        if not self.datastore.exists('service_definitions', ('name', '=', service)):
+            raise RpcException(errno.EINVAL, 'Invalid service name')
+
+        return self.configstore.list_children('service.{0}'.format(service))
 
 @description("Provides functionality to start, stop, restart or reload service")
 @accepts({
@@ -64,9 +69,6 @@ class ServiceInfoProvider(Provider):
     'enum': ['start', 'stop', 'restart', 'reload']
 })
 class ServiceManageTask(Task):
-    def __init__(self, dispatcher):
-        pass
-
     def describe(self, name, action):
         return "{0}ing service {1}".format(action.title(), name)
 
@@ -92,13 +94,26 @@ class ServiceManageTask(Task):
 
         return TaskState.FINISHED
 
-    def get_status(self):
-        return TaskStatus(None, "Processing...")
 
-    def abort(self):
-        # We cannot abort that task
-        return False
+class UpdateServiceConfigTask(Task):
+    def describe(self, service, updated_fields):
+        return "Updating configuration for service {0}".format(service)
+
+    def verify(self, service, updated_fields):
+        return ['system']
+
+    def run(self, service, updated_fields):
+        service_def = self.datastore.get_one('service_definitions', ('name', '=', service))
+        for k, v in updated_fields.items():
+            if k not in service_def['settings'].keys():
+                raise TaskException(errno.EINVAL, 'Invalid setting {0}'.format(k))
+
+            self.configstore.set(k, v)
+
+        self.chain('service.manage', service, 'reload')
+
 
 def _init(dispatcher):
-    dispatcher.register_task_handler("system.service", ServiceManageTask)
-    dispatcher.register_provider("system.service", ServiceInfoProvider)
+    dispatcher.register_task_handler("service.manage", ServiceManageTask)
+    dispatcher.register_task_handler("service.update_config", ServiceManageTask)
+    dispatcher.register_provider("service", ServiceInfoProvider)
