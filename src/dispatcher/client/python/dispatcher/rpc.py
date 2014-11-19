@@ -93,7 +93,6 @@ class RpcContext(object):
             raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
 
         if len(errors) > 0:
-            print errors
             raise RpcException(errno.EINVAL, "One or more passed arguments failed schema verification", extra=errors)
 
     def dispatch_call(self, method, args, sender=None):
