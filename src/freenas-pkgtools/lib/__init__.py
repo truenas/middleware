@@ -10,7 +10,9 @@ _os_type = "FreeNAS"
 UPDATE_SERVER = "http://beta-update.freenas.org/" + _os_type
 
 # For signature verification
-ROOT_CA_FILE = "/usr/local/share/certs/iX-CA.pem"
+IX_CRL = "https://web.ixsystems.com/updates/ix_crl.pem"
+DEFAULT_CA_FILE = "/usr/local/share/certs/ca-root-nss.crt"
+IX_ROOT_CA_FILE = "/usr/local/share/certs/iX-CA.pem"
 UPDATE_CERT_FILE = "/usr/local/share/certs/freenas-update.pem"
 VERIFIER_HELPER = "/usr/local/libexec/verify_signature"
 SIGNATURE_FAILURE = False

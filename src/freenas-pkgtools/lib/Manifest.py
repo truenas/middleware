@@ -114,6 +114,8 @@ class Manifest(object):
     def __init__(self, configuration = None, require_signature = False):
         if configuration is None:
             self._config = Configuration.Configuration()
+        else:
+            self._config = configuration
         self._requireSignature = require_signature
         self._dict = {}
         return
@@ -297,22 +299,41 @@ class Manifest(object):
             return True
         # Probably need a way to ignore the signature
         else:
-            from . import ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER
+            from . import IX_ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER, IX_CRL
             from . import SIGNATURE_FAILURE
             import subprocess
             import tempfile
 
-            if not os.path.isfile(ROOT_CA_FILE) or \
+            if not os.path.isfile(IX_ROOT_CA_FILE) or \
                not os.path.isfile(UPDATE_CERT_FILE) or \
                not os.path.isfile(VERIFIER_HELPER):
                 log.debug("VerifySignature:  Cannot find a required file")
                 return True
 
+            # Now need to get the CRL
+            crl_file = tempfile.NamedTemporaryFile(suffix=".pem")
+            if crl_file is None:
+                log.debug("Could not create CRL, ignoring for now")
+            else:
+                if not self._config.TryGetNetworkFile(IX_CRL,
+                                                  pathname = crl_file.name,
+                                                  reason = "FetchCRL"):
+                    log.error("Could not get CRL file %s" % IX_CRL)
+                    crl_file.close()
+                    crl_file = None
+
             tdata = None
             verify_cmd = [VERIFIER_HELPER,
                           "-K", UPDATE_CERT_FILE,
-                          "-C", ROOT_CA_FILE,
+                          "-C", IX_ROOT_CA_FILE,
                           "-S", self.Signature()]
+            if crl_file:
+                verify_cmd.extend(["-R", crl_file.name])
+            else:
+                if SIGNATURE_FAILURE:
+                    log.error("Could not get CRL %s, but signature check is mandated" % IX_CRL)
+                    return False
+
             log.debug("Verify command = %s" % verify_cmd)
 
             temp = self.dict().copy()

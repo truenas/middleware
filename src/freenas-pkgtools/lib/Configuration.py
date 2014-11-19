@@ -461,7 +461,7 @@ class Configuration(object):
             self._temp = self._system_dataset
 
     def TryGetNetworkFile(self, url, handler=None, pathname = None, reason = None):
-        from . import ROOT_CA_FILE
+        from . import DEFAULT_CA_FILE
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
         host_id = None
@@ -475,7 +475,7 @@ class Configuration(object):
             host_id = None
 
         try:
-            https_handler = VerifiedHTTPSHandler(ca_certs = ROOT_CA_FILE)
+            https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
             opener = urllib2.build_opener(https_handler)
             req = urllib2.Request(url)
             req.add_header("X-iXSystems-Project", Avatar())
@@ -487,8 +487,8 @@ class Configuration(object):
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
             furl = opener.open(req, timeout=5)
-        except:
-            log.warn("Unable to load %s", url)
+        except BaseException as e:
+            log.error("Unable to load %s: %s", url, str(e))
             return None
         try:
             totalsize = int(furl.info().getheader('Content-Length').strip())
@@ -609,7 +609,7 @@ class Configuration(object):
         return
 
     def SystemManifest(self):
-        man = Manifest.Manifest(self)
+        man = Manifest.Manifest(configuration = self)
         try:
             man.LoadPath(self._root + Manifest.SYSTEM_MANIFEST_FILE)
         except:
