@@ -98,7 +98,7 @@ The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 Introduction
 ============
 
-FreeNAS® is an embedded open source network-attached storage (NAS) system based on FreeBSD and released under a BSD license. A NAS provides an operating
+FreeNAS® is an embedded open source network-attached storage (NAS) operating system based on FreeBSD and released under a BSD license. A NAS is an operating
 system that has been optimized for file storage and sharing.
 
 Notable features in FreeNAS® include:
@@ -138,7 +138,7 @@ Notable features in FreeNAS® include:
 What's New in 9.3
 -----------------
 
-FreeNAS® 9.3 fixes this list of bugs.
+FreeNAS® 9.3 fixes `this list of bugs <https://bugs.freenas.org/projects/freenas/issues?query_id=98>`_.
 
 It is based on the stable version of FreeBSD 9.3 which adds 
 `these features <https://www.freebsd.org/releases/9.3R/relnotes.html>`_, supports
@@ -156,7 +156,7 @@ issued since FreeBSD 9.3 RELEASE.
   file as new versions of FreeNAS® must be installed using a menu-driven installer.
   
 * FreeNAS® now formats the device holding the operating system with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments,
-  allowing you to easily recover from a failed upgrade, system patch, or configuration.
+  allowing you to easily recover from a failed upgrade, system update, or configuration.
   
 * The new installer provides the option to select multiple devices, meaning that you can now mirror the boot device.
   
@@ -339,30 +339,6 @@ The following fields have been added or deleted:
 
 * The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
 
-.. _Known Issues:
-
-Known Issues
-------------
-
-Before installing FreeNAS® you should be aware of the following known issues:
-
-* **UPGRADES FROM FreeNAS® 0.7x ARE NOT SUPPORTED.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
-  will have to manually recreate your configuration. However, you should be able to import supported FreeNAS® 0.7x volumes.
-
-* **The ZFS upgrade procedure is non-reversible.** Do not upgrade your ZFS version unless you are absolutely sure that you will never want to go back to the
-  previous version. There is no reversing a ZFS pool upgrade, and there is no way for a system with an older version of ZFS to access pools that have been
-  upgraded.
-
-* The available space reported in the parent zpool may not reflect reality and can be confusing because the available space represented by datasets or zvols
-  can exceed that of the parent zpool.
-
-* Disks with certain configurations can get probed by GEOM and become essentially unwritable without manual intervention. For instance, if you use disks that
-  previously had a gmirror on them, the system may pick that up and the disks will be unavailable until the existing gmirror is stopped and destroyed.
-
-* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. It is recommended to upgrade the firmware before
-  installing FreeNAS® or immediately after upgrading FreeNAS®. Running older firmware can cause many woes, including the failure to probe all of the
-  attached disks, which can lead to degraded or unavailable arrays.
-
 .. _Hardware Recommendations:
 
 Hardware Recommendations
@@ -388,15 +364,7 @@ RAM
 The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. The recommended minimum is 8 GB of RAM. The more RAM, the
 better the performance, and the
 `FreeNAS® Forums <http://forums.freenas.org/>`_
-provide anecdotal evidence from users on how much performance is gained by adding more RAM. For systems with a disk capacity greater than 8 TB, a general rule
-of thumb is 1 GB of RAM for every 1 TB of storage. This
-`post <http://hardforum.com/showpost.php?s=8d31305e57c1dd2853eb817124ff18d9&p=1036865233&postcount=3>`_
-describes how RAM is used by ZFS.
-
-If you plan to use your server for home use, you can often soften the rule of thumb of 1 GB of RAM for every 1 TB of storage, though 8 GB of RAM is still the
-recommended minimum. If performance is inadequate, consider adding more RAM as a first remedy. The sweet spot for most home or small business users is 16 GB
-of RAM. While it is possible to use ZFS on systems with less than 8 GB of RAM, performance will be substantially reduced. The ZFS filesystem will
-automatically disable pre-fetching (caching) on systems where it is not able to use at least 4 GB of memory for its cache and data structures.
+provide anecdotal evidence from users on how much performance is gained by adding more RAM.
 
 If your system supports it and your budget allows for it, install ECC RAM. While more expensive, ECC RAM is highly recommended as it prevents in-flight
 corruption of data before the error-correcting properties of ZFS come into play, thus providing consistency for the checksumming and parity calculations
@@ -405,7 +373,7 @@ performed by ZFS. If you consider your data to be important, use ECC RAM. This
 
 If you plan to use ZFS deduplication, a general rule of thumb is 5 GB RAM per TB of storage to be deduplicated.
 
-If you use Active Directory with FreeNAS®, add an additional 2 GB of RAM for winbind's internal cache.
+If you plan to use Active Directory with a lot of users, add an additional 2 GB of RAM for winbind's internal cache.
 
 If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
@@ -424,8 +392,8 @@ or SSD. Technically, it can also be installed onto a hard drive, but this is dis
 
 When determining the type and size of device to install the operating system to, keep the following points in mind:
 
-- the recommended bare minimum size is 4GB. This provides room for the operating system and two boot environments. The recommended minimum is 8GB or 16GB as
-  this provides more room for boot environments.
+- the *bare* minimum size is 4GB. This provides room for the operating system and two boot environments. The 
+  *recommended* minimum is 8GB or 16GB as this provides more room for boot environments.
 
 - if you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.

@@ -196,12 +196,12 @@ Boot
 ----
 
 Beginning with version 9.3, FreeNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
-the operating system or applying a system patch becomes a low-risk operation as you can create a snapshot of your current boot environment before upgrading or
-applying the system patch. When a boot environment is created, an entry is added to the boot menu. If the upgrade or system update fails, simply reboot the
-system and select the previous boot environment from the boot menu to instruct the system to go back to that system state.
+the operating system becomes a low-risk operation as the updater automatically creates a snapshot of your current boot environment and adds it to the boot
+menu before applying the update. If the update fails, simply reboot the system and select the previous boot environment from the boot menu to instruct the
+system to go back to that system state.
 
-.. note:: do not confuse boot environments with the configuration database. Boot environments are a snapshot of the operating system at a specified time, such
-   as before an upgrade or a system patch. When a FreeNAS® system boots, it loads the specified boot environment, or operating system, then reads the
+.. note:: do not confuse boot environments with the configuration database. Boot environments are a snapshot of the
+   *operating system* at a specified time. When a FreeNAS® system boots, it loads the specified boot environment, or operating system, then reads the
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
@@ -217,7 +217,7 @@ environment called *Wizard-date* is also created indicating the date and time th
     :height: 1.8in
 
 To create a boot environment, click the "Create" button, input a name for the boot environment, and click "OK". In the example shown in Figure 5.3b, a boot
-environment named *prepatch* was created in preparation before applying a system patch.
+environment named *prepatch* was created in preparation before applying a system update.
 
 **Figure 5.3b: Viewing Boot Environments**
 
@@ -582,7 +582,7 @@ tunables back.
 Update
 ------
 
-Beginning with version 9.3, FreeNAS® uses signed patches rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
+Beginning with version 9.3, FreeNAS® uses signed updates rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
 when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
 release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they can revert to a previous
 version of the operating system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to

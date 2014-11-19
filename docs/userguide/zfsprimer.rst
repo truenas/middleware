@@ -8,10 +8,8 @@ developed at Sun with the intent to open source the filesystem so that it could 
 some of the original ZFS engineers founded
 `OpenZFS <http://open-zfs.org>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
 version numbers, OpenZFS uses feature flags. Feature flags are used to tag features with unique names in order to provide portability between OpenZFS
-implementations running on different platforms, as long as all of the feature flags enabled on the ZFS pool are supported by both platforms.
-
-FreeNAS® uses OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and OpenZFS bug fixes. Since many of the features
-provided by ZFS are particularly suited to the storage of data, format your disk(s) with ZFS in order to get the most out of your FreeNAS® system.
+implementations running on different platforms, as long as all of the feature flags enabled on the ZFS pool are supported by both platforms. FreeNAS® uses
+OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and OpenZFS bug fixes.
 
 Here is an overview of the features provided by ZFS:
 

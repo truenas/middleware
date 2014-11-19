@@ -301,15 +301,34 @@ Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the 
 #. Upgrades to major releases, for example from version 9.3 to 10.0, can still be performed using either an ISO or the graphical administrative interface.
    Unless the Release Notes for the new major release indicate that your current version requires an ISO upgrade, you can use either upgrade method.
 
-#. Minor releases have been replaced with signed patches. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
-   you do not have to wait for a minor release to update the system with a system patch or newer versions of drivers and features and that you no longer have
+#. Minor releases have been replaced with signed updates. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
+   you do not have to wait for a minor release to update the system with a system update or newer versions of drivers and features and that you no longer have
    to manually download an upgrade file and its associated checksum in order to do so.
 
-#. During an upgrade or update, a boot environment is automatically created for you, so that upgrading or patching the operating system becomes a low-risk
-   operation. Boot environments provide the option to return to the previous version of the operating system by rebooting the system and selecting the
-   previous boot environment from the boot menu.
+#. The updater automatically creates a boot environment, meaning that updates are a low-risk operation. Boot environments provide the option to return to the
+   previous version of the operating system by rebooting the system and selecting the previous boot environment from the boot menu.
 
 This section describes how to perform an upgrade to the next major release as well as how to update a 9.3 system with newer features between major releases.
+
+.. _Caveats:
+
+Caveats:
+~~~~~~~~
+
+Be aware of the following caveats **before** attempting an upgrade:
+
+* **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
+  will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
+
+* **DO NOT upgrade the ZFS pool unless you are absolutely sure that you will never want to go back to the previous version.** For this reason, the update
+  process will not automatically upgrade the ZFS pool, though the :ref:`Alert` system will tell you if newer feature flags are available for the pool. Unless
+  you need a new feature flag, it is safe to leave the ZFS pool at its current version and uncheck the alert. If you do decide to upgrade the pool, you will
+  not be able to boot into a previous version that does not support the newer feature flags.
+
+* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. It is recommended to upgrade the firmware before
+  installing FreeNAS® or immediately after upgrading FreeNAS®, using the instructions in :ref:`Alert`. Running older firmware can cause many woes, including
+  the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays. While you can mismatch your firmware version with a higher
+  version and things will "probably still work", there are no guarantees as that driver and firmware combination is untested.
 
 .. _Initial Preparation:
 
@@ -327,13 +346,13 @@ Before upgrading the operating system or applying a system update, perform the f
 
 #.  Stop all services in :menuselection:`Services --> Control Services`.
 
-.. _Upgrading to a Major Release From the ISO:
+.. _Upgrading Using the ISO:
 
-Upgrading to a Major Release From the ISO
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Upgrading Using the ISO
+~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade to a major release using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the release to
-the computer that will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
+To perform an upgrade using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the new release to the computer that
+will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
 :ref:`Preparing the Media`.
 
 Insert the prepared media into the system and boot from it. Once the media has finished booting into the installation menu, press :kbd:`Enter` to select the
@@ -373,14 +392,14 @@ database schema changes" line in the reboot cycle. This conversion can take a lo
 for some reason you end up with database errors but the graphical administrative interface is accessible, go to :menuselection:`Settings --> General` and use
 the "Upload Config" button to upload the configuration that you saved before you started the upgrade.
 
-.. _Upgrading to a Major Release From the GUI:
+.. _Upgrading From the GUI:
 
-Upgrading to a Major Release From the GUI
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Upgrading From the GUI
+~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade to a major release using this method, `download <http://www.freenas.org/download-releases.html>`_ the latest version of the :file:`.txz`
-file for the release and its associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to
-:menuselection:`System --> Update`. Click the "Manual Update" button to open the screen shown in Figure 2.5c.
+To perform an upgrade using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.txz` file for the new release and its
+associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Update`. Click the "Manual Update"
+button to open the screen shown in Figure 2.5c.
 
 **Figure 2.5c: Upgrading FreeNAS® From the GUI**
 
@@ -419,12 +438,12 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 * Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
   the system.
 
-.. _Updating Between Major Releases:
+.. _Updating Between Releases:
 
-Updating Between Major Releases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Updating Between Releases
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To update the system between major releases, use :menuselection:`System --> Update`.
+To update the system between releases, use :menuselection:`System --> Update`.
 
 In the screen shown in Figure 2.5e, use the drop-down menu to select which "Train" you would like to track updates to.
 
@@ -489,7 +508,7 @@ Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical admin
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
-* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version of FreeNAS® that does not support feature flags.**
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version of FreeNAS® that does not support those feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
