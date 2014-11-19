@@ -5,12 +5,45 @@
 // Top level controller-view for FreeNAS webapp
 "use strict";
 
+var React        = require("react");
 
-var React  = require("react");
+// Middleware
+var middleware = require("../middleware/middleware");
 
-// Page router
-var Router = require("react-router");
-var Link   = Router.Link;
+var sock = middleware;
+
+function refreshTasks()
+{
+    console.log("refreshTasks");
+    sock.call("task.list_active", null, function (tasks) {
+      console.log("active tasks:");
+      console.log(tasks);
+    });
+
+    sock.call("task.list_failed", null, function (tasks) {
+      console.log("failed tasks:");
+      console.log(tasks);
+    });
+}
+
+sock.on("connected", function() {
+    var username = prompt("Username:");
+    var password = prompt("Password:");
+    sock.login(username, password);
+  }
+);
+
+sock.on("login", function() {
+    refreshTasks();
+    sock.subscribe("task.*");
+    sock.call("discovery.get_tasks", null, function (tasks) {
+      console.log(tasks);
+    });
+});
+
+sock.on("event", function(args){
+  console.log(args);
+});
 
 var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
@@ -21,7 +54,12 @@ var InfoBox   = require("../components/InfoBox");
 var TWBS   = require("react-bootstrap");
 
 var FreeNASWebApp = React.createClass({
-  getInitialState: function() {
+    componentDidMount: function() {
+      var sockProtocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+
+      sock.connect( sockProtocol + document.domain + ":5000/socket" );
+    }
+  , getInitialState: function() {
     return {
       warningBoxIsVisible: 0,
       infoBoxIsVisible: 0,
@@ -122,7 +160,7 @@ var FreeNASWebApp = React.createClass({
           {/* Primary view */}
           <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12} xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
             <h1>FreeNAS WebGUI</h1>
-            { this.props.activeRouteHandler() }
+            <this.props.activeRouteHandler />
           </TWBS.Col>
 
           {/* Tasks and active users */}

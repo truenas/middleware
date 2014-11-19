@@ -61,7 +61,7 @@ module.exports = function(grunt) {
 
         // Bower components
         , bower: {
-            velocity : "./bower_components/velocity"
+            velocity     : "./bower_components/velocity"
           , openSans: {
               less  : "./bower_components/lessfonts-open-sans/src/less"
             , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
