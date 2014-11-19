@@ -15,8 +15,6 @@
 /usr/local/lib/dispatcher/src/lib/zfs.py
 /usr/local/lib/dispatcher/src/lib/__init__.py
 /usr/local/lib/dispatcher/src/lib/system.py
-/usr/local/lib/dispatcher/src/rpc/rpc.py
-/usr/local/lib/dispatcher/src/rpc/__init__.py
 /usr/local/lib/dispatcher/src/balancer.py
 /usr/local/lib/dispatcher/src/auth.py
 /usr/local/lib/dispatcher/src/services.py
