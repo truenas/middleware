@@ -311,20 +311,20 @@ class JailCreateForm(ModelForm):
         jail_create_args['template'] = template_create_args['nick']
 
         if jail_ipv4_dhcp:
-            jail_ipv4 = "dhcp"
+            jail_ipv4 = "DHCP"
 
         if jail_ipv4:
-            if jail_ipv4 != "dhcp":
+            if jail_ipv4 != "DHCP":
                 jail_ipv4 = "%s/%s" % (jail_ipv4, jail_ipv4_netmask)
 
             jail_flags |= WARDEN_CREATE_FLAGS_IPV4
             jail_create_args['ipv4'] = jail_ipv4
 
         if jail_ipv6_autoconf:
-            jail_ipv6 = "autoconf"
+            jail_ipv6 = "AUTOCONF"
 
         if jail_ipv6:
-            if jail_ipv6 != "autoconf":
+            if jail_ipv6 != "AUTOCONF":
                 jail_ipv6 = "%s/%s" % (jail_ipv6, jail_ipv6_prefix)
 
             jail_flags |= WARDEN_CREATE_FLAGS_IPV6
