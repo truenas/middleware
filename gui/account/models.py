@@ -27,6 +27,7 @@
 import crypt
 import logging
 import os
+import time
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -209,6 +210,10 @@ class bsdUsers(Model):
         return True
 
     def set_password(self, password):
+        # Django auth backend calls set_password even if user doesnt exist
+        if not self.bsdusr_username or not self.id:
+            time.sleep(0.1)
+            return
         unixhash, smbhash = notifier().user_changepassword(
             username=self.bsdusr_username.encode('utf-8'),
             password=password,
