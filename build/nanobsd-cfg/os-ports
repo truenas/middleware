@@ -145,10 +145,8 @@ fi
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
-add_port databases/postgresql93-client
-add_port databases/postgresql93-server
-add_port databases/postgresql93-contrib
-add_port databases/py-psycopg2
+add_port databases/mongodb
+add_port databases/pymongo
 add_port devel/py-gevent
 add_port www/py-gevent-websocket
 add_port www/py-flask
