@@ -102,6 +102,7 @@ class CertValidatingHTTPSConnection(httplib.HTTPConnection):
                             if x[0][0].lower() == 'commonname']
 
     def _ValidateCertificateHostname(self, cert, hostname):
+        import re
         hosts = self._GetValidHostsForCert(cert)
         for host in hosts:
             host_re = host.replace('.', '\.').replace('*', '[^.]*')
