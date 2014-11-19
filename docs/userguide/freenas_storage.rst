@@ -27,10 +27,10 @@ Volumes
 -------
 
 The "Volumes" section of the FreeNAS® graphical interface can be used to format ZFS pools, import a disk in order to copy its data into an existing pool, or
-import an existing UFS volume or ZFS pool. It can also be used to create ZFS datasets and zvols and to manage their permissions.
+import an existing ZFS pool. It can also be used to create ZFS datasets and zvols and to manage their permissions.
 
 .. note:: in ZFS terminology, the storage that is managed by ZFS is referred to as a pool. The FreeNAS® graphical interface uses the term volume to refer to
-   either a UFS volume or a ZFS pool.
+   a ZFS pool.
 
 Proper storage design is important for any NAS.
 **It is recommended that you read through this entire chapter first, before configuring your storage disks, so that you are aware of all of the possible features, know which ones will benefit your setup most, and are aware of any caveats or hardware restrictions.**
@@ -526,7 +526,7 @@ Import Disk
 
 The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk or partition that has been formatted with a
 supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
-measure in order to copy the data from a disk to an existing volume. Only one disk can be imported at a time.
+measure in order to copy the data from a disk to an existing ZFS pool. Only one disk can be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
@@ -554,15 +554,8 @@ Import Volume
 ~~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> Import Volume`, you can configure FreeNAS® to use an
-**existing** software UFS or ZFS volume. This action is typically performed when an existing FreeNAS® system is re-installed. Since the operating system is
-separate from the storage disks, a new installation does not affect the data on the disks. However, the new operating system needs to be configured to use the
-existing volume.
-
-The following types of volumes can be imported: UFS GEOM stripes (RAID0), UFS GEOM mirrors (RAID1), UFS GEOM RAID3, and ZFS pools. UFS RAID5 is not supported
-as it is an unmaintained summer of code project which was never integrated into FreeBSD.
-
-Beginning with version 8.3.1, the import of existing GELI-encrypted ZFS pools is also supported. However, the pool must be decrypted before it can be
-imported.
+**existing** ZFS pool. This action is typically performed when an existing FreeNAS® system is re-installed. Since the operating system is separate from the
+storage disks, a new installation does not affect the data on the disks. However, the new operating system needs to be configured to use the existing volume.
 
 Figure 8.1g shows the initial pop-up window that appears when you select to import a volume.
 
@@ -574,7 +567,7 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
     :width: 4.3in
     :height: 3.1in
 
-If you are importing a UFS RAID or an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
+If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
 **Figure 8.1h: Importing a Non-Encrypted Volume**
 
@@ -586,8 +579,6 @@ If you are importing a UFS RAID or an unencrypted ZFS pool, select "No: Skip to 
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
-
-FreeNAS® will not import a dirty volume. If a supported UFS volume does not show in the drop-down menu, :command:`fsck` the volume and try again.
 
 If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
 

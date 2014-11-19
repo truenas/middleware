@@ -160,7 +160,7 @@ The following redundancy types are available:
 
 Once you have made your selection, click "Next" to continue.
 
-If the disks have already been formatted with UFS or ZFS, the initial wizard screen will instead prompt to import the volume, as seen in Figure 3.1b.
+If the disks have already been formatted with ZFS, the initial wizard screen will instead prompt to import the volume, as seen in Figure 3.1b.
 
 **Figure 3.1b: Volume Import Screen**
 

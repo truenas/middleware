@@ -149,8 +149,7 @@ issued since FreeBSD 9.3 RELEASE.
 * FreeNAS® is now 64-bit only.
 
 * FreeNAS® is now ZFS only. This means that the "UFS Volume Manager" has been removed and disks can no longer be formatted with UFS. However, for backwards
-  compatibility, existing UFS-formatted disks can still be imported using "Import Volume" and UFS software RAID volumes can be imported using "Auto Import
-  Volume".
+  compatibility, existing UFS-formatted disks can still be imported using "Import Volume" so that their contents can be copied to a ZFS pool.
 
 * There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
   file as new versions of FreeNAS® must be installed using a menu-driven installer.

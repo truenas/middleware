@@ -52,9 +52,9 @@ Jails Configuration
 -------------------
 
 Before you can create any jails, you must first configure which volume or dataset will be used to hold the jails. To do so, click
-:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. While a jail can be installed on a UFS volume,
-**it is recommended to use ZFS and to create a dataset to use for the "Jail Root"**. As jails are created on a ZFS system, they will automatically be
-installed into their own dataset under the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail
+:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. 
+**It is recommended to create a dataset to use for the "Jail Root"**. As jails are created, they will automatically be installed into their own dataset under
+the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail
 named *jail1*, it will be installed into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
 
 **Figure 13.1a: Global Jail Configuration**
