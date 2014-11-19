@@ -1492,34 +1492,3 @@ Go back to :menuselection:`Services --> iSCSI --> File Extents --> View File Ext
 this causes the iSCSI target to use the new size of the file.
 
 You can now start the iSCSI service and allow initiators to connect.
-
-.. _LLDP:
-
-LLDP
-----
-
-Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
-
-**Figure 11.8a: Configuring LLDP**
-
-|lldp.png|
-
-.. |lldp.png| image:: images/lldp.png
-    :width: 3.2in
-    :height: 1.8in
-
-**Table 11.8a: LLDP Configuration Options**
-
-+------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| **Setting**            | **Value**  | **Description**                                                                                                     |
-|                        |            |                                                                                                                     |
-+========================+============+=====================================================================================================================+
-| Interface Description  | checkbox   |                                                                                                                     |
-|                        |            |                                                                                                                     |
-+------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Country Code           | string     |                                                                                                                     |
-|                        |            |                                                                                                                     |
-+------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Location               | string     |                                                                                                                     |
-|                        |            |                                                                                                                     |
-+------------------------+------------+---------------------------------------------------------------------------------------------------------------------+

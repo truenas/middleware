@@ -838,6 +838,37 @@ iSCSI
 
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in Services.
 
+.. _LLDP:
+
+LLDP
+----
+
+Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
+
+**Figure 11.8a: Configuring LLDP**
+
+|lldp.png|
+
+.. |lldp.png| image:: images/lldp.png
+    :width: 3.2in
+    :height: 1.8in
+
+**Table 11.8a: LLDP Configuration Options**
+
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value**  | **Description**                                                                                                     |
+|                        |            |                                                                                                                     |
++========================+============+=====================================================================================================================+
+| Interface Description  | checkbox   |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Country Code           | string     |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Location               | string     |                                                                                                                     |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+
 .. _NFS:
 
 NFS
@@ -846,9 +877,9 @@ NFS
 The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
 configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
-Figure 11.8a shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
+Figure 11.9a shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
 
-**Figure 11.8a: Configuring NFS**
+**Figure 11.9a: Configuring NFS**
 
 |nfs1.png|
 
@@ -856,7 +887,7 @@ Figure 11.8a shows the configuration screen and Table 11.9a summarizes the confi
     :width: 3.3in
     :height: 3.9in
 
-**Table 11.8a: NFS Configuration Options**
+**Table 11.9a: NFS Configuration Options**
 
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | **Setting**            | **Value**  | **Description**                                                                                                     |
