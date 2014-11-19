@@ -152,6 +152,20 @@ _interface_config()
 		fi
 	done
 
+	if ! is_freenas; then
+	# CARP
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a LEFT JOIN network_interfaces b ON a.carp_interface_id = b.id ORDER BY a.carp_number" | \
+	while read -r carp_number carp_vhid carp_pass carp_v4address carp_skew; do
+			if [ -n "${carp_pass}" ]; then
+				carp_passopt=" pass ${carp_pass}"
+			else
+				carp_passopt=""
+			fi
+			echo "ifconfig_carp${carp_number}=\"vhid ${carp_vhid} advskew ${carp_skew}${carp_passopt} ${carp_v4address}/32\""
+			echo "cloned_interfaces=\"\${cloned_interfaces} carp${carp_number}\""
+	done
+	fi
+
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
 	while read lagg_physnic lagg_deviceoptions lagg_gid; do
@@ -430,8 +444,17 @@ _gen_conf()
 	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
+	if ! is_freenas; then
+		_count_config pf_enable system_failover id \>0
+		_count_config failover_enable system_failover id \>0
+		local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+		if [ "${failover}" != "BACKUP" ]; then
+			echo "collectd_enable=\"YES\""
+		fi
+	else
+		echo "collectd_enable=\"YES\""
+	fi
 
-	echo "collectd_enable=\"YES\""
 
 	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_consolescreensaver FROM system_advanced ORDER BY -id LIMIT 1")" = 1 ]; then
 		echo "saver=\"daemon\""
