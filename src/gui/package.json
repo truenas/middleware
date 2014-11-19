@@ -12,7 +12,8 @@
     "react-bootstrap": "0.12.x",
     "react-router": "0.9.x",
     "velocity-animate": "0.1.x",
-    "wolfy87-eventemitter": "^4.2.9"
+    "wolfy87-eventemitter": "^4.2.9",
+    "when": "^3.5.x"
   },
   "devDependencies": {
     "bower": "^1.3.8",
