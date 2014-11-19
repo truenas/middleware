@@ -594,8 +594,8 @@ where:
   *http* or
   *https*, depending upon the "Protocol" configured in :menuselection:`Services --> WebDAV`.
   
-* **IP address:** is the IP address of the FreeNAS® system. Take care when configuring a public IP address to ensure that the network's firewall only allows
-  access to authorized systems.
+* **IP address:** is the IP address or hostname of the FreeNAS® system. Take care when configuring a public IP address to ensure that the network's firewall
+  only allows access to authorized systems.
   
 * **port_number:** is configured in :menuselection:`Services --> WebDAV`. If the FreeNAS® system is to be accessed using a public IP address, consider
   changing the default port number and ensure that the network's firewall only allows access to authorized systems.
@@ -990,17 +990,17 @@ is more than one target per LUN.
 
 In order to configure iSCSI:
 
-#.  Review the Target Global Configuration parameters.
+#.  Review the target global configuration parameters.
 
-#.  Create at least one Portal.
+#.  Create at least one portal.
 
-#.  Determine which hosts are allowed to connect using iSCSI and create an Initiator.
+#.  Determine which hosts are allowed to connect using iSCSI and create an initiator.
 
-#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an Authorized Access.
+#.  Decide if you will use authentication, and if so, whether it will be CHAP or mutual CHAP. If using authentication, create an authorized access.
 
-#.  Create a Target.
+#.  Create a target.
 
-#.  Create either a device or a file Extent to be used as storage.
+#.  Create either a device or a file extent to be used as storage.
 
 #.  Associate a target with an extent.
 
@@ -1015,9 +1015,6 @@ Target Global Configuration
 
 :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in Figures 10.5a, contains settings that apply to all iSCSI shares. Table
 10.5a summarizes the settings that can be configured in the Target Global Configuration screen.
-
-.. note:: the following operations do require that the iSCSI service be restarted: editing a target, adding or deleting LUNs, or changing the size of an
-   existing extent.
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
@@ -1439,7 +1436,7 @@ firmware support. The magic is on the booting host side, meaning that there is n
 `iSCSI SAN Configuration Guide <http://www.vmware.com/pdf/vsphere4/r41/vsp_41_iscsi_san_cfg.pdf>`_
 for details.
 
-If you can see the target but not connect to it, check the "discovery authentication" settings in "Target Global Configuration".
+If you can see the target but not connect to it, check the "Discovery Auth" settings in "Target Global Configuration".
 
 If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to "Accept" in the vswitch.
 
@@ -1458,10 +1455,8 @@ After the LUN is expanded using one of the methods below, use the tools from the
 Zvol Based LUN
 ^^^^^^^^^^^^^^
 
-Before growing a zvol based LUN, make sure that all initiators are disconnected. Stop the iSCSI service in :ref:`Control Services`.
-
-Next, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In the example shown in
-Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
+To grow a zvol based LUN, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In
+the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
 
 **Figure 10.5j: Editing an Existing Zvol**
 
@@ -1474,21 +1469,15 @@ Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.
 
-You can now start the iSCSI service and allow initiators to connect.
-
 .. _File Extent Based LUN:
 
 File Extent Based LUN
 ^^^^^^^^^^^^^^^^^^^^^
 
-Before growing a file extent based LUN, make sure that all initiators are disconnected. Stop the iSCSI service in Control Services.
-
-Then, go to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` to determine the path of the file extent to grow. Open Shell to grow
-the extent. This example grows :file:`/mnt/volume1/data` by 2G::
+To grow a file extent based LUN, go to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` to determine the path of the file extent to
+grow. Open Shell to grow the extent. This example grows :file:`/mnt/volume1/data` by 2G::
 
  truncate -s +2g /mnt/volume1/data
 
 Go back to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` and click the "Edit" button for the file extent. Set the size to *0* as
 this causes the iSCSI target to use the new size of the file.
-
-You can now start the iSCSI service and allow initiators to connect.

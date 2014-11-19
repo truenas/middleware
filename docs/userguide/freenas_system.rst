@@ -598,8 +598,8 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
     :width: 6.5in
     :height: 3.2in
 
-By default, the system will automatically check for updates and will issue an alert and email the administrative address when a new update becomes available.
-To disable this default, uncheck the box "Automatically check for updates".
+By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
+box "Automatically check for updates".
 
 This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
 a different selection.

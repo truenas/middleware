@@ -163,6 +163,8 @@ issued since FreeBSD 9.3 RELEASE.
 
 * NFSv4 support, which includes Kerberized NFS support, has been added.
 
+* The system logger has been replaced by `syslog-ng <http://www.balabit.com/network-security/syslog-ng>`_.
+
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
   later time by selecting :ref:`Wizard` from the graphical tree menu.
@@ -187,7 +189,8 @@ issued since FreeBSD 9.3 RELEASE.
   `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
 
 * Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
-  2012 clustering. In addition, Zvol based LUNs can now be grown from the GUI.
+  2012 clustering. Zvol based LUNs can now be grown from the GUI. LUNs can now be grown on-the-fly, without having to first disconnect initiators or stop the
+  iSCSI service.
 
 * Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
   an Ethernet LAN.

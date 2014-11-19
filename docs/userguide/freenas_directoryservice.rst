@@ -179,17 +179,18 @@ Table 9.1b summarizes the backends which are available in the "Idmap backend" dr
 | hash           | uses a hashing algorithm for mapping and can be used to support local name mapping files                                                 |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
-| ldap           | stores and retrieves mapping tables in an LDAP directory service                                                                         |
+| ldap           | stores and retrieves mapping tables in an LDAP directory service; default for "LDAP" directory service                                   |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
 | nss            | provides a simple means of ensuring that the SID for a Unix user is reported as the one assigned to the corresponding domain user        |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
-| rfc2307        |                                                                                                                                          |
+| rfc2307        | an AD server is required to provide the mapping between the name and SID and an LDAP server is required to provide the mapping between   |
+|                | the name and the UID/GID                                                                                                                 |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
-| rid            | requires an explicit idmap configuration for each domain, using disjoint ranges; a writeable default idmap range should be defined,      |
-|                | using a backend like "tdb" or "ldap"                                                                                                     |
+| rid            | default for "AD" and "NT4" directory services; requires an explicit idmap configuration for each domain, using disjoint ranges where a   |
+|                | writeable default idmap range should be defined, using a backend like "tdb" or "ldap"                                                    |
 |                |                                                                                                                                          |
 +----------------+------------------------------------------------------------------------------------------------------------------------------------------+
 | tdb            | default backend used by winbindd for storing mapping tables                                                                              |
@@ -371,6 +372,9 @@ If you are new to LDAP terminology, skim through the
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Samba Schema            | checkbox       | only available in "Advanced Mode"; only check this box if you need LDAP authentication for CIFS shares **and** |
 |                         |                | you have **already** configured the LDAP server with Samba attributes                                          |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Auxiliary Parameters    | string         | additional options for `sssd.conf(5) <https://jhrozek.fedorapeople.org/sssd/1.11.6/man/sssd.conf.5.html>`_     |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
@@ -564,7 +568,7 @@ where:
 
 This will create a keytab with sufficient privileges to grant tickets.
 
-Once the keytab is generated, use :menuselection:`Directory Service --> Kerberos Keytabs` to add it to the FreeNAS® system. 
+Once the keytab is generated, use :menuselection:`Directory Service --> Kerberos Keytabs --> Add kerberos keytab` to add it to the FreeNAS® system. 
 
 Then, to instruct the Active Directory service to use the keytab, check the "Use keytab" box and select the installed keytab using the drop-down "Kerberos
 keytab" menu in :menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and

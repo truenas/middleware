@@ -186,16 +186,9 @@ be a dedicated IPMI interface.
    `article <http://www.ixsystems.com/whats-new/how-to-fix-the-ipmi-remote-management-vulnerability/>`_ provides more information about the vulnerability and
    how to fix it.
 
-Before configuring IPMI, add a :ref:`Tunables` with a "Variable" of *ipmi_load*, a "Type" of
-*Loader* and a "Value" of
-*YES*. This will configure the system to load the driver at bootup. Then, to load the
-*ipmi* kernel module now, without rebooting, type this from :ref:`Shell`::
-
- kldload ipmi
-
-Once the module is loaded, IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.3a, provides a
-shortcut to the most basic IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.3a summarizes the
-options when configuring IPMI using the FreeNAS® GUI.
+IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.3a, provides a shortcut to the most basic
+IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.3a summarizes the options when configuring
+IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
