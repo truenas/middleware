@@ -309,7 +309,7 @@ class Manifest(object):
                not os.path.isfile(UPDATE_CERT_FILE) or \
                not os.path.isfile(VERIFIER_HELPER):
                 log.debug("VerifySignature:  Cannot find a required file")
-                return True
+                return False
 
             # Now need to get the CRL
             crl_file = tempfile.NamedTemporaryFile(suffix=".pem")
@@ -361,10 +361,7 @@ class Manifest(object):
                 tdata.close()
                 os.remove(tdata.name)
 
-            if SIGNATURE_FAILURE is True:
-                return rv
-            else:
-                return True
+            return rv
         return False
 
     def Signature(self):
