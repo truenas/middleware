@@ -47,8 +47,8 @@ does not use a domain name add *.local* to the end of the hostname.
 |system1.png|
 
 .. |system1.png| image:: images/system1.png
-    :width: 4.8in
-    :height: 4.2in
+    :width: 6.3in
+    :height: 3.4in
 
 .. _General:
 
@@ -611,7 +611,7 @@ By default, the system will automatically check for updates and will issue an al
 box "Automatically check for updates".
 
 This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
-a different selection.
+a different selection. It also lists the URL of the official update server should that information be needed in a network with outbound firewall restrictions.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
@@ -777,7 +777,7 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 |cert1.png|
 
 .. |cert1.png| image:: images/cert1.png
-    :width: 6.4in
+    :width: 6.5in
     :height: 1.8in
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
@@ -789,7 +789,7 @@ summarized in Table 5.10a.
 
 .. |cert2.png| image:: images/cert2.png
     :width: 3.7in
-    :height: 2.2in
+    :height: 2.5in
 
 **Table 5.10a: Certificate Import Options**
 
@@ -804,6 +804,9 @@ summarized in Table 5.10a.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Private Key          | string               | mandatory; paste the private key associated with the certificate                                |
+|                      |                      |                                                                                                 |
++----------------------+----------------------+-------------------------------------------------------------------------------------------------+
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                  |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -846,7 +849,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | State                | string               | mandatory; input the state or province for the organization                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               | mandatory; input the city for the organization                                                  |
+| Locality             | string               | mandatory; input the location for the organization                                              |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Organization         | string               | mandatory; input the name of the company or organization                                        |
@@ -874,7 +877,7 @@ connections.
 |cert4.png|
 
 .. |cert4.png| image:: images/cert4.png
-    :width: 6.3in
+    :width: 6.2in
     :height: 4.5in
 
 If you click an entry, it will activate the following configuration buttons:
