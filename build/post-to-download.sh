@@ -29,12 +29,8 @@ if [ ! -d ${STAGE}/$VERSION-$DATE ]; then
 	exit 2
 fi
 
-FV=`echo $VERSION|sed -e 's/FreeNAS-\(.*\)-.*/\1/'`
-
-ssh ${ID}@download.freenas.org rm -rf /tank/downloads/nightlies/$FV/$TRAIN/$DATE
-ssh ${ID}@download.freenas.org mkdir -p /tank/downloads/nightlies/$FV/$TRAIN/$DATE
-scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:/tank/downloads/nightlies/$FV/$TRAIN/$DATE/
-if [ "${FV}" = "${PUSHIT}" ]; then
-	ssh ${ID}@download.freenas.org "(cd /tank/downloads; rm -f nightly; ln -s nightlies/$FV/$TRAIN/$DATE nightly)"
-fi
+ssh ${ID}@download.freenas.org rm -rf /tank/downloads/nightlies/$TRAIN/$DATE
+ssh ${ID}@download.freenas.org mkdir -p /tank/downloads/nightlies/$TRAIN/$DATE
+scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:/tank/downloads/nightlies/$TRAIN/$DATE/
+ssh ${ID}@download.freenas.org "(cd /tank/downloads; rm -f nightly; ln -s nightlies/$TRAIN/$DATE nightly)"
 exit 0
