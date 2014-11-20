@@ -165,26 +165,27 @@ class Manifest(object):
         # and some number of packages.  If there is a signature,
         # it needs to match the computed signature.
         from . import SIGNATURE_FAILURE
-        if not SEQUENCE_KEY in self._dict:
+        if SEQUENCE_KEY not in self._dict:
             raise Exceptions.ManifestInvalidException("Sequence is not set")
-        if not TRAIN_KEY in self._dict:
+        if TRAIN_KEY not in self._dict:
             raise Exceptions.ManifestInvalidException("Train is not set")
-        if not PACKAGES_KEY in self._dict \
+        if PACKAGES_KEY not in self._dict \
            or len(self._dict[PACKAGES_KEY]) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
-        if not SIGNATURE_KEY in self._dict:
+        if SIGNATURE_KEY not in self._dict:
             # If we don't have a signature, but one is required,
             # raise an exception
             if self._requireSignature and SIGNATURE_FAILURE:
                 log.debug("No signature in manifest")
         else:
-            if not self.VerifySignature():
-                if self._requireSignature and SIGNATURE_FAILURE:
-                    raise Exceptions.ManifestInvalidSignature("Signature verification failed")
-                if not self._requireSignature:
-                    log.debug("Ignoring invalid signature due to manifest option")
-                elif not SIGNATURE_FAILURE:
-                    log.debug("Ignoring invalid signature due to global configuration")
+            if self._requireSignature:
+                if not self.VerifySignature():
+                    if self._requireSignature and SIGNATURE_FAILURE:
+                        raise Exceptions.ManifestInvalidSignature("Signature verification failed")
+                    if not self._requireSignature:
+                        log.debug("Ignoring invalid signature due to manifest option")
+                    elif not SIGNATURE_FAILURE:
+                        log.debug("Ignoring invalid signature due to global configuration")
         return True
 
     def Notice(self):
