@@ -263,6 +263,8 @@ The following fields have been added or deleted:
 
 * A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
 
+* The "Rsync Create" checkbox has been added to :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
+
 * The icons in Storage have been renamed to clarify their purpose. "Auto Import Volume" is now "Import Volume", "Import Volume" is now "Import Disk", "ZFS
   Volume Manager" is now "Volume Manager", and "ZFS Scrubs" are now "Scrubs".
 

@@ -173,7 +173,7 @@ can be configured when creating an rsync task.
 |rsync1.png|
 
 .. |rsync1.png| image:: images/rsync1.png
-    :width: 10.74in
+    :width: 11.1in
     :height: 4.4in
 
 **Table 6.3a: Rsync Configuration Options**
@@ -187,6 +187,11 @@ can be configured when creating an rsync task.
 |                                  |                             | characters will fail                                                                      |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
+| User                             | drop-down menu              | specified user must have permission to write to the specified directory on the remote     |
+|                                  |                             | system; due to a limitation in FreeBSD, the user name can not contain spaces or exceed 17 |
+|                                  |                             | characters                                                                                |
+|                                  |                             |                                                                                           |
++----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy                      |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
@@ -198,11 +203,17 @@ can be configured when creating an rsync task.
 |                                  |                             | *Rsync over SSH*                                                                          |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Module Name/Remote Path   | string                      | when using *Rsync module* mode, at least one module must be defined in                    |
+| Remote Module Name               | string                      | only appears when using *Rsync module* mode, at least one module must be defined in       |
 |                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
 |                                  |                             | of rsync server or in the "Rsync Modules" of another                                      |
-|                                  |                             | system; when using *Rsync over SSH* mode, input the path on the remote host to push or    |
-|                                  |                             | pull (e.g. */mnt/volume*)                                                                 |
+|                                  |                             | system                                                                                    |
+|                                  |                             |                                                                                           |
++----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
+| Remote Path                      | string                      | only appears when using *Rsync over SSH* mode, input the path on the remote host to push  |
+|                                  |                             | or pull (e.g. */mnt/volume*)                                                              |
+|                                  |                             |                                                                                           |
++----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
+| Rsync Create                     | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |
@@ -228,11 +239,6 @@ can be configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Day of week                      | checkboxes                  | task occurs on the selected days of the week                                              |
-|                                  |                             |                                                                                           |
-+----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| User                             | drop-down menu              | specified user must have permission to write to the specified directory on the remote     |
-|                                  |                             | system; due to a limitation in FreeBSD, the user name can not contain spaces or exceed 17 |
-|                                  |                             | characters                                                                                |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Recursive                        | checkbox                    | if checked, copy will include all subdirectories of the specified volume                  |
