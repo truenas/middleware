@@ -164,6 +164,14 @@ def list_cmd(mani, args):
                 print "\t\tUpdate from %s: checksum %s" % (upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
     return
 
+def verify_cmd(mani, args):
+    if mani.VerifySignature() is True:
+        print "Verified"
+    else:
+        print "Bad Signature"
+        sys.exit(1)
+    return
+
 def sign_manifest(mani, path, a):
     key_file = None
     output_file = sys.stdout
@@ -267,6 +275,8 @@ def main():
             print mani.Notes()
     elif args[0] == "show":
         show_cmd(mani, args[1:])
+    elif args[0] == "verify":
+        verify_cmd(mani, args[1:])
     elif args[0] == "sign":
         sign_manifest(mani, mani_file, args[1:])
     else:
