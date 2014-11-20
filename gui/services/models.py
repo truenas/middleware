@@ -509,6 +509,12 @@ class iSCSITargetExtent(Model):
             verbose_name=_("Enable TPC"),
             help_text=_("Allow initiators to xcopy without authenticating to foreign targets."),
             )
+    iscsi_target_extent_xen = models.BooleanField(
+            default=False,
+            verbose_name=_("Xen initiator compat mode"),
+            help_text=_("Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+                        "naming scheme.  Checking this alters the naming scheme to be more Xen-friendly"),
+            )
 
     class Meta:
         verbose_name = _("Extent")
