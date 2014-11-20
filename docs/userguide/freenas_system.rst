@@ -63,7 +63,7 @@ General
 
 .. |system2.png| image:: images/system2.png
     :width: 6.2in
-    :height: 4.5in
+    :height: 4.4in
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -206,28 +206,18 @@ system to go back to that system state.
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
 As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed. If you used the initial configuration wizard, a second boot
-environment called *Wizard-date* is also created indicating the date and time the wizard was run.
+environment called *Wizard-date* is also created indicating the date and time the wizard was run. In this example, an update was applied from the
+*FreeNAS-9.3-Nightlies* train.
 
-**Figure 5.3a: Default Boot Environment**
+**Figure 5.3a: Viewing Boot Environments**
 
 |be1.png|
 
 .. |be1.png| image:: images/be1.png
-    :width: 5.9in
-    :height: 1.8in
+    :width: 6.3in
+    :height: 1.9in
 
-To create a boot environment, click the "Create" button, input a name for the boot environment, and click "OK". In the example shown in Figure 5.3b, a boot
-environment named *prepatch* was created in preparation before applying a system update.
-
-**Figure 5.3b: Viewing Boot Environments**
-
-|be2.png|
-
-.. |be2.png| image:: images/be2.png
-    :width: 6.2in
-    :height: 4.5in
-
-Each entry contains the following information:
+Each boot environment entry contains the following information:
 
 * **Name:** the name of the boot entry as it will appear in the boot menu.
 
@@ -245,12 +235,31 @@ Highlight an entry to view its configuration buttons.  The following configurati
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
 
-* **Delete:** used to delete that entry, which also removes it from the boot menu. You
+* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete the
   *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
   entry, which will clear the *On reboot* field of the currently activated entry.
 
-Figure 5.3c shows the boot menu with our example boot environment added.
+The buttons above the boot entries can be used to:
+
+* **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
+  underscores, and dashes are allowed.
+
+* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed after every installation or upgrade
+  and every 30 days. The date and results of the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
+
+* **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
+
+|be2.png|
+
+.. |be2.png| image:: images/be2.png
+    :width: 3.2in
+    :height: 4.4in
+
+If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
+Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
+
+Figure 5.3c shows a sample boot menu containing entries for the default, wizard generated, and a manually created boot environment named *prepatch*.
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
@@ -272,8 +281,8 @@ Advanced
 |system3.png|
 
 .. |system3.png| image:: images/system3.png
-    :width: 11.1in
-    :height: 4.4in
+    :width: 9.4in
+    :height: 4.5in
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -383,7 +392,7 @@ that can be configured using the Email tab.
 
 .. |system4.png| image:: images/system4.png
     :width: 6.2in
-    :height: 3.6in
+    :height: 3.8in
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -486,8 +495,8 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 2.8in
-    :height: 2.4in
+    :width: 6.2in
+    :height: 2.9in
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -595,7 +604,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.5in
+    :width: 6.2in
     :height: 3.2in
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
@@ -603,6 +612,9 @@ box "Automatically check for updates".
 
 This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
 a different selection.
+
+The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
+menu will list any files with checksum mismatches or permission errors.
 
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. In the example shown in Figure 5.8b, three
 updates are available.
@@ -621,9 +633,9 @@ case, this screen will close once the updates are downloaded and the downloaded 
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading to a Major Release From the GUI`. Note that in
-9.3, this button is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead
-apply the necessary updates to upgrade the operating system.
+The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
+is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead apply the necessary
+updates to upgrade the operating system.
 
 .. _CAs:
 
@@ -642,7 +654,7 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 .. |ca1.png| image:: images/ca1.png
     :width: 6.2in
-    :height: 2.1in
+    :height: 1.9in
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
@@ -652,8 +664,8 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 |ca2.png|
 
 .. |ca2.png| image:: images/ca2.png
-    :width: 3.8in
-    :height: 2.5in
+    :width: 3.7in
+    :height: 2.8in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -668,6 +680,9 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
+|                      |                      |                                                                                                   |
++----------------------+----------------------+---------------------------------------------------------------------------------------------------+
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                    |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | Serial               | string               | mandatory; input the serial number for the certificate                                            |
@@ -713,7 +728,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 | State                | string               | mandatory; input the state or province for the organization                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| City                 | string               | mandatory; input the city for the organization                                                  |
+| Locality             | string               | mandatory; input the location of the organization                                               |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Organization         | string               | mandatory; input the name of the company or organization                                        |

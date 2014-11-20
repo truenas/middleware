@@ -723,7 +723,8 @@ current status of a running scrub or the statistics from the last completed scru
 write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the device's
 options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
-**Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`.
+**Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`. This button will not appear if the pool is
+running the latest versions of feature flags.
 
 **Figure 8.1m: Volume Status**
 

@@ -452,12 +452,13 @@ In the screen shown in Figure 2.5e, use the drop-down menu to select which "Trai
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.6in
+    :width: 6.2in
     :height: 3.2in
 
-In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release) and
-*FreeNAS-9.3-Nightlies* which represents the latest nightly build of the current release which includes all new features, drivers, and bug fixes since 9.3 was
-released. The administrator has selected to track the *FreeNAS-9.3-Nightlies*.
+In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release),
+*FreeNAS-9.3-Nightlies* which represents the latest nightly build of the upcoming 9.3 release, and
+*FreeNAS-9.3-BETA* which includes all new features, drivers, and bug fixes since 9.3-BETA was released. The administrator has selected to track the
+*FreeNAS-9.3-Nightlies*.
 
 To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
 button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
@@ -513,8 +514,14 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
+* upgrading a ZFS pool is **optional**. You do not need to upgrade the pool if you do not need newer feature flags or if you want to keep the possibility of
+  reverting to an earlier version of FreeNAS® or repurposing the disks in another operating system that supports ZFS. If you do decide to upgrade the pool to
+  the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
+
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
 "Upgrade" button as seen in Figure 2.5g.
+
+.. note:: if the "Upgrade" button does not appear, the pool is already at the latest feature flags and does not need to be upgraded.
 
 **Figure 2.5g: Upgrading a ZFS Pool**
 
