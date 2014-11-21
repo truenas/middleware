@@ -1249,6 +1249,8 @@ class notifier:
         reckey_file = tempfile.mktemp(dir='/tmp/')
         self._system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
 
+        errors = []
+
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
             if passphrase is not None:
@@ -1257,16 +1259,23 @@ class notifier:
                     passphrase,
                     dev,
                     )
-                    )
+                )
             else:
                 proc = self._pipeopen("geli setkey -n 1 -K %s -P %s" % (
                     reckey_file,
                     dev,
                     )
-                    )
+                )
             err = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError("Unable to set recovery key: %s" % (err, ))
+                errors.append(err)
+
+        if errors:
+            raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
+                    len(errors),
+                    ', '.join(errors),
+                )
+            )
         return reckey_file
 
     def geli_delkey(self, volume, slot=1):
