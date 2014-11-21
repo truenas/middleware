@@ -17,8 +17,6 @@ var UsersStore      = require("../../stores/UsersStore");
 
 
 // Dummy data from API call on relatively unmolested system
-// TODO: Update to use data from Flux store
-// var inputData  = require("../../../data/fakedata/accounts.json");
 var formatData = require("../../../data/middleware-keys/accounts-display.json")[0];
 var itemData = {
     "route" : "users-editor"
