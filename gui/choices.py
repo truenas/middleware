@@ -833,7 +833,6 @@ CERT_TYPE_CERTIFICATE_CHOICES = (
 )
 
 CERT_KEY_LENGTH_CHOICES = (
-    (512, '512'),
     (1024, '1024'),
     (2048, '2048'),
     (4096, '4096')

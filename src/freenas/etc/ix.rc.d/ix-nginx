@@ -198,9 +198,15 @@ __EOF__
 		let "validcert |= $?" > /dev/null
 		${OPENSSL} rsa -in "${httpdkey}" -check -noout > /dev/null 2>&1
 		let "validcert |= $?" > /dev/null
+		# Checking if the key bit lenght is greater than or equal to 1024
+		local safecert=$(${OPENSSL} rsa -in "${httpdkey}" -text -noout | grep "Private-Key" | egrep -o '[0-9]' | tr -d "\n")
 
-		if [ ${validcert} -eq 0 ]; then
+		if [ ${validcert} -eq 0 -a ${safecert} -gt 1024]; then
 			working_ssl=true
+			# Delete this file (if it exists) now that we have a valid cert (else the alert ui keeps complaining)
+			if [ -f /tmp/alert_invalid_ssl_nginx ]; then
+			    rm /tmp/alert_invalid_ssl_nginx
+			fi
 
 			cat << __EOF__
 	listen			${addr}:${httpsport} default_server ssl spdy;
@@ -227,6 +233,10 @@ __EOF__
 		else
 			port=80
 			touch /tmp/alert_invalid_ssl_nginx
+			# The below to inform the user why his cert was invalidated (if it was invalidated on the basis of key length)
+			if [ ${safecert} -lt 1024 ]; then
+			    echo "${safecert}" > /tmp/alert_invalid_ssl_nginx
+			fi
 		fi
 	fi
 
