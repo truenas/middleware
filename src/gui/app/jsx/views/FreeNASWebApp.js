@@ -7,44 +7,6 @@
 
 var React        = require("react");
 
-// Middleware
-var middleware = require("../middleware/middleware");
-
-var sock = middleware;
-
-function refreshTasks()
-{
-    console.log("refreshTasks");
-    sock.call("task.list_active", null, function (tasks) {
-      console.log("active tasks:");
-      console.log(tasks);
-    });
-
-    sock.call("task.list_failed", null, function (tasks) {
-      console.log("failed tasks:");
-      console.log(tasks);
-    });
-}
-
-sock.on("connected", function() {
-    var username = prompt("Username:");
-    var password = prompt("Password:");
-    sock.login(username, password);
-  }
-);
-
-sock.on("login", function() {
-    refreshTasks();
-    sock.subscribe("task.*");
-    sock.call("discovery.get_tasks", null, function (tasks) {
-      console.log(tasks);
-    });
-});
-
-sock.on("event", function(args){
-  console.log(args);
-});
-
 var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
 var WarningBox   = require("../components/WarningBox");
@@ -55,9 +17,7 @@ var TWBS   = require("react-bootstrap");
 
 var FreeNASWebApp = React.createClass({
     componentDidMount: function() {
-      var sockProtocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
 
-      sock.connect( sockProtocol + document.domain + ":5000/socket" );
     }
   , getInitialState: function() {
     return {

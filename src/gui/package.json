@@ -5,6 +5,7 @@
     "browserify": "^6.2.0",
     "d3": "^3.4.x",
     "flux": "^2.0.x",
+    "keymirror": "^0.1.0",
     "lodash": "^2.4.x",
     "mach": "^0.12.0",
     "node-jsx": "^0.11.x",
@@ -12,7 +13,6 @@
     "react-bootstrap": "0.12.x",
     "react-router": "0.9.x",
     "velocity-animate": "0.1.x",
-    "wolfy87-eventemitter": "^4.2.9",
     "when": "^3.5.x"
   },
   "devDependencies": {

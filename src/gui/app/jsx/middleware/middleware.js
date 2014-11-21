@@ -5,10 +5,9 @@
 
 "use strict";
 
-var _ = require("lodash");
+var _            = require("lodash");
+var EventEmitter = require("events").EventEmitter;
 
-// Middleware object inherits event system from EventEmitter
-var EventEmitter = require("wolfy87-eventemitter");
 
 // Generate a unique UUID used to identify the client connection
 function uuid() {
@@ -21,6 +20,9 @@ function uuid() {
   );
 }
 
+
+// Middleware constructor - behaves as EventEmitter and manages all connections
+// to and from the FreeNAS backend
 function Middleware() {
   this.socket       = null;
   this.rpcTimeout   = 10000;
@@ -31,12 +33,10 @@ function Middleware() {
     var self = this;
     this.socket = new WebSocket(url);
     this.socket.onmessage = function(msg) {
-      console.log("Message from server: ");
-      console.log(msg);
       self.onMessage(msg.data);
     };
     this.socket.onopen    = function() {
-      self.emitEvent("connected");
+      self.emit("connected");
     };
   };
 
@@ -60,21 +60,16 @@ function Middleware() {
       , "password" : password
     };
 
-    console.log(this.pendingCalls[id]);
-
     this.pendingCalls[id] = {
         "callback": function() {
           console.log("emitting event");
-          this.emitEvent("login");
+          self.emit("login");
         }
       , "timeout": setTimeout(function() {
           self.onRPCTimeout(id);
         }
       , this.rpcTimeout )
     };
-
-    console.log("login");
-    console.log(this.pendingCalls[id]);
 
     this.socket.send( this.pack( "rpc", "auth", payload, id ) );
   };
@@ -94,17 +89,17 @@ function Middleware() {
       var self = this;
       var id = uuid();
       var payload = {
-          "method": method,
-          "args": args,
+          "method" : method
+        , "args"   : args
       };
 
       this.pendingCalls[id] = {
-          "method": method,
-          "args": args,
-          "callback": callback,
-          "timeout": setTimeout(function() {
+          "method": method
+        , "args": args
+        , "callback": callback
+        , "timeout": setTimeout( function() {
               self.onRPCTimeout(id);
-          }, this.rpcTimeout)
+          }, this.rpcTimeout )
       };
 
       this.socket.send( this.pack( "rpc", "call", payload, id ) );
@@ -115,12 +110,11 @@ function Middleware() {
   };
 
   this.onMessage = function( msg ) {
-    console.log("onMessage");
     var data = JSON.parse( msg );
     var call;
 
     if ( data.namespace === "events" && data.name === "event" ) {
-      this.emitEvent( "event", data.args );
+      this.emit( "event", data.args );
     }
 
     if ( data.namespace === "rpc" ) {
@@ -137,7 +131,7 @@ function Middleware() {
       }
 
       if (data.name === "error") {
-        this.emitEvent("error", data.args);
+        this.emit("error", data.args);
       }
     }
   };

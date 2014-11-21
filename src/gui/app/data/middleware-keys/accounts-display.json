@@ -1,113 +1,106 @@
 [{
-    "primaryKey"   : "bsdusr_username"
-  , "secondaryKey" : "bsdusr_full_name"
-  , "selectionKey" : "bsdusr_username"
-  , "uniqueKey"    : "bsdusr_uid"
-  , "groups"       : [ "bsdusr_builtin" ]
+    "primaryKey"   : "username"
+  , "secondaryKey" : "full_name"
+  , "selectionKey" : "username"
+  , "uniqueKey"    : "id"
+  , "groups"       : [ "builtin" ]
   , "dataKeys": [
       {
-          "key"         : "bsdusr_builtin"
+          "key"         : "builtin"
         , "name"        : "Built-in User"
         , "type"        : "boolean"
         , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
-          "key"         : "bsdusr_email"
+          "key"         : "email"
         , "name"        : "Email Address"
         , "type"        : "string"
         , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_full_name"
+          "key"         : "full_name"
         , "name"        : "Full Name"
         , "type"        : "string"
         , "mutable"     : true
         , "defaultCol"  : true
       }
     , {
-          "key"         : "bsdusr_group"
+          "key"         : "group"
         , "name"        : "Group"
         , "type"        : "number"
         , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
-          "key"         : "bsdusr_home"
+          "key"         : "home"
         , "name"        : "Home Directory"
         , "type"        : "string"
         , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_locked"
+          "key"         : "locked"
         , "name"        : "Locked Account"
         , "type"        : "boolean"
         , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_password_disabled"
+          "key"         : "password_disabled"
         , "name"        : "Password Disabled"
         , "type"        : "boolean"
         , "mutable"     : true
         , "defaultCol"  : true
       }
     , {
-          "key"         : "bsdusr_shell"
+          "key"         : "shell"
         , "name"        : "Shell"
         , "type"        : "string"
         , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_smbhash"
+          "key"         : "smbhash"
         , "name"        : "SMB Hash"
         , "type"        : "string"
         , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_sshpubkey"
+          "key"         : "sshpubkey"
         , "name"        : "SSH Public Key"
         , "type"        : "string"
         , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_sudo"
+          "key"         : "sudo"
         , "name"        : "sudo Allowed"
         , "type"        : "boolean"
         , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_uid"
+          "key"         : "id"
         , "name"        : "User ID"
         , "type"        : "number"
         , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
-          "key"         : "bsdusr_unixhash"
+          "key"         : "unixhash"
         , "name"        : "Unix Hash"
         , "type"        : "string"
         , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
-          "key"         : "bsdusr_username"
+          "key"         : "username"
         , "name"        : "Username"
         , "type"        : "string"
         , "mutable"     : true
-        , "defaultCol"  : true
-      }
-    , {
-          "key"         : "id"
-        , "name"        : "ID Number"
-        , "type"        : "number"
-        , "mutable"     : false
         , "defaultCol"  : true
       }
   ]
