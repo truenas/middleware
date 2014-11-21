@@ -113,7 +113,11 @@ In the example shown in Figure 12.2a, a newer version of Minidlna is available.
 
 **Figure 12.2a: Updating an Installed Plugin**
 
-|Figure122a_png|
+|plugins4.png|
+
+.. |plugins4.png| image:: images/plugins4.png
+    :width: 6.9in
+    :height: 2.4in
 
 Click the "OK" button to start the download and installation of the latest version of the plugin. Once the update is complete, the entry for the plugin will
 be refreshed to show the new version number and the "Update" button will disappear.
@@ -132,7 +136,11 @@ downloaded file. Once selected, click the "Upload" button to begin the installat
 
 **Figure 12.3a: Installing a Previously Downloaded *.pbi File**
 
-|Figure123a_png|
+|plugins5.png|
+
+.. |plugins5.png| image:: images/plugins5.png
+    :width: 5.2in
+    :height: 1.7in
 
 When the installation is complete, an entry for the plugin will be added to the "Installed" tab and its associated jail will be listed under "Jails". However,
 if it is not a FreeNAS® plugin, it will not be added to "Plugins" in the tree. In this case, if the application requires any configuration, you will have to
@@ -152,7 +160,11 @@ that they want to delete. **This is the one and only warning.** If the user clic
 
 **Figure 12.4a: Deleting an Installed Plugin**
 
-|Figure124a_png|
+|plugins6.png|
+
+.. |plugins6.png| image:: images/plugins6.png
+    :width: 4.7in
+    :height: 2.3in
 
 .. _Available Plugins:
 
