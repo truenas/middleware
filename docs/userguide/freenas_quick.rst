@@ -129,9 +129,25 @@ Beginning with FreeNAS® 9.3, a configuration wizard automatically starts the fi
 steps needed to quickly configure FreeNAS® to start serving data over a network. This section describes these configuration steps. If you wish to use the
 wizard again after the initial configuration, click the "Wizard" icon.
 
-Figure 3.1a shows the initial wizard configuration screen that appears if the storage disks have not yet been formatted.
+Figure 3.1a shows the initial wizard configuration screen.
 
 **Figure 3.1a: Initial Configuration Wizard**
+
+|wizard.png|
+
+.. |wizard.png| image:: images/wizard.png
+    :width: 2.7in
+    :height: 1.8in
+
+.. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart
+   the wizard again by clicking the "Wizard" icon. Alternately, you can use the FreeNAS® GUI to configure the system, as described in the rest of this Guide.
+
+This screen can be used to change the default language, keyboard map, and timezone. After making your selections, click "Next". The next screen depends on
+whether or not the storage disks have already been formatted into a ZFS pool.
+
+Figure 3.1b shows the configuration screen that appears if the storage disks have not yet been formatted.
+
+**Figure 3.1b: Volume Creation Wizard**
 
 |wizard1.png|
 
@@ -148,7 +164,8 @@ to make a more complex configuration, click the "Exit" button to close the "Wiza
 
 The following redundancy types are available:
 
-* **Automatic:**
+* **Automatic:** automatically creates a mirrored, RAIDZ1, or RAIDZ2 pool, depending upon the number of disks. If you prefer to control the type of
+  redundancy, select one of the other options.
 
 * **RAID 10:** creates a striped mirror and requires a minimum of 4 disks.
 
@@ -160,9 +177,9 @@ The following redundancy types are available:
 
 Once you have made your selection, click "Next" to continue.
 
-If the disks have already been formatted with ZFS, the initial wizard screen will instead prompt to import the volume, as seen in Figure 3.1b.
+If the disks have already been formatted with ZFS, the next screen will instead prompt to import the volume, as seen in Figure 3.1c.
 
-**Figure 3.1b: Volume Import Screen**
+**Figure 3.1c: Volume Import Screen**
 
 |wizard2.png|
 
@@ -172,12 +189,9 @@ If the disks have already been formatted with ZFS, the initial wizard screen wil
 
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
-.. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart
-   the wizard again by clicking the "Wizard" icon. Alternately, you can use the FreeNAS® GUI to configure the system, as described in the rest of this Guide.
+The next screen in the wizard is shown in Figure 3.1d.
 
-The next screen in the wizard is shown in Figure 3.1c.
-
-**Figure 3.1c: Directory Service Selection**
+**Figure 3.1d: Directory Service Selection**
 
 |wizard3.png|
 
@@ -277,9 +291,9 @@ which directory service is selected. Tables 3.1a to 3.1d summarize the available
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
-The next configuration screen, shown in Figure 3.1d, can be used to create the network shares.
+The next configuration screen, shown in Figure 3.1e, can be used to create the network shares.
 
-**Figure 3.1d: Share Creation**
+**Figure 3.1e: Share Creation**
 
 |wizard4.png|
 
@@ -305,9 +319,9 @@ To create a share using the wizard, input a name, then select the "Purpose" of t
 * **Block Storage (iSCSI):** this type of share can be accessed by any operating system using iSCSI initiator software. Input the size of the block storage to
   create in the format *20G* (for 20 GB). If you make any iSCSI shares using the wizard, you can fine-tune them afterwards using :ref:`iSCSI`.
 
-After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 3.1e.
+After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 3.1f.
 
-**Figure 3.1e: Share Permissions**
+**Figure 3.1f: Share Permissions**
 
 |wizard5.png|
 
@@ -323,9 +337,9 @@ appear in the "Name" frame.
 You can use the "Delete" button to remove the highlighted share in the "Name" frame. If you need to edit a share, highlight it, make the change, then press
 the "Update" button.
 
-When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 3.1f.
+When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 3.1g.
 
-**Figure 3.1f: Miscellaneous Settings**
+**Figure 3.1g: Miscellaneous Settings**
 
 |wizard6.png|
 
