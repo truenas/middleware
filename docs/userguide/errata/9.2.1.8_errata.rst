@@ -129,7 +129,7 @@ Section 3.2.2: Users
 
 |Figure32d.png|
 
-.. |Figure32d.png| image:: images/Figure32d.png
+.. |Figure32d.png| image:: Figure32d.png
     :width: 10.5in
     :height: 4.3in
 
@@ -161,7 +161,7 @@ information, moving these to the system dataset will prevent :file:`/var/` from 
 
 |Figure46e.png|
 
-.. |Figure46e.png| image:: images/Figure46e.png
+.. |Figure46e.png| image:: Figure46e.png
     :width: 5.9in
     :height: 4.2in
 
@@ -181,7 +181,7 @@ Section 6.2.2: Configure PUSH
 
 |Replication1i.png|
 
-.. |Replication1i.png| image:: images/Replication1i.png
+.. |Replication1i.png| image:: Replication1i.png
     :width: 9.0in
     :height: 5.1in
 
@@ -217,7 +217,7 @@ Section 6.3.6: Creating ZFS Datasets
 
 |Figure63i.png|
 
-.. |Figure63i.png| image:: images/Figure63i.png
+.. |Figure63i.png| image:: Figure63i.png
     :width: 7.4in
     :height: 3.8in
 
@@ -240,7 +240,7 @@ Section 6.3.10: Setting Permissions
 
 |Figure63q.png|
 
-.. |Figure63q.png| image:: images/Figure63q.png
+.. |Figure63q.png| image:: Figure63q.png
     :width: 3.5in
     :height: 3.5in
 
@@ -251,7 +251,7 @@ Section 7.1.1: Creating AFP Shares
 
 |Figure71a.png|
 
-.. |Figure71a.png| image:: images/Figure71a.png
+.. |Figure71a.png| image:: Figure71a.png
     :width: 6.7in
     :height: 4.1in
 
@@ -273,7 +273,7 @@ The manual page for the Samba4 version of smb.conf(5) is `http://www.sloop.net/s
 
 |Figure73a.png|
 
-.. |Figure73a.png| image:: images/Figure73a.png
+.. |Figure73a.png| image:: Figure73a.png
     :width: 6.7in
     :height: 4.1in
 
@@ -315,7 +315,7 @@ Section 8.2: AFP
 
 |Figure82a.png|
 
-.. |Figure82a.png| image:: images/Figure32d.png
+.. |Figure82a.png| image:: Figure32d.png
     :width: 6.4in
     :height: 3.6in
 
@@ -337,7 +337,7 @@ Section 8.3: CIFS
 
 |Figure83a.png|
 
-.. |Figure83a.png| image:: images/Figure83a.png
+.. |Figure83a.png| image:: Figure83a.png
     :width: 8.1in
     :height: 4.2in
 
@@ -459,7 +459,7 @@ Section 8.7.5: Target Global Configuration
 
 |Figure87g.png|
 
-.. |Figure87g.png| image:: images/Figure87g.png
+.. |Figure87g.png| image:: Figure87g.png
     :width: 8.4in
     :height: 4.4in
 
@@ -483,7 +483,7 @@ Section 8.7.7: Target/Extents
 
 |Figure87i.png|
 
-.. |Figure87i.png| image:: images/Figure87i.png
+.. |Figure87i.png| image:: Figure87i.png
     :width: 5.1in
     :height: 4.1in
 
@@ -504,7 +504,7 @@ Section 8.12.2: Chrooting Command Line SFTP Users
 
 |Figure812b.png|
 
-.. |Figure812b.png| image:: images/Figure812b.png
+.. |Figure812b.png| image:: Figure812b.png
     :width: 3.6in
     :height: 3.5in
 
@@ -515,7 +515,7 @@ Section 9.1: Installing a FreeNAS® PBI Using Plugins
 
 |Figure91a.png|
 
-.. |Figure91a.png| image:: images/Figure91a.png
+.. |Figure91a.png| image:: Figure91a.png
     :width: 7.6in
     :height: 4.4in
 
@@ -557,7 +557,7 @@ Section 10.3: Jail Templates
 
 |Figure103a.png|
 
-.. |Figure103a.png| image:: images/Figure103a.png
+.. |Figure103a.png| image:: Figure103a.png
     :width: 7.6in
     :height: 4.4in
 
