@@ -268,16 +268,18 @@ def main():
                 name="kdc", value=kr.krb_kdc
             )
         )
-        bc.append(
-            KerberosConfigBinding(
-                name="admin_server", value=kr.krb_admin_server
+        if kr.krb_admin_server: 
+            bc.append(
+                KerberosConfigBinding(
+                    name="admin_server", value=kr.krb_admin_server
+                )
             )
-        )
-        bc.append(
-            KerberosConfigBinding(
-                name="kpasswd_server", value=kr.krb_kpasswd_server
+        if kr.krb_kpasswd_server:
+            bc.append(
+                KerberosConfigBinding(
+                    name="kpasswd_server", value=kr.krb_kpasswd_server
+                )
             )
-        )
         bc.append(
             KerberosConfigBinding(
                 name="default_domain", value=kr.krb_realm
