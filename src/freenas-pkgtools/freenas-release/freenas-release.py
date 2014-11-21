@@ -36,6 +36,26 @@ delta packags we can make.
 debug = 0
 verbose = 1
 
+# Obtain a lock for an archive.
+# This should be done before creating any files,
+# such as manifests or package files.
+# To unlock, simply close the returned object.
+# Pass in wait = True to have it try to get
+# a lock.
+def LockArchive(archive, reason, wait = False):
+    import fcntl
+    # Do thrown an exception if we can't get the lock
+    print >> sys.stderr, "LockArchive(%s, %s): %s" % (archive, wait, reason)
+    lock_file = open(os.path.join(archive, ".lock"), "wb+")
+    flags = fcntl.LOCK_EX
+    if not wait:
+        flags |= fcntl.LOCK_NB
+    try:
+        fcntl.lockf(lock_file, flags, 0, 0)
+    except (IOError, Exception) as e:
+        print >> sys.stderr, "Unable to obtain lock for archive %s: %s" % (archive, str(e))
+        return None
+    return lock_file
 
 class ReleaseDB(object):
     """
@@ -46,7 +66,7 @@ class ReleaseDB(object):
     """
     global debug, verbose
 
-    def __init__(self, use_transactions = False):
+    def __init__(self, use_transactions = False, initialize = False):
         self._connection = None
         self._use_transactions = use_transactions
 
@@ -155,11 +175,16 @@ class PyReleaseDB(ReleaseDB):
     TRAINS_KEY = "kTrains"
     UPDATES_KEY = "kUpdates"
 
-    def __init__(self, use_transactions = False, dbfile = None):
+    def __init__(self, use_transactions = False, initialize = False, dbfile = None):
         import json
 
-        super(PyReleaseDB, self).__init__(use_transactions)
+        super(PyReleaseDB, self).__init__(use_transactions, initialize)
         self._dbfile = dbfile
+        if initialize:
+            try:
+                os.remove(self._dbfile)
+            except:
+                pass
         try:
             with open(self._dbfile, "r") as f:
                 self._db = json.load(f)
@@ -391,8 +416,13 @@ class FSReleaseDB(ReleaseDB):
             return False
         return True
 
-    def __init__(self, use_transactions = False, dbpath = None):
-        super(FSReleaseDB, self).__init__(use_transactions)
+    def __init__(self, use_transactions = False, initialize = False, dbpath = None):
+        super(FSReleaseDB, self).__init__(use_transactions, initialize)
+        if initialize:
+            try:
+                os.removedirs(dbpath)
+            except:
+                pass
         if self.SafeMakedir(dbpath) is False:
             raise Exception("Cannot create database path %s" % dbpath)
         self._dbpath = dbpath
@@ -597,13 +627,18 @@ class SQLiteReleaseDB(ReleaseDB):
     """
     global debug, verbose
 
-    def __init__(self, use_transactions = False, dbfile = None):
+    def __init__(self, use_transactions = False, initialize = False, dbfile = None):
         global debug
         import sqlite3
         if dbfile is None:
             raise Exception("dbfile must be specified")
-        super(SQLiteReleaseDB, self).__init__(use_transactions)
+        super(SQLiteReleaseDB, self).__init__(use_transactions, initialize)
         self._dbfile = dbfile
+        if initialize:
+            try:
+                os.remove(self._dbfile)
+            except:
+                pass
         self._connection = sqlite3.connect(self._dbfile)
         if self._connection is None:
             raise Exception("Could not connect to sqlie db file %s" % dbfile)
@@ -984,6 +1019,7 @@ def usage():
     Command is:
 	add	Add the build-output directories (args) to the archive and database
 	check	Check the archive for self-consistency.
+    	rebuild	Rebuild the databse (--copy <new_dest> and --verify options)
 """ % sys.argv[0]
     sys.exit(1)
 
@@ -1455,7 +1491,256 @@ def Check(archive, db, project = "FreeNAS"):
         for found in found_packages.keys():
             print >> sys.stderr, "Unexpected package file %s" % found
 
-                       
+
+def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
+    """
+    Given an archive, rebuild the database by examining the
+    manifests.
+    We start by looking for directories in $archive.
+    We ignore the directory "Packages" in it.
+    For each directory we find, we look for files (and
+    exclude LATEST if it is a symlink).
+    Then we process each manifest and add its entries to
+    the database.
+    The manifests are sorted based on their mtime, then
+    based on the filename if the mtime is equal.
+    """
+    found_manifests = []
+    pkg_directory = "%s/Packages" % archive
+    copy = None
+    verify = False
+    
+    long_options = [ "copy=", "verify" ]
+    try:
+        opts, args = getopt.getopt(args, None, long_options)
+    except getopt.GetoptError as err:
+        print >> sys.stderr, str(err)
+        usage()
+
+    for o, a in opts:
+        if o in ("--copy"):
+            copy = os.path.join(a, project)
+        elif o in ("--verify"):
+            verify = True
+        else:
+            usage()
+
+    if verify and copy:
+        print >> sys.stderr, "Only one of --verify or --copy is allowed"
+        usage()
+
+    for train_name in os.listdir(archive):
+        if train_name == "Packages":
+            continue
+        if os.path.isdir(os.path.join(archive, train_name)):
+            for manifest_file in os.listdir(os.path.join(archive, train_name)):
+                mname = os.path.join(archive, train_name, manifest_file)
+                if manifest_file == "LATEST" and os.path.islink(mname):
+                    continue
+                if os.path.isfile(mname):
+                    found_manifests.append(mname)
+    def my_sort(left, right):
+        if os.stat(left).st_mtime < os.stat(right).st_mtime: return -1
+        if os.stat(left).st_mtime > os.stat(right).st_mtime: return 1
+        if left < right: return -1
+        if left > right: return 1
+        return 0
+    sorted_manifests = sorted(found_manifests, cmp = my_sort)
+
+    for manifest in sorted_manifests:
+        # Process them somehow
+        # This seems to duplicate a lot of ProcessRelease
+        # so it should be abstracted so both can use it
+        if debug or verbose:
+            print >> sys.stderr, "Processing %s" % manifest
+        m = Manifest.Manifest()
+        m.LoadPath(manifest)
+        previous_sequences = db.RecentSequencesForTrain(m.Train())
+        pkg_list = []
+        for pkg in m.Packages():
+            pkg_path = os.path.join(pkg_directory, pkg.FileName())
+            if not os.path.exists(pkg_path):
+                print >> sys.stderr, "Package file %s does not exist where I expect it" % pkg.FileName()
+                continue
+            updates = []
+            if verify or copy:
+                hash = ChecksumFile(pkg_path)
+                if verify and hash != pkg.Checksum():
+                    print >> sys.stderr, "Package file %s has different hash than manifest %s" % (pkg_path, manifest)
+                size = os.lstat(pkg_path).st_size
+                if verify and pkg.Size() is not None and size != pkg.Size():
+                    print >> sys.stderr, "Package file %s has different size than manifest %s" % (pkg_path, manifest)
+                if copy:
+                    pkg.SetChecksum(hash)
+                    pkg.SetSize(size)
+                    # And now copy the package file
+                    try:
+                        os.makedirs(os.path.join(copy, "Packages"))
+                    except:
+                        # Be lazy
+                        pass
+                    flock = LockArchive(copy, "Create Package file")
+                    pkg_src = open(pkg_path, "rb")
+                    kBufSize = 1024 * 1024
+                    try:
+                        pkg_dest = open(os.path.join(copy, "Packages", pkg.FileName()), "wxb")
+                    except OSError as e:
+                        import errno
+                        if e.errno != errno.EEXIST:
+                            print >> sys.stderr, "Unable to create package file %s" % pkg_dest.name
+                            raise
+                        else:
+                            hash = ChecksumFile(os.path.join(copy, "Packages", pkg.FileName()))
+                            size = os.lstat(os.path.join(copy, "Packages", pkg.FileName())).st_size
+                            pkg.SetChecksum(hash)
+                            pkg.SetSize(size)
+                    else:
+                        while True:
+                            data = pkg_src.read(kBufSize)
+                            if data:
+                                pkg_dest.write(data)
+                            else:
+                                break
+                    pkg_dest.close()
+                    flock.close()
+
+            # Now look for updates.
+            # Only if verify or copy; otherwise
+            # we just get the values from the manifest
+            # If we're copying, we need to create the
+            # delta packages.
+            if verify or copy:
+                if Package.UPGRADES_KEY in pkg.dict():
+                    pkg.dict().pop(Package.UPGRADES_KEY)
+                older_versions = {}
+                for older in previous_sequences:
+                    # What should we do here?
+                    # If we aren't checking the FS for copying or verify
+                    # we should just accept the manifest file's version?
+                    old_pkg = db.PackageForSequence(older, pkg.Name())
+                    if old_pkg:
+                        if old_pkg.Version() == pkg.Version():
+                            continue
+                        if old_pkg.Version() in older_versions:
+                            continue
+                        older_versions[old_pkg.Version()] = True
+                        delta_pkg = "%s/%s" % (pkg_directory, pkg.FileName(old_pkg.Version()))
+                        if os.path.exists(delta_pkg):
+                            hash = ChecksumFile(delta_pkg)
+                            size = os.lstat(delta_pkg).st_size
+                            if copy:
+                                flock = LockArchive(copy, "Create Delta Package File")
+                                try:
+                                    os.makedirs(os.path.join(copy, "Packages"))
+                                except:
+                                    # Lazy. let failure happen below
+                                    pass
+                                pkg_delta_src = open(delta_pkg, "rb")
+                                kBufSize = 1024 * 1024
+                                try:
+                                    pkg_delta_dest = open(os.path.join(copy, "Packages", pkg.FileName(old_pkg.Version())), "wxb")
+                                except OSError as e:
+                                    import errno
+                                    if e.errno != errno.EEXIST:
+                                        print >> sys.stderr, "Unable to create package file %s" % pkg_dest.name
+                                    else:
+                                        hash = ChecksumFile(os.path.join(copy, "Packages", pkg.FileName(old_pkg.Version())))
+                                        size = os.lstat(os.path.join(copy, "Packages", pkg.FileName(okd_pkg.Version()))).st_size
+                                else:
+                                    # Need to create a delta package
+                                    # We look for the versions in copy, not the source archive.
+                                    pkg1 = os.path.join(copy, "Packages", old_pkg.FileName())
+                                    pkg2 = os.path.join(copy, "Packages", pkg.FileName())
+                                    x = PackageFile.DiffPackageFiles(pkg1, pkg2, pkg_delta_dest.name)
+                                    if x is None:
+                                        print >> sys.stderr, "%s:  No differences between versions %s and %s, downgrading to older version" % (pkg.Name(), old_pkg.Version(), pkg.Version())
+                                        for u in db.UpdatesForPackage(old_pkg):
+                                            old_pkg.AddUpdate(upd[0], upd[1])
+                                        old_pkg.SetChecksum(ChecksumFile(pkg1))
+                                        old_pkg.SetSize(os.lstat(pkg1).st_size)
+                                        pkg = old_pkg
+                                    else:
+                                        print >> sys.stderr, "Created delta package %s" % x
+                                        hash = ChecksumFile(x)
+                                        size = os.lstat(x).st_size
+                                        pkg.AddUpdate(old_pkg.Version(),
+                                                      hash,
+                                                      size)
+
+                                pkg_delta_dest.close()
+                                flock.close()
+                            updates.append({
+                                Package.VERSION_KEY : old_pkg.Version(),
+                                Package.CHECKSUM_KEY : hash,
+                                Package.SIZE_KEY : size
+                                })
+
+            else:
+                for upd in pkg.Updates():
+                    updates.append(upd)
+
+            for upd in updates:
+                try:
+                    db.AddPackageUpdate(pkg,
+                                        upd[Package.VERSION_KEY],
+                                        upd[Package.CHECKSUM_KEY])
+                    if verbose or debug:
+                        print >> sys.stderr, "\tAdded package update %s %s->%s" % (pkg.Name(), pkg.Version(), upd[Package.VERSION_KEY])
+                except BaseException as e:
+                    print >> sys.stderr, "AddPackageUpdats %s %s->%s: %s" % (pkg.Name(), pkg.Version(), upd[Package.VERSION_KEY], str(e))
+
+            pkg_list.append(pkg)
+
+        m.SetPackages(pkg_list)
+        if copy:
+            # We need to save the manifest.
+            # Since this may change the sequence, we
+            # need to do this before updating the database.
+            try:
+                os.makedirs(os.path.join(copy, m.Train()))
+            except:
+                # Lazy, let it fail below
+                pass
+            flock = LockArchive(copy, "Save Manifest File")
+            name = m.Sequence()
+            suffix = None
+            while True:
+                manifest_path = os.path.join(copy, m.Train(), "%s-%s" % (project, name))
+                print >> sys.stderr, "%s" % manifest_path
+                try:
+                    manifest_file = open(manifest_path, "wxb", 0664)
+                except OSError as e:
+                    # Should compare manifests, perhaps
+                    print >> sys.stderr, "Cannot open %s: %s" % (manifest_path, str(e))
+                    if suffix is None:
+                        suffix = 1
+                    else:
+                        suffix += 1
+                    name = "%s-%d" % (m.Sequence(), suffix)
+                    continue
+                else:
+                    break
+            m.SetSequence(name)
+            m.StoreFile(manifest_file)
+            # And now set the symlink
+            latest = os.path.join(copy, m.Train(), "LATEST")
+            try:
+                os.unlink(latest)
+            except:
+                pass
+            os.symlink("%s-%s" % (project, m.Sequence()), latest)
+            flock.close()
+
+        try:
+            db.AddRelease(m)
+        except BaseException as e:
+            print >> sys.stderr, "Processing %s, got exception %s" % (m.Sequence(), str(e))
+            continue
+        if debug or verbose:
+            print >> sys.stderr, "Done processing %s" % m.Sequence()
+
+    return
+
 def main():
     global debug, verbose
     # Variables set via getopt
@@ -1542,6 +1827,8 @@ def main():
             ProcessRelease(source, archive, db, project = project_name, key_data = key_data, changelog = changelog)
     elif cmd == "check":
         Check(archive, db, project = project_name)
+    elif cmd == "rebuild":
+        Rebuild(archive, db, project = project_name, key = key_data, args = args)
     else:
         print >> sys.stderr, "Unknown command %s" % cmd
         usage()

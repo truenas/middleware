@@ -63,6 +63,15 @@ class Package(object):
         self._dict[CHECKSUM_KEY] = checksum
         return
 
+    def SetUpdates(self, updates):
+        self._dict[UPGRADES_KEY] = []
+        for upd in updates:
+            size = None
+            if SIZE_KEY in upd:
+                size = up[SIZE_KEY]
+            self.AddUpdate(upd[VERSION_KEY], upd[CHECKSUM_KEY], size)
+        return
+
     def AddUpdate(self, old, checksum, size = None):
         if UPGRADES_KEY not in self._dict:
             self._dict[UPGRADES_KEY] = []
