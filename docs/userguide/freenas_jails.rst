@@ -65,8 +65,9 @@ named *jail1*, it will be installed into its own dataset named :file:`/mnt/volum
     :width: 4.2in
     :height: 2.4in
 
-.. warning:: if you have already installed a plugin, all of the fields in this screen will automatically be filled in. You should still double-check that
-   the pre-configured IP addressing values are appropriate for your jails and will not conflict with addresses used by other systems on the network.
+.. warning:: if you have already installed any :ref:`Plugins`, the "Jail Root", "IPv4 Network", "IPv4 Network Start Address", and "IPv4 Network End Address"
+   will automatically be filled in. You should double-check that the pre-configured IP addressing values are appropriate for your jails and will not conflict
+   with addresses used by other systems on the network.
 
 Table 13.1a summarizes the fields in this configuration screen. Refer to the text below the table for more details on how to properly configure the "Jail
 Root" and network settings.  Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure
@@ -289,25 +290,25 @@ order to enable that jail's configuration options.
 |jails4.png|
 
 .. |jails4.png| image:: images/jails4.png
-    :width: 4.2in
-    :height: 2.4in
+    :width: 3.4in
+    :height: 4.5in
 
 In order, from left to right, the following configuration icons are available:
 
-**Edit Jail:** used to edit the jail's settings which were described in Table 13.2a. Note that once a jail is created, the jail name cannot be changed so this
-field will be greyed out.
+**Edit Jail:** used to edit the jail's settings which were described in Table 13.2a. Note that once a jail is created, the jail's name and type cannot be
+changed so these fields will be greyed out.
 
 .. note:: if you need to modify the IP address information for a jail, use it's "Edit Jail" button instead of the associated networking commands from the
    command line of the jail.
 
 **Add Storage:** used to configure the jail to access an area of storage as described in :ref:`Add Storage`.
 
-**Start/Stop:** this icon will vary, depending upon the current running status of the jail. If the jail is currently stopped, the icon will be green and can
-be used to start the jail. If the jail is currently running, the icon will be red and can be used to stop the jail. A stopped jail and its applications are
+**Start/Stop:** this icon will vary, depending upon the current "Status" of the jail. If the jail is currently stopped, the icon will be green and can be used
+to start the jail. If the jail is currently running, the icon will be red and can be used to stop the jail. A stopped jail and its applications are
 inaccessible until it is restarted.
 
-**Shell:** used to access a root command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close
-the shell.
+**Shell:** used to access a
+*root* command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close the shell.
 
 **Delete:** deleting the specified jail also deletes any software that was installed in that jail. The GUI will display a warning which requires you to click
 the "Yes" button, indicating that you are sure that you want to delete the jail, before this operation is performed.
@@ -373,8 +374,8 @@ expanding the jail's name in the tree view and clicking :menuselection:`Storage 
 |jails5.png|
 
 .. |jails5.png| image:: images/jails5.png
-    :width: 4.2in
-    :height: 2.4in
+    :width: 7.2in
+    :height: 5.6in
 
 Browse to the "Source" and "Destination", where:
 
@@ -418,8 +419,8 @@ if the directory does not already exist.
 
 Once a storage has been added, it will be added to the tree under the specified jail. In the example shown in Figure 13.2d, a dataset named 
 :file:`volume1/data` has been chosen as the "Source" as it contains the files stored on the FreeNAS® system. When the storage was created, the user browsed
-to :file:`volume1/jails/pluginjail/usr/local` in the "Destination" field, then typed in *test* as the directory. Since this directory did not already exist,
-it was created as the "Create directory" box was left as checked. The resulting storage was added to the *pluginjail* entry in the tree as
+to :file:`volume1/jails/freebsd1/usr/local` in the "Destination" field, then typed in *test* as the directory. Since this directory did not already exist,
+it was created as the "Create directory" box was left as checked. The resulting storage was added to the *freenas1* entry in the tree as
 :file:`/usr/local/test`. The user has clicked this :file:`/usr/local/test` entry in order to access its "Edit" screen.
 
 **Figure 13.2d: Example Storage**
@@ -427,8 +428,8 @@ it was created as the "Create directory" box was left as checked. The resulting 
 |jails6.png|
 
 .. |jails6.png| image:: images/jails6.png
-    :width: 4.2in
-    :height: 2.4in
+    :width: 7.2in
+    :height: 5.2in
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -460,7 +461,7 @@ audiotag package, use this command::
 
  pkg install audiotag
 
-When prompted, type *y* to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
+When prompted, type **y** to complete the installation. The installation messages will indicate if the package and its dependencies successfully download and
 install.
 
 .. warning:: **do not** use the :command:`pkg_add` command in a FreeNAS® jail as it will cause inconsistencies in your package management database.
@@ -471,6 +472,7 @@ You can confirm that the installation was successful by querying the package dat
  audiotag-0.19_1
  Name:		 audiotag
  Version:	 0.19_1
+ Installed on:   Fri Nov 21 10:10:34 PST 2014
  Origin:	 audio/audiotag
  Architecture:	 freebsd:9:x86:64
  Prefix:	 /usr/local
@@ -480,11 +482,14 @@ You can confirm that the installation was successful by querying the package dat
  WWW:		 http://github.com/Daenyth/audiotag
  Comment:	 Command-line tool for mass tagging/renaming of audio files
  Options:
- DOCS:		 on
- FLAC:		 on
- ID3:		 on
- MP4:		 on
- VORBIS:	 on
+   DOCS:	 on
+   FLAC:	 on
+   ID3:		 on
+   MP4:		 on
+   VORBIS:	 on
+ Annotations:
+   repo_type:    binary
+   repository:   FreeBSD
  Flat size:	 62.8KiB
  Description:	Audiotag is a command-line tool for mass tagging/renaming of audio files
 		it supports the vorbis comment, id3 tags, and MP4 tags.
@@ -514,16 +519,16 @@ Compiling FreeBSD Ports
 Typically, software is installed into a FreeBSD jail using packages. Occasionally you may prefer to compile the port yourself. Compiling the port offers the
 following advantages:
 
-* not every port has an available package. This is usually due to licensing restrictions or known, unaddressed security vulnerabilities.
+* Not every port has an available package. This is usually due to licensing restrictions or known, unaddressed security vulnerabilities.
 
-* sometimes the package is out-of-date and you need a feature that became available in the newer version.
+* Sometimes the package is out-of-date and you need a feature that became available in the newer version.
 
-* some ports provide compile options that are not available in the pre-compiled package. These options are used to add additional features or to strip out
+* Some ports provide compile options that are not available in the pre-compiled package. These options are used to add additional features or to strip out
   the features you do not need.
 
 Compiling the port yourself has the following dis-advantages:
 
-* it takes time. Depending upon the size of the application, the amount of dependencies, the amount of CPU and RAM on the system, and the current load on
+* It takes time. Depending upon the size of the application, the amount of dependencies, the amount of CPU and RAM on the system, and the current load on
   the FreeNAS® system, the amount of time can range from a few minutes to a few hours or even to a few days.
 
 .. note:: if the port doesn't provide any compile options, you are better off saving your time and the FreeNAS® system's resources by using the
@@ -550,19 +555,16 @@ configurable options (DOCS, FLAC, ID3, MP4, and VORBIS) and each option is enabl
 FreeBSD packages are always built using the default options. When you compile the port yourself, those options will be presented to you in a menu, allowing
 you to change their default settings.
 
-Before you can compile a port, the ports collection must be installed within the jail. From within the jail, use the :command:`portsnap` utility::
+Before you can compile a port, the ports collection must be installed within the jail. From within the jail, use the :command:`portsnap` utility. This command
+will download the ports collection and extract it to the jail's :file:`/usr/ports/` directory::
 
  portsnap fetch extract
 
-This command will download the ports collection and extract it to the jail's :file:`/usr/ports/`
-directory::
+.. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using by typing
+   :command:`portsnap fetch update`.
 
- portsnap fetch update
-
-.. note:: if you install additional software at a later date, you should make sure that the ports collection is up-to-date using this command:
-
-To compile a port, you will :command:`cd` into a subdirectory of :file:`/usr/ports/`. FreshPorts provides the location to :command:`cd` into and the
-:command:`make` command to run. This example will compile the audiotag port::
+To compile a port, you will :command:`cd` into a subdirectory of :file:`/usr/ports/`. The entry for the port at FreshPorts provides the location to
+:command:`cd` into and the :command:`make` command to run. This example will compile the audiotag port::
 
  cd /usr/ports/audio/audiotag
  make install clean
