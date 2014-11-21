@@ -519,7 +519,8 @@ Mode" button or configure the system to always display these settings by checkin
 | Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Force size         | checkbox       |                                                                                                                      |
+| Force size         | checkbox       | by default, the system will not let you create a zvol if that operation will bring the pool to over 80% capacity;    |
+|                    |                | **while NOT recommended**, checking this box will force the creation of the zvol in this situation                   |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Compression level  | drop-down menu | see the section on :ref:`Compression` for a description of the available algorithms                                  |
@@ -614,7 +615,7 @@ access the screen shown in Figure 8.1g.
 
 **Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
 
-|Figure81c_png|
+|decrypt.png|
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
