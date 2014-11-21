@@ -17,7 +17,7 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Snapshots`: used to manage local snapshots.
 
-* :ref:`VMWare Snapshots`: used to...
+* :ref:`VMWare Snapshots`: are used to coordinate ZFS snapshots with a VWware datastore.
 
 These configurations are described in more detail in this section.
 
@@ -50,8 +50,8 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 |zfs1.png|
 
 .. |zfs1.png| image:: images/zfs1.png
-    :width: 8.5in
-    :height: 4.1in
+    :width: 8.3in
+    :height: 4.12in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -291,8 +291,8 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |perms1.png|
 
 .. |perms1.png| image:: images/perms1.png
-    :width: 3.4in
-    :height: 3.6in
+    :width: 5.6in
+    :height: 4.9in
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -301,12 +301,21 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |                            |                  |                                                                                                            |
 |                            |                  |                                                                                                            |
 +============================+==================+============================================================================================================+
+| Apply Owner (user)         | checkbox         | uncheck to prevent new permission change from being applied to "Owner (user)", see NOTE below              |
+|                            |                  |                                                                                                            |
++----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Owner (user)               | drop-down menu   | user to control the volume/dataset; users which were manually created or imported from a directory service |
 |                            |                  | will appear in the drop-down menu                                                                          |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
+| Apply Owner (group)        | checkbox         | uncheck to prevent new permission change from being applied to "Owner (group)", see NOTE below             |
+|                            |                  |                                                                                                            |
++----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Owner (group)              | drop-down menu   | group to control the volume/dataset; groups which were manually created or imported from a directory       |
 |                            |                  | service will appear in the drop-down menu                                                                  |
+|                            |                  |                                                                                                            |
++----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
+| Apply Mode                 | checkbox         | uncheck to prevent new permission change from being applied to "Mode", see NOTE below                      |
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 | Mode                       | checkboxes       | only applies to the *Unix*                                                                                 |
@@ -324,6 +333,9 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |                            |                  |                                                                                                            |
 +----------------------------+------------------+------------------------------------------------------------------------------------------------------------+
 
+.. note:: the "Apply Owner (user)", "Apply Owner (group)", and "Apply Mode" checkboxes allow you to fine-tune the change permissions behavior. By default, all
+          boxes are checked and FreeNAS® resets the owner, group, and mode whenever the "Change" button is clicked. These checkboxes allow you to fine-tune
+          which settings to change. For example, to just change the "Owner (group)" setting, uncheck the boxes "Apply Owner (user)" and "Apply Mode".
 
 If you have a mix of operating systems or clients will be accessing the volume/dataset using a non-CIFS share, select the *Unix* "Permission Type" as all
 clients understand them. 
@@ -488,7 +500,7 @@ To create a zvol, select an existing ZFS volume or dataset from the tree then cl
 
 .. |zvol.png| image:: images/zvol.png
     :width: 3.2in
-    :height: 2.2in
+    :height: 2.5in
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -507,6 +519,9 @@ Mode" button or configure the system to always display these settings by checkin
 | Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Force size         | checkbox       |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Compression level  | drop-down menu | see the section on :ref:`Compression` for a description of the available algorithms                                  |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -514,10 +529,11 @@ Mode" button or configure the system to always display these settings by checkin
 |                    |                | pool is low on space                                                                                                 |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Block size         | drop-down menu | only available in "Advanced Mode"; can be set to match the block size of the filesystem which will be formatted onto |
-|                    |                | the iSCSI target                                                                                                     |
+| Block size         | drop-down menu | only available in "Advanced Mode" and by default is based on the number of disks in pool; can be set to match the    |
+|                    |                | block size of the filesystem which will be formatted onto the iSCSI target                                           |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+
 
 .. _Import Disk:
 
@@ -564,8 +580,8 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 4.3in
-    :height: 3.1in
+    :width: 4.9in
+    :height: 3.4in
 
 If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
@@ -691,15 +707,15 @@ space is "Available", the type of "Compression", the "Compression Ratio", and th
 |volume1.png|
 
 .. |volume1.png| image:: images/volume1.png
-    :width: 4.5in
+    :width: 4.9in
     :height: 4.5in
 
-If you click the entry for a pool, four buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
+If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
 
 **Detach Volume:** allows you to either export the pool or to delete the contents of the pool, depending upon the choice you make in the screen shown in
 Figure 8.1l. The "Detach Volume" screen displays the current used space and indicates if there are any shares, provides checkboxes to "Mark the disks as new
-(destroy data)" and to "Delete all shares related to this volume", asks if you are sure that you want to do this, and the browser will turn red to alert you
+(destroy data)" and to "Also delete the share's configuration", asks if you are sure that you want to do this, and the browser will turn red to alert you
 that you are about to do something that will make the data inaccessible.
 **If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not destroyed and the volume can be
 re-imported at a later time. If you will be moving a ZFS pool from one system to another, perform this export action first as it flushes any unwritten data to
@@ -711,7 +727,7 @@ disk, writes data to the disk indicating that the export was done, and removes a
 |detach.png|
 
 .. |detach.png| image:: images/detach.png
-    :width: 5.3in
+    :width: 4.9in
     :height: 4.5in
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
@@ -1175,8 +1191,8 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 |periodic1.png|
 
 .. |periodic1.png| image:: images/periodic1.png
-    :width: 8.2in
-    :height: 4.8in
+    :width: 8.3in
+    :height: 4.5in
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1225,7 +1241,7 @@ Click an entry to access its "Edit" and "Delete" buttons.
 |periodic2.png|
 
 .. |periodic2.png| image:: images/periodic2.png
-    :width: 4.5in
+    :width: 4.9in
     :height: 4.5in
 
 .. _Replication Tasks:
@@ -1318,8 +1334,8 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 |replication2.png|
 
 .. |replication2.png| image:: images/replication2.png
-    :width: 6.6in
-    :height: 4.4in
+    :width: 7.98in
+    :height: 5.2in
 
 **Table 8.3a: Adding a Replication Task**
 
@@ -1470,7 +1486,7 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 |scrub.png|
 
 .. |scrub.png| image:: images/scrub.png
-    :width: 9.5in
+    :width: 8.8in
     :height: 4.4in
 
 **Table 8.4a: ZFS Scrub Options**

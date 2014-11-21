@@ -268,6 +268,8 @@ The following fields have been added or deleted:
 * The icons in Storage have been renamed to clarify their purpose. "Auto Import Volume" is now "Import Volume", "Import Volume" is now "Import Disk", "ZFS
   Volume Manager" is now "Volume Manager", and "ZFS Scrubs" are now "Scrubs".
 
+* The "Apply Owner (user)", "Apply Owner (group)", and "Apply Mode" checkboxes have been added to the "Change Permissions" screen.
+
 * The "Case Sensitivity" drop-down menu has been added to :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
 
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
