@@ -1538,7 +1538,7 @@ class ZVol_CreateForm(Form):
         self.vol_name = kwargs.pop('vol_name')
         self._force = False
         zpool = notifier().zpool_parse(self.vol_name)
-        numdisks = 2
+        numdisks = 4
         for vdev in zpool.data:
             if vdev.type in (
                 'cache',
@@ -1549,22 +1549,16 @@ class ZVol_CreateForm(Form):
                 continue
             if vdev.type == 'raidz':
                 num = len(list(iter(vdev))) - 1
-                if num > numdisks:
-                    numdisks = num
             elif vdev.type == 'raidz2':
                 num = len(list(iter(vdev))) - 2
-                if num > numdisks:
-                    numdisks = num
             elif vdev.type == 'raidz3':
                 num = len(list(iter(vdev))) - 3
-                if num > numdisks:
-                    numdisks = num
             elif vdev.type == 'mirror':
-                numdisks = 1
+                num = 1
             else:
                 num = len(list(iter(vdev)))
-                if num > numdisks:
-                    numdisks = num
+            if num > numdisks:
+                numdisks = num
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
