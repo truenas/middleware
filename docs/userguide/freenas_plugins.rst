@@ -5,12 +5,10 @@
 Plugins
 =======
 
-FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was
-known as the Plugins architecture and is based on
-`FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_
-and
-`PC-BSD PBIs <http://wiki.pcbsd.org/index.php/AppCafe®/9.2>`_. This allowed users to install and configure additional applications once they had created and
-configured a plugins jail.
+FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was known
+as the Plugins architecture and is based on `FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_ and `PC-BSD PBIs
+<http://wiki.pcbsd.org/index.php/AppCafe%C2%AE/9.2>`_. This allowed users to install and configure additional applications once they had created and configured
+a plugins jail.
 
 FreeNAS® 9.x simplifies this procedure by providing two methods for software installation. The Plugins method, described in this section, is meant for users
 who prefer to browse for, install, and configure available software using the GUI. This method is very easy to use, but is limited in the amount of software

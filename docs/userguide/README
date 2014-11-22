@@ -27,3 +27,16 @@ To build a local copy of the HTML, run this command in /path/to/your-build-direc
 % sphinx-build -b html . _build
 
 When finished, open _build/freenas.html in a browser to verify the HTML output.
+
+To build a PDF version of the userguide you will need a few extra packages:
+
+- tex-formats (note: this will pull in a LOT of dependencies)
+- tex-dvipsk
+- gmake
+
+Run this command *twice* to build the PDF:
+
+% yes '' | gmake latexpdf
+
+When finished running the second time you will find the pdf in _build/latex/FreeNAS.pdf
+
