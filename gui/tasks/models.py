@@ -253,7 +253,10 @@ class Rsync(Model):
     rsync_remotehost = models.CharField(
         max_length=120,
         verbose_name=_("Remote Host"),
-        help_text=_("IP Address or hostname"),
+        help_text=_("IP Address or hostname. "
+            "Specify user@hostname or user@ip-address "
+            "if your remote machine user and above rsync task user are different."
+        ),
     )
     rsync_remoteport = models.SmallIntegerField(
         default=22,

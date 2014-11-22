@@ -182,19 +182,26 @@ class RsyncForm(ModelForm):
         )
 
     def check_rpath_exists(self):
-	"""A function to check if the rsync_remotepath,
-      	exists or not. Returns TRUE rpath is a directory
-      	and exists, else FALSE"""
-      	
-	ruser = self.cleaned_data.get("rsync_user").encode('utf8')
-      	rhost = str(self.cleaned_data.get("rsync_remotehost"))
-      	rport = str(self.cleaned_data.get("rsync_remoteport"))
+        """A function to check if the rsync_remotepath,
+        exists or not. Returns TRUE rpath is a directory
+        and exists, else FALSE"""
+
+        ruser = self.cleaned_data.get("rsync_user").encode('utf8')
+        rhost = str(self.cleaned_data.get("rsync_remotehost"))
+        if '@' in rhost:
+            remote = rhost
+        else:
+            remote = '%s@%s' % (
+                ruser,
+                rhost,
+            )
+        rport = str(self.cleaned_data.get("rsync_remoteport"))
         rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
         proc = subprocess.Popen(
-                """su -m %s -c "ssh -p %s -o 'BatchMode yes' -o 'ConnectTimeout=5' %s@%s test -d %s" """
-                % (ruser,rport,ruser,rhost,rpath), shell=True) 
+                    """su -m %s -c "ssh -p %s -o 'BatchMode yes' -o 'ConnectTimeout=5' %s test -d %s" """
+                    % (ruser,rport,remote,rpath), shell=True)
         proc.wait()
-      	return proc.returncode == 0
+        return proc.returncode == 0
 
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
