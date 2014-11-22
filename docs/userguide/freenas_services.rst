@@ -143,7 +143,7 @@ CNIIDs stored in the AppleDouble files.
 CIFS
 ----
 
-The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share` are specific to
+The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share` are specific to
 each configured CIFS Share. In contrast, global settings which apply to all CIFS shares are configured in :menuselection:`Services --> CIFS`.
 
 .. note:: after starting the CIFS service, it may take several minutes for the
