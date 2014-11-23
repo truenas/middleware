@@ -10,7 +10,7 @@ class SSLAlert(BaseAlert):
             msg='HTTP SSL certificate is not valid, failling back to HTTP'
             try:
                 a=open('/tmp/alert_invalid_ssl_nginx').read().split()[0]
-                msg = 'A %s-bit certificate was found for the WebGUI. We do not support certificates below 1024-bit key lenghts' %a
+                msg = 'FreeNAS does not support certificates with keys shorter than 1024 bits. HTTPS will not be enabled until a certificate having at least 1024 bit keylength is provided'
             except IndexError:
                 pass
             return [
