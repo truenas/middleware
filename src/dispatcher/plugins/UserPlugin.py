@@ -33,11 +33,8 @@ from balancer import TaskState
 from datastore import DuplicateKeyException, DatastoreException
 
 
-@description("Provides access to users and groups database")
+@description("Provides access to users database")
 class UserProvider(Provider):
-    def initialize(self, context):
-        self.datastore = context.dispatcher.datastore
-
     @description("Lists users present in the system")
     @query
     @returns({
@@ -46,9 +43,15 @@ class UserProvider(Provider):
             'type': {'$ref': '#/definitions/user'}
         }
     })
-    def query_users(self, filter=[], params={}):
+    def query(self, filter=[], params={}):
         return list(self.datastore.query('users', *filter, **params))
 
+    def get_profile_picture(self, uid):
+        pass
+
+
+@description("Provides access to groups database")
+class GroupProvider(Provider):
     @description("Lists groups present in the system")
     @query
     @returns({
@@ -57,8 +60,8 @@ class UserProvider(Provider):
             'type': {'$ref': '#/definitions/group'}
         }
     })
-    def query_groups(self, query_params=None):
-        return list(self.datastore.query('groups'))
+    def query(self, filter=[], params={}):
+        return list(self.datastore.query('groups', *filter, **params))
 
 
 @description("Create an user in the system")
@@ -98,6 +101,11 @@ class UserCreateTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
+        self.dispatcher.dispatch_event('users.changed', {
+            'operation': 'create',
+            'ids': [user['id']]
+        })
+
         return TaskState.FINISHED
 
 @description("Deletes an user from the system")
@@ -126,6 +134,11 @@ class UserDeleteTask(Task):
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete user: {0}'.format(str(e)))
+
+        self.dispatcher.dispatch_event('users.changed', {
+            'operation': 'delete',
+            'ids': [uid]
+        })
 
         return TaskState.FINISHED
 
@@ -160,7 +173,11 @@ class UserUpdateTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
-        svc.generate_group('accounts')
+        self.dispatcher.dispatch_event('users.changed', {
+            'operation': 'update',
+            'ids': [user['id']]
+        })
+
         return TaskState.FINISHED
 
 
@@ -197,7 +214,10 @@ class GroupCreateTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
-        svc.generate_group('accounts')
+        self.dispatcher.dispatch_event('groups.changed', {
+            'operation': 'create',
+            'ids': [id]
+        })
         return TaskState.FINISHED
 
 
@@ -235,7 +255,11 @@ class GroupUpdateTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
-        svc.generate_group('accounts')
+        self.dispatcher.dispatch_event('groups.changed', {
+            'operation': 'update',
+            'ids': [id]
+        })
+
         return TaskState.FINISHED
 
 
@@ -273,6 +297,11 @@ class GroupDeleteTask(Task):
             raise TaskException(errno.EBADMSG, 'Cannot delete group: {0}'.format(str(e)))
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate config files')
+
+        self.dispatcher.dispatch_event('groups.changed', {
+            'operation': 'delete',
+            'ids': [id]
+        })
 
         return TaskState.FINISHED
 
@@ -319,12 +348,13 @@ def _init(dispatcher):
     })
 
     # Register provider for querying accounts and groups data
-    dispatcher.register_provider('accounts', UserProvider)
+    dispatcher.register_provider('users', UserProvider)
+    dispatcher.register_provider('groups', GroupProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler('accounts.create_user', UserCreateTask)
-    dispatcher.register_task_handler('accounts.update_user', UserUpdateTask)
-    dispatcher.register_task_handler('accounts.delete_user', UserDeleteTask)
-    dispatcher.register_task_handler('accounts.create_group', GroupCreateTask)
-    dispatcher.register_task_handler('accounts.update_group', GroupUpdateTask)
-    dispatcher.register_task_handler('accounts.delete_group', GroupDeleteTask)
+    dispatcher.register_task_handler('users.create', UserCreateTask)
+    dispatcher.register_task_handler('users.update', UserUpdateTask)
+    dispatcher.register_task_handler('users.delete', UserDeleteTask)
+    dispatcher.register_task_handler('groups.create', GroupCreateTask)
+    dispatcher.register_task_handler('groups.update', GroupUpdateTask)
+    dispatcher.register_task_handler('groups.delete', GroupDeleteTask)
