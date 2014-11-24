@@ -65,12 +65,14 @@ def restore_collection(dump):
     metadata = dump['metadata']
     data = dump['data']
     name = metadata['name']
+    integer = metadata['pkey-type'] == 'integer'
 
     ds.collection_delete(name)
     ds.collection_create(name, metadata['pkey-type'], metadata['attributes'])
 
     for key, row in data.items():
-        ds.insert(name, row, pkey=key)
+        pkey = int(key) if integer else key
+        ds.insert(name, row, pkey=pkey)
 
 
 def main():

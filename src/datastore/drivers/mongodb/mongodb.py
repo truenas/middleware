@@ -121,11 +121,17 @@ class MongodbDatastore(object):
 
     def get_one(self, collection, *args, **kwargs):
         obj = self.db[collection].find_one(self._build_query(args))
+        if obj is None:
+            return None
+
         obj['id'] = obj.pop('_id')
         return obj
 
     def get_by_id(self, collection, id):
         obj = self.db[collection].find_one({'_id': id})
+        if obj is None:
+            return None
+
         obj['id'] = obj.pop('_id')
         return obj
 

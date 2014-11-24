@@ -15,10 +15,21 @@ COMMENT=        FreeNAS data store layer
 
 USE_XZ=		yes
 USE_PYTHON=	yes
+
+OPTIONS_SINGLE=	USE_POSTGRESQL USE_MONGODB
+
+.if ${PORT_OPTIONS:USE_POSTGRESQL}
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}psycopg2:${PORTSDIR}/databases/py-psycopg2 \
 		postgresql93-server:${PORTSDIR}/databases/postgresql93-server \
 		postgresql93-contrib:${PORTSDIR}/databases/postgresql93-contrib \
 		freenas-dispatcher:${PORTSDIR}/freenas/freenas-dispatcher
+.endif
+
+.if ${PORT_OPTIONS:USE_MONGODB}
+RUN_DEPENDS=	pymongo:${PORTSDIR}/databases/pymongo \
+		mongodb:${PORTSDIR}/databases/mongodb \
+		freenas-dispatcher:${PORTSDIR}/freenas/freenas-dispatcher
+.endif
 
 EXTRACT_ONLY=
 

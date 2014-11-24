@@ -46,7 +46,8 @@ add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
                             REVISION=${SVNREVISION}
 add_port freenas/freenas-datastore PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
-                            REVISION=${SVNREVISION}
+                            REVISION=${SVNREVISION} \
+                            USE_MONGODB="yes"
 add_port freenas/freenas-dispatcher PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
@@ -56,7 +57,9 @@ add_port freenas/freenas-etcd PRODUCT_VERSION=${VERSION} \
 add_port freenas/freenas-10gui PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
-
+add_port freenas/freenas-cli PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 
 if ! is_truenas ; then
@@ -160,6 +163,7 @@ add_port devel/py-sysctl
 add_port devel/py-watchdog
 add_port devel/py-setproctitle
 add_port devel/py-jsonschema
+add_port devel/py-jsonpointer
 add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py
