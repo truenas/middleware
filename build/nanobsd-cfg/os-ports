@@ -73,7 +73,7 @@ add_port archivers/lzo2
 add_port archivers/pigz
 add_port archivers/plzip
 add_port security/easy-rsa
-add_port security/openvpn
+add_port security/openvpn WITHOUT_CHECK=yes
 if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
 	add_port converters/libiconv
 fi
