@@ -12,6 +12,8 @@ usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
 usr/local/bin/zilstat
 usr/local/bin/adtool
+usr/local/bin/chelsio_adapter_config
+usr/local/bin/t5seeprom
 usr/local/etc/avahi/avahi-daemon.conf
 usr/local/etc/nginx/fastcgi_params
 usr/local/etc/nginx/nginx.conf
@@ -55,7 +57,17 @@ usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
 usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
+usr/local/share/firmware/t5fw-1.12.25.0.bin
 usr/local/share/perftests-nas/tests/iozone
+usr/local/share/vpds/t580_cr_qsa_variable_2133_vpd.bin
+usr/local/share/vpds/t580_cr_spider_variable_2133_vpd.bin
+usr/local/share/vpds/t580_cr_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_cr_qsa_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_cr_spider_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_cr_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_so_qsa_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin
+usr/local/share/vpds/t580_lp_so_variable_2133_vpd.bin
 usr/local/www/data/django.fcgi
 etc/ix.rc.d/ix-activedirectory
 etc/ix.rc.d/ix-afpd
