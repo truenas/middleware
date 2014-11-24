@@ -8,7 +8,7 @@
 #        5414  T580-LP-SO-CR Unified Wire Ethernet Controller
 
 echo
-vpd_dir=/usr/local/share/vpd
+vpd_dir=/usr/local/share/vpds
 bin_dir=/usr/local/bin
 
 # Test for lspci and pcicon
