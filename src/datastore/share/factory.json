@@ -505,7 +505,7 @@
                 "name": "sshd",
                 "service-name": "sshd",
                 "etcd-group": "sshd",
-                "pidfile": "/var/run/sshd/pid",
+                "pidfile": "/var/run/sshd.pid",
                 "settings": [
                     "service.sshd.*"
                 ]
