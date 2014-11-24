@@ -261,7 +261,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_cr_qsa_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_cr_qsa_variable_2133_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_cr_spider_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_cr_spider_variable_2133_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_cr_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_cr_variable_2133_vpd.bin
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_qsa_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_qsa_variable_2133_vpd.bin
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_variable_2133_vpd.bin
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_variable_vpd.bin
 .include <bsd.port.mk>
