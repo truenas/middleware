@@ -14,11 +14,15 @@ main()
 {
 	local host=$1
 	local package=$2
-	local pkg_path=`ls -1 ${NANO_OBJ}/ports/packages/*/All/${package}-*.txz | head -1`
-	local pkg_name=`basename ${pkg_path}`
+	local pkg_paths=`ls -1 ${NANO_OBJ}/ports/packages/*/All/${package}*.txz`
+	local pkg_names=""
 
-	scp ${pkg_path} ${host}:/tmp/${pkg_name}
-	ssh -t ${host} pkg add -f /tmp/${pkg_name}
+	for p in ${pkg_paths}; do
+		pkg_names="${pkg_names} /tmp/`basename $p`"
+	done
+
+	scp ${pkg_paths} ${host}:/tmp
+	ssh -t ${host} pkg add -f ${pkg_names}
 	
 	return $?
 }
