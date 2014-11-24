@@ -564,7 +564,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['kerberos_keytab'] = kt
                         kwargs['keytab_name'] = kt.keytab_name
                         kwargs['keytab_principal'] = kt.keytab_principal
-                        kwargs['keytab_file'] = kt.keytab_file
+                        kwargs['keytab_file'] = '/etc/krb5.keytab'
 
                 else:
                     if not newkey in kwargs:
