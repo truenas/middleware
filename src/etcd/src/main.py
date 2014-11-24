@@ -35,6 +35,7 @@ import json
 import errno
 import datastore
 import imp
+import setproctitle
 import renderers
 from dispatcher.client import Client
 from dispatcher.rpc import RpcService, RpcException
@@ -96,11 +97,13 @@ class FileGenerationService(RpcService):
         if not group:
             raise RpcException(errno.ENOENT, 'Group {0} not found'.format(name))
 
-        for f in group['files']:
-            self.generate_file(f)
+        for i in group['dependencies']:
+            typ, fname = i.split(':')
 
-        for p in group['plugins']:
-            self.generate_plugin(p)
+            if typ == 'file':
+                self.generate_file(fname)
+            elif typ == 'plugin':
+                self.generate_plugin(fname)
 
     def get_managed_files(self):
         return self.context.managed_files
@@ -192,6 +195,7 @@ class Main:
         parser.add_argument('mountpoint', metavar='MOUNTPOINT', default='/etc', help='/etc mount point')
         args = parser.parse_args()
         logging.basicConfig(level=logging.DEBUG)
+        setproctitle.setproctitle('etcd')
         self.root = args.mountpoint
         self.parse_config(args.c)
         self.scan_plugins()

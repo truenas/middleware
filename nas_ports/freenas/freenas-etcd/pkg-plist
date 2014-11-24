@@ -7,5 +7,9 @@
 /usr/local/lib/etcd/plugins/passwd.mako
 /usr/local/lib/etcd/plugins/rc.conf.mako
 /usr/local/lib/etcd/plugins/resolv.conf.mako
+/usr/local/lib/etcd/plugins/pwd_database.py
+/usr/local/lib/etcd/plugins/pubkeys.py
+/usr/local/lib/etcd/plugins/ssh/sshd_config.mako
+/usr/local/lib/etcd/plugins/ssh/sshd_keys.py
 /usr/local/etc/rc.d/etcd
 /usr/local/sbin/etcd

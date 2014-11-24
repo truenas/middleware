@@ -30,7 +30,7 @@ import os
 
 
 def run(context):
-    for user in context.dispatcher.call_sync('accounts.query_users'):
+    for user in context.client.call_sync('users.query'):
         home = user['home']
         filename = os.path.join(home, '.ssh', 'id_rsa.pub')
 
@@ -41,7 +41,7 @@ def run(context):
         if not os.path.isdir(os.path.join(home, '.ssh')):
             os.mkdir(os.path.join(home, '.ssh'))
 
-        if 'sshpubkey' not in user:
+        if 'sshpubkey' not in user or user['sshpubkey'] is None:
             if os.path.isfile(filename):
                 os.unlink(filename)
         else:
@@ -49,6 +49,6 @@ def run(context):
             fd.write(user['sshpubkey'])
             fd.close()
 
-        context.emit_event('etcd.regenerated_file', {
-            'filename': filename
-        })
+            context.emit_event('etcd.regenerated_file', {
+                'filename': filename
+            })

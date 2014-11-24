@@ -27,6 +27,12 @@ class MakoTemplateRenderer(object):
         return tmpl.render(**self.get_template_context())
 
 
+
+class PythonRenderer(object):
+    def __init__(self, context):
+        self.context = context
+
+
 class ShellTemplateRenderer(object):
     def __init__(self, context):
         self.context = context
