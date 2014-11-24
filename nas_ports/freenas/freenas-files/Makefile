@@ -81,6 +81,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/rc.d/pbid ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d/pbid
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/samba.gdb ${STAGEDIR}/${PREFIX}/usr/local/etc/samba.gdb
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
+	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
+	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/warden.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/warden.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache
