@@ -490,6 +490,18 @@ def nis_objects():
     return NIS.objects.all()
 
 
+def kerberosrealm_objects():
+    from freenasUI.directoryservice.models import KerberosRealm
+
+    return KerberosRealm.objects.all()
+
+
+def kerberoskeytab_objects():
+    from freenasUI.directoryservice.models import KerberosKeytab
+
+    return KerberosKeytab.objects.all()
+
+
 def get_avatar_conf():
     avatar_conf = {}
     avatar_vars = [

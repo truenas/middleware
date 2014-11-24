@@ -79,8 +79,15 @@ ldapctl_start()
 		return 1
 	fi
 
+	ldapctl_cmd ${service} ix-kerberos quietstart
 	ldapctl_cmd ${service} ix-nsswitch quietstart
-	ldapctl_cmd ${service} ix-pam quietstart
+
+	ldapctl_cmd ${service} ix-kinit quietstart
+	if ! ldapctl_cmd ${service} ix-kinit status
+	then
+		ldap_set 0
+		return 1
+	fi  
 
 	ldapctl_cmd ${service} ix-sssd start	
 	if sssd_running
@@ -101,6 +108,7 @@ ldapctl_start()
 		cifs_restart
 	fi
 
+	ldapctl_cmd ${service} ix-pam quietstart
 	ldapctl_cmd "${service} ix-cache quietstart &"
 	touch "${status_file}"
 
@@ -125,6 +133,7 @@ ldapctl_stop()
 	ldapctl_cmd ${service} ix-ldap forcestop
 	ldapctl_cmd ${service} ix-nsswitch quietstop
 	ldapctl_cmd ${service} ix-pam quietstop
+	ldapctl_cmd ${service} ix-kinit quietstop
 	ldapctl_cmd "${service} ix-cache quietstop &"
 
 	ldap_set 0

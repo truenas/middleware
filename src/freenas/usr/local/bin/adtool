@@ -553,7 +553,6 @@ def main():
         adts.onecmd(string.join(sys.argv[1:], ' '))
 
     except Exception as e:
-        print "E = ", e
         ret = 1
 
     sys.exit(0)

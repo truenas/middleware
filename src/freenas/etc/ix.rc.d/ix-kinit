@@ -2,6 +2,8 @@
 #
 # $FreeBSD$
 #
+# I want to rewrite this in python. That is all.
+#
 
 # PROVIDE: ix-kinit
 # REQUIRE: kerberos
@@ -10,7 +12,7 @@
 
 . /etc/rc.freenas
 
-kerberos_start()
+kerberos_start_activedirectory()
 {
 	local res=1
 	local pwfile
@@ -110,7 +112,7 @@ kerberos_start()
 	return ${res}
 }
 
-kerberos_status()
+kerberos_status_activedirectory()
 {
 	local res=1
 
@@ -138,6 +140,165 @@ kerberos_status()
 
 			AD_log "kerberos_status: ${ok}"
 		fi
+	fi
+
+	return ${res}
+}
+
+kerberos_start_ldap()
+{
+	local res=1
+	local pwfile
+	local timeout=60
+
+	LDAP_init
+
+	local realm=$(LDAP_get ldap_krb_realm)
+	local binddn="$(LDAP_get ldap_binddn)"
+	local bindpw="$(LDAP_get ldap_bindpw)"
+	local hostname="$(LDAP_get ldap_hostname)"
+	local keytab="$(LDAP_get ldap_keytab_name)"
+
+	if [ -n "${keytab}" ]
+	then
+		local res=0
+		local keytab_file="$(LDAP_get ldap_keytab_file)"
+		local keytab_principal="$(LDAP_get ldap_keytab_principal)"
+
+		LDAP_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
+		/usr/bin/kinit -t "${keytab_file}" \
+			--renewable -k "${keytab_principal}"
+		if [ "$?" != "0" ]
+		then
+			res=1
+			break
+		fi
+		res=0
+
+		local ok="Failed"
+		if [ "${res}" = "0" ]
+		then
+			ok="Successful"
+		fi
+
+		LDAP_log "kerberos_start: ${ok}"
+		rm -f "${pwfile}"
+
+		i=0
+		timeout="$(LDAP_get ldap_timeout)"
+		while [ "${i}" -lt "${timeout}" ]
+		do
+			/usr/bin/klist -t
+			if [ "$?" = "0" ]
+			then
+				break
+			fi
+
+			sleep 1
+			: $(( i += 1 ))
+		done
+
+	elif [ -n "${realm}" -a -n "${binddn}" -a -n "${bindpw}" ]
+	then
+		local uid="$(LDAP_get_binddn_uid)"
+		if [ -z "${uid}" ]
+		then
+			LDAP_log "kerberos_start: unable to determine uid"
+		fi
+
+		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
+		echo -n "${bindpw}" > ${pwfile}
+
+		LDAP_log "kerberos_start: /usr/bin/kinit --renewable " \
+			"--password-file=${pwfile} ${uid}@${realm}"
+		__LDAP_tc ${timeout} /usr/bin/kinit --renewable \
+			--password-file="${pwfile}" "${uid}@${realm}"
+		res=$?
+
+		local ok="Failed"
+		if [ "${res}" = "0" ]
+		then
+			ok="Successful"
+		fi
+
+		LDAP_log "kerberos_start: ${ok}"
+		rm -f "${pwfile}"
+
+		i=0
+		timeout="$(LDAP_get ldap_timeout)"
+		while [ "${i}" -lt "${timeout}" ]
+		do
+			/usr/bin/klist -t
+			if [ "$?" = "0" ]
+			then
+				break
+			fi
+
+			sleep 1
+			: $(( i += 1 ))
+		done
+	fi
+
+	return ${res}
+}
+
+kerberos_status_ldap()
+{
+	local res=1
+
+	LDAP_init
+
+	local realm=$(LDAP_get ldap_krb_realm)
+
+	if [ -n "${realm}" ]
+	then
+		LDAP_log "kerberos_status: klist -t"
+		/usr/bin/klist -t
+		res=$?
+
+		local ok="Failed"
+		if [ "${res}" = "0" ]
+		then
+			ok="Successful"
+		fi
+
+		LDAP_log "kerberos_status: ${ok}"
+	fi
+
+	return ${res}
+}
+
+kerberos_start()
+{
+	local res=1
+
+	if dirsrv_enabled activedirectory
+	then
+		keberos_start_activedirectory
+		res=$?
+
+	elif dirsrv_enabled ldap
+	then
+		kerberos_start_ldap
+		res=$?
+	fi
+
+	return ${res}
+}
+
+kerberos_status()
+{
+	local res=1
+
+	if dirsrv_enabled activedirectory
+	then
+		kerberos_status_activedirectory
+		res=$?
+
+	elif dirsrv_enabled ldap
+	then
+		kerberos_status_ldap
+		res=$?
 	fi
 
 	return ${res}

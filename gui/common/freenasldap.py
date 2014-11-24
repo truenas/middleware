@@ -29,6 +29,7 @@ import dns
 import grp
 import hashlib
 import ldap
+import ldap.sasl
 import logging
 import os
 import pwd
@@ -82,6 +83,7 @@ FLAGS_DBINIT		= 0x00010000
 FLAGS_AD_ENABLED	= 0x00000001
 FLAGS_LDAP_ENABLED	= 0x00000002
 FLAGS_PREFER_IPv6	= 0x00000004
+FLAGS_SASL_GSSAPI	= 0x00000008
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
@@ -197,6 +199,42 @@ class FreeNAS_LDAP_Directory(object):
         uri = "%s://%s:%d" % (proto, self.host, self.port)
         return uri
 
+    def _do_authenticated_bind(self):
+        log.debug("FreeNAS_LDAP_Directory.open: "
+            "(authenticated bind) trying to bind to %s:%d",
+            self.host, self.port)
+        return self._handle.simple_bind_s(self.binddn, self.bindpw)
+
+    def _do_anonymous_bind(self):
+        log.debug("FreeNAS_LDAP_Directory.open: "
+            "(anonymous bind) trying to bind to %s:%d",
+            self.host, self.port)
+        return self._handle.simple_bind_s()
+
+    def _do_sasl_gssapi_bind(self):
+        log.debug("FreeNAS_LDAP_Directory.open: "
+            "(sasl gssapi bind) trying to bind to %s:%d",
+            self.host, self.port)
+        auth_tokens = ldap.sasl.gssapi()
+        res = self._handle.sasl_interactive_bind_s('', auth_tokens)
+        if res == 0:
+            log.debug("FreeNAS_LDAP_Directory.open: "
+                "(sasl gssapi bind) successful")
+            return True
+
+        log.debug("FreeNAS_LDAP_Directory.open: "
+            "SASL/GSSAPI bind failed, trying simple bind")
+
+        if self.binddn and self.bindpw:
+            res = self._do_authenticated_bind()
+            if res:
+                return res
+
+            log.debug("FreeNAS_LDAP_Directory.open: "
+                "authenticated bind failed, trying simple bind")
+        
+        return self._do_anonymous_bind()
+
     def open(self):
         log.debug("FreeNAS_LDAP_Directory.open: enter")
 
@@ -236,35 +274,26 @@ class FreeNAS_LDAP_Directory(object):
                     self._logex(e)
                     raise e
 
-            if self.binddn and self.bindpw:
-                try:
-                    log.debug("FreeNAS_LDAP_Directory.open: "
-                        "trying to bind to %s:%d", self.host, self.port)
-                    res = self._handle.simple_bind_s(self.binddn, self.bindpw)
-                    log.debug("FreeNAS_LDAP_Directory.open: binded")
+            bind_method = None
+            if self.flags & FLAGS_SASL_GSSAPI:
+                bind_method = self._do_sasl_gssapi_bind
+            elif self.binddn and self.bindpw:
+                bind_method = self._do_authenticated_bind 
+            else: 
+                bind_method = self._do_anonymous_bind
+           
+            try:
+                log.debug("FreeNAS_LDAP_Directory.open: trying to bind")
+                res = bind_method()
+                log.debug("FreeNAS_LDAP_Directory.open: binded")
 
-                except ldap.LDAPError as e:
-                    log.debug("FreeNAS_LDAP_Directory.open: "
-                        "could not bind to %s:%d (%s)",
-                        self.host, self.port, e)
-                    self._logex(e)
-                    res = None
-                    raise e
-            else:
-                try:
-                    log.debug("FreeNAS_LDAP_Directory.open: "
-                        "(anonymous bind) trying to bind to %s:%d",
-                        self.host, self.port)
-                    res = self._handle.simple_bind_s()
-                    log.debug("FreeNAS_LDAP_Directory.open: binded")
-
-                except ldap.LDAPError as e:
-                    log.debug("FreeNAS_LDAP_Directory.open: "
-                        "could not bind to %s:%d", self.host, self.port)
-
-                    self._logex(e)
-                    res = None
-                    raise e
+            except ldap.LDAPError as e:
+                log.debug("FreeNAS_LDAP_Directory.open: "
+                    "could not bind to %s:%d (%s)",
+                    self.host, self.port, e)
+                self._logex(e)
+                res = None
+                raise e
 
             if res:
                 self._isopen = True
@@ -425,6 +454,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
     def __keys(self):
         return [
+            'hostname',
             'host',
             'port',
             'anonbind',
@@ -436,8 +466,22 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             'groupsuffix',
             'machinesuffix',
             'passwordsuffix',
+            'sudosuffix',
             'certfile',
-            'use_default_domain'
+            'use_default_domain',
+            'has_samba_schema',
+            'kerberos_realm',
+            'krb_realm',
+            'krb_kdc',
+            'krb_admin_server',
+            'krb_kpasswd_server',
+            'kerberos_keytab',
+            'keytab_name',
+            'keytab_principal',
+            'keytab_file',
+            'idmap_backend',
+            'timeout',
+            'dns_timeout'
         ]
 
     def __set_defaults(self): 
@@ -446,6 +490,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         for key in self.__keys():
             if key in ('anonbind', 'use_default_domain'):
                 self.__dict__[key] = False
+            elif key in ('timeout', 'dns_timeout'):
+                 self.__dict__[key] = 10
             else:
                 self.__dict__[key] = None
 
@@ -483,14 +529,17 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['host'] = host
                     if not 'port' in kwargs:
                         kwargs['port'] = port
+                    kwargs[newkey] = ldap.__dict__[key]
 
-                elif newkey == 'anonbind':
+                elif newkey in ('anonbind', 'use_default_domain',
+                    'has_samba_schema'):
                     if not 'anonbind' in kwargs:
                         kwargs[newkey] = \
                              False if long(ldap.__dict__[key]) == 0 else True
-
-                elif newkey == 'use_default_domain':
-                    if not 'use_default_domain' in kwargs:
+                    elif not 'use_default_domain' in kwargs:
+                        kwargs[newkey] = \
+                             False if long(ldap.__dict__[key]) == 0 else True
+                    elif not 'has_samba_schema' in kwargs:
                         kwargs[newkey] = \
                              False if long(ldap.__dict__[key]) == 0 else True
 
@@ -499,10 +548,23 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                     kwargs['certfile'] = cert
 
                 elif newkey == 'kerberos_realm_id':
-                    kwargs['kerberos_realm'] = ldap.ldap_kerberos_realm 
+                    kr = ldap.ldap_kerberos_realm
+
+                    if kr:
+                        kwargs['kerberos_realm'] = kr
+                        kwargs['krb_realm'] = kr.krb_realm
+                        kwargs['krb_kdc'] = kr.krb_kdc
+                        kwargs['krb_admin_server'] = kr.krb_admin_server
+                        kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
 
                 elif newkey == 'kerberos_keytab_id':
-                    kwargs['kerberos_keytab'] = ldap.ldap_kerberos_keytab
+                    kt = ldap.ldap_kerberos_keytab
+
+                    if kt:
+                        kwargs['kerberos_keytab'] = kt
+                        kwargs['keytab_name'] = kt.keytab_name
+                        kwargs['keytab_principal'] = kt.keytab_principal
+                        kwargs['keytab_file'] = kt.keytab_file
 
                 else:
                     if not newkey in kwargs:
@@ -510,7 +572,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                             if ldap.__dict__[key] else None
     
         for key in kwargs:
-            if key in self.__keys():
+            if key == 'flags':
+                flags = self.flags
+                flags |= long(kwargs[key])
+                self.__dict__[key] = flags
+
+            elif key in self.__keys():
                 self.__dict__[key] = kwargs[key]
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
@@ -534,15 +601,20 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
 
         if type(user) in (types.IntType, types.LongType):
-            filter = '(&(|(objectclass=person)(objectclass=account))' \
+            filter = '(&(|(objectclass=person)' \
+                '(objectclass=posixaccount)' \
+                '(objectclass=account))' \
                 '(uidnumber=%d))' % user.encode('utf-8')
 
         elif user.isdigit():
-
-            filter = '(&(|(objectclass=person)(objectclass=account))' \
+            filter = '(&(|(objectclass=person)' \
+                '(objectclass=posixaccount)' \
+                '(objectclass=account))' \
                 '(uidnumber=%s))' % user.encode('utf-8')
         else:
-            filter = '(&(|(objectclass=person)(objectclass=account))' \
+            filter = '(&(|(objectclass=person)' \
+                '(objectclass=posixaccount)' \
+                '(objectclass=account))' \
                 '(|(uid=%s)(cn=%s)))' % (user.encode('utf-8'),
                 user.encode('utf-8'))
 
@@ -578,7 +650,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         users = []
         scope = ldap.SCOPE_SUBTREE
-        filter = '(&(|(objectclass=person)(objectclass=account))(uid=*))'
+        filter = '(&(|(objectclass=person)' \
+            '(objectclass=posixaccount)' \
+            '(objectclass=account))(uid=*))'
 
         if self.usersuffix:
             basedn = "%s,%s" % (self.usersuffix, self.basedn)
@@ -611,14 +685,18 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         scope = ldap.SCOPE_SUBTREE
 
         if type(group) in (types.IntType, types.LongType):
-            filter = '(&(objectclass=posixgroup)(gidnumber=%d))' % \
-                group.encode('utf-8')
+            filter = '(&(|(objectclass=posixgroup)' \
+                '(objectclass=group))' \
+                '(gidnumber=%d))' % group.encode('utf-8')
+
         elif group.isdigit():
-            filter = '(&(objectclass=posixgroup)(gidnumber=%s))' % \
-                group.encode('utf-8')
+            filter = '(&(|(objectclass=posixgroup)' \
+                '(objectclass=group))' \
+                '(gidnumber=%s))' % group.encode('utf-8')
         else:
-            filter = '(&(objectclass=posixgroup)(cn=%s))' % \
-                group.encode('utf-8')
+            filter = '(&(|(objectclass=posixgroup)' \
+                '(objectclass=group))' \
+                '(cn=%s))' % group.encode('utf-8')
 
         if self.groupsuffix:
             basedn = "%s,%s" % (self.groupsuffix, self.basedn)
@@ -645,7 +723,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         groups = []
         scope = ldap.SCOPE_SUBTREE
-        filter = '(&(objectclass=posixgroup)(gidnumber=*))'
+        filter = '(&(|(objectclass=posixgroup)' \
+            '(objectclass=group))' \
+            '(gidnumber=*))'
 
         if self.groupsuffix:
             basedn = "%s,%s" % (self.groupsuffix, self.basedn)
@@ -1059,7 +1139,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.kpwdname:
             self.__kpwdname = self.kpwdname
 
-        self.flags = 0
+        self.flags = FLAGS_SASL_GSSAPI
 
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
 
@@ -1137,7 +1217,12 @@ class FreeNAS_ActiveDirectory_Base(object):
                         if ad.__dict__[key] else None
 
         for key in kwargs:
-            if key in self.__keys():
+            if key == 'flags':
+                flags = self.flags
+                flags |= long(kwargs[key])
+                self.__dict__[key] = flags
+
+            elif key in self.__keys():
                 self.__dict__[key] = kwargs[key]
 
     def set_domain_controller(self):

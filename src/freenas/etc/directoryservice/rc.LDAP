@@ -28,12 +28,101 @@
 #
 #	LDAP settings
 #
+: ${LDAP_CONFIG_PATH:="/etc/directoryservice/LDAP"}
+: ${LDAP_CONFIG_FILE:="${LDAP_CONFIG_PATH}/config"}
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
 : ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 : ${LDAP_TIMEOUT:="0"}
+: ${LDAP_TOOL:="/usr/local/bin/ldaptool"}
 
+__LDAP_tc()
+{
+	local timeout=$1
+	shift
+	local args="$*"
+
+	local i=0
+	local ret=1
+	local lf="$(mktemp /tmp/tmp.XXXXXX)"
+
+	lockf -k -s -t 0 ${lf} ${args} &
+	ret=$?
+	lpid=$!
+
+	if [ "${ret}" != "0" ]
+	then
+		return ${ret}
+	fi
+
+	ret=2
+	while [ ${i} -lt ${timeout} ]
+	do
+		sleep 1
+
+		if lockf -k -s -t 0 ${lf} /usr/bin/true
+		then
+			rm -f ${lf}
+			ret=0
+			break
+		fi
+
+		: $((i += 1))
+	done
+
+	kill $! >/dev/null 2>&1
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill ${pid} >/dev/null 2>&1
+	fi
+
+	pid="$(ps -axwww|grep "$args"|grep -v grep|awk '{ print $1 }')"
+	if [ -n "${pid}" ]
+	then
+		kill -9 ${pid} >/dev/null 2>&1
+	fi
+
+	wait ${lpid}
+	ret=$?
+
+	rm -f ${lf}
+	return ${ret}
+}
+
+LDAP_get_user_by_dn()
+{
+	local dn="${1}"
+	local host="$(LDAP_get ldap_host)"
+	local port="$(LDAP_get ldap_port)"
+	local basedn="$(LDAP_get ldap_basedn)"
+	local binddn="$(LDAP_get ldap_binddn)"
+	local bindpw="$(LDAP_get ldap_bindpw)"
+	local tmpfile="$(mktemp -q /var/tmp/.adbarXXXXXX)"
+
+	cat<<-__EOF__>"${tmpfile}"
+	/usr/local/bin/ldapsearch \
+	    -H 'ldap://${host}:${port}' \
+	    -b '${dn}' \
+	    -D '${binddn}' \
+	    -w '${bindpw}' \
+	    -s sub \
+	    -x \
+	    -z 0 \
+	    -LLL \
+	    -l '${LDAP_TIMEOUT}' 
+__EOF__
+
+	eval $(cat "${tmpfile}")
+	rm "${tmpfile}"
+}
+
+LDAP_get_binddn_uid()
+{
+	LDAP_get_user_by_dn "$(LDAP_get ldap_binddn)" | \
+		egrep -iw '^uid' | awk '{ print $2 }'
+}
 
 __do_LDAP_get()
 {
@@ -90,7 +179,7 @@ LDAP_show_config()
 	printf "ldap_hostname:           %s\n" $(LDAP_get ldap_hostname)
 	printf "ldap_basedn:             %s\n" $(LDAP_get ldap_basedn)
 	printf "ldap_anonbind:           %s\n" $(LDAP_get ldap_anonbind)
-	printf "ldap_basedn:             %s\n" $(LDAP_get ldap_basedn)
+	printf "ldap_binddn:             %s\n" $(LDAP_get ldap_binddn)
 	printf "ldap_bindpw:             %s\n" $(LDAP_get ldap_bindpw)
 	printf "ldap_pwencryption:       %s\n" $(LDAP_get ldap_pwencryption)
 	printf "ldap_usersuffix:         %s\n" $(LDAP_get ldap_usersuffix)
@@ -130,7 +219,7 @@ LDAP_log()
 	fi
 }
 
-LDAP_load_database_values()
+old_LDAP_load_values()
 {
 	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
 
@@ -153,13 +242,30 @@ LDAP_load_database_values()
 		ldap_certificate_id,
 		ldap_idmap_backend,
 		ldap_has_samba_schema,
-		ldap_enable
+		ldap_enable,
+		krb.krb_realm as ldap_krb_realm,
+		krb.krb_kdc as ldap_krb_kdc,
+		krb.krb_admin_server as ldap_krb_admin_server,
+		krb.krb_kpasswd_server as ldap_krb_kpasswd_server,
+		keytab.keytab_name as ldap_keytab_name,
+		keytab.keytab_file as ldap_keytab_file,
+		keytab.keytab_principal as ldap_keytab_principal
  
 	FROM
-		directoryservice_ldap
+		directoryservice_ldap as ldap
+
+	LEFT OUTER JOIN
+		directoryservice_kerberosrealm as krb
+	ON
+		(ldap.ldap_kerberos_realm_id = krb.id)
+
+	LEFT OUTER JOIN
+		directoryservice_kerberoskeytab as keytab
+	ON
+		(ldap.ldap_kerberos_keytab_id = keytab.id)
 
 	ORDER BY
-		-id	
+		-ldap.id	
 
 	LIMIT 1;
 __SQL__
@@ -181,9 +287,63 @@ __SQL__
 	rm "${tmpfile}"
 }
 
+LDAP_load_values()
+{
+	LDAP_generate_config
+
+	exec 3<&0
+	exec 0<"${LDAP_CONFIG_FILE}"
+
+	while read -r line
+	do
+		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+
+		LDAP_set "${var}" "${val}"
+	done
+	exec 0<&3
+}
+
+LDAP_generate_config()
+{
+	${LDAP_TOOL} get config_file > "${LDAP_CONFIG_FILE}"
+	/bin/chmod 600 "${LDAP_CONFIG_FILE}"
+}
+
+LDAP_load_bindpw()
+{
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
+	SELECT
+		ldap_bindpw
+
+	FROM
+		directoryservice_ldap
+
+	ORDER BY
+		-id
+
+	LIMIT 1;
+__SQL__
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		local var="$(echo ${line}|cut -f1 -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+		local val="$(echo ${line}|cut -f2- -d=|sed -Ee 's#^[[:space:]]+##' -e 's#[[:space:]]+$##')"
+
+		LDAP_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
+	done
+	exec 0<&3
+	rm "${tmpfile}"
+}
+
 LDAP_init()
 {
-	LDAP_load_database_values
+	LDAP_load_values
+	LDAP_load_bindpw
 }
 
 ldap_enabled()

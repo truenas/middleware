@@ -1095,6 +1095,16 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True
     )
+    ldap_timeout = models.IntegerField(
+        verbose_name=_("LDAP timeout"),
+        help_text=_("Timeout for LDAP related commands."),
+        default=10
+    )
+    ldap_dns_timeout = models.IntegerField(
+        verbose_name=_("DNS timeout"),
+        help_text=_("Timeout for LDAP DNS queries."),
+        default=10
+    )
     ldap_idmap_backend = models.CharField(
         verbose_name=_("Idmap Backend"),
         choices=choices.IDMAP_CHOICES,

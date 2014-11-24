@@ -1,0 +1,415 @@
+#!/usr/local/bin/python
+
+import cmd
+import getopt
+import os
+import string
+import sys
+
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
+
+from django.db.models.loading import cache
+cache.get_apps()
+
+from freenasUI.common.freenasldap import (
+    FreeNAS_LDAP,
+    FLAGS_DBINIT
+)
+
+from freenasUI.directoryservice.models import LDAP
+
+
+class LDAPConfig(FreeNAS_LDAP):
+    pass
+
+
+class LDAPToolShell(cmd.Cmd):
+    prompt = "ldaptool> "
+
+    def __init__(self, **kwargs):
+        cmd.Cmd.__init__(self)
+        self.lc = LDAPConfig(flags=FLAGS_DBINIT)
+        self.lo = LDAP.objects.all()[0]
+        self.flags = 0
+
+    def cmdloop(self, intro=None):
+        return cmd.Cmd.cmdloop(self, intro)
+
+    def onecmd(self, line):
+        return cmd.Cmd.onecmd(self, line)
+
+    def emptyline(self):
+        pass
+
+    def default(self, line):
+        tmp = line.strip() 
+        if tmp.startswith('#'):
+            return
+        return cmd.Cmd.default(self, line)
+
+    def do_help(self, arg):
+        options = [
+            [ "config_file", "Generate configf file" ],
+            [ "timeout", "Timeout for commands" ],
+            [ "dns_timeout", "DNS query timeout" ],
+            [ "basedn", "Base DN" ],
+            [ "binddn", "Bind DN"],
+            [ "anonbind", "Bind anonymously"],
+            [ "hostname", "Hostname in hostname:port format"],
+            [ "host", "LDAP server hostname" ],
+            [ "port", "LDAP server port" ],
+            [ "usersuffix", "User suffix" ],
+            [ "groupsuffix", "Group suffix" ],
+            [ "machinesuffix", "Machine suffix" ],
+            [ "passwordsuffix", "Password suffix" ],
+            [ "sudosuffix", "SUDO suffix" ],
+            [ "krb_realm", "Kerberos realm" ],
+            [ "krb_kdc", "Kerberos KDC" ],
+            [ "krb_admin_server", "Kerberos admin server" ],
+            [ "krb_kpasswd_server", "Kerberos password server" ],
+            [ "keytab_name", "Kerberos keytab name" ],
+            [ "keytab_principal", "Kerberos keytab principal" ],
+            [ "keytab_file", "Kerberos keytab file" ],
+            [ "certfile", "SSL/TLS certificate" ],
+            [ "use_default_domain", "Use default domain" ],
+            [ "has_samba_schema", "Samba schema" ],
+            [ "idmap_backend", "IDMAP backend" ],
+            [ "ssl", "SSL/TLS" ],
+        ]
+
+        print >> sys.stderr, """\
+[set|get] <option> <value>
+  eg: set hostname ldap.example.com
+  eg: get hostname
+
+Available options:
+        """
+        for opts in options:
+            print >> sys.stderr, "  %-32s %s" % (opts[0], opts[1])
+
+    def do_set(self, arg):
+        args = arg.split()
+        
+        set_method = getattr(self, "set_%s" % args[0]) 
+        if set_method:
+            set_method(string.join(args[1:], ' '))
+
+    def do_get(self, arg):
+        args = arg.split()
+
+        get_method = getattr(self, "get_%s" % args[0])
+        if get_method:
+            get_method(args)
+
+    def do_debug(self, arg):
+        pass
+
+    def do_connect(self, arg):
+        pass
+    def do_join(self, arg):
+        pass
+
+    def do_save(self, arg):
+        self.lo.save()
+        self.lc.reload()
+
+    def do_exit(self, arg):
+        sys.exit(0)
+    def do_quit(self, arg):
+        sys.exit(0)
+
+    def setbool(self, args):
+        val = None 
+        if arg == '0':
+            val = False 
+        elif arg.lower() == 'false':
+            val = False 
+        elif arg == '1':
+            val = True
+        if arg.lower() == 'true':
+            val = True
+        return val
+
+    def get_config_file(self, args):
+        keys = [
+            "ldap_basedn",
+            "ldap_binddn",
+            "ldap_anonbind",
+            "ldap_hostname",
+            "ldap_host",
+            "ldap_port",
+            "ldap_usersuffix", 
+            "ldap_groupsuffix", 
+            "ldap_machinesuffix", 
+            "ldap_passwordsuffix", 
+            "ldap_sudosuffix", 
+            "ldap_krb_realm",
+            "ldap_krb_kdc",
+            "ldap_krb_admin_server",
+            "ldap_krb_kpasswd_server",
+            "ldap_keytab_name",
+            "ldap_keytab_principal",
+            "ldap_keytab_file",
+            "ldap_ssl",
+            "ldap_has_samba_schema",
+            "ldap_use_default_domain",
+            "ldap_certfile",
+            "ldap_idmap_backend",
+            "ldap_timeout",
+            "ldap_dns_timeout"
+        ]
+
+        for k in keys:
+            attr = k.replace("ldap_", "")
+            val = getattr(self.lc, attr)
+
+            if val == True:
+                val = 1
+            if val == False:
+                val = 0
+
+            print >> sys.stdout, "%s=%s" % (
+                k, val if val != None else ''
+            )
+
+    def get_binddn(self, args):
+        print >> sys.stdout, self.lc.binddn
+
+    def set_binddn(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_binddn = val 
+            ldap.save()
+    
+    def get_hostname(self, args):
+        print >> sys.stdout, self.lc.hostname
+
+    def set_hostname(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_hostname = val 
+            ldap.save()
+
+    def get_usersuffix(self, args):
+        print >> sys.stdout, self.lc.usersuffix
+
+    def set_usersuffix(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_usersuffix = val 
+            ldap.save()
+
+    def get_groupsuffix(self, args):
+        print >> sys.stdout, self.lc.groupsuffix
+
+    def set_groupsuffix(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_groupsuffix = val 
+            ldap.save()
+
+    def get_machinesuffix(self, args):
+        print >> sys.stdout, self.lc.machinesuffix
+
+    def set_machinesuffix(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_machinesuffix = val 
+            ldap.save()
+
+    def get_passwordsuffix(self, args):
+        print >> sys.stdout, self.lc.passwordsuffix
+
+    def set_passwordsuffix(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_passwordsuffix = val 
+            ldap.save()
+
+    def get_sudosuffix(self, args):
+        print >> sys.stdout, self.lc.sudosuffix
+
+    def set_sudosuffix(self, args):
+        val = None
+    
+        ldap = self.lo
+        for arg in args:
+            val = arg
+    
+        if val != None:
+            ldap.ldap_sudosuffix = val 
+            ldap.save()
+    
+    def get_basedn(self, args):
+        print >> sys.stdout, self.lc.basedn
+
+    def set_basedn(self, args):
+        self.lc.basedn = args
+        self.lc.reload() 
+    
+    def get_krb_realm(self, args):
+        print >> sys.stdout, self.lc.krb_realm
+
+    def set_krb_realm(self, args):
+        for arg in args:
+            self.lc.krb_realm = arg
+    
+    def get_krb_kdc(self, args):
+        print >> sys.stdout, self.lc.krb_kdc
+
+    def set_krb_kdc(self, args):
+        for arg in args:
+            self.lc.krb_kdc = arg
+    
+    def get_krb_admin_server(self, args):
+        print >> sys.stdout, self.lc.krb_admin_server
+
+    def set_krb_admin_server(self, args):
+        for arg in args:
+            self.lc.krb_admin_server = arg
+    
+    def get_krb_kpasswd_server(self, args):
+        print >> sys.stdout, self.lc.krb_kpasswd_server
+
+    def set_krb_kpasswd_server(self, args):
+        for arg in args:
+            self.lc.krb_kpasswd_server = arg
+    
+    def get_keytab_name(self, args):
+        print >> sys.stdout, self.lc.keytab_name
+
+    def set_keytab_name(self, args):
+        for arg in args:
+            self.lc.keytab_name = arg
+    
+    def get_keytab_principal(self, args):
+        print >> sys.stdout, self.lc.keytab_principal
+
+    def set_keytab_principal(self, args):
+        for arg in args:
+            self.lc.keytab_principal = arg
+
+    def get_keytab_file(self, args):
+        print >> sys.stdout, self.lc.keytab_file
+
+    def set_keytab_file(self, args):
+        for arg in args:
+            self.lc.keytab_file = arg
+
+    def get_certfile(self, args):
+        print >> sys.stdout, self.lc.certfile
+
+    def set_certfile(self, args):
+        for arg in args:
+            self.lc.certfile = arg
+
+    def get_use_default_domain(self, args):
+        print >> sys.stdout, self.lc.use_default_domain
+
+    def set_use_default_domain(self, args):
+        for arg in args:
+            self.lc.use_default_domain = arg
+
+    def get_has_samba_schema(self, args):
+        print >> sys.stdout, self.lc.has_samba_schema
+
+    def set_has_samba_schema(self, args):
+        for arg in args:
+            self.lc.has_samba_schema = arg
+
+    def get_ssl(self, args):
+        print >> sys.stdout, self.lc.ssl
+
+    def set_ssl(self, args):
+        for arg in args:
+            self.lc.has_samba_schema = ssl
+    def get_timeout(self, args):
+        print >> sys.stdout, self.adc.timeout
+
+    def set_timeout(self, args):
+        val = None
+
+        ldap = self.lo   
+        for arg in args:
+            if not arg.isdigit():
+                print >> sys.stderr, "not an integer"
+                return   
+
+            val = long(arg)
+   
+        if val != None:   
+            ldap.ldap_timeout = val
+            ldap.save()
+
+    def get_dns_timeout(self, args):
+        print >> sys.stdout, self.lc.dns_timeout
+
+    def set_dns_timeout(self, args):   
+        val = None
+
+        ldap = self.lo
+        for arg in args:
+            if not arg.isdigit():
+                print >> sys.stderr, "not an integer"
+                return
+
+            val = long(arg)
+
+        if val != None:
+            ldap.ldap_dns_timeout = val
+            ldap.save()
+
+
+
+def main():
+    ldapts = LDAPToolShell()
+
+    if len(sys.argv) == 1:
+        ldapts.cmdloop()
+
+    try:
+        ldapts.onecmd(string.join(sys.argv[1:], ' '))
+
+    except Exception as e:
+        print "Exception: ", e 
+        ret = 1
+
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main()
