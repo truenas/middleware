@@ -531,10 +531,6 @@ def add_ldap(sc):
             ldap.ldap_basedn
         )
 
-    ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
-    ldap_section.ldap_default_authtok_type = 'password'
-    ldap_section.ldap_default_authtok = ldap.ldap_bindpw
-
     if ldap.ldap_ssl == 'on':
         certpath = get_certificateauthority_path(ldap.ldap_certificate)
         if certpath:
@@ -554,6 +550,22 @@ def add_ldap(sc):
             if len(parts) < 2:
                 continue
             setattr(ldap_section, parts[0].strip(), parts[1].strip())
+
+    ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+    
+    if ldap.keytab_name and ldap.kerberos_realm:
+        ldap_section.auth_provider = 'krb5'
+        ldap_section.chpass_provider = 'krb5'
+        ldap_section.ldap_sasl_mech = 'GSSAPI'
+        ldap_section.ldap_sasl_authid = ldap.keytab_principal
+        ldap_section.krb5_server = ldap.krb_kdc
+        ldap_section.krb5_realm = ldap.krb_realm
+        ldap_section.krb5_canonicalize = 'false'
+
+    else:
+        ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
+        ldap_section.ldap_default_authtok_type = 'password'
+        ldap_section.ldap_default_authtok = ldap.ldap_bindpw
 
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)

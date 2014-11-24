@@ -556,6 +556,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['krb_kdc'] = kr.krb_kdc
                         kwargs['krb_admin_server'] = kr.krb_admin_server
                         kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
+                        self.flags |= FLAGS_SASL_GSSAPI
 
                 elif newkey == 'kerberos_keytab_id':
                     kt = ldap.ldap_kerberos_keytab
@@ -565,6 +566,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['keytab_name'] = kt.keytab_name
                         kwargs['keytab_principal'] = kt.keytab_principal
                         kwargs['keytab_file'] = '/etc/krb5.keytab'
+                        self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
                     if not newkey in kwargs:
