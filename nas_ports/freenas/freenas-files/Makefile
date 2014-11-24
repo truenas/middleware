@@ -70,6 +70,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/perftests-nas ${STAGEDIR}/${PREFIX}/usr/local/bin/perftests-nas
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/zilstat ${STAGEDIR}/${PREFIX}/usr/local/bin/zilstat
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/adtool ${STAGEDIR}/${PREFIX}/usr/local/bin/adtool
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ldaptool ${STAGEDIR}/${PREFIX}/usr/local/bin/ldaptool
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/chelsio_adapter_config ${STAGEDIR}/${PREFIX}/usr/local/bin/chelsio_adapter_config
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/t5seeprom ${STAGEDIR}/${PREFIX}/usr/local/bin/t5seeprom
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi

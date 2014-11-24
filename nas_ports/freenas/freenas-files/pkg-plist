@@ -12,6 +12,7 @@ usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
 usr/local/bin/zilstat
 usr/local/bin/adtool
+usr/local/bin/ldaptool
 usr/local/bin/chelsio_adapter_config
 usr/local/bin/t5seeprom
 usr/local/etc/avahi/avahi-daemon.conf
