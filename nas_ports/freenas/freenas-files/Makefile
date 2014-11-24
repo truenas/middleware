@@ -73,6 +73,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ldaptool ${STAGEDIR}/${PREFIX}/usr/local/bin/ldaptool
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/chelsio_adapter_config ${STAGEDIR}/${PREFIX}/usr/local/bin/chelsio_adapter_config
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/t5seeprom ${STAGEDIR}/${PREFIX}/usr/local/bin/t5seeprom
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/sockscopy ${STAGEDIR}/${PREFIX}/usr/local/bin/sockscopy
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx

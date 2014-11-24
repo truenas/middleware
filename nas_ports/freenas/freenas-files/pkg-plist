@@ -15,6 +15,7 @@ usr/local/bin/adtool
 usr/local/bin/ldaptool
 usr/local/bin/chelsio_adapter_config
 usr/local/bin/t5seeprom
+usr/local/bin/sockscopy
 usr/local/etc/avahi/avahi-daemon.conf
 usr/local/etc/nginx/fastcgi_params
 usr/local/etc/nginx/nginx.conf

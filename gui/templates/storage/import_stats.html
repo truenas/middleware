@@ -1,0 +1,34 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+    {% if abort  %}
+        Import of Volume {{ vol }} Aborted by the User
+    {% elif error %}
+        Import of Volume {{ vol }} Failed.<br /><br />
+        Reason {{ error }}
+    {% else %}
+        Import of Volume {{ vol }} Successfully Done
+    {% endif %}
+{% endblock %}
+<br />
+{% block buttons %}
+{% if abort %}
+<button id="btn_A_Close" data-dojo-type="dijit.form.Button"type="button">
+    {% trans "Done" %}
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+        cancelDialog(this);
+    </script>
+</button>
+{% else %}
+<button id="btn_Import_Done" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
+        {% trans "OK" %}
+</button>
+{% endif %}
+{% endblock %}
+
+{% block onSubmit %}
+doSubmit({
+    form: this,
+    event: e,
+    url: '{% url 'storage_volimport_abort' %}'
+});
+{% endblock %}

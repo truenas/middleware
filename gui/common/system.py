@@ -287,10 +287,14 @@ def mount(dev, path, mntopts=None, fstype=None):
         return True
 
 
-def umount(path):
+def umount(path, force=False):
 
+    if force:
+        cmdlst = ['/sbin/umount', '-f', path]
+    else:
+        cmdlst = ['/sbin/umount', path]
     proc = subprocess.Popen(
-        ['/sbin/umount', path],
+        cmdlst,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
     output = proc.communicate()[0]

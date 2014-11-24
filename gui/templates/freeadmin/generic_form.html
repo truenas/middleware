@@ -20,8 +20,8 @@
         {% block oklabel %}{% trans "OK" %}{% endblock %}
     </button>
     {% if not inline %}
-    <button id="btn_{% cls_name form %}_Cancel" data-dojo-type="dijit.form.Button"type="button">
-        {% trans "Cancel" %}
+    <button id="btn_{% cls_name form %}_Cancel" data-dojo-type="dijit.form.Button" type="button">
+        {% block cancellabel %}{% trans "Cancel" %}{% endblock %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             cancelDialog(this);
         </script>

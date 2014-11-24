@@ -1,0 +1,226 @@
+#!/usr/local/bin/python
+import subprocess
+import os
+import sys
+import signal
+import atexit
+import re
+import asyncore
+import socket
+import threading
+import json
+import errno
+import time
+from django.utils.translation import ugettext_lazy as _
+from syslog import (
+    syslog,
+    LOG_ALERT,
+    LOG_ERR,
+)
+
+sys.path.append("/usr/local/www/freenasUI")
+from common.system import (
+    mount,
+    umount,
+    is_mounted,
+)
+
+# Global Variables
+QUIT_FLAG = threading.Event() # Termination Event
+# Dictinoary containing information (File currently being copied,
+# Progress info, State: mounting, copying,  unmounting, done
+# Volume being imported.
+global data_dict
+# The temp. src directory to mount the disk to
+src = '/var/run/importcopy/tmpdir/'
+# The tempfile to store rsync output
+tempfile = '/var/run/importcopy/vol_rsync_stats'
+
+data_dict = dict([
+    ('ftrans', '/ '),
+    ('percent', 0),
+    ('status', 'Mounting'),
+    ('volume', None),
+    ('error', None),
+    ])
+
+def signal_handler(signal, frame):
+    QUIT_FLAG.set()
+signal.signal(signal.SIGINT, signal_handler)
+
+def sub_kill(pname=None, thread=None, ):
+    global data_dict
+    if thread:
+        thread.stop()
+    # Repeating socket deletion logic here for extra safety
+    if os.path.exists(socket_path):
+        os.unlink(socket_path)
+    if pname and pname.poll() is None:
+         os.kill(pname.pid, signal.SIGTERM)
+    if os.path.isdir(src):
+        if is_mounted(device=data_dict["volume"], path=src[:-1]):
+            try:
+                umount(src, True)
+                os.rmdir(src)
+            except Exception as e:
+                syslog(LOG_ERR, str(e))
+        else:
+            os.rmdir(src)
+    #if os.path.exists(tempfile):
+         #os.unlink(tempfile)
+    if data_dict['error']:
+        sys.exit(1)
+    sys.exit(0)
+
+class testselect(asyncore.dispatcher):
+
+    def __init__(self, path):
+        asyncore.dispatcher.__init__(self)
+        self.path = path
+        self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        try:
+            self.bind(self.path)
+        except socket.error as serr:
+            if serr.errno != errno.EADDRINUSE:
+                raise serr
+            # Delete socket if it prexists when we try to bind
+            os.unlink(self.path)
+            self.bind(self.path)
+        self.listen(5)
+
+    def handle_accept(self):
+        client = self.accept()
+        if client is None:
+            pass
+        else:
+            handler = testhandler(*client)
+
+class testhandler(asyncore.dispatcher_with_send):
+
+    def __init__(self, sock, addr):
+        asyncore.dispatcher_with_send.__init__(self, sock)
+        self.addr = addr
+        self.buffer = ''
+
+    def handle_read(self):
+        global data_dict
+        a = self.recv(8192)
+        if a.startswith("get_progress"):
+            self.buffer = json.dumps(data_dict)
+        if a.startswith("stop"):
+            raise asyncore.ExitNow('User Terminated Import of Volume: %s' % data_dict['volume'])
+        if a.startswith("done"):
+            raise asyncore.ExitNow('Import of Volume: %s Successfully Done' % data_dict['volume'])
+    def writable(self):
+        return (len(self.buffer) > 0)
+
+    def handle_write(self):
+        self.send(self.buffer)
+        self.buffer = ''
+
+    def handle_close(self):
+        self.close()
+
+class Loop_Sockserver(threading.Thread):
+    def __init__(self,socket_path):
+        super(Loop_Sockserver, self).__init__()
+        self.daemon = True
+        self.obj = testselect(socket_path)
+
+    def run(self):
+        try:
+            asyncore.loop()
+        except asyncore.ExitNow, e:
+            syslog(LOG_ALERT, str(e))
+        except Exception as e:
+            syslog(LOG_ALERT, str(e))
+        finally:
+            if os.path.exists(self.obj.path):
+                os.unlink(self.obj.path)
+            QUIT_FLAG.set()
+
+    def stop(self):
+        self.obj.close()
+        self.join()
+
+def usage():
+    print >> sys.stderr, "Usage: %s vol_to_import fs_type dest_path socket_path" % sys.argv[0]
+    sys.exit(1)
+# Main Code starts here
+if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        usage()
+    data_dict["volume"] = sys.argv[1]
+    fstype = sys.argv[2]
+    dest = sys.argv[3]
+    socket_path = sys.argv[4]
+    try:
+        os.remove(tempfile)
+    except OSError:
+        pass
+    #os.makedirs(src)
+    #dest = '/root/dumpcopy'
+    #socket_path = '/tmp/importcopy'
+
+    try:
+        atexit.register(sub_kill)
+        os.makedirs(src)
+        loop_thread = Loop_Sockserver(socket_path)
+        loop_thread.start()
+        mount(data_dict["volume"],src,'ro',fstype)
+        tsk = subprocess.Popen(
+                  "/usr/local/bin/rsync -aH --info=progress2 --itemize-changes %s %s >%s  2>&1" %(src, dest, tempfile),
+                  shell = True,
+              )
+        data_dict["status"] = "Importing"
+        atexit._exithandlers = []
+        atexit.register(sub_kill, tsk, loop_thread)
+
+        while tsk.poll() is None:
+            if QUIT_FLAG.wait(0.01):
+                raise Exception("A Terminate Instruction was sent to the Program")
+            a = re.split('\n|\r ',os.popen('tail -n %s %s' % (2, tempfile)).read().strip())
+            pw = True
+            for i in a:
+                tmp = i.find(">f")
+                if tmp!= -1 and pw:
+                   tmp1 = i[i.rfind("+")+2:]
+                   if data_dict['ftrans'] != tmp1:
+                       #print "\n%s\n" % tmp1
+                       data_dict['ftrans'] = tmp1
+                       pw = False
+                       continue
+                tmp = i.find("%")
+                if tmp!=-1:
+                    tmp1 = int(i[tmp-2:tmp])
+                    if tmp1 > data_dict['percent']:
+                        #print "%d \r" % tmp1
+                        data_dict['percent'] = tmp1
+
+        data_dict["ftrans"] = '/ '
+        data_dict["status"] = "Unmounting"
+    except Exception as e:
+        data_dict['error'] = str(e)
+        data_dict['status'] = "error"
+        syslog(LOG_ERR,"Import of Volume %s encoutered the following error %s" 
+            %(data_dict['volume'], data_dict['error']))
+        #sys.exit(1)
+        loop_thread.join()
+
+    # We do not raise an error here as the atexit registered function
+    # will (force) take care of these and hence no need to inform the
+    # user of an error
+    try:
+        umount(src)
+        os.rmdir(src)
+        #os.unlink(tempfile)
+    except Exception:
+        pass
+    if tsk.poll() !=0:
+        data_dict["status"] = "error"
+        data_dict["error"] = "Import Process was Abruptly Terminated."
+    else:
+        data_dict['percent'] = 100
+        data_dict["status"] = "finished"
+    loop_thread.join()

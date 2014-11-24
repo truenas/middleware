@@ -38,6 +38,8 @@ define([
     _iter: 0,
     name : "",
     fileUpload: false,
+    importProgress: false,
+    _message: "",
     mode: "advanced",
     poolUrl: "",
     steps: "",
@@ -71,6 +73,12 @@ define([
         domStyle.set(this.dapDetails, "word-break", "break-word");
       }
 
+      if(this.mode == "import") {
+        domStyle.set(this.dapSub, "display", "none");
+        domStyle.set(this.dapMainLabel, "word-wrap", "break-word");
+        domStyle.set(this.dapMainLabel, "word-break", "break-word");
+      }
+
       this.inherited(arguments);
 
     },
@@ -86,7 +94,11 @@ define([
       var me = this;
       if(uuid) this.uuid = uuid;
       if(!this.dapMainLabel) return;
-      this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.steps[this._curStep-1].label);
+      if(!this.importProgress) {
+        this.message = this.steps[this._curStep - 1];
+        this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.message.label);
+      } else
+        this.dapMainLabel.innerHTML = this._message;
       if(this.fileUpload && this._curStep == 1) {
         xhr.get('/progress', {
           headers: {"X-Progress-ID": me.uuid}
@@ -123,6 +135,34 @@ define([
           }
         });
         me._iter += 1;
+      } else if (this.importProgress) {
+        xhr.get(me.poolUrl, {
+          handleAs: "json"
+        }).then(function(data) {
+          if(data.status && data.volume && data.ftrans) {
+            me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);;
+          }
+          if(data.status == 'error' || data.status == 'finished') {
+            me.onFinished();
+            return;
+          }
+          if(data.percent) {
+            if(data.percent == 100) {
+              me._mainProgress.update({'indeterminate': true});
+            } else {
+              me._mainProgress.update({
+                maximum: 100,
+                progress: data.percent,
+                indeterminate: false
+              });
+            }
+          } else {
+            me._mainProgress.update({'indeterminate': true});
+          }
+          setTimeout(function() {
+            me.update();
+          }, 1000);
+        });
       } else {
         xhr.get(me.poolUrl, {
           headers: {"X-Progress-ID": me.uuid},

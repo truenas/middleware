@@ -55,7 +55,8 @@ from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
-    CronMultiple, UserField, GroupField, WarningSelect
+    CronMultiple, UserField, GroupField, WarningSelect,
+    PathField,
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
@@ -698,7 +699,6 @@ class ZFSVolumeWizardForm(forms.Form):
 
 class VolumeImportForm(Form):
 
-    volume_name = forms.CharField(max_length=30, label=_('Volume name'))
     volume_disks = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
@@ -708,6 +708,10 @@ class VolumeImportForm(Form):
         choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
         widget=forms.RadioSelect(attrs=attrs_dict),
         label='File System type',
+    )
+
+    volume_dest_path = PathField(
+        label=_("Destination"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -745,12 +749,6 @@ class VolumeImportForm(Form):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        volume_name = cleaned_data.get("volume_name")
-        if models.Volume.objects.filter(vol_name=volume_name).count() > 0:
-            msg = _(u"You already have a volume with same name")
-            self._errors["volume_name"] = self.error_class([msg])
-            del cleaned_data["volume_name"]
-
         devpath = "/dev/%s" % (cleaned_data.get('volume_disks', []), )
         isvalid = notifier().precheck_partition(
             devpath,
@@ -760,42 +758,17 @@ class VolumeImportForm(Form):
                 u"The selected disks were not verified for these import "
                 "rules. Filesystem check failed."
             )
-            self._errors["volume_name"] = self.error_class([msg])
-            if "volume_name" in cleaned_data:
-                del cleaned_data["volume_name"]
-
-        if "volume_name" in cleaned_data:
-            dolabel = notifier().label_disk(
-                cleaned_data["volume_name"],
-                devpath, cleaned_data['volume_fstype'])
-            if not dolabel:
-                msg = _(u"An error occurred while labeling the disk.")
-                self._errors["volume_name"] = self.error_class([msg])
-                cleaned_data.pop("volume_name", None)
-
+            self._errors["volume_fstype"] = self.error_class([msg])
+        path = cleaned_data.get("volume_dest_path")
+        if not os.path.exists(path):
+            self._errors["volume_dest_path"] = self.error_class(
+                [_(u"The path %s does not exist" % path)])
         return cleaned_data
 
     def done(self, request):
-        # Construct and fill forms into database.
-        volume_name = self.cleaned_data['volume_name']
         volume_fstype = self.cleaned_data['volume_fstype']
-
-        volume = models.Volume(vol_name=volume_name, vol_fstype=volume_fstype)
-        volume.save()
-        self.volume = volume
-
-        mp = models.MountPoint(
-            mp_volume=volume,
-            mp_path='/mnt/' + volume_name,
-            mp_options='rw')
-        mp.save()
-
-        notifier().start("ix-fstab")
         if volume_fstype == 'NTFS':
             notifier().start("fusefs")
-        notifier().mount_volume(volume)
-        #notifier().reload("disk")
-
 
 def show_descrypt_condition(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('0') or {}

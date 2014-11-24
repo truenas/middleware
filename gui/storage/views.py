@@ -50,6 +50,7 @@ from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
+import socket
 
 log = logging.getLogger('storage.views')
 
@@ -282,14 +283,39 @@ def volumemanager_zfs(request):
     })
 
 
+SOCKIMP = '/var/run/importcopy/importsock'
 def volimport(request):
-
+    if os.path.exists(SOCKIMP):
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(SOCKIMP)
+        s.send("get_progress")
+        data = json.loads(s.recv(1024))
+        s.close()
+        if data["status"] == "finished":
+            return render(request, 'storage/import_stats.html', {
+                'vol': data["volume"]}
+            )
+        if data["status"] == "error":
+            return render(request, 'storage/import_stats.html', {
+                'vol': data["volume"],
+                'error': data["error"],}
+            )
+        return render(request, 'storage/import_progress.html')
     if request.method == "POST":
-
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return JsonResp(request, message=_("Volume successfully added."))
+            # usage for command below
+            #Usage: sockscopy vol_to_import fs_type dest_path socket_path
+            msg = "/usr/local/bin/sockscopy /dev/%s %s %s %s &" %(form.cleaned_data.get('volume_disks'),
+                      form.cleaned_data.get('volume_fstype').lower(),
+                      form.cleaned_data.get('volume_dest_path'),
+                      SOCKIMP,
+                  )
+            subprocess.Popen(msg,
+                shell=True,
+            )
+            return render(request, 'storage/import_progress.html')
         else:
 
             if 'volume_disks' in request.POST:
@@ -303,6 +329,37 @@ def volimport(request):
         'form': form,
         'disks': disks
     })
+
+def volimport_progress(request):
+      s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+      s.connect(SOCKIMP)
+      s.send("get_progress")
+      data = s.recv(1024)
+      s.close()
+      return HttpResponse(data, content_type='application/json')
+
+def volimport_abort(request):
+    if request.method == 'POST':
+      s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+      s.connect(SOCKIMP)
+      s.send("get_progress")
+      data = json.loads(s.recv(1024))
+      if data["status"] == "finished":
+          s.send("done")
+          s.close()
+          return JsonResp(request,
+                     message=_("Volume successfully Imported."))
+      if data["status"] == "error":
+          s.send("stop")
+          s.close()
+          return JsonResp(request,
+                     message=_("Error Importing Volume"))
+      s.send("stop")
+      s.close()
+      return render(request, 'storage/import_stats.html', {
+          'abort': True,
+          'vol': data["volume"],}
+      )
 
 
 def dataset_create(request, fs):
