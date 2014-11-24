@@ -35,12 +35,6 @@ fi
 add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
-add_port freenas/pcbsd-warden PRODUCT_VERSION=${VERSION} \
-                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
-                            REVISION=${SVNREVISION}
-add_port freenas/pcbsd-pbi PRODUCT_VERSION=${VERSION} \
-                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
-                            REVISION=${SVNREVISION}
 add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
@@ -68,6 +62,7 @@ if ! is_truenas ; then
                             REVISION=${SVNREVISION}
 fi
 
+add_port sysutils/pcbsd-appweb
 add_port net/mDNSResponder
 add_port textproc/libxml2
 add_port devel/libffi

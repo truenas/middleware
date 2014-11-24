@@ -35,4 +35,8 @@ fi
 : ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git}
 : ${GIT_PORTS_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/ports"}
 
+: ${GIT_PCBSD_BRANCH=master}
+: ${GIT_PCBSD_REPO=https://github.com/pcbsd/pcbsd.git}
+: ${GIT_PCBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/pcbsd"}
+
 : ${REPOS="FREEBSD PORTS ${ADDL_REPOS}"}
