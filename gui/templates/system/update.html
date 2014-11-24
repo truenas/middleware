@@ -28,7 +28,7 @@ doSubmit({
 {% endif %}
 {% trans "The following packages will be changed:" %}
 <pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
-{% trans "Are you sure you want to continue?" %}
+{% trans "Are you sure you want to continue? The system will be rebooted after updates are applied." %}
 {% else %}
     <p>{% trans "No updates available" %}</p>
 {% endif %}
