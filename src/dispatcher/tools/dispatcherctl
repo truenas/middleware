@@ -1,4 +1,30 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python2.7
+#+
+# Copyright 2014 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
 
 import sys
 import argh
@@ -8,8 +34,10 @@ import socket
 from dispatcher.client import Client, ClientError
 from texttable import Texttable
 
+
 DEFAULT_SERVER = '127.0.0.1'
 DEFAULT_TIMEOUT = 10
+
 
 @argh.arg('--server')
 @argh.arg('--timeout')
@@ -17,17 +45,23 @@ DEFAULT_TIMEOUT = 10
 @argh.arg('args', nargs='*')
 def call(method, args, server=DEFAULT_SERVER, timeout=DEFAULT_TIMEOUT, j=False):
     c = create_client(server)
+
+    for idx, i in enumerate(args):
+        args[idx] = json.loads(i)
+
     result = c.call_sync(method, *args, timeout=timeout)
     print result
 
+
 @argh.arg('--server')
-def enumerate(server=DEFAULT_SERVER):
+def enum(server=DEFAULT_SERVER):
     c = create_client(server)
     for svc in c.call_sync('discovery.get_services', timeout=DEFAULT_TIMEOUT):
         print "Service: {0}".format(svc)
         print "Methods:"
         for m in c.call_sync('discovery.get_methods', svc, timeout=DEFAULT_TIMEOUT):
             print "\t{0}".format(m['name'])
+
 
 @argh.arg('--server')
 @argh.arg('events', nargs='*')
@@ -43,9 +77,11 @@ def listen(events, server=DEFAULT_SERVER):
     except KeyboardInterrupt:
         return
 
+
 @argh.arg('--server')
 def submit(task, args, server=DEFAULT_SERVER):
     pass
+
 
 @argh.arg('--server')
 @argh.arg('--limit')
@@ -68,6 +104,7 @@ def tasks(server=DEFAULT_SERVER, limit=None, H=False):
         ])
 
     print table.draw()
+
 
 @argh.arg('--server')
 def poll(task_id, server=DEFAULT_SERVER):
@@ -97,7 +134,7 @@ def create_client(server):
 
 def main():
     parser = argh.ArghParser()
-    parser.add_commands([enumerate, call, listen, submit, poll, tasks])
+    parser.add_commands([enum, call, listen, submit, poll, tasks])
     parser.dispatch()
 
 
