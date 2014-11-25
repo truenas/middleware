@@ -13,3 +13,4 @@
 /usr/local/sbin/dsutil
 /usr/local/sbin/dsdump
 /usr/local/sbin/dsrestore
+/usr/local/sbin/dspasswd

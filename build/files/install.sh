@@ -889,7 +889,9 @@ menu_install()
 #$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 -a -n "${_password}" ]; then
 	# Set the root password
-	chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+	chroot /tmp/data /usr/sbin/service datastore start
+	chroot /tmp/data /usr/local/sbin/dspasswd root ${_password}
+	chroot /tmp/data /usr/sbin/service datastore stop
     fi
     # Finally, before we unmount, start a srub.
     zpool scrub freenas-boot || true

@@ -1,0 +1,88 @@
+#!/usr/local/bin/python2.7
+#+
+# Copyright 2014 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
+
+
+from __future__ import print_function
+import argparse
+import json
+import os
+import crypt
+import sys
+import datastore
+
+
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
+
+
+def init_datastore(filename):
+    try:
+        f = open(filename)
+        conf = json.load(f)
+        f.close()
+    except IOError, err:
+        print("Cannot read config file: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
+    except ValueError, err:
+        print("Cannot read config file: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
+
+    if 'datastore' not in conf:
+        print("Cannot initialize datastore: configuration not found", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
+    except datastore.DatastoreException, err:
+        print("Cannot initialize datastore: {0}".format(str(err)), file=sys.stderr)
+        sys.exit(1)
+
+    return ds
+
+
+def hash_password(plaintext):
+    return crypt.crypt(plaintext, '$6${0}$'.format(os.urandom(16).encode('hex')))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    parser.add_argument('username', metavar='USERNAME', help='User name')
+    parser.add_argument('password', metavar='PASSWORD', help='Password')
+    args = parser.parse_args()
+    ds = init_datastore(args.c)
+    user = ds.get_one('users', ('username', '=', args.username))
+    if user is None:
+        print("User {0} not found".format(args.username))
+        sys.exit(1)
+
+    user['unixhash'] = hash_password(args.password)
+    ds.update('users', user['id'], user)
+
+
+if __name__ == '__main__':
+    main()
