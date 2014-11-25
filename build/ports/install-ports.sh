@@ -43,10 +43,14 @@ if [ -n "$WITH_PKGNG" ]; then
 	     }' > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/pcbsd.conf
 
 	# Create the fingerprints dirs
-	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/revoked
-	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/trusted
+	if [ ! -d "${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/trusted" ] ; then
+		mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/trusted
+	fi
+	if [ ! -d "${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/revoked" ] ; then
+		mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/revoked
+	fi
 
-	# Save the fingerprint
+	# Save the pcbsd fingerprint
 	echo 'function: sha256
 fingerprint: b2b9e037f938cf20ba68aa85ac88c15889c729a7f6b70c25069774308e760a03' > ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/pcbsd/trusted/pkg.cdn.pcbsd.org.20131209
 
