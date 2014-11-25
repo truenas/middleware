@@ -157,12 +157,8 @@ This section will demonstrate how to use
 to burn the :file:`.iso` file. When downloading Win32DiskImager, download the latest version that ends in :file:`-binary.zip` and use 7-Zip to unzip its
 executable.
 
-Once installed, launch Win32DiskImager, shown in Figure 2.2a. Use the "browse" button to browse to the location of the :file:`.iso` file. Insert a USB thumb
-drive and select its drive letter from the "Device" drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
-
-**Figure 2.2a: Using Win32DiskImager to Write the Image**
-
-|Figure24b_png|
+Once installed, launch Win32DiskImager and use its "browse" button to browse to the location of the :file:`.iso` file. Insert a USB thumb drive and select its
+drive letter from the "Device" drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
 
 .. _Performing the Installation:
 
@@ -458,7 +454,7 @@ In the screen shown in Figure 2.5e, use the drop-down menu to select which "Trai
 In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release),
 *FreeNAS-9.3-Nightlies* which represents the latest nightly build of the upcoming 9.3 release, and
 *FreeNAS-9.3-BETA* which includes all new features, drivers, and bug fixes since 9.3-BETA was released. The administrator has selected to track the
-*FreeNAS-9.3-Nightlies*.
+*FreeNAS-9.3-Nightlies*. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
 
 To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
 button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
