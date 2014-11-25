@@ -1217,6 +1217,11 @@ def update_apply(request):
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
         if not uuid:
+
+            running = UpdateHandler.is_running()
+            if running is not False:
+                return HttpResponse(running, status=202)
+
             # Why not use subprocess module?
             # Because for some reason it was leaving a zombie process behind
             # My guess is that its related to fork within a thread and fds
@@ -1282,6 +1287,11 @@ def update_check(request):
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
         if not uuid:
+
+            running = UpdateHandler.is_running()
+            if running is not False:
+                return HttpResponse(running, status=202)
+
             if request.POST.get('apply') == '1':
                 apply_ = True
             else:

@@ -119,6 +119,23 @@ class UpdateHandler(object):
         self._pkgname = ''
         self._baseprogress = 0
 
+    @classmethod
+    def is_running(cls):
+        if not os.path.exists(cls.DUMPFILE):
+            return False
+
+        with LockFile(cls.DUMPFILE) as lock:
+            with open(cls.DUMPFILE, 'rb') as f:
+                data = json.loads(f.read())
+
+        pid = int(data.get('pid'))
+        try:
+            os.kill(pid, 0)
+        except:
+            return False
+        else:
+            return data['uuid']
+
     def get_handler(self, index, pkg, pkgList):
         self.step = 1
         self._pkgname = '%s-%s' % (
