@@ -225,7 +225,7 @@ class ServerRpcContext(RpcContext):
         self.dispatcher = dispatcher
 
     def call_sync(self, name, *args):
-        svcname, method = name.rpartition('.')
+        svcname, _, method = name.rpartition('.')
         svc = self.get_service(svcname)
         if svc is None:
             raise RpcException(errno.ENOENT, 'Service {0} not found'.format(svcname))
