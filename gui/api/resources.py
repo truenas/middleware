@@ -827,69 +827,72 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['compression'] = '-'
             bundle.data['compressratio'] = '-'
 
-        bundle.data['is_upgraded'] = bundle.obj.is_upgraded
-
-        is_decrypted = bundle.obj.is_decrypted()
-        if bundle.obj.vol_fstype == 'ZFS':
-            bundle.data['is_decrypted'] = is_decrypted
-
         if self.is_webclient(bundle.request):
             bundle.data['_detach_url'] = reverse(
                 'storage_detach',
                 kwargs={
                     'vid': bundle.obj.id,
                 })
+
+        attr_fields = ('avail', 'used', 'used_pct')
+        for attr in attr_fields + ('status', ):
+            bundle.data[attr] = getattr(mp, attr)
+
+        if bundle.obj.vol_fstype != 'ZFS':
+            return bundle
+
+        bundle.data['is_upgraded'] = bundle.obj.is_upgraded
+
+        is_decrypted = bundle.obj.is_decrypted()
+        bundle.data['is_decrypted'] = is_decrypted
+
+        if self.is_webclient(bundle.request):
             bundle.data['_status_url'] = "%s?id=%d" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
                 bundle.obj.id,
             )
 
-            if bundle.obj.vol_fstype == 'ZFS':
-                bundle.data['_scrub_url'] = reverse(
-                    'storage_scrub',
-                    kwargs={
-                        'vid': bundle.obj.id,
-                    })
-                bundle.data['_upgrade_url'] = reverse(
-                    'storage_volume_upgrade',
+            bundle.data['_scrub_url'] = reverse(
+                'storage_scrub',
+                kwargs={
+                    'vid': bundle.obj.id,
+                })
+            bundle.data['_upgrade_url'] = reverse(
+                'storage_volume_upgrade',
+                kwargs={
+                    'object_id': bundle.obj.id,
+                })
+            if bundle.obj.vol_encrypt > 0:
+                bundle.data['_unlock_url'] = reverse(
+                    'storage_volume_unlock',
                     kwargs={
                         'object_id': bundle.obj.id,
                     })
-                if bundle.obj.vol_encrypt > 0:
-                    bundle.data['_unlock_url'] = reverse(
-                        'storage_volume_unlock',
-                        kwargs={
-                            'object_id': bundle.obj.id,
-                        })
-                    bundle.data['_download_key_url'] = reverse(
-                        'storage_volume_key',
-                        kwargs={
-                            'object_id': bundle.obj.id,
-                        })
-                    bundle.data['_rekey_url'] = reverse(
-                        'storage_volume_rekey',
-                        kwargs={
-                            'object_id': bundle.obj.id,
-                        })
-                    bundle.data['_add_reckey_url'] = reverse(
-                        'storage_volume_recoverykey_add',
-                        kwargs={'object_id': bundle.obj.id})
-                    bundle.data['_rem_reckey_url'] = reverse(
-                        'storage_volume_recoverykey_remove',
-                        kwargs={'object_id': bundle.obj.id})
-                    bundle.data['_create_passphrase_url'] = reverse(
-                        'storage_volume_create_passphrase',
-                        kwargs={'object_id': bundle.obj.id})
-                    bundle.data['_change_passphrase_url'] = reverse(
-                        'storage_volume_change_passphrase',
-                        kwargs={'object_id': bundle.obj.id})
-                    bundle.data['_volume_lock_url'] = reverse(
-                        'storage_volume_lock',
-                        kwargs={'object_id': bundle.obj.id})
-
-        attr_fields = ('avail', 'used', 'used_pct')
-        for attr in attr_fields + ('status', ):
-            bundle.data[attr] = getattr(mp, attr)
+                bundle.data['_download_key_url'] = reverse(
+                    'storage_volume_key',
+                    kwargs={
+                        'object_id': bundle.obj.id,
+                    })
+                bundle.data['_rekey_url'] = reverse(
+                    'storage_volume_rekey',
+                    kwargs={
+                        'object_id': bundle.obj.id,
+                    })
+                bundle.data['_add_reckey_url'] = reverse(
+                    'storage_volume_recoverykey_add',
+                    kwargs={'object_id': bundle.obj.id})
+                bundle.data['_rem_reckey_url'] = reverse(
+                    'storage_volume_recoverykey_remove',
+                    kwargs={'object_id': bundle.obj.id})
+                bundle.data['_create_passphrase_url'] = reverse(
+                    'storage_volume_create_passphrase',
+                    kwargs={'object_id': bundle.obj.id})
+                bundle.data['_change_passphrase_url'] = reverse(
+                    'storage_volume_change_passphrase',
+                    kwargs={'object_id': bundle.obj.id})
+                bundle.data['_volume_lock_url'] = reverse(
+                    'storage_volume_lock',
+                    kwargs={'object_id': bundle.obj.id})
 
         if is_decrypted:
             if self.is_webclient(bundle.request):
@@ -903,15 +906,14 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle.data['mountpoint'] = mp.mp_path
 
-        if bundle.obj.vol_fstype == 'ZFS':
-            uid = Uid(bundle.obj.id * 100)
+        uid = Uid(bundle.obj.id * 100)
 
-            bundle.data['children'] = self._get_children(
-                bundle,
-                bundle.obj,
-                bundle.obj.get_children(),
-                uid=uid,
-            )
+        bundle.data['children'] = self._get_children(
+            bundle,
+            bundle.obj,
+            bundle.obj.get_children(),
+            uid=uid,
+        )
 
         return bundle
 
