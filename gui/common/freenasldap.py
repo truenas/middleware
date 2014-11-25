@@ -35,11 +35,15 @@ import os
 import pwd
 import socket
 import sqlite3
+import string
+import tempfile
 import time
 import types
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
+
+from freenasUI.common.pipesubr import pipeopen
 
 from freenasUI.common.ssl import (
     get_certificate_path,
@@ -84,6 +88,7 @@ FLAGS_AD_ENABLED	= 0x00000001
 FLAGS_LDAP_ENABLED	= 0x00000002
 FLAGS_PREFER_IPv6	= 0x00000004
 FLAGS_SASL_GSSAPI	= 0x00000008
+FLAGS_CONFIG_ONLY	= 0x00000010
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
@@ -216,6 +221,7 @@ class FreeNAS_LDAP_Directory(object):
             "(sasl gssapi bind) trying to bind to %s:%d",
             self.host, self.port)
         auth_tokens = ldap.sasl.gssapi()
+
         res = self._handle.sasl_interactive_bind_s('', auth_tokens)
         if res == 0:
             log.debug("FreeNAS_LDAP_Directory.open: "
@@ -281,7 +287,7 @@ class FreeNAS_LDAP_Directory(object):
                 bind_method = self._do_authenticated_bind 
             else: 
                 bind_method = self._do_anonymous_bind
-           
+            
             try:
                 log.debug("FreeNAS_LDAP_Directory.open: trying to bind")
                 res = bind_method()
@@ -582,12 +588,109 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             elif key in self.__keys():
                 self.__dict__[key] = kwargs[key]
 
+        self.get_kerberos_ticket()
+
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
         self.ucount = 0
         self.gcount = 0
 
         log.debug("FreeNAS_LDAP_Base.__init__: leave")
+
+    def kerberos_cache_has_ticket(self):
+        res = False
+
+        p = pipeopen("/usr/bin/klist -t")
+        p.communicate() 
+        if p.returncode == 0:
+            res = True
+
+        return res
+
+    def get_kerberos_principal_from_cache(self):
+        principal = None
+
+        p = pipeopen("klist")
+        klist_out = p.communicate()
+        if p.returncode != 0:
+            return None
+
+        klist_out = klist_out[0]
+        lines = klist_out.splitlines()
+        for line in lines:
+            line =  line.strip()
+            if line.startswith("Principal"):
+                parts = line.split(':')
+                if len(parts) > 1: 
+                    principal = parts[1].strip()
+
+        return principal
+
+    def get_kerberos_ticket(self):
+        res = False 
+        kinit = False
+
+        if self.keytab_name and self.keytab_principal:
+            krb_principal = self.get_kerberos_principal_from_cache()
+            if krb_principal and krb_principal.upper() == \
+                self.keytab_principal.upper():
+                return True
+
+            args = [
+                "/usr/bin/kinit",
+                "--renewable",
+                "-k",
+                "-t",
+                self.keytab_file,
+                self.keytab_principal
+            ]
+
+            p = pipeopen(string.join(args, ' '))
+            kinit_out = p.communicate()
+            if p.returncode != 0:
+                return False
+
+            kinit = True 
+
+        elif self.krb_realm and self.bindname and self.bindpw:
+            krb_principal = self.get_kerberos_principal_from_cache()
+            principal = "%s@%s" % (self.bindname, self.krb_realm)
+            
+            if krb_principal and krb_principal.upper() == principal.upper():
+                return True
+
+            (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+            os.fchmod(fd, 0600)
+            os.write(fd, self.bindpw)
+            os.close(fd)
+
+            args = [
+                "/usr/bin/kinit",
+                "--renewable",
+                "--password-file=%s" % tmpfile,
+                "%s@%s" % principal
+            ]
+
+            p = pipeopen(string.join(args, ' '))
+            kinit_out = p.communicate()
+            os.unlink(tmpfile)
+
+            if p.returncode != 0:
+                return False
+
+            kinit = True 
+
+        if kinit:
+            i = 0
+            while i < self.timeout: 
+                if self.kerberos_cache_has_ticket():
+                    res = True
+                    break 
+
+                time.sleep(1)
+                i += 1
+
+        return res
 
     def get_user(self, user):
         log.debug("FreeNAS_LDAP_Base.get_user: enter")
@@ -1085,8 +1188,6 @@ class FreeNAS_ActiveDirectory_Base(object):
             'netbiosname',
             'bindname',
             'bindpw',
-            'use_keytab',
-            'keytab',
             'ssl',
             'certfile',
             'verbose_logging',
@@ -1109,6 +1210,15 @@ class FreeNAS_ActiveDirectory_Base(object):
             'krbport',
             'kpwdhost',
             'kpwdport',
+            'kerberos_realm',
+            'krb_realm',
+            'krb_kdc',
+            'krb_admin_server',   
+            'krb_kpasswd_server',
+            'kerberos_keytab',
+            'keytab_name',
+            'keytab_principal',
+            'keytab_file',
             'dchandle',
             'gchandle',
             'site',
@@ -1124,7 +1234,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.__kpwdname = None 
 
         for key in self.__keys():
-            if key in ('use_keytab', 'verbose_logging', 'unix_extensions',
+            if key in ('verbose_logging', 'unix_extensions',
                 'allow_trusted_doms', 'use_default_domain'):
                  self.__dict__[key] = False
             elif key in ('timeout', 'dns_timeout'):
@@ -1141,7 +1251,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.kpwdname:
             self.__kpwdname = self.kpwdname
 
-        self.flags = FLAGS_SASL_GSSAPI
+        #self.flags = FLAGS_SASL_GSSAPI
+        self.flags = 0
 
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
 
@@ -1154,6 +1265,101 @@ class FreeNAS_ActiveDirectory_Base(object):
             if len(parts) > 1:
                 port = long(parts[1])
         return (host, port)
+
+    def kerberos_cache_has_ticket(self):
+        res = False
+
+        p = pipeopen("/usr/bin/klist -t")
+        p.communicate() 
+        if p.returncode == 0:
+            res = True
+
+        return res
+
+    def get_kerberos_principal_from_cache(self):
+        principal = None
+
+        p = pipeopen("klist")
+        klist_out = p.communicate()
+        if p.returncode != 0:
+            return None
+
+        klist_out = klist_out[0]
+        lines = klist_out.splitlines()
+        for line in lines:
+            line =  line.strip()
+            if line.startswith("Principal"):
+                parts = line.split(':')
+                if len(parts) > 1: 
+                    principal = parts[1].strip()
+
+        return principal
+
+    def get_kerberos_ticket(self):
+        res = False 
+        kinit = False
+
+        if self.keytab_name and self.keytab_principal:
+            krb_principal = self.get_kerberos_principal_from_cache()
+            if krb_principal and krb_principal.upper() == \
+                self.keytab_principal.upper():
+                return True
+
+            args = [
+                "/usr/bin/kinit",
+                "--renewable",
+                "-k",
+                "-t",
+                self.keytab_file,
+                self.keytab_principal
+            ]
+
+            p = pipeopen(string.join(args, ' '))
+            kinit_out = p.communicate()
+            if p.returncode != 0:
+                return False
+
+            kinit = True 
+
+        elif self.krb_realm and self.bindname and self.bindpw:
+            krb_principal = self.get_kerberos_principal_from_cache()
+            principal = "%s@%s" % (self.bindname, self.krb_realm)
+            
+            if krb_principal and krb_principal.upper() == principal.upper():
+                return True
+
+            (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+            os.fchmod(fd, 0600)
+            os.write(fd, self.bindpw)
+            os.close(fd)
+
+            args = [
+                "/usr/bin/kinit",
+                "--renewable",
+                "--password-file=%s" % tmpfile,
+                "%s@%s" % principal
+            ]
+
+            p = pipeopen(string.join(args, ' '))
+            kinit_out = p.communicate()
+            os.unlink(tmpfile)
+
+            if p.returncode != 0:
+                return False
+
+            kinit = True 
+
+        if kinit:
+            i = 0
+            while i < self.timeout: 
+                if self.kerberos_cache_has_ticket():
+                    res = True
+                    break 
+
+                time.sleep(1)
+                i += 1
+
+        return res
 
     def __init__(self, **kwargs):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: enter")
@@ -1169,8 +1375,11 @@ class FreeNAS_ActiveDirectory_Base(object):
             self.binddn = self.adset(self.binddn,
                 self.bindname + '@' + self.domainname.upper())
 
+        # here we open a connection
+        self.get_kerberos_ticket()
         self.set_servers()
 
+        # get_baseDN() requires an open connection
         self.basedn = self.adset(self.basedn, self.get_baseDN())
         self.netbiosname = self.get_netbios_name()
 
@@ -1178,11 +1387,15 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gcount = 0
 
         if not self.site: 
+
+            # locate_site() requires an open connection
             self.site = self.locate_site()
             if not self.site:
                 self.site = 'Default-First-Site-Name'
 
             if self.site:
+
+                # requires an open connection
                 self.reset_servers()
                 self.set_servers()
 
@@ -1198,24 +1411,39 @@ class FreeNAS_ActiveDirectory_Base(object):
                     continue
 
                 newkey = key.replace("ad_", "")
-                if newkey in ('use_keytab', 'verbose_logging',
+                if newkey in ('verbose_logging',
                     'unix_extensions', 'allow_trusted_doms',
                     'use_default_domain'):
-                    self.__dict__[newkey] = \
+                    kwargs[newkey] = \
                         False if long(ad.__dict__[key]) == 0 else True
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)
-                    self.__dict__['certfile'] = cert
+                    kwargs['certfile'] = cert
 
                 elif newkey == 'kerberos_realm_id':
-                    self.__dict__['kerberos_realm'] = ad.ad_kerberos_realm
+                    kr = ad.ad_kerberos_realm
+
+                    if kr:
+                        kwargs['kerberos_realm'] = kr
+                        kwargs['krb_realm'] = kr.krb_realm
+                        kwargs['krb_kdc'] = kr.krb_kdc
+                        kwargs['krb_admin_server'] = kr.krb_admin_server
+                        kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
+                        #self.flags |= FLAGS_SASL_GSSAPI
 
                 elif newkey == 'kerberos_keytab_id':
-                    self.__dict__['kerberos_keytab'] = ad.ad_kerberos_keytab
+                    kt = ad.ad_kerberos_keytab
+
+                    if kt:
+                        kwargs['kerberos_keytab'] = kt
+                        kwargs['keytab_name'] = kt.keytab_name
+                        kwargs['keytab_principal'] = kt.keytab_principal
+                        kwargs['keytab_file'] = '/etc/krb5.keytab'
+                        #self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
-                    self.__dict__[newkey] = ad.__dict__[key] \
+                    kwargs[newkey] = ad.__dict__[key] \
                         if ad.__dict__[key] else None
 
         for key in kwargs:

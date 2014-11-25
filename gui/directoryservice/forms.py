@@ -241,8 +241,6 @@ class ActiveDirectoryForm(ModelForm):
 
     advanced_fields = [
         'ad_netbiosname',
-        'ad_use_keytab',
-        'ad_kerberos_keytab',
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
@@ -253,6 +251,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_dcname',
         'ad_gcname',
         'ad_kerberos_realm',
+        'ad_kerberos_keytab',
         'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
@@ -274,7 +273,6 @@ class ActiveDirectoryForm(ModelForm):
             'ad_netbiosname',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
-            'ad_use_keytab',
             'ad_unix_extensions',
             'ad_verbose_logging',
             'ad_bindname',
@@ -302,8 +300,6 @@ class ActiveDirectoryForm(ModelForm):
         if self.instance._original_ad_bindname != self.instance.ad_bindname:
             return True
         if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
-            return True
-        if self.instance._original_ad_use_keytab != self.instance.ad_use_keytab:
             return True
         return False
 
@@ -378,7 +374,7 @@ class ActiveDirectoryForm(ModelForm):
         if not cdata.get("ad_bindpw"):
             cdata['ad_bindpw'] = self.instance.ad_bindpw
 
-        if self.instance.ad_use_keytab is False:
+        if not self.instance.ad_kerberos_keytab:
             bindname = cdata.get("ad_bindname")
             bindpw = cdata.get("ad_bindpw")
             domain = cdata.get("ad_domainname")

@@ -763,17 +763,6 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("System hostname"),
         blank=True
     )
-    ad_use_keytab = models.BooleanField(
-        verbose_name=_("Use keytab"),
-        default=False,
-    )
-    ad_kerberos_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Kerberos Keytab"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -836,6 +825,13 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
+    ad_kerberos_keytab = models.ForeignKey(
+        KerberosKeytab,
+        verbose_name=_("Kerberos Keytab"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True

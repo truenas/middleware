@@ -18,95 +18,85 @@ kerberos_start_activedirectory()
 	local pwfile
 	local timeout=60
 
-	if dirsrv_enabled activedirectory
+	AD_init
+
+	local realm="$(AD_get ad_krb_realm)"
+	local bindname="$(AD_get ad_bindname)"
+	local bindpw="$(AD_get ad_bindpw)"
+	local domainname="$(AD_get ad_domainname)"
+	local keytab="$(AD_get ad_keytab_name)"
+
+	if [ -n "${keytab}" ]
 	then
-		AD_init
+		local res=0
+		local keytab_file="$(AD_get ad_keytab_file)"
+		local keytab_principal="$(AD_get ad_keytab_principal)"
 
-		local bindname="$(AD_get ad_bindname)"
-		local bindpw="$(AD_get ad_bindpw)"
-		local domainname="$(AD_get ad_domainname)"
-		local use_keytab=$(AD_get ad_use_keytab)
-		local keytab="$(AD_get ad_keytab)"
-
-		if [ "${use_keytab}" = "1" -a -f "${keytab}" ]
+		AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
+		/usr/bin/kinit -t "${keytab_file}" --renewable -k "${keytab_principal}"
+		if [ "$?" != "0" ]
 		then
-			local res=0
-			local principals
-
-			domainname="$(echo "${domainname}" | tr a-z A-Z)"
-
-			principals="$(/usr/sbin/ktutil -k "${keytab}" list|tail +4|awk '{ print $3 }')"
-			for p in ${principals}
-			do
-				AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab} -k ${p}"
-				/usr/bin/kinit -t "${keytab}" --renewable -k "${p}"
-				if [ "$?" != "0" ]
-				then
-					res=1
-					break
-				fi
-				res=0
-			done
-
-			local ok="Failed"
-			if [ "${res}" = "0" ]
-			then
-				ok="Successful"
-			fi
-
-			AD_log "kerberos_start: ${ok}"
-			rm -f "${pwfile}"
-
-			i=0
-			timeout="$(AD_get ad_timeout)"
-			while [ "${i}" -lt "${timeout}" ]
-			do
-				/usr/bin/klist -t
-				if [ "$?" = "0" ]
-				then
-					break
-				fi
-
-				sleep 1
-				: $(( i += 1 ))
-			done
-
-		elif [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
-		then
-			domainname="$(echo "${domainname}" | tr a-z A-Z)"
-
-			pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
-			echo -n "${bindpw}" > ${pwfile}
-
-			AD_log "kerberos_start: /usr/bin/kinit --renewable " \
-				"--password-file=${pwfile} ${bindname}@${domainname}"
-			__AD_tc ${timeout} /usr/bin/kinit --renewable \
-				--password-file="${pwfile}" "${bindname}@${domainname}"
-			res=$?
-
-			local ok="Failed"
-			if [ "${res}" = "0" ]
-			then
-				ok="Successful"
-			fi
-
-			AD_log "kerberos_start: ${ok}"
-			rm -f "${pwfile}"
-
-			i=0
-			timeout="$(AD_get ad_timeout)"
-			while [ "${i}" -lt "${timeout}" ]
-			do
-				/usr/bin/klist -t
-				if [ "$?" = "0" ]
-				then
-					break
-				fi
-
-				sleep 1
-				: $(( i += 1 ))
-			done
+			res=1
+			break
 		fi
+		res=0
+
+		local ok="Failed"
+		if [ "${res}" = "0" ]
+		then
+			ok="Successful"
+		fi
+
+		AD_log "kerberos_start: ${ok}"
+		rm -f "${pwfile}"
+
+		i=0
+		timeout="$(AD_get ad_timeout)"
+		while [ "${i}" -lt "${timeout}" ]
+		do
+			/usr/bin/klist -t
+			if [ "$?" = "0" ]
+			then
+				break
+			fi
+
+			sleep 1
+			: $(( i += 1 ))
+		done
+
+	elif [ -n "${realm}" -n "${bindname}" -a -n "${bindpw}" ]
+	then
+		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
+		echo -n "${bindpw}" > ${pwfile}
+
+		AD_log "kerberos_start: /usr/bin/kinit --renewable " \
+			"--password-file=${pwfile} ${bindname}@${realm}"
+		__AD_tc ${timeout} /usr/bin/kinit --renewable \
+			--password-file="${pwfile}" "${bindname}@${realm}"
+		res=$?
+
+		local ok="Failed"
+		if [ "${res}" = "0" ]
+		then
+			ok="Successful"
+		fi
+
+		AD_log "kerberos_start: ${ok}"
+		rm -f "${pwfile}"
+
+		i=0
+		timeout="$(AD_get ad_timeout)"
+		while [ "${i}" -lt "${timeout}" ]
+		do
+			/usr/bin/klist -t
+			if [ "$?" = "0" ]
+			then
+				break
+			fi
+
+			sleep 1
+			: $(( i += 1 ))
+		done
 	fi
 
 	return ${res}
@@ -116,30 +106,27 @@ kerberos_status_activedirectory()
 {
 	local res=1
 
-	if dirsrv_enabled activedirectory
+	AD_init
+
+	local domainname=$(AD_get ad_domainname)
+	local bindname=$(AD_get ad_bindname)
+	local bindpw=$(AD_get ad_bindpw)
+
+	if [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
 	then
-		AD_init
+		domainname=$(echo "${domainname}"|tr a-z A-Z)
 
-		local domainname=$(AD_get ad_domainname)
-		local bindname=$(AD_get ad_bindname)
-		local bindpw=$(AD_get ad_bindpw)
+		AD_log "kerberos_status: klist -t"
+		/usr/bin/klist -t
+		res=$?
 
-		if [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
+		local ok="Failed"
+		if [ "${res}" = "0" ]
 		then
-			domainname=$(echo "${domainname}"|tr a-z A-Z)
-
-			AD_log "kerberos_status: klist -t"
-			/usr/bin/klist -t
-			res=$?
-
-			local ok="Failed"
-			if [ "${res}" = "0" ]
-			then
-				ok="Successful"
-			fi
-
-			AD_log "kerberos_status: ${ok}"
+			ok="Successful"
 		fi
+
+		AD_log "kerberos_status: ${ok}"
 	fi
 
 	return ${res}
@@ -274,7 +261,7 @@ kerberos_start()
 
 	if dirsrv_enabled activedirectory
 	then
-		keberos_start_activedirectory
+		kerberos_start_activedirectory
 		res=$?
 
 	elif dirsrv_enabled ldap

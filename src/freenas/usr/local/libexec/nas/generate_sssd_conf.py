@@ -623,9 +623,20 @@ def add_activedirectory(sc):
     #
     ad_section.ldap_uri = "ldap://%s" % ad.dchost
     ad_section.ldap_search_base = ad.basedn
-    ad_section.ldap_default_bind_dn = ad.binddn
-    ad_section.ldap_default_authtok_type = 'password'
-    ad_section.ldap_default_authtok = ad.bindpw
+
+    if ad.keytab_name and ad.kerberos_realm:
+        ad_section.auth_provider = 'krb5'
+        ad_section.chpass_provider = 'krb5'
+        ad_section.ldap_sasl_mech = 'GSSAPI'
+        ad_section.ldap_sasl_authid = ad.keytab_principal
+        ad_section.krb5_server = ad.krb_kdc
+        ad_section.krb5_realm = ad.krb_realm
+        ad_section.krb5_canonicalize = 'false'
+
+    else:
+        ad_section.ldap_default_bind_dn = ad.binddn
+        ad_section.ldap_default_authtok_type = 'password'
+        ad_section.ldap_default_authtok = ad.bindpw
 
     sc[ad_domain] = ad_section
     sc['sssd'].add_domain(ad_cookie)

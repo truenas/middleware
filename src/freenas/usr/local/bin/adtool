@@ -77,8 +77,13 @@ class ADToolShell(cmd.Cmd):
             [ "kpwdname", "Kerberos password change server in hostname:port format"],
             [ "kpwdhost", "Kerberos password change server hostname" ],
             [ "kpwdport", "Kerberos password change server port" ],
-            [ "keytab", "Path to kerberos keytab" ],
-            [ "use_keytab", "Use a kerberos keytab" ],
+            [ "krb_realm", "Kerberos realm" ],
+            [ "krb_kdc", "Kerberos KDC" ],
+            [ "krb_admin_server", "Kerberos admin server" ],
+            [ "krb_kpasswd_server", "Kerberos password server" ],
+            [ "keytab_name", "Kerberos keytab name" ],
+            [ "keytab_principal", "Kerberos keytab principal" ],
+            [ "keytab_file", "Kerberos keytab file" ],
             [ "rootDSE", "Root of domain" ],
             [ "config", "Configuration DN" ],
             [ "partitions", "Directory partitions" ],
@@ -162,14 +167,19 @@ Available options:
             "ad_gcname",
             "ad_gchost",
             "ad_gcport",
-            "ad_use_keytab",
-            "ad_keytab",
             "ad_krbname",
             "ad_krbhost",
             "ad_krbport",
             "ad_kpwdname",
             "ad_kpwdhost",
             "ad_kpwdport",
+            "ad_krb_realm",
+            "ad_krb_kdc",
+            "ad_krb_admin_server",
+            "ad_krb_kpasswd_server",
+            "ad_keytab_name",
+            "ad_keytab_principal",
+            "ad_keytab_file",
             "ad_timeout",
             "ad_dns_timeout",
             "ad_ssl"
@@ -379,19 +389,54 @@ Available options:
         for arg in args:
             self.adc.kpwdport = long(arg)
     
-    def get_keytab(self, args):
-        print >> sys.stdout, self.adc.keytab
+    def get_krb_realm(self, args):
+        print >> sys.stdout, self.adc.krb_realm
 
-    def set_keytab(self, args):
+    def set_krb_realm(self, args):
         for arg in args:
-            self.adc.keytab = long(arg)
-    
-    def get_use_keytab(self, args):
-        print >> sys.stdout, self.adc.use_keytab
+            self.adc.krb_realm = arg 
 
-    def set_usekeytab(self, args):
+    def get_krb_kdc(self, args):
+        print >> sys.stdout, self.adc.krb_kdc
+
+    def set_krb_kdc(self, args):
         for arg in args:
-            self.adc.usekeytab = self.setbool(arg)
+            self.adc.krb_kdc = arg
+
+    def get_krb_admin_server(self, args):
+        print >> sys.stdout, self.adc.krb_admin_server
+
+    def set_krb_admin_server(self, args):
+        for arg in args:
+            self.adc.krb_admin_server = arg
+
+    def get_krb_kpasswd_server(self, args):
+        print >> sys.stdout, self.adc.krb_kpasswd_server
+
+    def set_krb_kpasswd_server(self, args):
+        for arg in args:
+            self.adc.krb_kpasswd_server = arg
+   
+    def get_keytab_name(self, args):
+        print >> sys.stdout, self.adc.keytab_name
+
+    def set_keytab_name(self, args):
+        for arg in args:
+            self.adc.keytab_name = arg
+   
+    def get_keytab_principal(self, args):
+        print >> sys.stdout, self.adc.keytab_principal
+
+    def set_keytab_principal(self, args):
+        for arg in args:
+            self.adc.keytab_principal = arg
+
+    def get_keytab_file(self, args):
+        print >> sys.stdout, self.adc.keytab_file
+
+    def set_keytab_file(self, args):
+        for arg in args:
+            self.adc.keytab_file = arg
 
     def get_rootdse(self, args):
         results = self.adc.get_rootDSE()
