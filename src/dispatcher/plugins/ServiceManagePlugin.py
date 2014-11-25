@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import os
 import errno
 from gevent import Timeout
 from watchdog import events
@@ -37,6 +38,9 @@ from lib.system import system, SubprocessException
 
 @description("Provides info about available services and their state")
 class ServiceInfoProvider(Provider):
+    def initialize(self, context):
+        self.datastore = context.dispatcher.datastore
+
     @description("Lists available services")
     @returns({
         'type': 'array',
@@ -44,20 +48,56 @@ class ServiceInfoProvider(Provider):
             'type': 'string'
         }
     })
-    def query(self, filter, params):
+    def query(self, filter=[], params={}):
         result = []
         for i in self.datastore.query('service_definitions', *filter, **params):
-            result.append({
-                'name': i['name']
-            })
+
+            if 'pidfile' in i:
+                # Check if process is alive by reading pidfile
+                try:
+                    fd = open(i['pidfile'], 'r')
+                    pid = int(fd.read().strip())
+                except IOError:
+                    pid = None
+                    state = 'stopped'
+                except ValueError:
+                    pid = None
+                    state = 'stopped'
+                else:
+                    try:
+                        os.kill(pid, 0)
+                    except OSError:
+                        state = 'unknown'
+                    else:
+                        state = 'running'
+            else:
+                # Fallback to 'service xxx status'
+                pid = None
+                state = 'unknown'
+
+            entry = {
+                'name': i['name'],
+                'state': state,
+            }
+
+            if pid is not None:
+                entry['pid'] = pid
+
+            result.append(entry)
 
         return result
 
     def get_service_config(self, service):
-        if not self.datastore.exists('service_definitions', ('name', '=', service)):
+        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
+        if not svc:
             raise RpcException(errno.EINVAL, 'Invalid service name')
 
-        return self.configstore.list_children('service.{0}'.format(service))
+        result = {}
+
+        for i in svc['settings']:
+            result.update(self.configstore.list_children(i))
+
+        return result
 
 @description("Provides functionality to start, stop, restart or reload service")
 @accepts({

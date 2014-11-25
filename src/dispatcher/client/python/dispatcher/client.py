@@ -28,7 +28,7 @@
 import json
 import uuid
 import errno
-from threading import Event
+from threading import Event, Thread
 from dispatcher import rpc
 from ws4py.client.threadedclient import WebSocketClient
 
@@ -71,6 +71,7 @@ class Client(object):
             self.method = method
             self.args = args
             self.result = None
+            self.error = None
             self.completed = Event()
             self.callback = None
 
@@ -134,11 +135,13 @@ class Client(object):
         self.ws.send(self.__pack('rpc', 'response', id=id, args=resp))
 
     def decode(self, msg):
-        if not 'namespace' in msg:
-            pass # error
+        if 'namespace' not in msg:
+            self.error_callback(ClientError.INVALID_JSON_RESPONSE)
+            return
 
-        if not 'name' in msg:
-            pass # error
+        if 'name' not in msg:
+            self.error_callback(ClientError.INVALID_JSON_RESPONSE)
+            return
 
         if msg['namespace'] == 'events' and msg['name'] == 'event':
             args = msg['args']
@@ -151,29 +154,32 @@ class Client(object):
                     self.__send_error(msg['id'], errno.EINVAL, 'Server functionality is not supported')
                     return
 
-                if not 'args' in msg:
+                if 'args' not in msg:
                     self.__send_error(msg['id'], errno.EINVAL, 'Malformed request')
                     return
 
                 args = msg['args']
-                if not 'method' in args or not 'args' in args:
+                if 'method' not in args or 'args' not in args:
                     self.__send_error(msg['id'], errno.EINVAL, 'Malformed request')
                     return
 
-                try:
-                    result = self.rpc.dispatch_call(args['method'], args['args'])
-                except rpc.RpcException, err:
-                    self.__send_error(msg['id'], err.code, err.message)
-                else:
-                    self.__send_response(msg['id'], result)
+                def run_async(msg, args):
+                    try:
+                        result = self.rpc.dispatch_call(args['method'], args['args'], sender=self)
+                    except rpc.RpcException, err:
+                        self.__send_error(msg['id'], err.code, err.message)
+                    else:
+                        self.__send_response(msg['id'], result)
 
+                t = Thread(target=run_async, args=(msg, args))
+                t.start()
                 return
 
             if msg['name'] == 'response':
                 if msg['id'] in self.pending_calls.keys():
                     call = self.pending_calls[msg['id']]
-                    call.completed.set()
                     call.result = msg['args']
+                    call.completed.set()
                     if call.callback is not None:
                         call.callback(msg['args'])
                 else:
@@ -181,6 +187,11 @@ class Client(object):
                         self.error_callback(ClientError.SPURIOUS_RPC_RESPONSE, msg['id'])
 
             if msg['name'] == 'error':
+                if msg['id'] in self.pending_calls.keys():
+                    call = self.pending_calls[msg['id']]
+                    call.result = None
+                    call.error = msg['args']
+                    call.completed.set()
                 if self.error_callback is not None:
                     self.error_callback(ClientError.RPC_CALL_ERROR)
 
@@ -247,6 +258,13 @@ class Client(object):
         self.pending_calls[str(call.id)] = call
         self.__call(call)
         call.completed.wait(timeout)
+
+        if call.result is None and call.error is not None:
+            raise rpc.RpcException(
+                call.error['code'],
+                call.error['message'],
+                call.error['extra'] if 'extra' in call.error else None)
+
         return call.result
 
     def emit_event(self, name, params):

@@ -41,7 +41,7 @@ from lxml import etree
 class DeviceInfoPlugin(Provider):
     def initialize(self, context):
         # Enumerate disks and create initial disk queues
-        for disk in self.__get_class_disk():
+        for disk in self._get_class_disk():
             context.dispatcher.balancer.create_queue(QueueClass.DISK, disk["name"])
 
     @description("Returns list of available device classes")
@@ -71,13 +71,13 @@ class DeviceInfoPlugin(Provider):
         ]
     })
     def get_devices(self, dev_class):
-        method = "__get_class_{0}".format(dev_class)
+        method = "_get_class_{0}".format(dev_class)
         if hasattr(self, method):
-            return getattr(self, method)
+            return getattr(self, method)()
 
         return None
 
-    def __get_class_disk(self):
+    def _get_class_disk(self):
         disk = None
         result = []
         confxml = geom.confxml()
@@ -101,10 +101,10 @@ class DeviceInfoPlugin(Provider):
 
         return result
 
-    def __get_class_network(self):
+    def _get_class_network(self):
         result = []
         for i in netifaces.interfaces():
-            node = get_sysctl(re.sub('(\w+)([0-9]+)', '\\1.\\2', i))
+            node = get_sysctl(re.sub('(\w+)([0-9]+)', 'dev.\\1.\\2', i))
             result.append({
                 'name': i,
                 'description': node['%desc'],
@@ -113,7 +113,7 @@ class DeviceInfoPlugin(Provider):
 
         return result
 
-    def __get_class_cpu(self):
+    def _get_class_cpu(self):
         pass
 
 

@@ -2,6 +2,7 @@ __author__ = 'jceel'
 
 import logging
 
+
 class EventSource(object):
     def __init__(self, dispatcher):
         self.__dispatcher = dispatcher

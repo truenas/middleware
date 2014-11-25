@@ -59,6 +59,7 @@ from auth import PasswordAuthenticator
 
 DEFAULT_CONFIGFILE = '/data/middleware.conf'
 
+
 class Dispatcher(object):
     def __init__(self):
         self.started_at = None
@@ -386,7 +387,6 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         del self.client_pending_calls[id]
 
-
     def on_rpc_call(self, id, data):
         def dispatch_call_async(id, method, args):
             try:
@@ -493,6 +493,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
     def send_json(self, obj):
         self.ws.send(json.dumps(obj))
+
 
 def run(d, args):
     setproctitle.setproctitle('server')

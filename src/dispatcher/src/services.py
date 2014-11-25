@@ -26,6 +26,7 @@
 #####################################################################
 
 import errno
+from gevent.event import Event
 from dispatcher.rpc import RpcService, RpcException, pass_sender
 
 
@@ -94,6 +95,7 @@ class PluginService(RpcService):
 
     def initialize(self, context):
         self.services = {}
+        self.events = {}
         self.__dispatcher = context.dispatcher
         self.__dispatcher.register_event_handler(
             'server.client_disconnected',
@@ -110,6 +112,9 @@ class PluginService(RpcService):
             'description': "Service {0} registered".format(name)
         })
 
+        if name in self.events.keys():
+            self.events[name].set()
+
     @pass_sender
     def unregister_service(self, name, sender):
         if name not in self.services.keys():
@@ -125,6 +130,13 @@ class PluginService(RpcService):
             'service-name': name,
             'description': "Service {0} unregistered".format(name)
         })
+
+    def wait_for_service(self, name, timeout=None):
+        if name in self.services.keys():
+            return
+
+        self.events[name] = Event()
+        self.events[name].wait(timeout)
 
 
 class TaskService(RpcService):
