@@ -147,6 +147,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-collectd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-collectd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-crontab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-crontab
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ctld ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ctld
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-etc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-fstab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-fstab
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-hostname ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-hostname
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inadyn ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inadyn

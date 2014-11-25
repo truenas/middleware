@@ -64,6 +64,7 @@ etc/ix.rc.d/ix-cache
 etc/ix.rc.d/ix-collectd
 etc/ix.rc.d/ix-crontab
 etc/ix.rc.d/ix-ctld
+etc/ix.rc.d/ix-etc
 etc/ix.rc.d/ix-fstab
 etc/ix.rc.d/ix-hostname
 etc/ix.rc.d/ix-inadyn
