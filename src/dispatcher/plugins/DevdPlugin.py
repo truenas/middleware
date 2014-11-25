@@ -104,11 +104,13 @@ class DeviceInfoPlugin(Provider):
     def _get_class_network(self):
         result = []
         for i in netifaces.interfaces():
+            if i.startswith('lo'):
+                continue
+
             node = get_sysctl(re.sub('(\w+)([0-9]+)', 'dev.\\1.\\2', i))
             result.append({
                 'name': i,
-                'description': node['%desc'],
-                'pnpinfo': node['%pnpinfo']
+                'description': node['%desc'] if '%desc' in node else 'unknown'
             })
 
         return result
