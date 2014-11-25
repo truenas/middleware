@@ -12,6 +12,33 @@
 
 . /etc/rc.freenas
 
+kerberos_get_principal()
+{
+	/usr/bin/klist|egrep '^ +Principal'|awk '{ print $2 }'
+}
+
+kerbers_principal_check()
+{
+	local principal="${1}"
+	local krb_principal="$(kerberos_get_principal)"
+
+	if [ -z "${principal}" -o -z "${krb_principal}" ]
+	then
+		return 1
+	fi
+
+	principal="$(echo "${principal}"|tr a-z A-Z)"
+	krb_principal="$(echo "${krb_principal}"|tr a-z A-Z)"
+
+	local res=1
+	if [ "${principal}" = "${krb_principal}" ]
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
 kerberos_start_activedirectory()
 {
 	local res=1
@@ -31,6 +58,12 @@ kerberos_start_activedirectory()
 		local res=0
 		local keytab_file="$(AD_get ad_keytab_file)"
 		local keytab_principal="$(AD_get ad_keytab_principal)"
+
+		if kerbers_principal_check "${keytab_principal}"
+		then
+			return 0
+		fi
+
 
 		AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
 		/usr/bin/kinit -t "${keytab_file}" --renewable -k "${keytab_principal}"
@@ -66,13 +99,19 @@ kerberos_start_activedirectory()
 
 	elif [ -n "${realm}" -n "${bindname}" -a -n "${bindpw}" ]
 	then
+		local principal="${bindname}@${realm}"
+		if kerbers_principal_check "${principal}"
+		then
+			return 0
+		fi
+
 		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
 		echo -n "${bindpw}" > ${pwfile}
 
 		AD_log "kerberos_start: /usr/bin/kinit --renewable " \
-			"--password-file=${pwfile} ${bindname}@${realm}"
+			"--password-file=${pwfile} ${principal}"
 		__AD_tc ${timeout} /usr/bin/kinit --renewable \
-			--password-file="${pwfile}" "${bindname}@${realm}"
+			--password-file="${pwfile}" "${principal}"
 		res=$?
 
 		local ok="Failed"
@@ -152,6 +191,11 @@ kerberos_start_ldap()
 		local keytab_file="$(LDAP_get ldap_keytab_file)"
 		local keytab_principal="$(LDAP_get ldap_keytab_principal)"
 
+		if kerbers_principal_check "${keytab_principal}"
+		then
+			return 0
+		fi
+
 		LDAP_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
 		/usr/bin/kinit -t "${keytab_file}" \
 			--renewable -k "${keytab_principal}"
@@ -187,6 +231,12 @@ kerberos_start_ldap()
 
 	elif [ -n "${realm}" -a -n "${binddn}" -a -n "${bindpw}" ]
 	then
+		local principal="${uid}@${realm}"
+		if kerbers_principal_check "${principal}"
+		then
+			return 0
+		fi
+
 		local uid="$(LDAP_get_binddn_uid)"
 		if [ -z "${uid}" ]
 		then
@@ -197,9 +247,9 @@ kerberos_start_ldap()
 		echo -n "${bindpw}" > ${pwfile}
 
 		LDAP_log "kerberos_start: /usr/bin/kinit --renewable " \
-			"--password-file=${pwfile} ${uid}@${realm}"
+			"--password-file=${pwfile} ${principal}"
 		__LDAP_tc ${timeout} /usr/bin/kinit --renewable \
-			--password-file="${pwfile}" "${uid}@${realm}"
+			--password-file="${pwfile}" "${principal}"
 		res=$?
 
 		local ok="Failed"

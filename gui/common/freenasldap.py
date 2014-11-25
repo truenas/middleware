@@ -88,7 +88,6 @@ FLAGS_AD_ENABLED	= 0x00000001
 FLAGS_LDAP_ENABLED	= 0x00000002
 FLAGS_PREFER_IPv6	= 0x00000004
 FLAGS_SASL_GSSAPI	= 0x00000008
-FLAGS_CONFIG_ONLY	= 0x00000010
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
@@ -668,7 +667,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 "/usr/bin/kinit",
                 "--renewable",
                 "--password-file=%s" % tmpfile,
-                "%s@%s" % principal
+                "%s" % principal
             ]
 
             p = pipeopen(string.join(args, ' '))
@@ -1337,7 +1336,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 "/usr/bin/kinit",
                 "--renewable",
                 "--password-file=%s" % tmpfile,
-                "%s@%s" % principal
+                "%s" % principal
             ]
 
             p = pipeopen(string.join(args, ' '))
