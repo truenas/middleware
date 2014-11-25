@@ -799,8 +799,8 @@ If you check the "Encryption" box during the creation of a pool, five additional
 |encrypt.png|
 
 .. |encrypt.png| image:: images/encrypt.png
-    :width: 4.3in
-    :height: 4.6in
+    :width: 4.8in
+    :height: 4.5in
 
 In order from left to right, these additional encryption buttons are used to:
 
@@ -1588,16 +1588,16 @@ changed since the snapshot was taken will be reverted back to their state at the
 .. note:: rollback is a potentially dangerous operation and will cause any configured replication tasks to fail as the replication system uses the existing
    snapshot when doing an incremental backup. If you do need to restore the data within a snapshot, the recommended steps are:
 
-#.  Clone the desired snapshot.
+   #.  Clone the desired snapshot.
 
-#.  Share the clone with the share type or service running on the FreeNAS® system.
+   #.  Share the clone with the share type or service running on the FreeNAS® system.
 
-#.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
+   #.  Once users have recovered the needed data, destroy the clone in the Active Volumes tab.
 
-This approach will never destroy any on-disk data and has no impact on replication.
+   This approach will never destroy any on-disk data and has no impact on replication.
 
-Periodic snapshots can be configured to appear as Shadow Copies in newer versions of Windows Explorer. Users can access the files in the shadow copy using
-Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
+Periodic snapshots can be configured to appear as shadow copies in newer versions of Windows Explorer, as described in :ref:`Configuring Shadow Copies`. Users
+can access the files in the shadow copy using Explorer without requiring any interaction with the FreeNAS® graphical administrative interface.
 
 The ZFS Snapshots screen allows you to create filters to view snapshots by selected criteria. To create a filter, click the "Define filter" icon (near the
 text "No filter applied"). When creating a filter:
@@ -1621,11 +1621,14 @@ available snapshots will be listed.
 VMWare Snapshots
 ----------------
 
-:menuselection:`Storage --> VMWare Snapshots` allows you to...
+:menuselection:`Storage --> VMWare Snapshots` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once a "VMWare Snapshot" is created,
+FreeNAS® will automatically snapshot any running VMware virtual machines before taking a scheduled or manual ZFS snapshot of the dataset or zvol backing that
+VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
+resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
 
-Figure 8.6a shows the menu for adding a VMWare snapshot and Table 8.6a summarizes the available options.
+Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarizes the available options.
 
-**Figure 8.6a: Adding a VMWare Snapshot**
+**Figure 8.6a: Adding a VMware Snapshot**
 
 |vmware1.png|
 
@@ -1653,6 +1656,6 @@ Figure 8.6a shows the menu for adding a VMWare snapshot and Table 8.6a summarize
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | Datastore      | drop-down menu              | after inputting the "Hostname", "Username", and "Password", click the "Fetch Datastores" button to populate |
-|                |                             | the menu; select the datastore to....                                                                       |
+|                |                             | the menu and select the datastore to synchronize with                                                       |
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
