@@ -40,15 +40,15 @@ if [ -n "$WITH_PKGNG" ]; then
 		signature_type: "fingerprints",
 		fingerprints: "/etc/pkg/fingerprints/pcbsd",
 		enabled: true
-	     }' > ${NANO_OBJ}/.w/usr/local/etc/pkg/repos/pcbsd.conf
+	     }' > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/pcbsd.conf
 
 	# Create the fingerprints dirs
-	mkdir -p ${NANO_OBJ}/.w/usr/local/etc/pkg/fingerprints/revoked
-	mkdir -p ${NANO_OBJ}/.w/usr/local/etc/pkg/fingerprints/trusted
+	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/revoked
+	mkdir -p ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/trusted
 
 	# Save the fingerprint
 	echo 'function: sha256
-fingerprint: b2b9e037f938cf20ba68aa85ac88c15889c729a7f6b70c25069774308e760a03' > ${NANO_OBJ}/.w/usr/local/etc/pkg/fingerprints/trusted/pkg.cdn.pcbsd.org.20131209
+fingerprint: b2b9e037f938cf20ba68aa85ac88c15889c729a7f6b70c25069774308e760a03' > ${NANO_OBJ}/_.w/usr/local/etc/pkg/fingerprints/trusted/pkg.cdn.pcbsd.org.20131209
 
 	PACKAGES_TO_INSTALL=""
 	for package in $(cat ${PORTSLIST}); do 
