@@ -1,0 +1,33 @@
+#
+# $FreeBSD$
+# $Id$
+#
+
+PORTNAME=       freenas-cli
+PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
+PORTREVISION=	${REVISION}
+
+CATEGORIES=     freenas
+VALID_CATEGORIES+= freenas
+
+MAINTAINER=     dev@ixsystems.com
+COMMENT=        FreeNAS Command Line Iterface
+
+USE_XZ=		yes
+USE_PYTHON=	yes
+EXTRACT_ONLY=
+
+NO_BUILD= 	yes
+MAKE_JOBS_UNSAFE= yes
+ALL_TARGET=	obj all
+WRKSRC=		/usr/nas_source2/cli
+
+USES=		python
+
+checksum fetch:
+	echo ${.TARGET} not needed because building direct
+
+do-install:
+	${MAKE} -C ${WRKSRC} install PREFIX=${STAGEDIR}${PREFIX} PYTHON=${PYTHON_CMD}
+
+.include <bsd.port.mk>

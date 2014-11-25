@@ -32,7 +32,7 @@ from namespace import Namespace, Command, description
 
 @description("Lists system services")
 class ListCommand(Command):
-    def run(self, context, args):
+    def run(self, context, args, kwargs):
         print context.connection.call_sync('system.info.status')
 
 

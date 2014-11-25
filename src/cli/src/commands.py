@@ -25,34 +25,32 @@
 #
 #####################################################################
 
+import sys
+from namespace import Command, CommandException, description
+from output import output_value, output_dict
 
-from namespace import Namespace, Command, IndexCommand, description
-from output import output_dict
 
-
-@description("Provides status information about the server")
-class StatusCommand(Command):
+@description("Sets variable value")
+class SetenvCommand(Command):
     def run(self, context, args, kwargs):
-        output_dict(context.connection.call_sync('management.status'))
+        if len(args) < 2:
+            raise CommandException('Wrong parameter count')
 
+        context.variables.set(args[0], args[1])
 
-@description("Logs in to the server")
-class LoginCommand(Command):
+@description("Prints variable value")
+class PrintenvCommand(Command):
     def run(self, context, args, kwargs):
-        context.connection.login_user(args[0], args[1])
-        context.connection.subscribe_events('*')
-        context.login_plugins()
+        if len(args) == 0:
+            output_dict(context.variables.get_all(), key_label='Variable name', value_label='Value')
+            return
+
+        if len(args) == 1:
+            output_value(context.variables.get(args[0]))
+            return
 
 
-@description("System namespace")
-class SystemNamespace(Namespace):
-    def commands(self):
-        return {
-            '?': IndexCommand(self),
-            'login': LoginCommand(),
-            'status': StatusCommand()
-        }
-
-
-def _init(context):
-    context.attach_namespace('/system', SystemNamespace())
+@description("Exits the CLI")
+class ExitCommand(Command):
+    def run(self, context, args, kwargs):
+        sys.exit(0)

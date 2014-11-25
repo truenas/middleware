@@ -1,0 +1,17 @@
+/usr/local/lib/freenascli/src/commands.py
+/usr/local/lib/freenascli/src/config.py
+/usr/local/lib/freenascli/src/namespace.py
+/usr/local/lib/freenascli/src/output.py
+/usr/local/lib/freenascli/src/repl.py
+/usr/local/lib/freenascli/src/utils.py
+/usr/local/lib/freenascli/plugins/accounts.py
+/usr/local/lib/freenascli/plugins/accounts.pyc
+/usr/local/lib/freenascli/plugins/autogenerate.py
+/usr/local/lib/freenascli/plugins/autogenerate.pyc
+/usr/local/lib/freenascli/plugins/service.py
+/usr/local/lib/freenascli/plugins/service.pyc
+/usr/local/lib/freenascli/plugins/system.py
+/usr/local/lib/freenascli/plugins/system.pyc
+/usr/local/lib/freenascli/plugins/tasks.py
+/usr/local/lib/freenascli/plugins/tasks.pyc
+/usr/local/bin/cli

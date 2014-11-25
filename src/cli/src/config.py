@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -26,26 +25,4 @@
 #
 #####################################################################
 
-from texttable import Texttable
-
-
-def print_dict(obj, key_label='Key', value_label='Value'):
-    table = Texttable()
-    table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-    table.add_rows([[key_label, value_label]], header=True)
-
-    for k, v in obj.items():
-        table.add_row([k, v])
-
-    print table.draw()
-
-
-def print_set(array):
-    table = Texttable()
-    table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-    table.add_rows([array[0].keys()], header=True)
-
-    for row in array:
-        table.add_row(row.values())
-
-    print table.draw()
+instance = None

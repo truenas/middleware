@@ -26,68 +26,99 @@
 #####################################################################
 
 
-from texttable import Texttable
-from namespace import Namespace, Command, IndexCommand, description
+from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
 
 
-@description("Lists system services")
-class ListUsersCommand(Command):
-    def run(self, context, args):
-        users = context.connection.call_sync('accounts.query_users')
-        table = Texttable()
-        table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-        table.header(['Username', 'Full name', 'UID', 'Group', 'Shell', 'Home directory'])
-
-        for u in users:
-            table.add_row([u['username'], u['full_name'], u['id'], u['group'], u['shell'], u['home']])
-
-        print table.draw()
-
-
-@description("Lists system services")
-class UserSetCommand(Command):
-    def __init__(self, name):
-        super(UserSetCommand, self).__init__()
-        self.name = name
-
-    def run(self, context, args):
+@description("foo")
+class UsersNamespace(EntityNamespace):
+    class ChangePasswordCommand(Command):
         pass
 
+    def __init__(self, context):
+        super(UsersNamespace, self).__init__(context)
 
-@description("Lists system services")
-class UserShowCommand(Command):
-    def __init__(self, name):
-        super(UserShowCommand, self).__init__()
-        self.name = name
+        self.add_property(
+            descr='User name',
+            name='username',
+            get='/username',
+            list=True)
 
-    def run(self, context, args):
+        self.add_property(
+            descr='Full name',
+            name='fullname',
+            get='/full_name',
+            list=True)
+
+        self.add_property(
+            descr='User ID',
+            name='uid',
+            get='/id',
+            set=None,
+            list=True)
+
+        self.add_property(
+            descr='Primary group',
+            name='group',
+            get=self.display_group)
+
+        self.add_property(
+            descr='Login shell',
+            name='shell',
+            get='/shell')
+
+        self.add_property(
+            descr='Home directory',
+            name='home',
+            get='/home',
+            list=True)
+
+        self.primary_key = '/username'
+        self.entity_commands = [self.ChangePasswordCommand]
+
+    def query(self):
+        return self.context.connection.call_sync('users.query')
+
+    def get_one(self, name):
+        return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
+
+    def set(self, entity, name, value, context):
         pass
 
+    def display_group(self, entity):
+        group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
+        return group['name'] if group else 'GID:{0}'.format(entity['group'])
 
-@description("Lists system services")
-class UserDeleteCommand(Command):
-    def __init__(self, name):
-        super(UserDeleteCommand, self).__init__()
-        self.name = name
 
-    def run(self, context, args):
+@description("blah")
+class GroupsNamespace(EntityNamespace):
+    def __init__(self, context):
+        super(GroupsNamespace, self).__init__(context)
+
+        self.add_property(
+            descr='Group name',
+            name='name',
+            get='/name')
+
+        self.add_property(
+            descr='Group ID',
+            name='gid',
+            get='/id',
+            set=None)
+
+        self.add_property(
+            descr='Builtin group',
+            name='builtin',
+            get='/builtin',
+            set=None)
+
+    def query(self):
+        return self.context.connection.call_sync('groups.query')
+
+    def get_one(self, name, context):
+        return context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
+
+    def set(self, entity, name, value, context):
         pass
-
-
-class UserNamespace(Namespace):
-    def __init__(self, context, name):
-        super(UserNamespace, self).__init__()
-        self.context = context
-        self.name = name
-        self.description = 'User {0}'.format(name)
-
-    def commands(self):
-        return {
-            '?': IndexCommand(self),
-            'set': UserSetCommand(self.name),
-            'show': UserShowCommand(self.name),
-            'delete': UserDeleteCommand(self.name)
-        }
 
 
 @description("Service namespace")
@@ -98,18 +129,14 @@ class AccountNamespace(Namespace):
 
     def commands(self):
         return {
-            '?': IndexCommand(self),
-            'list': ListUsersCommand()
+            '?': IndexCommand(self)
         }
 
     def namespaces(self):
-        result = {}
-        users = self.context.connection.call_sync('accounts.query_users')
-
-        for i in map(lambda u: u['username'], users):
-            result[i] = UserNamespace(self.context, i)
-
-        return result
+        return {
+            'users': UsersNamespace(self.context),
+            'groups': GroupsNamespace(self.context)
+        }
 
 
 def _init(context):

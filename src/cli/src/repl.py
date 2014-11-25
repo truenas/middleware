@@ -29,15 +29,58 @@
 import sys
 import os
 import glob
-import gnureadline as readline
 import argparse
+import shlex
 import imp
 import logging
 import struct
 import fcntl
+import platform
 import termios
+import config
 from namespace import RootNamespace
 from dispatcher.client import Client
+from commands import ExitCommand, PrintenvCommand, SetenvCommand
+
+
+if platform.system() == 'Darwin':
+    import gnureadline as readline
+else:
+    import readline
+
+
+class VariableStore(object):
+    class Variable(object):
+        def __init__(self, default, type, choices=None):
+            self.default = default
+            self.type = type
+            self.choices = choices
+            self.value = default
+
+        def set(self, value):
+            try:
+                if self.type == int:
+                    value = int(value)
+            except ValueError:
+                raise
+
+            if self.choices is not None and value not in self.choices:
+                raise ValueError('Value not on the list of possible choices')
+
+    def __init__(self):
+        self.variables = {
+            'output-format': self.Variable('ascii', str, ['ascii', 'json'])
+        }
+
+    def get(self, name):
+        return self.variables[name].value
+
+    def get_all(self):
+        for name, var in self.variables.items():
+            yield (name, var.value)
+
+    def set(self, name, value):
+        self.variables[name].set(value)
 
 
 class Context(object):
@@ -48,8 +91,10 @@ class Context(object):
         self.logger = logging.getLogger('cli')
         self.plugin_dirs = []
         self.plugins = {}
+        self.variables = VariableStore()
         self.root_ns = RootNamespace()
         self.event_masks = ['*']
+        config.instance = self
 
     def start(self):
         self.discover_plugins()
@@ -109,6 +154,12 @@ class PathItem(object):
 
 
 class MainLoop(object):
+    builtin_commands = {
+        'exit': ExitCommand(),
+        'setenv': SetenvCommand(),
+        'printenv': PrintenvCommand()
+    }
+
     def __init__(self, context):
         self.context = context
         self.root_path = [PathItem(self.context.hostname, self.context.root_ns)]
@@ -125,6 +176,29 @@ class MainLoop(object):
     @property
     def cwd(self):
         return self.path[-1]
+
+    def tokenize(self, line):
+        args = []
+        kwargs = {}
+        tokens = shlex.split(line, posix=False)
+
+        for t in tokens:
+            if t[0] == '"' and t[-1] == '"':
+                t = t[1:-1]
+                args.append(t)
+                continue
+
+            if '=' in t:
+                key, eq, value = t.partition('=')
+                if value[0] == '"' and value[-1] == '"':
+                    value = value[1:-1]
+
+                kwargs[key] = value
+                continue
+
+            args.append(t)
+
+        return args, kwargs
 
     def repl(self):
         readline.parse_and_bind('tab: complete')
@@ -144,7 +218,7 @@ class MainLoop(object):
                     del self.path[-1]
                     continue
 
-            tokens = line.split()
+            tokens, kwargs = self.tokenize(line)
             oldpath = self.path[:]
 
             while tokens:
@@ -152,28 +226,37 @@ class MainLoop(object):
                 nsfound = False
                 cmdfound = False
 
-                for name, ns in self.cwd.ns.namespaces().items():
-                    if token == name:
-                        self.cd(token, ns)
-                        nsfound = True
-                        break
-
-                for name, cmd in self.cwd.ns.commands().items():
-                    if token == name:
-                        cmd.run(self.context, tokens)
-                        cmdfound = True
-                        break
-
-                if not nsfound and not cmdfound:
-                    print 'Command not found! Type "?" for help.'
+                if token in self.builtin_commands.keys():
+                    self.builtin_commands[token].run(self.context, tokens, kwargs)
                     break
 
-                if cmdfound:
-                    self.path = oldpath
+                try:
+                    for name, ns in self.cwd.ns.namespaces().items():
+                        if token == name:
+                            self.cd(token, ns)
+                            nsfound = True
+                            break
+
+                    for name, cmd in self.cwd.ns.commands().items():
+                        if token == name:
+                            cmd.run(self.context, tokens, kwargs)
+                            cmdfound = True
+                            break
+
+                except Exception, err:
+                    print 'Error: {0}'.format(str(err))
                     break
+                else:
+                    if not nsfound and not cmdfound:
+                        print 'Command not found! Type "?" for help.'
+                        break
+
+                    if cmdfound:
+                        self.path = oldpath
+                        break
 
     def complete(self, text, state):
-        choices = self.cwd.ns.namespaces().keys() + self.cwd.ns.commands().keys()
+        choices = self.cwd.ns.namespaces().keys() + self.cwd.ns.commands().keys() + self.builtin_commands.keys()
         options = [i for i in choices if i.startswith(text)]
         if state < len(options):
             return options[state]
@@ -197,6 +280,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('hostname', metavar='HOSTNAME', default='127.0.0.1')
     parser.add_argument('-I', metavar='DIR')
+    parser.add_argument('-D', metavar='DEFINE', action='append')
     args = parser.parse_args()
     context = Context()
     context.hostname = args.hostname
