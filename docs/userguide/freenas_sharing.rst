@@ -73,8 +73,8 @@ If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) 
 |afp2.png|
 
 .. |afp2.png| image:: images/afp2.png
-    :width: 3.8in
-    :height: 3.4in
+    :width: 5.3in
+    :height: 2.4in
 
 Table 10.1a summarizes the available options when creating an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -181,8 +181,6 @@ In this configuration example, the AFP share has been configured for guest acces
 *   "Read-write Access": set to *nobody*
 
 #.  :menuselection:`Services --> AFP` has been configured as follows:
-
-*   "Server Name": *freenas*
 
 *   "Guest Access": checkbox is checked
 
@@ -303,8 +301,8 @@ To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> 
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 4.4in
-    :height: 3.9in
+    :width: 5.5in
+    :height: 3.1in
 
 Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
 :menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
@@ -797,7 +795,6 @@ The process for configuring a share is as follows:
 
     * Repeat this process to create a user account for every user that will need access to the CIFS share
 
-    
 #.  If you are not using Active Directory or LDAP, create a group in :menuselection:`Account --> Groups --> Add Group`. Once the group is created, click its
     "Members" button and add the user accounts that you created in step 1.
 
