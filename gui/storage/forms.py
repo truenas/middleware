@@ -389,6 +389,21 @@ class VdevFormSet(BaseFormSet):
             zpool = notifier().zpool_parse(
                 self.pform.cleaned_data.get("volume_add")
             )
+
+            for i in range(0, self.total_form_count()):
+                form = self.forms[i]
+                vdevtype = form.cleaned_data.get('vdevtype')
+                if not vdevtype:
+                    continue
+
+                if vdevtype in (
+                    'cache',
+                    'log',
+                    'log mirror',
+                    'spare',
+                ):
+                    self._clean_vdevtype(vdevfound, vdevtype)
+
             for vdev in zpool.data:
 
                 for i in range(0, self.total_form_count()):
@@ -404,7 +419,6 @@ class VdevFormSet(BaseFormSet):
                         'log mirror',
                         'spare',
                     ):
-                        self._clean_vdevtype(vdevfound, vdevtype)
                         continue
 
                     disks = form.cleaned_data.get('disks')
