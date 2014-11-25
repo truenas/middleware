@@ -32,6 +32,8 @@ Getting FreeNAS®
 FreeNAS® 9.3 can be downloaded from
 `http://download.freenas.org/ <http://download.freenas.org/>`_.
 
+.. note:: FreeNAS® will only install to 64-bit hardware and the installer will not work on 32-bit hardware.
+
 The download page contains the following types of files:
 
 * **.iso:** this is a bootable installer that can be written to either a CD or USB flash as described in :ref:`Preparing the Media`.
@@ -315,6 +317,9 @@ Be aware of the following caveats **before** attempting an upgrade:
 
 * **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
   will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
+
+* **Upgrades on 32-bit hardware to FreeNAS® 9.3 or higher are not supported.** However, if the system is currently running a 32-bit version of FreeNAS®
+  **and** the hardware supports 64-bit, the system can be upgraded but any archived reporting graphs will be lost during the upgrade.
 
 * **DO NOT upgrade the ZFS pool unless you are absolutely sure that you will never want to go back to the previous version.** For this reason, the update
   process will not automatically upgrade the ZFS pool, though the :ref:`Alert` system will tell you if newer feature flags are available for the pool. Unless
