@@ -28,7 +28,6 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
-from stat import S_ISDIR
 import logging
 import os
 import re
@@ -341,7 +340,6 @@ class VolumeVdevForm(Form):
 
 class VdevFormSet(BaseFormSet):
 
-
     def _clean_vdevtype(self, vdevfound, vdevtype):
         if vdevtype in (
             'cache',
@@ -483,8 +481,9 @@ class ZFSVolumeWizardForm(forms.Form):
             self.fields['volume_add'] = forms.ChoiceField(
                 label=_('Volume add'),
                 required=False)
-            self.fields['volume_add'].choices = [('', '-----')] + \
-                                        [(x.vol_name, x.vol_name) for x in qs]
+            self.fields['volume_add'].choices = [
+                ('', '-----')
+            ] + [(x.vol_name, x.vol_name) for x in qs]
             self.fields['volume_add'].widget.attrs['onChange'] = (
                 'zfswizardcheckings(true);')
 
@@ -562,11 +561,13 @@ class ZFSVolumeWizardForm(forms.Form):
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
         if vname and not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
-            raise forms.ValidationError(_("The volume name must start with "
+            raise forms.ValidationError(_(
+                "The volume name must start with "
                 "letters and may include numbers, \"-\", \"_\" and \".\" ."))
         if models.Volume.objects.filter(vol_name=vname).exists():
-            raise forms.ValidationError(_("A volume with that name already "
-                "exists."))
+            raise forms.ValidationError(_(
+                "A volume with that name already exists."
+            ))
         return vname
 
     def clean_group_type(self):
@@ -612,8 +613,10 @@ class ZFSVolumeWizardForm(forms.Form):
                 re.search(r'^mirror.*', volume_name) or \
                 re.search(r'^spare.*', volume_name) or \
                 re.search(r'^raidz.*', volume_name):
-            msg = _(u"The volume name may NOT start with c[0-9], mirror, "
-                "raidz or spare")
+            msg = _(
+                u"The volume name may NOT start with c[0-9], mirror, "
+                "raidz or spare"
+            )
             self._errors["volume_name"] = self.error_class([msg])
             cleaned_data.pop("volume_name", None)
 
@@ -640,8 +643,10 @@ class ZFSVolumeWizardForm(forms.Form):
             group_type = self.cleaned_data['group_type']
 
         with transaction.commit_on_success():
-            vols = models.Volume.objects.filter(vol_name=volume_name,
-                vol_fstype='ZFS')
+            vols = models.Volume.objects.filter(
+                vol_name=volume_name,
+                vol_fstype='ZFS'
+            )
             if vols.count() == 1:
                 volume = vols[0]
                 add = True
@@ -686,8 +691,10 @@ class ZFSVolumeWizardForm(forms.Form):
             if add:
                 for grp_type in grouped:
                     if grp_type in ('log', 'cache', 'spare'):
-                        notifier().zfs_volume_attach_group(volume,
-                            grouped.get(grp_type))
+                        notifier().zfs_volume_attach_group(
+                            volume,
+                            grouped.get(grp_type)
+                        )
 
             else:
                 notifier().init(
@@ -783,6 +790,7 @@ class VolumeImportForm(Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         if volume_fstype == 'NTFS':
             notifier().start("fusefs")
+
 
 def show_descrypt_condition(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
@@ -1274,9 +1282,9 @@ class ZFSDataset(Form):
         label=_('Share type'))
     dataset_case_sensitivity = forms.ChoiceField(
         choices=choices.CASE_SENSITIVITY_CHOICES,
-        initial=choices.CASE_SENSITIVITY_CHOICES[0][0], 
+        initial=choices.CASE_SENSITIVITY_CHOICES[0][0],
         widget=forms.Select(attrs=attrs_dict),
-        label=_('Case Sensitivity')) 
+        label=_('Case Sensitivity'))
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),
@@ -1845,7 +1853,7 @@ class CloneSnapshotForm(Form):
             if '/' in dataset:
                 dataset = '%s-' % dataset
             else:
-                dataset= '%s/' % dataset
+                dataset = '%s/' % dataset
             self.fields['cs_name'].initial = '%s%s-clone' % (
                 dataset,
                 snapname)
@@ -1937,7 +1945,6 @@ class ZFSDiskReplacementForm(Form):
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
         return choices
-
 
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
@@ -2620,7 +2627,7 @@ class VMWarePluginForm(ModelForm):
         return cdata
 
     def save(self, *args, **kwargs):
-	kwargs['commit'] = False
+        kwargs['commit'] = False
         obj = super(VMWarePluginForm, self).save(*args, **kwargs)
         obj.set_password(self.cleaned_data.get('password'))
         obj.save()
