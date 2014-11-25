@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import copy
 import uuid
 from pymongo import MongoClient
 
@@ -139,20 +140,24 @@ class MongodbDatastore(object):
         obj['id'] = obj.pop('_id')
         return obj
 
-    def get_by_id(self, collection, id):
-        obj = self.db[collection].find_one({'_id': id})
+    def get_by_id(self, collection, pkey):
+        obj = self.db[collection].find_one({'_id': pkey})
         if obj is None:
             return None
 
         obj['id'] = obj.pop('_id')
         return obj
 
+    def exists(self, collection, *args, **kwargs):
+        return self.get_one(collection, *args, **kwargs) is not None
+
     def insert(self, collection, obj, pkey=None, upsert=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-
-        if type(obj) is not dict:
+        elif type(obj) is not dict:
             obj = {'value': obj}
+        else:
+            obj = copy.copy(obj)
 
         if 'id' in obj:
             pkey = obj.pop('id')
@@ -172,9 +177,10 @@ class MongodbDatastore(object):
     def update(self, collection, pkey, obj):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-
-        if type(obj) is not dict:
+        elif type(obj) is not dict:
             obj = {'value': obj}
+        else:
+            obj = copy.copy(obj)
 
         if 'id' in obj:
             del obj['id']
