@@ -201,7 +201,7 @@ __EOF__
 		# Checking if the key bit lenght is greater than or equal to 1024
 		local safecert=$(${OPENSSL} rsa -in "${httpdkey}" -text -noout | grep "Private-Key" | egrep -o '[0-9]' | tr -d "\n")
 
-		if [ ${validcert} -eq 0 -a ${safecert} -gt 1024 ]; then
+		if [ ${validcert} -eq 0 -a ${safecert} -ge 1024 ]; then
 			working_ssl=true
 			# Delete this file (if it exists) now that we have a valid cert (else the alert ui keeps complaining)
 			if [ -f /tmp/alert_invalid_ssl_nginx ]; then
