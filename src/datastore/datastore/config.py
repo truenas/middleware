@@ -25,6 +25,7 @@
 #
 #####################################################################
 
+import re
 from datastore import DatastoreException
 
 
@@ -39,7 +40,7 @@ class ConfigStore(object):
         datastore.collection_create('config', 'ltree', 'config')
 
     def get(self, key, default=None):
-        ret = self.__datastore.get_one('config', [('id', '=', key)])
+        ret = self.__datastore.get_one('config', ('id', '=', key))
         return ret['value'] if ret is not None else default
 
     def set(self, key, value):
@@ -48,4 +49,17 @@ class ConfigStore(object):
     def list_children(self, key=None):
         if key is None:
             return self.__datastore.query('config', [], wrap=False)
-        return self.__datastore.query('config', [('id', '~', key + '.*')], wrap=False)
+        return self.__datastore.query('config', ('id', '~', key + '.*'), wrap=False)
+
+    def children_dict(self, root):
+        result = {}
+        for item in self.__datastore.query('config', ('id', '~', re.escape(root) + '\.[a-zA-Z0-9_]+\.')):
+            matched = item['id'][len(root) + 1:]
+            key, _, value = matched.partition('.')
+
+            if key not in result.keys():
+                result[key] = {}
+
+            result[key][value] = item['value']
+
+        return result
