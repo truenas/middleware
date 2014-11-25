@@ -406,13 +406,13 @@ disk_is_freenas()
 		    if [ -d /tmp/data_old/root/.ssh ]; then
 			cp -pR /tmp/data_old/root/.ssh /tmp/
 		    fi
-		    if [ -d /tmp/data_old/boot/modules ]; then
-			mkdir -p /tmp/modules
-			for i in `ls /tmp/data_old/boot/modules`
-			do
-			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
-			done
-		    fi
+# 		    if [ -d /tmp/data_old/boot/modules ]; then
+# 			mkdir -p /tmp/modules
+# 			for i in `ls /tmp/data_old/boot/modules`
+# 			do
+# 			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+# 			done
+# 		    fi
 		    if [ -d /tmp/data_old/usr/local/fusionio ]; then
 			cp -pR /tmp/data_old/usr/local/fusionio /tmp/
 		    fi
