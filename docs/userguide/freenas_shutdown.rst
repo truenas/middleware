@@ -5,10 +5,10 @@
 Shutdown
 ========
 
-If you click the "Shutdown" entry in the tree, you will receive the warning message shown in Figure 20a and your browser color will change to red to indicate
+If you click the "Shutdown" entry in the tree, you will receive the warning message shown in Figure 19a and your browser color will change to red to indicate
 that you have selected an option that will negatively impact users of the FreeNAS® system.
 
-**Figure 20a: Shutdown Warning Message**
+**Figure 19a: Shutdown Warning Message**
 
 |shutdown.png|
 

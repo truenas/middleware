@@ -1269,7 +1269,7 @@ the following steps.
 
     .. |chroot.png| image:: images/chroot.png
        :width: 3.4in
-       :height: 3.5in
+       :height: 4.3in
 
     **Example 11.13a: Creating a User's Home Directory**
     ::

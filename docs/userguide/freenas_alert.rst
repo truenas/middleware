@@ -6,10 +6,10 @@ Alert
 =====
 
 FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 22a, a system update is available and one of the disks in a ZFS
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 21a, a system update is available and one of the disks in a ZFS
 pool is offline which has degraded the state of the pool.
 
-**Figure 22a: Example Alert Message**
+**Figure 21a: Example Alert Message**
 
 |alert.png|
 

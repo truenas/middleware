@@ -6,9 +6,9 @@ Shell
 =====
 
 Beginning with version 8.2.0, the FreeNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user.
-The link to Shell is the fourth entry from the bottom of the menu tree. In Figure 17a, the link has been clicked and Shell is open.
+The link to Shell is the fourth entry from the bottom of the menu tree. In Figure 16a, the link has been clicked and Shell is open.
 
-**Figure 17a: Web Shell**
+**Figure 16a: Web Shell**
 
 |shell.png|
 

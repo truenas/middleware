@@ -5,10 +5,10 @@
 Reboot
 ======
 
-If you click the "Reboot" entry in the tree, you will receive the warning message shown in Figure 19a and your browser color will change to red to indicate
+If you click the "Reboot" entry in the tree, you will receive the warning message shown in Figure 18a and your browser color will change to red to indicate
 that you have selected an option that will negatively impact users of the FreeNAS® system.
 
-**Figure 19a: Reboot Warning Message**
+**Figure 18a: Reboot Warning Message**
 
 |reboot.png|
 
