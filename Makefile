@@ -77,6 +77,7 @@ clean-package:
 
 clean-ui-package:
 	${MAKE} clean-package p=freenas-ui
+	rm -rf objs/os-base/*/gui-dest
 
 distclean: clean
 	rm -fr FreeBSD nas_source
@@ -151,13 +152,15 @@ git-external:
 tag:
 	build/apply_tag.sh
 
-ports: check-root
+gui: 
+	build/ports/build-gui.sh
+
+ports: check-root gui
 	build/ports/create-poudriere-conf.sh
 	build/ports/create-poudriere-make.conf.sh
 	build/ports/prepare-jail.sh
 	build/ports/fetch-ports-srcs.sh
 	build/ports/create-ports-list.sh
-	build/ports/build-gui.sh
 	build/ports/build-ports.sh
 
 portsjail:

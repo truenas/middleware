@@ -51,6 +51,12 @@ remove_npm_quirks()
 	fi
 }
 
+if [ -d ${NANO_GUI_DEST} ]; then
+	echo "Skipping GUI build. If this is not what you want, type:"
+	echo "make clean-ui-package"
+	exit 0
+fi
+
 # Clean up the staging and deployment directories
 mkdir -p ${NANO_GUI} ${NANO_GUI_DEST}
 rm -rf ${NANO_GUI}/* ${NANO_GUI_DEST}/*
