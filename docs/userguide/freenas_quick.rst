@@ -152,8 +152,8 @@ Figure 3.1b shows the configuration screen that appears if the storage disks hav
 |wizard1.png|
 
 .. |wizard1.png| image:: images/wizard1.png
-    :width: 3.6in
-    :height: 2.3in
+    :width: 4.7in
+    :height: 2.4in
 
 Input a name for the ZFS pool that conforms to these
 `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
