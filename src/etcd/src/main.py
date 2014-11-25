@@ -66,8 +66,8 @@ class FileGenerationService(RpcService):
         self.datastore = ctx.datastore
 
     def generate_all(self):
-        for f in self.get_managed_files():
-            self.generate_file(f)
+        for group in self.datastore.query('etcd.groups'):
+            self.generate_group(group['name'])
 
     def generate_file(self, filename):
         if filename not in self.context.managed_files.keys():
@@ -94,7 +94,7 @@ class FileGenerationService(RpcService):
         plugin.run(self.context)
 
     def generate_group(self, name):
-        group = self.datastore.get_one('etcd_groups', ('name', '=', name))
+        group = self.datastore.get_one('etcd.groups', ('name', '=', name))
         if not group:
             raise RpcException(errno.ENOENT, 'Group {0} not found'.format(name))
 
@@ -105,9 +105,14 @@ class FileGenerationService(RpcService):
                 self.generate_file(fname)
             elif typ == 'plugin':
                 self.generate_plugin(fname)
+            elif typ == 'group':
+                self.generate_group(fname)
 
     def get_managed_files(self):
         return self.context.managed_files
+
+    def get_groups(self):
+        return [g['name'] for g in self.datastore.query('etcd.groups')]
 
 
 class Main:
@@ -191,7 +196,7 @@ class Main:
 
     def main(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('-c', metavar='CONFIG', help='Middleware config file')
+        parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Middleware config file')
         parser.add_argument('-f', action='store_true', default=False, help='Run in foreground')
         parser.add_argument('mountpoint', metavar='MOUNTPOINT', default='/etc', help='/etc mount point')
         args = parser.parse_args()

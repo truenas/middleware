@@ -19,6 +19,7 @@ class MakoTemplateRenderer(object):
         return {
             "disclaimer": TemplateFunctions.disclaimer,
             "config": self.config,
+            "dispatcher": self.context.client,
             "ds": self.context.datastore
         }
 

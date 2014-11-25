@@ -449,6 +449,7 @@
             }
         },
         "data": {
+            "system.hostname": "freenas.local",
             "network.autoconfigure": true,
             "service.sshd.enable": true,
             "service.sshd.port": 22,
@@ -459,6 +460,7 @@
             "service.sshd.compression": false,
             "service.sshd.allow_password_auth": true,
             "service.sshd.allow_pubkey_auth": true,
+            "service.ftp.enable": true,
             "service.ftp.port": 21
         }
     },
@@ -466,7 +468,7 @@
         "metadata": {
             "last-id": null,
             "pkey-type": "uuid",
-            "name": "etcd_groups",
+            "name": "etcd.groups",
             "attributes": {
                 "type": "persistent"
             }
@@ -482,9 +484,16 @@
                     "plugin:pwd_database"
                 ]
             },
+            "AB7F43FF-F122-4392-96A7-66791B334271": {
+                "name": "services",
+                "dependencies": [
+                    "file:rc.conf"
+                ]
+            },
             "B5EF4F4C-6E9C-45E7-B5B6-73A8CD7F7199": {
                 "name": "sshd",
                 "dependencies": [
+                    "group:services",
                     "file:ssh/sshd_config",
                     "plugin:ssh/sshd_keys"
                 ]
