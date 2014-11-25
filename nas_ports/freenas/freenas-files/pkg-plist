@@ -12,13 +12,11 @@ usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
 usr/local/bin/zilstat
 usr/local/bin/adtool
-usr/local/etc/appcafe.conf
 usr/local/etc/avahi/avahi-daemon.conf
 usr/local/etc/nginx/fastcgi_params
 usr/local/etc/nginx/nginx.conf
 usr/local/etc/rc.d/django
-usr/local/etc/rc.d/ldpbiconfig
-usr/local/etc/rc.d/pbid
+usr/local/etc/appcafe.conf
 usr/local/etc/samba.gdb
 usr/local/etc/sudoers
 usr/local/etc/warden.conf

@@ -77,8 +77,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/nginx.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/nginx.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/rc.d/django ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d/django
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/rc.d/ldpbiconfig ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d/ldpbiconfig
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/rc.d/pbid ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d/pbid
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/samba.gdb ${STAGEDIR}/${PREFIX}/usr/local/etc/samba.gdb
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
