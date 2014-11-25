@@ -103,6 +103,8 @@ class MongodbDatastore(object):
         dir = kwargs.pop('dir', None)
         limit = kwargs.pop('limit', None)
         offset = kwargs.pop('offset', None)
+        single = kwargs.pop('single', False)
+        result = []
         cur = self.db[collection].find(self._build_query(args))
 
         if sort:
@@ -115,9 +117,19 @@ class MongodbDatastore(object):
         if limit:
             cur = cur.limit(limit)
 
+        if single:
+            i = next(cur, None)
+            if i is None:
+                return i
+
+            i['id'] = i.pop('_id')
+            return i
+
         for i in cur:
             i['id'] = i.pop('_id')
-            yield i
+            result.append(i)
+
+        return result
 
     def get_one(self, collection, *args, **kwargs):
         obj = self.db[collection].find_one(self._build_query(args))
@@ -147,7 +159,7 @@ class MongodbDatastore(object):
 
         if pkey is None:
             pkey_type = self.collection_get_pkey_type(collection)
-            if pkey_type == 'serial':
+            if pkey_type in ('serial', 'integer'):
                 ret = self.db['collections'].find_and_modify({'_id': collection}, {'$inc': {'last-id': 1}})
                 pkey = ret['last-id']
             elif pkey_type == 'uuid':
@@ -157,8 +169,20 @@ class MongodbDatastore(object):
         self.db[collection].insert(obj)
         return pkey
 
+    def update(self, collection, pkey, obj):
+        if hasattr(obj, '__getstate__'):
+            obj = obj.__getstate__()
+
+        if type(obj) is not dict:
+            obj = {'value': obj}
+
+        if 'id' in obj:
+            del obj['id']
+
+        self.db[collection].update({'_id': pkey}, obj)
+
     def upsert(self, collection, pkey, obj):
         return self.insert(collection, obj, pkey=pkey, upsert=True)
 
     def delete(self, collection, pkey):
-        pass
+        self.db[collection].remove(pkey)
