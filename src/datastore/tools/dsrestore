@@ -32,7 +32,8 @@ import argparse
 import json
 import datastore
 
-DEFAULT_CONFIGFILE = '/conf/middleware.conf'
+
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 ds = None
 
 

@@ -33,8 +33,22 @@ import sys
 import datastore
 from datastore.config import ConfigStore
 
-DEFAULT_CONFIGFILE = '/conf/middleware.conf'
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 ds = None
+
+
+def strtoint(v):
+    # If string is quoted, strip quotes and return
+    if v[0] == '"' and v[-1] == '"':
+        return v[1:-1]
+
+    try:
+        v = int(v)
+        return v
+    except ValueError:
+        pass
+
+    return v
 
 
 def init_datastore(filename):
@@ -45,14 +59,14 @@ def init_datastore(filename):
         conf = json.load(f)
         f.close()
     except IOError, err:
-        print("Cannot read config file: {0}".format(str(err)))
+        print("Cannot read config file: {0}".format(str(err)), file=sys.stderr)
         sys.exit(1)
     except ValueError, err:
-        print("Cannot read config file: {0}".format(str(err)))
+        print("Cannot read config file: {0}".format(str(err)), file=sys.stderr)
         sys.exit(1)
 
     if not 'datastore' in conf:
-        print("Cannot initialize datastore: configuration not found")
+        print("Cannot initialize datastore: configuration not found", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -144,10 +158,24 @@ def config_set(key, value):
     cfg.set(key, json.loads(value))
 
 
+@argh.arg('fields', nargs='*')
+def update(name, pkey, fields):
+    replace = {}
+    pkey = strtoint(pkey)
+
+    for k, v in zip(fields[::2], fields[1::2]):
+        v = strtoint(v)
+        replace[k] = v
+
+    item = ds.get_by_id(name, pkey)
+    item.update(replace)
+    ds.update(name, pkey, item)
+
+
 def main():
     parser = argh.ArghParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
-    parser.add_commands([create, destroy, list, get, query, config_list, config_get, config_set])
+    parser.add_commands([create, destroy, list, get, query, update, config_list, config_get, config_set])
     args = parser.parse_args()
     init_datastore(args.c)
     parser.dispatch()

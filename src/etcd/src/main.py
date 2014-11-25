@@ -41,6 +41,7 @@ from dispatcher.client import Client
 from dispatcher.rpc import RpcService, RpcException
 
 
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 TEMPLATE_RENDERERS = {
     '.mako': renderers.MakoTemplateRenderer,
     '.py': renderers.PythonRenderer,

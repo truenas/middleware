@@ -57,7 +57,7 @@ from balancer import Balancer
 from auth import PasswordAuthenticator
 
 
-DEFAULT_CONFIGFILE = '/data/middleware.conf'
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
 class Dispatcher(object):
