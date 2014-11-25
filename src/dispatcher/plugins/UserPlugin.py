@@ -103,7 +103,7 @@ class UserCreateTask(Task):
 
         self.dispatcher.dispatch_event('users.changed', {
             'operation': 'create',
-            'ids': [user['id']]
+            'ids': [uid]
         })
 
         return TaskState.FINISHED
@@ -175,7 +175,7 @@ class UserUpdateTask(Task):
 
         self.dispatcher.dispatch_event('users.changed', {
             'operation': 'update',
-            'ids': [user['id']]
+            'ids': [uid]
         })
 
         return TaskState.FINISHED
@@ -216,7 +216,7 @@ class GroupCreateTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'create',
-            'ids': [id]
+            'ids': [group['id']]
         })
         return TaskState.FINISHED
 
@@ -244,11 +244,11 @@ class GroupUpdateTask(Task):
 
         return ['system']
 
-    def run(self, id, updated_fields):
+    def run(self, gid, updated_fields):
         try:
-            group = self.datastore.get_by_id('groups', id)
+            group = self.datastore.get_by_id('groups', gid)
             group.update(updated_fields)
-            self.datastore.update('groups', id, group)
+            self.datastore.update('groups', gid, group)
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot update group: {0}'.format(str(e)))
@@ -257,7 +257,7 @@ class GroupUpdateTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'update',
-            'ids': [id]
+            'ids': [gid]
         })
 
         return TaskState.FINISHED
@@ -289,9 +289,9 @@ class GroupDeleteTask(Task):
 
         return ['system']
 
-    def run(self, id, force=False):
+    def run(self, gid, force=False):
         try:
-            self.datastore.delete('groups', id)
+            self.datastore.delete('groups', gid)
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete group: {0}'.format(str(e)))
@@ -300,7 +300,7 @@ class GroupDeleteTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'delete',
-            'ids': [id]
+            'ids': [gid]
         })
 
         return TaskState.FINISHED
