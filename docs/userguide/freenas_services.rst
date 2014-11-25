@@ -618,7 +618,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS policy                                                   | drop-down menu | only available in "Advanced Mode"; the selected policy defines whether the          |
 |                                                              |                | control channel, data channel, both channels, or neither channel, of an FTP         |
-|                                                              |                | session must occur over SSL/TLS; the policies are described |                       |
+|                                                              |                | session must occur over SSL/TLS; the policies are described                         |
 |                                                              |                | `here <http://www.proftpd.org/docs/directives/linked/config_ref_TLSRequired.html>`_ |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
@@ -809,9 +809,7 @@ To configure any FTP scenario to use encrypted connections:
     *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the
     certificate of the FreeNAS® system. Click "OK" to accept the certificate and negotiate an encrypted connection.
 
-To force encrypted connections, add the following line to Auxiliary Parameters::
-
- TLS Required on
+#.  To force encrypted connections, select *on* for the "TLS Policy".
 
 .. _Troubleshooting FTP:
 
@@ -836,12 +834,16 @@ address of the FreeNAS® system in the "Host name database" field of :menuselect
 iSCSI
 -----
 
-Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in Services.
+Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
 .. _LLDP:
 
 LLDP
 ----
+
+The Link Layer Discovery Protocol (LLDP) is used by network devices to advertise their identity, capabilities, and neighbors on an Ethernet network. FreeNAS®
+uses the `ladvd <http://http://code.google.com/p/ladvd/>`_ LLDP implementation. If your network contains managed switches, configuring and starting the LLDP
+service will tell the FreeNAS® system to advertise itself on the network.
 
 Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
 
@@ -859,13 +861,13 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 | **Setting**            | **Value**  | **Description**                                                                                                     |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
-| Interface Description  | checkbox   |                                                                                                                     |
+| Interface Description  | checkbox   | when checked, receive mode is enabled and received peer information is saved in interface descriptions              |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Country Code           | string     |                                                                                                                     |
+| Country Code           | string     | required for LLDP location support; input 2 letter ISO 3166 country code                                            |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Location               | string     |                                                                                                                     |
+| Location               | string     | optional; specify the physical location of the host                                                                 |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
