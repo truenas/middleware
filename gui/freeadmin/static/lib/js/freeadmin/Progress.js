@@ -79,6 +79,10 @@ define([
         domStyle.set(this.dapMainLabel, "word-break", "break-word");
       }
 
+      if(this.importProgress) {
+        this.update("");
+      }
+
       this.inherited(arguments);
 
     },
