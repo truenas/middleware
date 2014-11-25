@@ -51,8 +51,10 @@ class Task(object):
 class TaskException(RpcException):
     pass
 
+
 class VerifyException(TaskException):
     pass
+
 
 class TaskStatus(object):
     def __init__(self, percentage, message=None, extra=None):
@@ -70,14 +72,20 @@ class TaskStatus(object):
 
 class Provider(RpcService):
     def initialize(self, context):
-        self.dispatcher = context
+        self.dispatcher = context.dispatcher
+        self.datastore = self.dispatcher.datastore
 
 
 def query(fn):
     fn.params_schema = [
         {
             'title': 'filter',
-            'type': 'object',
+            'type': 'array',
+            'items': {
+                'type': 'array',
+                'minItems': 3,
+                'maxItems': 3
+            }
         },
         {
             'title': 'options',
@@ -86,7 +94,8 @@ def query(fn):
                 'sort-field': {'type': 'string'},
                 'sort-order': {'type': 'string', 'enum': ['asc', 'desc']},
                 'limit': {'type': 'integer'},
-                'offset': {'type': 'integer'}
+                'offset': {'type': 'integer'},
+                'single': {'type': 'boolean'}
             }
         }
     ]
