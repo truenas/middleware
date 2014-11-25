@@ -39,7 +39,8 @@ def run(context):
 
         if private_key is None or public_key is None:
             try:
-                subprocess.check_call(['/usr/bin/ssh-keygen', '-t', keytype])
+                keyarg = 'rsa1' if keytype == 'host' else keytype
+                subprocess.check_call(['/usr/bin/ssh-keygen', '-t', keyarg])
             except subprocess.CalledProcessError:
                 raise
         else:
