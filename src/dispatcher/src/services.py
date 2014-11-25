@@ -131,12 +131,15 @@ class PluginService(RpcService):
             'description': "Service {0} unregistered".format(name)
         })
 
+        del self.services[name]
+
     def wait_for_service(self, name, timeout=None):
         if name in self.services.keys():
             return
 
         self.events[name] = Event()
         self.events[name].wait(timeout)
+        del self.events[name]
 
 
 class TaskService(RpcService):
