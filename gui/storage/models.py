@@ -147,7 +147,7 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                status = noTIFIER().get_volume_status(
+                status = notifier().get_volume_status(
                     self.vol_name,
                     self.vol_fstype)
                 if status == 'UNKNOWN' and self.vol_encrypt > 0:
