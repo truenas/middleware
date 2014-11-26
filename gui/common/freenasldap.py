@@ -1546,12 +1546,14 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         self.dchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
-            host=self.dchost, port=self.dcport, flags=self.flags)
+            host=self.dchost, port=self.dcport,
+            flags=(self.flags & ~FLAGS_SASL_GSSAPI))
         self.dchandle.open()
 
         self.gchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
-            host=self.gchost, port=self.gcport, flags=self.flags)
+            host=self.gchost, port=self.gcport,
+            flags=(self.flags & ~FLAGS_SASL_GSSAPI))
         self.gchandle.open()
 
     def reset_servers(self):
