@@ -808,6 +808,7 @@ class InitialWizard(CommonWizard):
         _n.start("ix-system")
         _n.start("ix-syslogd")
         _n.restart("system_datasets")  # FIXME: may reload collectd again
+        _n.reload("timeservices")
 
         progress['percent'] = 70
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
