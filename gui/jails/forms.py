@@ -856,6 +856,10 @@ class JailsEditForm(ModelForm):
                     flags |= WARDEN_SET_FLAGS_MAC
                     args['mac'] = self.cleaned_data.get(cf)
 
+                elif cf == 'jail_iface':
+                    flags |= WARDEN_SET_FLAGS_IFACE
+                    args['iface'] = self.cleaned_data.get(cf)
+
                 elif cf == 'jail_vnet':
                     if (self.cleaned_data.get(cf)):
                             flags |= WARDEN_SET_FLAGS_VNET_ENABLE
