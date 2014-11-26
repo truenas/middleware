@@ -591,7 +591,7 @@ If you are importing an unencrypted ZFS pool, select "No: Skip to import" to ope
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 4.3in
+    :width: 4.9in
     :height: 3.1in
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
@@ -610,12 +610,16 @@ to see if the controller driver is supported or if it needs to be loaded using :
 Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1h, select "Yes: Decrypt disks" to
-access the screen shown in Figure 8.1g.
+If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1g, select "Yes: Decrypt disks" to
+access the screen shown in Figure 8.1i.
 
 **Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
 
 |decrypt.png|
+
+.. |decrypt.png| image:: images/decrypt.png
+    :width: 5.2in
+    :height: 3.9in
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
