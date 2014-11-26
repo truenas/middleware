@@ -101,6 +101,20 @@ release-push: release
 update-push:	release
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
+archive:	release
+.if !defined(ARCHIVE)
+	@echo "ARCHIVE location must be defined" 1>&2
+	false
+.endif
+.if !defined(RELEASEDB)
+	@echo "RELEASEDB must be defined" 1>&2
+	false
+.endif
+	/usr/local/bin/freenas-release -P ${NANO_LABEL} \
+		-D ${RELEASEDB} --archive ${ARCHIVE} \
+		-K ${FREENAS_KEYFILE} \
+		add objs/LATEST
+
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
 	@${ENV_SETUP} ${MAKE} all
