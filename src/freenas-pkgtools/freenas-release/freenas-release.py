@@ -1094,6 +1094,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match (%s for file, %s for package)" % (pkg.Name(), pkg.Version(), hash, pkg.Checksum())
                 print >> sys.stderr, "Using archive checksum, note this for debugging bpurposes"
                 pkg.SetChecksum(hash)
+                pkg.SetSize(os.stat(pkg_dest).st_size)
             else:
                 if verbose or debug:
                     print >> sys.stderr, "Package %s-%s already exists in the destination, so not copying" % (pkg.Name(), pkg.Version())
@@ -1112,7 +1113,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
             copied = True
             os.chmod(pkg_file.name, 0664)
             print >> sys.stderr, "Package %s-%s copied to archive as %s (%d bytes)"  % (pkg.Name(), pkg.Version(), pkg_file.name, total_bytes)
-
+            pkg.SetSize(total_bytes)
         pkg_file.close()
 
         older_versions = {}
@@ -1171,9 +1172,15 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         
                         for upd in db.UpdatesForPackage(old_pkg):
                             if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (upd[0], upd[1])
-                            old_pkg.AddUpdate(upd[0], upd[1])
+                            tname = "%s/Packages/%s"  % (archive, old_pkg.FileName(upd[0]))
+                            size = None
+                            if os.path.exists(tname):
+                                size = os.stat(tname).st_size
+                                if debug or verbose:  print >> sys.stderr, "\t\tSize = %d" % size
+                            old_pkg.AddUpdate(upd[0], upd[1], size = size)
                         print >> sys.stderr, "\tgetting checksum for %s" % pkg1
                         old_pkg.SetChecksum(ChecksumFile(pkg1))
+                        old_pkg.SetSize(os.stat(pkg1).st_size)
                         print >> sys.stderr, "\t\tGot it"
                         pkg = old_pkg
                         # Should I instead verify through the db
@@ -1186,14 +1193,15 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
                         cksum = ChecksumFile(x)
+                        size = os.stat(x).st_size
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (old_pkg.Version(), cksum)
-                        pkg.AddUpdate(old_pkg.Version(), cksum)
+                        pkg.AddUpdate(old_pkg.Version(), cksum, size = size)
                 except IOError as e:
                     import errno
                     if e.errno == errno.EEXIST:
                         print >> sys.stderr, "Delta package %s already exists" % delta_pkg
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
-                        pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
+                        pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg), size = os.stat(delta_pkg).st_size)
                     else:
                         if delta_file:
                             print >> sys.stderr, "Removing delta package file %s" % delta_file.name
