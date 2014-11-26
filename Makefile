@@ -96,10 +96,10 @@ release-push: release
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 	fi
-	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 update-push:	release
-	${ENV_SETUP} /bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
