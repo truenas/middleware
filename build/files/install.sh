@@ -406,13 +406,13 @@ disk_is_freenas()
 		    if [ -d /tmp/data_old/root/.ssh ]; then
 			cp -pR /tmp/data_old/root/.ssh /tmp/
 		    fi
-# 		    if [ -d /tmp/data_old/boot/modules ]; then
-# 			mkdir -p /tmp/modules
-# 			for i in `ls /tmp/data_old/boot/modules`
-# 			do
-# 			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
-# 			done
-# 		    fi
+		    if [ -d /tmp/data_old/boot/modules ]; then
+			mkdir -p /tmp/modules
+			for i in `ls /tmp/data_old/boot/modules`
+			do
+			    cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
+			done
+		    fi
 		    if [ -d /tmp/data_old/usr/local/fusionio ]; then
 			cp -pR /tmp/data_old/usr/local/fusionio /tmp/
 		    fi
@@ -845,7 +845,7 @@ menu_install()
 	if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
-		cp -p /tmp/modules/$i /tmp/data/boot/modules
+		cp -np /tmp/modules/$i /tmp/data/boot/modules
             done
 	fi
 	if [ -d /tmp/fusionio ]; then
@@ -856,7 +856,7 @@ menu_install()
 	fi
 	if [ -f /tmp/loader.conf.local ]; then
 	    cp /tmp/loader.conf.local /tmp/data/boot/
-	    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules;",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
+	    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
 	fi
     fi
     if is_truenas ; then

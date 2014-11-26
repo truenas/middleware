@@ -211,14 +211,15 @@ remove_var_cache_pkg()
 	if [ -n "$WITH_PKGNG" ]; then
 		CR "pkg clean -a -y"
 	fi
-	# And now remove the package database
-	echo "Removing pkg package"
-	if [ -n "$WITH_PKGNG" ]; then
-		CR "pkg delete -y -f pkg\* || true"
-		CR "rm -rf var/db/pkg || true"
-	else
-		CR "pkg_delete -f pkg\* || true"
-	fi
+	# Revisit the thing below later
+# 	# And now remove the package database
+# 	echo "Removing pkg package"
+# 	if [ -n "$WITH_PKGNG" ]; then
+# 		CR "pkg delete -y -f pkg\* || true"
+# 		CR "rm -rf var/db/pkg || true"
+# 	else
+# 		CR "pkg_delete -f pkg\* || true"
+# 	fi
 }
 
 create_var_home_symlink()
@@ -275,6 +276,10 @@ freenas_custom()
 	rm -rf ${NANO_WORLDDIR}/usr/share/groff_font
 	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
 	rm -rf ${NANO_WORLDDIR}/usr/share/me
+
+	# for now just remove the following file (later on revisit remove_var_cache_pkg)
+	rm -rf ${NANO_WORLDDIR}/etc/local/periodic/security
+	rm -rf ${NANO_WORLDDIR}/conf/base/etc/local/periodic/security
 
 	# Kill all .a's and .la's that are installed (20MB+)
 	find ${NANO_WORLDDIR} -name \*.a -or -name \*.la -delete
