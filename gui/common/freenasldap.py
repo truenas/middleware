@@ -561,7 +561,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['krb_kdc'] = kr.krb_kdc
                         kwargs['krb_admin_server'] = kr.krb_admin_server
                         kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
-                        self.flags |= FLAGS_SASL_GSSAPI
 
                 elif newkey == 'kerberos_keytab_id':
                     kt = ldap.ldap_kerberos_keytab
@@ -571,7 +570,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['keytab_name'] = kt.keytab_name
                         kwargs['keytab_principal'] = kt.keytab_principal
                         kwargs['keytab_file'] = '/etc/krb5.keytab'
-                        self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
                     if not newkey in kwargs:
@@ -587,9 +585,11 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             elif key in self.__keys():
                 self.__dict__[key] = kwargs[key]
 
-        self.get_kerberos_ticket()
-
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
+
+        if self.kerberos_realm or self.kerberos_keytab:
+            self.get_kerberos_ticket()
+            self.flags |= FLAGS_SASL_GSSAPI
 
         self.ucount = 0
         self.gcount = 0
@@ -626,6 +626,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         return principal
 
     def get_kerberos_ticket(self):
+        isopen = self._isopen
+        self.open()
+
         res = False 
         kinit = False
 
@@ -646,14 +649,15 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
             p = pipeopen(string.join(args, ' '))
             kinit_out = p.communicate()
-            if p.returncode != 0:
-                return False
+            if p.returncode == 0:
+                kinit = True 
 
-            kinit = True 
+        elif self.krb_realm and self.binddn and self.bindpw:
+            user = self.get_user_by_DN(self.binddn)
+            uid = user[1]['uid'][0]
 
-        elif self.krb_realm and self.bindname and self.bindpw:
             krb_principal = self.get_kerberos_principal_from_cache()
-            principal = "%s@%s" % (self.bindname, self.krb_realm)
+            principal = "%s@%s" % (uid, self.krb_realm)
             
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
@@ -674,10 +678,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             kinit_out = p.communicate()
             os.unlink(tmpfile)
 
-            if p.returncode != 0:
-                return False
-
-            kinit = True 
+            if p.returncode == 0:
+                kinit = True 
 
         if kinit:
             i = 0
@@ -689,7 +691,43 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 time.sleep(1)
                 i += 1
 
+        if not isopen:
+            self.close()
+
         return res
+
+    def get_user_by_DN(self, DN):
+        log.debug("FreeNAS_LDAP_Base.get_user_by_DN: enter")
+        log.debug("FreeNAS_LDAP_Base.get_user_by_DN: DN = %s", DN)
+
+        if DN is None:
+            raise AssertionError('DN is None')
+
+        isopen = self._isopen
+        self.open()
+
+        ldap_user = None
+        scope = ldap.SCOPE_SUBTREE
+
+        basedn = DN
+        args = {'scope': scope, 'filter': '(objectclass=*)'}
+        if basedn:
+            args['basedn'] = basedn
+        if self.attributes:
+            args['attributes'] = self.attributes
+
+        results = self._search(**args)
+        if results:
+            for r in results:
+                if r[0]:
+                    ldap_user = r
+                    break
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Base.get_user_by_DN: leave")
+        return ldap_user
 
     def get_user(self, user):
         log.debug("FreeNAS_LDAP_Base.get_user: enter")

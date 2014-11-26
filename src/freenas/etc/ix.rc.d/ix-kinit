@@ -231,16 +231,16 @@ kerberos_start_ldap()
 
 	elif [ -n "${realm}" -a -n "${binddn}" -a -n "${bindpw}" ]
 	then
-		local principal="${uid}@${realm}"
-		if kerbers_principal_check "${principal}"
-		then
-			return 0
-		fi
-
 		local uid="$(LDAP_get_binddn_uid)"
 		if [ -z "${uid}" ]
 		then
 			LDAP_log "kerberos_start: unable to determine uid"
+		fi
+
+		local principal="${uid}@${realm}"
+		if kerbers_principal_check "${principal}"
+		then
+			return 0
 		fi
 
 		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"

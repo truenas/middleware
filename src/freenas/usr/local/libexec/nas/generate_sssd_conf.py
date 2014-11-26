@@ -563,9 +563,9 @@ def add_ldap(sc):
         ldap_section.krb5_canonicalize = 'false'
 
     else:
-        ldap_section.ldap_default_bind_dn = ldap.ldap_binddn
+        ldap_section.ldap_default_bind_dn = ldap.binddn
         ldap_section.ldap_default_authtok_type = 'password'
-        ldap_section.ldap_default_authtok = ldap.ldap_bindpw
+        ldap_section.ldap_default_authtok = ldap.bindpw
 
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)

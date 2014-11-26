@@ -91,7 +91,7 @@ __LDAP_tc()
 	return ${ret}
 }
 
-LDAP_get_user_by_dn()
+LDAP_get_user_by_DN()
 {
 	local dn="${1}"
 	local host="$(LDAP_get ldap_host)"
@@ -120,7 +120,7 @@ __EOF__
 
 LDAP_get_binddn_uid()
 {
-	LDAP_get_user_by_dn "$(LDAP_get ldap_binddn)" | \
+	LDAP_get_user_by_DN "$(LDAP_get ldap_binddn)" | \
 		egrep -iw '^uid' | awk '{ print $2 }'
 }
 

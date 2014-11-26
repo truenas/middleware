@@ -580,6 +580,7 @@ class LDAPForm(ModelForm):
         else:
             if started == True:
                 started = notifier().stop("ldap")
+
         return obj
 
     def done(self, request, events):
