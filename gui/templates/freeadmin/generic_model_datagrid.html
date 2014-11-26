@@ -199,6 +199,12 @@ require([
     });
     {% endif %}
 
+    grid.on("dgrid-error", function(event) {
+      //var innerNode = put(loadingNode, 'div.dgrid-below');
+      console.log(event, "ha");
+      grid.contentNode.innerHTML = event.error.message;
+    });
+
     {% if double_click %}
 {{ double_click|safe }}
     {% endif %}
