@@ -321,6 +321,18 @@ Be aware of the following caveats **before** attempting an upgrade:
 * **Upgrades on 32-bit hardware to FreeNAS® 9.3 or higher are not supported.** However, if the system is currently running a 32-bit version of FreeNAS®
   **and** the hardware supports 64-bit, the system can be upgraded but any archived reporting graphs will be lost during the upgrade.
 
+* **UFS is no longer supported.** If your data currently resides on
+  **one** UFS-formatted disk, you will need to create a ZFS volume using
+  **other** disk(s) after the upgrade, then use the instructions in :ref:`Import Disk` to mount the UFS-formatted disk in order to copy the data to the ZFS
+  volume. If you only have one disk, backup its data to another system or media before the upgrade, format the disk as ZFS after the upgrade, then restore the
+  backup. If your data currently resides on a UFS RAID of disks, you will not be able to import that UFS volume. Instead, you will need to backup that data
+  before the upgrade, create a ZFS volume after the upgrade, then restore the data from backup.
+
+* The initial configuration wizard will not recognize an encrypted ZFS pool. If your ZFS pool is GELI-encrypted and the :ref:`Initial Configuration Wizard`
+  starts after the upgrade, cancel the wizard and use the instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then
+  rerun the wizard afterwards, if you wish to use it for post-configuration, and it will recognize that the volume has been imported and will not prompt to
+  reformat the disks.
+
 * **DO NOT upgrade the ZFS pool unless you are absolutely sure that you will never want to go back to the previous version.** For this reason, the update
   process will not automatically upgrade the ZFS pool, though the :ref:`Alert` system will tell you if newer feature flags are available for the pool. Unless
   you need a new feature flag, it is safe to leave the ZFS pool at its current version and uncheck the alert. If you do decide to upgrade the pool, you will

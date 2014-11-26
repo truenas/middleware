@@ -155,6 +155,10 @@ Figure 3.1b shows the configuration screen that appears if the storage disks hav
     :width: 4.7in
     :height: 2.4in
 
+.. note:: the initial configuration wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the
+   instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard afterwards, if you wish to use it for
+   post-configuration, and it will recognize that the volume has been imported and will not prompt to reformat the disks.
+
 Input a name for the ZFS pool that conforms to these
 `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
 **not** :file:`data` or :file:`freenas`).
@@ -177,7 +181,8 @@ The following redundancy types are available:
 
 Once you have made your selection, click "Next" to continue.
 
-If the disks have already been formatted with ZFS, the next screen will instead prompt to import the volume, as seen in Figure 3.1c.
+If the disks have already been formatted with ZFS and the disks have **not** been encrypted, the next screen will instead prompt to import the volume, as seen
+in Figure 3.1c.
 
 **Figure 3.1c: Volume Import Screen**
 
