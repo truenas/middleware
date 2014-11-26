@@ -1332,8 +1332,6 @@ For this example, the required configuration is as follows:
 * once the Remote hostname is input, click the "SSH Key Scan" button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
   automatically be populated to the "Remote hostkey" box
 
-Table 8.3a summarizes the available options in the Add Replication Task screen.
-
 **Figure 8.3b: Adding a Replication Task**
 
 |replication2.png|
@@ -1341,6 +1339,8 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 .. |replication2.png| image:: images/replication2.png
     :width: 7.98in
     :height: 5.2in
+
+Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
 **Table 8.3a: Adding a Replication Task**
 
@@ -1363,6 +1363,12 @@ Table 8.3a summarizes the available options in the Add Replication Task screen.
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
 |                           |                | operation; use this option if replication gets stuck                                                         |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Replication Stream        | drop-down menu | choices are *lz4 (fastest)*,                                                                                 |
+| Compression               |                | *pigz (all rounder)*,                                                                                        |
+|                           |                | *plzip (best compression)*, or                                                                               |
+|                           |                | *Off* (no compression); selecting a compression algorithm can reduce the size of the data being replicated   |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of *0* is unlimited                 |
