@@ -896,11 +896,13 @@ class VolumeResourceMixin(NestedMixin):
 
         if is_decrypted:
             if self.is_webclient(bundle.request):
-                bundle.data['used'] = "%s (%s)" % (
-                    humanize_size(bundle.data['used']),
-                    bundle.data['used_pct'],
-                )
-                bundle.data['avail'] = humanize_size(bundle.data['avail'])
+                if isinstance(bundle.data['used'], int):
+                    bundle.data['used'] = "%s (%s)" % (
+                        humanize_size(bundle.data['used']),
+                        bundle.data['used_pct'],
+                    )
+                if isinstance(bundle.data['avail'], int):
+                    bundle.data['avail'] = humanize_size(bundle.data['avail'])
         else:
             bundle.data['used'] = _("Locked")
 

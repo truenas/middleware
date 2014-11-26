@@ -34,7 +34,7 @@ import uuid
 import subprocess
 
 from django.db import models, transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as __, ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.middleware import zfs
@@ -76,7 +76,11 @@ class Volume(Model):
     def is_upgraded(self):
         if not self.is_decrypted():
             return True
-        if notifier().zpool_version(str(self.vol_name)) ==  '-':
+        try:
+            version = notifier().zpool_version(str(self.vol_name))
+        except ValueError:
+            return True
+        if version ==  '-':
             proc = subprocess.Popen([
                        "zpool",
                        "get",
@@ -143,7 +147,7 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                status = notifier().get_volume_status(
+                status = noTIFIER().get_volume_status(
                     self.vol_name,
                     self.vol_fstype)
                 if status == 'UNKNOWN' and self.vol_encrypt > 0:
@@ -777,9 +781,9 @@ class MountPoint(Model):
                 return self._vfs.f_bavail * self._vfs.f_frsize
         except:
             if self.mp_volume.is_decrypted():
-                return _(u"Error getting available space")
+                return __(u"Error getting available space")
             else:
-                return _("Locked")
+                return __("Locked")
 
     def _get_used_bytes(self):
         try:
@@ -796,9 +800,9 @@ class MountPoint(Model):
             return self._get_used_bytes()
         except:
             if self.mp_volume.is_decrypted():
-                return _(u"Error getting used space")
+                return __(u"Error getting used space")
             else:
-                return _("Locked")
+                return __("Locked")
 
     def _get_used_pct(self):
         try:
@@ -809,7 +813,7 @@ class MountPoint(Model):
                     self._vfs.f_blocks
             return u"%d%%" % availpct
         except:
-            return _(u"Error")
+            return __(u"Error")
 
     def _get_status(self):
         try:
@@ -817,7 +821,7 @@ class MountPoint(Model):
                 self._status = self.mp_volume.status
             return self._status
         except Exception:
-            return _(u"Error")
+            return __(u"Error")
 
     _vfs = property(_get__vfs)
     _zplist = property(_get__zplist, _set__zplist)
