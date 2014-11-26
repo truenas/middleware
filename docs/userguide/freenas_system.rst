@@ -619,11 +619,13 @@ menu will list any files with checksum mismatches or permission errors.
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. In the example shown in Figure 5.8b, three
 updates are available.
 
+**Figure 5.8b: Reviewing Updates**
+
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.5in
-    :height: 2.2in
+    :width: 6.6in
+    :height: 2.1in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
