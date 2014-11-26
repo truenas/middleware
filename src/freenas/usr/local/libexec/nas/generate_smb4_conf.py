@@ -851,6 +851,27 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, line)
 
 
+def generate_smb4_system_shares(smb4_shares):
+    if domaincontroller_enabled():
+        try:
+            dc = DomainController.objects.all()[0]
+            sysvol_path =  "/var/db/samba4/sysvol"
+
+            confset1(smb4_shares, "\n")
+            confset1(smb4_shares, "[sysvol]", space=0)
+            confset1(smb4_shares, "path = %s" % sysvol_path)
+            confset1(smb4_shares, "read only = no")
+
+            confset1(smb4_shares, "\n")
+            confset1(smb4_shares, "[netlogon]", space=0)
+            confset1(smb4_shares, "path = %s/%s/scripts" % (
+                sysvol_path, dc.dc_realm.lower()))
+            confset1(smb4_shares, "read only = no")
+
+        except:
+            pass
+
+
 def provision_smb4():
     if not Samba4().domain_provision():
         print >> sys.stderr, "Failed to provision domain"
@@ -1128,6 +1149,7 @@ def main():
 
     generate_smb4_tdb(smb4_tdb)
     generate_smb4_conf(smb4_conf, role)
+    generate_smb4_system_shares(smb4_shares)
     generate_smb4_shares(smb4_shares)
 
     if role == 'dc' and not Samba4().domain_provisioned():
