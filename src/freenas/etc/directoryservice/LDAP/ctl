@@ -63,6 +63,8 @@ cifs_restart()
 ldapctl_start()
 {
 	local ldap_started=0
+	local realm
+	local keytab
 
 	LDAP_init
 
@@ -82,12 +84,18 @@ ldapctl_start()
 	ldapctl_cmd ${service} ix-kerberos quietstart
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 
-	ldapctl_cmd ${service} ix-kinit quietstart
-	if ! ldapctl_cmd ${service} ix-kinit status
+	realm="$(LDAP_get ldap_krb_realm)"
+	keytab="$(LDAP_get ldap_keytab_name)"
+
+	if [ -n "${realm}" -o -n "${keytab}" ]
 	then
-		ldap_set 0
-		return 1
-	fi  
+		ldapctl_cmd ${service} ix-kinit quietstart
+		if ! ldapctl_cmd ${service} ix-kinit status
+		then
+			ldap_set 0
+			return 1
+		fi  
+	fi
 
 	ldapctl_cmd ${service} ix-sssd start	
 	if sssd_running
