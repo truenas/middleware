@@ -176,7 +176,7 @@ IPMI
 ----
 
 Beginning with version 9.2.1, FreeNAS® provides a graphical screen for configuring an IPMI interface. This screen will only appear if the system hardware
-includes a Baseboard Management Controller (BMC) and the IPMI kernel module is loaded.
+includes a Baseboard Management Controller (BMC).
 
 IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
 such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow
