@@ -1232,32 +1232,32 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     # and is recreated by the library code.)
     if "NOTICE" in notes:
         manifest.SetNotice(notes["NOTICE"])
-    for note_name in ["ReleaseNotes", "ChangeLog"]:
+        notes.pop("NOTICE")
+    for note_name in notes.keys():
         import tempfile
         note_dir = "%s/%s/Notes" % (archive, manifest.Train())
         try:
             os.makedirs(note_dir)
         except:
             pass
-        if note_name in notes:
-            try:
-                # The note goes in:
-                # <archive>/<train>/Notes/<name>-<random>.txt
-                # The manifest gets a dictionary with
-                # <name> : <name>-<random>.txt
-                # which the library code will use to
-                # fetch over the network.
-                note_file = tempfile.NamedTemporaryFile(suffix=".txt",
-                                                        dir=note_dir,
-                                                        prefix="%s-" % note_name,
-                                                        delete = False)
-                if debug or verbose:
-                    print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
-                note_file.write(notes[note_name])
-                os.chmod(note_file.name, 0664)
-                manifest.SetNote(note_name, os.path.basename(note_file.name))
-            except OSError as e:
-                print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
+        try:
+            # The note goes in:
+            # <archive>/<train>/Notes/<name>-<random>.txt
+            # The manifest gets a dictionary with
+            # <name> : <name>-<random>.txt
+            # which the library code will use to
+            # fetch over the network.
+            note_file = tempfile.NamedTemporaryFile(suffix=".txt",
+                                                    dir=note_dir,
+                                                    prefix="%s-" % note_name,
+                                                    delete = False)
+            if debug or verbose:
+                print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
+            note_file.write(notes[note_name])
+            os.chmod(note_file.name, 0664)
+            manifest.SetNote(note_name, os.path.basename(note_file.name))
+        except OSError as e:
+            print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
         
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
