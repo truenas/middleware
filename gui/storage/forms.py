@@ -1047,7 +1047,9 @@ class VolumeAutoImportForm(Form):
 
         diskchoices = dict()
         used_disks = []
+        guids = []
         for v in models.Volume.objects.all():
+            guids.append(v.vol_guid)
             used_disks.extend(v.get_disks())
 
         # Grab partition list
@@ -1055,6 +1057,11 @@ class VolumeAutoImportForm(Form):
         vols = notifier().detect_volumes()
 
         for vol in list(vols):
+            # Exclude volumes with same guid as existing volumes
+            # See #6808
+            if vol['id'] in guids:
+                vols.remove(vol)
+                continue
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
                     if filter(lambda x: x is not None and re.search(
