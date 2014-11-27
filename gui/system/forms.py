@@ -939,7 +939,7 @@ class SettingsForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
         proto = cdata.get("stg_guiprotocol")
-        if proto == "http": 
+        if proto == "http":
             return cdata
 
         certificate = cdata["stg_guicertificate"]
@@ -2036,6 +2036,11 @@ class InitialWizardSystemForm(Form):
             self.fields[fname] = field
             field.initial = getattr(self._instance, fname, None)
             field.required = False
+        try:
+            adv = models.Advanced.objects.order_by('-id')[0]
+        except IndexError:
+            adv = models.Advanced.objects.create()
+        self.fields['sys_console'].initial = adv.adv_consolemsg
         self.fields['em_smtp'].widget.attrs['onChange'] = (
             'toggleGeneric("id_system-em_smtp", ["id_system-em_pass1", '
             '"id_system-em_pass2", "id_system-em_user"], true);'
