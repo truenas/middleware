@@ -987,7 +987,7 @@ def usage():
 """ % sys.argv[0]
     sys.exit(1)
 
-def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS", key_data = None):
+def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS", key_data = None, changelog = None):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/${project}-MANIFEST, which will tell us
@@ -997,6 +997,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
 
     if debug:  print >> sys.stderr, "Processelease(%s, %s, %s, %s)" % (source, archive, db, sign)
 
+    print >> sys.stderr, "changelog = %s" % changelog
     if db is None:
         raise Exception("Invalid db")
 
@@ -1282,6 +1283,27 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         pass
     os.symlink("%s-%s" % (project, manifest.Sequence()), "%s/%s/LATEST" % (archive, manifest.Train()))
 
+    if changelog:
+        changefile = "%s/%s/ChangeLog.txt" % (archive, manifest.Train())
+        if changelog == "-":
+            change_input = sys.stdin
+        else:
+            try:
+                change_input = open(changelog, "r")
+            except:
+                print >> sys.stderr, "Unable to open input change log %s" % changelog
+        if change_input:
+            try:
+                cfile = open(changefile, "ab")
+            except:
+                print >> sys.stderr, "Unable to open changelog %s" % changefile
+            else:
+                fcntl.lockf(cfile, fcntl.LOCK_EX, 0, 0)
+                cfile.write("### START %s\n" % manifest.Sequence())
+                cfile.write(change_input.read())
+                cfile.write("\n### END %s\n" % manifest.Sequence())
+                cfile.close()
+            
     if db is not None:
         db.AddRelease(manifest)
         for pkg in manifest.Packages():
@@ -1444,14 +1466,17 @@ def main():
     # Signing support
     key_file = None
     key_data = None
+    # Changelog
+    changelog = None
     # Locabl variables
     db = None
 
-    options = "a:D:dK:P:v"
+    options = "a:C:D:dK:P:v"
     long_options = ["archive=", "destination=",
                     "database=",
                     "key=",
                     "project=",
+                    "changelog=",
                     "debug", "verbose",
                 ]
 
@@ -1475,6 +1500,8 @@ def main():
             project_name = a
         elif o in ('-K', '--key'):
             key_file = a
+        elif o in ('-C', '--changelog'):
+            changelog = a
         else:
             usage()
 
@@ -1511,7 +1538,7 @@ def main():
             print >> sys.stderr, "No source directories specified"
             usage()
         for source in args:
-            ProcessRelease(source, archive, db, project = project_name, key_data = key_data)
+            ProcessRelease(source, archive, db, project = project_name, key_data = key_data, changelog = changelog)
     elif cmd == "check":
         Check(archive, db, project = project_name)
     else:
