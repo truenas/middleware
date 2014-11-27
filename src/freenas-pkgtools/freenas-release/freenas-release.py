@@ -997,7 +997,6 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
 
     if debug:  print >> sys.stderr, "Processelease(%s, %s, %s, %s)" % (source, archive, db, sign)
 
-    print >> sys.stderr, "changelog = %s" % changelog
     if db is None:
         raise Exception("Invalid db")
 
@@ -1285,6 +1284,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
 
     if changelog:
         changefile = "%s/%s/ChangeLog.txt" % (archive, manifest.Train())
+        change_input = None
         if changelog == "-":
             print "Enter changelog, control-d when done"
             change_input = sys.stdin
@@ -1295,7 +1295,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 print >> sys.stderr, "Unable to open input change log %s" % changelog
         if change_input:
             try:
-                cfile = open(changefile, "ab")
+                cfile = open(changefile, "ab", 0664)
             except:
                 print >> sys.stderr, "Unable to open changelog %s" % changefile
             else:
