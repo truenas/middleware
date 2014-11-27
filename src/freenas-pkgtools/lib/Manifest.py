@@ -296,12 +296,12 @@ class Manifest(object):
         return
 
     def VerifySignature(self):
+        from . import IX_ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER, IX_CRL
+        from . import SIGNATURE_FAILURE
         if self.Signature() is None:
-            return True
+            return not SIGNATURE_FAILURE
         # Probably need a way to ignore the signature
         else:
-            from . import IX_ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER, IX_CRL
-            from . import SIGNATURE_FAILURE
             import subprocess
             import tempfile
 

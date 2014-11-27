@@ -15,7 +15,7 @@ DEFAULT_CA_FILE = "/usr/local/share/certs/ca-root-nss.crt"
 IX_ROOT_CA_FILE = "/usr/local/share/certs/iX-CA.pem"
 UPDATE_CERT_FILE = "/usr/local/share/certs/freenas-update.pem"
 VERIFIER_HELPER = "/usr/local/libexec/verify_signature"
-SIGNATURE_FAILURE = False
+SIGNATURE_FAILURE = True
 
 try:
     import sys
