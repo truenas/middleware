@@ -520,6 +520,9 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
             RemoveUpdate(directory)
             return False
 
+    # Almost done:  get a changelog if one exists for the train
+    # If we can't get it, we don't care.
+    conf.GetChangeLog(train, save_dir = directory, handler = get_handler)
     # Then save the manifest file.
     latest_mani.StoreFile(mani_file)
     # Create the SEQUENCE file.

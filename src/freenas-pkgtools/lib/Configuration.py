@@ -911,6 +911,23 @@ class Configuration(object):
             pass
         return None
 
+    def GetChangeLog(self, train, save_dir = None, handler = None):
+        # Look for the changelog file for the specific train, and attempt to
+        # download it.  If save_dir is set, save it as save_dir/ChangeLog.txt
+        # Returns a file for the ChangeLog, or None if it can't be found.
+        changelog_url = "%s/%s/ChangeLog.txt" % (UPDATE_SERVER, train)
+        if save_dir:
+            save_path = "%s/ChangeLog.txt" % save_dir
+        else:
+            save_path = None
+        file = self.TryGetNetworkFile(
+            url = changelog_url,
+            handler = handler,
+            pathname = save_path,
+            reason = "GetChangeLog",
+            )
+        return file
+    
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
