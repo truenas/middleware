@@ -18,7 +18,7 @@ class VolumeStatusAlert(BaseAlert):
     def on_volume_status_not_healthy(self, vol, status, message):
         if message:
             return Alert(
-                Alert.WARN,
+                Alert.CRIT,
                 _('The volume %(volume)s status is %(status)s:'
                   ' %(message)s') % {
                     'volume': vol,
@@ -28,7 +28,7 @@ class VolumeStatusAlert(BaseAlert):
             )
         else:
             return Alert(
-                Alert.WARN,
+                Alert.CRIT,
                 _('The volume %(volume)s status is %(status)s') % {
                     'volume': vol,
                     'status': status,
