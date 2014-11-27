@@ -1286,6 +1286,7 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     if changelog:
         changefile = "%s/%s/ChangeLog.txt" % (archive, manifest.Train())
         if changelog == "-":
+            print "Enter changelog, control-d when done"
             change_input = sys.stdin
         else:
             try:
