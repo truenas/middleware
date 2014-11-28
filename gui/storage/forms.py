@@ -1349,22 +1349,20 @@ class ZFSDataset(Form):
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
         _n = notifier()
-        if '/' in self._fs:
-            parentds = self._fs.rsplit('/', 1)[0]
-            parentdata = _n.zfs_get_options(parentds)
+        parentdata = _n.zfs_get_options(self._fs)
 
-            self.fields['dataset_atime'].choices = _inherit_choices(
-                choices.ZFS_AtimeChoices,
-                parentdata['atime'][0]
-            )
-            self.fields['dataset_compression'].choices = _inherit_choices(
-                choices.ZFS_CompressionChoices,
-                parentdata['compression'][0]
-            )
-            self.fields['dataset_dedup'].choices = _inherit_choices(
-                choices.ZFS_DEDUP_INHERIT,
-                parentdata['dedup'][0]
-            )
+        self.fields['dataset_atime'].choices = _inherit_choices(
+            choices.ZFS_AtimeChoices,
+            parentdata['atime'][0]
+        )
+        self.fields['dataset_compression'].choices = _inherit_choices(
+            choices.ZFS_CompressionChoices,
+            parentdata['compression'][0]
+        )
+        self.fields['dataset_dedup'].choices = _inherit_choices(
+            choices.ZFS_DEDUP_INHERIT,
+            parentdata['dedup'][0]
+        )
 
         if self._create is False:
             del self.fields['dataset_name']
