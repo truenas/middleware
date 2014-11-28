@@ -183,9 +183,13 @@ trampoline_upgrade()
 
 echo -n "Extracting upgrade image, please wait..."
 
+set -e
+# These must all succeed and there is no automated way to recover
+# from fails.
 /rescue/mount -o ro /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a /mnt
 /rescue/mount -t tmpfs tmpfs /installer
 /rescue/mkdir -p /installer/.mount/${AVATAR_PROJECT}
+set +e
 
 /rescue/tar xf /mnt/gui-install-environment.tar  -C /installer || (echo "FAILED BASE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
 /rescue/tar xf /mnt/gui-packages.tar -C /installer/.mount || (echo "FAILED PACKAGE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
