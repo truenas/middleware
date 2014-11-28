@@ -39,7 +39,7 @@ if [ -n "$WITH_PKGNG" ]; then
 		url: "http://pkg.cdn.pcbsd.org/10.0-RELEASE/amd64",
 		signature_type: "fingerprints",
 		fingerprints: "/usr/local/etc/pkg/fingerprints/pcbsd",
-		enabled: true
+		enabled: false
 	     }' > ${NANO_OBJ}/_.w/usr/local/etc/pkg/repos/pcbsd.conf
 
 	# Create the fingerprints dirs
@@ -63,7 +63,7 @@ fingerprint: b2b9e037f938cf20ba68aa85ac88c15889c729a7f6b70c25069774308e760a03' >
 	else
 		PACKAGESITE=""
 	fi
-	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install -f $PACKAGES_TO_INSTALL"
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install -r local -f $PACKAGES_TO_INSTALL"
 	rm -f ${NANO_OBJ}/_.w/usr/local/etc/pkg.conf
 
 
