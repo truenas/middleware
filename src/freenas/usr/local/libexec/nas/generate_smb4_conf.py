@@ -937,7 +937,9 @@ def smb4_setup():
             smb4_mkdir(statedir)
         return
 
-    basename_realpath = os.path.join(notifier().system_dataset_path(), 'samba4')
+    systemdataset_path = notifier().system_dataset_path() or statedir
+
+    basename_realpath = os.path.join(systemdataset_path, 'samba4')
     statedir_realpath = os.path.realpath(statedir)
 
     if os.path.islink(statedir) and not os.path.exists(statedir):
