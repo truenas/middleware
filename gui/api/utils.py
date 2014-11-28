@@ -35,6 +35,7 @@ from django.db.models.fields.related import ForeignKey
 from django.http import QueryDict
 
 from freenasUI.account.models import bsdUsers
+from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -229,11 +230,15 @@ class ResourceMixin(object):
                 request_type, request, *args, **kwargs
             )
         except (MiddlewareError, ServiceFailed, UnsupportedFormat), e:
+            log_traceback(log=log)
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error_message': unicode(e),
                 })
             )
+        except Exception, e:
+            log_traceback(log=log)
+            raise
 
     def dehydrate(self, bundle):
         bundle = super(ResourceMixin, self).dehydrate(bundle)
