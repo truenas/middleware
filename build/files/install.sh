@@ -888,6 +888,9 @@ menu_install()
 	${INTERACTIVE} && dialog --msgbox "The installer has preserved your database file.
 #$AVATAR_PROJECT will migrate this file, if necessary, to the current format." 6 74
     elif [ "${_do_upgrade}" -eq 0 -a -n "${_password}" ]; then
+	# Fix urandom
+	rm /tmp/data/dev/urandom
+	ln -s /dev/random /tmp/data/dev/urandom
 	# Set the root password
 	chroot /tmp/data /usr/sbin/service datastore start
 	chroot /tmp/data /usr/local/sbin/dspasswd root ${_password}
