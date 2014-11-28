@@ -2522,7 +2522,7 @@ class UnlockPassphraseForm(Form):
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
         _notifier.restart("system_datasets")
-
+        _notifier.reload("disk")
 
 class KeyForm(Form):
 
