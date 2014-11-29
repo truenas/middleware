@@ -781,7 +781,7 @@ class VolumeImportForm(Form):
             )
             self._errors["volume_fstype"] = self.error_class([msg])
         path = cleaned_data.get("volume_dest_path")
-        if not os.path.exists(path):
+        if path is None or not os.path.exists(path):
             self._errors["volume_dest_path"] = self.error_class(
                 [_(u"The path %s does not exist" % path)])
         return cleaned_data
