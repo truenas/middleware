@@ -64,6 +64,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/arcstat.py ${STAGEDIR}/${PREFIX}/usr/local/bin/arcstat.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/crashuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/crashuploader
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/custom-upssched-cmd ${STAGEDIR}/${PREFIX}/usr/local/bin/custom-upssched-cmd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/fixsid.py ${STAGEDIR}/${PREFIX}/usr/local/bin/fixsid.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-debug ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-debug
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ixdiagnose ${STAGEDIR}/${PREFIX}/usr/local/bin/ixdiagnose
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/mfistatus.py ${STAGEDIR}/${PREFIX}/usr/local/bin/mfistatus.py

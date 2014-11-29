@@ -6,6 +6,7 @@ usr/local/bin/arc_summary.py
 usr/local/bin/arcstat.py
 usr/local/bin/crashuploader
 usr/local/bin/custom-upssched-cmd
+usr/local/bin/fixsid.py
 usr/local/bin/freenas-debug
 usr/local/bin/ixdiagnose
 usr/local/bin/mfistatus.py
