@@ -59,6 +59,10 @@ if sanity:
         cifs.cifs_SID = sidval
         print "Saving detected SID to the database"
         cifs.save()
+        print "Please either reboot the system or run the following commands as root:"
+        print "service samba_server stop"
+        print "service ix-pre-samba start"
+        print "service samba_server start"
     else:
         print "Database SID is the same as the detected SID. Nothing to do."
         exit(0)
