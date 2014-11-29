@@ -196,6 +196,12 @@ class DevdEventSource(EventSource):
 
 
 def _init(dispatcher):
+    def on_service_started(args):
+        if args['name'] == 'devd':
+            # devd is running, kick in DevdEventSource
+            dispatcher.register_event_source('system.device', DevdEventSource)
+            dispatcher.unregister_event_handler('system.device', on_service_started)
+
     dispatcher.register_schema_definition('disk_device', {
         'type': 'object',
         'properties': {
@@ -221,5 +227,5 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_provider("system.device", DeviceInfoPlugin)
-    dispatcher.register_event_source("system.device", DevdEventSource)
+    dispatcher.register_event_handler('service.started', on_service_started)
+    dispatcher.register_provider('system.device', DeviceInfoPlugin)

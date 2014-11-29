@@ -184,9 +184,9 @@ class Main:
 
         template_path = self.managed_files[file_path]
         name, ext = os.path.splitext(template_path)
-        if not ext in self.renderers.keys():
+        if ext not in self.renderers.keys():
             print 'no renderer for %s' % ext
-            raise OSError("Cant find renderer")
+            raise OSError("Can't find renderer")
 
         renderer = self.renderers[ext]
         return renderer.render_template(template_path)

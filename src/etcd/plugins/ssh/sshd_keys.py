@@ -34,13 +34,20 @@ def run(context):
     for keytype in ('host', 'rsa', 'dsa', 'ecdsa', 'ed25519'):
         private_key = context.config.get('service.sshd.keys.{0}.private'.format(keytype))
         public_key = context.config.get('service.sshd.keys.{0}.public'.format(keytype))
-        private_key_file = '/etc/ssh/ssh_host_{0}_key'.format(keytype)
+        private_key_file = '/etc/ssh/ssh_host_{0}_key'.format(keytype) \
+            if keytype != 'host' \
+            else '/etc/ssh/ssh_host_key'
+
         public_key_file = private_key_file + '.pub'
 
         if private_key is None or public_key is None:
+            if os.path.exists(private_key_file) and os.path.exists(public_key_file):
+                return
+
             try:
-                keyarg = 'rsa1' if keytype == 'host' else keytype
-                subprocess.check_call(['/usr/bin/ssh-keygen', '-t', keyarg])
+                keyalg = 'rsa1' if keytype == 'host' else keytype
+                subprocess.check_call(['/usr/bin/ssh-keygen', '-q', '-t', keyalg, '-f', private_key_file, '-N', ''])
+                subprocess.check_call(['/usr/bin/ssh-keygen', '-l', '-f', public_key_file])
             except subprocess.CalledProcessError:
                 raise
         else:

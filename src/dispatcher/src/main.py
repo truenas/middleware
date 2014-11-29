@@ -50,6 +50,7 @@ from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 from datastore import get_datastore
+from datastore.config import ConfigStore
 from dispatcher.rpc import RpcContext, RpcException
 from services import ManagementService, EventService, TaskService, PluginService
 from api.handler import ApiHandler
@@ -63,7 +64,6 @@ DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 class Dispatcher(object):
     def __init__(self):
         self.started_at = None
-        self.preserved_files = []
         self.plugin_dirs = []
         self.event_types = []
         self.event_sources = {}
@@ -91,6 +91,7 @@ class Dispatcher(object):
             self.config['datastore']['dsn']
         )
 
+        self.configstore = ConfigStore(self.datastore)
         self.logger.info('Connected to datastore')
         self.require_collection('events', 'serial', 'log')
         self.require_collection('tasks', 'serial', 'log')
@@ -120,12 +121,14 @@ class Dispatcher(object):
             raise
 
         if data['dispatcher']['logging'] == 'syslog':
-            handler = logging.handlers.SysLogHandler('/var/run/log', facility='local3')
-            logging.root.setLevel(logging.DEBUG)
-            logging.root.handlers = []
-            logging.root.addHandler(handler)
-            self.preserved_files.append(handler.socket.fileno())
-            self.logger.info('Initialized syslog logger')
+            try:
+                self.__init_syslog()
+            except IOError:
+                # syslog is not yet available
+                self.logger.info('Initialization of syslog logger deferred')
+                self.register_event_handler('service.started', self.__on_service_started)
+            else:
+                self.logger.info('Initialized syslog logger')
 
         self.config = data
         self.plugin_dirs = data['dispatcher']['plugin-dirs']
@@ -158,12 +161,31 @@ class Dispatcher(object):
             return
 
         self.logger.debug("Loading plugin from %s", path)
-        plugin = imp.load_source("plugin", path)
-        if hasattr(plugin, "_init"):
-            plugin._init(self)
-            self.plugins[path] = plugin
+        try:
+            plugin = imp.load_source("plugin", path)
+            if hasattr(plugin, "_init"):
+                plugin._init(self)
+                self.plugins[path] = plugin
+        except Exception, err:
+            self.logger.warning("Cannot load plugin from %s", path)
+            self.dispatch_event("server.plugin.load_error", {"name": os.path.basename(path)})
+            return
 
         self.dispatch_event("server.plugin.loaded", {"name": os.path.basename(path)})
+
+    def __on_service_started(self, args):
+        if args['name'] == 'syslogd':
+            try:
+                self.__init_syslog()
+                self.unregister_event_handler('service.started', self.__on_service_started)
+            except IOError, err:
+                self.logger.warning('Cannot initialize syslog: %s', str(err))
+
+    def __init_syslog(self):
+        handler = logging.handlers.SysLogHandler('/var/run/log', facility='local3')
+        logging.root.setLevel(logging.DEBUG)
+        logging.root.handlers = []
+        logging.root.addHandler(handler)
 
     def dispatch_event(self, name, args):
         if 'timestamp' not in args:
@@ -192,6 +214,9 @@ class Dispatcher(object):
             self.event_handlers[name] = []
 
         self.event_handlers[name].append(handler)
+
+    def unregister_event_handler(self, name, handler):
+        self.event_handlers[name].remove(handler)
 
     def register_event_source(self, name, clazz):
         self.logger.debug("New event source: %s provided by %s", name, clazz.__module__)

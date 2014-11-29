@@ -47,6 +47,9 @@ class ManagementService(RpcService):
     def restart(self):
         pass
 
+    def get_event_sources(self):
+        return self.dispatcher.event_sources.keys()
+
     def get_connected_clients(self):
         return self.dispatcher.ws_server.clients.keys()
 

@@ -154,6 +154,24 @@ class UpdateServiceConfigTask(Task):
 
 
 def _init(dispatcher):
+    def on_rc_command(args):
+        cmd = args['action']
+        name = args['name']
+        svc = dispatcher.datastore.get_one('service_definitions', ('service-name', '=', name))
+
+        if svc is None:
+            # ignore unknown rc scripts
+            return
+
+        if cmd not in ('start', 'stop', 'reload', 'restart'):
+            # ignore unknown actions
+            return
+
+        dispatcher.dispatch_event('service.{0}ed'.format(cmd), {
+            'name': svc['name']
+        })
+
+    dispatcher.register_event_handler("service.rc.command", on_rc_command)
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
     dispatcher.register_task_handler("service.update_config", ServiceManageTask)
     dispatcher.register_provider("service", ServiceInfoProvider)

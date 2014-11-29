@@ -26,6 +26,7 @@
 #
 #####################################################################
 
+from __future__ import print_function
 import sys
 import argh
 import json
@@ -45,29 +46,54 @@ DEFAULT_TIMEOUT = 10
 @argh.arg('args', nargs='*')
 def call(method, args, server=DEFAULT_SERVER, timeout=DEFAULT_TIMEOUT, j=False):
     c = create_client(server)
+    c.default_timeout = timeout
 
-    for idx, i in enumerate(args):
-        args[idx] = json.loads(i)
+    if j:
+        args = json.loads(args[0])
+    else:
+        for idx, i in enumerate(args):
+            args[idx] = json.loads(i)
 
-    result = c.call_sync(method, *args, timeout=timeout)
-    print result
+    result = c.call_sync(method, *args)
+
+    if result is not None:
+        print(result)
+
+
+@argh.arg('--server')
+@argh.arg('--timeout')
+@argh.arg('-j')
+@argh.arg('args', nargs='*')
+def emit(event, args, server=DEFAULT_SERVER, timeout=DEFAULT_TIMEOUT, j=False):
+    c = create_client(server)
+    c.default_timeout = timeout
+
+    if j:
+        data = json.loads(args[0])
+    else:
+        data = {}
+        for k, v in zip(args[::2], args[1::2]):
+            v = strtoint(v)
+            data[k] = v
+
+    c.emit_event(event, data)
 
 
 @argh.arg('--server')
 def enum(server=DEFAULT_SERVER):
     c = create_client(server)
     for svc in c.call_sync('discovery.get_services', timeout=DEFAULT_TIMEOUT):
-        print "Service: {0}".format(svc)
-        print "Methods:"
+        print("Service: {0}".format(svc))
+        print("Methods:")
         for m in c.call_sync('discovery.get_methods', svc, timeout=DEFAULT_TIMEOUT):
-            print "\t{0}".format(m['name'])
+            print("\t{0}".format(m['name']))
 
 
 @argh.arg('--server')
 @argh.arg('events', nargs='*')
 def listen(events, server=DEFAULT_SERVER):
     def callback(name, args):
-        print "New event: {0}".format(name)
+        print("New event: {0}".format(name))
 
     c = create_client(server)
     c.event_callback = callback
@@ -103,21 +129,35 @@ def tasks(server=DEFAULT_SERVER, limit=None, H=False):
             time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(task['created_at']))
         ])
 
-    print table.draw()
+    print(table.draw())
 
 
 @argh.arg('--server')
 def poll(task_id, server=DEFAULT_SERVER):
     c = create_client(server)
     result = c.call_sync('task.status', DEFAULT_TIMEOUT, task_id)
-    print "Task #{0}:".format(result['id'])
-    print "Created at: {0}".format(time.localtime(result['created_at']))
-    print "Name: {0}".format(result['name'])
-    print "Arguments: {0}".format(','.join(result['args']))
-    print "State: {0}".format(result['state'])
+    print("Task #{0}:".format(result['id']))
+    print("Created at: {0}".format(time.localtime(result['created_at'])))
+    print("Name: {0}".format(result['name']))
+    print("Arguments: {0}".format(','.join(result['args'])))
+    print("State: {0}".format(result['state']))
 
     if 'progress' in result:
         pass
+
+@argh.arg('--server')
+@argh.arg('--timeout')
+def wait_server(server=DEFAULT_SERVER, timeout=DEFAULT_TIMEOUT):
+    while timeout > 0:
+        try:
+            c = Client()
+            c.connect(server)
+            c.login_service('dispatcherctl', timeout)
+            break
+        except socket.error, err:
+            time.sleep(1)
+            timeout -= 1
+            continue
 
 
 def create_client(server):
@@ -126,15 +166,29 @@ def create_client(server):
         c.connect(server)
         c.login_service('dispatcherctl', DEFAULT_TIMEOUT)
     except socket.error, err:
-        print "Cannot connect: {0}".format(str(err))
+        print("Cannot connect: {0}".format(str(err)), file=sys.stderr)
         sys.exit(1)
 
     return c
 
 
+def strtoint(v):
+    # If string is quoted, strip quotes and return
+    if v[0] == '"' and v[-1] == '"':
+        return v[1:-1]
+
+    try:
+        v = int(v)
+        return v
+    except ValueError:
+        pass
+
+    return v
+
+
 def main():
     parser = argh.ArghParser()
-    parser.add_commands([enum, call, listen, submit, poll, tasks])
+    parser.add_commands([enum, call, emit, wait_server, listen, submit, poll, tasks])
     parser.dispatch()
 
 

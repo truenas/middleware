@@ -26,13 +26,12 @@
 #####################################################################
 
 
+import crypt
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
 
 
 @description("foo")
 class UsersNamespace(EntityNamespace):
-    class ChangePasswordCommand(Command):
-        pass
 
     def __init__(self, context):
         super(UsersNamespace, self).__init__(context)
@@ -72,8 +71,15 @@ class UsersNamespace(EntityNamespace):
             get='/home',
             list=True)
 
+        self.add_property(
+            descr='Password',
+            name='unixhash',
+            get=None,
+            set='/unixhash',
+            list=False
+        )
+
         self.primary_key = '/username'
-        self.entity_commands = [self.ChangePasswordCommand]
 
     def query(self):
         return self.context.connection.call_sync('users.query')
@@ -82,7 +88,8 @@ class UsersNamespace(EntityNamespace):
         return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
 
     def set(self, entity, name, value, context):
-        pass
+        if name == 'unixhash':
+            pass
 
     def display_group(self, entity):
         group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()

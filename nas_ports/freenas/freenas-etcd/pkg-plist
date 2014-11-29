@@ -2,7 +2,7 @@
 /usr/local/lib/etcd/src/main.py
 /usr/local/lib/etcd/plugins/group.mako
 /usr/local/lib/etcd/plugins/loader.conf.mako
-/usr/local/lib/etcd/plugins/local/nginx.conf.mako
+/usr/local/lib/etcd/plugins/local/nginx/nginx.conf.mako
 /usr/local/lib/etcd/plugins/master.passwd.mako
 /usr/local/lib/etcd/plugins/passwd.mako
 /usr/local/lib/etcd/plugins/rc.conf.mako

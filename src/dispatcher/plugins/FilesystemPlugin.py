@@ -25,17 +25,50 @@
 #
 #####################################################################
 
+import errno
+import os
+import stat
+from dispatcher.rpc import RpcException, description, returns
 from task import Provider
-from dispatcher.rpc import description, returns
 
-@description("Provides access to configuration store")
-class ConfigProvider(Provider):
-    def get(self, key):
-        return self.dispatcher.configstore.get(key)
 
-    def list(self, root):
-        return self.dispatcher.configstore.list_children(root)
+@description("Provides informations filesystem structure")
+class FilesystemProvider(Provider):
+
+    def list_dir(self, path):
+        result = []
+        if not os.path.isdir(path):
+            raise RpcException(errno.ENOENT, 'Path {0} is not a directory'.format(path))
+
+        for i in os.listdir(path):
+            try:
+                st = os.stat(os.path.join(path, i))
+            except OSError:
+                continue
+
+            if stat.S_ISDIR(st.st_mode):
+                typ = 'directory'
+                size = None
+            elif stat.S_ISLNK(st.st_mode):
+                typ = 'link'
+                size = None
+            else:
+                typ = 'file'
+                size = st.st_size
+
+            item = {
+                'name': i,
+                'type': typ,
+                'modified': st.st_mtime
+            }
+
+            if size is not None:
+                item['size'] = size
+
+            result.append(item)
+
+        return result
 
 
 def _init(dispatcher):
-    dispatcher.register_provider('config', ConfigProvider)
+    dispatcher.register_provider('filesystem', FilesystemProvider)

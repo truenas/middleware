@@ -28,6 +28,7 @@
 import gevent
 import time
 import logging
+import traceback
 from gevent.queue import Queue
 from gevent.event import Event
 from task import TaskException, TaskStatus
@@ -36,6 +37,9 @@ from task import TaskException, TaskStatus
 class QueueClass(object):
     SYSTEM = 'SYSTEM'
     DISK = 'DISK'
+    VOLUME = 'VOLUME'
+    DATASET = 'DATASET'
+    SNAPSHOT = 'SNAPSHOT'
 
 
 class TaskState(object):
@@ -244,7 +248,9 @@ class Worker(object):
                 result = task.run()
             except BaseException, e:
                 task.ended.set()
-                task.set_state(TaskState.FAILED, TaskStatus(0, str(e)))
+                task.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
+                    "stacktrace": traceback.format_exc()
+                }))
                 continue
 
             if result is None:

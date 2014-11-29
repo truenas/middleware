@@ -35,6 +35,7 @@
 /usr/local/lib/dispatcher/plugins/ConfigPlugin.py
 /usr/local/lib/dispatcher/plugins/AuditPipePlugin.py
 /usr/local/lib/dispatcher/plugins/UserPlugin.py
+/usr/local/lib/dispatcher/plugins/FilesystemPlugin.py
 /usr/local/etc/rc.d/dispatcher
 /usr/local/sbin/dispatcherd
 /usr/local/sbin/dispatcherctl

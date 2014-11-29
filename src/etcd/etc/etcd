@@ -3,8 +3,9 @@
 # $FreeBSD$
 #
 
-# PROVIDE: dispatcher
-# REQUIRE: datastore
+# PROVIDE: etcd
+# REQUIRE: datastore dispatcher
+# BEFORE: FILESYSTEMS
 
 . /etc/rc.subr
 

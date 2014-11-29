@@ -1,0 +1,1 @@
+${config.get("system.motd")}
