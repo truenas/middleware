@@ -138,10 +138,12 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/www/data/django.fcgi ${STAGEDIR}/${PREFIX}/usr/local/www/data/django.fcgi
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix.rc.d
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.subr ${STAGEDIR}/${PREFIX}/etc/rc.subr
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-activedirectory ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-activedirectory
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-afpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-afpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-aliases ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-aliases
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ataidle ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ataidle
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-bootstrap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-snmpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-snmpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-cache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-cache
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-collectd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-collectd
@@ -149,7 +151,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ctld ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ctld
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-etc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-fstab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-fstab
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-hostname ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-hostname
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inadyn ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inadyn
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inetd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inetd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-jail ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-jail
@@ -161,13 +162,11 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-motd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-motd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-multipath ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-multipath
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nfsd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nfsd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nginx ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nginx
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nis ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nis
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nsswitch ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nsswitch
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nt4 ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nt4
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ntpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ntpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pam ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pam
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-passwd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-passwd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-plugins ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-plugins
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-postinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-postinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit
@@ -181,16 +180,13 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-shutdown ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-shutdown
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smartd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smartd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smbpasswd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smbpasswd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sshd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sshd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ssl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ssl
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sssd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sssd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-swap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-swap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sudoers ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sudoers
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syncdisks ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syncdisks
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sysctl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sysctl
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syslogd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syslogd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-system ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-system
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ttys ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ttys
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-update ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-update
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ups ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ups
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-warden ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-warden
