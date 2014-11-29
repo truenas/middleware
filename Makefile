@@ -86,7 +86,14 @@ save-build-env:
 	build/save_build.sh
 
 sync:
-	rsync -al --rsync-path="sudo rsync" --exclude '.git' --exclude '.idea' . ${host}:${dir}/
+	rsync -al --info=progress2 \
+		--rsync-path="sudo rsync" \
+		--delete \
+		--exclude '.git-repo-setting' \
+		--exclude 'objs' \
+		--exclude 'FreeBSD' \
+		--exclude '.git' \
+		--exclude '.idea' . ${host}:${dir}/
 
 remote: sync
 	ssh -t ${host} sudo make -C ${dir} ${target}
@@ -152,10 +159,10 @@ git-external:
 tag:
 	build/apply_tag.sh
 
-gui: 
+build-gui: 
 	build/ports/build-gui.sh
 
-ports: check-root gui
+ports: check-root build-gui
 	build/ports/create-poudriere-conf.sh
 	build/ports/create-poudriere-make.conf.sh
 	build/ports/prepare-jail.sh
