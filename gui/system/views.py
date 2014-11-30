@@ -897,7 +897,7 @@ def perftest(request):
 
     p1 = subprocess.Popen([
         '/usr/local/bin/perftests-nas',
-        '-o', perftestdataset.encode('utf8'),
+        '-o', perftestdir.encode('utf8'),
         '-s', str(PERFTEST_SIZE),
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p1.communicate()
@@ -924,8 +924,7 @@ def perftest(request):
 
 def perftest_download(request):
 
-    systemdataset, volume, basename = notifier().system_dataset_settings()
-    dump = '/mnt/%s/perftest.txz' % basename
+    dump = os.path.join(notifier().system_dataset_path(), 'perftest.txz')
 
     wrapper = FileWrapper(file(dump))
     response = StreamingHttpResponse(
