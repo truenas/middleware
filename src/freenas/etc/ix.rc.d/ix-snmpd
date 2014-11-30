@@ -34,6 +34,7 @@ sysContact ${snmp_contact:-unknown@localhost}
 sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
 
 rocommunity ${snmp_community} default
+pass .1.3.6.1.4.1.25359.1 /usr/local/bin/freenas-snmp/zfs-snmp
 EOF
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}

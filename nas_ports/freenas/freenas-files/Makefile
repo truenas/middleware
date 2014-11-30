@@ -46,6 +46,7 @@ do-build:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin/freenas-snmp
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec
@@ -75,6 +76,9 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/chelsio_adapter_config ${STAGEDIR}/${PREFIX}/usr/local/bin/chelsio_adapter_config
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/t5seeprom ${STAGEDIR}/${PREFIX}/usr/local/bin/t5seeprom
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/sockscopy ${STAGEDIR}/${PREFIX}/usr/local/bin/sockscopy
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/__init__.py ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/__init__.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/snmpresponse.py ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/snmpresponse.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/zfs-snmp ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/zfs-snmp
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx
@@ -257,6 +261,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/find_alias_for_smtplib.py ${STAGEDIR}/${PREFIX}/etc/find_alias_for_smtplib.py
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/share/firmware
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/share/vpds
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/share/snmp/mibs
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/firmware/t5fw-1.12.25.0.bin ${STAGEDIR}/${PREFIX}/usr/local/share/firmware/t5fw-1.12.25.0.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_cr_qsa_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_cr_qsa_variable_2133_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_cr_spider_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_cr_spider_variable_2133_vpd.bin
@@ -267,4 +272,5 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_variable_vpd.bin
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/snmp/mibs/FREENAS-MIB.txt ${STAGEDIR}/${PREFIX}/usr/local/share/snmp/mibs/FREENAS-MIB.txt
 .include <bsd.port.mk>

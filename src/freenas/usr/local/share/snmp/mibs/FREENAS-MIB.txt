@@ -1,0 +1,170 @@
+FREENAS-MIB DEFINITIONS ::= BEGIN
+
+-- Currently defines structures for monitoring the zfs-stats in freenas (more to come)
+-- via snmp. Taken from https://github.com/jm66/solaris-extra-snmp. License below:
+-- Copyright (c) 2012, Jakob Borg
+-- All rights reserved.
+-- 
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions are met:
+--    * Redistributions of source code must retain the above copyright
+--      notice, this list of conditions and the following disclaimer.
+--    * Redistributions in binary form must reproduce the above copyright
+--      notice, this list of conditions and the following disclaimer in the
+--      documentation and/or other materials provided with the distribution.
+--    * The name of the author may not be used to endorse or promote products
+--      derived from this software without specific prior written permission.
+--
+-- THIS SOFTWARE IS PROVIDED BY JAKOB BORG ''AS IS'' AND ANY EXPRESS OR IMPLIED
+-- WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+-- EVENT SHALL JAKOB BORG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+-- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+-- IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+-- OF SUCH DAMAGE.
+
+IMPORTS
+	enterprises FROM RFC1155-SMI
+	OBJECT-TYPE FROM RFC-1212
+	DisplayString FROM RFC-1213;
+
+freenas	OBJECT IDENTIFIER ::= {enterprises 25359}
+
+zfs	OBJECT IDENTIFIER ::= {freenas 1}
+
+vols 	OBJECT IDENTIFIER ::= {zfs 5}
+
+zfsVolumeName OBJECT-TYPE
+        SYNTAX  DisplayString
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The name of the filesystem type Volume."
+        ::= {vols 1}
+
+zfsVolumeAvailableKB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 KB blocks that are available for use."
+        ::= {vols 2}
+
+zfsVolumeUsedKB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 KB blocks that are in use."
+        ::= {vols 3}
+
+zfsVolumeSizeKB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 KB blocks of the volume."
+        ::= {vols 4}
+
+zfsVolumeAvailableMB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 MB blocks that are available for use.
+                 Useful if zfsVolumeAvailableKB exceeds a 32 bit
+                 integer."
+        ::= {vols 12}
+
+zfsVolumeUsedMB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 MB blocks that are in use Useful if
+                 zfsVolumeUsedKB exceeds a 32 bit integer."
+        ::= {vols 13}
+
+zfsVolumeSizeMB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 MB blocks part of the volume Useful if
+                 zfsVolumeSizeKB exceeds a 32 bit integer."
+        ::= {vols 14}
+
+fs	OBJECT IDENTIFIER ::= {zfs 1}
+
+zfsFilesystemName OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"The name of the filesystem."
+	::= {fs 1}
+
+zfsFilesystemAvailableKB OBJECT-TYPE
+	SYNTAX	GAUGE
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+	         "The number of 1 KB blocks that are available for use."
+	::= {fs 2}
+
+zfsFilesystemUsedKB OBJECT-TYPE
+	SYNTAX	GAUGE
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+	         "The number of 1 KB blocks that are in use."
+	::= {fs 3}
+
+zfsPoolHealth OBJECT-TYPE
+	SYNTAX	INTEGER { online(1), degraded(2), faulted(3), unknown(4) }
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+	         "The current health of the containing pool, as reported
+		 by zpool status."
+	::= {fs 4}
+
+zfsFilesystemSizeKB OBJECT-TYPE
+        SYNTAX  INTEGER32 { online(1), degraded(2), faulted(3), unknown(4) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+        	 "The number of 1 MB blocks that are assigned"
+	::= {fs 5}
+
+zfsFilesystemAvailableMB OBJECT-TYPE
+	SYNTAX	GAUGE
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+	         "The number of 1 MB blocks that are available for use.
+		 Useful if zfsFilesystemAvailableKB exceeds a 32 bit
+		 integer."
+	::= {fs 12}
+
+zfsFilesystemUsedMB OBJECT-TYPE
+	SYNTAX	GAUGE
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+	         "The number of 1 MB blocks that are in use Useful if
+		 zfsFilesystemUsedKB exceeds a 32 bit integer."
+	::= {fs 13}
+
+zfsFilesystemSizeMB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 MB blocks that are assigned  Useful if
+                 zfsFilesystemSizeKB exceeds a 32 bit integer."
+        ::= {fs 14}
+END
