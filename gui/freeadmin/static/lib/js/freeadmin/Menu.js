@@ -525,7 +525,7 @@ define([
                     href:openurl,
                     refreshOnShow: true
                 });
-                pane.tab = 'jails';
+                pane.tab = 'directoryservice';
                 p.addChild(pane);
                 p.selectChild(pane);
                 domClass.add(pane.domNode,["objrefresh", "data_directoryservice_directoryservice"]);
