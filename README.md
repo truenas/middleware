@@ -4,8 +4,8 @@ To build the system (experts only):
 
 ## Requirements:
 
-* Your build environment must be FreeBSD 9.2-RELEASE (building on
-  FreeBSD 10 or 11 is not supported at this time).
+* Your build environment must be FreeBSD 10.0-RELEASE (building on
+  FreeBSD 9 or 11 is not supported at this time).
 
 * an amd64 capable processor.  8GB of memory, or an equal/greater amount
   of swap space, is also required
