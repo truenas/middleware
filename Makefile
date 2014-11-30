@@ -5,6 +5,7 @@
 NANO_LABEL?=FreeNAS
 VERSION?=10.0.0-ALPHA
 TRAIN?=${NANO_LABEL}-10-Nightlies
+FREENAS_KEYFILE?=/dev/null
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
@@ -25,6 +26,8 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export GIT_LOCATION
 .export BUILD_TIMESTAMP
 .export TRAIN
+.export FREENAS_KEYFILE
+.export CHANGELOG
 .export UPDATE_USER = sef	# For now, just use sef's account
 
 .if defined(NANO_ARCH)
@@ -107,12 +110,12 @@ release-push: release
 	cp ReleaseNotes "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
-		sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
+		sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 	fi
-	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/LATEST/
 
 update-push:	release
-	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/LATEST/
 
 rebuild: checkout all
 	@sh build/create_release_distribution.sh
