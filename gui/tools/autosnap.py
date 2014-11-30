@@ -242,19 +242,23 @@ if len(mp_to_task_map) > 0:
         qs = VMWarePlugin.objects.filter(filesystem=fs)
         vmsnapname = str(uuid.uuid4())
         snapvms = []
+        snapvmfails = []
         for obj in qs:
-           try:
-               server.connect(obj.hostname, obj.username, obj.password) 
-           except:
-               continue
-           vmlist = server.get_registered_vms(status='poweredOn')
-           for vm in vmlist:
-               if vm.startswith("[%s]" % obj.datastore):
-                   vm1 = server.get_vm_by_path(vm)
-                   vm1.create_snapshot(vmsnapname, memory=False)
-                   snapvms.append(vm1)
+            try:
+                server.connect(obj.hostname, obj.username, obj.password) 
+            except:
+                continue
+            vmlist = server.get_registered_vms(status='poweredOn')
+            for vm in vmlist:
+                if vm.startswith("[%s]" % obj.datastore):
+                    vm1 = server.get_vm_by_path(vm)
+                    try:
+                        vm1.create_snapshot(vmsnapname, memory=False)
+                    except:
+                        snapvmfails.append(vm1)
+                    snapvms.append(vm1)
 
-        if len(snapvms) > 0:
+        if len(snapvms) > 0 and len(snapvmfails) == 0:
             vmflag = '-o freenas:vmsynced=Y '
         else:
             vmflag = ''
@@ -282,7 +286,8 @@ if len(mp_to_task_map) > 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
 
         for vm in snapvms:
-            vm.delete_named_snapshot(vmsnapname)
+            if vm not in snapvmfails:
+                vm.delete_named_snapshot(vmsnapname)
 
     MNTLOCK.lock()
     for snapshot in snapshots_pending_delete:
