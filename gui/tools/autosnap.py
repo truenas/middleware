@@ -247,6 +247,7 @@ if len(mp_to_task_map) > 0:
             try:
                 server.connect(obj.hostname, obj.username, obj.password) 
             except:
+                log.warn("VMWare login failed to %s" % obj.hostname
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
@@ -255,6 +256,7 @@ if len(mp_to_task_map) > 0:
                     try:
                         vm1.create_snapshot(vmsnapname, memory=False)
                     except:
+                        log.warn("Snapshot of VM %s failed" % vm1)
                         snapvmfails.append(vm1)
                     snapvms.append(vm1)
 
