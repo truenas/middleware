@@ -86,6 +86,7 @@ from freenasUI.system.utils import (
     UpdateHandler,
     VerifyHandler,
     get_changelog,
+    parse_changelog,
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -1283,9 +1284,18 @@ def update_apply(request):
             train=updateobj.get_train(),
             cache_dir=notifier().get_update_location(),
         )
+        changelog = None
+        if update:
+            changelogpath = '%s/ChangeLog.txt' % (
+                notifier().get_update_location()
+            )
+            if os.path.exists(changelogpath):
+                with open(changelogpath, 'r') as f:
+                    changelog = parse_changelog(f.read(), update.Sequence())
         return render(request, 'system/update.html', {
             'update': update,
             'handler': handler,
+            'changelog': changelog,
         })
 
 

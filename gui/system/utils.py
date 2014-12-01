@@ -294,7 +294,10 @@ def get_changelog(train, sequence):
     if not changelog:
         return None
 
-    changelog = changelog.read()
+    return parse_changelog(changelog.read(), sequence)
+
+
+def parse_changelog(changelog, sequence):
     regexp = r'### START %(seq)s(.+)### END %(seq)s' % {'seq': sequence}
     reg = re.search(regexp, changelog, re.S|re.M)
 
