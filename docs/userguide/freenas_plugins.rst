@@ -109,15 +109,15 @@ Updating Plugins
 ----------------
 
 When a newer version of a plugin becomes available in the official repository, an "Update" button is added to the entry for the plugin in the "Installed" tab.
-In the example shown in Figure 12.2a, a newer version of Minidlna is available.
+In the example shown in Figure 12.2a, a newer version of Transmission is available.
 
 **Figure 12.2a: Updating an Installed Plugin**
 
 |plugins4.png|
 
 .. |plugins4.png| image:: images/plugins4.png
-    :width: 6.9in
-    :height: 2.4in
+    :width: 7.8in
+    :height: 1.9in
 
 Click the "OK" button to start the download and installation of the latest version of the plugin. Once the update is complete, the entry for the plugin will
 be refreshed to show the new version number and the "Update" button will disappear.
