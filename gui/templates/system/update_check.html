@@ -30,7 +30,7 @@ doSubmit({
 
 {% if changelog %}
 {% trans "Changelog" %}:
-<pre style="padding: 8px; margin: 4px;">{{ changelog }}</pre>
+<pre style="padding: 8px; margin: 4px; max-height: 100px; overflow: auto;">{{ changelog }}</pre>
 {% endif %}
 
 {% trans "The following packages will be downloaded:" %}
