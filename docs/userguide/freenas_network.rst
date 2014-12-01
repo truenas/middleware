@@ -194,7 +194,11 @@ IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
-|Figure73a_png|
+|ipmi.png|
+
+.. |ipmi.png| image:: images/ipmi.png
+    :width: 5.7in
+    :height: 3.3in
 
 **Table 7.3a: IPMI Options**
 
@@ -203,6 +207,9 @@ IPMI using the FreeNAS® GUI.
 |                      |                |                                                                             |
 |                      |                |                                                                             |
 +======================+================+=============================================================================+
+| Channel              | drop-down menu | select the channel to use                                                   |
+|                      |                |                                                                             |
++----------------------+----------------+-----------------------------------------------------------------------------+
 | Password             | string         | input the password used to connect to the IPMI interface from a web browser |
 |                      |                |                                                                             |
 +----------------------+----------------+-----------------------------------------------------------------------------+

@@ -261,6 +261,8 @@ The following fields have been added or deleted:
 
 * The "HTTP Proxy" field has been added to :menuselection:`Network --> Global Configuration`.
 
+* The "Channel" drop-down menu has been added to :menuselection:`Network --> IPMI`.
+
 * A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
 
 * The "Rsync Create" checkbox has been added to :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
