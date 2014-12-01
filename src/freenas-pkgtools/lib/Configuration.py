@@ -486,7 +486,7 @@ class Configuration(object):
                 req.add_header("X-iXSystems-Reason", reason)
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
-            furl = opener.open(req, timeout=5)
+            furl = opener.open(req, timeout=30)
         except BaseException as e:
             log.error("Unable to load %s: %s", url, str(e))
             return None
