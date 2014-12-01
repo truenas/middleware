@@ -1918,7 +1918,11 @@ class notifier:
            (more technically speaking, a replaced disk.  The replacement actually
            creates a mirror for the device to be replaced)"""
 
-        assert volume.vol_fstype == 'ZFS'
+        if isinstance(volume, basestring):
+            vol_name = volume
+        else:
+            assert volume.vol_fstype == 'ZFS'
+            vol_name = volume.vol_name
 
         from_disk = self.label_to_disk(label)
         if not from_disk:
@@ -1933,7 +1937,7 @@ class notifier:
                 self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
                 self._system('/sbin/geli detach /dev/%s' % (from_swap,))
 
-        ret = self._system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
+        ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
         if from_disk:
             # TODO: This operation will cause damage to disk data which should be limited
             self.__gpt_unlabeldisk(from_disk)
