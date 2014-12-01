@@ -63,6 +63,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP
 )
 from freenasUI.common.ssl import (
+    create_self_signed_CA,
     create_self_signed_certificate,
     create_certificate_signing_request,
     create_certificate,
@@ -2289,7 +2290,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             'digest_algorithm': self.instance.cert_digest_algorithm
         }
 
-        (cert, key) = create_self_signed_certificate(cert_info)
+        (cert, key) = create_self_signed_CA(cert_info)
         self.instance.cert_certificate = \
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.instance.cert_privatekey = \
@@ -2726,6 +2727,12 @@ class CertificateCreateInternalForm(ModelForm):
 
         cert = create_certificate(cert_info)
         cert.set_pubkey(publickey)
+        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
+        cert.set_issuer(cacert.get_subject())
+        cert.add_extensions([
+            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
+                                 subject=cert),
+        ])
 
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 

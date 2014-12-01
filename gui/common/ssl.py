@@ -56,6 +56,21 @@ def create_certificate(cert_info):
     cert.set_issuer(cert.get_subject())
     return cert
 
+def create_self_signed_CA(cert_info):
+    key = generate_key(cert_info['key_length'])
+    cert = create_certificate(cert_info)
+    cert.set_pubkey(key)
+    cert.add_extensions([
+        crypto.X509Extension("basicConstraints", True,
+                             "CA:TRUE, pathlen:0"),
+        crypto.X509Extension("keyUsage", True,
+                             "keyCertSign, cRLSign"),
+        crypto.X509Extension("subjectKeyIdentifier", False, "hash",
+                             subject=cert),
+    ])
+    sign_certificate(cert, key, cert_info['digest_algorithm'])
+    return (cert, key)
+
 
 def sign_certificate(cert, key, digest_algorithm):
     cert.sign(key, str(digest_algorithm))
