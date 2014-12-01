@@ -27,6 +27,12 @@ doSubmit({
 <p><a href="{{ url_ }}" target="_blank">{{ note }}</a></p>
 {% endfor %}
 {% endif %}
+
+{% if changelog %}
+{% trans "Changelog" %}:
+<pre style="padding: 8px; margin: 4px;">{{ changelog }}</pre>
+{% endif %}
+
 {% trans "The following packages will be downloaded:" %}
 <pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
 <p><input data-dojo-type="dijit.form.CheckBox" name="apply" type="checkbox" checked="checked" value="1" /> {% trans "Apply updates after downloading" %} ({% trans "The system will reboot" %})</p>

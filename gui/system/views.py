@@ -84,7 +84,8 @@ from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     CheckUpdateHandler,
     UpdateHandler,
-    VerifyHandler
+    VerifyHandler,
+    get_changelog,
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -1362,9 +1363,14 @@ def update_check(request):
             handler=handler.call,
             train=updateobj.get_train(),
         )
+        if update:
+            changelog = get_changelog(updateobj.get_train(), update.Sequence())
+        else:
+            changelog = None
         return render(request, 'system/update_check.html', {
             'update': update,
             'handler': handler,
+            'changelog': changelog,
         })
 
 

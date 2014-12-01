@@ -26,6 +26,7 @@
 import json
 import logging
 import os
+import re
 import time
 from datetime import timedelta
 from uuid import uuid4
@@ -33,6 +34,7 @@ from uuid import uuid4
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
+from freenasOS import Configuration
 from freenasUI.common import humanize_size
 
 log = logging.getLogger('system.utils')
@@ -284,3 +286,19 @@ class VerifyHandler(object):
         log.debug("VerifyUpdate: handler.exit() was called")
         if os.path.exists(self.DUMPFILE):
             os.unlink(self.DUMPFILE)
+
+
+def get_changelog(train, sequence):
+    conf = Configuration.Configuration()
+    changelog = conf.GetChangeLog(train=train)
+    if not changelog:
+        return None
+
+    changelog = changelog.read()
+    regexp = r'### START %(seq)s(.+)### END %(seq)s' % {'seq': sequence}
+    reg = re.search(regexp, changelog, re.S|re.M)
+
+    if not reg:
+        return None
+
+    return reg.group(1).strip('\n')
