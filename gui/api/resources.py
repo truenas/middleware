@@ -2422,9 +2422,8 @@ class BootEnvResource(NestedMixin, DojoResource):
 
                         if current.replacing:
                             data['_detach_url'] = reverse(
-                                'storage_disk_detach',
+                                'system_bootenv_pool_detach',
                                 kwargs={
-                                    'vname': pool.name,
                                     'label': current.name,
                                 })
 

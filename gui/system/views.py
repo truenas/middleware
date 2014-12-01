@@ -409,6 +409,18 @@ def bootenv_pool_attach(request):
     })
 
 
+def bootenv_pool_detach(request, label):
+    if request.method == 'POST':
+        notifier().zfs_detach_disk('freenas-boot', label)
+        return JsonResp(
+            request,
+            message=_("Disk has been successfully detached."))
+
+    return render(request, 'system/bootenv_pool_detach.html', {
+        'label': label,
+    })
+
+
 def bootenv_pool_replace(request, label):
     if request.method == 'POST':
         form = forms.BootEnvPoolReplaceForm(request.POST, label=label)
