@@ -97,7 +97,7 @@ kerberos_start_activedirectory()
 			: $(( i += 1 ))
 		done
 
-	elif [ -n "${realm}" -n "${bindname}" -a -n "${bindpw}" ]
+	elif [ -n "${realm}" -a -n "${bindname}" -a -n "${bindpw}" ]
 	then
 		local principal="${bindname}@${realm}"
 		if kerbers_principal_check "${principal}"
