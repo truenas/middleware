@@ -921,12 +921,20 @@ class ActiveDirectory(DirectoryServiceBase):
             try:
                 fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
 
-                kr = KerberosRealm()
-                kr.krb_realm = self.ad_domainname.upper()
-                kr.krb_kdc = fad.krbname
-                kr.krb_admin_server = kr.krb_kdc
-                kr.krb_kpasswd_server = fad.kpwdname
-                kr.save()
+                kr = KerberosRealm.objects.filter(
+                    krb_realm=self.ad_domainname.upper()
+                )
+                if kr:
+                    kr = kr[0]
+                else:
+                    kr = KerberosRealm()
+                    kr.krb_realm = self.ad_domainname.upper()
+                    if fad.krbname:
+                        kr.krb_kdc = fad.krbname
+                        kr.krb_admin_server = kr.krb_kdc
+                    if fad.kpwdname:
+                        kr.krb_kpasswd_server = fad.kpwdname
+                    kr.save()
 
                 self.ad_kerberos_realm = kr
                 super(ActiveDirectory, self).save()
