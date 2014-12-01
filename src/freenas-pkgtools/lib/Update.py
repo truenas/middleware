@@ -222,6 +222,7 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
     """
 
     conf = Configuration.Configuration()
+    new_manifest = None
     if cache_dir:
         try:
             mfile = VerifyUpdate(cache_dir)
@@ -250,8 +251,8 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
         except Exception as e:
             log.error("Could not find latest manifest due to %s" % str(e))
 
-        if new_manifest is None:
-            raise ValueError("Manifest could not be found!")
+    if new_manifest is None:
+        raise ValueError("Manifest could not be found!")
 
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
