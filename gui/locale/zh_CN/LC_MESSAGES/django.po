@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-07-02 10:08+0000\n"
-"Last-Translator: yuhr123 <yuhr123@gmail.com>\n"
+"PO-Revision-Date: 2014-11-18 06:45+0000\n"
+"Last-Translator: anyeme <sohaohanw@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1404295688.0\n"
+"X-POOTLE-MTIME: 1416293144.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6424,7 +6424,7 @@ msgstr "plzip (最好)"
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "详细信息"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -10150,7 +10150,7 @@ msgstr ""
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "导入已有数字证书"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
@@ -10158,7 +10158,7 @@ msgstr ""
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "创建中级数字证书"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
@@ -11360,3 +11360,104 @@ msgstr ""
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
 msgstr ""
+
+#: directoryservice/models.py:1099
+#, fuzzy
+msgid "LDAP timeout"
+msgstr "超时"
+
+#: directoryservice/models.py:1100
+msgid "Timeout for LDAP related commands."
+msgstr ""
+
+#: directoryservice/models.py:1105
+msgid "Timeout for LDAP DNS queries."
+msgstr ""
+
+#: directoryservice/models.py:1108
+#, fuzzy
+msgid "These parameters are added to sssd.conf"
+msgstr "这些参数已经添加到ldap.conf。"
+
+#: services/models.py:514
+msgid "Xen initiator compat mode"
+msgstr ""
+
+#: services/models.py:515
+msgid ""
+"Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+"naming scheme.  Checking this alters the naming scheme to be more Xen-"
+"friendly"
+msgstr ""
+
+#: storage/forms.py:1505
+#, fuzzy
+msgid "Force size"
+msgstr "逻辑块大小"
+
+#: storage/views.py:351
+#, fuzzy
+msgid "Volume successfully Imported."
+msgstr "卷添加成功"
+
+#: storage/views.py:356
+#, fuzzy
+msgid "Error Importing Volume"
+msgstr "自动导入卷"
+
+#: system/admin.py:129
+#, fuzzy
+msgid "Attach"
+msgstr "分离卷"
+
+#: system/forms.py:164
+#, fuzzy
+msgid "Only alphanumeric, underscores and dashes are allowed."
+msgstr "请使用字母、数字、“.”“-”和 “_”。"
+
+#: system/views.py:361
+#, fuzzy
+msgid "Disk successfully attached."
+msgstr "成功擦除磁盘"
+
+#: system/views.py:379
+#, fuzzy
+msgid "Disk is being replaced."
+msgstr "磁盘已移除"
+
+#: system/views.py:1249
+#: system/views.py:1321
+msgid "Update daemon failed!"
+msgstr ""
+
+#: system/alertmods/volume_version.py:15
+msgid ""
+"New feature flags are available for volume %s. Refer to the \"Upgrading a "
+"ZFS Pool\" section of the User Guide for instructions."
+msgstr ""
+
+#: tasks/models.py:256
+msgid ""
+"IP Address or hostname. Specify user@hostname or user@ip-address if your "
+"remote machine user and above rsync task user are different."
+msgstr ""
+
+#: templates/storage/import_stats.html:16
+msgid "Done"
+msgstr ""
+
+#: templates/system/bootenv_pool_attach.html:3
+#, fuzzy
+msgid "Attach Disk"
+msgstr "替换磁盘"
+
+#: templates/system/update.html:31
+msgid ""
+"Are you sure you want to continue? The system will be rebooted after updates "
+"are applied."
+msgstr ""
+
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "The system will reboot"
+msgstr "系统时间"

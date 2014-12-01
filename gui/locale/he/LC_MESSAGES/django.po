@@ -11824,3 +11824,102 @@ msgstr ""
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
 msgstr ""
+
+#: directoryservice/models.py:1099
+#, fuzzy
+msgid "LDAP timeout"
+msgstr "Timeout"
+
+#: directoryservice/models.py:1100
+msgid "Timeout for LDAP related commands."
+msgstr ""
+
+#: directoryservice/models.py:1105
+msgid "Timeout for LDAP DNS queries."
+msgstr ""
+
+#: directoryservice/models.py:1108
+#, fuzzy
+msgid "These parameters are added to sssd.conf"
+msgstr "האפיינים האלו מוספים ל-ldap.conf."
+
+#: services/models.py:514
+msgid "Xen initiator compat mode"
+msgstr ""
+
+#: services/models.py:515
+msgid ""
+"Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+"naming scheme.  Checking this alters the naming scheme to be more Xen-"
+"friendly"
+msgstr ""
+
+#: storage/forms.py:1505
+#, fuzzy
+msgid "Force size"
+msgstr "גודל גוש לוגי"
+
+#: storage/views.py:351
+#, fuzzy
+msgid "Volume successfully Imported."
+msgstr "נפח הוסף בהצלחה."
+
+#: storage/views.py:356
+#, fuzzy
+msgid "Error Importing Volume"
+msgstr "יבא נפח באופן אוטומטי"
+
+#: system/admin.py:129
+#, fuzzy
+msgid "Attach"
+msgstr "צור נפח"
+
+#: system/forms.py:164
+msgid "Only alphanumeric, underscores and dashes are allowed."
+msgstr ""
+
+#: system/views.py:361
+#, fuzzy
+msgid "Disk successfully attached."
+msgstr "%s הוסף בהצלחה"
+
+#: system/views.py:379
+msgid "Disk is being replaced."
+msgstr ""
+
+#: system/views.py:1249
+#: system/views.py:1321
+msgid "Update daemon failed!"
+msgstr ""
+
+#: system/alertmods/volume_version.py:15
+msgid ""
+"New feature flags are available for volume %s. Refer to the \"Upgrading a "
+"ZFS Pool\" section of the User Guide for instructions."
+msgstr ""
+
+#: tasks/models.py:256
+msgid ""
+"IP Address or hostname. Specify user@hostname or user@ip-address if your "
+"remote machine user and above rsync task user are different."
+msgstr ""
+
+#: templates/storage/import_stats.html:16
+msgid "Done"
+msgstr ""
+
+#: templates/system/bootenv_pool_attach.html:3
+#, fuzzy
+msgid "Attach Disk"
+msgstr "החלף כונן"
+
+#: templates/system/update.html:31
+msgid ""
+"Are you sure you want to continue? The system will be rebooted after updates "
+"are applied."
+msgstr ""
+
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "The system will reboot"
+msgstr "זמן מערכת"

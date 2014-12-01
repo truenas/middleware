@@ -403,3 +403,7 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
+msgid "Passwords do not match."
+msgstr ""

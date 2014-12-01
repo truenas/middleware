@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-06-28 20:10+0000\n"
+"PO-Revision-Date: 2014-11-21 13:52+0000\n"
 "Last-Translator: kornjaca <bane.krsmanovic@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1403986228.0\n"
+"X-POOTLE-MTIME: 1416577936.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7360,7 +7360,7 @@ msgstr ""
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: templates/storage/dataset_edit.html:4
 #, fuzzy
@@ -8330,7 +8330,7 @@ msgstr ""
 #: templates/services/core.html:82
 #, fuzzy
 msgid "LLDP Settings"
-msgstr "LDAP podešavanja"
+msgstr "LLDP Podešavanja"
 
 #: templates/storage/key.html:3
 msgid "You are about to download the global GELI key"
@@ -9333,9 +9333,8 @@ msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
 msgstr "Dobro došli na %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/reporting/index.html:11
-#, fuzzy
 msgid "Partition"
-msgstr "Opcija pokretanja"
+msgstr "Particija"
 
 #: templates/services/core.html:33
 #, fuzzy
@@ -9533,7 +9532,7 @@ msgstr "Rsync Zadaci"
 #: templates/services/core.html:32
 #, fuzzy
 msgid "Domain Controller Settings"
-msgstr "Ime Domen Kontrolera"
+msgstr "Podešavanja Domen Kontrolera"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
@@ -11349,27 +11348,28 @@ msgstr "Verifikuj"
 #: system/alertmods/boot_volume_status.py:19
 #, fuzzy
 msgid "The boot volume status is %(status)s: %(message)s"
-msgstr "Volumen %(volume)s status je %(status)s: %(message)s"
+msgstr ""
+"Status volumena %(volume)s za pokretanje sistema je %(status)s: %(message)s"
 
 #: system/views.py:318
 #, fuzzy
 msgid "Boot Environments successfully deleted."
-msgstr "Snimak uspešno izbrisan."
+msgstr "Okruženja za pokretanje sistema uspešno izbrisana."
 
 #: system/alertmods/boot_volume_status.py:28
 #, fuzzy
 msgid "The boot volume status is %(status)s"
-msgstr "Volumen %(volume)s status je %(status)s"
+msgstr "Status volumena %(volume)s za pokretanje sistema je %(status)s"
 
 #: system/views.py:322
 #, fuzzy
 msgid "Failed to delete Boot Environments."
-msgstr "Nije moguće preuzeti %(url)s: %(greška)s"
+msgstr "Neuspešno brisanje okruženja za pokretanje sistema."
 
 #: system/alertmods/boot_volume_status.py:44
 #, fuzzy
 msgid "The boot volume status is DEGRADED"
-msgstr "Status volumena %s je DEGRADIRAN"
+msgstr "Status volumena za pokretanje sistema je DEGRADIRAN"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
@@ -11436,3 +11436,106 @@ msgstr ""
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
 msgstr ""
+
+# ili Prekid???
+#: directoryservice/models.py:1099
+#, fuzzy
+msgid "LDAP timeout"
+msgstr "Pauza"
+
+#: directoryservice/models.py:1100
+msgid "Timeout for LDAP related commands."
+msgstr ""
+
+#: directoryservice/models.py:1105
+msgid "Timeout for LDAP DNS queries."
+msgstr ""
+
+#: directoryservice/models.py:1108
+#, fuzzy
+msgid "These parameters are added to sssd.conf"
+msgstr "Ovi parametri su dodati u ldap.conf."
+
+#: services/models.py:514
+msgid "Xen initiator compat mode"
+msgstr ""
+
+#: services/models.py:515
+msgid ""
+"Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+"naming scheme.  Checking this alters the naming scheme to be more Xen-"
+"friendly"
+msgstr ""
+
+#: storage/forms.py:1505
+#, fuzzy
+msgid "Force size"
+msgstr "Veličina logičkog bloka"
+
+#: storage/views.py:351
+#, fuzzy
+msgid "Volume successfully Imported."
+msgstr "Volumen uspešno dodat."
+
+#: storage/views.py:356
+#, fuzzy
+msgid "Error Importing Volume"
+msgstr "Automatski uvoz Volumena"
+
+#: system/admin.py:129
+#, fuzzy
+msgid "Attach"
+msgstr "Odvojiti Volumen"
+
+#: system/forms.py:164
+#, fuzzy
+msgid "Only alphanumeric, underscores and dashes are allowed."
+msgstr "Koristiti alfanumeričke karaktere, \".\", \"-\" i \"_\"."
+
+# wipe - isto kao i delete ali se prostor popunjava nulama i jedinicama u nekoliko iteracija
+#: system/views.py:361
+#, fuzzy
+msgid "Disk successfully attached."
+msgstr "Disk je uspešno priključen."
+
+#: system/views.py:379
+#, fuzzy
+msgid "Disk is being replaced."
+msgstr "Disk je uklonjen."
+
+#: system/views.py:1249
+#: system/views.py:1321
+msgid "Update daemon failed!"
+msgstr ""
+
+#: system/alertmods/volume_version.py:15
+msgid ""
+"New feature flags are available for volume %s. Refer to the \"Upgrading a "
+"ZFS Pool\" section of the User Guide for instructions."
+msgstr ""
+
+#: tasks/models.py:256
+msgid ""
+"IP Address or hostname. Specify user@hostname or user@ip-address if your "
+"remote machine user and above rsync task user are different."
+msgstr ""
+
+#: templates/storage/import_stats.html:16
+msgid "Done"
+msgstr ""
+
+#: templates/system/bootenv_pool_attach.html:3
+#, fuzzy
+msgid "Attach Disk"
+msgstr "Zameniti disk"
+
+#: templates/system/update.html:31
+msgid ""
+"Are you sure you want to continue? The system will be rebooted after updates "
+"are applied."
+msgstr ""
+
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "The system will reboot"
+msgstr "Sistemsko Vreme"

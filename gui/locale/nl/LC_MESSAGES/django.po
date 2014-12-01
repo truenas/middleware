@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-11-08 19:52+0000\n"
+"PO-Revision-Date: 2014-12-01 00:30+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1415476343.0\n"
+"X-POOTLE-MTIME: 1417393813.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11645,3 +11645,105 @@ msgstr "<bold>Alle bestanden met succes geverifieerd!</bold>"
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
 msgstr "Het verificatieproces nu starten?"
+
+#: directoryservice/models.py:1099
+msgid "LDAP timeout"
+msgstr "LDAP-time-out"
+
+#: directoryservice/models.py:1100
+msgid "Timeout for LDAP related commands."
+msgstr "Time-out voor LDAP-gerelateerde opdrachten."
+
+#: directoryservice/models.py:1105
+msgid "Timeout for LDAP DNS queries."
+msgstr "Time-out voor LDAP-DNS-query's."
+
+#: directoryservice/models.py:1108
+msgid "These parameters are added to sssd.conf"
+msgstr "Deze parameters worden aan sssd.conf toegevoegd."
+
+#: services/models.py:514
+msgid "Xen initiator compat mode"
+msgstr "Xen-initiator-compatib.modus"
+
+#: services/models.py:515
+msgid ""
+"Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+"naming scheme.  Checking this alters the naming scheme to be more Xen-"
+"friendly"
+msgstr ""
+"Xen-inititors geven fouten bij het verbinden met LUN’s die het standaard "
+"naamgevingsschema van FreeNAS gebruiken. Aanvinken hiervan maakt het "
+"naamgevingsschema wat Xen-vriendelijker"
+
+#: storage/forms.py:1505
+msgid "Force size"
+msgstr "Grootte forceren"
+
+#: storage/views.py:351
+msgid "Volume successfully Imported."
+msgstr "Volume met succes geïmporteerd."
+
+#: storage/views.py:356
+msgid "Error Importing Volume"
+msgstr "Fout bij importeren van volume"
+
+#: system/admin.py:129
+msgid "Attach"
+msgstr "Bijvoegen"
+
+#: system/forms.py:164
+msgid "Only alphanumeric, underscores and dashes are allowed."
+msgstr ""
+"Alleen alfanumerieke tekens, streepjes en liggende streepjes zijn toegestaan."
+
+#: system/views.py:361
+msgid "Disk successfully attached."
+msgstr "Schijf met succes bijgevoegd."
+
+#: system/views.py:379
+msgid "Disk is being replaced."
+msgstr "Schijf wordt vervangen."
+
+#: system/views.py:1249
+#: system/views.py:1321
+msgid "Update daemon failed!"
+msgstr "Update-daemon mislukt!"
+
+#: system/alertmods/volume_version.py:15
+msgid ""
+"New feature flags are available for volume %s. Refer to the \"Upgrading a "
+"ZFS Pool\" section of the User Guide for instructions."
+msgstr ""
+"Er zijn nieuwe functievlaggen beschikbaar voor volume %s. Raadpleeg de "
+"sectie \"Een ZFS-pool upgraden\" van de Gebruikershandleiding voor "
+"instructies."
+
+#: tasks/models.py:256
+msgid ""
+"IP Address or hostname. Specify user@hostname or user@ip-address if your "
+"remote machine user and above rsync task user are different."
+msgstr ""
+"IP-adres of hostnaam. Specificeer gebruiker@hostnaam of gebruiker@ip-adres "
+"als de gebruiker van uw externe machine en die van bovenstaande rsync-taak "
+"verschillend zijn."
+
+#: templates/storage/import_stats.html:16
+msgid "Done"
+msgstr "Gereed"
+
+#: templates/system/bootenv_pool_attach.html:3
+msgid "Attach Disk"
+msgstr "Schijf bijvoegen"
+
+#: templates/system/update.html:31
+msgid ""
+"Are you sure you want to continue? The system will be rebooted after updates "
+"are applied."
+msgstr ""
+"Weet u zeker dat u wilt doorgaan? Het systeem zal opnieuw worden opgestart "
+"nadat updates zijn toegepast."
+
+#: templates/system/update_check.html:32
+msgid "The system will reboot"
+msgstr "Het systeem wordt opnieuw opgestart"

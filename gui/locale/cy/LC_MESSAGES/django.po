@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2014-11-08 10:14+0000\n"
+"PO-Revision-Date: 2014-11-28 10:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cy\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n==2) ? 1 : 0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1415441659.0\n"
+"X-POOTLE-MTIME: 1417169752.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10700,4 +10700,94 @@ msgstr ""
 
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
+msgstr ""
+
+#: directoryservice/models.py:1099
+msgid "LDAP timeout"
+msgstr ""
+
+#: directoryservice/models.py:1100
+msgid "Timeout for LDAP related commands."
+msgstr ""
+
+#: directoryservice/models.py:1105
+msgid "Timeout for LDAP DNS queries."
+msgstr ""
+
+#: directoryservice/models.py:1108
+msgid "These parameters are added to sssd.conf"
+msgstr ""
+
+#: services/models.py:514
+msgid "Xen initiator compat mode"
+msgstr ""
+
+#: services/models.py:515
+msgid ""
+"Xen inititors give errors when connecting to LUNs using the FreeNAS default "
+"naming scheme.  Checking this alters the naming scheme to be more Xen-"
+"friendly"
+msgstr ""
+
+#: storage/forms.py:1505
+msgid "Force size"
+msgstr ""
+
+#: storage/views.py:351
+msgid "Volume successfully Imported."
+msgstr ""
+
+#: storage/views.py:356
+msgid "Error Importing Volume"
+msgstr ""
+
+#: system/admin.py:129
+msgid "Attach"
+msgstr ""
+
+#: system/forms.py:164
+msgid "Only alphanumeric, underscores and dashes are allowed."
+msgstr ""
+
+#: system/views.py:361
+msgid "Disk successfully attached."
+msgstr ""
+
+#: system/views.py:379
+msgid "Disk is being replaced."
+msgstr ""
+
+#: system/views.py:1249
+#: system/views.py:1321
+msgid "Update daemon failed!"
+msgstr ""
+
+#: system/alertmods/volume_version.py:15
+msgid ""
+"New feature flags are available for volume %s. Refer to the \"Upgrading a "
+"ZFS Pool\" section of the User Guide for instructions."
+msgstr ""
+
+#: tasks/models.py:256
+msgid ""
+"IP Address or hostname. Specify user@hostname or user@ip-address if your "
+"remote machine user and above rsync task user are different."
+msgstr ""
+
+#: templates/storage/import_stats.html:16
+msgid "Done"
+msgstr ""
+
+#: templates/system/bootenv_pool_attach.html:3
+msgid "Attach Disk"
+msgstr ""
+
+#: templates/system/update.html:31
+msgid ""
+"Are you sure you want to continue? The system will be rebooted after updates "
+"are applied."
+msgstr ""
+
+#: templates/system/update_check.html:32
+msgid "The system will reboot"
 msgstr ""
