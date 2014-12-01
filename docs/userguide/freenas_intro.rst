@@ -320,7 +320,8 @@ The following fields have been added or deleted:
 * :menuselection:`Storage --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
   Servers" and "Pool Available Size Threshold" fields have been added.
 
-* The "Available Size Threshold" and "Enable TPC" fields have been added to :menuselection:`Storage --> Block (iSCSI) --> Extents --> Add Extent`.
+* The "Available Size Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
+  :menuselection:`Storage --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from
   :menuselection:`Storage --> (Block) iSCSI --> Targets --> Add Target`.

@@ -1317,8 +1317,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |extent.png|
 
 .. |extent.png| image:: images/extent.png
-    :width: 3.5in
-    :height: 2.8in
+    :width: 3.9in
+    :height: 3.2in
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1356,6 +1356,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable TPC         | checkbox       | if checked, an initiator can bypass normal access control and access any scannable target; this allows               |
 |                    |                | :command:`xcopy` operations otherwise blocked by access control                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Xen initiator      | checkbox       | check this box when using Xen as the iSCSI initiator                                                                 |
+| compat mode        |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
