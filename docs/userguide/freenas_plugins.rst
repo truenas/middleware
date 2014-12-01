@@ -5,10 +5,12 @@
 Plugins
 =======
 
-FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was known
-as the Plugins architecture and is based on `FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_ and `PC-BSD PBIs
-<http://wiki.pcbsd.org/index.php/AppCafe%C2%AE/9.2>`_. This allowed users to install and configure additional applications once they had created and configured
-a plugins jail.
+FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was
+known as the Plugins architecture and is based on
+`FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_
+and
+`PC-BSD PBIs <http://wiki.pcbsd.org/index.php/AppCafe®/9.2>`_. This allowed users to install and configure additional applications once they had created and
+configured a plugins jail.
 
 FreeNAS® 9.x simplifies this procedure by providing two methods for software installation. The Plugins method, described in this section, is meant for users
 who prefer to browse for, install, and configure available software using the GUI. This method is very easy to use, but is limited in the amount of software
@@ -43,7 +45,7 @@ To install a plugin, click "Plugins". As seen in Figure 12.1a, the list of avail
 |plugins1.png|
 
 .. |plugins1.png| image:: images/plugins1.png
-    :width: 5.9in
+    :width: 5.975in
     :height: 4.5in
 
 .. note:: if the list of available plugins is not displayed, open :ref:`Shell` and verify that the FreeNAS® system can :command:`ping` an address on the
@@ -192,8 +194,6 @@ The following plugins are available for FreeNAS® 9.3:
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
 * `MineOS <http://minecraft.codeemo.com/>`_
-
-* `minidlna <https://wiki.archlinux.org/index.php/MiniDLNA>`_
 
 * `Mylar <https://github.com/evilhero/mylar>`_
 
