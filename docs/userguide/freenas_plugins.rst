@@ -193,6 +193,8 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
+* `MediaBrowser <http://mediabrowser.tv/>`_
+
 * `MineOS <http://minecraft.codeemo.com/>`_
 
 * `Mylar <https://github.com/evilhero/mylar>`_
