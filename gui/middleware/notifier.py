@@ -870,7 +870,7 @@ class notifier:
         self._system("/usr/sbin/service rpcbind forcestop")
         self._system("/usr/sbin/service lockd forcestop")
         self._system("/usr/sbin/service statd forcestop")
-        self._system("/usr/sbin/service gssd forcetstop")
+        self._system("/usr/sbin/service gssd forcestop")
         self._system("/usr/sbin/service nfsuserd forcestop")
         self._system("/usr/sbin/service mountd forcestop")
         self._system("/usr/sbin/service nfsd forcestop")
