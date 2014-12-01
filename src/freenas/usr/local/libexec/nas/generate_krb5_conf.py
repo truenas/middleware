@@ -262,6 +262,9 @@ def main():
     kc.create_default_config()
 
     for kr in realms:
+        if not kr.krb_realm:
+            continue 
+
         bc = KerberosConfigBindingCollection(name=kr.krb_realm)
         bc.append(
             KerberosConfigBinding(
