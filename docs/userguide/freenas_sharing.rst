@@ -970,20 +970,48 @@ and to periodically confirm that the session has not been hijacked by another sy
 
 **Mutual CHAP:** a superset of CHAP in that both ends of the communication authenticate to each other.
 
-**Initiator:** a client which has authorized access to the storage data on the FreeNAS® system. The client requires initiator software to connect to the
-iSCSI share.
+**Initiator:** a client which has authorized access to the storage data on the FreeNAS® system. The client requires initiator software in order to initiate
+the connection to the iSCSI share.
 
-**Target:** a storage resource on the FreeNAS® system.
+**Target:** a storage resource on the FreeNAS® system. Every target has a unique name known as an iSCSI Qualified Name (IQN).
+
+**Internet Storage Name Service (iSNS):** protocol for the automated discovery of iSCSI devices on a TCP/IP network.
 
 **Extent:** the storage unit to be shared. It can either be a file or a device.
 
+**Portal:** indicates which IP(s) and port(s) to listen on for connection requests.
+
 **LUN:** stands for Logical Unit Number and represents a logical SCSI device. An initiator negotiates with a target to establish connectivity to a LUN; the
 result is an iSCSI connection that emulates a connection to a SCSI hard disk. Initiators treat iSCSI LUNs the same way as they would a raw SCSI or IDE hard
-drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs.
-
-FreeNAS® supports multiple iSCSI drives. When configuring multiple iSCSI LUNs, create a new target for each LUN. Portal groups and initiator groups can be
-reused without any issue. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
+drive; rather than mounting remote directories, initiators format and directly manage filesystems on iSCSI LUNs. When configuring multiple iSCSI LUNs, create
+a new target for each LUN. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
+
+In FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
+locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
+framework that enables certain storage tasks, such as thin provisioning, to be offloaded from the virtualization hardware to the storage array.
+
+* **unmap:** tells ZFS that the space created by deleted files should be freed. Without unmap, ZFS is unaware of freed space made using a virtualization
+  technology such as VMware or Hyper-V.
+
+* **atomic test and set:** allows a virtual machine to only lock the part of the virtual machine it is using rather than locking the whole LUN, which would
+  prevent other hosts from accessing the same LUN simultaneously.
+
+* **write same:** when allocating virtual machines with thick provisioning, the necessary write of zeroes is done locally, rather than over the network, so
+  virtual machine creation is much quicker.
+
+* **xcopy:** similar to Microsoft ODX, copies happen locally rather than over the network.
+
+* **stun:** if a volume runs out of space, this feature pauses any running virtual machines so that the space issue can be fixed, instead of crashing with
+  kernel panics.
+
+* **threshold warning:** the system reports an error when a configurable capacity is reached. In FreeNAS, this threshold can be configured both at the pool
+  level (see Table 10.5a) and the device extent level (see Table 10.5f).
+
+* **LUN reporting:** the LUN reports that it is thin provisioned.
+
+To take advantage of these VAAI primitives, create a zvol using the instructions in :ref:`Create zvol` and use it to create a device extent, as described in
+:ref:`Extents`.
 
 In order to configure iSCSI:
 
@@ -1231,8 +1259,8 @@ entry to display its "Edit" and "Delete" buttons.
 Targets
 ~~~~~~~
 
-Next, create a Target using :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target`, as shown in Figure 10.5g. A target combines a portal ID, allowed
-initiator ID, and an authentication method. Table 10.5e summarizes the settings that can be configured when creating a Target.
+Next, create a Target using :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target`, as shown in Figure 10.5g. A target combines a portal ID,
+allowed initiator ID, and an authentication method. Table 10.5e summarizes the settings that can be configured when creating a Target.
 
 .. note:: an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
    as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -1299,9 +1327,13 @@ virtualization does a pass-through to the disk or hardware RAID controller. None
 capabilities of the disk or controller.
 
 Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
-as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
+as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots. A zvol is also required in order to take
+advantage of VAAI primitives and should be used when using virtualization software as the iSCSI initiator.
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
+
+.. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of an extent below 50%. As required, you
+   can increase the capacity of an extent using the instructions in :ref:`Growing LUNs`.
 
 To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 10.5h, the device extent is using the
 :file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
