@@ -63,15 +63,8 @@ class EventService(RpcService):
         self.__dispatcher = context.dispatcher
         pass
 
-    def query(self, mask, start=None, end=None, limit=None):
-        where = []
-        if start is not None:
-            where.append(('timestamp', '>=', start))
-
-        if end is not None:
-            where.append(('timestamp', '<=', end))
-
-        return list(self.__datastore.query('events', where, limit))
+    def query(self, filter=[], params={}):
+        return list(self.__datastore.query('events', *filter, **params))
 
 
 class PluginService(RpcService):
@@ -159,7 +152,7 @@ class TaskService(RpcService):
         t = self.__datastore.get_by_id('tasks', id)
         task = self.__balancer.get_task(id)
 
-        if task:
+        if task and task.progress:
             t['progress'] = task.progress.__getstate__()
 
         return t
@@ -171,39 +164,14 @@ class TaskService(RpcService):
         result = []
         for name, queue in self.__balancer.queues.items():
             result.append({
-                "name": name,
-                "type": queue.clazz,
-                "status": queue.worker.state
+                'name': name,
+                'type': queue.clazz,
+                'status': queue.worker.state
             })
 
         return result
 
-    def list_tasks(self, limit=None):
-        result = []
-        for t in self.__datastore.query('tasks', sort='created_at', dir='desc', limit=limit):
-            result.append(t)
-
-        return result
-
-    def list_active(self):
-        result = []
-        for i in self.__balancer.get_active_tasks():
-            result.append({
-                "id": i.id,
-                "type": i.name,
-                "state": i.state
-            })
-
-        return result
-
-    def list_failed(self):
-        result = []
-        from balancer import TaskState
-        for i in self.__balancer.get_tasks(TaskState.FAILED):
-            result.append({
-                "id": i.id,
-                "type": i.name,
-                "state": i.state
-            })
-
-        return result
+    def query(self, filter=None, params=None):
+        filter = filter if filter else []
+        params = params if params else {}
+        return list(self.__datastore.query('tasks', *filter, **params))

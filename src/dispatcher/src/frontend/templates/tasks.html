@@ -56,16 +56,7 @@
         {
             $("#tasklist tbody").empty();
 
-            sock.call("task.list_active", null, function (tasks) {
-                $.each(tasks, function(idx, i) {
-                    $("<tr/>", {
-                        'data-id': i.id,
-                        'html': template_task(i)
-                    }).appendTo("#tasklist tbody");
-                });
-            });
-
-            sock.call("task.list_failed", null, function (tasks) {
+            sock.call("task.query", null, function (tasks) {
                 $.each(tasks, function(idx, i) {
                     $("<tr/>", {
                         'data-id': i.id,
