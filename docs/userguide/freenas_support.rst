@@ -105,6 +105,8 @@ The following categories are available under **How-To Guides:**
 
 * `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`__: instructions for setting up specific hardware.
 
+* `Useful Scripts <http://forums.freenas.org/index.php?forums/useful-scripts.47/>`_: user-contributed scripts.
+
 If you are looking for tips on how to test and increase the performance of your system, check out the
 `Performance <http://forums.freenas.org/forumdisplay.php?37-Performance>`_
 forum.
