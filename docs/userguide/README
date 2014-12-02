@@ -30,13 +30,13 @@ When finished, open _build/freenas.html in a browser to verify the HTML output.
 
 To build a PDF version of the userguide you will need a few extra packages:
 
-- tex-formats (note: this will pull in a LOT of dependencies)
-- tex-dvipsk
-- gmake
+- print/tex-formats (this will pull in a LOT of dependencies)
+- print/tex-dvipsk
+- devel/gmake
 
 Run this command *twice* to build the PDF:
 
 % yes '' | gmake latexpdf
 
-When finished running the second time you will find the pdf in _build/latex/FreeNAS.pdf
+When finished running the second time, you will find the PDF in _build/latex/FreeNAS.pdf.
 
