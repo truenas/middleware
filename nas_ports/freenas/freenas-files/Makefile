@@ -272,5 +272,5 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_qsa_variable_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_spider_variable_2133_vpd.bin
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/vpds/t580_lp_so_variable_vpd.bin ${STAGEDIR}/${PREFIX}/usr/local/share/vpds/t580_lp_so_variable_vpd.bin
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/snmp/mibs/FREENAS-MIB.txt ${STAGEDIR}/${PREFIX}/usr/local/share/snmp/mibs/FREENAS-MIB.txt
+	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/share/snmp/mibs/FREENAS-MIB.txt ${STAGEDIR}/${PREFIX}/usr/local/share/snmp/mibs/FREENAS-MIB.txt
 .include <bsd.port.mk>
