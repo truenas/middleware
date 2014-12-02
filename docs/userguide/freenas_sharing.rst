@@ -989,12 +989,12 @@ is more than one target per LUN.
 
 In FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
 locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
-framework that enables certain storage tasks, such as thin provisioning, to be offloaded from the virtualization hardware to the storage array.
+framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 
-* **unmap:** tells ZFS that the space created by deleted files should be freed. Without unmap, ZFS is unaware of freed space made using a virtualization
-  technology such as VMware or Hyper-V.
+* **unmap:** tells ZFS that the space occupied by deleted files should be freed. Without unmap, ZFS is unaware of freed space made when the initiator deletes
+  files.
 
-* **atomic test and set:** allows a virtual machine to only lock the part of the virtual machine it is using rather than locking the whole LUN, which would
+* **atomic test and set:** allows multiple initiators to synchronize LUN access in a fine-grained manner rather than locking the whole LUN, which would
   prevent other hosts from accessing the same LUN simultaneously.
 
 * **write same:** when allocating virtual machines with thick provisioning, the necessary write of zeroes is done locally, rather than over the network, so
@@ -1002,10 +1002,10 @@ framework that enables certain storage tasks, such as thin provisioning, to be o
 
 * **xcopy:** similar to Microsoft ODX, copies happen locally rather than over the network.
 
-* **stun:** if a volume runs out of space, this feature pauses any running virtual machines so that the space issue can be fixed, instead of crashing with
-  kernel panics.
+* **stun:** if a volume runs out of space, this feature pauses any running virtual machines so that the space issue can be fixed, instead of reporting write
+  errors.
 
-* **threshold warning:** the system reports an error when a configurable capacity is reached. In FreeNAS, this threshold can be configured both at the pool
+* **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS, this threshold can be configured both at the pool
   level (see Table 10.5a) and the device extent level (see Table 10.5f).
 
 * **LUN reporting:** the LUN reports that it is thin provisioned.
