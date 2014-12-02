@@ -224,6 +224,10 @@ class ResourceMixin(object):
         )
         return response
 
+    def _handle_500(self, *args, **kwargs):
+        log_traceback(log=log)
+        return super(ResourceMixin, self)._handle_500(*args, **kwargs)
+
     def dispatch(self, request_type, request, *args, **kwargs):
         try:
             return super(ResourceMixin, self).dispatch(
