@@ -788,8 +788,6 @@ class VolumeImportForm(Form):
 
     def done(self, request):
         volume_fstype = self.cleaned_data['volume_fstype']
-        if volume_fstype == 'NTFS':
-            notifier().start("fusefs")
 
 
 def show_descrypt_condition(wizard):
