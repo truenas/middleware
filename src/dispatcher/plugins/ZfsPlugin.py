@@ -86,7 +86,7 @@ class ZpoolScrubTask(Task):
         self.dispatcher.register_event_handler("fs.zfs.scrub.finish", self.__scrub_finished)
         self.finish_event.clear()
         try:
-            system(["/sbin/zpool", "scrub", self.pool])
+            system("/sbin/zpool", "scrub", self.pool)
             self.started = True
         except SubprocessException, e:
             raise TaskException(errno.EINVAL, e.err)
@@ -96,7 +96,7 @@ class ZpoolScrubTask(Task):
 
     def abort(self):
         try:
-            system(["/sbin/zpool", "scrub", "-s", self.pool])
+            system("/sbin/zpool", "scrub", "-s", self.pool)
         except SubprocessException, e:
             raise TaskException(errno.EINVAL, e.err)
 

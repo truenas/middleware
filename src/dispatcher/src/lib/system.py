@@ -8,7 +8,7 @@ class SubprocessException(Exception):
         self.out = out
         self.err = err
 
-def system(args):
+def system(*args):
     proc = subprocess.Popen(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
     out, err = proc.communicate()
 

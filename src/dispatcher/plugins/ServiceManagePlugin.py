@@ -117,7 +117,7 @@ class ServiceManageTask(Task):
             raise TaskException(errno.EINVAL, "Invalid action")
 
         try:
-            out, err = system(["/usr/sbin/service", "-l"])
+            out, err = system("/usr/sbin/service", "-l")
         except SubprocessException, e:
             raise TaskException(errno.ENXIO, e.err)
 
@@ -128,7 +128,7 @@ class ServiceManageTask(Task):
 
     def run(self, name, action):
         try:
-            system(["/usr/sbin/service", name, action])
+            system("/usr/sbin/service", name, action)
         except SubprocessException, e:
             raise TaskException(errno.EBUSY, e.err)
 

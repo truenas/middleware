@@ -34,7 +34,7 @@ from lib.freebsd import get_sysctl
 class SystemInfoProvider(Provider):
 
     def uname_full(self):
-        out, _ = system(['uname', '-a'])
+        out, _ = system('uname', '-a')
         return out
 
     def memory_size(self):
