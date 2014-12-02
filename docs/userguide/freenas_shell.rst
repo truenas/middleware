@@ -25,12 +25,12 @@ To change the size of the shell, click the *80x25* drop-down menu and select a d
 To copy text from shell, highlight the text, right-click, and select "Copy" from the right-click menu. To paste into the shell, click the "Paste" button,
 paste the text into the box that opens, and click the "OK" button to complete the paste operation.
 
-While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
-Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last session.
-When you are finished using Shell, type :command:`exit` to leave the session completely.
-
 Shell provides history (use your up arrow to see previously entered commands and press :kbd:`Enter` to repeat the currently displayed command) and tab
-completion (type a few letters and press tab to complete a command name or filename in the current directory).
+completion (type a few letters and press tab to complete a command name or filename in the current directory). When you are finished using Shell, type
+:command:`exit` to leave the session.
+
+While you are in Shell, you will not have access to any of the other GUI menus. If you need to have access to a prompt while using the GUI menus, use
+:ref:`tmux` instead as it supports multiple shell sessions and the detachment and reattachment of sessions.
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 

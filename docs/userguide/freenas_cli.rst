@@ -932,7 +932,8 @@ tmux
 
 :command:`tmux` is a terminal multiplexer which enables a number of terminals to be created, accessed, and controlled from a single screen. :command:`tmux` is
 an alternative to GNU :command:`screen`. Similar to screen, :command:`tmux` can be detached from a screen and continue running in the background, then later
-reattached.
+reattached. Unlike :ref:`Shell`, :command:`tmux` allows you to have access to a command prompt while still providing access to the graphical administration
+screens.
 
 To start a session, simply type :command:`tmux`. As seen in Figure 23.9a, a new session with a single window will open with a status line at the bottom of the
 screen. This line shows information on the current session and is used to enter interactive commands.
@@ -950,9 +951,15 @@ To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window,
 `tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi?query=tmux>`_
 lists all of the key bindings and commands for interacting with :command:`tmux` windows and sessions.
 
-If you close Shell while :command:`tmux` is running, it will detach its session. The next time you open Shell, run :command:`tmux attach` to return to the
-previous session. To leave the :command:`tmux` session entirely, type :command:`exit`; if you have multiple windows running, you will need to
+If you close :ref:`Shell` while :command:`tmux` is running, it will detach its session. The next time you open Shell, run :command:`tmux attach` to return to
+the previous session. To leave the :command:`tmux` session entirely, type :command:`exit`. If you have multiple windows running, you will need to
 :command:`exit` out of each first.
+
+These resources provide more information about using :command:`tmux`:
+
+* `A tmux Crash Course <http://robots.thoughtbot.com/a-tmux-crash-course>`_
+
+* `TMUX - The Terminal Multiplexer <http://blog.hawkhost.com/2010/06/28/tmux-the-terminal-multiplexer/>`_
 
 .. _Dmidecode:
 
