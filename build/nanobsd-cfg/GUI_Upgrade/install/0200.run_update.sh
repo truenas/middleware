@@ -253,7 +253,6 @@ mfsroot_name="${TARGET_MFS}"
 init_path="/rescue/init"
 init_shell="/rescue/sh"
 init_script="/${TRAMPOLINE_MFS_RC}"
-tmpfs_load="YES"
 EOF
 
 	umount ${TRAMPOLINE_MP}
