@@ -143,7 +143,7 @@ arch=x64
 mapped_arch=amd64
 mkdir -p ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 for ext in GUI_Upgrade.txz iso; do
-	tfile=${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}
+	tfile=${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME}.${ext}
 	if [ -f ${tfile} ]; then
 		ln ${tfile} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 		ln ${tfile}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
