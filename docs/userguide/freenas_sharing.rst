@@ -992,7 +992,7 @@ locally, rather than over the network. It also supports the following VAAI (vSto
 framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 
 * **unmap:** tells ZFS that the space occupied by deleted files should be freed. Without unmap, ZFS is unaware of freed space made when the initiator deletes
-  files.
+  files. For this feature to work, the initiator must support the unmap command.
 
 * **atomic test and set:** allows multiple initiators to synchronize LUN access in a fine-grained manner rather than locking the whole LUN, which would
   prevent other hosts from accessing the same LUN simultaneously.
