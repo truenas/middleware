@@ -65,6 +65,9 @@ installation.
 The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the
 plugin and add it to the "Installed" tab as shown in Figure 12.1c.
 
+.. warning:: be patient and wait for the installation to finish. Navigating away from the installation before it is finished will cause problems with the
+   installation.
+
 **Figure 12.1c: Viewing Installed PBIs**
 
 |plugins3.png|
