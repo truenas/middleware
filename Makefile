@@ -19,7 +19,7 @@ RELEASE_LOGFILE?=release.build.log
 .ifdef TIMESTAMP
 BUILD_TIMESTAMP=${TIMESTAMP}
 .else
-BUILD_TIMESTAMP!=date -u '+%Y%m%d%k%M'|sed -e 's/ /0/'
+BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 .endif
 
 GIT_REPO_SETTING=.git-repo-setting
