@@ -73,6 +73,7 @@ class Task(object):
         self.queues = []
         self.thread = None
         self.instance = None
+        self.parent = None
         self.ended = Event()
 
     def __getstate__(self):
@@ -88,6 +89,7 @@ class Task(object):
     def __emit_progress(self):
         self.dispatcher.dispatch_event("task.progress", {
             "id": self.id,
+            "nolog": True,
             "percentage": self.progress.percentage,
             "message": self.progress.message,
             "extra": self.progress.extra
@@ -173,6 +175,19 @@ class Balancer(object):
         self.logger.info("Task %d submitted (type: %s, class: %s)", task.id, name, task.clazz)
         return task.id
 
+    def run_subtask(self, parent, name, args):
+        worker = Worker('{0}.subtask'.format(name))
+        task = Task(self.dispatcher, name)
+        task.created_at = time.time()
+        task.clazz = self.dispatcher.tasks[name]
+        task.args = args
+        task.state = TaskState.CREATED
+        task.id = self.dispatcher.datastore.insert("tasks", task)
+        return worker.spawn_single(task)
+
+    def join_subtasks(self, *tasks):
+        gevent.joinall(tasks)
+
     def abort(self, id):
         task = self.get_task(id)
         if not task:
@@ -228,10 +243,34 @@ class Balancer(object):
 
 
 class Worker(object):
-    def __init__(self, queue):
+    def __init__(self, queue=None):
+        self.thread = None
         self.queue = queue
         self.state = WorkerState.IDLE
         self.logger = logging.getLogger("Worker:{}".format(self.queue.name))
+
+    def spawn_single(self, task):
+        return gevent.spawn(self.run_single, task)
+
+    def run_single(self, task):
+        self.state = WorkerState.EXECUTING
+        task.set_state(TaskState.EXECUTING)
+        try:
+            result = task.run()
+        except BaseException, e:
+            task.ended.set()
+            task.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
+                "stacktrace": traceback.format_exc()
+            }))
+            return
+
+        if result is None:
+            result = TaskState.FINISHED
+
+        status = TaskStatus(100, '') if result == TaskState.FINISHED else None
+
+        task.ended.set()
+        task.set_state(result, status)
 
     def run(self):
         self.logger.info("Started")
@@ -242,21 +281,4 @@ class Worker(object):
                 task.ended.wait()
                 continue
 
-            self.state = WorkerState.EXECUTING
-            task.set_state(TaskState.EXECUTING)
-            try:
-                result = task.run()
-            except BaseException, e:
-                task.ended.set()
-                task.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
-                    "stacktrace": traceback.format_exc()
-                }))
-                continue
-
-            if result is None:
-                result = TaskState.FINISHED
-
-            status = TaskStatus(100, '') if result == TaskState.FINISHED else None
-
-            task.ended.set()
-            task.set_state(result, status)
+            self.run_single(task)

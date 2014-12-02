@@ -27,6 +27,7 @@
 
 from dispatcher.rpc import RpcService, RpcException
 
+
 class Task(object):
     SUCCESS = (0, "Success")
 
@@ -43,6 +44,12 @@ class Task(object):
 
     def get_status(self):
         return TaskStatus(50, 'Executing...')
+
+    def run_subtask(self, classname, *args):
+        return self.dispatcher.balancer.run_subtask(self, classname, args)
+
+    def join_subtasks(self, *tasks):
+        return self.dispatcher.balancer.join_subtasks(tasks)
 
     def chain(self, task, *args):
         self.dispatcher.balancer.submit(task, *args)
