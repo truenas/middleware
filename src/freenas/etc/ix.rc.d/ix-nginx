@@ -254,6 +254,7 @@ __EOF__
             fastcgi_intercept_errors off;
             fastcgi_read_timeout 600m;
             #fastcgi_temp_path /var/tmp/firmware;
+            fastcgi_param HTTPS \$https;
 
             # track uploads in the 'proxied' zone
             # remember connections for 30s after they finished
