@@ -4,7 +4,6 @@
 /usr/local/lib/freenascli/src/output.py
 /usr/local/lib/freenascli/src/repl.py
 /usr/local/lib/freenascli/plugins/accounts.py
-/usr/local/lib/freenascli/plugins/autogenerate.py
 /usr/local/lib/freenascli/plugins/service.py
 /usr/local/lib/freenascli/plugins/system.py
 /usr/local/lib/freenascli/plugins/tasks.py
