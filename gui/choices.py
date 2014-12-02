@@ -584,6 +584,8 @@ TASK_INTERVAL = (
     (720, _("%(hours)s hours") % {'hours': '12'}),
     (1440, _("%(day)s day") % {'day': '1'}),
     (10080, _("%(week)s week") % {'week': '1'}),
+    (20160, _("%(weeks)s weeks") % {'weeks': '2'}),
+    (40320, _("%(weeks)s weeks") % {'weeks': '4'}),
     )
 
 SMART_POWERMODE = (
