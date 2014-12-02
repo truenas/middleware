@@ -219,8 +219,12 @@ class Dispatcher(object):
         self.event_handlers[name].remove(handler)
 
     def register_event_source(self, name, clazz):
-        self.logger.debug("New event source: %s provided by %s", name, clazz.__module__)
+        self.logger.debug("New event source: %s", name)
         self.event_sources[name] = clazz
+
+        if self.started_at is not None:
+            source = clazz(self)
+            self.threads.append(gevent.spawn(source.run))
 
     def register_task_handler(self, name, clazz):
         self.logger.debug("New task handler: %s", name)

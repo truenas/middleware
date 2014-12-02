@@ -227,5 +227,9 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_event_handler('service.started', on_service_started)
+    if os.path.exists('/var/run/devd.pipe'):
+        dispatcher.register_event_source('system.device', DevdEventSource)
+    else:
+        dispatcher.register_event_handler('service.started', on_service_started)
+
     dispatcher.register_provider('system.device', DeviceInfoPlugin)
