@@ -344,8 +344,12 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     try:
         if root is None:
             # We clone the existing boot environment to
-            # "Avatar()-<sequence>"
-            clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+            # "Avatar()-<sequence>", unless it already does.
+            if new_man.Sequence().startswith(Avatar() + "-"):
+                clone_name = new_man.Sequence()
+            else:
+                clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+                
             if CreateClone(clone_name) is False:
                 msg = "Unable to create boot-environment %s" % clone_name
                 # We set clone_name to None here because we may have gotten
@@ -617,7 +621,12 @@ def ApplyUpdate(directory, install_handler = None):
     clone_name = None
     mount_point = None
     try:
-        clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
+        # We clone the existing boot environment to
+        # "Avatar()-<sequence>", unless it already does.
+        if new_manifest.Sequence().startswith(Avatar() + "-"):
+            clone_name = new_manifest.Sequence()
+        else:
+            clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
         if CreateClone(clone_name) is False:
             log.debug("Failed to create BE %s" % clone_name)
             # It's possible the boot environment already exists.
