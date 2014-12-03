@@ -45,11 +45,22 @@ class ServiceInfoProvider(Provider):
     @returns({
         'type': 'array',
         'items': {
-            'type': 'string'
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'pid': {'type': 'integer'},
+                'state': {
+                    'type': 'string',
+                    'enum': ['running', 'stopped', 'unknown']
+                }
+            }
         }
     })
-    def query(self, filter=[], params={}):
+    def query(self, filter=None, params=None):
         result = []
+        filter = filter if filter else []
+        params = params if params else {}
+
         for i in self.datastore.query('service_definitions', *filter, **params):
 
             if 'pidfile' in i:
@@ -88,14 +99,14 @@ class ServiceInfoProvider(Provider):
         return result
 
     def get_service_config(self, service):
-        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
+        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
         if not svc:
             raise RpcException(errno.EINVAL, 'Invalid service name')
 
         result = {}
 
         for i in svc['settings']:
-            result.update(self.configstore.list_children(i))
+            result.update(self.dispatcher.configstore.list_children(i))
 
         return result
 
@@ -173,5 +184,5 @@ def _init(dispatcher):
 
     dispatcher.register_event_handler("service.rc.command", on_rc_command)
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
-    dispatcher.register_task_handler("service.update_config", ServiceManageTask)
+    dispatcher.register_task_handler("service.configure", ServiceManageTask)
     dispatcher.register_provider("service", ServiceInfoProvider)
