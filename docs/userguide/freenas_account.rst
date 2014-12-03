@@ -258,7 +258,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | rbash        | `Restricted bash <http://www.gnu.org/software/bash/manual/html_node/The-Restricted-Shell.html>`_                     |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
-| rzsh         | `Restricted zsh <http://linux.die.net/man/1/zsh>`_                                                                   |
+| rzsh         | `Restricted zsh <http://www.csse.uwa.edu.au/programming/linux/zsh-doc/zsh_14.html>`_                                 |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | scponly      | select `scponly <https://github.com/scponly/scponly/wiki>`_ to restrict the user's SSH usage to only the             |
