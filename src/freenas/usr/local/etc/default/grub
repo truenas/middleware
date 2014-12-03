@@ -1,0 +1,1 @@
+GRUB_TERMINAL_OUTPUT="console serial"

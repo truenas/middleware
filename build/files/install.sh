@@ -9,6 +9,8 @@ HOME=/root
 export HOME
 TERM=${TERM:-cons25}
 export TERM
+GRUB_TERMINAL_OUTPUT="console serial"
+export GRUB_TERMINAL_OUTPUT
 
 . /etc/avatar.conf
 
