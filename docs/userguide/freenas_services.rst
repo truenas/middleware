@@ -143,7 +143,7 @@ CNIIDs stored in the AppleDouble files.
 CIFS
 ----
 
-The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share` are specific to
+The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares_ --> Add Windows (CIFS) Share` are specific to
 each configured CIFS Share. In contrast, global settings which apply to all CIFS shares are configured in :menuselection:`Services --> CIFS`.
 
 .. note:: after starting the CIFS service, it may take several minutes for the
@@ -1343,8 +1343,8 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 | **Setting**     | **Value**     | **Description**                                                                                                          |
 |                 |               |                                                                                                                          |
 +=================+===============+==========================================================================================================================+
-| Directory       | browse button | browse to the directory to be used for storage; some devices require a specific directory name, refer to the device's    |
-|                 |               | documentation for details                                                                                                |
+| Directory       | browse button | browse to an **existing** directory to be used for storage; some devices require a specific directory name, refer to the |
+|                 |               | device's documentation for details                                                                                       |
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 | Allow New Files | checkbox      | enable if network devices need to send files to the system (e.g. backup their config)                                    |
