@@ -18,3 +18,6 @@ class UpdateInvalidCacheException(Exception):
 
 class UpdateBusyCacheException(Exception):
     pass
+
+class UpdateManifestNotFound(Exception):
+    pass

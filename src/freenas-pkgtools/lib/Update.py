@@ -13,7 +13,7 @@ import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 import freenasOS.Package as Package
 from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
-from freenasOS.Exceptions import ManifestInvalidSignature
+from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
 
 log = logging.getLogger('freenasOS.Update')
 
@@ -252,7 +252,7 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
             log.error("Could not find latest manifest due to %s" % str(e))
 
     if new_manifest is None:
-        raise ValueError("Manifest could not be found!")
+        raise UpdateManifestNotFound("Manifest could not be found!")
 
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
@@ -462,7 +462,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     if latest_mani is None:
         # That really shouldnt happen
         log.error("Unable to find latest manifest for train %s" % train)
-        return False
+        raise UpdateManifestNotFound("Latest manifest could not be loaded")
 
     cache_mani = Manifest.Manifest(require_signature = True)
     try:
