@@ -137,16 +137,16 @@ STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 rm -rf "${TOP}/${OBJ}/${STAGEDIR}"
 set -x
 set -e
-mkdir -p "${TOP}/${OBJ}/${STAGEDIR}"
+TARGET="${TOP}/${OBJ}/${STAGEDIR}/x64"
+mkdir -p "${TARGET}"
 
-arch=x64
-mapped_arch=amd64
-mkdir -p ${TOP}/${OBJ}/${STAGEDIR}/${arch}
 for ext in GUI_Upgrade.txz iso; do
-	tfile=${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME}.${ext}
+	tfile=${TOP}/${OBJ}/os-base/amd64/${NANO_NAME}.${ext}
 	if [ -f ${tfile} ]; then
-		ln ${tfile} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
-		ln ${tfile}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
+		ln ${tfile} "${TARGET}"
+		ln ${tfile}.sha256.txt "${TARGET}"
+	else
+		echo "** ERROR: Unable to find ${tfile}"
 	fi
 done
 
