@@ -4,9 +4,16 @@
 
 NANO_LABEL?=FreeNAS
 VERSION?=9.3-BETA
-TRAIN?=${NANO_LABEL}-9.3-Nightlies
+TRAIN?=${NANO_LABEL}-9.3-BETA
 FREENAS_KEYFILE?=/dev/null
 COMPANY?="iXsystems"
+
+.ifdef TIMESTAMP
+BUILD_TIMESTAMP=${TIMESTAMP}
+.else
+BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
+.endif
+
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
 
@@ -16,11 +23,6 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-.ifdef TIMESTAMP
-BUILD_TIMESTAMP=${TIMESTAMP}
-.else
-BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
-.endif
 
 GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
