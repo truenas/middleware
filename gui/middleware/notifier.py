@@ -5433,35 +5433,37 @@ class notifier:
         """
         Function to find out the status of the zpool
         It takes the name of the zpool (as a string) as the
-        argument. It returns with a tuple of (status, message)
+        argument. It returns with a tuple of (state, status)
         """
         status = ''
-        message = ""
+        state = ''
         p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name)
         zpool_result = p1.communicate()[0]
         if zpool_result.find("pool '%s' is healthy" % pool_name) != -1:
-            status = 'HEALTHY'
+            state = 'HEALTHY'
         else:
             reg1 = re.search('^\s*state: (\w+)', zpool_result, re.M)
             if reg1:
-                status = reg1.group(1)
+                state = reg1.group(1)
             else:
                 # The default case doesn't print out anything helpful,
                 # but instead coredumps ;).
-                status = 'UNKNOWN'
-                reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
-                                 zpool_result, re.S | re.M)
-                reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-                                 zpool_result, re.S | re.M)
-                if reg1:
-                    msg = reg1.group(1)
-                    msg = re.sub(r'\s+', ' ', msg)
-                    message += msg
-                if reg2:
-                    msg = reg2.group(1)
-                    msg = re.sub(r'\s+', ' ', msg)
-                    message += msg
-        return (status, message)
+                state = 'UNKNOWN'
+            reg1 = re.search(r'^\s*status: (.+)\n\s*action+:',
+                             zpool_result, re.S | re.M)
+            if reg1:
+                msg = reg1.group(1)
+                status = re.sub(r'\s+', ' ', msg)
+            # Ignoring the action for now.
+            # Deal with it when we can parse it, interpret it and
+            # come up a gui link to carry out that specific repair.
+            #action = ""
+            #reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
+                             #zpool_result, re.S | re.M)
+            #if reg2:
+                #msg = reg2.group(1)
+                #action = re.sub(r'\s+', ' ', msg)
+        return (state, status)
 
     def get_train(self):
         from freenasUI.system.models import Update

@@ -1,6 +1,3 @@
-import re
-import subprocess
-
 from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
@@ -12,35 +9,23 @@ class BootVolumeStatusAlert(BaseAlert):
     __hook_reverse_order__ = False
     name = 'BootVolumeStatus'
     
-    def on_volume_status_not_healthy(self, status, message):
-        if message:
-            return Alert(
-                Alert.WARN,
-                _('The boot volume status is %(status)s:'
-                  ' %(message)s') % {
-                    'status': status,
-                    'message': message,
+    def on_volume_status_not_healthy(self, state, status):
+        return Alert(
+            Alert.CRIT,
+            _('The boot volume state is %(state)s:'
+              ' %(status)s') % {
+                'state': state,
+                'status': status,
                 }
             )
-        else:
-            return Alert(
-                Alert.WARN,
-                _('The boot volume status is %(status)s') % {
-                    'status': status,
-                }
-            )
-
     def run(self):
         alerts = []
-        status, message = notifier().zpool_status('freenas-boot')
-        
-        if status == 'HEALTHY':
+        state, status = notifier().zpool_status('freenas-boot')
+        if state == 'HEALTHY':
             pass
-        elif status == 'DEGRADED':
-             alerts.append(Alert(Alert.CRIT,_('The boot volume status is DEGRADED')))
         else:
             alerts.append(
-                self.on_volume_status_not_healthy(status, message)
+                self.on_volume_status_not_healthy(state, status)
             )
         return alerts
 
