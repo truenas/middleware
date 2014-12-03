@@ -1427,9 +1427,6 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             # locate_site() requires an open connection
             self.site = self.locate_site()
-            if not self.site:
-                self.site = 'Default-First-Site-Name'
-
             if self.site:
 
                 # requires an open connection
@@ -1569,6 +1566,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         from freenasUI.common.sipcalc import sipcalc_type
 
         subnets = self.get_subnets()
+        if not subnets:
+            return None
 
         ipv4_candidates = {}
         ipv6_candidates = {}
