@@ -15,7 +15,7 @@ OBJ=objs
 : ${SEQUENCE:-0}
 
 mapped_arch=amd64
-UPDATE_DIR="${TOP}/${OBJ}/${SEQUENCE}"
+UPDATE_DIR="${TOP}/${OBJ}/${SEQUENCE}-Update"
 PKG_DIR="${TOP}/${OBJ}/os-base/${mapped_arch}/_.packages"
 LATEST="${TOP}/${OBJ}/LATEST"
 
