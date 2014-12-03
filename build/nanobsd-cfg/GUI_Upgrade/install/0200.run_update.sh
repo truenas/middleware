@@ -223,6 +223,10 @@ echo -n "Applying upgrade..."
 /rescue/chroot /installer /bin/sh /etc/install.sh "${ROOTDEV}" || (echo "FAILED" && /bin/sh && /bin/sh && /rescue/reboot)
 echo " Done!"
 echo "Rebooting..."
+/rescue/sync
+/rescue/sleep 5
+/rescue/sync
+/rescue/sleep 1
 /rescue/reboot
 EOF
 	##########################################
