@@ -438,14 +438,57 @@ To view ARC statistics in real time, specify an interval and a count. This comma
 
  arcstat.py 1 5
  time		read	miss	miss%	dmis	dm%	pmis	pm%	mmis	mm%	arcsz	c
- 06:19:03	0	0	0	0	0	0	0	0	0	425K	6.6G
- 06:19:04	0	0	0	0	0	0	0	0	0	425K	6.6G
- 06:19:05	0	0	0	0	0	0	0	0	0	425K	6.6G
- 06:19:06	0	0	0	0	0	0	0	0	0	425K	6.6G
- 06:19:07	0	0	0	0	0	0	0	0	0	425K	6.6G
+ 06:19:03	  7	0	0	0	0	0	0	0	0	153M	6.6G
+ 06:19:04	257	0	0	0	0	0	0	0	0	153M	6.6G
+ 06:19:05	193	0	0	0	0	0	0	0	0	153M	6.6G
+ 06:19:06	193	0	0	0	0	0	0	0	0	153M	6.6G
+ 06:19:07	255	0	0	0	0	0	0	0	0	153M	6.6G
 
 
-This command provides a brief description of the fields in the output::
+Table 23.4a briefly describes the columns in the output.
+
+**Table 23.4a: arcstat Column Descriptions**
+
++---------------------+-------------------------------------------------------------------------+
+| **Column**          | **Description**                                                         |
+|                     |                                                                         |
++=====================+=========================================================================+
+| read                | total ARC accesses/second                                               |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| miss                | ARC misses/second                                                       |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| miss%               | ARC miss percentage                                                     |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| dmis                | demand data misses/second                                               |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| dm%                 | demand data miss percentage                                             |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| pmis                | prefetch misses per second                                              |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| pm%                 | prefetch miss percentage                                                |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| mmis                | metadata misses/second                                                  |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| mm%                 | metadata miss percentage                                                |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| arcsz               | arc size                                                                |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+| c                   | arc target size                                                         |
+|                     |                                                                         |
++---------------------+-------------------------------------------------------------------------+
+
+
+This command provides more verbose information::
 
  arcstat.py -v
  System Memory:
@@ -640,7 +683,7 @@ This command provides a brief description of the fields in the output::
 		vfs.zfs.trim.timeout		30
 		vfs.zfs.trim.txg_delay		32
 
-When reading the tunable values, 0 means no, 1 typically means yes, and any other number represents a value. To receive a brief description of a **sysctl**
+When reading the tunable values, 0 means no, 1 typically means yes, and any other number represents a value. To receive a brief description of a "sysctl"
 value, use :command:`sysctl -d`. For example::
 
  sysctl -d vfs.zfs.zio.use_uma
@@ -657,7 +700,7 @@ changes first at the command line using :command:`sysctl`. For example, to disab
  vfs.zfs.prefetch_disable: 0 -> 1
 
 The output will indicate the old value followed by the new value. If the change is not beneficial, change it back to the original value. If the change turns
-out to be beneficial, you can make it permanent by creating a Tunable.
+out to be beneficial, you can make it permanent by creating a "sysctl" using the instructions in :ref:`Tunables`.
 
 .. _XDD:
 
