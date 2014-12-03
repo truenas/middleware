@@ -19,11 +19,9 @@ UPDATE_DIR="${TOP}/${OBJ}/${SEQUENCE}-Update"
 PKG_DIR="${TOP}/${OBJ}/os-base/${mapped_arch}/_.packages"
 LATEST="${TOP}/${OBJ}/LATEST"
 
-rm -rf "${UPDATE_DIR}"
 set -x
 set -e
 mkdir -p "${UPDATE_DIR}"
-
 
 cp "${PKG_DIR}/${NANO_LABEL}-MANIFEST" "${UPDATE_DIR}/${NANO_LABEL}-MANIFEST"
 cp -R "${PKG_DIR}/Packages" "${UPDATE_DIR}"
