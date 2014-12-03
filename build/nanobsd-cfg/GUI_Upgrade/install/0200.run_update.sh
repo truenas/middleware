@@ -181,7 +181,19 @@ trampoline_upgrade()
 	cat > ${TRAMPOLINE_MFS_ROOT}/${TRAMPOLINE_MFS_RC} <<-EOF
 #!/bin/sh
 
-echo -n "Extracting upgrade image, please wait..."
+echo -n "Locating upgrade image from /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a ."
+
+RETRIES=0
+while [ ! -c /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a ]; do
+	/rescue/sleep 1
+	echo -n "."
+	RETRIES=$((RETRIES+1))
+	if [ \${RETRIES} -gt 120 ]; then
+		echo " failed!  Boot interrupted."
+		echo "Please report this at FreeNAS forum."
+		exit 1
+	fi
+done
 
 set -e
 # These must all succeed and there is no automated way to recover
@@ -190,6 +202,8 @@ set -e
 /rescue/mount -t tmpfs tmpfs /installer
 /rescue/mkdir -p /installer/.mount/${AVATAR_PROJECT}
 set +e
+
+echo -n "Extracting upgrade image, please wait..."
 
 /rescue/tar xf /mnt/gui-install-environment.tar  -C /installer || (echo "FAILED BASE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
 /rescue/tar xf /mnt/gui-packages.tar -C /installer/.mount || (echo "FAILED PACKAGE EXTRACTION" && /bin/sh && /rescue/sleep 15 && /rescue/reboot)
