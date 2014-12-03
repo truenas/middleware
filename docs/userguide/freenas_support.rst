@@ -239,6 +239,16 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 
 * `FreeNAS® 9.2.1.5: Shares Overview (AFP, NFS, CIFS, Time Machine)  <https://www.youtube.com/watch?v=rOueRnMNZtY>`_
 
+* `FreeNAS® 9.2.1.7 FTP Configuration <https://www.youtube.com/watch?v=wySXaTMMLoA>`_
+
+* `FreeNAS® 9.2.1.8 Transmission Plugin <https://www.youtube.com/watch?v=lyW7BpKfBmk>`_
+
+* `MineOS (Minecraft) Plugin for FreeNAS <https://www.youtube.com/watch?v=3tP31M2EWU8>`_
+
+* `Changes in FreeNAS® 9.3 <https://www.youtube.com/watch?v=weKWqmbWdR4>`_
+
+* `FreeNAS 9.3 Updates <https://www.youtube.com/watch?v=lC7af_ahwSE>`_
+
 .. note:: videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
    doubt, refer to the documentation specific to your version of FreeNAS®. 
 
