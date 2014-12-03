@@ -199,6 +199,9 @@ class Dispatcher(object):
             for h in self.event_handlers[name]:
                 h(args)
 
+        if 'nolog' in args and args['nolog']:
+            return
+
         # Persist event
         event_data = args.copy()
         del event_data['timestamp']
@@ -326,7 +329,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if not type(message) is str:
             return
 
-        if not "namespace" in message:
+        if "namespace" not in message:
             return
 
         message = json.loads(message)
@@ -566,12 +569,19 @@ def run(d, args):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
+    parser.add_argument('--log-level', type=str, metavar='LOG_LEVEL', default='INFO', help="Logging level")
+    parser.add_argument('--log-file', type=str, metavar='LOG_FILE', help="Log to file")
     parser.add_argument('-s', type=int, metavar='PORT', default=8180, help="Run debug frontend server on port")
     parser.add_argument('-p', type=int, metavar='PORT', default=5000, help="WebSockets server port")
     parser.add_argument('-c', type=str, metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Configuration file path')
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.getLevelName(args.log_level))
+
+    if args.log_file:
+        handler = logging.handlers.RotatingFileHandler(args.log_file)
+        logging.root.addHandler(handler)
 
     # Initialization and dependency injection
     d = Dispatcher()
