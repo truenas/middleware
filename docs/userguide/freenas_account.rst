@@ -187,9 +187,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | home directory                                                                                                                                        |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Shell                      | drop-down menu  | if creating a system account, choose *nologin*; if creating a user account, select shell of choice;                                                   |
-|                            |                 | if *netcli.sh* is selected, that user can access the Console Setup menu, even if it is disabled in                                                    |
-|                            |                 | :menuselection:`System --> Advanced --> Enable Console Menu`                                                                                          |
+| Shell                      | drop-down menu  | select shell to use for local and SSH logins; see table 4.2b for an overview of available shells                                                      |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Full Name                  | string          | mandatory, may contain spaces                                                                                                                         |
@@ -202,7 +200,6 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
-|                            |                 |                                                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
@@ -225,3 +222,52 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | groups                                                                                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+**Table 4.2b: Available Shells**
+
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| **Shell**    | **Description**                                                                                                      |
+|              |                                                                                                                      |
++==============+======================================================================================================================+
+| netcli.sh    | user can access the Console Setup menu shown in Figure 3a, even if it is disabled in                                 |
+|              | :menuselection:`System --> Advanced --> Enable Console Menu`                                                         |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| csh          | `C shell <http://en.wikipedia.org/wiki/C_shell>`_                                                                    |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| sh           | `Bourne shell <http://en.wikipedia.org/wiki/Bourne_shell>`_                                                          |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| tcsh         | `Enhanced C shell <http://en.wikipedia.org/wiki/Tcsh>`_                                                              |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| nologin      | use when creating a system account or to create a user account that can authenticate with shares but which cannot    |
+|              | login to the FreeNAS system using :command:`ssh`                                                                     |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| bash         | `Bourne Again shell <http://en.wikipedia.org/wiki/Bash_%28Unix_shell%29>`_                                           |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| ksh93        | `Korn shell <http://www.kornshell.com/>`_                                                                            |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| mksh         | `mirBSD Korn shell <https://www.mirbsd.org/mksh.htm>`_                                                               |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| rbash        | `Restricted bash <http://www.gnu.org/software/bash/manual/html_node/The-Restricted-Shell.html>`_                     |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| rzsh         | `Restricted zsh <http://linux.die.net/man/1/zsh>`_                                                                   |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| scponly      | select `scponly <https://github.com/scponly/scponly/wiki>`_ to restrict the user's SSH usage to only the             |
+|              | :command:`scp` and :command:`sftp` commands                                                                          |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| zsh          | `Z shell <http://www.zsh.org/>`_                                                                                     |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
+| git-shell    | `restricted git shell <http://git-scm.com/docs/git-shell>`_                                                          |
+|              |                                                                                                                      |
++--------------+----------------------------------------------------------------------------------------------------------------------+
