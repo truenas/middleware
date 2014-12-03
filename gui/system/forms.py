@@ -2418,6 +2418,16 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
         cert = create_certificate(cert_info)
         cert.set_pubkey(publickey)
+        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
+        cert.set_issuer(cacert.get_subject())
+        cert.add_extensions([
+            crypto.X509Extension("basicConstraints", True,
+                             "CA:TRUE, pathlen:0"),
+            crypto.X509Extension("keyUsage", True,
+                             "keyCertSign, cRLSign"),
+            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
+                                 subject=cert),
+        ])
 
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
