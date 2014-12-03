@@ -195,6 +195,8 @@ while [ ! -c /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}a ]; do
 	fi
 done
 
+echo " Found!"
+
 set -e
 # These must all succeed and there is no automated way to recover
 # from fails.
