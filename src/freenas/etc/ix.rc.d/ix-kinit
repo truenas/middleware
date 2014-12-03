@@ -348,7 +348,29 @@ kerberos_stop()
 
 kerberos_renew()
 {
-	if ! dirsrv_enabled activedirectory
+	local ad_enabled=0
+	local ldap_enabled=0
+
+	if dirsrv_enabled activedirectory
+	then
+		ad_enabled=1
+	fi
+	if dirsrv_enabled ldap
+	then
+		LDAP_init
+
+		local realm=$(LDAP_get ldap_krb_realm)
+		local keytab="$(LDAP_get ldap_keytab_name)"
+
+		if [ -z "${realm}" -a -z "${keytab}" ]
+		then
+			return
+		fi
+
+		ldap_enabled=1
+	fi
+
+	if [ "${ad_enabled}" = "0" -a "${ldap_enabled}" = "0" ]
 	then
 		return
 	fi
