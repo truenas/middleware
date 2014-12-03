@@ -1,5 +1,5 @@
-This is an x64 distribution for FreeNAS VERSION
-built on BUILD_TIMESTAMP (yyyymmdd format).
+This is an x64 distribution for FreeNAS VERSION built on
+BUILD_TIMESTAMP (yyyymmddhhmm format, GMT timezone, 24-hour time).
 
 If you are seeing this README file, this is a daily build created for
 testing purposes.  You should, of course, run any daily build at your
