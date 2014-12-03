@@ -116,17 +116,9 @@ def _system_info(request=None):
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     try:
-        freenas_build = '%s %s' % (get_sw_name(), get_sw_login_version())
+        freenas_build = get_sw_version()
     except:
         freenas_build = "Unrecognized build"
-
-    try:
-        conf = Configuration.Configuration()
-        manifest = conf.SystemManifest()
-        builddate = int(manifest.TimeStamp())
-        builddate = datetime.utcfromtimestamp(builddate)
-    except:
-        builddate = None
 
     return {
         'hostname': hostname,
@@ -136,7 +128,6 @@ def _system_info(request=None):
         'uptime': uptime,
         'loadavg': loadavg,
         'freenas_build': freenas_build,
-        'builddate': builddate,
     }
 
 
