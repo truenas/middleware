@@ -25,7 +25,9 @@ Behind the scenes, an alert script checks for various alert conditions, such as 
 :file:`/var/tmp/alert`. A javascript retrieves the current alert status every 5 minutes and will change the solid green alert icon to flashing red if a new
 alert is detected. Some of the conditions that trigger an alert include:
 
-* a ZFS volume's capacity goes over 80%
+* a volume's capacity goes over 80%
+
+* new OpenZFS feature flags are available for the pool; this alert can be unchecked if you choose not to upgrade the pool at this time
 
 * non-optimal multipath states
 
@@ -36,6 +38,10 @@ alert is detected. Some of the conditions that trigger an alert include:
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 
 * the system can not find an IP address configured on an iSCSI portal
+
+* a replication task fails
+
+* a VMware login or a :ref:`VMWare Snapshots` task fails
 
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
