@@ -430,7 +430,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "id": id,
                     "args": {
                         "code": err.code,
-                        "message": err.message
+                        "message": err.message,
+                        "extra": err.extra
                     }
                 })
             else:

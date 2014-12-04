@@ -29,6 +29,9 @@ import gevent
 import time
 import logging
 import traceback
+import errno
+from dispatcher import validator
+from dispatcher.rpc import RpcException
 from gevent.queue import Queue
 from gevent.event import Event
 from task import TaskException, TaskStatus
@@ -74,6 +77,7 @@ class Task(object):
         self.thread = None
         self.instance = None
         self.parent = None
+        self.result = None
         self.ended = Event()
 
     def __getstate__(self):
@@ -100,14 +104,19 @@ class Task(object):
         return self.instance.run(*self.args)
 
     def set_state(self, state, progress=None):
+        event = {'id': self.id, 'state': state}
+
         if state == TaskState.EXECUTING:
             self.started_at = time.time()
+            event['started_at'] = self.started_at
 
         if state == TaskState.FINISHED:
             self.finished_at = time.time()
+            event['finished_at'] = self.finished_at
+            event['result'] = self.result
 
         self.state = state
-        self.dispatcher.dispatch_event("task.updated", {"id": self.id, "state": state})
+        self.dispatcher.dispatch_event('task.updated', event)
         self.dispatcher.datastore.update('tasks', self.id, self)
 
         if progress:
@@ -158,10 +167,32 @@ class Balancer(object):
         self.threads.append(gevent.spawn(self.distribution_thread))
         self.logger.info("Started")
 
+    def schema_to_list(self, schema):
+        return {
+            'type': 'array',
+            'items': schema,
+            'minItems': sum([1 for x in schema if 'mandatory' in x and x['mandatory']]),
+            'maxItems': len(schema)
+        }
+
+    def verify_schema(self, clazz, args):
+        if not hasattr(clazz, 'params_schema'):
+            return True
+
+        schema = self.schema_to_list(clazz.params_schema)
+        val = validator.DefaultDraft4Validator(schema, resolver=self.dispatcher.rpc.get_schema_resolver(schema))
+        return list(val.iter_errors(args))
+
     def submit(self, name, args):
         if name not in self.dispatcher.tasks:
             self.logger.warning("Cannot submit task: unknown task type %s", name)
-            return None
+            raise RpcException(errno.EINVAL, "Unknown task type {0}".format(name))
+
+        errors = self.verify_schema(self.dispatcher.tasks[name], args)
+        if len(errors) > 0:
+            errors = list(validator.serialize_errors(errors))
+            self.logger.warning("Cannot submit task %s: schema verification failed", name)
+            raise RpcException(errno.EINVAL, "Schema verification failed", extra=errors)
 
         task = Task(self.dispatcher, name)
         task.created_at = time.time()
@@ -264,13 +295,9 @@ class Worker(object):
             }))
             return
 
-        if result is None:
-            result = TaskState.FINISHED
-
-        status = TaskStatus(100, '') if result == TaskState.FINISHED else None
-
         task.ended.set()
-        task.set_state(result, status)
+        task.result = result
+        task.set_state(TaskState.FINISHED, TaskStatus(100, ''))
 
     def run(self):
         self.logger.info("Started")

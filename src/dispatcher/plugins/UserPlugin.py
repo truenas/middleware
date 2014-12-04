@@ -40,11 +40,13 @@ class UserProvider(Provider):
     @returns({
         'type': 'array',
         'items': {
-            'type': {'$ref': '#/definitions/user'}
+            'type': {'$ref': 'definitions/user'}
         }
     })
-    def query(self, filter=[], params={}):
-        return list(self.datastore.query('users', *filter, **params))
+    def query(self, filter=None, params=None):
+        filter = filter or []
+        params = params or {}
+        return self.datastore.query('users', *filter, **params)
 
     def get_profile_picture(self, uid):
         pass
@@ -57,10 +59,12 @@ class GroupProvider(Provider):
     @returns({
         'type': 'array',
         'items': {
-            'type': {'$ref': '#/definitions/group'}
+            'type': {'$ref': 'definitions/group'}
         }
     })
-    def query(self, filter=[], params={}):
+    def query(self, filter=None, params=None):
+        filter = filter or []
+        params = params or {}
         return list(self.datastore.query('groups', *filter, **params))
 
 
@@ -68,8 +72,8 @@ class GroupProvider(Provider):
 @accepts({
     'title': 'user',
     'allOf': [
-        {'$ref': '#/definitions/user'},
-        {'required': ['id', 'username', 'group', 'shell', 'home']},
+        {'$ref': 'definitions/user'},
+        {'required': ['username', 'group', 'shell', 'home']},
         {'not': {'required': ['builtin']}}
     ]
 })
@@ -79,21 +83,34 @@ class UserCreateTask(Task):
         self.datastore = dispatcher.datastore
 
     def describe(self, user):
-        return "Adding user {0}".format(user['name'])
+        return "Adding user {0}".format(user['username'])
 
     def verify(self, user):
-        if self.datastore.exists(('name', '=', user['name'])):
+        if self.datastore.exists('users', ('username', '=', user['username'])):
             raise VerifyException(errno.EEXIST, 'User with given name already exists')
 
-        if 'id' in user and self.datastore.exists(('id', '=', user['id'])):
+        if 'id' in user and self.datastore.exists('users', ('id', '=', user['id'])):
             raise VerifyException(errno.EEXIST, 'User with given UID already exists')
 
         return ['system']
 
     def run(self, user):
-        uid = user.pop('id')
+        if 'id' not in user:
+            # Need to get next free UID
+            start_uid, end_uid = self.dispatcher.configstore.get('accounts.local_uid_range')
+            uid = None
+            for i in range(start_uid, end_uid):
+                if not self.datastore.exists('users', ('id', '=', i)):
+                    uid = i
+                    break
+
+            if not uid:
+                raise TaskException(errno.ENOSPC, 'No free UIDs available')
+        else:
+            uid = user.pop('id')
 
         try:
+            user['builtin'] = False
             self.datastore.insert('users', user, pkey=uid)
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
@@ -106,7 +123,7 @@ class UserCreateTask(Task):
             'ids': [uid]
         })
 
-        return TaskState.FINISHED
+        return uid
 
 @description("Deletes an user from the system")
 @accepts({
@@ -119,18 +136,23 @@ class UserDeleteTask(Task):
         self.datastore = dispatcher.datastore
 
     def describe(self, uid):
-        user = self.datastore.get_by_id(uid)
-        return "Deleting user {0}".format(user['name'] if user else uid)
+        user = self.datastore.get_by_id('users', uid)
+        return "Deleting user {0}".format(user['username'] if user else uid)
 
     def verify(self, uid):
-        if not self.datastore.exists('users', ('id', '=', id)):
+        user = self.datastore.get_by_id('users', uid)
+
+        if user is None:
             raise VerifyException(errno.ENOENT, 'User with UID {0} does not exists'.format(uid))
+
+        if user['builtin']:
+            raise VerifyException(errno.EPERM, 'Cannot delete builtin user {0}'.format(user['username']))
 
         return ['system']
 
     def run(self, uid):
         try:
-            self.datastore.delete(uid)
+            self.datastore.delete('users', uid)
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete user: {0}'.format(str(e)))
@@ -140,8 +162,6 @@ class UserDeleteTask(Task):
             'ids': [uid]
         })
 
-        return TaskState.FINISHED
-
 
 @description('Updates an user')
 @accepts({
@@ -149,7 +169,7 @@ class UserDeleteTask(Task):
     'type': 'integer'
 }, {
     'title': 'user',
-    '$ref': '#/definitions/user'
+    '$ref': 'definitions/user'
 })
 class UserUpdateTask(Task):
     def __init__(self, dispatcher):
@@ -178,14 +198,12 @@ class UserUpdateTask(Task):
             'ids': [uid]
         })
 
-        return TaskState.FINISHED
-
 
 @description("Creates a group")
 @accepts({
     'allOf': [
-        {'ref': '#/definitions/group'},
-        {'required': ['name', 'id', 'members']}
+        {'ref': 'definitions/group'},
+        {'required': ['name']}
     ]
 })
 class GroupCreateTask(Task):
@@ -206,8 +224,23 @@ class GroupCreateTask(Task):
         return ['system']
 
     def run(self, group):
+        if 'id' not in group:
+            # Need to get next free GID
+            start_uid, end_uid = self.dispatcher.configstore.get('accounts.local_gid_range')
+            gid = None
+            for i in range(start_uid, end_uid):
+                if not self.datastore.exists('groups', ('id', '=', i)):
+                    gid = i
+                    break
+
+            if not gid:
+                raise TaskException(errno.ENOSPC, 'No free GIDs available')
+        else:
+            gid = group.pop('id')
+
         try:
-            self.datastore.insert('groups', group)
+            group['builtin'] = False
+            self.datastore.insert('groups', group, pkey=gid)
             self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot add group: {0}'.format(str(e)))
@@ -216,9 +249,10 @@ class GroupCreateTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'create',
-            'ids': [group['id']]
+            'ids': [gid]
         })
-        return TaskState.FINISHED
+
+        return gid
 
 
 @description("Updates a group")
@@ -226,7 +260,7 @@ class GroupCreateTask(Task):
     'title': 'id',
     'type': 'integer'
 }, {
-    '$ref': '#/definitions/group'
+    '$ref': 'definitions/group'
 })
 class GroupUpdateTask(Task):
     def __init__(self, dispatcher):
@@ -259,8 +293,6 @@ class GroupUpdateTask(Task):
             'operation': 'update',
             'ids': [gid]
         })
-
-        return TaskState.FINISHED
 
 
 @description("Deletes a group")
@@ -302,8 +334,6 @@ class GroupDeleteTask(Task):
             'operation': 'delete',
             'ids': [gid]
         })
-
-        return TaskState.FINISHED
 
 
 def _init(dispatcher):

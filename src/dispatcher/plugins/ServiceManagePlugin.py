@@ -143,8 +143,6 @@ class ServiceManageTask(Task):
         except SubprocessException, e:
             raise TaskException(errno.EBUSY, e.err)
 
-        return TaskState.FINISHED
-
 
 class UpdateServiceConfigTask(Task):
     def describe(self, service, updated_fields):
@@ -184,5 +182,5 @@ def _init(dispatcher):
 
     dispatcher.register_event_handler("service.rc.command", on_rc_command)
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
-    dispatcher.register_task_handler("service.configure", ServiceManageTask)
+    dispatcher.register_task_handler("service.configure", UpdateServiceConfigTask)
     dispatcher.register_provider("service", ServiceInfoProvider)

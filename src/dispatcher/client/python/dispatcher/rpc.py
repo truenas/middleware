@@ -29,7 +29,8 @@ import errno
 import inspect
 import logging
 import traceback
-from jsonschema import Draft4Validator, ValidationError
+from dispatcher import validator
+from jsonschema import RefResolver
 
 
 class RpcContext(object):
@@ -50,14 +51,17 @@ class RpcContext(object):
         self.instances[name] = instance
 
     def unregister_service(self, name):
-        if not name in self.services.keys():
+        if name not in self.services.keys():
             return
 
         del self.instances[name]
         del self.services[name]
 
     def register_schema_definition(self, name, definition):
-        self.schema_definitions[name] = definition
+        self.schema_definitions['definitions/{0}'.format(name)] = definition
+
+    def get_schema_resolver(self, schema):
+        return RefResolver('', schema, self.schema_definitions)
 
     def get_service(self, name):
         if name not in self.instances.keys():
@@ -65,35 +69,28 @@ class RpcContext(object):
 
         return self.instances[name]
 
-    def schema_to_list(self, schema):
-        return {
-            'type': 'array',
-            'items': schema,
-            'minItems': sum([1 for x in schema if 'mandatory' in x and x['mandatory']]),
-            'maxItems': len(schema)
-        }
-
-    def schema_to_dict(self, schema):
-        return {
-            'type': 'object',
-            'properties': {x['title']: x for x in schema.items()},
-            'required': [x['title'] for x in schema.values() if 'mandatory' in x and x['mandatory']]
-        }
-
     def validate_call(self, args, schema):
         errors = []
         if type(args) is dict:
-            validator = Draft4Validator(self.schema_to_dict(schema))
-            errors += validator.iter_errors(args)
+            val = validator.DefaultDraft4Validator(
+                validator.schema_to_dict(schema),
+                resolver=self.get_schema_resolver(schema))
+
+            errors += val.iter_errors(args)
 
         elif type(args) is list:
-            validator = Draft4Validator(self.schema_to_list(schema))
-            errors += validator.iter_errors(args)
+            val = validator.DefaultDraft4Validator(
+                validator.schema_to_list(schema),
+                resolver=self.get_schema_resolver(schema))
+
+            errors += val.iter_errors(args)
         else:
             raise RpcException(errno.EINVAL, "Function parameters should be passed as dictionary or array")
 
         if len(errors) > 0:
-            raise RpcException(errno.EINVAL, "One or more passed arguments failed schema verification", extra=errors)
+            errors = list(validator.serialize_errors(errors))
+            raise RpcException(
+                errno.EINVAL, "One or more passed arguments failed schema verification", extra=errors)
 
     def dispatch_call(self, method, args, sender=None):
         service, sep, name = method.rpartition(".")
@@ -132,6 +129,8 @@ class RpcContext(object):
                 result = func(**args)
             elif type(args) is list:
                 result = func(*args)
+        except RpcException:
+            raise
         except Exception:
             raise RpcException(errno.EFAULT, traceback.format_exc())
 

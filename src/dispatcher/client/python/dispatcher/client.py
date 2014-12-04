@@ -36,10 +36,11 @@ from ws4py.client.threadedclient import WebSocketClient
 class ClientError(object):
     INVALID_JSON_RESPONSE = 1
     CONNECTION_TIMEOUT = 2
-    RPC_CALL_TIMEOUT = 3
-    RPC_CALL_ERROR = 4
-    SPURIOUS_RPC_RESPONSE = 5
-    OTHER = 6
+    CONNECTION_CLOSED = 3
+    RPC_CALL_TIMEOUT = 4
+    RPC_CALL_ERROR = 5
+    SPURIOUS_RPC_RESPONSE = 6
+    OTHER = 7
 
 
 class Client(object):
@@ -52,7 +53,8 @@ class Client(object):
             self.parent.opened.set()
 
         def closed(self, code, reason=None):
-            pass
+            if self.parent.error_callback is not None:
+                self.parent.error_callback(ClientError.CONNECTION_CLOSED)
 
         def received_message(self, message):
             try:
@@ -145,7 +147,8 @@ class Client(object):
 
         if msg['namespace'] == 'events' and msg['name'] == 'event':
             args = msg['args']
-            self.event_callback(args['name'], args['args'])
+            t = Thread(target=self.event_callback, args=(args['name'], args['args']))
+            t.start()
             return
 
         if msg['namespace'] == 'rpc':
@@ -214,7 +217,7 @@ class Client(object):
         call.completed.wait(timeout)
 
     def disconnect(self):
-        self.ws.disconnect()
+        self.ws.close()
 
     def enable_server(self):
         self.rpc = rpc.RpcContext()
