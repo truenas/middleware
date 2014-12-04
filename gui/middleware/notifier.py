@@ -5085,6 +5085,11 @@ class notifier:
         """path = "/mnt/%s" % dataset"""
         pass
 
+    def dataset_init_windows_meta_file(self, dataset):
+        path = "/mnt/%s" % dataset
+        with open("%s/.windows" % path, "w") as f:
+            f.close()
+
     def dataset_init_windows(self, dataset):
         acl = [
             "owner@:rwxpDdaARWcCos:fd:allow",
@@ -5092,17 +5097,19 @@ class notifier:
             "everyone@:rxaRc:fd:allow"
         ]
 
-        path = "/mnt/%s" % dataset
-        with open("%s/.windows" % path, "w") as f:
-            f.close()
+        dataset_init_windows_meta_file(dataset) 
 
+        path = "/mnt/%s" % dataset
         for ace in acl:
             self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
 
-    def dataset_init_apple(self, dataset):
+    def dataset_init_apple_meta_file(self, dataset):  
         path = "/mnt/%s" % dataset
         with open("%s/.apple" % path, "w") as f:
             f.close()
+
+    def dataset_init_apple(self, dataset):
+        dataset_init_apple_meta_file(dataset)
 
     def get_dataset_share_type(self, dataset):
         share_type = "unix"
@@ -5114,6 +5121,29 @@ class notifier:
             share_type = "mac"
 
         return share_type
+
+    def change_dataset_share_type(self, dataset, changeto):
+        share_type = self.get_dataset_share_type(dataset)
+
+        if changeto == "windows":
+            self.dataset_init_windows_meta_file(dataset)
+            self.zfs_set_option(dataset, "aclmode", "restricted")
+
+        elif changeto == "mac":
+            self.dataset_init_apple_meta_file(dataset)
+            self.zfs_set_option(dataset, "aclmode", "passthrough")
+
+        else:  
+            self.zfs_set_option(dataset, "aclmode", "passthrough")
+
+        path = None 
+        if share_type == "mac":
+            path = "/mnt/%s/.apple" % dataset
+        elif share_type == "windows":
+            path = "/mnt/%s/.windows" % dataset
+
+        if path and os.path.exists(path):
+            os.unlink(path)
 
     def get_proc_title(self, pid):
         proc = self._pipeopen('/bin/ps -a -x -w -w -o pid,command | /usr/bin/grep ^%s' % pid)

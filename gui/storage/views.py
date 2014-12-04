@@ -446,17 +446,24 @@ def dataset_edit(request, dataset_name):
                 'refreservation',
                 'quota',
                 'refquota',
+                'share_type'
             ):
                 formfield = 'dataset_%s' % attr
-                if dataset_form.cleaned_data[formfield] == "inherit":
+                val = dataset_form.cleaned_data[formfield]
+
+                if val == "inherit":
                     success, err = notifier().zfs_inherit_option(
                         dataset_name,
                         attr)
                 else:
-                    success, err = notifier().zfs_set_option(
-                        dataset_name,
-                        attr,
-                        dataset_form.cleaned_data[formfield])
+                    if attr == "share_type":
+                        notifier().change_dataset_share_type(
+                            dataset_name, val)
+                    else:
+                        success, err = notifier().zfs_set_option(
+                            dataset_name,
+                            attr,
+                            val)
                 error |= not success
                 if not success:
                     errors[formfield] = err

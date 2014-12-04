@@ -1372,7 +1372,6 @@ class ZFSDataset(Form):
             else:
                 self.fields['dataset_compression'].initial = data['compression'][0]
             self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
-            self.fields['dataset_share_type'].widget.attrs['readonly'] = True
 
             if data['atime'][2] == 'inherit':
                 self.fields['dataset_atime'].initial = 'inherit'
