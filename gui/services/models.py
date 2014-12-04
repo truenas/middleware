@@ -556,8 +556,8 @@ class iSCSITargetExtent(Model):
 
     def save(self, *args, **kwargs):
         if not self.iscsi_target_extent_naa:
-            self.iscsi_target_extent_naa = '0x6589cfc000000000%s' % (
-                hashlib.sha256(str(uuid.uuid4())).hexdigest()[0:16]
+            self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
+                hashlib.sha256(str(uuid.uuid4())).hexdigest()[0:19]
             )
         return super(iSCSITargetExtent, self).save(*args, **kwargs)
 
