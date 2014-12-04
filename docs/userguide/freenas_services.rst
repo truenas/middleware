@@ -374,15 +374,12 @@ section of the Samba documentation contains additional troubleshooting tips.
 Domain Controller
 -----------------
 
-Beginning with FreeNAS® 9.2.1, FreeNAS® uses Samba4, meaning that it can be configured to act as the domain controller for a network. Refer to the
-`Samba FAQ <https://wiki.samba.org/index.php/FAQ>`_
-for further information.
-
-.. note:: creating a domain controller is a complex process that requires a good understanding of how Active Directory works. While FreeNAS® makes it easy
-   to input the needed settings into the administrative graphical interface, it can't tell you what those settings should be. Refer to the
-   `Samba AD DC HOWTO <http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_
-   for more information about creating a new domain. The current implementation does not support a configuration that allows FreeNAS® to join an existing
-   domain as a domain controller. This limitation will be addressed in a future version of FreeNAS®.
+FreeNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. Be
+aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
+:menuselection:`Services --> Domain Controller` makes it easy to input the needed settings into the administrative graphical interface, it is up to you to
+understand what those settings should be. Before beginning your configuration, read through the
+`Samba AD DC HOWTO <http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_. Once FreeNAS® is configured, use the RSAT utility from a Windows system to manage
+the domain controller. The Samba AD DC HOWTO includes instructions for installing and configuring RSAT.
 
 Figure 11.4a shows the configuration screen for creating a domain controller and Table 11.4a summarizes the available options.
 
