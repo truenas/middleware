@@ -101,37 +101,8 @@ Introduction
 FreeNAS® is an embedded open source network-attached storage (NAS) operating system based on FreeBSD and released under a BSD license. A NAS is an operating
 system that has been optimized for file storage and sharing.
 
-Notable features in FreeNAS® include:
-
-* supports AFP, CIFS, FTP, NFS, SSH (including SFTP), and TFTP as file sharing mechanisms
-
-* supports exporting file or device extents via iSCSI
-
-* supports Active Directory or LDAP for user authentication as well as manual user and group creation
-
-* supports the creation and import of
-  `ZFS <http://en.wikipedia.org/wiki/ZFS>`_
-  pools, enabling many features such as quotas, snapshots, compression, replication, and datasets for sharing subsets of volumes
-
-* upgrade procedure saves the current operating system to an inactive partition, allowing for an easy reversal of an undesirable upgrade
-
-* system notifications are automatically mailed to the root user account
-
-* `Django <http://en.wikipedia.org/wiki/Django_%28Web_framework%29>`_
-  driven graphical user interface available through a web browser
-
-* secure replication, automatic ZFS snapshots, scheduling of ZFS scrubs, and cron management are all configurable through the graphical interface
-
-* support for menu localization and keyboard layouts
-
-* SMART monitoring and UPS management in GUI
-
-* support for Windows ACLs and UNIX filesystem permissions
-
-* periodic ZFS snapshots are visible in Windows as shadow copies
-
-* includes
-  `tmux <http://sourceforge.net/projects/tmux/>`_, a BSD-licensed utility similar to GNU screen
+FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
+wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.
 
 .. _What's New in 9.3:
 
