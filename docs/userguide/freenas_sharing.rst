@@ -658,15 +658,8 @@ Configuring CIFS shares is a multi-step process that requires you to set permiss
 server running Active Directory, you will also need to configure the Active Directory service in
 :menuselection:`Directory Services --> Active Directory`. Depending upon your authentication requirements, you may need to create or import users and groups.
 
-This section will demonstrate some common configuration scenarios:
-
-* If you would like an overview of the configurable parameters, see Creating CIFS Shares.
-
-* If you would like each user to authenticate before accessing the share, see Configuring Local User Access.
-
-* If you would like to use Shadow Copies, see Configuring Shadow Copies.
-
-* If you are having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
+This section will demonstrate some common configuration scenarios. If you would like to use Shadow Copies, see :ref:`Configuring Shadow Copies`. If you are
+having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
 
 Figure 10.4a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
@@ -883,25 +876,27 @@ copies.
 
 Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
-* if the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files
+* If the Windows system is not fully patched to the latest service pack, Shadow Copies may not work. If you are unable to see any previous versions of files
   to restore, use Windows Update to make sure that the system is fully up-to-date.
 
-* at this time, shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a
-  directory. Directory support will be added in a future version of FreeNAS®.
+* Shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a directory.
 
-* since directories can not be shadow copied at this time, if you configure "Enable home directories" on the CIFS service, any data stored in the
+* Since directories can not be shadow copied at this time, if you configure "Enable home directories" on the CIFS service, any data stored in the
   user's home directory will not be shadow copied.
+
+* Datasets are filesystems and shadow copies cannot traverse filesystems. If you want to be able to see the shadow copies in your child datasets, create
+  separate shares for them.
 
 * shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
   task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
   work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
 
-* the periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
+* The periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
   first, restart the CIFS service in :menuselection:`Services --> Control Services`.
 
-* appropriate permissions must be configured on the volume/dataset being shared by CIFS.
+* Appropriate permissions must be configured on the volume/dataset being shared by CIFS.
 
-* users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
+* Users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
   administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
   CIFS share.
 
