@@ -271,7 +271,13 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 fields = [f.strip() for f in fields.split(',')]
                 break
         if fields:
-            obj_list = obj_list.order_by(",".join(fields))
+            for f in fields:
+                reverse = False
+                if f.startswith('-'):
+                    reverse = True
+                    f = f[1:]
+                obj_list = sorted(obj_list, key=lambda x: getattr(x, f), reverse=reverse) 
+
         return obj_list
 
     def is_form_valid(self, bundle, form):
