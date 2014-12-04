@@ -103,11 +103,11 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Allow List                   | string        | only available in "Advanced Mode"; comma delimited list of allowed users and/or groups where groupname      |
-|                              |               | begins with a *@*                                                                                           |
+|                              |               | begins with a *@*; note that adding an entry will deny any user/group that is not specified                 |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Deny List                    | string        | only available in "Advanced Mode"; comma delimited list of denied users and/or groups where groupname       |
-|                              |               | begins with a *@*                                                                                           |
+|                              |               | begins with a *@*; note that adding an entry will allow all users/groups that are not specified             |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Read-only Access             | string        | only available in "Advanced Mode"; comma delimited list of users and/or groups who only have read access    |
@@ -118,8 +118,9 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               | access where groupname begins with a @                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Time Machine                 | checkbox      | due to a limitation in how Mac deals with low-diskspace issues when multiple Mac's share the same volume,   |
-|                              |               | checking "Time Machine" on multiple shares may result in intermittent failed backups                        |
+| Time Machine                 | checkbox      | when checked, FreeNAS will advertise itself as a Time Machine disk so it can be found by Macs; due to a     |
+|                              |               | limitation in how Mac deals with low-diskspace issues when multiple Mac's share the same volume, checking   |
+|                              |               | "Time Machine" on multiple shares may result in intermittent failed backups                                 |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Zero Device Numbers          | checkbox      | only available in "Advanced Mode"; enable when the device number is not constant across a reboot            |
@@ -220,7 +221,8 @@ Using Time Machine
 Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured
 to backup to an AFP share on a FreeNAS® system. To configure the AFP share on the FreeNAS® system:
 
-#.  A ZFS dataset named :file:`/mnt/data/backup_user1` with a quota of *60G* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+#.  A ZFS dataset named :file:`/mnt/data/backup_user1` with a "Quota" of *60G* and a "Share type" of
+    *Mac* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
 
 #.  A user account was created as follows:
 
