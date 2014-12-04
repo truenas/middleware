@@ -191,7 +191,10 @@ def main():
                     cf_contents.append("\t\t\toption unmap on\n")
                 cf_contents.append("\t\t\tpath %s\n" % path)
                 cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
-                cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
+                if t2e.iscsi_lunid is None:
+                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(cur_lunid-1)))
+                else:
+                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(t2e.iscsi_lunid)))
                 padded_serial = target.iscsi_target_serial
                 if t2e.iscsi_lunid is None:
                     padded_serial += str(cur_lunid-1)
