@@ -106,7 +106,8 @@ disk space or performance:
 * A mirror consumes more disk space but generally performs better with small random reads. For better performance, a mirror is strongly favored over any 
   RAIDZ, particularly for large, uncacheable, random read loads.
 
-* Array sizes beyond 12 disks are not recommended. The recommended number of disks per vdev is between 3 and 9. If you have more disks, use multiple vdevs.
+* Using more than 12 disks per vdev is not recommended. The recommended number of disks per vdev is between 3 and 9. If you have more disks, use multiple
+  vdevs.
 
 * Some older ZFS documentation recommends that a certain number of disks is needed for each type of RAIDZ in order to achieve optimal performance. On systems
   using LZ4 compression, which is the default for FreeNAS® 9.2.1 and higher, this is no longer true. See
@@ -129,7 +130,7 @@ While ZFS provides many benefits, there are some caveats to be aware of:
   over 50% capacity to prevent fragmentation issues.
   
 * When considering the number of disks to use per vdev, consider the size of the disks and the amount of time required for resilvering, which is the process
-  of rebuilding the array. The larger the size of the array, the longer the resilvering time. When replacing a disk in a RAIDZ*, it is possible that another
+  of rebuilding the vdev. The larger the size of the vdev, the longer the resilvering time. When replacing a disk in a RAIDZ*, it is possible that another
   disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
   in the pool will be lost. For this reason, RAIDZ1 is not recommended for drives over 1 TB in size.
   
