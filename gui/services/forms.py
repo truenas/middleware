@@ -750,11 +750,7 @@ class UPSForm(ModelForm):
         return email
 
     def save(self):
-        obj = super(UPSForm, self).save(commit=False)
-        obj.ups_monpwd = notifier().pwenc_encrypt(
-            self.cleaned_data.get('ups_monpwd')
-        )
-        obj.save()
+        obj = super(UPSForm, self).save()
         started = notifier().restart("ups")
         if (
             started is False
