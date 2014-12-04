@@ -25,6 +25,7 @@
 # SUCH DAMAGE.
 #
 
+import cPickle as pickle
 import logging
 import os
 import re
@@ -43,10 +44,13 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
-from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.locks import mntlock
+from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.system import send_mail
+from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.storage.models import VMWarePlugin
+
+from lockfile import LockFile
 
 log = logging.getLogger('tools.autosnap')
 
@@ -58,7 +62,9 @@ log = logging.getLogger('tools.autosnap')
 # With this assumption, the mntlock SHOULD only be instansized once during the
 # whole lifetime of this script.
 #
-MNTLOCK=mntlock()
+MNTLOCK = mntlock()
+
+VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
 
 # Set to True if verbose log desired
 debug = False
@@ -245,9 +251,9 @@ if len(mp_to_task_map) > 0:
         snapvmfails = []
         for obj in qs:
             try:
-                server.connect(obj.hostname, obj.username, obj.password) 
+                server.connect(obj.hostname, obj.username, obj.password)
             except:
-                log.warn("VMWare login failed to %s" % obj.hostname)
+                log.warn("VMWare login failed to %s", obj.hostname)
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
@@ -256,9 +262,31 @@ if len(mp_to_task_map) > 0:
                     try:
                         vm1.create_snapshot(vmsnapname, memory=False)
                     except:
-                        log.warn("Snapshot of VM %s failed" % vm1)
+                        log.warn("Snapshot of VM %s failed", vm1)
                         snapvmfails.append(vm1)
                     snapvms.append(vm1)
+
+        if snapvmfails:
+            try:
+                with LockFile(VMWARE_FAILS) as lock:
+                    with open(VMWARE_FAILS, 'rb') as f:
+                        fails = pickle.load(f)
+            except:
+                fails = {}
+            fails[snapname] = [str(vm) for vm in snapvmfails]
+            with LockFile(VMWARE_FAILS) as lock:
+                with open(VMWARE_FAILS, 'wb') as f:
+                    pickle.dump(fails, f)
+
+            send_mail(
+                subject="VMWare Snapshot failed! (%s)" % snapname,
+                text="""
+Hello,
+    The following VM failed to snapshot %s:
+%s
+""" % (snapname, '    \n'.join([str(vm) for vm in snapvmfails])),
+                 channel='snapvmware'
+            )
 
         if len(snapvms) > 0 and len(snapvmfails) == 0:
             vmflag = '-o freenas:vmsynced=Y '
