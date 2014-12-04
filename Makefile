@@ -98,7 +98,7 @@ release: git-verify
 release-push: release
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	rm -rf "${STAGEDIR}/FreeNAS-MANIFEST ${STAGEDIR}/Packages"
+	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
