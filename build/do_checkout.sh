@@ -174,7 +174,7 @@ checkout_source()
     # First try to get the freenas repo which we're building from
     if [ -f .git/config ]; then
         mkdir -p $(dirname ${SRCS_MANIFEST})
-        echo `awk '/url = / {print $3}' .git/config` `git log -1 --format="%h"` > ${SRCS_MANIFEST}
+	echo $(git config --get remote.origin.url) $(git log -1 --format="%h") > ${SRCS_MANIFEST}
     fi
 
     for repo in ${REPOS}; do
