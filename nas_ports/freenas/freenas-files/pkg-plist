@@ -21,6 +21,7 @@ usr/local/bin/freenas-snmp/__init__.py
 usr/local/bin/freenas-snmp/snmpresponse.py
 usr/local/bin/freenas-snmp/zfs-snmp
 usr/local/etc/avahi/avahi-daemon.conf
+usr/local/etc/default/grub
 usr/local/etc/nginx/fastcgi_params
 usr/local/etc/nginx/nginx.conf
 usr/local/etc/rc.d/django

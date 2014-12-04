@@ -81,6 +81,8 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/zfs-snmp ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/zfs-snmp
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc/default
+	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/default/grub ${STAGEDIR}/${PREFIX}/usr/local/etc/default/grub
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/nginx.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/nginx.conf
