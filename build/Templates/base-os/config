@@ -1,5 +1,4 @@
 [Package]
-
 name = base-os
 comment = "FreeNAS OS"
 desc = "FreeNAS OS (derived from FreeBSD)"
@@ -7,25 +6,21 @@ www = http://www.freenas.org/
 origin = freenas/os
 maintainer = dev@ixsystems.com
 prefix = /
-arch = freebsd:9:x86:64
+arch = freebsd:10:x86:64
 licenselogic = or
 licenses = [BSD, MIT, GPL]
 
 [Scripts]
-
 post-install = /usr/bin/touch /boot/kernel/linker.hints
 	/usr/bin/touch /boot/modules/linker.hints
 
 post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
-	     /usr/bin/touch /boot/modules/linker.hints
+	/usr/bin/touch /boot/modules/linker.hints
 	/usr/bin/touch /data/cd-upgrade
 	/usr/bin/touch /data/need-update
-#	test -f /data/freenas-v1.db && \
-#	     /usr/bin/yes | /usr/local/bin/python \
-#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
 
 [Files]
-exclude = /usr/local/www/freenasUI
+exclude = /usr/local/www/gui
 	/usr/share/man
 	/usr/lib/*.a
 	/usr/local/share/doc

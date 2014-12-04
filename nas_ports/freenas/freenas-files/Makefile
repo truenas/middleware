@@ -73,10 +73,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/nginx.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/nginx.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/rc.d/django ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d/django
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/samba.gdb ${STAGEDIR}/${PREFIX}/usr/local/etc/samba.gdb
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
@@ -116,18 +113,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/sysctl/sysctl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl/sysctl.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/system/system.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system/system.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/zfs/zfs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs/zfs.sh
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_afpd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_afpd_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ctl_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ctl_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_krb5_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_krb5_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ldap_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ldap_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_nsswitch_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_nsswitch_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_resolv_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_resolv_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_smb4_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_smb4_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ssl_certificates.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ssl_certificates.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_sssd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_sssd_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_webdav_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_webdav_conf.py
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/register_mdns.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/register_mdns.py
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
@@ -136,68 +121,10 @@ do-install:
 	${MKDIR} ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/perftests-nas/tests/* ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests/
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/www/data/django.fcgi ${STAGEDIR}/${PREFIX}/usr/local/www/data/django.fcgi
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix.rc.d
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.subr ${STAGEDIR}/${PREFIX}/etc/rc.subr
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-activedirectory ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-activedirectory
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-afpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-afpd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-aliases ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-aliases
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ataidle ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ataidle
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-bootstrap
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-snmpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-snmpd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-cache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-cache
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-collectd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-collectd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-crontab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-crontab
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ctld ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ctld
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-etc
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-fstab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-fstab
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inadyn ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inadyn
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inetd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inetd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-jail ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-jail
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-kerberos ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-kerberos
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-kinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-kinit
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ldap ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ldap
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-loader ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-loader
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-localtime ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-localtime
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-motd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-motd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-multipath ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-multipath
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nfsd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nfsd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nis ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nis
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nsswitch ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nsswitch
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-nt4 ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-nt4
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ntpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ntpd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pam ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pam
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-plugins ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-plugins
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-postinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-postinit
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-proftpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-proftpd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-resolv ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-resolv
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-rsyncd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-rsyncd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pre-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pre-samba
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-post-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-post-samba
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-savehostid ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-savehostid
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sercons ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sercons
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-shutdown ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-shutdown
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smartd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smartd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smbpasswd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smbpasswd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ssl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ssl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sssd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sssd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sudoers ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sudoers
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syncdisks ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syncdisks
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sysctl ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sysctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-syslogd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-syslogd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-system ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-system
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-update ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-update
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ups ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ups
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-warden ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-warden
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-zfs ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-zfs
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_diagnose ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_diagnose
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_pf_early ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_pf_early
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_pf_late ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_pf_late
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_register ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_register
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_sshd_save_keys ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_sshd_save_keys
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix_textdump ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix_textdump
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-apache ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-apache
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/cleanvar ${STAGEDIR}/${PREFIX}/etc/rc.d/cleanvar
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-bootstrap
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-etc
 
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController

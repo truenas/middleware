@@ -538,7 +538,7 @@ install_ports()
 
 	# Workaround until pkg bug: https://github.com/freebsd/pkg/issues/857
 	# is fixed to detect errors in pkg-install scripts
-	ls ${NANO_WORLDDIR}/data/freenas-v1.db ${NANO_WORLDDIR}/data/factory-v1.db
+	# ls ${NANO_WORLDDIR}/data/freenas-v1.db ${NANO_WORLDDIR}/data/factory-v1.db
 
 	
 }

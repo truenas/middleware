@@ -2,34 +2,15 @@
 
 name = freenasUI
 comment = "FreeNAS User Interface"
-desc = "FreeNAS UI (django-based)"
+desc = "FreeNAS UI"
 www = http://www.freenas.org/
 origin = freenas/ui
 maintainer = dev@ixsystems.com
 prefix = /
-arch = freebsd:9:x86:64
+arch = freebsd:10:x86:64
 licenselogic = or
 licenses = [BSD, MIT, GPL]
 
 [Files]
-include = /usr/local/www/freenasUI
+include = /usr/local/www/gui
 
-[Scripts]
-
-# Fresh installs don't need this.
-# However, if the package name changed, we would.
-
-#post-install = 
-#	if [ -f /data/freenas-v1.db ]; then
-#	   /usr/bin/touch /data/cd-upgrade
-#	   /usr/bin/touch /data/need-update
-#	fi
-#	test -f /data/freenas-v1.db && \
-#		/usr/bin/yes | /usr/local/bin/python \
-#		            /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
-
-post-upgrade = 
-	/usr/bin/touch /data/cd-upgrade
-	/usr/bin/touch /data/need-update
-#	/usr/bin/yes | /usr/local/bin/python \
-#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations

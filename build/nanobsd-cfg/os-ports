@@ -35,9 +35,6 @@ fi
 add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
-add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
-                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
-                            REVISION=${SVNREVISION}
 add_port freenas/freenas-datastore PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION} \
@@ -141,7 +138,6 @@ if is_truenas ; then
 	add_port emulators/qemu WITHOUT_ADD_AUDIO=y WITHOUT_ALL_TARGETS=y WITHOUT_CDROM_DMA=y WITHOUT_CURL=y WITHOUT_GNS3=y WITHOUT_GNUTLS=y WITHOUT_KQEMU=y WITHOUT_BPF=y WITHOUT_RTL8139_TIMER=y WITHOUT_SAMBA=y WITHOUT_SDL=y
 fi
 add_port databases/sqlite3
-add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port databases/mongodb
 add_port databases/pymongo
@@ -163,9 +159,6 @@ add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py
 add_port www/py-flup
-add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
-add_port www/py-dojango
-add_port www/dojo
 add_port www/node
 add_port databases/py-south
 add_port devel/py-asn1
@@ -278,12 +271,10 @@ add_port benchmarks/netperf
 add_port security/sudo OPTIONS_FILE_SET+=LDAP \
 	OPTIONS_FILE_SET+=SSSD
 add_port sysutils/ipmitool
-add_port www/py-django-json-rpc
 add_port devel/py-mimeparse
 add_port devel/py-six
 add_port devel/py-dateutil
 add_port devel/py-rose
-add_port www/py-django-tastypie
 add_port devel/py-lockfile
 add_port devel/py-daemon
 add_port devel/py-polib
