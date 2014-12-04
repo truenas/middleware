@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/local/bin/node /usr/local/www/gui/app/server.js > /var/log/gui.log 2>&1

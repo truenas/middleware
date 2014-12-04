@@ -40,6 +40,7 @@ pre-install:
 
 do-install:
 	install ${WRKSRC}/etc/gui ${STAGEDIR}${PREFIX}/etc/rc.d/
+	install ${WRKSRC}/sbin/gui ${STAGEDIR}${PREFIX}/sbin/
 	cp -a ${WRKDEPLOY}/ ${STAGEDIR}${PREFIX}/www/gui/
 
 .include <bsd.port.mk>

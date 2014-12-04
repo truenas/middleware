@@ -12,11 +12,11 @@ name="dispatcher"
 pidfile="/var/run/node.pid"
 command="/usr/sbin/daemon"
 start_precmd="prestart"
-server="/usr/local/www/gui/app/server.js"
+gui="/usr/local/sbin/gui"
 
 prestart()
 {
-    rc_flags="-P ${pidfile} -f -r /usr/local/bin/node ${server}"
+    rc_flags="-P ${pidfile} -r ${gui}"
 }
 
 load_rc_config $name
