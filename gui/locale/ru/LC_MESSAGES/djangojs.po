@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-10-25 15:36+0000\n"
+"PO-Revision-Date: 2014-12-02 20:52+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1414251384.0\n"
+"X-POOTLE-MTIME: 1417553553.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -417,9 +417,8 @@ msgstr "Нет ожидающих обновлений."
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Проверить установку"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
-#, fuzzy
 msgid "Passwords do not match."
 msgstr "Пароли не совпадают."

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-12-01 00:30+0000\n"
+"PO-Revision-Date: 2014-12-03 16:13+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1417393813.0\n"
+"X-POOTLE-MTIME: 1417623205.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4331,7 +4331,7 @@ msgstr "Er is een fout opgetreden."
 
 #: storage/views.py:706
 msgid "Disk detach has been successfully done."
-msgstr "De schijf is met succes losgekoppeld."
+msgstr "De schijf is met succes ontkoppeld."
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
@@ -4343,7 +4343,7 @@ msgstr "Schijf is verwijderd."
 
 #: storage/views.py:766
 msgid "The volume has been successfully detached"
-msgstr "Het volume is met succes losgekoppeld"
+msgstr "Het volume is met succes ontkoppeld"
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
@@ -5728,7 +5728,7 @@ msgstr "Gegevensset toevoegen"
 #: templates/storage/disk_detach.html:7
 #: templates/storage/volume_detach.html:20
 msgid "Are you sure you want to detach?"
-msgstr "Weet u zeker dat u wilt loskoppelen?"
+msgstr "Weet u zeker dat u wilt ontkoppelen?"
 
 #: templates/storage/disk_offline.html:3
 msgid "Are you sure you want to offline?"
@@ -5934,7 +5934,7 @@ msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Detach Volume"
-msgstr "Volume loskoppelen"
+msgstr "Volume ontkoppelen"
 
 #: templates/storage/volumes.html:102 templates/storage/volumes.html.py:106
 msgid "Scrub Volume"
@@ -8206,7 +8206,7 @@ msgstr "Controlesom"
 
 #: storage/admin.py:470
 msgid "Detach"
-msgstr "Loskoppelen"
+msgstr "Ontkoppelen"
 
 #: storage/admin.py:581
 msgid "Frequency"
@@ -11747,3 +11747,25 @@ msgstr ""
 #: templates/system/update_check.html:32
 msgid "The system will reboot"
 msgstr "Het systeem wordt opnieuw opgestart"
+
+#: choices.py:587
+#: choices.py:588
+msgid "%(weeks)s weeks"
+msgstr "%(weeks)s weken"
+
+#: system/views.py:419
+msgid "Disk has been successfully detached."
+msgstr "Schijf is met succes ontkoppeld."
+
+#: system/alertmods/boot_volume_status.py:15
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "De status van het opstartvolume is %(state)s: %(status)s"
+
+#: system/alertmods/volume_status.py:17
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "De status van volume %(volume)s is %(state)s: %(status)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+msgid "Changelog"
+msgstr "Changelog"

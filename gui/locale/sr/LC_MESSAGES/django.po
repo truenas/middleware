@@ -11539,3 +11539,31 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "Sistemsko Vreme"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(nedelja)s nedelja"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Volumen je bio uspešno odvojen"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr ""
+"Status volumena %(volume)s za pokretanje sistema je %(status)s: %(message)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "Volumen %(volume)s status je %(status)s: %(message)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Promeni"

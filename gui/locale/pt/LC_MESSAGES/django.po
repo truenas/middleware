@@ -11822,3 +11822,30 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "Hora de Sistema"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s semana"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Volume exportado com sucesso"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "O Estado (%status) do volume %(volume)s  é %(message)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "O Estado (%status) do volume %(volume)s  é %(message)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Alterar"

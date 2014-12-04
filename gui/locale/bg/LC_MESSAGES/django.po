@@ -11498,3 +11498,30 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "Системно време"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s седмица"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Томът е екпортиран успешно"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "Статуса на масив %(volume)s е %(status)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "Статуса на масив %(volume)s е %(status)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Промяна"

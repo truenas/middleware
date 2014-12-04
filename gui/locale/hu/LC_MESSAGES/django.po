@@ -11539,3 +11539,30 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "A rendszer újrabootól"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s hét"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "A kötet sikeresen lecsatolva"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "A volume %s státusza: %(status)"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "A volume %s státusza: %(status)"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Módosítás"

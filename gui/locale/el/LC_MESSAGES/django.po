@@ -12012,3 +12012,30 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "Ώρα συστήματος"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s εβδομάδα"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Ο τόμος εξήχθη επιτυχώς"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "Ο Τόμος %(volume)s βρίσκεται στην κατάσταση %(status)s: %(message)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "Ο Τόμος %(volume)s βρίσκεται στην κατάσταση %(status)s: %(message)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Αλλαγή"

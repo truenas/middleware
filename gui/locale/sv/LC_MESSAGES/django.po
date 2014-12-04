@@ -11510,3 +11510,30 @@ msgstr ""
 #, fuzzy
 msgid "The system will reboot"
 msgstr "Systemtid"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(vecka)s vecka"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Volymen har framgångsrikt avlägsnas"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "Volymen %(volym)s status är %(status)s: %(meddelande)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "Volymen %(volym)s status är %(status)s: %(meddelande)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Ändra"

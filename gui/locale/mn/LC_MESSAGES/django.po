@@ -11017,3 +11017,28 @@ msgstr ""
 #: templates/system/update_check.html:32
 msgid "The system will reboot"
 msgstr ""
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s week"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "%s амжилттай шинэчлэгдлээ"
+
+#: system/alertmods/boot_volume_status.py:15
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr ""
+
+#: system/alertmods/volume_status.py:17
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr ""
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "E-mail - ийг өөрчлөх"

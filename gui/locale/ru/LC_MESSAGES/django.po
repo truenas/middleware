@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-10-25 15:36+0000\n"
+"PO-Revision-Date: 2014-12-02 21:15+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1414251384.0\n"
+"X-POOTLE-MTIME: 1417554910.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -10382,15 +10382,14 @@ msgid "Security"
 msgstr "Безопасность"
 
 #: storage/forms.py:2052
-#, fuzzy
 msgid ""
 "Enabling this may substantially increase transfer speed on high speed, "
 "secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
 "unsuitable for untrusted networks."
 msgstr ""
-"Включение этого может увеличить скорость передачи в быстрых сетях. При этом "
-"используются менее безопасные алгоритмы, что может быть нежелательно в "
-"небезопасных сетях."
+"Включение этого может существенно увеличить скорость передачи в быстрых "
+"сетях. При этом ВООБЩЕ НЕ ИСПОЛЬЗУЕТСЯ ШИФРОВАНИЕ, что может быть "
+"нежелательно в небезопасных сетях."
 
 #: storage/models.py:819
 msgid "Encryption Cipher"
@@ -10405,15 +10404,14 @@ msgid "Fast"
 msgstr "Быстро"
 
 #: storage/models.py:830
-#, fuzzy
 msgid ""
 "Enabling this may substantially increase transfer speed on high speed, "
 "secure local networks.  It uses NO encryption at all, making it totally "
 "unsuitable for untrusted networks."
 msgstr ""
-"Включение этого может увеличить скорость передачи в быстрых сетях. При этом "
-"используются менее безопасные алгоритмы, что может быть нежелательно в "
-"небезопасных сетях."
+"Включение этого может увеличить скорость передачи в быстрых безопасных "
+"сетях. При этом ВООБЩЕ НЕ ИСПОЛЬЗУЕТСЯ ШИФРОВАНИЕ, что может быть "
+"нежелательно в небезопасных сетях."
 
 #: templates/directoryservice/index.html:15
 msgid "Kerberos"
@@ -11334,40 +11332,36 @@ msgid "Unmount Failed (%(retcode)s) -> %(output)s"
 msgstr "Ошибка демонтирования (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
-#, fuzzy
 msgid "Jail name cannot have '.'"
-msgstr "Имя пользователя не может содержать пробелы"
+msgstr "Имя jail не может содержать '.'"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
 msgstr "Путь не может быть демонтирован %(source)s: %(error)s"
 
 #: jails/utils.py:609
-#, fuzzy
 msgid "Unable to determine IPv6 for plugin"
-msgstr "Невозможно определить адрес IPv4 для плагина"
+msgstr "Невозможно определить адрес IPv6 для плагина"
 
 #: services/forms.py:1006
-#, fuzzy
 msgid "The following addresses are not valid: %s"
-msgstr "Следующие multipath не оптимальны: %s"
+msgstr "Следующие адреса не допустимы: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr ""
+msgstr "Эта группа аутентификации не поддепрживает взаимный CHAP."
 
 #: services/models.py:440
-#, fuzzy
 msgid "iSNS Servers"
-msgstr "NTP серверы"
+msgstr "iSNS серверы"
 
 #: services/models.py:444
 msgid "Pool Available Size Threshold (%)"
-msgstr ""
+msgstr "Порог доступного места для пула (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
-msgstr ""
+msgstr "Порог доступного места (%)"
 
 #: services/models.py:1736
 msgid ""
@@ -11402,30 +11396,26 @@ msgstr "WebDAV SSL сертификат"
 
 #: sharing/forms.py:188
 #: sharing/forms.py:212
-#, fuzzy
 msgid "Invalid IP or Network."
-msgstr "Неверная сеть: %s"
+msgstr "Неверный IP или сеть."
 
 #: sharing/models.py:223
 msgid "Allow only listed hosts and/or networks access to this volume"
-msgstr ""
+msgstr "Разрешить доступ к этому тому только указанным хостам и/или сетям"
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Deny listed hosts and/or networks access to this volume"
-msgstr "Удалить все общие ресурсы, связанные с этим томом"
+msgstr "Запретить доступ к этому тому указанным хостам и/или сетям"
 
 #: sharing/nav.py:43
 #: templates/sharing/index.html:27
-#, fuzzy
 msgid "Block (iSCSI)"
 msgstr "Блочное хранилище (iSCSI)"
 
 #: storage/admin.py:629
 #: storage/forms.py:1741
-#, fuzzy
 msgid "VMWare Sync"
-msgstr "Плагин VMWare"
+msgstr "Синхронизация VMWare"
 
 #: storage/forms.py:1576
 msgid "Apply Owner (user)"
@@ -11444,12 +11434,13 @@ msgid ""
 "The default of the zvol block size is chosen automatically based on the "
 "number of the disks in the pool for a general use case."
 msgstr ""
+"Размер блока zvol выбран автоматически основываясь на числе дисков в пуле и "
+"для типичного варианта использования."
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMWare-Snapshot"
-msgstr "Снимок"
+msgstr "VMWare-Снимок"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -11518,25 +11509,22 @@ msgid "System dataset not configured"
 msgstr "Не задан том системного набора данных"
 
 #: system/views.py:185
-#, fuzzy
 msgid "DeleteBulk"
-msgstr "Удалить"
+msgstr "УдалитьВместе"
 
 #: system/views.py:1138
 msgid "Packages downloaded"
 msgstr "Загруженные пакеты"
 
 #: system/utils.py:230
-#, fuzzy
 msgid "Verifying"
-msgstr "Проверять"
+msgstr "Проверяется"
 
 #: system/alertmods/boot_volume_status.py:19
 msgid "The boot volume status is %(status)s: %(message)s"
 msgstr "Статус загрузочного тома - %(status)s: %(message)s"
 
 #: system/views.py:318
-#, fuzzy
 msgid "Boot Environments successfully deleted."
 msgstr "Окружение загрузки успешно удалено."
 
@@ -11545,9 +11533,8 @@ msgid "The boot volume status is %(status)s"
 msgstr "Состояние загрузочного тома - %(status)s"
 
 #: system/views.py:322
-#, fuzzy
 msgid "Failed to delete Boot Environments."
-msgstr "Не удалось удалить окружение загрузки."
+msgstr "Не удалось удалить окружения загрузки."
 
 #: system/alertmods/boot_volume_status.py:44
 msgid "The boot volume status is DEGRADED"
@@ -11579,9 +11566,8 @@ msgid "Last Scrub Run on"
 msgstr "Последняя проверка"
 
 #: templates/system/bootenv_deletebulk.html:6
-#, fuzzy
 msgid "Are you sure you want to delete the following boot environments?"
-msgstr "Вы уверены, что хотите удалить %(name)s?"
+msgstr "Вы уверены, что хотите удалить окружения загрузки?"
 
 #: templates/system/update_check.html:29
 msgid "The following packages will be downloaded:"
@@ -11602,41 +11588,36 @@ msgstr "Загрузить хранилища"
 
 #: templates/vmware/index.html:3
 #: vmware/models.py:67
-#, fuzzy
 msgid "Configure"
 msgstr "Конфигурация"
 
 #: templates/system/update_verify.html:79
 msgid "<bold>All files verified successfully!</bold>"
-msgstr ""
+msgstr "<bold>Все файлы проверены успешно!</bold>"
 
 #: templates/system/update_verify.html:81
 msgid "Start the Verification process now?"
-msgstr ""
+msgstr "Начать проверку сейчас?"
 
 #: directoryservice/models.py:1099
-#, fuzzy
 msgid "LDAP timeout"
-msgstr "Таймаут AD"
+msgstr "Таймаут LDAP"
 
 #: directoryservice/models.py:1100
-#, fuzzy
 msgid "Timeout for LDAP related commands."
-msgstr "Таймаут для команд Active Directory."
+msgstr "Таймаут для команд LDAP."
 
 #: directoryservice/models.py:1105
-#, fuzzy
 msgid "Timeout for LDAP DNS queries."
-msgstr "Таймаут для Active Directory DNS запросов."
+msgstr "Таймаут для LDAP DNS запросов."
 
 #: directoryservice/models.py:1108
-#, fuzzy
 msgid "These parameters are added to sssd.conf"
-msgstr "Эти параметры добавляются к ldap.conf."
+msgstr "Эти параметры добавляются к sssd.conf"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
-msgstr ""
+msgstr "Режим совместимости с Xen"
 
 #: services/models.py:515
 msgid ""
@@ -11644,75 +11625,103 @@ msgid ""
 "naming scheme.  Checking this alters the naming scheme to be more Xen-"
 "friendly"
 msgstr ""
+"Xen возвращает ошибки при подключении к LUN, использующим схему именования "
+"принятую по умолчанию во FreeNAS. Эта опция изменяет схему именования для "
+"совместимости с Xen"
 
 #: storage/forms.py:1505
-#, fuzzy
 msgid "Force size"
-msgstr "Размер блока"
+msgstr "Установить размер"
 
 #: storage/views.py:351
-#, fuzzy
 msgid "Volume successfully Imported."
-msgstr "Том успешно добавлен."
+msgstr "Том успешно импортирован."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "Error Importing Volume"
-msgstr "Автоматический импорт тома"
+msgstr "Ошибка импорта тома"
 
 #: system/admin.py:129
-#, fuzzy
 msgid "Attach"
-msgstr "Отсоединить"
+msgstr "Присоединить"
 
 #: system/forms.py:164
-#, fuzzy
 msgid "Only alphanumeric, underscores and dashes are allowed."
-msgstr "Используйте буквы или цифры."
+msgstr "Разрешены только буквы, цифры, подчеркивания и минусы."
 
 #: system/views.py:361
-#, fuzzy
 msgid "Disk successfully attached."
-msgstr "Диск успешно отредактирован"
+msgstr "Диск успешно подключен."
 
 #: system/views.py:379
-#, fuzzy
 msgid "Disk is being replaced."
-msgstr "Диск был удален."
+msgstr "Диск был заменен."
 
 #: system/views.py:1249
 #: system/views.py:1321
 msgid "Update daemon failed!"
-msgstr ""
+msgstr "Сбой демона обновления!"
 
 #: system/alertmods/volume_version.py:15
 msgid ""
 "New feature flags are available for volume %s. Refer to the \"Upgrading a "
 "ZFS Pool\" section of the User Guide for instructions."
 msgstr ""
+"Новые флаги возможностей доступны для тома %s. Обратитесь к разделу \""
+"Обновление ZFS пула\" в руководстве пользователя для получения инструкций."
 
 #: tasks/models.py:256
 msgid ""
 "IP Address or hostname. Specify user@hostname or user@ip-address if your "
 "remote machine user and above rsync task user are different."
 msgstr ""
+"IP-адрес или имя хоста. Укажите пользователь@имя-хоста или пользователь@ip-"
+"адрес, если ваш удаленный пользователь и указанный выше пользователь задачи "
+"rsync различны."
 
 #: templates/storage/import_stats.html:16
 msgid "Done"
-msgstr ""
+msgstr "Готово"
 
 #: templates/system/bootenv_pool_attach.html:3
-#, fuzzy
 msgid "Attach Disk"
-msgstr "Замените диск"
+msgstr "Подключить диск"
 
 #: templates/system/update.html:31
 msgid ""
 "Are you sure you want to continue? The system will be rebooted after updates "
 "are applied."
 msgstr ""
+"Вы уверены что хотите продолжить? Система будет перезагружены после "
+"установки обновлений."
 
 #: templates/system/update_check.html:32
-#, fuzzy
 msgid "The system will reboot"
-msgstr "Система перезагружается"
+msgstr "Система будет перезагружена"
+
+#: choices.py:587
+#: choices.py:588
+#, fuzzy
+msgid "%(weeks)s weeks"
+msgstr "%(week)s неделя"
+
+#: system/views.py:419
+#, fuzzy
+msgid "Disk has been successfully detached."
+msgstr "Том был успешно отключён"
+
+#: system/alertmods/boot_volume_status.py:15
+#, fuzzy
+msgid "The boot volume state is %(state)s: %(status)s"
+msgstr "Статус загрузочного тома - %(status)s: %(message)s"
+
+#: system/alertmods/volume_status.py:17
+#, fuzzy
+msgid "The volume %(volume)s state is %(state)s: %(status)s"
+msgstr "Статус тома %(volume)s - %(status)s: %(message)s"
+
+#: templates/system/update.html:31
+#: templates/system/update_check.html:32
+#, fuzzy
+msgid "Changelog"
+msgstr "Изменить"
