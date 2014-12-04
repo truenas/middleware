@@ -209,8 +209,8 @@ can be configured when creating an rsync task.
 |                                  |                             | system                                                                                    |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Path                      | string                      | only appears when using *Rsync over SSH* mode, input the path on the remote host to push  |
-|                                  |                             | or pull (e.g. */mnt/volume*)                                                              |
+| Remote Path                      | string                      | only appears when using *Rsync over SSH* mode, input the **existing** path on the remote  |
+|                                  |                             | host to sync with (e.g. */mnt/volume*); note that maximum path length is 255 characters   |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Rsync Create                     | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
