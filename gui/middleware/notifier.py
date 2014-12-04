@@ -5342,6 +5342,10 @@ class notifier:
             'rrd-%s' % systemdataset.sys_uuid
         ]
 
+        # Check if .system datasets are already mounted
+        if os.path.ismount(path):
+            return
+
         self._system('/sbin/mount -t zfs "%s/.system" "%s"' % (pool, path))
 
         for i in sub:
