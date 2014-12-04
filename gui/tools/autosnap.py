@@ -247,7 +247,7 @@ if len(mp_to_task_map) > 0:
             try:
                 server.connect(obj.hostname, obj.username, obj.password) 
             except:
-                log.warn("VMWare login failed to %s" % obj.hostname
+                log.warn("VMWare login failed to %s" % obj.hostname)
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
