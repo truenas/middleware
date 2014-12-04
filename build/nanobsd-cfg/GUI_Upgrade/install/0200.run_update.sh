@@ -275,6 +275,9 @@ init_shell="/rescue/sh"
 init_script="/${TRAMPOLINE_MFS_RC}"
 EOF
 
+	# Copy loader.conf.local if it exists
+	test -f /boot/loader.conf.local && cp /boot/loader.conf.local ${TRAMPOLINE_MP}/boot/loader.conf.local
+
 	umount ${TRAMPOLINE_MP}
 	mdconfig -d -u ${TRAMPOLINE_MD##md}
 	recoverdisk ${TRAMPOLINE_IMG} /dev/${ROOTDEV}s${TRAMPOLINE_SLICE}
