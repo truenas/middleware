@@ -429,7 +429,7 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 | Administrator password | string         | password to be used for the Active Directory administrator account                                                                                                                        |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Realm         | drop-down menu | select the realm created using the instructions in :ref:`Kerberos Realms`                                                                                                                 |
+| Kerberos Realm         | drop-down menu | this drop-down menu will auto-populate using the information from "Realm" when the settings in this screen are saved                                                                      |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
