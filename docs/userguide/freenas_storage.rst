@@ -1468,8 +1468,7 @@ Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs 
    :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 
 After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
-transmitted. If it is still not working, you can manually send an incremental backup of the last snapshot that is on both systems to the current one with this
-command::
+transmitted. If it is still not working, you can manually send the specified snapshot with this command::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
  
