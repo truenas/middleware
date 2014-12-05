@@ -466,6 +466,8 @@
         "data": {
             "system.hostname": "freenas.local",
             "system.motd": "FreeBSD ?.?.?  (UNKNOWN)\n\nFreeNAS (c) 2009-2014, The FreeNAS Development Team\nAll rights reserved.\nFreeNAS is released under the modified BSD license.\nFor more information, documentation, help or support, go here:\nhttp://freenas.org",
+            "accounts.local_uid_range": [1000, 65000],
+            "accounts.local_gid_range": [1000, 65000],
             "network.autoconfigure": true,
             "service.nginx.enable": true,
             "service.nginx.listen": ["0.0.0.0", "[::]"],
@@ -546,7 +548,7 @@
             "77C31BDA-A90A-495A-8D58-0063981EEC67": {
                 "name": "syslog",
                 "service-name": "syslog-ng",
-                "pidfile": "/var/run/syslog-ng.pid",
+                "pidfile": "/var/run/syslog.pid",
                 "builtin": true
             },
             "DFC8C5C9-6825-43B3-BDFA-45466D0F77D1": {
