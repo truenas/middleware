@@ -79,7 +79,7 @@ generate_upsdusers()
 {
 
 	local user=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_monuser FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
-	local passwd=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_monpwd FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
+	local passwd=`/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_monpwd FROM services_ups ORDER BY -id LIMIT 1")"|sed -E 's/(["$#=])/\\\1/g'`
 	cat <<EOF
 [${user}]
     password = ${passwd}
