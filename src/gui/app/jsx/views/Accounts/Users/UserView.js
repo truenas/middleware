@@ -13,9 +13,11 @@ var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil = require("../../../components/Viewer/Editor/editorUtil");
 
 var UserView = React.createClass({
+
     propTypes: {
       item: React.PropTypes.object.isRequired
     }
+
   , render: function() {
     var builtInUserAlert = null;
 
@@ -87,6 +89,7 @@ var UserView = React.createClass({
       </TWBS.Grid>
     );
   }
+
 });
 
 module.exports = UserView;

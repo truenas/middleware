@@ -7,10 +7,14 @@ var keyMirror = require("keymirror");
 
 module.exports = {
     ActionTypes: keyMirror({
-        RECEIVE_RAW_USERS : null
+        UPDATE_AUTH_STATE         : null
+      , LOG_MIDDLEWARE_EVENT      : null
+      , LOG_MIDDLEWARE_TASK_QUEUE : null
+      , RECEIVE_RAW_USERS         : null
     })
   , PayloadSources: keyMirror({
-        MIDDLEWARE_ACTION : null
-      , CLIENT_ACTION     : null
-  })
+        MIDDLEWARE_ACTION    : null
+      , MIDDLEWARE_LIFECYCLE : null
+      , CLIENT_ACTION        : null
+    })
 };

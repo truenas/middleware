@@ -4,7 +4,7 @@
 
 "use strict";
 
-var Middleware = require("./middleware");
+var MiddlewareClient = require("../middleware/MiddlewareClient");
 
 var UsersActionCreators = require("../actions/UsersActionCreators");
 
@@ -19,7 +19,7 @@ module.exports = {
     }
 
   , requestUsersList: function() {
-      Middleware.call( "accounts.query_users", null, function ( rawUsersList ) {
+      MiddlewareClient.request( "accounts.query_users", null, function ( rawUsersList ) {
         UsersActionCreators.receiveUsersList( rawUsersList );
       });
     }

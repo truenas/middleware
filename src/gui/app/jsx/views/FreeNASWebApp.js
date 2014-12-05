@@ -5,30 +5,57 @@
 // Top level controller-view for FreeNAS webapp
 "use strict";
 
-var React        = require("react");
+var _     = require("lodash");
+var React = require("react");
+
+// Middleware
+var MiddlewareClient = require("../middleware/MiddlewareClient");
+var MiddlewareStore  = require("../stores/MiddlewareStore");
+
+// Twitter Bootstrap React components
+var TWBS = require("react-bootstrap");
 
 var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
 var WarningBox   = require("../components/WarningBox");
 var QueueBox   = require("../components/QueueBox");
 var InfoBox   = require("../components/InfoBox");
-// Twitter Bootstrap React components
-var TWBS   = require("react-bootstrap");
+
+
+// Middleware Utilies
+function getMiddlewareStateFromStores () {
+  return {
+      authenticated : MiddlewareStore.getAuthStatus()
+  };
+}
+
 
 var FreeNASWebApp = React.createClass({
-    componentDidMount: function() {
 
+    getInitialState: function() {
+      return _.assign({
+        warningBoxIsVisible: 0,
+        infoBoxIsVisible: 0,
+        queueBoxIsVisible: 0,
+        gridClass: "collapsed"
+      }, getMiddlewareStateFromStores() );
     }
-  , getInitialState: function() {
-    return {
-      warningBoxIsVisible: 0,
-      infoBoxIsVisible: 0,
-      queueBoxIsVisible: 0,
-      gridClass: "collapsed"
-    };
-  },
 
-  handleBox: function(event) {
+  , componentDidMount: function() {
+      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      if ( !this.state.authenticated ) {
+        var username = window.prompt("Login");
+        var password = window.prompt("Password");
+
+        MiddlewareClient.login( username, password );
+      }
+    }
+
+  , handleMiddlewareChange: function() {
+      this.setState( getMiddlewareStateFromStores() );
+  }
+
+  , handleBox: function(event) {
     //ultimate if
     //this.setState({ warningBoxIsVisible: ((event.currentTarget.className.indexOf("icoAlert") > -1)? ((this.state.warningBoxIsVisible) ? 0 : 1) :  0) });
 
@@ -88,6 +115,7 @@ var FreeNASWebApp = React.createClass({
   },
 
   render: function() {
+
     return (
       <div>
       <div className = "notificationBar">
