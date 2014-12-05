@@ -1289,7 +1289,11 @@ def update_apply(request):
                 sequence = ''
             if os.path.exists(changelogpath):
                 with open(changelogpath, 'r') as f:
-                    changelog = parse_changelog(f.read(), sequence)
+                    changelog = parse_changelog(
+                        f.read(),
+                        start=sequence,
+                        end=update.Sequence()
+                    )
         return render(request, 'system/update.html', {
             'update': update,
             'handler': handler,
