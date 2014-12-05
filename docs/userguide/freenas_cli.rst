@@ -947,6 +947,7 @@ Using Shell, you can run this command manually to gather the specific debugging 
      -e		A list of comma delimited list of email addresses to email the debug log to.
      -a		Dump Active Directory Configuration
      -c		Dump (AD|LDAP) Cache
+     -d		Dump dtrace scripts
      -g		Dump GEOM configuration
      -h		Dump Hardware Configuration
      -I		Dump IPMI Configuration
@@ -955,9 +956,11 @@ Using Shell, you can run this command manually to gather the specific debugging 
      -T		Loader Configuration Information
      -n		Dump Network Configuration
      -N		Dump NFS Configuration
+     -S		Dump SMART information
      -s		Dump SSL Configuration
      -y		Dump Sysctl Configuration
      -t		Dump System Information
+     -v		Dump Boot System File Verification Status and Inconsistencies (if any)
      -z		Dump ZFS configuration
  Output will be saved to /var/tmp/fndebug
 
