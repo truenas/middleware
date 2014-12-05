@@ -1468,7 +1468,7 @@ for details.
 
 If you can see the target but not connect to it, check the "Discovery Auth" settings in "Target Global Configuration".
 
-If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to "Accept" in the vswitch.
+If the LUN is not discovered by ESXi, make sure that promiscuous mode is set to "Accept" in the vSwitch.
 
 .. _Growing LUNs:
 
