@@ -476,6 +476,9 @@ The :command:`mount` command uses the following options:
 
 The :command:`mount` command should return to the command prompt without any error messages, indicating that the share was successfully mounted.
 
+.. note:: if this command fails on a Linux system, make sure that the `nfs-utils <http://sourceforge.net/projects/nfs/files/nfs-utils/>`_ package is
+   installed.
+
 Once mounted, this configuration allows users on the client system to copy files to and from :file:`/mnt` (the mount point) and all files will be owned by
 *nobody:nobody*. Any changes to :file:`/mnt` will be saved to the FreeNAS® system's :file:`/mnt/data` volume.
 
@@ -490,9 +493,7 @@ From Microsoft
 ^^^^^^^^^^^^^^
 
 Windows systems can connect to NFS shares using Services for NFS (refer to the documentation for your version of Windows for instructions on how to find,
-activate, and use this service) or a third-party NFS client. Connecting to NFS shares is often faster than connecting to CIFS shares due to the
-`single-threaded limitation <http://www.samba.org/samba/docs/man/Samba-Developers-Guide/architecture.html>`_
-of Samba.
+activate, and use this service) or a third-party NFS client.
 
 Instructions for connecting from an Enterprise version of Windows 7 can be found at
 `Mount Linux NFS Share on Windows 7 <http://www.hackourlife.com/mount-linux-nfs-share-on-windows-7/>`_.
