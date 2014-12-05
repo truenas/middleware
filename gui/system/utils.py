@@ -298,10 +298,17 @@ def get_changelog(train, sequence):
 
 
 def parse_changelog(changelog, sequence):
-    regexp = r'### START %(seq)s(.+)### END %(seq)s' % {'seq': sequence}
-    reg = re.search(regexp, changelog, re.S|re.M)
+    regexp = r'### START (\S+)(.+?)### END \1'
+    reg = re.findall(regexp, changelog, re.S | re.M)
 
     if not reg:
         return None
 
-    return reg.group(1).strip('\n')
+    changelog = ''
+    for seq, changes in reg:
+        if not changes.strip('\n'):
+            continue
+        if seq > sequence:
+            changelog += changes.strip('\n') + '\n'
+
+    return changelog if changelog else None

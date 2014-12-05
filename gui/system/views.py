@@ -1281,9 +1281,15 @@ def update_apply(request):
             changelogpath = '%s/ChangeLog.txt' % (
                 notifier().get_update_location()
             )
+            conf = Configuration.Configuration()
+            sys_mani = conf.SystemManifest()
+            if sys_mani:
+                sequence = sys_mani.Sequence()
+            else:
+                sequence = ''
             if os.path.exists(changelogpath):
                 with open(changelogpath, 'r') as f:
-                    changelog = parse_changelog(f.read(), update.Sequence())
+                    changelog = parse_changelog(f.read(), sequence)
         return render(request, 'system/update.html', {
             'update': update,
             'handler': handler,
@@ -1371,7 +1377,13 @@ def update_check(request):
             network = False
             update = False
         if update:
-            changelog = get_changelog(updateobj.get_train(), update.Sequence())
+            conf = Configuration.Configuration()
+            sys_mani = conf.SystemManifest()
+            if sys_mani:
+                sequence = sys_mani.Sequence()
+            else:
+                sequence = ''
+            changelog = get_changelog(updateobj.get_train(), sequence)
         else:
             changelog = None
         return render(request, 'system/update_check.html', {
