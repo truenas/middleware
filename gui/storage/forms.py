@@ -1057,7 +1057,7 @@ class VolumeAutoImportForm(Form):
         for vol in list(vols):
             # Exclude volumes with same guid as existing volumes
             # See #6808
-            if vol['id'] in guids:
+            if vol.get('id') in guids:
                 vols.remove(vol)
                 continue
             for vdev in vol['disks']['vdevs']:

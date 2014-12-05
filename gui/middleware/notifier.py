@@ -3459,38 +3459,13 @@ class notifier:
 
     def detect_volumes(self, extra=None):
         """
-        Responsible to detect existing volumes by running
-        g{mirror,stripe,raid3},zpool commands
+        Responsible to detect existing volumes by running zpool commands
 
         Used by: Automatic Volume Import
         """
 
         volumes = []
         doc = self._geom_confxml()
-        # Detect GEOM mirror, stripe and raid3
-        for geom in ('mirror', 'stripe', 'raid3'):
-            search = doc.xpath("//class[name = '%s']/geom/config" % (geom.upper(),))
-            for entry in search:
-                label = entry.xpath('../name')[0].text
-                disks = []
-                for consumer in entry.xpath('../consumer/provider'):
-                    provider = consumer.attrib.get('ref')
-                    device = doc.xpath("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
-                    # The raid might be degraded
-                    if len(device) > 0:
-                        disks.append({'name': device[0].text})
-
-                # Next thing is find out whether this is a raw block device or has GPT
-                # TODO: MBR?
-                search = doc.xpath("//class[name = 'PART']/geom[name = '%s/%s']/provider//config[type = 'freebsd-ufs']" % (geom, label))
-                if len(search) > 0:
-                    label = search[0].xpath("../name")[0].text.split('/', 1)[1]
-                volumes.append({
-                    'label': label,
-                    'type': 'geom',
-                    'group_type': geom,
-                    'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
-                    })
 
         pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I | re.M | re.S)
         p1 = self._pipeopen("zpool import")
