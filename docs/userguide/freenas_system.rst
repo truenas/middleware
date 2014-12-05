@@ -250,6 +250,8 @@ The buttons above the boot entries can be used to:
 
 * **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
 
+**Figure 5.3b: Viewing the Status of the Boot Device**
+
 |be2.png|
 
 .. |be2.png| image:: images/be2.png
@@ -268,6 +270,40 @@ Figure 5.3c shows a sample boot menu containing entries for the default, wizard 
 .. |be3.png| image:: images/be3.png
     :width: 5.4in
     :height: 4.0in
+
+.. _Mirroring the Boot Device:
+
+Mirroring the Boot Device
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
+can still boot from the remaining device in the mirror.
+
+In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
+example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
+*stripe*. To create a mirrored boot device, click either the entry called
+*freenas-boot* or
+*stripe*, then click the "Attach" button. If another device is available, it will appear in the "Member disk" drop-down menu. Select the desired device, then
+click "Attach Disk".
+
+**Figure 5.3d: Mirroring a Boot Device**
+
+|mirror1.png|
+
+.. |mirror1.png| image:: images/mirror1.png
+    :width: 3.6in
+    :height: 4.5in
+
+Once the mirror is created, the "Status" screen will indicate that it is now a *mirror* and the number of devices in the mirror will be shown, as seen in the
+example in Figure 5.3e.
+
+**Figure 5.3e: Viewing the Status of a Mirrored Boot Device**
+
+|mirror2.png|
+
+.. |mirror2.png| image:: images/mirror2.png
+    :width: 3.8in
+    :height: 1.9in
 
 .. _Advanced:
 
