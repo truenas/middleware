@@ -288,16 +288,16 @@ class VerifyHandler(object):
             os.unlink(self.DUMPFILE)
 
 
-def get_changelog(train, sequence):
+def get_changelog(train, start = '', end = ''):
     conf = Configuration.Configuration()
     changelog = conf.GetChangeLog(train=train)
     if not changelog:
         return None
 
-    return parse_changelog(changelog.read(), sequence)
+    return parse_changelog(changelog.read(), start, end)
 
 
-def parse_changelog(changelog, sequence):
+def parse_changelog(changelog, start = '', end = ''):
     regexp = r'### START (\S+)(.+?)### END \1'
     reg = re.findall(regexp, changelog, re.S | re.M)
 
@@ -308,7 +308,12 @@ def parse_changelog(changelog, sequence):
     for seq, changes in reg:
         if not changes.strip('\n'):
             continue
-        if seq > sequence:
+        if seq == start:
+            # Once we found the right one, we start accumulating
+            changelog = ''
+        else:
             changelog += changes.strip('\n') + '\n'
+        if seq == end:
+            break    
 
     return changelog if changelog else None

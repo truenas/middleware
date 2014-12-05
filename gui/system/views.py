@@ -1383,7 +1383,7 @@ def update_check(request):
                 sequence = sys_mani.Sequence()
             else:
                 sequence = ''
-            changelog = get_changelog(updateobj.get_train(), sequence)
+            changelog = get_changelog(updateobj.get_train(), start = sequence, end = update.Sequence())
         else:
             changelog = None
         return render(request, 'system/update_check.html', {
