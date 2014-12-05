@@ -26,28 +26,55 @@
 #####################################################################
 
 
-from texttable import Texttable
-from namespace import Namespace, Command, description
+import time
+from descriptions import tasks
+from namespace import Namespace, IndexCommand, Command, description
+from output import output_msg, output_table, format_datetime
 
 
 @description("Lists system services")
 class ListCommand(Command):
-    def run(self, context, args):
-        pass
+    def run(self, context, args, kwargs):
+        tasks = context.connection.call_sync('task.query')
+        output_table(tasks, [
+            ('ID', '/id'),
+            ('Started at', lambda t: format_datetime(t['started_at'])),
+            ('Finished at', lambda t: format_datetime(t['finished_at'])),
+            ('Description', self.describe_task),
+            ('State', self.describe_state)
+        ])
+
+    def describe_state(self, task):
+        if task['state'] == 'EXECUTING':
+            state = self.context.call_sync('task.status', task['id'])
+
+        return task['state']
+
+    def describe_task(self, task):
+        return tasks.translate(task['name'], task['args'])
+
+
+@description("Submits new task")
+class SubmitCommand(Command):
+    def run(self, context, args, kwargs):
+        name = args.pop(0)
+        tid = context.connection.call_sync('task.submit', name, args)
+        output_msg('Task {0} started'.format(tid))
 
 
 @description("Service namespace")
 class TasksNamespace(Namespace):
+    def __init__(self, context):
+        super(TasksNamespace, self).__init__()
+        self.context = context
+
     def commands(self):
         return {
-            'list': ListCommand()
+            '?': IndexCommand(self),
+            'list': ListCommand(),
+            'submit': SubmitCommand()
         }
-
-    def namespaces(self):
-        pass
-
-
 
 
 def _init(context):
-    context.attach_namespace('/tasks', TasksNamespace())
+    context.attach_namespace('/tasks', TasksNamespace(context))

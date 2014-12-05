@@ -27,33 +27,57 @@
 
 
 from texttable import Texttable
-from namespace import Namespace, Command, description
+from namespace import Namespace, EntityNamespace, Command, description
 
 
-@description("Lists system services")
-class ListCommand(Command):
+class ServiceManageCommand(Command):
+    def __init__(self, name, action):
+        self.name = name
+        self.action = action
+
     def run(self, context, args, kwargs):
-        print context.connection.call_sync('system.info.status')
+        context.submit_task('service.manage', self.name, self.action)
 
 
 @description("Service namespace")
-class ServiceNamespace(Namespace):
-    def commands(self):
-        return {
-            'list': ListCommand()
+class ServicesNamespace(EntityNamespace):
+    def __init__(self, context):
+        super(ServicesNamespace, self).__init__(context)
+        self.primary_key = '/name'
+
+        self.add_property(
+            descr='Service name',
+            name='name',
+            get='/name',
+            set=None,
+            list=True
+        )
+
+        self.add_property(
+            descr='State',
+            name='state',
+            get='/state',
+            set=None,
+            list=True
+        )
+
+        self.entity_commands = lambda name: {
+            'start': ServiceManageCommand(name, 'start'),
+            'stop': ServiceManageCommand(name, 'stop'),
+            'restart': ServiceManageCommand(name, 'restart'),
+            'reload': ServiceManageCommand(name, 'reload')
         }
 
+    def query(self):
+        return self.context.connection.call_sync('service.query')
 
-class ServiceItemNamespace(Namespace):
-    def commands(self):
-        return {
-            'start': ListCommand(),
-            'stop': ListCommand(),
-            'restart': ListCommand(),
+    def get_one(self, name):
+        return self.context.connection.call_sync('service.query', [('name', '=', name)]).pop()
 
-        }
 
+class ServiceConfigNamespace(Namespace):
+    pass
 
 
 def _init(context):
-    context.attach_namespace('/service', ServiceNamespace())
+    context.attach_namespace('/services', ServicesNamespace(context))

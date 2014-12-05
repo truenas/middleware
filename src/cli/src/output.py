@@ -28,9 +28,15 @@
 import os
 import json
 import config
+import time
+import natural.date
+from threading import Lock
 from xml.etree import ElementTree
 from texttable import Texttable
 from jsonpointer import resolve_pointer
+
+
+output_lock = Lock()
 
 
 class JsonOutputFormatter(object):
@@ -69,7 +75,7 @@ class AsciiOutputFormatter(object):
         table = Texttable(max_width=get_terminal_size()[1])
         table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
         table.header([key_label, value_label])
-        table.add_rows([[row[0], row[1]] for row in data], False)
+        table.add_rows([[row[0], row[1]] for row in data.items()], False)
         print table.draw()
 
     @staticmethod
@@ -137,3 +143,15 @@ def output_table(data, columns, fmt=None):
         fmt = config.instance.variables.get('output-format')
 
     globals()['{0}OutputFormatter'.format(fmt.title())].output_table(data, columns)
+
+
+def output_msg(message, fmt=None):
+    print message
+
+
+def format_datetime(timestamp):
+    fmt = config.instance.variables.get('datetime-format')
+    if fmt == 'natural':
+        return natural.date.duration(timestamp)
+
+    return time.strftime(fmt, time.localtime(timestamp))

@@ -29,7 +29,6 @@
 import crypt
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
 
-
 @description("foo")
 class UsersNamespace(EntityNamespace):
 
@@ -73,9 +72,9 @@ class UsersNamespace(EntityNamespace):
 
         self.add_property(
             descr='Password',
-            name='unixhash',
+            name='password',
             get=None,
-            set='/unixhash',
+            set=self.set_unixhash,
             list=False
         )
 
@@ -87,9 +86,15 @@ class UsersNamespace(EntityNamespace):
     def get_one(self, name):
         return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
 
-    def set(self, entity, name, value, context):
-        if name == 'unixhash':
-            pass
+    def set_unixhash(self, obj, value):
+        pass
+
+    def save(self, entity, new=False):
+        if new:
+            self.context.submit_task('users.create', entity)
+
+        self.context.submit_task('users.update', entity['id'], entity)
+        return
 
     def display_group(self, entity):
         group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
@@ -104,19 +109,24 @@ class GroupsNamespace(EntityNamespace):
         self.add_property(
             descr='Group name',
             name='name',
-            get='/name')
+            get='/name',
+            list=True)
 
         self.add_property(
             descr='Group ID',
             name='gid',
             get='/id',
-            set=None)
+            set=None,
+            list=True)
 
         self.add_property(
             descr='Builtin group',
             name='builtin',
             get='/builtin',
-            set=None)
+            set=None,
+            list=True)
+
+        self.primary_key = '/name'
 
     def query(self):
         return self.context.connection.call_sync('groups.query')

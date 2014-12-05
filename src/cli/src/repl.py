@@ -38,8 +38,14 @@ import fcntl
 import platform
 import termios
 import config
+import json
+import gettext
+import signal
+import traceback
+from descriptions import events, tasks
 from namespace import RootNamespace
-from dispatcher.client import Client
+from output import output_lock, output_msg
+from dispatcher.client import Client, ClientError
 from commands import ExitCommand, PrintenvCommand, SetenvCommand
 
 
@@ -47,6 +53,12 @@ if platform.system() == 'Darwin':
     import gnureadline as readline
 else:
     import readline
+
+
+DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
+DEFAULT_RC = os.path.expanduser('~/.freenascli.conf')
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
 
 
 class VariableStore(object):
@@ -65,12 +77,23 @@ class VariableStore(object):
                 raise
 
             if self.choices is not None and value not in self.choices:
-                raise ValueError('Value not on the list of possible choices')
+                raise ValueError(_("Value not on the list of possible choices"))
 
     def __init__(self):
         self.variables = {
-            'output-format': self.Variable('ascii', str, ['ascii', 'json'])
+            'output-format': self.Variable('ascii', str, ['ascii', 'json']),
+            'datetime-format': self.Variable('natural', str),
+            'language': self.Variable(os.environ['LANG'], str),
+            'prompt': self.Variable('{host}:{path}>', str),
+            'timeout': self.Variable(10, int),
+            'show-events': self.Variable(True, bool)
         }
+
+    def load(self, filename):
+        pass
+
+    def save(self, filename):
+        pass
 
     def get(self, name):
         return self.variables[name].value
@@ -86,7 +109,7 @@ class VariableStore(object):
 class Context(object):
     def __init__(self):
         self.hostname = None
-        self.connection = None
+        self.connection = Client()
         self.ml = None
         self.logger = logging.getLogger('cli')
         self.plugin_dirs = []
@@ -101,18 +124,38 @@ class Context(object):
         self.connect()
 
     def connect(self):
-        self.connection = Client()
         self.connection.on_event(self.print_event)
+        self.connection.on_error(self.connection_error)
         self.connection.connect(self.hostname)
+
+    def read_config_file(self, file):
+        try:
+            f = open(file, 'r')
+            data = json.load(f)
+            f.close()
+        except (IOError, ValueError):
+            raise
+
+        if 'cli' not in data:
+            return
+
+        if 'plugin-dirs' not in data['cli']:
+            return
+
+        if type(data['cli']['plugin-dirs']) != list:
+            return
+
+        self.plugin_dirs += data['cli']['plugin-dirs']
 
     def discover_plugins(self):
         for dir in self.plugin_dirs:
-            self.logger.debug("Searching for plugins in %s", dir)
+            self.logger.debug(_("Searching for plugins in %s"), dir)
             self.__discover_plugin_dir(dir)
 
     def login_plugins(self):
         for i in self.plugins.values():
-            i._login(self)
+            if hasattr(i, '_login'):
+                i._login(self)
 
     def __discover_plugin_dir(self, dir):
         for i in glob.glob1(dir, "*.py"):
@@ -122,11 +165,14 @@ class Context(object):
         if path in self.plugins:
             return
 
-        self.logger.debug("Loading plugin from %s", path)
+        self.logger.debug(_("Loading plugin from %s"), path)
         plugin = imp.load_source('plugin', path)
         if hasattr(plugin, '_init'):
             plugin._init(self)
             self.plugins[path] = plugin
+
+    def __try_reconnect(self):
+        pass
 
     def attach_namespace(self, path, ns):
         splitpath = path.split('/')
@@ -134,17 +180,27 @@ class Context(object):
 
         for n in splitpath[1:-1]:
             if n not in ptr.namespaces().keys():
-                self.logger.warn('Cannot attach to namespace %s', path)
+                self.logger.warn(_("Cannot attach to namespace %s"), path)
                 return
 
             ptr = ptr.namespaces()[n]
 
         ptr.register_namespace(splitpath[-1], ns)
 
+    def connection_error(self, event):
+        if event == ClientError.CONNECTION_CLOSED:
+            self.__try_reconnect()
+            return
+
     def print_event(self, event, data):
         self.ml.blank_readline()
-        print 'Event: {0}'.format(data['description'])
+        output_lock.acquire()
+        output_msg(events.translate(event, data))
+        output_lock.release()
         self.ml.restore_readline()
+
+    def submit_task(self, name, *args):
+        return self.connection.call_sync('task.submit', name, args)
 
 
 class PathItem(object):
@@ -210,7 +266,7 @@ class MainLoop(object):
                 continue
 
             if line[0] == '/':
-                self.path = self.root_path
+                self.path = self.root_path[:]
                 line = line[1:]
 
             if line == '..':
@@ -239,16 +295,19 @@ class MainLoop(object):
 
                     for name, cmd in self.cwd.ns.commands().items():
                         if token == name:
+                            output_lock.acquire()
                             cmd.run(self.context, tokens, kwargs)
                             cmdfound = True
+                            output_lock.release()
                             break
 
                 except Exception, err:
                     print 'Error: {0}'.format(str(err))
+                    traceback.print_exc()
                     break
                 else:
                     if not nsfound and not cmdfound:
-                        print 'Command not found! Type "?" for help.'
+                        print _("Command not found! Type \"?\" for help.")
                         break
 
                     if cmdfound:
@@ -279,13 +338,22 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('hostname', metavar='HOSTNAME', default='127.0.0.1')
-    parser.add_argument('-I', metavar='DIR')
+    parser.add_argument('--config', metavar='CONFIGFILE', default=DEFAULT_CONFIGFILE)
+    parser.add_argument('-c', metavar='COMMANDS')
+    parser.add_argument('-l', metavar='LOGIN')
+    parser.add_argument('-p', metavar='PASSWORD')
     parser.add_argument('-D', metavar='DEFINE', action='append')
     args = parser.parse_args()
     context = Context()
     context.hostname = args.hostname
-    context.plugin_dirs = [args.I]
+    context.read_config_file(args.c)
     context.start()
+
+    if args.l:
+        context.connection.login_user(args.l, args.p)
+        context.connection.subscribe_events('*')
+        context.login_plugins()
+
     ml = MainLoop(context)
     context.ml = ml
     ml.repl()

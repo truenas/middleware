@@ -26,8 +26,8 @@
 #####################################################################
 
 from texttable import Texttable
-from jsonpointer import resolve_pointer
-from output import output_dict, output_table
+from jsonpointer import resolve_pointer, set_pointer
+from output import output_dict, output_table, output_msg
 
 
 def description(descr):
@@ -104,6 +104,7 @@ class EntityNamespace(Namespace):
         self.context = context
         self.property_mappings = []
         self.primary_key = None
+        self.entity_commands = None
 
     class PropertyMapping(object):
         def __init__(self, name, descr, get, set=None, list=False):
@@ -112,6 +113,18 @@ class EntityNamespace(Namespace):
             self.get = get
             self.set = set if set is not None else get
             self.list = list
+
+        def do_get(self, obj):
+            if callable(self.get):
+                return self.get(obj)
+
+            return resolve_pointer(obj, self.get)
+
+        def do_set(self, obj, value):
+            if callable(self.set):
+                self.set(obj, value)
+
+            set_pointer(obj, self.set, value)
 
     class SingleItemNamespace(Namespace):
         def __init__(self, name, parent):
@@ -122,13 +135,15 @@ class EntityNamespace(Namespace):
             self.nslist = {}
 
         def commands(self):
-            return {
+            base = {
                 '?': IndexCommand(self),
                 'get': self.parent.GetEntityCommand(self.name, self),
                 'set': self.parent.SetEntityCommand(self.name, self),
                 'show': self.parent.ShowEntityCommand(self.name, self),
                 'delete': self.parent.DeleteEntityCommand(self.name, self)
             }
+
+            base.update(self.parent.entity_commands(self.name))
 
     @description("Lists items")
     class ListCommand(Command):
@@ -159,11 +174,7 @@ class EntityNamespace(Namespace):
                 if not mapping.get:
                     continue
 
-                if callable(mapping.get):
-                    values[mapping.descr] = mapping.get(entity)
-                    continue
-
-                values[mapping.descr] = resolve_pointer(entity, mapping.get)
+                values[mapping.name] = mapping.do_get(entity)
 
             output_dict(values)
 
@@ -174,7 +185,12 @@ class EntityNamespace(Namespace):
             self.parent = parent
 
         def run(self, context, args, kwargs):
-            pass
+            if not self.parent.parent.has_property(args[0]):
+                output_msg('Property {0} not found'.format(args[0]))
+                return
+
+            entity = self.parent.parent.get_one(self.name)
+            output_msg(self.parent.parent.get_property(args[0], entity))
 
     @description("Sets single item property")
     class SetEntityCommand(Command):
@@ -182,11 +198,54 @@ class EntityNamespace(Namespace):
             self.name = name
             self.parent = parent
 
+        def run(self, context, args, kwargs):
+            for k, v in kwargs.items():
+                if not self.parent.parent.has_property(k):
+                    output_msg('Property {0} not found'.format(k))
+                    return
+
+            entity = self.parent.parent.get_one(self.name)
+
+            for k, v in kwargs.items():
+                prop = self.parent.parent.get_mapping(k)
+                prop.do_set(entity, v)
+
+            self.parent.parent.save(entity)
+
+    @description("Creates new item")
+    class CreateEntityCommand(Command):
+        def __init__(self, parent):
+            self.parent = parent
+
+        def run(self, context, args, kwargs):
+            for k, v in kwargs.items():
+                if not self.parent.has_property(k):
+                    output_msg('Property {0} not found'.format(k))
+                    return
+
+            entity = {}
+
+            for k, v in kwargs.items():
+                prop = self.parent.get_mapping(k)
+                prop.do_set(entity, v)
+
+            self.parent.save(entity, new=True)
+
     @description("Removes item")
     class DeleteEntityCommand(Command):
         def __init__(self, name, parent):
             self.name = name
             self.parent = parent
+
+    def has_property(self, prop):
+        return len(filter(lambda x: x.name == prop, self.property_mappings)) > 0
+
+    def get_mapping(self, prop):
+        return filter(lambda x: x.name == prop, self.property_mappings)[0]
+
+    def get_property(self, prop, obj):
+        mapping = self.get_mapping(prop)
+        return mapping.do_get(obj)
 
     def get_entity(self, name):
         pass
@@ -203,6 +262,7 @@ class EntityNamespace(Namespace):
     def commands(self):
         return {
             '?': IndexCommand(self),
+            'create': self.CreateEntityCommand(self),
             'list': self.ListCommand(self)
         }
 
