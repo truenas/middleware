@@ -54,8 +54,8 @@ module.exports = function( grunt ) {
 
   if ( grunt.config( ["freenasVersion"] ) === 10 ) {
     commonCommands = {
-        startServer   : "/usr/sbin/service start gui"
-      , stopServer    : "/usr/sbin/service stop gui"
+        startServer   : "/usr/sbin/service gui start"
+      , stopServer    : "/usr/sbin/service gui stop"
       , restartServer : "/usr/sbin/service gui restart"
     };
   } else {
