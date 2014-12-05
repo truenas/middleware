@@ -507,3 +507,12 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 
 You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
 
+You can check the results of a test from :ref:`Shell` by specifying the name of the drive. For example, to see the results for disk *ada0*,
+type::
+
+ smartctl -l selftest /dev/ada0
+
+If you enter an email address in the "Email to report" field of :menuselection:`Services --> S.M.A.R.T.`, the system will email the specified address when a
+test fails. 
+
+
