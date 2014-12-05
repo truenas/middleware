@@ -1534,6 +1534,8 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
             continue
         if os.path.isdir(os.path.join(archive, train_name)):
             for manifest_file in os.listdir(os.path.join(archive, train_name)):
+                if manifest_file == "ChangeLog.txt":
+                    continue
                 mname = os.path.join(archive, train_name, manifest_file)
                 if manifest_file == "LATEST" and os.path.islink(mname):
                     continue
