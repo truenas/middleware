@@ -53,6 +53,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration, Train
+from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
     ActivateClone,
     ApplyUpdate,
@@ -1360,16 +1361,22 @@ def update_check(request):
                 )
     else:
         handler = CheckUpdateHandler()
-        update = CheckForUpdates(
-            handler=handler.call,
-            train=updateobj.get_train(),
-        )
+        try:
+            update = CheckForUpdates(
+                handler=handler.call,
+                train=updateobj.get_train(),
+            )
+            network = True
+        except UpdateManifestNotFound:
+            network = False
+            update = False
         if update:
             changelog = get_changelog(updateobj.get_train(), update.Sequence())
         else:
             changelog = None
         return render(request, 'system/update_check.html', {
             'update': update,
+            'network': network,
             'handler': handler,
             'changelog': changelog,
         })
