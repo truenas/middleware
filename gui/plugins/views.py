@@ -573,6 +573,8 @@ def plugin_fcgi_client(request, name, oid, path):
     env.pop('wsgi.multiprocess', None)
     env.pop('wsgi.run_once', None)
     env['SCRIPT_NAME'] = env['PATH_INFO']
+    if request.is_secure():
+        env['HTTPS'] = 'on'
     args = request.POST if request.method == "POST" else request.GET
     status, headers, body, raw = app(env, args=args)
 

@@ -381,7 +381,7 @@ class FCGIApp(object):
 
     _environPrefixes = ['SERVER_', 'HTTP_', 'REQUEST_', 'REMOTE_', 'PATH_',
                         'CONTENT_', 'DOCUMENT_', 'SCRIPT_']
-    _environCopies = ['SCRIPT_NAME', 'QUERY_STRING', 'AUTH_TYPE']
+    _environCopies = ['SCRIPT_NAME', 'QUERY_STRING', 'AUTH_TYPE','HTTPS']
     _environRenames = {}
 
     def _defaultFilterEnviron(self, environ):

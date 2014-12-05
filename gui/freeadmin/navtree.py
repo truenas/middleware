@@ -518,7 +518,7 @@ class NavTree(object):
                     self.register_option(subopt, navopt)
 
     def _plugin_fetch(self, args):
-        plugin, host, request = args
+        plugin, host, request, timeout = args
         if re.match('^.+\[.+\]', host, re.I):
             import urllib2
         else:
@@ -534,7 +534,8 @@ class NavTree(object):
                 )
             )]
             #TODO: Increase timeout based on number of plugins
-            response = opener.open(url, None, 5)
+            # Have done above ^ but still sucky, try to use caching if possible
+            response = opener.open(url, None, timeout)
             data = response.read()
             if not data:
                 log.warn(_("Empty data returned from %s") % (url,))
@@ -548,9 +549,14 @@ class NavTree(object):
     def _get_plugins_nodes(self, request, jails):
 
         host = get_base_url(request)
+        plugs = Plugins.objects.filter(plugin_enabled=True, plugin_jail__in=[jail.jail_host for jail in jails])
+        if len(plugs) > 1:
+            timeout = len(plugs) * 5
+        else:
+            timeout = 6
         args = map(
-            lambda y: (y, host, request),
-            Plugins.objects.filter(plugin_enabled=True, plugin_jail__in=[jail.jail_host for jail in jails]))
+            lambda y: (y, host, request, timeout),
+            plugs)
 
         pool = eventlet.GreenPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
