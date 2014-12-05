@@ -1220,76 +1220,23 @@ A few sshd_config(5) options that are useful to input in the "Extra Options" fie
 * *ClientMaxStartup* defaults to 
   *10*; increase this value if you need more concurrent SSH connections
 
-.. _SFTP Chroot:
+.. _SCP Only:
 
-SFTP Chroot
-~~~~~~~~~~~
+SCP Only
+~~~~~~~~
 
-By default when you configure SSH, users can use the :command:`ssh` command to login to the FreeNAS® system. A user's home directory will be the
-volume/dataset specified in the "Home Directory" field of their user account on the FreeNAS® system. Users can also use the :command:`scp` and
-:command:`sftp` commands to transfer files between their local computer and their home directory on the FreeNAS® system.
+When you configure SSH, authenticated users with a user account created using :menuselection:`Account --> Users --> Add User` can use the :command:`ssh`
+command to login to the FreeNAS® system over the network. A user's home directory will be the volume/dataset specified in the "Home Directory" field of their
+FreeNAS® user account. While the SSH login will default to the user's home directory, users are able to navigate outside of their home directory which can
+pose a security risk.
 
-While these commands will default to the user's home directory, users are able to navigate outside of their home directory which can pose a security risk. SSH
-supports using a
-`chroot <http://en.wikipedia.org/wiki/Chroot>`_
-to confine users to only the :command:`sftp` command and to be limited to the contents of their own home directory. To configure this scenario on FreeNAS®, perform
-the following steps.
+It is possible to allow users to use the :command:`scp` and :command:`sftp` commands to transfer files between their local computer and their home directory
+on the FreeNAS® system, while restricting them from logging into the system using :command:`ssh`. To configure this scenario, go to
+:menuselection:`Account --> Users --> View Users`, select the user and click "Modify User", and change the user's "Shell" to
+*scponly*. Repeat for each user that needs restricted SSH access.
 
-.. note:: some utilities such as WinSCP can
-   `bypass the chroot <http://winscp.net/eng/docs/faq_breaks_permissions>`_. This section assumes that users are accessing the chroot using the command line
-   :command:`sftp`.
-
-#.  Create a ZFS dataset for each user requiring :command:`sftp` access in :menuselection:`Storage --> Volumes`.
-
-#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User`. In the "Home
-    Directory" field, browse to the location of the dataset you created for that user. Repeat this process to create a user account for every user that will
-    need access to the SSH service.
-
-#.  Create a group named *sftp* in :menuselection:`Account --> Groups --> Add Group`. Then, click on the
-    *sftp* group in "View Groups" and add the users who are to be restricted to their home directories when using :command:`sftp`.
-
-#.  Set permissions for each dataset in :menuselection:`Storage --> Volume --> View Volumes`. SSH chroot is
-    **very specific** with regards to the required permissions (see the ChrootDirectory keyword in
-    `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
-    for details).
-    **Your configuration will not work if the permissions on the datasets used by SSH chroot users differ from those shown in Figure 11.13b.**
-
-#.  Create a home directory within each dataset using :ref:`Shell`. Due to the permissions required by SSH chroot, the user will not have permissions to write
-    to the root of their own dataset until you do this. Since your intention is to limit them to the contents of their home directory, manually create a home
-    directory for each user **within their own dataset** and change the ownership of the directory to the user. Example 11.13a demonstrates the commands used
-    to create a home directory called *user1* for the user account
-    *user1* on dataset :file:`/mnt/volume1/user1`:
-
-    **Figure 11.13b: Permissions Required by SSH Chroot**
-
-    |chroot.png|
-
-    .. |chroot.png| image:: images/chroot.png
-       :width: 3.4in
-       :height: 4.3in
-
-    **Example 11.13a: Creating a User's Home Directory**
-    ::
-
-     mkdir /mnt/volume1/user1/user1
-
-     chown user1:user1 /mnt/volume1/user1/user1
-
-#.  Configure SSH in :menuselection:`Services --> SSH`. Add these lines to the "Extra Options" section:
-    ::
-
-
-
-     Match Group sftp
-     ChrootDirectory %h
-     ForceCommand internal-sftp
-     AllowTcpForwarding no
-
-#.  Start the SSH service in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to SSH. After a second or so, it will change to a
-    blue "ON", indicating that the service has been enabled.
-
-#.  Test the connection from a client by running :command:`sftp`, :command:`ssh`, and :command:`scp` as the user. The :command:`sftp` command should work but
-    be limited to the user's home directory and the :command:`ssh` and :command:`scp` commands should fail.
+Test the configuration from another system by running the :command:`sftp`, :command:`ssh`, and :command:`scp` commands as the user. The :command:`sftp`
+and :command:`scp` commands should work but the :command:`ssh`  should fail.
 
 .. _Troubleshooting SSH:
 
