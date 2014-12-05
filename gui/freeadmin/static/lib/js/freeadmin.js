@@ -843,7 +843,11 @@ require([
             ipv4_network_start.set("disabled", false);
             ipv4_network_end.set("disabled", false);
 
-            jc_network_info =  get_jc_network_info();
+            jc_network_info = get_jc_info();
+            if (!jc_network_info) {
+                jc_network_info =  get_jc_network_info();
+            }
+
             if (jc_network_info) {
                 if (jc_network_info.jc_ipv4_network) {
                     ipv4_network.set("value", jc_network_info.jc_ipv4_network);
@@ -875,7 +879,11 @@ require([
             ipv6_network_start.set("disabled", false);
             ipv6_network_end.set("disabled", false);
 
-            jc_network_info =  get_jc_network_info();
+            jc_network_info = get_jc_info();
+            if (!jc_network_info) {
+                jc_network_info =  get_jc_network_info();
+            }
+
             if (jc_network_info) {
                 if (jc_network_info.jc_ipv6_network) {
                     ipv6_network.set("value", jc_network_info.jc_ipv6_network);
