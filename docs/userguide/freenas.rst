@@ -1,33 +1,33 @@
+FreeNAS User Guide |release|
+============================
+
 .. toctree::
    :numbered:
+   :maxdepth: 2
 
-   Introduction <freenas_intro>
-   Installing and Upgrading FreeNAS® <freenas_install>
-   Booting Into FreeNAS® <freenas_quick>
-   Account <freenas_account>
-   System <freenas_system>
-   Tasks <freenas_tasks>
-   Network <freenas_network>
-   Storage <freenas_storage>
-   Directory Service <freenas_directoryservice>
-   Sharing <freenas_sharing>
-   Services <freenas_services>
-   Plugins <freenas_plugins>
-   Jails <freenas_jails>
-   Reporting <freenas_reporting>
-   Display System Processes <freenas_processes>
-   Shell <freenas_shell>
-   Log Out <freenas_logout>
-   Reboot <freenas_reboot>
-   Shutdown <freenas_shutdown>
-   Help <freenas_help>
-   Alert <freenas_alert>
-   FreeNAS® Support Resources <freenas_support>
-   Command Line Utilities <freenas_cli>
-   Contributing to FreeNAS® <freenas_contribute>
-   Using the FreeNAS® API <freenas_api>
+   freenas_intro
+   freenas_install
+   freenas_quick
+   freenas_account
+   freenas_system
+   freenas_tasks
+   freenas_network
+   freenas_storage
+   freenas_directoryservice
+   freenas_sharing
+   freenas_services
+   freenas_plugins
+   freenas_jails
+   freenas_reporting
+   freenas_processes
+   freenas_shell
+   freenas_logout
+   freenas_reboot
+   freenas_shutdown
+   freenas_help
+   freenas_alert
+   freenas_support
+   freenas_cli
+   freenas_contribute
+   freenas_api
 
-
-.. |93coverpng| image:: images/93cover.png
-    :width: 6.9252in
-    :height: 3.4984in
