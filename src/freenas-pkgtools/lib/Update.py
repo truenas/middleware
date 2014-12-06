@@ -416,7 +416,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                                     log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                         rv = True
                         # Start a scrub.  We ignore the return value.
-                        RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+                        # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
 
     except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
@@ -705,7 +705,7 @@ def ApplyUpdate(directory, install_handler = None):
                     raise Exception(s)
                 RemoveUpdate(directory)
                 rv = True
-                RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+                # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
     except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
         if mount_point:
