@@ -136,7 +136,7 @@ issued since FreeBSD 9.3 RELEASE.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
-  later time by selecting :ref:`Wizard` from the graphical tree menu.
+  later time by selecting :ref:`Wizard <Initial Configuration Wizard>` from the graphical tree menu.
 
 * The ability to manage boot environments has been added to :menuselection:`System --> Boot`.
 

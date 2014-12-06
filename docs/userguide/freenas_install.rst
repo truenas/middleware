@@ -376,10 +376,6 @@ The installer will recognize that an earlier version of FreeNAS® is installed o
 
 |upgrade1.png|
 
-.. |upgrade1.png| image:: images/upgrade1.png
-    :width: 5.9327in
-    :height: 3.1917in
-
 .. note:: if you select to perform a "Fresh Install", you will have to restore the backup of your configuration using
    :menuselection:`System --> General --> Upload Config` after you boot into the new operating system.
 

@@ -269,7 +269,7 @@ can be configured when creating an rsync task.
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Extra options                    | string                      | `rsync(1) <http://rsync.samba.org/ftp/rsync/rsync.html>`_                                 |
 |                                  |                             | options not covered by the GUI; note that if the "*" character is used, it must be        |
-|                                  |                             | escaped between single quotes (e.g. '*.txt')                                              |
+|                                  |                             | escaped between single quotes (e.g. '\*.txt')                                             |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Enabled                          | checkbox                    | uncheck if you would like to disable the rsync task without deleting it                   |
