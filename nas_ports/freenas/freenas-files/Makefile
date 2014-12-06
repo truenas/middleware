@@ -70,6 +70,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ixdiagnose ${STAGEDIR}/${PREFIX}/usr/local/bin/ixdiagnose
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/mfistatus.py ${STAGEDIR}/${PREFIX}/usr/local/bin/mfistatus.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/perftests-nas ${STAGEDIR}/${PREFIX}/usr/local/bin/perftests-nas
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/sas2ircu ${STAGEDIR}/${PREFIX}/usr/local/bin/sas2ircu
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/zilstat ${STAGEDIR}/${PREFIX}/usr/local/bin/zilstat
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/adtool ${STAGEDIR}/${PREFIX}/usr/local/bin/adtool
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/ldaptool ${STAGEDIR}/${PREFIX}/usr/local/bin/ldaptool
