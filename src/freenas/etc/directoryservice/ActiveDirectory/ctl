@@ -42,8 +42,8 @@ sssd_stop()
 
 sssd_restart()
 {
-	adctl_cmd ${service} sssd onestart
 	adctl_cmd ${service} sssd onestop
+	adctl_cmd ${service} sssd onestart
 	return $?
 }
 
