@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Command Line Utilities:
 
 Command Line Utilities

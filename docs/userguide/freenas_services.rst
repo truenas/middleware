@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Services Configuration:
 
 Services Configuration

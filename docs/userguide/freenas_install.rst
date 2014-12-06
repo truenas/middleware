@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Installing and Upgrading FreeNAS®:
 
 Installing and Upgrading FreeNAS®

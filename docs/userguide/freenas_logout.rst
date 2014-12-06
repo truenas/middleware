@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Log Out:
 
 Log Out

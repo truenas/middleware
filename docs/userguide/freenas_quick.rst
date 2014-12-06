@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Booting Into FreeNAS®:
 
 Booting Into FreeNAS®

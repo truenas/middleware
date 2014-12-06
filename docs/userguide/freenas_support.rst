@@ -1,5 +1,3 @@
-:orphan:
-
 .. _FreeNAS® Support Resources:
 
 FreeNAS® Support Resources

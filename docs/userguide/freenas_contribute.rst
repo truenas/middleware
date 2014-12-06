@@ -1,5 +1,3 @@
-:orphan:
-
 .. _Contributing to FreeNAS®:
 
 Contributing to FreeNAS®

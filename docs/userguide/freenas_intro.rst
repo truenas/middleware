@@ -1,5 +1,3 @@
-:orphan:
-
 |fn93cover.jpg|
 
 .. |fn93cover.jpg| image:: images/fn93cover.jpg
