@@ -15,6 +15,8 @@ var MiddlewareStore  = require("../stores/MiddlewareStore");
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
+var LoginBox = require("../components/LoginBox");
+
 var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
 var WarningBox   = require("../components/WarningBox");
@@ -32,7 +34,7 @@ function getMiddlewareStateFromStores () {
 
 var FreeNASWebApp = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return _.assign({
         warningBoxIsVisible: 0,
         infoBoxIsVisible: 0,
@@ -41,18 +43,32 @@ var FreeNASWebApp = React.createClass({
       }, getMiddlewareStateFromStores() );
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-      if ( !this.state.authenticated ) {
-        var username = window.prompt("Login");
-        var password = window.prompt("Password");
-
-        MiddlewareClient.login( username, password );
-      }
     }
 
-  , handleMiddlewareChange: function() {
+  , componentDidUpdate: function ( prevProps, prevState ) {
+    if ( !this.state.authenticated ) {
+      this.showLoginBox();
+    } else {
+      this.hideLoginBox();
+    }
+  }
+
+  , handleMiddlewareChange: function () {
       this.setState( getMiddlewareStateFromStores() );
+  }
+
+  , showLoginBox: function () {
+      Velocity( this.refs.login.getDOMNode()
+                , "fadeIn"
+                , { duration: "500" } );
+  }
+
+  , hideLoginBox: function () {
+      Velocity( this.refs.login.getDOMNode()
+                , "fadeOut"
+                , { duration: "500" } );
   }
 
   , handleBox: function(event) {
@@ -118,45 +134,51 @@ var FreeNASWebApp = React.createClass({
 
     return (
       <div>
-      <div className = "notificationBar">
-       <WarningBox isVisible = {this.state.warningBoxIsVisible} />
-       <InfoBox isVisible = {this.state.infoBoxIsVisible} />
-       <QueueBox isVisible = {this.state.queueBoxIsVisible} />
+        <LoginBox ref="login" />
+
+        <div ref="mainWrapper">
+          <div className = "notificationBar">
+           <WarningBox isVisible = {this.state.warningBoxIsVisible} />
+           <InfoBox isVisible = {this.state.infoBoxIsVisible} />
+           <QueueBox isVisible = {this.state.queueBoxIsVisible} />
 
 
 
-        <div className="userInfo">
-        <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="1" onClick={this.handleBox} />
-        <Icon glyph="info-circle" icoClass="icoInfo" icoSize="3x" warningFlag="2" onClick={this.handleBox} />
-        <Icon glyph="list-alt" icoClass="icoQueue" icoSize="3x" warningFlag="3" onClick={this.handleBox} />
-        <Icon glyph = "user" icoSize = "2x" />
+            <div className="userInfo">
+            <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="1" onClick={this.handleBox} />
+            <Icon glyph="info-circle" icoClass="icoInfo" icoSize="3x" warningFlag="2" onClick={this.handleBox} />
+            <Icon glyph="list-alt" icoClass="icoQueue" icoSize="3x" warningFlag="3" onClick={this.handleBox} />
+            <Icon glyph = "user" icoSize = "2x" />
 
-         <TWBS.SplitButton title="Kevin Spacey" pullRight>
-          <TWBS.MenuItem key="1">Camera!</TWBS.MenuItem>
-          <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
-          <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
-          <TWBS.MenuItem divider />
-          <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
-        </TWBS.SplitButton>
+             <TWBS.SplitButton title="Kevin Spacey" pullRight>
+              <TWBS.MenuItem key="1">Camera!</TWBS.MenuItem>
+              <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
+              <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
+              <TWBS.MenuItem divider />
+              <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
+            </TWBS.SplitButton>
 
+            </div>
+          </div>
+
+          <LeftMenu handleMenuChange={this.menuChange} />
+
+          <TWBS.Grid fluid ref="gridRef" className={"mainGrid " + this.state.gridClass}>
+            {/* TODO: Add Modal mount div */}
+            <TWBS.Row>
+              {/* Primary view */}
+              <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12} xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
+                <h1>FreeNAS WebGUI</h1>
+                <this.props.activeRouteHandler />
+              </TWBS.Col>
+
+              {/* Tasks and active users */}
+              <TWBS.Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                {/* TODO: Add tasks/users component */}
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
         </div>
-      </div>
-      <LeftMenu handleMenuChange={this.menuChange} />
-      <TWBS.Grid fluid ref="gridRef" className={"mainGrid " + this.state.gridClass}>
-        {/* TODO: Add Modal mount div */}
-        <TWBS.Row>
-          {/* Primary view */}
-          <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12} xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
-            <h1>FreeNAS WebGUI</h1>
-            <this.props.activeRouteHandler />
-          </TWBS.Col>
-
-          {/* Tasks and active users */}
-          <TWBS.Col xs={2} sm={2} md={2} lg={2} xl={2}>
-            {/* TODO: Add tasks/users component */}
-          </TWBS.Col>
-        </TWBS.Row>
-      </TWBS.Grid>
       </div>
     );
   }
