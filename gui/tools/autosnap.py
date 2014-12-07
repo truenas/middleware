@@ -263,7 +263,7 @@ if len(mp_to_task_map) > 0:
                         vm1.create_snapshot(vmsnapname, memory=False)
                     except:
                         log.warn("Snapshot of VM %s failed", vm1)
-                        snapvmfails.append(vm1)
+                        snapvmfails.append(vm)
                     snapvms.append(vm1)
 
         if snapvmfails:
