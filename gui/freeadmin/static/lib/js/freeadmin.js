@@ -240,6 +240,39 @@ require([
 
     }
 
+    checkRunning = function(newurl) {
+
+            try {
+                setTimeout( function () {
+                    window.location = newurl;
+                }, 10000);
+            }
+            catch (e) {
+                setTimeout( function () {
+                    checkRunning(newurl);
+                }, 4000);
+            }
+    }
+
+    evilrestartHttpd = function(newurl) {
+
+      dialog = new Dialog({
+                    title: gettext('Restating WebGUI'),
+                    content: "Please wait while the WebGUI restarts...</br>Refresh your Browser Manually if Unresponsive after 15 seconds",
+                    //parseOnLoad: true,
+                    closable: true,
+                    style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+                    onHide: function() {
+                    setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+                    }
+                });
+      dialog.show();
+      xhr.get('/system/restart-httpd-all/', {
+                sync: true
+            }).then(checkRunning(newurl));
+
+    }
+
     get_selected_plugin = function() {
         var plugin = null;
         var grid = dom.byId("dgrid_available").grid;

@@ -999,7 +999,10 @@ class SettingsForm(ModelForm):
             elif self.instance.stg_guihttpsport and protocol == 'https':
                 newurl += ":" + str(self.instance.stg_guihttpsport)
             notifier().start_ssl("nginx")
-            events.append("restartHttpd('%s')" % newurl)
+            if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
+                events.append("evilrestartHttpd('%s')" % newurl)
+            else:
+                events.append("restartHttpd('%s')" % newurl)
 
 
 class NTPForm(ModelForm):
@@ -2312,6 +2315,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.instance.cert_privatekey = \
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
+        self.instance.cert_serial = 01
 
         super(CertificateAuthorityCreateInternalForm, self).save()
 
@@ -2446,6 +2450,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
                                  subject=cert),
         ])
 
+        cert.set_serial_number(signing_cert.cert_serial)
+        self.instance.cert_serial = 01
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \
@@ -2454,7 +2460,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
 
         super(CertificateAuthorityCreateIntermediateForm, self).save()
-
+        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
+        ca.cert_serial = ca.cert_serial +1
+        ca.save()
         notifier().start("ix-ssl")
 
     class Meta:
@@ -2761,6 +2769,7 @@ class CertificateCreateInternalForm(ModelForm):
                                  subject=cert),
         ])
 
+        cert.set_serial_number(signing_cert.cert_serial)
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \
@@ -2769,6 +2778,9 @@ class CertificateCreateInternalForm(ModelForm):
             crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
 
         super(CertificateCreateInternalForm, self).save()
+        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
+        ca.cert_serial = ca.cert_serial +1
+        ca.save()
 
         notifier().start("ix-ssl")
 

@@ -53,6 +53,7 @@ host=${django_host}
 port=${django_port}
 start_cmd="start_command"
 stop_cmd="stop_command"
+restart_cmd="restart_command"
 
 
 start_command()
@@ -60,7 +61,13 @@ start_command()
 	local logs="/var/log/nginx-error.log /var/log/nginx-access.log"
 	new_string=`dd if=/dev/random bs=32 count=1 2>/dev/null | /usr/local/bin/base64`
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
-        echo "SECRET_KEY = '${new_string}'" >> ${django_config}
+        # changed ">>" below to ">" as I want it to write a new file each time
+        echo "SECRET_KEY = '${new_string}'" > ${django_config}
+        local webguiproto=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_guiprotocol from system_settings")
+        if [ ${webguiproto} = "https" ]; then
+            echo "SESSION_COOKIE_SECURE = True" >> ${django_config}
+            echo "CSRF_COOKIE_SECURE = True" >> ${django_config}
+        fi
 
 	local proxy=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_httpproxy FROM network_globalconfiguration ORDER by -id LIMIT 1")
 
@@ -80,6 +87,12 @@ stop_command()
 {
 	kill `cat ${pidfile}`
 	rm -f ${pidfile}
+}
+
+restart_command()
+{
+	stop_command
+	start_command
 }
 
 run_rc_command "$1"

@@ -991,6 +991,13 @@ def restart_httpd(request):
     return HttpResponse('OK')
 
 
+def restart_httpd_all(request):
+    """ restart nginx as well as django (evil)"""
+    notifier().restart("http")
+    notifier().restart("django")
+    return HttpResponse('OK')
+
+
 def reload_httpd(request):
     """ restart httpd """
     notifier().reload("http")
