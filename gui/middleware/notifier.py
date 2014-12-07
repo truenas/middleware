@@ -5072,7 +5072,7 @@ class notifier:
             "everyone@:rxaRc:fd:allow"
         ]
 
-        dataset_init_windows_meta_file(dataset) 
+        self.dataset_init_windows_meta_file(dataset) 
 
         path = "/mnt/%s" % dataset
         for ace in acl:
@@ -5084,7 +5084,7 @@ class notifier:
             f.close()
 
     def dataset_init_apple(self, dataset):
-        dataset_init_apple_meta_file(dataset)
+        self.dataset_init_apple_meta_file(dataset)
 
     def get_dataset_share_type(self, dataset):
         share_type = "unix"
