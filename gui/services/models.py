@@ -518,6 +518,7 @@ class iSCSITargetExtent(Model):
 
     class Meta:
         verbose_name = _("Extent")
+        verbose_name_plural = _("Extents")
         ordering = ["iscsi_target_extent_name"]
 
     def __unicode__(self):
@@ -577,6 +578,7 @@ class iSCSITargetPortal(Model):
 
     class Meta:
         verbose_name = _("Portal")
+        verbose_name_plural = _("Portals")
 
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
@@ -658,6 +660,7 @@ class iSCSITargetAuthorizedInitiator(Model):
 
     class Meta:
         verbose_name = _("Initiator")
+        verbose_name_plural = _("Initiators")
 
     class FreeAdmin:
         menu_child_of = "sharing.ISCSI"
@@ -789,6 +792,7 @@ class iSCSITarget(Model):
 
     class Meta:
         verbose_name = _("Target")
+        verbose_name_plural = _("Targets")
         ordering = ['iscsi_target_name']
 
     def __unicode__(self):
