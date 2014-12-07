@@ -1534,7 +1534,7 @@ class ZVol_CreateForm(Form):
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
         self._force = False
-        zpool = notifier().zpool_parse(self.vol_name)
+        zpool = notifier().zpool_parse(self.vol_name.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
             if vdev.type in (
