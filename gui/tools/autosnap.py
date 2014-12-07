@@ -251,7 +251,7 @@ if len(mp_to_task_map) > 0:
         snapvmfails = []
         for obj in qs:
             try:
-                server.connect(obj.hostname, obj.username, obj.password)
+                server.connect(obj.hostname, obj.username, obj.get_password())
             except:
                 log.warn("VMWare login failed to %s", obj.hostname)
                 continue
