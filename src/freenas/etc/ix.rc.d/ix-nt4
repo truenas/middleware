@@ -30,13 +30,16 @@ get_cifs_homedir()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		cifs_srv_homedir
+		cifs_path
 
 	FROM
-		services_cifs
+		sharing_cifs_share
+
+	WHERE
+		cifs_home = 1
 
 	ORDER BY
-		-services_cifs.id
+		-sharing_cifs_share.id
 
 	LIMIT 1;
 	"
