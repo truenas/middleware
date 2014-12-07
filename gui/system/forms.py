@@ -589,10 +589,27 @@ class InitialWizard(CommonWizard):
                         authini = (
                             iSCSITargetAuthorizedInitiator.objects.create()
                         )
+                    try:
+                        nic = list(choices.NICChoices(
+                            nolagg=True, novlan=True, exclude_configured=False)
+                        )[0][0]
+                        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
+                                               "awk '{print $2}'|tr -d :" % (nic, ),
+                                               shell=True,
+                                               stdout=subprocess.PIPE).communicate()[0]
+                        ltg = iSCSITarget.objects.order_by('-id')
+                        if ltg.count() > 0:
+                            lid = ltg[0].id
+                        else:
+                            lid = 0
+                        serial = mac.strip() + "%.2d" % lid
+                    except:
+                        serial = "10000001"
                     target = iSCSITarget.objects.create(
                         iscsi_target_name='%sTarget' % share_name,
                         iscsi_target_portalgroup=portal,
                         iscsi_target_initiatorgroup=authini,
+                        iscsi_target_serial=serial,
                     )
 
                     iscsi_target_extent_path = 'zvol/%s/%s' % (
