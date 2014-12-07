@@ -786,9 +786,9 @@ SHARE_TYPE_CHOICES = (
 )
 
 CASE_SENSITIVITY_CHOICES = (
-   ('sensitive', 'sensitive'),
-   ('insensitive', 'insensitive'),
-   ('mixed', 'mixed')
+   ('sensitive',  _('Sensitive')),
+   ('insensitive',  _('Insensitive')),
+   ('mixed',  _('Mixed'))
 )
 
 class SERIAL_CHOICES(object):

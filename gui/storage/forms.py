@@ -1321,7 +1321,7 @@ class ZFSDataset(Form):
         initial="inherit",
     )
     dataset_recordsize = forms.ChoiceField(
-        choices=(('', 'Inherit'), ) + choices.ZFS_RECORDSIZE,
+        choices=(('', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
         initial="",
         required=False,
@@ -1524,7 +1524,7 @@ class ZVol_CreateForm(Form):
             'on the number of the disks in the pool for a general use case.'
         ),
         required=False,
-        choices=(('', 'Inherit'), ) + choices.ZFS_RECORDSIZE,
+        choices=(('', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
     )
 
     advanced_fields = (
