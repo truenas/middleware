@@ -484,16 +484,13 @@ def add_ldap(sc):
         { 'chpass_provider': 'ldap' },
         { 'ldap_schema': 'rfc2307bis' },
         { 'ldap_force_upper_case_realm': 'true' },
-        { 'use_fully_qualified_names': 'true' }
+        { 'use_fully_qualified_names': 'false' }
     ]
 
     for d in ldap_defaults:
         key = d.keys()[0]  
         if not key in ldap_section:
             setattr(ldap_section, key, d[key])
-
-    if ldap.ldap_use_default_domain:
-        ldap_section.use_fully_qualified_names = 'false'
 
     ldap_section.ldap_uri = "%s://%s" % (
         "ldaps" if ldap.ldap_ssl == 'on' else "ldap",

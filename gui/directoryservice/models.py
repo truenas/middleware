@@ -1063,11 +1063,6 @@ class LDAP(DirectoryServiceBase):
             "ou=SUDOers"),
         blank=True
     )
-    ldap_use_default_domain = models.BooleanField(
-        verbose_name=_("Use default domain"),
-        default=False,
-        help_text=_("Set this if you want to use the default domain for users and groups.")
-    )
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),

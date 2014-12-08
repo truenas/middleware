@@ -187,7 +187,6 @@ LDAP_show_config()
 	printf "ldap_passwordsuffix:     %s\n" $(LDAP_get ldap_passwordsuffix)
 	printf "ldap_machinesuffix:      %s\n" $(LDAP_get ldap_machinesuffix)
 	printf "ldap_sudosuffix:         %s\n" $(LDAP_get ldap_sudosuffix)
-	printf "ldap_use_default_domain: %s\n" $(LDAP_get ldap_use_defalt_domain)
 	printf "ldap_kerberos_realm_id:  %s\n" $(LDAP_get ldap_kerberos_realm_id)
 	printf "ldap_kerberos_keytab_id: %s\n" $(LDAP_get ldap_kerberos_keytab_id)
 	printf "ldap_ssl:                %s\n" $(LDAP_get ldap_ssl)
@@ -235,7 +234,6 @@ old_LDAP_load_values()
 		ldap_passwordsuffix,
 		ldap_machinesuffix,
 		ldap_sudosuffix,
-		ldap_use_default_domain,
 		ldap_kerberos_realm_id,
 		ldap_kerberos_keytab_id,
 		ldap_ssl,
