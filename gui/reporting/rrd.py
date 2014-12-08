@@ -810,3 +810,36 @@ class ARCSizePlugin(RRDBase):
         ]
 
         return args
+
+
+class ARCRatioPlugin(RRDBase):
+
+    plugin = 'zfs_arc'
+    vertical_label = "Hit (%)"
+
+    def get_title(self):
+        return 'ARC Ratio'
+
+    def graph(self):
+
+        ratioarc = os.path.join(self.base_path, "cache_ratio-arc.rrd")
+        ratiol2 = os.path.join(self.base_path, "cache_ratio-L2.rrd")
+
+        args = [
+            'DEF:arc_hit=%s:value:MAX' % ratioarc,
+            'CDEF:arc_p=arc_hit,100,*',
+            'DEF:l2arc_hit=%s:value:MAX' % ratiol2,
+            'CDEF:l2arc_p=l2arc_hit,100,*',
+            'LINE1:arc_p#0000FF:ARC Hit',
+            'GPRINT:arc_p:LAST:Cur\: %4.2lf%s',
+            'GPRINT:arc_p:AVERAGE:Avg\: %4.2lf%s',
+            'GPRINT:arc_p:MAX:Max\: %4.2lf%s',
+            'GPRINT:arc_p:MIN:Min\: %4.2lf%s',
+            'LINE1:l2arc_p#FF0000:L2ARC Hit',
+            'GPRINT:l2arc_p:LAST:Cur\: %4.2lf%s',
+            'GPRINT:l2arc_p:AVERAGE:Avg\: %4.2lf%s',
+            'GPRINT:l2arc_p:MAX:Max\: %4.2lf%s',
+            'GPRINT:l2arc_p:MIN:Min\: %4.2lf%s',
+        ]
+
+        return args
