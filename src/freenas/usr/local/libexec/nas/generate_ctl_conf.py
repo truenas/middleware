@@ -56,7 +56,7 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("""\tinitiator-name "%s"\n""" % name)
+                cf_contents.append("""\tinitiator-name "%s"\n""" % name.lstrip())
         if initiator.iscsi_target_initiator_auth_network:
             sep = "\n"
             if "," in initiator.iscsi_target_initiator_auth_network:
@@ -67,7 +67,7 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("""\tinitiator-portal "%s"\n""" % name)
+                cf_contents.append("""\tinitiator-portal "%s"\n""" % name.lstrip())
         if rv and not auth_list and auth_type == 'None':
             cf_contents.append("\tauth-type \"none\"\n")
     cf_contents.append("}\n\n")
