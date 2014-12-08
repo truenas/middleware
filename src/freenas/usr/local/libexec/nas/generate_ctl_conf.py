@@ -47,17 +47,27 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
 
     if initiator:
         if initiator.iscsi_target_initiator_initiators:
-            for name in initiator.iscsi_target_initiator_initiators.strip('\n').split('\n'):
+            sep = "\n"
+            if "," in initiator.iscsi_target_initiator_initiators:
+                sep = ","
+            elif " " in initiator.iscsi_target_initiator_initiators:
+                sep = " "
+            for name in initiator.iscsi_target_initiator_initiators.strip('\n').split(sep):
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("\tinitiator-name %s\n" % name)
+                cf_contents.append("""\tinitiator-name "%s"\n""" % name)
         if initiator.iscsi_target_initiator_auth_network:
-            for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split('\n'):
+            sep = "\n"
+            if "," in initiator.iscsi_target_initiator_auth_network:
+                sep = ","
+            elif " " initiator.iscsi_target_initiator_auth_network:
+                sep = " "
+            for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split(sep):
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("\tinitiator-portal %s\n" % name)
+                cf_contents.append("""\tinitiator-portal "%s"\n""" % name)
         if rv and not auth_list and auth_type == 'None':
             cf_contents.append("\tauth-type \"none\"\n")
     cf_contents.append("}\n\n")
