@@ -409,6 +409,9 @@ class notifier:
         self._system("/usr/sbin/service ix-apache onestart")
         self._system("/usr/sbin/service apache24 reload")
 
+    def _restart_django(self):
+        self._system("/usr/sbin/service django restart")
+
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
