@@ -5,6 +5,7 @@
     "browserify": "^6.2.0",
     "d3": "^3.4.x",
     "flux": "^2.0.x",
+    "keymirror": "^0.1.0",
     "lodash": "^2.4.x",
     "mach": "^0.12.0",
     "node-jsx": "^0.11.x",

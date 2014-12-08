@@ -3,6 +3,31 @@
 @notification-bar-height: 70px;
 @almost-white: #f3f3f3;
 
+// Overlays
+//
+.overlay,
+.overlay-dark,
+.overlay-light {
+  position : absolute;
+  top      : 0;
+  right    : 0;
+  bottom   : 0;
+  left     : 0;
+  z-index  : 1000;
+}
+.overlay-dark  { background-color: fade( black, 50% ); }
+.overlay-light { background-color: fade( white, 50% ); }
+
+.overlay-window {
+  width      : 450px;
+  height     : 260px;
+  padding    : 10px 45px;
+  border     : 1px solid #F5F5F5;
+  box-shadow : 2px 2px 8px 0 rgba(0, 0, 0, 0.035);
+  .absolute-center();
+  #gradient.directional( white, #FAFAFA, 135deg );
+}
+
 .notificationBar {
     position: fixed;
     top: 0px;
