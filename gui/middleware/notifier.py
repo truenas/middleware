@@ -5598,6 +5598,7 @@ class notifier:
         if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
+        time.sleep(10)
         self._system("/usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/%s" % devname)
 
         return True
@@ -5635,6 +5636,7 @@ class notifier:
         if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
+        time.sleep(10)
         self._system("/usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/%s" % devname)
 
         return True
