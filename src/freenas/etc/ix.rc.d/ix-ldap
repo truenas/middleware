@@ -92,7 +92,7 @@ ldap_status()
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?
 
-			#rm -f "${temp}" "${cmdfile}"
+			rm -f "${temp}" "${cmdfile}"
 		else		
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
 			local cmd
