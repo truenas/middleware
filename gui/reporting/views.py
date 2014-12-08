@@ -55,12 +55,12 @@ def plugin2graphs(name):
             if len(ids) > 0:
                 for ident in ids:
                     graphs.append({
-                        'plugin': ins.plugin,
+                        'plugin': ins.name,
                         'identifier': ident,
                     })
         else:
             graphs.append({
-                'plugin': ins.plugin,
+                'plugin': ins.name,
             })
 
     return graphs

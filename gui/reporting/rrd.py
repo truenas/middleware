@@ -45,9 +45,14 @@ class RRDMeta(type):
         reg = re.search(r'^(?P<name>.+)Plugin$', name)
         if reg and not hasattr(klass, 'plugin'):
             klass.plugin = reg.group("name").lower()
-            name2plugin[klass.plugin] = klass
-        elif hasattr(klass, 'plugin'):
-            name2plugin[klass.plugin] = klass
+        elif name != 'RRDBase' and not hasattr(klass, 'plugin'):
+            raise ValueError("Could not determine plugin name %s" % str(name))
+
+        if reg and not hasattr(klass, 'name'):
+            klass.name = reg.group("name").lower()
+            name2plugin[klass.name] = klass
+        elif hasattr(klass, 'name'):
+            name2plugin[klass.name] = klass
         elif name != 'RRDBase':
             raise ValueError("Could not determine plugin name %s" % str(name))
         return klass
@@ -771,6 +776,37 @@ class DiskPlugin(RRDBase):
             'GPRINT:max_wr:MAX: %5.1lf%s Max\g',
             'GPRINT:avg_wr:LAST: %5.1lf%s Last\g',
             'GPRINT:tot_wr: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
+class ARCSizePlugin(RRDBase):
+
+    plugin = 'zfs_arc'
+    vertical_label = "Size"
+
+    def get_title(self):
+        return 'ARC Size'
+
+    def graph(self):
+
+        cachearc = os.path.join(self.base_path, "cache_size-arc.rrd")
+        cachel2 = os.path.join(self.base_path, "cache_size-L2.rrd")
+
+        args = [
+            'DEF:arc_size=%s:value:MAX' % cachearc,
+            'DEF:l2arc_size=%s:value:MAX' % cachel2,
+            'LINE1:arc_size#0000FF:ARC Size\l',
+            'GPRINT:arc_size:LAST:Cur\: %.2lf%S',
+            'GPRINT:arc_size:AVERAGE:Avg\: %.2lf%S',
+            'GPRINT:arc_size:MAX:Max\: %.2lf%S',
+            'GPRINT:arc_size:MIN:Min\: %.2lf%S\l',
+            'LINE1:l2arc_size#FF0000:L2ARC Size\l',
+            'GPRINT:l2arc_size:LAST:Cur\: %.2lf%S',
+            'GPRINT:l2arc_size:AVERAGE:Avg\: %.2lf%S',
+            'GPRINT:l2arc_size:MAX:Max\: %.2lf%S',
+            'GPRINT:l2arc_size:MIN:Min\: %.2lf%S',
         ]
 
         return args
