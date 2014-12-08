@@ -7,7 +7,7 @@
 # platform-specific stuff.
 
 _os_type = "FreeNAS"
-UPDATE_SERVER = "http://beta-update.freenas.org/" + _os_type
+UPDATE_SERVER = "http://update.freenas.org/" + _os_type
 
 # For signature verification
 IX_CRL = "https://web.ixsystems.com/updates/ix_crl.pem"
@@ -22,7 +22,7 @@ try:
     sys.path.append("/usr/local/www")
     from freenasUI.common.system import get_sw_name
     _os_type = get_sw_name()
-    UPDATE_SERVER = "http://beta-update.freenas.org/" + _os_type
+    UPDATE_SERVER = "http://update.freenas.org/" + _os_type
 except:
     pass
 

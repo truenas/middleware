@@ -38,7 +38,7 @@ log = logging.getLogger('freenasOS.Configuration')
 # We may want to use a different update server for
 # TrueNAS.
 #UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
-SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/" + Avatar() ]
+SEARCH_LOCATIONS = [ "http://update.freenas.org/" + Avatar() ]
 
 # List of trains
 TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
