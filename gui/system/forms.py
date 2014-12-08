@@ -1923,11 +1923,28 @@ class InitialWizardVolumeForm(Form):
                     'disks': maindisks[i * 2:2 * (i + 1)],
                 }
                 grpid += 1
+        elif grptype.startswith('raidz'):
+            if grptype == 'raidz':
+                optimalrow = 9
+            elif grptype == 'raidz2':
+                optimalrow = 10
+            else:
+                optimalrow = 11
+            div = len(maindisks) / optimalrow
+            mod = len(maindisks) % optimalrow
+            if mod >= 2:
+                div += 1
+            perrow = len(maindisks) / (div if div else 1)
+            for i in range(div):
+                groups[grpid] = {
+                    'type': grptype,
+                    'disks': maindisks[i * perrow:perrow * (i + 1)],
+                }
+                grpid += 1
         else:
             groups[grpid] = {
                 'type': grptype,
                 'disks': maindisks,
-
             }
 
         return groups
