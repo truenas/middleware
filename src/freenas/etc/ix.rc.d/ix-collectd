@@ -124,6 +124,7 @@ LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
+LoadPlugin zfs_arc
 
 <Plugin "syslog">
     LogLevel err
@@ -157,6 +158,9 @@ LoadPlugin syslog
     DataDir "${datadir}"
     CacheTimeout 120
     CacheFlush 900
+</Plugin>
+
+<Plugin "zfs_arc">
 </Plugin>
 
 <Plugin "df">
