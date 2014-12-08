@@ -258,7 +258,7 @@ require([
 
       dialog = new Dialog({
                     title: gettext('Restating WebGUI'),
-                    content: "Please wait while the WebGUI restarts...</br>Refresh your Browser Manually if Unresponsive after 15 seconds",
+                    content: "Please wait while the WebGUI restarts...</br>Refresh your browser manually if unresponsive after 15 seconds",
                     //parseOnLoad: true,
                     closable: true,
                     style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
