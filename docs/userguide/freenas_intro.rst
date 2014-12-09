@@ -172,6 +172,8 @@ issued since FreeBSD 9.3 RELEASE.
 * The Linux jail templates have been removed as they were too experimental and limited to 32-bit. Instead, use the VirtualBox template, which installs a
   web-based instance of phpVirtualBox, and use that to install the desired Linux distro or any other operating system.
 
+* The various FreeBSD jail templates have been replaced with one FreeBSD template to reduce confusion in knowing which template to use.
+
 * Plugins and Jails now support DHCP configuration for IPv4 and IPv6. This should resolve most software connectivity issues when the network contains a DHCP
   server.
 
