@@ -138,6 +138,7 @@ if is_truenas ; then
 	add_port emulators/qemu WITHOUT_ADD_AUDIO=y WITHOUT_ALL_TARGETS=y WITHOUT_CDROM_DMA=y WITHOUT_CURL=y WITHOUT_GNS3=y WITHOUT_GNUTLS=y WITHOUT_KQEMU=y WITHOUT_BPF=y WITHOUT_RTL8139_TIMER=y WITHOUT_SAMBA=y WITHOUT_SDL=y
 fi
 add_port databases/sqlite3
+add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port databases/mongodb
 add_port databases/pymongo
