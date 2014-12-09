@@ -818,7 +818,7 @@ class ARCRatioPlugin(RRDBase):
     vertical_label = "Hit (%)"
 
     def get_title(self):
-        return 'ARC Ratio'
+        return 'ARC Hit Ratio'
 
     def graph(self):
 
