@@ -249,6 +249,8 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 
 * `How to Upgrade FreeNAS 9.3 <https://www.youtube.com/watch?v=L61IJF98eP8>`_
 
+* `How to Install FreeNAS 9.3 <https://www.youtube.com/watch?v=k-mRgeDS8rk>`_
+
 .. note:: videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
    doubt, refer to the documentation specific to your version of FreeNAS®. 
 
