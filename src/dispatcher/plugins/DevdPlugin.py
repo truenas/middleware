@@ -94,6 +94,7 @@ class DeviceInfoPlugin(Provider):
             mediasize = int(child.find("provider/mediasize").text)
             descr = child.find("provider/config/descr").text
             result.append({
+                "path": os.path.join("/dev", device),
                 "name": device,
                 "mediasize" : mediasize,
                 "description": descr
@@ -150,6 +151,10 @@ class DevdEventSource(EventSource):
                 params["description"] = "Device {0} detached".format(args["cdev"])
                 self.emit_event("system.device.detached", **params)
 
+            if args["type"] == "MEDIACHANGE":
+                params["description"] = "Device {0} media changed".format(args["cdev"])
+                self.emit_event("system.device.mediachange", **params)
+
     def __process_ifnet(self, args):
         params = {
             "interface": args["subsystem"]
@@ -162,8 +167,8 @@ class DevdEventSource(EventSource):
         }
 
         params = {
-            "pool": args["pool_name"],
-            "guid": args["pool_guid"],
+            "pool": args.get("pool_name"),
+            "guid": args.get("pool_guid"),
             "description": event_mapping[args["type"]][1].format(args["pool_name"])
         }
 
@@ -178,12 +183,12 @@ class DevdEventSource(EventSource):
             line = f.readline()
             if line is None:
                 # Connection closed - we need to reconnect
-                pass
+                return
 
             args = self.__tokenize(line[1:].strip())
-            if ("system", "subsystem") not in args:
+            if "system" not in args:
                 # WTF
-                pass
+                continue
 
             if args["system"] == "DEVFS":
                 self.__process_devfs(args)
@@ -195,12 +200,16 @@ class DevdEventSource(EventSource):
                 self.__process_zfs(args)
 
 
+def _depends():
+    return ['ServiceManagePlugin']
+
+
 def _init(dispatcher):
     def on_service_started(args):
         if args['name'] == 'devd':
             # devd is running, kick in DevdEventSource
             dispatcher.register_event_source('system.device', DevdEventSource)
-            dispatcher.unregister_event_handler('system.device', on_service_started)
+            dispatcher.unregister_event_handler('service.started', on_service_started)
 
     dispatcher.register_schema_definition('disk_device', {
         'type': 'object',
@@ -233,3 +242,9 @@ def _init(dispatcher):
         dispatcher.register_event_handler('service.started', on_service_started)
 
     dispatcher.register_provider('system.device', DeviceInfoPlugin)
+
+
+def _cleanup(dispatcher):
+    dispatcher.unregister_event_handler('service.started')
+    dispatcher.unregister_event_source('system.device')
+    dispatcher.unregister_provider('system.device')
