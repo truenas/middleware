@@ -581,6 +581,7 @@ The GUI does not display the sysctls that are pre-set when FreeNAS® is installe
  kern.coredump=1
  kern.sugid_coredump=1
  net.inet.tcp.delayed_ack=0
+ vfs.timestamp_precision=3
 
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
@@ -605,6 +606,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
  module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
  vfs.zfs.vol.mode=2
+ hw.usb.no_shutdown_wait=1
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
