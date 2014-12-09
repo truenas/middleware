@@ -30,6 +30,7 @@ import time
 import logging
 import traceback
 import errno
+import copy
 from dispatcher import validator
 from dispatcher.rpc import RpcException
 from gevent.queue import Queue
@@ -177,7 +178,7 @@ class Balancer(object):
 
     def verify_schema(self, clazz, args):
         if not hasattr(clazz, 'params_schema'):
-            return True
+            return []
 
         schema = self.schema_to_list(clazz.params_schema)
         val = validator.DefaultDraft4Validator(schema, resolver=self.dispatcher.rpc.get_schema_resolver(schema))
@@ -197,7 +198,7 @@ class Balancer(object):
         task = Task(self.dispatcher, name)
         task.created_at = time.time()
         task.clazz = self.dispatcher.tasks[name]
-        task.args = args
+        task.args = copy.deepcopy(args)
         task.state = TaskState.CREATED
         task.id = self.dispatcher.datastore.insert("tasks", task)
         self.task_list.append(task)
@@ -207,12 +208,14 @@ class Balancer(object):
         return task.id
 
     def run_subtask(self, parent, name, args):
-        worker = Worker('{0}.subtask'.format(name))
+        worker = Worker()
         task = Task(self.dispatcher, name)
         task.created_at = time.time()
         task.clazz = self.dispatcher.tasks[name]
         task.args = args
         task.state = TaskState.CREATED
+        task.instance = task.clazz(self.dispatcher)
+        task.instance.verify(*task.args)
         task.id = self.dispatcher.datastore.insert("tasks", task)
         return worker.spawn_single(task)
 
@@ -278,7 +281,7 @@ class Worker(object):
         self.thread = None
         self.queue = queue
         self.state = WorkerState.IDLE
-        self.logger = logging.getLogger("Worker:{}".format(self.queue.name))
+        self.logger = logging.getLogger("Worker:{}".format(self.queue.name if self.queue else "temp"))
 
     def spawn_single(self, task):
         return gevent.spawn(self.run_single, task)
