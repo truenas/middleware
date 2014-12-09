@@ -7,6 +7,7 @@ fsck_y_enable="YES"
 synchronous_dhclient="YES"
 
 # middleware10
+dispatcher_flags="--log-level=DEBUG"
 datastore_dbdir="/data"
 datastore_driver="mongodb"
 etcd_flags="/etc"
