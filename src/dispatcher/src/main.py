@@ -61,6 +61,41 @@ from auth import PasswordAuthenticator
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
+class Plugin(object):
+    UNLOADED = 1
+    LOADED = 2
+    ERROR = 3
+
+    def __init__(self, filename=None):
+        self.filename = filename
+        self.init = None
+        self.dependencies = set()
+        self.module = None
+        self.state = self.UNLOADED
+
+    def assign_module(self, module):
+        if not hasattr(module, '_init'):
+            raise Exception('Invalid plugin module')
+
+        if hasattr(module, '_depends'):
+            self.dependencies = set(module._depends())
+
+        self.module = module
+
+    def load(self, dispatcher):
+        try:
+            self.module._init(dispatcher)
+            self.state = self.LOADED
+        except Exception, err:
+            raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
+
+    def unload(self):
+        if hasattr(self.module, '_cleanup'):
+            self.module._cleanup()
+
+        self.state = self.UNLOADED
+
+
 class Dispatcher(object):
     def __init__(self):
         self.started_at = None
@@ -107,7 +142,9 @@ class Dispatcher(object):
     def start(self):
         for name, clazz in self.event_sources.items():
             source = clazz(self)
-            self.threads.append(gevent.spawn(source.run))
+            greenlet = gevent.spawn(source.run)
+            greenlet.link(source.run)
+            self.threads.append(greenlet)
 
         self.started_at = time.time()
         self.balancer.start()
@@ -134,7 +171,7 @@ class Dispatcher(object):
         self.plugin_dirs = data['dispatcher']['plugin-dirs']
         self.pidfile = data['dispatcher']['pidfile']
 
-        if 'tls' in data['dispatcher'] and data['dispatcher']['tls'] == True:
+        if 'tls' in data['dispatcher'] and data['dispatcher']['tls']:
             self.use_tls = True
             self.certfile = data['dispatcher']['tls-certificate']
             self.keyfile = data['dispatcher']['tls-keyfile']
@@ -144,10 +181,35 @@ class Dispatcher(object):
             self.logger.debug("Searching for plugins in %s", dir)
             self.__discover_plugin_dir(dir)
 
+    def load_plugins(self):
+        loaded = set()
+        toload = self.plugins.copy()
+        loadlist = []
+
+        while len(toload) > 0:
+            found = False
+            for name, plugin in toload.items():
+                if len(plugin.dependencies - loaded) == 0:
+                    found = True
+                    loadlist.append(plugin)
+                    loaded.add(name)
+                    del toload[name]
+
+            if not found:
+                self.logger.warning(
+                    "Could not load following plugins due to circular dependencies: {0}".format(', '.join(toload)))
+                break
+
+        for i in loadlist:
+            try:
+                i.load(self)
+            except RuntimeError, err:
+                self.logger.warning("Error initializing plugin {0}: {1}".format(i.filename, err.message))
+
     def reload_plugins(self):
         # Reload existing modules
         for i in self.plugins.values():
-                imp.reload(i)
+            i.reload()
 
         # And look for new ones
         self.discover_plugins()
@@ -162,12 +224,12 @@ class Dispatcher(object):
 
         self.logger.debug("Loading plugin from %s", path)
         try:
-            plugin = imp.load_source("plugin", path)
-            if hasattr(plugin, "_init"):
-                plugin._init(self)
-                self.plugins[path] = plugin
+            name = os.path.splitext(os.path.basename(path))[0]
+            plugin = Plugin(path)
+            plugin.assign_module(imp.load_source(name, path))
+            self.plugins[name] = plugin
         except Exception, err:
-            self.logger.warning("Cannot load plugin from %s", path)
+            self.logger.warning("Cannot load plugin from %s: %s", path, str(err))
             self.dispatch_event("server.plugin.load_error", {"name": os.path.basename(path)})
             return
 
@@ -227,7 +289,9 @@ class Dispatcher(object):
 
         if self.started_at is not None:
             source = clazz(self)
-            self.threads.append(gevent.spawn(source.run))
+            greenlet = gevent.spawn(source.run)
+            greenlet.link(source.run)
+            self.threads.append(greenlet)
 
     def register_task_handler(self, name, clazz):
         self.logger.debug("New task handler: %s", name)
@@ -565,6 +629,7 @@ def run(d, args):
 
     d.init()
     d.discover_plugins()
+    d.load_plugins()
     d.start()
     gevent.joinall(d.threads + [serv_thread])
 
