@@ -27,11 +27,13 @@
 
 import errno
 from gevent.event import Event
+from query import filter_query
 from lib import zfs
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException
 from dispatcher.rpc import accepts, returns, description
 from balancer import TaskState
+
 
 @description("Provides information about ZFS pools")
 class ZpoolProvider(Provider):
@@ -42,8 +44,12 @@ class ZpoolProvider(Provider):
             'type': {'$ref': '#/definitions/pool'}
         }
     })
-    def list_pools(self):
-        return zfs.list_pools()
+    def query(self, filter=None, params=None):
+        return filter_query(
+            [zfs.zpool_status(pool).__getstate__() for pool in zfs.list_pools()],
+            *(filter or []),
+            **(params or {})
+        )
 
     @description("Gets ZFS pool status")
     @returns({

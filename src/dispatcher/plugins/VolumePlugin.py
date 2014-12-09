@@ -25,8 +25,11 @@
 #
 #####################################################################
 
-from task import Provider, Task, TaskException, query
+import errno
+import os
+from task import Provider, Task, TaskException, VerifyException, query
 from lib.system import system
+from lib import zfs
 from dispatcher.rpc import description, accepts, returns
 
 
@@ -93,16 +96,17 @@ class VolumeProvider(Provider):
     }
 })
 class VolumeCreateTask(Task):
-    def __init__(self, dispatcher):
-        pass
-
     def __get_disks(self, topology):
         result = []
-        for g in topology['groups'].values():
-            for t in i['vdevs']:
-                result += t['disks']
+        for gname, g in topology['groups'].items():
+            for t in g['vdevs']:
+                result += [(i, gname) for i in t['disks']]
 
         return result
+
+    def __get_disk_gptid(self, disk):
+        config = self.dispatcher.rpc.call_sync('disk.get_config', disk)
+        return config.get('data-partition-path', disk)
 
     def __get_vdevs(self, topology):
         result = []
@@ -117,24 +121,27 @@ class VolumeCreateTask(Task):
                 result.append(i['type'])
                 result += i['disks']
 
-        return result
+        return [self.__get_disk_gptid(i) for i in result]
 
-    def verify(self, name, type, topology, params):
-        # XXX
-        return [i['name'] for i in self.__get_disks(topology)]
+    def verify(self, name, type, topology, params=None):
+        if self.datastore.exists('volumes', ('name', '=', name)):
+            raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-    def run(self, name, type, topology, params):
+        return [os.path.basename(i) for i, _ in self.__get_disks(topology)]
+
+    def run(self, name, type, topology, params=None):
         subtasks = []
-        mountpoint = params.pop('mountpoint', '/volumes/{0}'.format(name))
+        params = params or {}
+        mountpoint = params.pop('mountpoint', '/{0}'.format(name))
         altroot = params.pop('altroot', '/volumes')
 
-        for i in self.__get_disks(topology):
-            subtasks.append(self.run_subtask('disk.format.gpt', i, {
-                'blocksize': params.pop('blocksize'),
-                'swapsize': params['swapsize'] if i['group'] == 'data' else 0
+        for dname, dgroup in self.__get_disks(topology):
+            subtasks.append(self.run_subtask('disk.format.gpt', dname, 'freebsd-zfs', {
+                'blocksize': params.get('blocksize', 4096),
+                'swapsize': params.get('swapsize') if dgroup == 'data' else 0
             }))
 
-        self.join_subtasks(subtasks)
+        self.join_subtasks(*subtasks)
 
         system(
             'zpool', 'create',
@@ -146,8 +153,32 @@ class VolumeCreateTask(Task):
             '-O', 'aclmode=passthrough',
             '-O', 'aclinherit=passthrough',
             '-f', '-m', mountpoint,
-            name, self.__get_vdevs(topology)
+            name, *self.__get_vdevs(topology)
         )
+
+        pool = zfs.zpool_status(name)
+
+        self.datastore.insert('volumes', {
+            'id': pool.id,
+            'name': name,
+            'type': type,
+            'mountpoint': mountpoint
+        })
+
+        self.dispatcher.dispatch_event('volume.created', {
+            'name': name,
+            'id': pool.id,
+            'type': type,
+            'mountpoint': os.path.join(altroot, mountpoint)
+        })
+
+
+class VolumeDestroyTask(Task):
+    def verify(self, name, params=None):
+        pass
+
+    def run(self, name, params=None):
+        pass
 
 
 class VolumeUpdateTask(Task):
@@ -186,13 +217,10 @@ def _init(dispatcher):
     dispatcher.register_schema_definition('volume-topology', {
         'type': 'object',
         'properties': {
-            'groups': {'type': 'object'},
-            'properties': {
-                'data': {'$ref': '#/definitions/volume-vdev'},
-                'logs': {'$ref': '#/definitions/volume-vdev'},
-                'cache': {'$ref': '#/definitions/volume-vdev'},
-                'spare': {'$ref': '#/definitions/volume-vdev'}
-            }
+            'data': {'$ref': '#/definitions/volume-vdev'},
+            'logs': {'$ref': '#/definitions/volume-vdev'},
+            'cache': {'$ref': '#/definitions/volume-vdev'},
+            'spare': {'$ref': '#/definitions/volume-vdev'}
         }
     })
 
