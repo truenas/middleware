@@ -45,8 +45,8 @@ does not use a domain name add *.local* to the end of the hostname.
 |system1.png|
 
 .. |system1.png| image:: images/system1.png
-    :width: 6.3in
-    :height: 3.4in
+    :width: 6.9in
+    :height: 3.5in
 
 .. _General:
 
