@@ -86,8 +86,8 @@ system. You should be prompted to input the password for the root user, as seen 
 |login.png|
 
 .. |login.png| image:: images/login.png
-    :width: 5.8in
-    :height: 3.1in
+    :width: 5.2in
+    :height: 3.8in
 
 Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
@@ -96,8 +96,8 @@ Enter the password created during the installation. You should then see the admi
 |initial.png|
 
 .. |initial.png| image:: images/initial.png
-    :width: 12.2in
-    :height: 4.3in
+    :width: 12.0in
+    :height: 4.5in
 
 If you are unable to access the IP address from a browser, check the following:
 
