@@ -452,6 +452,10 @@ Updating Between Releases
 
 To update the system between releases, use :menuselection:`System --> Update`.
 
+.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
+   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
+   ones you no longer plan to boot into.
+
 In the screen shown in Figure 2.5e, use the drop-down menu to select which "Train" you would like to track updates to.
 
 **Figure 2.5e: Checking for Updates**

@@ -373,8 +373,8 @@ or SSD. Technically, it can also be installed onto a hard drive, but this is dis
 
 When determining the type and size of device to install the operating system to, keep the following points in mind:
 
-- the *bare* minimum size is 4GB. This provides room for the operating system and two boot environments. The 
-  *recommended* minimum is 8GB or 16GB as this provides more room for boot environments.
+- the *bare* minimum size is 4GB. This provides room for the operating system and two boot environments. Since each update creates a boot environment, the
+  *recommended* minimum is at least 8GB or 16GB as this provides room for more boot environments.
 
 - if you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
