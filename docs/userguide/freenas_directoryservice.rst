@@ -344,9 +344,6 @@ If you are new to LDAP terminology, skim through the
 | SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                               |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Use default domain      | checkbox       | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username                |
-|                         |                |                                                                                                                |
-+-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Kerberos Realm          | drop-down menu | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`  |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
