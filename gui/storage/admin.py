@@ -649,7 +649,7 @@ class ReplicationFAdmin(BaseFreeAdmin):
         'repl_userepl',
         'repl_resetonce',
     )
-    refresh_time = 5000
+    refresh_time = 12000
 
     def get_datagrid_columns(self):
         columns = super(ReplicationFAdmin, self).get_datagrid_columns()
