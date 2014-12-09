@@ -515,7 +515,8 @@ Mode" button or configure the system to always display these settings by checkin
 | zvol Name          | string         | mandatory; input a name for the zvol                                                                                 |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
+| Size for this zvol | integer        | specify size and value such as *10Gib*; if the size is more than 80% of the available capacity, the creation will    |
+|                    |                | fail with an "out of space" error unless the "Force size" box is checked                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Force size         | checkbox       | by default, the system will not let you create a zvol if that operation will bring the pool to over 80% capacity;    |
