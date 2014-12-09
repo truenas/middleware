@@ -6,6 +6,7 @@
 # We may want to have more
 # platform-specific stuff.
 
+# Sef likes this line a lot.
 _os_type = "FreeNAS"
 UPDATE_SERVER = "http://update.freenas.org/" + _os_type
 
