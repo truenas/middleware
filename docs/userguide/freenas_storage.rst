@@ -541,29 +541,21 @@ Mode" button or configure the system to always display these settings by checkin
 Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk or partition that has been formatted with a
-supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
-measure in order to copy the data from a disk to an existing ZFS pool. Only one disk can be imported at a time.
+The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk that has been formatted with the UFS, NTFS,
+MSDOS, or EXT2/3 filesystem. The import is meant to be a temporary measure in order to copy the data from a disk to an existing ZFS dataset. Only one disk can
+be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
 |import.png|
 
 .. |import.png| image:: images/import.png
-    :width: 4.2in
-    :height: 3.5in
+    :width: 4.98in
+    :height: 4.4in
 
-Input a name for the volume, use the drop-down menu to select the disk or partition that you wish to import, and select the type of filesystem on the disk.
-
-Before importing a disk, be aware of the following caveats:
-
-* FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to :command:`fsck` or run a disk
-  check on the filesystem.
-
-* FreeNAS® can not import dynamic NTFS volumes.
-
-* If an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
-  drive.
+Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
+When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
+automatically unmount once the copy operation completes.
 
 .. _Import Volume:
 
