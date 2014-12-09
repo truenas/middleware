@@ -737,7 +737,7 @@ class Configuration(object):
                 continue
             # Input is <name><white_space><description>
             m = re.search("(\S+)\s+(.*)$", line)
-            if m.lastindex == None:
+            if m is None or m.lastindex == None:
                 log.debug("Input line `%s' is unparsable" % line)
                 continue
             rv[m.group(1)] = m.group(2)
