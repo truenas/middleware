@@ -52,6 +52,7 @@ def _is_vdev(name):
         re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name)
     ):
         return True
+
     return False
 
 
@@ -160,14 +161,17 @@ class Pool(object):
             if getattr(self, key):
                 getattr(self, key).validate()
 
-    def dump(self):
-        data = []
+    def __getstate__(self):
+        groups = {}
         for key in ('data', 'cache', 'spares', 'logs'):
             if getattr(self, key):
-                data.append(
-                    getattr(self, key).dump()
-                )
-        return data
+                groups[key] = getattr(self, key).__getstate__()
+        return {
+            'name': self.name,
+            'id': self.id,
+            'scrub': self.scrub,
+            'groups': groups
+        }
 
     def __repr__(self):
         return repr({
@@ -259,6 +263,12 @@ class Root(Tnode):
     def __repr__(self):
         return "<Root: %s>" % self.name
 
+    def __getstate__(self):
+        return {
+            'vdevs': [vdev.__getstate__() for vdev in self],
+            'status': self.status if self.status else '',
+        }
+
     def append(self, node):
         """
         Append a Vdev
@@ -267,17 +277,6 @@ class Root(Tnode):
             raise Exception("Not a vdev: %s" % node)
         self.children.append(node)
         node.parent = self
-
-    def dump(self):
-        vdevs = []
-        for vdev in self:
-            vdevs.append(vdev.dump())
-        return {
-            'name': self.name,
-            'vdevs': vdevs,
-            'numVdevs': len(vdevs),
-            'status': self.status if self.status else '',
-        }
 
     def get_disks(self):
         """
@@ -304,6 +303,17 @@ class Vdev(Tnode):
     def __repr__(self):
         return "<Section: %s>" % self.name
 
+    def __getstate__(self):
+        disks = []
+        for dev in self:
+            disks.append(dev.__getstate__())
+        return {
+            'name': self.name,
+            'disks': disks,
+            'type': self.type,
+            'status': self.status,
+        }
+
     def append(self, node):
         """
         Append a Dev
@@ -312,18 +322,6 @@ class Vdev(Tnode):
             raise Exception("Not a device: %s" % node)
         self.children.append(node)
         node.parent = self
-
-    def dump(self):
-        disks = []
-        for dev in self:
-            disks.append(dev.dump())
-        return {
-            'name': self.name,
-            'disks': disks,
-            'type': self.type,
-            'numDisks': len(disks),
-            'status': self.status,
-        }
 
     def validate(self):
         """
@@ -360,9 +358,9 @@ class Dev(Tnode):
     def __repr__(self):
         return "<Dev: %s>" % self.name
 
-    def dump(self):
+    def __getstate__(self):
         return {
-            'name': self.devname,
+            'name': self.name,
             'status': self.status,
         }
 
@@ -832,7 +830,7 @@ def zpool_status(pool):
 
 
 def list_pools():
-    out = subprocess.check_output(["/sbin/zpool", "list", "-H", "-o", "name"])
+    out = subprocess.check_output(["/sbin/zpool", "list", "-H", "-o", "name"]).strip()
     return [i.strip() for i in out.split("\n")]
 
 
