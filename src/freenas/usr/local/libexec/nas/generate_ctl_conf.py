@@ -61,7 +61,7 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
             sep = "\n"
             if "," in initiator.iscsi_target_initiator_auth_network:
                 sep = ","
-            elif " " initiator.iscsi_target_initiator_auth_network:
+            elif " " in initiator.iscsi_target_initiator_auth_network:
                 sep = " "
             for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split(sep):
                 if name == 'ALL':
