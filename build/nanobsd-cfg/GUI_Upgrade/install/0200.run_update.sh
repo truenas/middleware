@@ -276,7 +276,9 @@ init_script="/${TRAMPOLINE_MFS_RC}"
 EOF
 
 	# Copy loader.conf.local if it exists
-	test -f /boot/loader.conf.local && cp /boot/loader.conf.local ${TRAMPOLINE_MP}/boot/loader.conf.local
+	# #7042 - Don't use debug kernel
+	test -f /boot/loader.conf.local && sed -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules",g' \
+		-e '/^kernel=.*/d' /boot/loader.conf.local > ${TRAMPOLINE_MP}/boot/loader.conf.local
 
 	umount ${TRAMPOLINE_MP}
 	mdconfig -d -u ${TRAMPOLINE_MD##md}
