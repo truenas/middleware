@@ -26,6 +26,40 @@ var LoginBox = React.createClass({
       };
     }
 
+  , getDefaultProps: function() {
+      return {
+        isHidden : false
+      };
+    }
+
+  , componentDidMount: function() {
+      if ( this.props.isHidden ) {
+        this.hideLoginBox();
+      }
+    }
+
+  , componentDidUpdate: function( prevProps, prevState ) {
+      if ( prevProps.isHidden !== this.props.isHidden ) {
+        if ( this.props.isHidden ) {
+          this.hideLoginBox();
+        } else {
+          this.showLoginBox();
+        }
+      }
+  }
+
+  , showLoginBox: function () {
+      Velocity( this.refs.login.getDOMNode()
+                , "fadeIn"
+                , { duration: "500" } );
+  }
+
+  , hideLoginBox: function () {
+      Velocity( this.refs.login.getDOMNode()
+                , "fadeOut"
+                , { duration: "500" } );
+  }
+
   , handleUserChange: function( event ) {
     this.setState({ userText: event.target.value });
   }
@@ -49,7 +83,7 @@ var LoginBox = React.createClass({
 
   , render: function () {
       return (
-        <div className="overlay-dark">
+        <div className="overlay-dark" ref="login">
           <div className="overlay-window">
 
             <h3>{"Welcome to FreeNAS 10"}</h3>

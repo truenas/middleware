@@ -15,9 +15,10 @@ var MiddlewareStore  = require("../stores/MiddlewareStore");
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
+var Icon = require("../components/Icon");
+
 var LoginBox = require("../components/LoginBox");
 
-var Icon   = require("../components/Icon");
 var LeftMenu   = require("../components/LeftMenu");
 var WarningBox   = require("../components/WarningBox");
 var QueueBox   = require("../components/QueueBox");
@@ -47,28 +48,8 @@ var FreeNASWebApp = React.createClass({
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
     }
 
-  , componentDidUpdate: function ( prevProps, prevState ) {
-    if ( !this.state.authenticated ) {
-      this.showLoginBox();
-    } else {
-      this.hideLoginBox();
-    }
-  }
-
   , handleMiddlewareChange: function () {
       this.setState( getMiddlewareStateFromStores() );
-  }
-
-  , showLoginBox: function () {
-      Velocity( this.refs.login.getDOMNode()
-                , "fadeIn"
-                , { duration: "500" } );
-  }
-
-  , hideLoginBox: function () {
-      Velocity( this.refs.login.getDOMNode()
-                , "fadeOut"
-                , { duration: "500" } );
   }
 
   , handleBox: function(event) {
@@ -134,7 +115,6 @@ var FreeNASWebApp = React.createClass({
 
     return (
       <div>
-        <LoginBox ref="login" />
 
         <div ref="mainWrapper">
           <div className = "notificationBar">
@@ -164,11 +144,14 @@ var FreeNASWebApp = React.createClass({
           <LeftMenu handleMenuChange={this.menuChange} />
 
           <TWBS.Grid fluid ref="gridRef" className={"mainGrid " + this.state.gridClass}>
+            {/* Modal window for FreeNAS login */}
+            <LoginBox isHidden={ this.state.authenticated } />
+
             {/* TODO: Add Modal mount div */}
             <TWBS.Row>
               {/* Primary view */}
-              <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12} xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
-                <h1>FreeNAS WebGUI</h1>
+              <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12}
+                        xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
                 <this.props.activeRouteHandler />
               </TWBS.Col>
 
