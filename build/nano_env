@@ -123,25 +123,10 @@ if [ -z "${SEQUENCE}" -a -n "${git}" ]; then
     export SEQUENCE
 fi
 
-# REVISION gets set to "" when doing tagged versions, SVNREVISION allows
-# us to keep the SVN[/git] revision number for the build.
+# SVNREVISION allows us to keep the SVN[/git] revision number for the build.
 SVNREVISION=${SVNREVISION:-$(echo ${svn}${git})}
 
-# This hack makes my skin crawl slightly.  If the VERSION string
-# is set to -RELEASE go ahead and automagically unset REVISION
-# We could probably extend the hack to include the RCs...
-
-# Ideally we could check this elsewhere, like when doing
-# the git checkouts, but unfortunately by the time that
-# happens NANO_NAME has already been set and passed to
-# nanobsd, so this is our shot.
-
-COOKED_VERSION=$(echo ${VERSION} | awk '/RELEASE/ {print $1}')
-if [ -z ${COOKED_VERSION} ]; then
-        : ${REVISION=$(echo ${svn}${git})}
-else
-        REVISION=""
-fi
+: ${REVISION=$(echo ${svn}${git})}
 
 if is_truenas ; then
 	NANO_KERNEL="$TRUENAS_COMPONENTS_ROOT/nanobsd/TRUENAS.$NANO_ARCH"
