@@ -543,7 +543,7 @@ def add_ldap(sc):
     if ldap.ldap_auxiliary_parameters:
         lines = ldap.ldap_auxiliary_parameters.splitlines()
         for l in lines:
-            parts = l.split('=')
+            parts = l.split('=',1)
             if len(parts) < 2:
                 continue
             setattr(ldap_section, parts[0].strip(), parts[1].strip())
