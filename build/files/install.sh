@@ -910,7 +910,9 @@ menu_install()
 	fi
 	if [ -f /tmp/loader.conf.local ]; then
 	    cp /tmp/loader.conf.local /tmp/data/boot/
-	    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules",g' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
+	    # TODO: #7042 - Don't use debug kernel
+	    sed -i '' -e 's,^module_path=.*,module_path="/boot/kernel;/boot/modules;/usr/local/modules",g' \
+		-e '/^kernel=.*/d' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
 	fi
     fi
     if is_truenas ; then
