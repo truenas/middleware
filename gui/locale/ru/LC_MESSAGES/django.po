@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-12-02 21:15+0000\n"
+"PO-Revision-Date: 2014-12-07 15:34+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1417554910.0\n"
+"X-POOTLE-MTIME: 1417966487.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -118,27 +118,19 @@ msgstr "Отключено"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
-"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остановка "
-"шпинделя)"
+msgstr "Уровень 1 - Минимальное энергопотребление с остановкой шпинделя"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
-"Уровень 64 - Среднее энергопотребление с режимом ожидания (остановка "
-"шпинделя)"
+msgstr "Уровень 64 - Среднее энергопотребление с остановкой шпинделя"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
-"Уровень 127 - Среднее энергопотребление с режимом ожидания (остановка "
-"шпинделя)"
+msgstr "Уровень 127 - Среднее энергопотребление с остановкой шпинделя"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
-"Уровень 128 - Минимальное энергопотребление без режима ожидания (без "
-"остановки шпинделя)"
+msgstr "Уровень 128 - Минимальное энергопотребление без остановки шпинделя"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -884,36 +876,36 @@ msgstr "Вы должны выбрать между IPv4 или IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr "Loopback не является допустимым nameserver"
+msgstr "Loopback не является допустимым сервером имен"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Не указаны адреса действительных nameserver"
+msgstr "Не указаны адреса действительных серверов имен"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr "Это не правильный адрес nameserver"
+msgstr "Это не правильный адрес сервера имен"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 подсеть не подходит для nameserver"
+msgstr "169.254/16 подсеть не подходит для сервера имен"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
 msgstr ""
-"Необходимо вначале заполнить nameserver 2 перед заполнением nameserver 3"
+"Необходимо вначале заполнить Сервер имен 2 перед заполнением Сервер имен 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Необходимо, когда используется nameserver 3"
+msgstr "Необходимо, когда используется Сервер имен 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Необходимо вначале заполнить nameserver 1 для заполнения nameserver 3"
+msgstr "Необходимо вначале заполнить Сервер имен 1 для заполнения Сервер имен 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Необходимо вначале заполнить nameserver 1 для заполнения nameserver 2"
+msgstr "Необходимо вначале заполнить Сервер имен 1 для заполнения Сервер имен 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
@@ -932,7 +924,7 @@ msgstr "Физические сетевые интерфейсы в LAGG"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
-msgstr "LAGG физический сетевой интерфейс (NIC)"
+msgstr "LAGG физический сетевой адаптер"
 
 #: network/forms.py:360
 #, python-format
@@ -984,15 +976,15 @@ msgstr "Шлюз IPv6 по умолчанию"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Nameserver 1"
+msgstr "Сервер имен 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Nameserver 2"
+msgstr "Сервер имен 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Nameserver 3"
+msgstr "Сервер имен 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
@@ -1102,7 +1094,7 @@ msgstr "Описание"
 
 #: network/models.py:292 templates/network/index.html:23
 msgid "VLAN"
-msgstr "VLAN"
+msgstr "VLAN-интерфейс"
 
 #: network/models.py:293
 msgid "VLANs"
@@ -4238,7 +4230,7 @@ msgstr "Задание периодического создания снимк�
 
 #: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr "Задания периодического создания снимков"
+msgstr "Задания создания снимков"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
@@ -4284,7 +4276,7 @@ msgstr "Просмотр томов"
 
 #: storage/nav.py:119
 msgid "Add Periodic Snapshot"
-msgstr "Добавить периодический снимок"
+msgstr "Добавить задание создания снимков"
 
 #: storage/nav.py:130
 msgid "Volumes"
@@ -8773,7 +8765,7 @@ msgstr "Размер записи"
 
 #: storage/forms.py:1279
 msgid "Sparse volume"
-msgstr "Том с пропусками"
+msgstr "Разряженный том"
 
 #: storage/forms.py:1917
 #: storage/forms.py:1983
@@ -8897,7 +8889,7 @@ msgstr "lz4 (быстрейший)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (средний во всем)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -8970,7 +8962,7 @@ msgstr "Не удалось создать каталог %(name)s: %(error)s"
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "Нет RPC Токена!"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
@@ -10051,6 +10043,7 @@ msgstr ""
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
+"Запрашивать атрибут cn вместо атрибута uid в роли имени пользователя из LDAP."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
@@ -10059,6 +10052,8 @@ msgstr "CN Область"
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"Добавлять @realm к cn для групп (и пользователей если установлен user_cn) в "
+"LDAP."
 
 #: directoryservice/models.py:369
 msgid "LDAP Domain"
@@ -10687,7 +10682,7 @@ msgstr "Создание набора данных"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
-msgstr "Учитывать регистр"
+msgstr "Чувствительность к регистру"
 
 #: system/admin.py:49
 msgid "Internal"
@@ -10881,7 +10876,7 @@ msgstr "Переименовать"
 #: system/nav.py:83
 #: templates/system/index.html:24
 msgid "CAs"
-msgstr "CA"
+msgstr "Центры сертификации"
 
 #: system/views.py:238
 msgid "Boot Environment successfully deleted."
@@ -11000,7 +10995,7 @@ msgstr "Создать окружение загрузки"
 
 #: templates/system/certificateauthority_datagrid.html:4
 msgid "Import CA"
-msgstr "Импорт CA"
+msgstr "Импорт центра сертификации"
 
 #: templates/system/certificateauthority_datagrid.html:11
 #: templates/system/certificateauthority_datagrid.html:13
@@ -11010,7 +11005,7 @@ msgstr "Создать внутренний СА"
 #: templates/system/certificateauthority_datagrid.html:18
 #: templates/system/certificateauthority_datagrid.html:20
 msgid "Create Intermediate CA"
-msgstr "Создать промежуточный CA"
+msgstr "Создать промежуточный центр сертификации"
 
 #: templates/system/bootenv_rename.html:4
 msgid "Rename boot environment %(name)s"
@@ -11061,7 +11056,7 @@ msgstr "Имя Сайта"
 
 #: directoryservice/models.py:806
 msgid "Name of site to use."
-msgstr "Имя сайта, которое следует сяпользовать."
+msgstr "Имя сайта, которое следует использовать."
 
 #: services/models.py:263
 msgid ""
@@ -11223,10 +11218,11 @@ msgid ""
 "are wrong."
 msgstr ""
 "Удаленный путь не существует или не является каталогом.<br>Создайте его на "
-"удаленной машине самостоятельно, либо отметьте поле "
-"'rsync_create'<br>**Примечание**: Это также может произойти, если удаленный "
-"путь превысил 255 символов и был усечен. Ограничьте его<br>255 символами. "
-"Также причиной могут быть неверные SSH полномочия (удаленный хост, и т.д.)."
+"удаленной машине самостоятельно,<br>либо отметьте поле "
+"'rsync_create'.<br>**Примечание**: Это также может произойти, если удаленный "
+"путь<br> превысил 255 символов и был усечен. Ограничьте его<br>255 "
+"символами. Также причиной могут быть неверные SSH полномочия (удаленный "
+"хост, и т.д.)."
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
@@ -11701,27 +11697,22 @@ msgstr "Система будет перезагружена"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s неделя"
+msgstr "%(weeks)s недель"
 
 #: system/views.py:419
-#, fuzzy
 msgid "Disk has been successfully detached."
-msgstr "Том был успешно отключён"
+msgstr "Диск был успешно отключён."
 
 #: system/alertmods/boot_volume_status.py:15
-#, fuzzy
 msgid "The boot volume state is %(state)s: %(status)s"
-msgstr "Статус загрузочного тома - %(status)s: %(message)s"
+msgstr "Статус загрузочного тома - %(state)s: %(status)s"
 
 #: system/alertmods/volume_status.py:17
-#, fuzzy
 msgid "The volume %(volume)s state is %(state)s: %(status)s"
-msgstr "Статус тома %(volume)s - %(status)s: %(message)s"
+msgstr "Статус тома %(volume)s - %(state)s: %(status)s"
 
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
-#, fuzzy
 msgid "Changelog"
-msgstr "Изменить"
+msgstr "Журнал изменений"
