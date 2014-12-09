@@ -218,7 +218,7 @@ class GroupCreateTask(Task):
         if self.datastore.exists('groups', ('name', '=', group['name'])):
             raise VerifyException(errno.EEXIST, 'Group {0} already exists'.format(group['name']))
 
-        if self.datastore.exists('groups', ('id', '=', group['id'])):
+        if 'id' in group and self.datastore.exists('groups', ('id', '=', group['id'])):
             raise VerifyException(errno.EEXIST, 'Group with GID {0} already exists'.format(group['id']))
 
         return ['system']
