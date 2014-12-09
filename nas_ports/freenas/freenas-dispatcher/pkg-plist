@@ -12,6 +12,8 @@
 /usr/local/lib/dispatcher/src/api/handler.py
 /usr/local/lib/dispatcher/src/task.py
 /usr/local/lib/dispatcher/src/event.py
+/usr/local/lib/dispatcher/src/cache.py
+/usr/local/lib/dispatcher/src/query.py
 /usr/local/lib/dispatcher/src/lib/freebsd.py
 /usr/local/lib/dispatcher/src/lib/geom.py
 /usr/local/lib/dispatcher/src/lib/zfs.py
@@ -32,7 +34,6 @@
 /usr/local/lib/dispatcher/plugins/SystemInfoPlugin.py
 /usr/local/lib/dispatcher/plugins/ZfsPlugin.py
 /usr/local/lib/dispatcher/plugins/DevdPlugin.py
-/usr/local/lib/dispatcher/plugins/VolumePlugin.py
 /usr/local/lib/dispatcher/plugins/ServiceManagePlugin.py
 /usr/local/lib/dispatcher/plugins/ConfigPlugin.py
 /usr/local/lib/dispatcher/plugins/AuditPipePlugin.py
