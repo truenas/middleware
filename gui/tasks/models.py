@@ -598,7 +598,7 @@ class SMARTTest(Model):
 
     def get_human_month(self):
         months = self.smarttest_month.split(',')
-        if len(months) == 12:
+        if len(months) == 12 or self.smarttest_month == '*':
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
