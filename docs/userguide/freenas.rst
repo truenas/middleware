@@ -3,7 +3,7 @@ FreeNAS User Guide |release|
 
 .. toctree::
    :numbered:
-   :maxdepth: 2
+   :maxdepth: 4
 
    freenas_intro
    freenas_install
