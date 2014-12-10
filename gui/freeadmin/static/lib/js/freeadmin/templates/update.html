@@ -3,12 +3,12 @@
       <table width="650px;" class="update">
         <tr>
           <td colspan="2">
-            <span data-dojo-attach-point="dapAutoCheck"></span> Automatically check for updates
+            <span data-dojo-attach-point="dapAutoCheck"></span> <span data-dojo-attach-point="dapAutoCheckText">Automatically check for updates</span>
           </td>
         </tr>
         <tr>
           <td>
-            Current Train: <span data-dojo-attach-point="dapCurrentTrain"></span> (<span data-dojo-attach-point="dapCurrentTrainDesc"></span>)
+            <span data-dojo-attach-point="dapCurrentTrainText">Current Train</span>: <span data-dojo-attach-point="dapCurrentTrain"></span> (<span data-dojo-attach-point="dapCurrentTrainDesc"></span>)
           </td>
           <td align="right">
             <span data-dojo-attach-point="dapManualUpdate"></span>
@@ -16,7 +16,7 @@
         </tr>
         <tr>
           <td colspan="2">
-            Update Server: <span data-dojo-attach-point="dapUpdateServer"></span>
+            <span data-dojo-attach-point="dapUpdateServerText">Update Server</span>: <span data-dojo-attach-point="dapUpdateServer"></span>
           </td>
         </tr>
         <tr>
@@ -26,13 +26,13 @@
         </tr>
         <tr>
           <td colspan="2">
-            Pending Updates
+            <span data-dojo-attach-point="dapUpdateGridText">Pending Updates</span>
             <div data-dojo-attach-point="dapUpdateGrid" style="max-width: 650px;"></div>
           </td>
         </tr>
         <tr>
           <td colspan="2">
-            <a data-dojo-attach-point="dapUpdateTrainInfoLink" href="" target="_blank" style="font size:20px"><b>Train Descriptions</b></a>
+            <b><a data-dojo-attach-point="dapUpdateTrainInfoLink" href="" target="_blank" style="font size:20px">Train Descriptions</a></b>
           </td>
         </tr>
       </table>
