@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-12-09 09:41+0000\n"
+"PO-Revision-Date: 2014-12-09 14:17+0000\n"
 "Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418118119.0\n"
+"X-POOTLE-MTIME: 1418134676.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "报表"
@@ -40,7 +40,7 @@ msgstr "服务"
 
 #: freeadmin/static/lib/js/freeadmin.js:231
 msgid "Account"
-msgstr "帐号"
+msgstr "帐户"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
@@ -202,7 +202,7 @@ msgstr "要扩展的卷"
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr "扩展加密卷将重置passphrase和recovery key！"
+msgstr "扩展加密卷将重置密码短语和recovery key！"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Encryption"
@@ -358,7 +358,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr "执行更新"
+msgstr "立即更新"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
@@ -396,7 +396,7 @@ msgstr "载入中..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr "未找到可用更新。"
+msgstr "没有可用更新。"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
