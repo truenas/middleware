@@ -138,6 +138,7 @@ class AlertResource(DojoResource):
     id = fields.CharField(attribute='_id')
     level = fields.CharField(attribute='_level')
     message = fields.CharField(attribute='_message')
+    dismissed = fields.BooleanField(attribute='_dismiss')
 
     class Meta:
         allowed_methods = ['get']
