@@ -322,6 +322,8 @@ The following fields have been added or deleted:
 
 * The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
 
+* The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
+
 .. _Hardware Recommendations:
 
 Hardware Recommendations
