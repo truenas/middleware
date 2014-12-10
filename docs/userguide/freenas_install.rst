@@ -39,19 +39,21 @@ The download page contains the following types of files:
 * **.GUI_Upgrade.txz:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download this file and see the section on
   :ref:`Upgrading`.
 
-Each file has an associated *sha256.txt* file which should be used to verify the integrity of the downloaded file before writing it to the installation media.
-The command you use to verify the checksum varies by operating system:
+Each file has an associated :file:`sha256.txt` file which should be used to verify the integrity of the downloaded file. The command you use to verify the
+checksum varies by operating system:
 
-* on a BSD system use the command :command:`sha256 name_of_file.sha256.txt`
+* on a BSD system use the command :command:`sha256 name_of_file`
 
-* on a Linux system use the command :command:`sha256sum name_of_file.sha256.txt`
+* on a Linux system use the command :command:`sha256sum name_of_file`
 
-* on a Mac system use the command :command:`shasum -a 256 name_of_file.sha256.txt`
+* on a Mac system use the command :command:`shasum -a 256 name_of_file`
 
 * on a Windows or Mac system, you can also install a utility such as
   `HashCalc <http://www.slavasoft.com/hashcalc/>`_
   or
   `HashTab <http://implbits.com/HashTab.aspx>`_
+
+The value produced by running the command should match the value of the :file:`sha256.txt` file.
 
 .. _Preparing the Media:
 
