@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-12-09 09:52+0000\n"
+"PO-Revision-Date: 2014-12-09 18:16+0000\n"
 "Last-Translator: Martin <bittin@reimu.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418118734.0\n"
+"X-POOTLE-MTIME: 1418148994.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapportering"
@@ -103,7 +103,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:258
 msgid "Enable service"
-msgstr ""
+msgstr "Aktivera tjänst"
 
 #: freeadmin/static/lib/js/freeadmin.js:784
 msgid "The cache is being rebuilt."
@@ -135,11 +135,11 @@ msgstr "Storlek"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:263
 msgid "drives"
-msgstr ""
+msgstr "diskar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:265
 msgid "drive"
-msgstr ""
+msgstr "disk"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:267
 msgid "show"
@@ -147,7 +147,7 @@ msgstr "visa"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:277
 msgid "no more drives"
-msgstr ""
+msgstr "inga mer diskar "
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
 #, fuzzy
@@ -174,7 +174,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
 msgid "Capacity"
-msgstr ""
+msgstr "Kapacitet"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
 msgid "Drag and drop this to resize"
@@ -194,7 +194,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Volume Name"
-msgstr ""
+msgstr "Volymnamn"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Volume to extend"
@@ -207,11 +207,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Encryption"
-msgstr ""
+msgstr "Kryptering"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1071
 msgid "Available disks"
-msgstr ""
+msgstr "Tillgängliga diskar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1072
 msgid "Volume layout"
@@ -227,11 +227,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
 msgid "Cancel"
-msgstr ""
+msgstr "Avbryt"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Manuell inställning"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 msgid "ZFS Volume Manager"
@@ -239,22 +239,22 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr ""
+msgstr "Skal"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
 msgid "Paste"
-msgstr ""
+msgstr "Klistra in"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
-msgstr ""
+msgstr "Bläddra"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
-msgstr ""
+msgstr "Stäng"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
@@ -287,7 +287,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 msgid "Share name"
-msgstr ""
+msgstr "Utdelningsnamn"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
@@ -301,27 +301,27 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Lägg till"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Ta bort"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Uppdatera"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Ägarskap"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Denna användare finns inte."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Denna gruppen finns inte."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
@@ -347,11 +347,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Är du säker på att du vill göra detta?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Manuell inställning"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -376,7 +376,7 @@ msgstr "Lösenordet får inte vara blankt"
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Manuell uppdatering"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
@@ -389,11 +389,11 @@ msgstr "Ja"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Nej"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Laddar..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
@@ -406,4 +406,4 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "Lösenorden stämmer inte överens."
