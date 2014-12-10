@@ -83,7 +83,7 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
 
-    if ! ifconfig lagg0 > /dev/null 2>&1; then
+    if ifconfig lagg0 > /dev/null 2>&1; then
 	echo "Sleeping 2 seconds and rechecking \${SUBSYSTEM}." | logger
 	sleep 2
         STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
@@ -273,7 +273,7 @@ fi
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
 
-    if ! ifconfig lagg0 > /dev/null 2>&1; then
+    if ifconfig lagg0 > /dev/null 2>&1; then
 	echo "Sleeping 2 seconds and rechecking \${SUBSYSTEM}." | logger
 	sleep 2
 	STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
