@@ -136,7 +136,10 @@ def main():
             auth_list = []
         agname = '4tg_%d' % target.id
         has_auth = auth_group_config(cf_contents, auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
-        cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
+        if target.iscsi_target_name.startswith("iqn."):
+            cf_contents.append("target %s {\n" % target.iscsi_target_name)
+        else:
+            cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
             cf_contents.append("\talias %s\n" % target.iscsi_target_name)
         if not has_auth:
