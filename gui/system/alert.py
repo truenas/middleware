@@ -47,9 +47,10 @@ class Alert(object):
     CRIT = 'CRIT'
     WARN = 'WARN'
 
-    def __init__(self, level, message, id=None):
+    def __init__(self, level, message, id=None, dismiss=False):
         self._level = level
         self._message = message
+        self._dismiss = dismiss
         if id is None:
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
@@ -90,6 +91,12 @@ class Alert(object):
 
     def getMessage(self):
         return self._message
+
+    def setDismiss(self, value):
+        self._dismiss = value
+
+    def getDismiss(self, value):
+        return self._dismiss
 
 
 class AlertPlugins:
@@ -151,6 +158,8 @@ class AlertPlugins:
         else:
             results = obj['results']
         rvs = []
+        dismisseds = [a.message_id
+                      for a in mAlert.objects.filter(dismiss=True)]
         for instance in self.mods:
             try:
                 if instance.name in results:
@@ -162,7 +171,11 @@ class AlertPlugins:
                         continue
                 rv = instance.run()
                 if rv:
-                    rvs.extend(filter(None, rv))
+                    alerts = filter(None, rv)
+                    for alert in alerts:
+                        if alert.getId() in dismisseds:
+                            alert.setDismiss(True)
+                    rvs.extend(alerts)
                 results[instance.name] = {
                     'lastrun': int(time.time()),
                     'alerts': rv,
