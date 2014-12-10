@@ -83,6 +83,15 @@ HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
 
+    if ! ifconfig lagg0 > /dev/null 2>&1; then
+	echo "Sleeping 2 seconds and rechecking \${SUBSYSTEM}." | logger
+	sleep 2
+        STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
+	if [ \${STATUS0} != "MASTER" ]; then
+		echo "\${SUBSYSTEM} became \${STATUS0}.  Previous event ignored." | logger
+	fi
+    fi
+
     # We are already master, insist this by setting all advskew to 1
     if [ -e ${FAILOVER_ASSUMED_MASTER} ]; then
 	ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 -J % ifconfig % advskew 1
@@ -263,6 +272,17 @@ fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
+
+    if ! ifconfig lagg0 > /dev/null 2>&1; then
+	echo "Sleeping 2 seconds and rechecking \${SUBSYSTEM}." | logger
+	sleep 2
+	STATUS0=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
+	echo "\${SUBSYSTEM} is now \${STATUS0}" | logger
+	if [ \${STATUS0} = "MASTER" ]; then
+		echo "Ignoring state on \${SUBSYSTEM} because it changed back to MASTER after 2 seconds." | logger
+		exit 1;
+	fi
+    fi
 
     MASTERS=\`ifconfig -l | tr ' ' '\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep "carp: MASTER" | wc -l \`
     if [ \${MASTERS} -gt 0 ]; then
