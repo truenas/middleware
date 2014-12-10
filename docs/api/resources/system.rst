@@ -151,7 +151,8 @@ List resource
         [{
                 "id": "256ad2f48e5e541e28388701e34409cc",
                 "level": "OK",
-                "message": "The volume tank (ZFS) status is HEALTHY"
+                "message": "The volume tank (ZFS) status is HEALTHY",
+                "dismissed": false
         }]
 
    :resheader Content-Type: content type of the response
