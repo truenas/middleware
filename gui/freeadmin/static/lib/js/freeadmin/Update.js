@@ -81,6 +81,12 @@ define([
       me.dapCurrentTrainDesc.innerHTML = me.initial.trainDesc;
       me.dapUpdateServer.innerHTML = me.updateServer;
       me.dapUpdateTrainInfoLink.setAttribute('href', me.updateServer+"/trains.txt");
+      me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
+
+      me.dapAutoCheckText.innerHTML = gettext('Automatically check for updates');
+      me.dapCurrentTrainText.innerHTML = gettext('Current Train');
+      me.dapUpdateServerText.innerHTML = gettext('Update Server');
+      me.dapUpdateGridText.innerHTML = gettext('Pending Updates');
 
       me._manualUpdate = new Button({
         label: gettext("Manual Update"),
