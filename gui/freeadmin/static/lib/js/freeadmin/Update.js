@@ -1,9 +1,11 @@
 define([
   "dojo/_base/declare",
   "dojo/_base/lang",
+  "dojo/data/ObjectStore",
   "dojo/on",
   "dojo/request/xhr",
   "dojo/store/JsonRest",
+  "dojo/store/Memory",
   "dojo/store/Observable",
   "dijit/_base/manager",
   "dijit/_Widget",
@@ -20,9 +22,11 @@ define([
   ], function(
   declare,
   lang,
+  ObjectStore,
   on,
   xhr,
   JsonRest,
+  Memory,
   Observable,
   manager,
   _Widget,
@@ -77,8 +81,6 @@ define([
         });
       });
 
-      me.dapCurrentTrain.innerHTML = me.initial.currentTrain;
-      me.dapCurrentTrainDesc.innerHTML = me.initial.trainDesc;
       me.dapUpdateServer.innerHTML = me.updateServer;
       me.dapUpdateTrainInfoLink.setAttribute('href', me.updateServer+"/trains.txt");
       me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
@@ -117,19 +119,40 @@ define([
         }
       }, me.dapVerifyInstallBtn);
 
-     var options = [];
-
-      for(var i in me.initial.trains) {
-        var name = me.initial.trains[i];
-        var entry = {label: name, value: name};
-        if(name == me.initial.currentTrain) entry['selected'] = true;
-        options.push(entry);
-      }
-
       me._selectTrain = new Select({
-        options: options,
       }, me.dapSelectTrain);
-      me._selectTrain.set('oldvalue', me.initial.currentTrain);
+
+      xhr.get(me.initial.trainUrl, {
+        headers: {
+          "X-Requested-From": "WebUI",
+          "Content-Type": "application/json"
+        },
+        handleAs: "json",
+        query: {"format": "json"}
+      }).then(function(data) {
+        console.log("data", data);
+        me.dapCurrentTrain.innerHTML = data.selected_train.name;
+        me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
+
+        var options = [];
+        for(var i in data.trains) {
+          var name = data.trains[i];
+          var entry = {id: name, label: name, value: name};
+          if(name == data.selected_train.name) entry['selected'] = true;
+          console.log(options);
+          options.push(entry);
+        }
+
+        var store = new Memory({data: options});
+        var objstore = new ObjectStore({ objectStore: store });
+        me._selectTrain.set('store', objstore);
+        me._selectTrain.set('oldvalue', data.selected_train.name);
+        me._selectTrain.set('internalchange', true);
+        me._selectTrain.set('value', data.selected_train.name);
+
+        me._updatesGrid.set('store', me._store);
+        me._updatesGrid.set('query', "?train=" + data.selected_train.name);
+      });
 
       on(me._selectTrain, "change", function(val) {
 
@@ -195,8 +218,6 @@ define([
 
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
-        store: me._store,
-        query: "?train=" + me.initial.currentTrain,
         columns: {
           name: "Name"
         },
