@@ -1504,12 +1504,14 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.gcname:
             (self.gchost, self.gcport) = self.__name_to_host(self.gcname)
         if not self.gchost:
-            gcs = self.get_global_catalog_servers(self.domainname, site=self.site)
-            if not gcs: 
-                raise FreeNAS_ActiveDirectory_Exception(
-                    "Unable to find global catalog servers for %s" % self.domainname)
-            (self.gchost, self.gcport) = self.get_best_host(gcs)
-            self.gcname = "%s:%d" % (self.gchost, self.gcport)
+            root = self.get_root_domain()
+            if root:
+                gcs = self.get_global_catalog_servers(root, site=self.site)
+                if not gcs: 
+                    raise FreeNAS_ActiveDirectory_Exception(
+                        "Unable to find global catalog servers for %s" % root)
+                (self.gchost, self.gcport) = self.get_best_host(gcs)
+                self.gcname = "%s:%d" % (self.gchost, self.gcport)
 
 
     def set_kerberos_server(self):
@@ -1537,7 +1539,6 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def set_servers(self):
         self.set_domain_controller()
-        self.set_global_catalog_server()
         self.set_kerberos_server()
         self.set_kpasswd_server()
 
@@ -1546,6 +1547,8 @@ class FreeNAS_ActiveDirectory_Base(object):
             host=self.dchost, port=self.dcport,
             flags=(self.flags & ~FLAGS_SASL_GSSAPI))
         self.dchandle.open()
+
+        self.set_global_catalog_server()
 
         self.gchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
