@@ -10,14 +10,14 @@
       <button id="datagridBtn_{{ module_name }}_CreateInternal" data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Create Internal Certificate{% endblocktrans %}
       <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-          editObject('{% trans "Create Internal Certificate"|escapejs %} {{ verbose_name }}', '{% url "certificate_create_internal" %}', [this,]);
+          editObject('{% trans "Create Internal Certificate"|escapejs %}', '{% url "certificate_create_internal" %}', [this,]);
       </script>
       </button>
 
       <button id="datagridBtn_{{ module_name }}_CreateCSR" data-dojo-type="dijit.form.Button" type="button">
           {% blocktrans with name=verbose_name %}Create Certificate Signing Request{% endblocktrans %}
       <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-          editObject('{% trans "Create Certificate Signing Request"|escapejs %} {{ verbose_name }}', '{% url "certificate_create_CSR" %}', [this,]);
+          editObject('{% trans "Create Certificate Signing Request"|escapejs %}', '{% url "certificate_create_CSR" %}', [this,]);
       </script>
       </button>
 
