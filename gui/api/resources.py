@@ -40,7 +40,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasOS import Update
+from freenasOS import Configuration, Update, Train
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -86,7 +86,8 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.utils import BootEnv, CheckUpdateHandler
+from freenasUI.system.models import Update  as mUpdate
+from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -1797,6 +1798,7 @@ class JailTemplateResourceMixin(object):
 
         return bundle
 
+
 class PluginsResourceMixin(NestedMixin):
 
     def prepend_urls(self):
@@ -2655,6 +2657,13 @@ class UpdateResourceMixin(NestedMixin):
                 self.wrap_view('check'),
                 name="api_upgrade_check"
             ),
+            url(
+                r"^(?P<resource_name>%s)/trains%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('trains'),
+                name="api_upgrade_trains"
+            ),
         ]
 
     def manual(self, request, **kwargs):
@@ -2710,6 +2719,40 @@ class UpdateResourceMixin(NestedMixin):
                     'operation': op,
                     'name': name,
                 })
+        return self.create_response(
+            request,
+            data,
+        )
+
+    def trains(self, request, **kwargs):
+        self.method_check(request, allowed=['get'])
+
+        try:
+            update = mUpdate.objects.order_by('-id')[0]
+        except IndexError:
+            update = mUpdate.objects.create()
+
+        conf = Configuration.Configuration()
+        conf.LoadTrainsConfig()
+        trains = conf.AvailableTrains() or []
+        if trains:
+            trains = trains.keys()
+
+        seltrain = update.get_train()
+        if seltrain in conf._trains:
+            seltrain = conf._trains.get(seltrain)
+        else:
+            seltrain = Train.Train(seltrain)
+
+        data = {
+            'trains': trains,
+            'selected_train': {
+                'name': seltrain.Name(),
+                'descr': seltrain.Description(),
+                'sequence': seltrain.LastSequence(),
+            },
+        }
+
         return self.create_response(
             request,
             data,

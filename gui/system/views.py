@@ -25,7 +25,6 @@
 #
 #####################################################################
 from collections import OrderedDict
-from datetime import datetime
 import cPickle as pickle
 import json
 import logging
@@ -52,22 +51,18 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
-from freenasOS import Configuration, Train
+from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
     ActivateClone,
-    ApplyUpdate,
     CheckForUpdates,
     DeleteClone,
-    DownloadUpdate,
-    Update,
 )
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
-    get_sw_login_version,
     send_mail
 )
 from freenasUI.common.pipesubr import pipeopen
@@ -1173,22 +1168,8 @@ def update_index(request):
     except IndexError:
         update = models.Update.objects.create()
 
-    conf = Configuration.Configuration()
-    conf.LoadTrainsConfig()
-    trains = conf.AvailableTrains() or []
-    if trains:
-        trains = trains.keys()
-
-    curtrain = update.get_train()
-    if curtrain in conf._trains:
-        curtrain = conf._trains.get(curtrain)
-    else:
-        curtrain = Train.Train(curtrain)
-
     return render(request, 'system/update_index.html', {
         'update': update,
-        'current_train': curtrain,
-        'trains': json.dumps(trains),
         'updateserver': ', '.join(Configuration.SEARCH_LOCATIONS),
     })
 
@@ -1413,6 +1394,7 @@ def update_progress(request):
         content_type='application/json',
     )
 
+
 def update_verify(request):
     if request.method == 'POST':
         handler = VerifyHandler()
@@ -1455,6 +1437,7 @@ def update_verify(request):
             })
     else:
         return render(request, 'system/update_verify.html')
+
 
 def verify_progress(request):
     handler = VerifyHandler()
