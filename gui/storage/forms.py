@@ -164,8 +164,8 @@ class VolumeMixin(object):
                 "letters and may include numbers, \"-\", \"_\" and \".\" ."))
         if vname in [i[1:] for i in glob.glob('/*')]:
             raise forms.ValidationError(_(
-                "The volume name currently cannot match the name of a top level directory in"
-                " the filesystem due to a bug. (#6994)"))
+                "The volume name cannot match the name of a top level directory in"
+                " the filesystem due to a bug."))
         if models.Volume.objects.filter(vol_name=vname).exists():
             raise forms.ValidationError(
                 _("A volume with that name already exists."))
