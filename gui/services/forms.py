@@ -1563,7 +1563,6 @@ class DomainControllerForm(ModelForm):
             'dc_realm',
             'dc_domain',
             'dc_role',
-            'dc_dns_backend',
             'dc_dns_forwarder',
             'dc_forest_level',
             'dc_passwd',
