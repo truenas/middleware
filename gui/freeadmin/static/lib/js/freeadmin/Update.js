@@ -85,6 +85,7 @@ define([
       me.dapUpdateTrainInfoLink.setAttribute('href', me.updateServer+"/trains.txt");
       me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
 
+      me.dapCurrentTrain.innerHTML = gettext('Loading');
       me.dapAutoCheckText.innerHTML = gettext('Automatically check for updates');
       me.dapCurrentTrainText.innerHTML = gettext('Current Train');
       me.dapUpdateServerText.innerHTML = gettext('Update Server');
@@ -120,6 +121,7 @@ define([
       }, me.dapVerifyInstallBtn);
 
       me._selectTrain = new Select({
+        disabled: true
       }, me.dapSelectTrain);
 
       xhr.get(me.initial.trainUrl, {
@@ -149,6 +151,7 @@ define([
         me._selectTrain.set('oldvalue', data.selected_train.name);
         me._selectTrain.set('internalchange', true);
         me._selectTrain.set('value', data.selected_train.name);
+        me._selectTrain.set('disabled', false);
 
         me._updatesGrid.set('store', me._store);
         me._updatesGrid.set('query', "?train=" + data.selected_train.name);
