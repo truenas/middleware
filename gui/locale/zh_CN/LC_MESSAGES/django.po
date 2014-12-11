@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-12-10 09:20+0000\n"
+"PO-Revision-Date: 2014-12-11 09:34+0000\n"
 "Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418203250.0\n"
+"X-POOTLE-MTIME: 1418290495.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -98,11 +98,11 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "串口(SATA) 1.5Gbit/s"
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr "串口(SATA) 3.0Gbit/s"
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
@@ -110,31 +110,31 @@ msgstr "一直开着"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "停用"
+msgstr "已禁用"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "级别 1 - 省电模式并待机(怠速)"
+msgstr "级别 1 - 省电待机 (怠速)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "级别 64 - 正常用电模式并待机"
+msgstr "级别 64 - 中等耗电量待机"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "级别 127 - 正常用电模式并待机"
+msgstr "级别 127 - 中等耗电量待机"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "级别 128 - 省电模式但不待机(不怠速)"
+msgstr "级别 128 - 省电不待机 (非怠速)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "级别 192 - 正常用电模式但不待机"
+msgstr "级别 192 - 中等耗电量不待机"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "级别 254 - 最高性能，最大功耗模式"
+msgstr "级别 254 - 最高性能，最大功耗"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -142,7 +142,7 @@ msgstr "最低"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "普通"
+msgstr "适中"
 
 #: choices.py:98
 msgid "Maximum"
@@ -254,7 +254,7 @@ msgstr "时间机器"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "没有折叠"
+msgstr "不转换为大写"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -287,7 +287,7 @@ msgstr "磁盘"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "读-写"
+msgstr "读写"
 
 #: choices.py:222
 msgid "read-only"
@@ -301,15 +301,15 @@ msgstr "无"
 
 #: choices.py:228
 msgid "CHAP"
-msgstr "CHAP （验证通信协议）"
+msgstr "CHAP"
 
 #: choices.py:229
 msgid "Mutual CHAP"
-msgstr "双向 CHAP （验证通信协议）"
+msgstr "双向 CHAP"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "UPS 电池电量不足"
+msgstr "UPS 电量不足"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -341,7 +341,7 @@ msgstr "关"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr "lzjb算法压缩（推荐）"
+msgstr "lzjb (推荐)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -353,7 +353,7 @@ msgstr "gzip (最快)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr "gzip(最大压缩率，速度慢)"
+msgstr "gzip (最大压缩率，速度慢)"
 
 #: choices.py:489
 msgid "Hour(s)"
@@ -456,11 +456,11 @@ msgstr "离线后立即检测（仅支持ATA设备）"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Rsync模块"
+msgstr "Rsync 模块"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr "通过SSH进行Rsync同步"
+msgstr "使用 SSH 的 Rsync"
 
 #: choices.py:567
 msgid "Push"
@@ -472,7 +472,7 @@ msgstr "取回"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr "名称不能以\"-\"开头"
+msgstr "名字不能以\"-\"符号开头"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -481,12 +481,12 @@ msgstr "“$”符号只允许作为最后一个字符"
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "名称中包含无效字符(%s)。"
+msgstr "名字中包含无效字符 (%s)。"
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "全名包含无效字符(%s)。"
+msgstr "全名包含无效字符 (%s)。"
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -521,7 +521,7 @@ msgstr "请再次输入密码以供验证。"
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "命令行界面"
+msgstr "命令行"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -556,7 +556,7 @@ msgstr "辅用户组"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "用户名已存在！"
+msgstr "用户名已存在。"
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -590,7 +590,7 @@ msgstr "密码被禁用，此项留空"
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "此项必填！"
+msgstr "此项必填。"
 
 #~ msgid "Home directory has to start with /mnt or be /nonexistent"
 #~ msgstr "主目录必须以/mnt/开头或者为/nonexistent"
@@ -601,15 +601,15 @@ msgstr "允许重复的GID"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "已存在同名用户组！"
+msgstr "用户组已存在。"
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "已存在相同GID的用户组！"
+msgstr "已存在相同GID的用户组"
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr "用户组成员"
+msgstr "组成员"
 
 #: account/forms.py:852
 msgid "New password"
@@ -629,22 +629,22 @@ msgstr "旧密码"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "您输入的旧密码不正确！请重新输入..."
+msgstr "您输入的旧密码不正确。请重新输入。"
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr "要删除该主用户组内的所有用户吗?"
+msgstr "要删除该主用户组内的所有用户吗？"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "用户组ID"
+msgstr "组 ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "用户组名"
+msgstr "组名称"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -679,7 +679,7 @@ msgstr "Hashed SMB 密码"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "主用户组ID"
+msgstr "主用户组 ID"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -728,7 +728,7 @@ msgstr "更改密码"
 
 #: account/views.py:95
 msgid "Password successfully updated."
-msgstr "密码已更新！"
+msgstr "密码已更新。"
 
 #~ msgid "Admin user successfully updated."
 #~ msgstr "Admin用户更新成功"
@@ -795,11 +795,11 @@ msgstr "无法从 %(url)s 中获取: %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "当从 %(url)s 执行未序列化时发生错误: %(error)s"
+msgstr "从 %(url)s 执行反序列化时发生错误: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr "无法获得当前状态"
+msgstr "无法获取当前状态"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -840,7 +840,7 @@ msgstr "网卡"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr "不可将同一个IP地址(%s)配置在多个网络接口上"
+msgstr "不可将同一个IP地址 (%s) 配置在多个网络接口上"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -868,31 +868,31 @@ msgstr "Loopback 不是有效的 nameserver"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "未指定地址不是有效的 nameservers"
+msgstr "未知地址不是有效的域名服务器"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr "这不是一个有效的 nameserver 地址"
+msgstr "这不是一个有效的域名服务器地址"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 子网段不能作为 nameserver"
+msgstr "169.254/16 子网段不能用作域名服务器"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "请先填写 nameserver 2 然后再填写 nameserver 3"
+msgstr "请先填写域名服务器 2 然后再填写域名服务器 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "若要使用 nameserver 3，请先填写此项"
+msgstr "若要使用域名服务器 3，此项必填"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "请先填写 nameserver 1 然后再填写 nameserver 3"
+msgstr "请先填写域名服务器 1 然后再填写域名服务器 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "请先填写 nameserver 1 然后再填写 nameserver 2"
+msgstr "请先填写域名服务器 1 然后再填写域名服务器 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
@@ -932,7 +932,7 @@ msgstr "必须为每个别名指定 IPv6 地址"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "必须为每个别名指定 IPv4 掩码"
+msgstr "必须为每个别名指定 IPv6 掩码"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
@@ -961,15 +961,15 @@ msgstr "IPv6 默认网关"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Nameserver 1"
+msgstr "域名服务器 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Nameserver 2"
+msgstr "域名服务器 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Nameserver 3"
+msgstr "域名服务器 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
@@ -1043,16 +1043,16 @@ msgstr "别名"
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr "别名列表"
+msgstr "别名"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr "虚拟网络接口"
+msgstr "虚拟接口"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "网络接口名称格式为 vlanX，其中 X 为数字。例如：vlan0。"
+msgstr "虚拟接口名称格式为 vlanX，其中 X 为数字。例如：vlan0。"
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1086,7 +1086,7 @@ msgstr "协议类型"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "HTTP代理"
+msgstr "HTTP 代理"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
@@ -1217,11 +1217,11 @@ msgstr "插件名称"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr "插件信息名"
+msgstr "插件信息名称"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr "插件信息名称"
+msgstr "插件的信息名称"
 
 #: plugins/models.py:50
 msgid "Plugin version"
@@ -1247,12 +1247,12 @@ msgstr "已启用插件"
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
 msgid "Plugin IP address"
-msgstr "插件IP地址"
+msgstr "插件 IP"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
 msgid "Plugin TCP port"
-msgstr "插件TCP端口"
+msgstr "插件 TCP 端口"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
@@ -1295,7 +1295,7 @@ msgstr "插件已更新。"
 
 #: plugins/views.py:86
 msgid "Unable to remove plugin."
-msgstr "无法删除插件。"
+msgstr "无法移除插件。"
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
@@ -1310,7 +1310,7 @@ msgstr "插件已安装"
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
-msgstr "成功导入Jail。"
+msgstr "Jail 导入成功。"
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -1318,11 +1318,11 @@ msgstr "无效的掩码"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "要\"启用主目录浏览\"则此项必填。"
+msgstr "要 \"启用主目录浏览\" 则此项必填。"
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr "要使用\"主目录\"则此项必填。"
+msgstr "要使用 \"主目录\" 则此项必填。"
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
@@ -1364,7 +1364,7 @@ msgstr "这个值必须大于最低passive端口"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr "这个字段是匿名登录所必须的"
+msgstr "要启用匿名登陆则此项必填"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
@@ -1372,7 +1372,7 @@ msgstr "FTP 服务启动失败。"
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr "tftp 服务重载失败。"
+msgstr "TFTP 服务重载失败。"
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
@@ -1421,7 +1421,8 @@ msgstr "端口"
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
 msgstr "请使用字母、数字、\".\", \"-\" 和 \"_\"。"
 
-# 邮件地址：%(email)s无效
+# 邮箱 %(email)s 无效
+# 下列邮箱无效：%(email)s
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1430,7 +1431,7 @@ msgstr[0] ""
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
-msgstr "UPS监控服务重加载失败。"
+msgstr "UPS 服务重载失败。"
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
@@ -1446,19 +1447,19 @@ msgstr "LDAP 服务重载失败。"
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
-msgstr "密钥"
+msgstr "密码"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr "Target端密钥。"
+msgstr "Target 端密码。"
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
-msgstr "Secret (确认)"
+msgstr "密码 (确认)"
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
-msgstr "请再次输入密钥以供验证。"
+msgstr "请再次输入密码以供验证。"
 
 #: services/forms.py:504
 msgid "Initiator Secret"
@@ -1466,26 +1467,29 @@ msgstr "Initiator 密码"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Initiator端密钥。(用于双向CHAP验证)"
+msgstr "Initiator 端密码。(用于双向 CHAP 身份认证)"
 
 #~ msgid "Initiator Secret (Confirm)"
 #~ msgstr "发起端密钥（确认）"
 
 #: services/forms.py:544
 msgid "Secret does not match"
-msgstr "密钥不匹配"
+msgstr "两次输入的密码不匹配"
 
 #: services/forms.py:559 services/forms.py:560
+#, fuzzy
 msgid "The peer secret is required if you set a peer user."
-msgstr "指定对端用户时，必须同时填写对端密钥"
+msgstr "指定对端用户时，必须同时填写对端密码。"
 
 #: services/forms.py:563
+#, fuzzy
 msgid "The peer secret cannot be the same as user secret."
-msgstr "对端密钥必须与用户密钥不同"
+msgstr "对端密码不能与用户密码相同。"
 
 #: services/forms.py:566 services/forms.py:569
+#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr "用户必须使用指定的密匙."
+msgstr "对端用户必须使用指定的对端密码。"
 
 #: services/forms.py:582 services/forms.py:614 services/forms.py:756
 #: services/forms.py:821 services/forms.py:927 services/forms.py:955
@@ -1496,21 +1500,22 @@ msgstr "iSCSI 服务重载失败。"
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
-msgstr "Target中已存在相同的 LUN。"
+msgstr "Target 中已存在相同的 LUN。"
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
 msgstr "控制器认证组"
 
 #: services/forms.py:620
+#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
-msgstr "istgtcontrol 能够通过设定的认证群组中正确的用户名密码访问Target。"
+msgstr "istgtcontrol 能够通过设定的认证群组中正确的用户名密码访问 Target。"
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr "发现认证群组"
+msgstr "发现认证组"
 
 #: services/forms.py:656
 #, python-format
@@ -1520,13 +1525,13 @@ msgstr "该值必须介于 %(start)d 和 %(end)d 之间。"
 #: services/forms.py:669
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "若发现方法设置为CHAP或双向CHAP，则此字段必填。"
+msgstr "若发现方法设置为 CHAP 或双向 CHAP，则此字段必填。"
 
 #: services/forms.py:717
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
-msgstr "无论是使用CHAP或者双向CHAP控制器验证方式，此字段均为必填。"
+msgstr "无论使用 CHAP 还是双向 CHAP 控制器验证方法，此字段均为必填。"
 
 #: services/forms.py:730
 msgid "This is not a valid network"
@@ -1543,16 +1548,16 @@ msgstr "你需要指定一个位于卷或数据集中的文件。"
 #: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "Extent路径必须位于卷或数据集挂载点上。"
+msgstr "Extent 路径必须位于卷或数据集挂载点上。"
 
 #: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr "这个值可以是以字节（B）为单位，也可以KB, MB, GB, TB为单位"
+msgstr "值可以字节为单位，也可以KB, MB, GB, TB为单位"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr "Extent大小被设定为 auto (0) 时此文件必须存在"
+msgstr "Extent 大小被设定为 auto (0) 时此文件必须存在"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1561,7 +1566,7 @@ msgstr "磁盘设备"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Portal Group ID 不能大于%d"
+msgstr "Portal 组 ID 不能大于 %d"
 
 #, python-format
 #~ msgid "Your Group ID cannot be higher than %d"
@@ -1571,11 +1576,11 @@ msgstr "Portal Group ID 不能大于%d"
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "此字段不是有效的IP地址或网络。使用关键字\"ALL\"来允许全部内容。"
+msgstr "此字段不是有效的 IP 地址或网络。关键字 \"ALL\" 为全部允许。"
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr "认证群组号"
+msgstr "认证组编号"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1583,7 +1588,7 @@ msgstr "请使用数字、字母或者\".\", \"-\" 和 \":\"符号"
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
-msgstr "删除对应的文件"
+msgstr "删除相应文件"
 
 #: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
 #: templates/plugins/plugin_confirm_delete.html:10
@@ -1603,7 +1608,7 @@ msgstr "服务"
 
 #: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "服务名称，将在建立时自动生成"
+msgstr "服务名称，构建时自动生成"
 
 #: services/models.py:55
 msgid "Enable Service"
@@ -1621,7 +1626,7 @@ msgstr "认证模式"
 #: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr "使用活动目录(Active Directory)或 LDAP 认证将取代该选项"
+msgstr "如果已经设置了 Active Directory 或 LDAP 认证，此项设置将被取代"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1659,7 +1664,7 @@ msgstr "Local Master"
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr "域内的时间服务器"
+msgstr "作为域的时间服务器"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
@@ -1683,7 +1688,7 @@ msgstr "文件掩码"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr "使用这个选项来改变文件创建时默认的权限掩码（默认值为0666）。"
+msgstr "此项用于指定新建文件的权限掩码 (默认值 0666)。"
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
@@ -1692,7 +1697,7 @@ msgstr "目录掩码"
 #: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr "使用这个选项来改变目录创建时默认的权限掩码（默认值为0666）。"
+msgstr "此项用于指定新建目录的权限掩码 (默认值 0777)。"
 
 #~ msgid "Large RW support"
 #~ msgstr "支持大文件读写"
@@ -1719,7 +1724,7 @@ msgstr "附加参数"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "这些参数将附加到 smb.conf 的 [Global] 小节"
+msgstr "参数将追加到 smb.conf 配置文件的 [Global] 小节"
 
 #: services/models.py:147
 msgid "Enable home directories"
@@ -1743,11 +1748,11 @@ msgstr "主目录"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
-msgstr "[Homes]附加参数"
+msgstr "[Homes] 附加参数"
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "这些参数将附加到 smb.conf 的 [homes] 小节"
+msgstr "参数将追加到 smb.conf 配置文件的 [homes] 小节"
 
 #: services/models.py:165
 msgid "Unix Extensions"
@@ -1757,9 +1762,7 @@ msgstr "Unix 扩展"
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"这些扩展使Samba能更好地支持UNIX CIFS客户端所支持的功能，如符号链接，硬件链接"
-"等......"
+msgstr "这些扩展使 Samba 能更好地支持 UNIX CIFS 客户端，实现如符号链接，硬件链接等功能..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1767,7 +1770,7 @@ msgstr "启用 AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "启用或禁用AIO支持。"
+msgstr "启用或禁用 AIO 支持。"
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
@@ -1776,7 +1779,7 @@ msgstr "AIO read 最小数据块"
 #: services/models.py:177
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
-msgstr "如果请求的大小比这个值大，Samba将不同步地读取。"
+msgstr "如果请求的数据大于此值，Samba 将异步读取。"
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1785,7 +1788,7 @@ msgstr "AIO write 最小数据块"
 #: services/models.py:183
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
-msgstr "若请求的文件大小超过这个值，Samba将采用非同步写入。"
+msgstr "如果请求的数据大于此值，Samba 将异步写入。"
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
@@ -1817,7 +1820,7 @@ msgstr "允许访客访问"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr "允许访客访问这台服务器上的全部Apple共享内容"
+msgstr "允许访客访问这台设备上的所有 Apple 共享。"
 
 #: services/models.py:219
 msgid "Max. Connections"
@@ -1826,7 +1829,7 @@ msgstr "最大连接数"
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "AFP的最大连接数（默认值为50）"
+msgstr "AFP 允许的最大连接数。默认为 50。"
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -1879,7 +1882,7 @@ msgstr "I/O 超时"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O超时，单位秒（默认为30秒）"
+msgstr "I/O 超时时间，单位秒（默认为30秒）。"
 
 #: services/models.py:281
 msgid "NOPIN Interval"
@@ -1895,7 +1898,7 @@ msgstr "最大会话数"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "在同一时间内保持的最大会话数（默认值为16）"
+msgstr "在同一时间内保持的最大会话数（默认值为16）。"
 
 #: services/models.py:293
 msgid "Max. connections"
@@ -1903,7 +1906,7 @@ msgstr "最大连接数"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "每个会话中的最大连接数（默认值为8）"
+msgstr "每个会话中的最大连接数（默认值为8）。"
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
@@ -1922,63 +1925,65 @@ msgstr "MaxOutstandingR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSI初始参数（默认值为16）"
+msgstr "iSCSI 初始参数（默认值为16）。"
 
 #: services/models.py:311
 msgid "First burst length"
-msgstr "首次burst长度"
+msgstr "首次 burst 长度"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "iSCSI初始参数（默认值为65536）"
+msgstr "iSCSI 初始参数（默认值为65536）。"
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr "最大burst长度"
+msgstr "最大 burst 长度"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "iSCSI初始参数（默认值为262144）"
+msgstr "iSCSI 初始参数（默认值为262144）。"
 
 #: services/models.py:323
 msgid "Max receive data segment length"
-msgstr "接受数据段最大长度"
+msgstr "最大接收数据段长度"
 
 #: services/models.py:329
+#, fuzzy
 msgid "DefaultTime2Wait"
-msgstr "DefaultTime2Wait"
+msgstr "默认等待时间"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "iSCSI初始参数 （默认值为2）"
+msgstr "iSCSI 初始参数（默认值为2）。"
 
 #: services/models.py:335
+#, fuzzy
 msgid "DefaultTime2Retain"
-msgstr "DefaultTime2Retain"
+msgstr "默认保持时间"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "iSCSI初始参数 （默认值为60）"
+msgstr "iSCSI 初始参数（默认值为60）。"
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr "启用LUC"
+msgstr "启用 LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr "控制器IP地址"
+msgstr "控制器 IP"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr "逻辑单元控制器IP地址（默认为127.0.0.1（本地主机））"
+msgstr "逻辑单元控制器 IP（默认为127.0.0.1（本地主机））"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr "控制器TCP端口"
+msgstr "控制器 TCP 端口"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "逻辑单元控制器IP地址TCP端口（默认为3261）"
+msgstr "逻辑单元控制器的 TCP 端口（默认为3261）"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
@@ -1988,21 +1993,21 @@ msgstr "控制器授权网络"
 # 127.0.0.0 means /7 in netmask format.
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
-msgstr "逻辑单元控制器授权子网掩码(默认127.0.0.0/8)"
+msgstr "逻辑单元控制器授权子网掩码 (默认127.0.0.0/8)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr "控制器授权方式"
+msgstr "控制器认证方式"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr "控制器可接受的方法。"
+msgstr "控制器可接受的方式。"
 
 #: services/models.py:375
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
-msgstr "istgtcontrol 能够通过设定的认证群组中正确的用户名和密码访问Target。"
+msgstr "istgtcontrol 能够通过指定认证群组中的用户名和密码访问 Target。"
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
@@ -2015,7 +2020,7 @@ msgstr "Extent 名称"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr "Extent的字符串标识符。"
+msgstr "Extent 的字符标识。"
 
 #: services/models.py:401
 msgid "Extent Type"
@@ -2023,7 +2028,7 @@ msgstr "Extent 类型"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr "使用的Extent类型。"
+msgstr "希望使用的 Extent 类型。"
 
 #: services/models.py:407
 msgid "Path to the extent"
@@ -2031,7 +2036,7 @@ msgstr "Extent 路径"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "Extent的文件路径 (例如: /mnt/sharename/extent/extent0)。"
+msgstr "Extent 的文件路径 (例如: /mnt/sharename/extent/extent0)。"
 
 #: services/models.py:413
 msgid "Extent size"
@@ -2041,7 +2046,7 @@ msgstr "Extent 尺寸"
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
-msgstr "Extent的大小，0为自动，数字以bytes计算，或带以KB,MB,TB为后缀"
+msgstr "Extent 的大小，0为自动，默认以 Bytes 为单位，可使用 KB,MB,TB 后缀。"
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2066,7 +2071,7 @@ msgstr "Extent"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr "网站组ID"
+msgstr "Portal 组 ID"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
@@ -2088,7 +2093,8 @@ msgstr "Initiator"
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
-msgstr "授权访问iSCSI Target的Initiator。输入Initiator名称或输入 'ALL' 对所有Initiator授权。"
+msgstr ""
+"授权访问 iSCSI Target 的 Initiator。输入 Initiator 名称或输入 'ALL' 对所有 Initiator 授权。"
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2098,7 +2104,7 @@ msgstr "授权的网络"
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
-msgstr "授权可访问iSCSI Target的网络。此处填写 IP 或 CIDR 地址，此外也可用 'ALL' 表示任意 IP 地址。"
+msgstr "授权可访问 iSCSI Target 的网络。此处填写 IP 或 CIDR 地址，此外也可用 'ALL' 表示任意 IP 地址。"
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2106,15 +2112,17 @@ msgstr "Initiator"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr "Target端用户名。通常应与Initiator端的名字相同。"
+msgstr "Target 端用户名。通常默认为 Initiator 的名称。"
 
 #: services/models.py:604
+#, fuzzy
 msgid "Peer User"
 msgstr "对端用户"
 
 #: services/models.py:609
+#, fuzzy
 msgid "Peer Secret"
-msgstr "对端用户密码"
+msgstr "对端密码"
 
 #: services/models.py:614
 msgid "Authorized Access"
@@ -2130,7 +2138,7 @@ msgstr "Target 名称"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "当启动是不带\"iqn.\"时，基本名将不会自动添加。"
+msgstr "如果 Base Name 不带 \"iqn.\"，将自动在 Base Name 前面添加。"
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -2138,7 +2146,7 @@ msgstr "Target 别名"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr "对用户友好的Target名称。"
+msgstr "对用户友好的 Target 名称。"
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2146,7 +2154,7 @@ msgstr "序列号"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
-msgstr "将序列号当成逻辑单元号"
+msgstr "分配给逻辑单元的序列号"
 
 #: services/models.py:653 system/models.py:665
 #: templates/services/iscsi_dextents.html:6
@@ -2157,7 +2165,7 @@ msgstr "类型"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr "逻辑单元类型映射为LUN"
+msgstr "逻辑单元类型映射到 LUN。"
 
 #: services/models.py:660
 msgid "Target Flags"
@@ -2165,7 +2173,7 @@ msgstr "Target 标识"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
-msgstr "Initiator 组ID"
+msgstr "Initiator 组 ID"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
@@ -2175,11 +2183,11 @@ msgstr "认证方式"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr "Target端可接受的认证方式。Auto代表自动匹配。"
+msgstr "Target 端可接受的认证方式。Auto代表自动匹配。"
 
 #: services/models.py:679
 msgid "Authentication Group ID"
-msgstr "认证组ID"
+msgstr "认证组 ID"
 
 #: services/models.py:692
 msgid "Queue Depth"
@@ -2199,7 +2207,7 @@ msgstr "逻辑块大小"
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
-msgstr "您可以指定逻辑块的长度（默认为512）。对于兼容性推荐长度为512"
+msgstr "指定逻辑块的长度（默认为512）。建议设置为 512 可获得良好的兼容性。"
 
 #: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
@@ -2231,7 +2239,7 @@ msgstr "域名"
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
-msgstr "主机别名。多个域名对应同一个IP的时候会多次出现。使用空格键分开多个主机别名。"
+msgstr "主机别名。多个域名对应同一个 IP 的时候会多次出现。使用空格键分开多个主机别名。"
 
 #: services/models.py:777
 msgid "Update period"
@@ -2247,12 +2255,12 @@ msgstr "强制更新周期"
 
 #: services/models.py:789 services/models.py:876
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr "这些参数将会附加到全局设置文件 inadyn.conf 中。"
+msgstr "参数将追加至 inadyn.conf 全局配置文件中。"
 
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
-msgstr "动态DNS"
+msgstr "动态 DNS"
 
 #~ msgid "Path to the plugins jail"
 #~ msgstr "插件的 jail 路径"
@@ -2271,7 +2279,7 @@ msgstr "Jail 名称"
 
 #: services/models.py:821
 msgid "Jail IP address"
-msgstr "Jail IP地址"
+msgstr "Jail IP 地址"
 
 #: services/models.py:825
 msgid "Jail IP Netmask"
@@ -2307,12 +2315,12 @@ msgstr "团体"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "在大多数情况下，在此使用'public'。"
+msgstr "通常情况下，此处应使用 'public'。"
 
 # SNMP专有名词
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr "发送SNMP Traps消息"
+msgstr "发送 SNMP Traps"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
@@ -2325,7 +2333,7 @@ msgstr "标识"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr "此为此系统上所使用UPS的不可重复标识"
+msgstr "这是所使用 UPS 的唯一标示。"
 
 #: services/models.py:898
 msgid "Driver"
@@ -2333,15 +2341,15 @@ msgstr "驱动程序"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr "驱动用于连接你的UPS。"
+msgstr "驱动程序用于与 UPS 设备交互。"
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr "UPS连接在哪个串口或者USB端口上。"
+msgstr "连接 UPS 设备的串口或 USB 端口。"
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "附加参数(ups.conf)"
+msgstr "附加参数 (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
@@ -2359,7 +2367,7 @@ msgstr "关机定时器"
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
-msgstr "开始关机前的等待秒数。如果UPS在时间到期前恢复，则取消关机操作。"
+msgstr "关机前的等待时间。如果 UPS 在到达指定时间前恢复，则取消关机操作。"
 
 #~ msgid "UPS Master User Password"
 #~ msgstr "UPS密码"
@@ -2382,7 +2390,7 @@ msgstr "收件人Email"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr "目标邮件地址。以半角冒号分隔多个地址。"
+msgstr "接收邮件的地址。以半角冒号分隔多个电子邮件地址。"
 
 #: services/models.py:951
 msgid "Email Subject"
@@ -2404,7 +2412,7 @@ msgstr "UPS"
 # 根据上下文翻译（非直译）
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr "FTP服务器监听端口。"
+msgstr "绑定到 FTP 服务的端口。"
 
 #: services/models.py:973
 msgid "Clients"
@@ -2420,7 +2428,7 @@ msgstr "连接数"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "每个IP地址最大连接数 (0代表不限)"
+msgstr "每个 IP 地址最大连接数 (0=无限制)。"
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -2440,7 +2448,7 @@ msgstr "最大空闲时间(秒)."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr "允许root登录"
+msgstr "允许 root 登录"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
@@ -2467,11 +2475,11 @@ msgstr "允许本地用户登录"
 
 #: services/models.py:1014 services/models.py:1020
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr "用该选项覆盖创建文件时的掩码（默认077）"
+msgstr "该选项用以指定新建文件的掩码 (默认077)。"
 
 #: services/models.py:1023
 msgid "Enable FXP"
-msgstr "启用FXP"
+msgstr "启用 FXP"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
@@ -2483,11 +2491,12 @@ msgstr "锁定到主目录"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr "需要IDENT认证"
+msgstr "要求 IDENT 认证"
 
 #: services/models.py:1031
+#, fuzzy
 msgid "Require Reverse DNS for IP"
-msgstr "要求DNS反向解析IP"
+msgstr "IP 需要反向解析 DNS"
 
 #: services/models.py:1033
 msgid "Masquerade address"
@@ -2502,17 +2511,17 @@ msgstr "服务器通过指定的地址向用户显示网络信息，将IP地址�
 
 #: services/models.py:1043
 msgid "Minimum passive port"
-msgstr "最低passive端口"
+msgstr "最低 passive 端口"
 
 #: services/models.py:1044
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
-msgstr "分配给PASV的最小数据端口（0 = 使用任何端口）"
+msgstr "分配给 PASV 的最小数据端口 (0 = 使用任何端口)."
 
 #: services/models.py:1048
 msgid "Maximum passive port"
-msgstr "最高passive端口"
+msgstr "最高 passive 端口"
 
 #: services/models.py:1049
 msgid ""
@@ -2593,11 +2602,11 @@ msgstr "允许新建文件"
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr "监听端口。默认监听在由/etc/services中指定的tftp端口上。"
+msgstr "要监听的端口。默认监听 /etc/services 中指定的 tftp 端。"
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
-msgstr "指定启动服务的用户。"
+msgstr "指定运行服务的用户。"
 
 #: services/models.py:1131
 msgid "umask"
@@ -2632,7 +2641,7 @@ msgstr "修改服务使用的TCP端口。默认是22"
 
 #: services/models.py:1157
 msgid "Login as Root with password"
-msgstr "允许Root用户登录"
+msgstr "允许 Root 密码登录"
 
 #: services/models.py:1158
 msgid ""
@@ -2646,7 +2655,7 @@ msgstr "允许密码认证"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
-msgstr "允许TCP端口转发"
+msgstr "允许 TCP 端口转发"
 
 #: services/models.py:1165
 msgid "Compress Connections"
@@ -2658,15 +2667,13 @@ msgstr "主机私有密钥"
 
 #: services/models.py:1170
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr "请将PEM格式的RSA私钥粘贴至此处。"
+msgstr "请将 PEM 格式的 RSA PRIVATE KEY 粘贴至此处。"
 
 #: services/models.py:1176
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
-msgstr ""
-"额外的/etc/ssh/sshd_config选项（通常为空）。注意，错误的选项会导致SSH服务无法"
-"启动。"
+msgstr "追加至 /etc/ssh/sshd_config 配置文件的额外选项 (通常为空)。注意，设置错误会导致 SSH 服务无法启动。"
 
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
@@ -2722,7 +2729,7 @@ msgstr "管理员密码"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
-msgstr "域管理帐号密码"
+msgstr "域管理员账户的密码。"
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
@@ -2735,13 +2742,13 @@ msgstr "LDAP服务器名或者IP地址"
 
 #: services/models.py:1290
 msgid "Base DN"
-msgstr "基础DN"
+msgstr "基础 DN"
 
 #: services/models.py:1292
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
-msgstr "默认用于搜索的基础唯一甄别名（DN），例如: dc=test,dc=org"
+msgstr "用于搜索的默认基础 Distinguished Name (DN)，例如: dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
@@ -2752,10 +2759,11 @@ msgid "Root bind DN"
 msgstr "Root 绑定 DN"
 
 #: services/models.py:1300
+#, fuzzy
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
-msgstr "可辨别的名称，用于连接到目录服务器，例如： cn=admin, dc=test, dc=org"
+msgstr "Distinguished Name (DN) 与其绑定的目录服务器，例如： cn=admin, dc=test, dc=org"
 
 #: services/models.py:1304
 msgid "Root bind password"
@@ -2964,7 +2972,7 @@ msgstr "非正式"
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
-msgstr "当温度高于或等于N摄氏度的时候报告。0是禁用。"
+msgstr "当温度高于或等于 N 摄氏度时报告。0为禁用。"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -2976,7 +2984,7 @@ msgstr "接收报告的Email"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "目标邮件地址。多个邮件地址使用分号做间隔。"
+msgstr "收件地址。多个邮件地址使用分号做间隔。"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3003,8 +3011,9 @@ msgstr "控制服务"
 #~ msgstr "添加文件范围"
 
 #: services/nav.py:118
+#, fuzzy
 msgid "View File Extents"
-msgstr "查看文件Extent"
+msgstr "查看文件 Extent"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3054,7 +3063,7 @@ msgstr "路径 %s 不存在"
 #: sharing/forms.py:165
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr "非法的IP:'%s'。"
+msgstr "IP '%s' 无效。"
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
@@ -3138,6 +3147,7 @@ msgid "Hosts Deny"
 msgstr "禁止主机"
 
 #: sharing/models.py:77
+#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this share. Where the lists conflict, the allow list "
@@ -3145,7 +3155,12 @@ msgid ""
 "use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify "
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
-msgstr "该选项为用逗号/空格/制表符分隔的 允许 访问该模块的主机列表。可使用主机名或 IP 地址。选项为空时使用默认设置。"
+msgstr ""
+"该选项用逗号/空格/制表符分隔的禁止访问此共享的主机列表。Where the lists conflict, the allow list takes "
+"precedence. In the event that it is necessary to deny all by default, use "
+"the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to "
+"the hosts allow parameter those hosts that should be permitted access. Leave "
+"this field empty to use default settings."
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -4240,7 +4255,7 @@ msgstr "新的配置已安装"
 msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
-msgstr "为了能通过SSH使用rsync服务，你需要在用户的Home目录放置该用户的公钥(DSA/ECDSA/RSA)"
+msgstr "为了能通过 SSH 使用 Rsync 服务<br />你需要在用户的主目录创建一个公钥 (DSA/ECDSA/RSA)。"
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
@@ -4329,7 +4344,7 @@ msgid ""
 "The maximum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
-msgstr "NTP报文的最大轮询间隔，显示的是2的次幂数，单位为秒。默认值是10（1024秒），但可以提升到的上限为17（36.4小时）"
+msgstr "NTP报文的最大轮询间隔，显示的是2的次幂数，单位为秒。默认值 10（1024秒），但可以提升至上限 17（36.4小时）"
 
 #: system/models.py:144
 msgid "NTP Server"
@@ -4806,7 +4821,7 @@ msgstr "附加组"
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr "删除用户"
+msgstr "移除用户"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
@@ -5970,12 +5985,12 @@ msgstr "卷%s状态为DEGRADED"
 #: tools/alert.py:115
 #, python-format
 msgid "The volume %(volume)s status is %(status)s: %(message)s"
-msgstr "卷%(valume)s状态为%(status)s:%(message)s"
+msgstr "卷 %(volume)s 状态为 %(status)s: %(message)s"
 
 #: tools/alert.py:119
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr "卷%(volume)的状态为%(status)"
+msgstr "卷 %(volume)s 状态为 %(status)s"
 
 #~ msgid ""
 #~ "You have to change the password for the admin user (currently no password is "
@@ -5992,7 +6007,7 @@ msgstr "WebGUI地址不能绑定到%s;请使用wildcard"
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
-msgstr "系统未找到绑定了以下IP地址的iSCSI接口"
+msgstr "系统未找到以下绑定到 iSCSI Portal 的IP：%s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
@@ -6339,7 +6354,7 @@ msgstr "已加密，有密码短语"
 
 #: choices.py:304
 msgid "lz4 (recommended)"
-msgstr "lz4无损压缩算法(推荐)"
+msgstr "lz4 (推荐)"
 
 #: choices.py:560
 msgid "Verify"
@@ -6379,7 +6394,7 @@ msgstr "开启"
 
 #: choices.py:695
 msgid "data"
-msgstr "数据"
+msgstr "data"
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
@@ -6412,7 +6427,7 @@ msgstr "SMB2_02"
 
 #: choices.py:312
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb算法压缩（过时，不推荐）"
+msgstr "lzjb (过时，不推荐)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -6432,7 +6447,7 @@ msgstr "Domain Controller"
 
 #: choices.py:711
 msgid "auth"
-msgstr "身份认证"
+msgstr "认证"
 
 #: choices.py:714
 msgid "ctrl+!data"
@@ -6497,11 +6512,11 @@ msgstr "MAC"
 
 #: jails/models.py:332
 msgid "Jail Root"
-msgstr "Jail根目录"
+msgstr "Jail 根目录"
 
 #: jails/models.py:333
 msgid "Path where to store jail data"
-msgstr "存储 jail 数据的路径"
+msgstr "存储 Jail 数据的路径"
 
 #: jails/models.py:338
 msgid "IPv4 network range for jails and plugins"
@@ -6567,11 +6582,11 @@ msgstr "执行此操作必须先创建一个卷！"
 
 #: jails/utils.py:714
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "创建数据集错误 %(name)s: %(error)s"
+msgstr "数据集创建失败 %(name)s: %(error)s"
 
 #: jails/utils.py:739
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "创建目录错误 %(name)s: %(error)s"
+msgstr "目录创建失败 %(name)s: %(error)s"
 
 #: jails/views.py:135
 msgid "Jail successfully started."
@@ -6584,7 +6599,7 @@ msgstr "成功删除数据集。"
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr "未找到 RPC Token！"
+msgstr "没有 RPC Token！"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -6630,7 +6645,7 @@ msgstr "LAGG 接口组"
 
 #: network/models.py:441
 msgid "Link Aggregation Member"
-msgstr "链接聚合成员"
+msgstr "链路聚合成员"
 
 #: network/models.py:442
 msgid "Link Aggregation Members"
@@ -6675,11 +6690,11 @@ msgstr "Jail 不存在"
 
 #: services/forms.py:220
 msgid "This path does not exist."
-msgstr "此路径不存在。"
+msgstr "路径不存在。"
 
 #: services/forms.py:222
 msgid "This path is not a directory."
-msgstr "此路径不是一个目录。"
+msgstr "路径不是一个目录。"
 
 #: services/forms.py:671
 #: services/forms.py:679
@@ -6691,12 +6706,14 @@ msgid "Confirm Domain Account Password"
 msgstr "确认域账户密码"
 
 #: services/forms.py:927
+#, fuzzy
 msgid "Peer Secret (Confirm)"
-msgstr "Peer Secret (确认)"
+msgstr "对端密码 (确认)"
 
 #: services/forms.py:1456
+#, fuzzy
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr "没找到串口且glabel失败 %(disk)s: %(error)s"
+msgstr "没找到串口且 glabel 失败 %(disk)s: %(error)s"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
@@ -6722,14 +6739,14 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
-"当接收到 Windows 客户端 \\\"打开并运行文件\\\" 的请求时，由此参数控制 smbd(8) 行为。Samba 3.6 "
+"当接收到 Windows 客户端 \"打开并运行文件\" 的请求时，由此参数控制 smbd(8) 行为。Samba 3.6 "
 "和更低的版本，ACL并不检查文件的可执行权限，因此客户端可以随意运行文件，即使该文件本身并不拥有可执行权限。Samba 4.0 修复了此问题，默认情况下，"
-"如果设置此参数为 \\\"False\\\"，当运行不具有执行权限的文件时，\\\"打开并运行文件\\\" 将被阻止。如果将此参数设置为 "
-"\\\"True\\\"，Samba 则不会检查文件的可执行权限。"
+"如果设置此参数为 \"False\"，当运行不具有执行权限的文件时，\"打开并运行文件\" 将被阻止。如果将此参数设置为 \"True\"，Samba "
+"则不会检查\"打开执行\"权限，然而Samba 3.6恢复了此功能"
 
 #: services/models.py:339
 msgid "Allow non-root mount"
-msgstr "允许非root挂载"
+msgstr "允许非 root 挂载"
 
 #: services/models.py:350
 msgid "Bind IP Addresses"
@@ -6759,7 +6776,7 @@ msgstr "用户初次登陆时将显示此处设置的消息。"
 msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
-msgstr "除非本地用户是wheel组成员，否则仅允许访问其家目录。"
+msgstr "除非本地用户是 wheel 组成员，否则仅允许访问其家目录。"
 
 #: services/models.py:1278
 msgid "Enable TLS"
@@ -6767,7 +6784,7 @@ msgstr "启用 TLS"
 
 #: services/models.py:1285
 msgid "TLS policy"
-msgstr "TLS策略"
+msgstr "TLS 策略"
 
 #: services/models.py:1288
 msgid "TLS allow client renegotiations"
@@ -7045,28 +7062,25 @@ msgstr "确认新密码短语"
 
 #: storage/forms.py:2346
 #: storage/forms.py:2492
-#, fuzzy
 msgid "Invalid password"
-msgstr "旧密码"
+msgstr "无效的密码"
 
 #: storage/forms.py:2396
-#, fuzzy
 msgid "Recovery Key"
-msgstr "每天"
+msgstr "Recovery Key"
 
 #: storage/forms.py:2400
-#, fuzzy
 msgid "Restart services"
-msgstr "控制服务"
+msgstr "重启服务"
 
 #: storage/forms.py:2417
-#, fuzzy
 msgid "Jails/Plugins"
-msgstr "插件"
+msgstr "Jails/插件"
 
 #: storage/models.py:594
+#, fuzzy
 msgid "Underlying provider"
-msgstr ""
+msgstr "底层提供者"
 
 #: storage/models.py:811
 msgid "Remote Dedicated User Enabled"
@@ -7114,9 +7128,8 @@ msgid "The pool failed to upgraded: %s"
 msgstr "存储池更新失败：%s"
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "EA 支持"
+msgstr "支持"
 
 #: system/forms.py:86
 msgid "The volume %s is locked by encryption"
@@ -7131,17 +7144,14 @@ msgid "RSA or DSA private key not found"
 msgstr ""
 
 #: system/forms.py:817
-#, fuzzy
 msgid "Usernames cannot exceed 17 characters for cronjobs"
-msgstr "完整的路径不能超过88个字符"
+msgstr "计划任务的用户名不能超过17个字符"
 
 #: system/forms.py:1018
-#, fuzzy
 msgid "This variable already exists"
-msgstr "该IP早已存在。"
+msgstr "此变量存在"
 
 #: system/forms.py:1124
-#, fuzzy
 msgid "System dataset pool"
 msgstr "系统数据集池"
 
@@ -7154,9 +7164,8 @@ msgid "WebGUI HTTP -> HTTPS Redirect"
 msgstr "WebGUI HTTP -> HTTPS 重定向"
 
 #: system/models.py:115
-#, fuzzy
 msgid "Directory Service"
-msgstr "目录权限"
+msgstr "目录服务"
 
 #: system/models.py:205
 msgid "Serial Port Address"
@@ -7179,9 +7188,8 @@ msgid "Pre Init"
 msgstr ""
 
 #: system/models.py:1067
-#, fuzzy
 msgid "Last Name"
-msgstr "基本名称(Base Name)"
+msgstr "姓氏"
 
 #: system/models.py:1105
 msgid "Home Phone"
@@ -7190,11 +7198,11 @@ msgstr "家庭电话"
 #: system/alertmods/multipaths_status.py:19
 #, fuzzy
 msgid "The following multipaths are not optimal: %s"
-msgstr "以下磁盘已经测式可使用类型:%s"
+msgstr "以下路径不是最优的：%s"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Replication %(replication)s 失败：%(message)s"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
@@ -7219,7 +7227,6 @@ msgid "Refresh"
 msgstr "刷新"
 
 #: templates/plugins/plugin_info.html:2
-#, fuzzy
 msgid "Plugin information"
 msgstr "插件信息"
 
@@ -7283,7 +7290,7 @@ msgstr "是否立即运行此计划任务？"
 
 #: templates/system/shutdown.html:85
 msgid "System is shutting down"
-msgstr ""
+msgstr "系统正在关机"
 
 #: choices.py:172
 msgid "COREPLUS"
@@ -7299,7 +7306,7 @@ msgstr "SMB2_24"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr "zle算法压缩(runs of zeros)"
+msgstr "zle (runs of zeros)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -7339,7 +7346,7 @@ msgstr "新密码"
 
 #: account/forms.py:66
 msgid "Passwords do not match"
-msgstr "两次输入的密码不一致！"
+msgstr "两次输入的密码不一致"
 
 #: account/forms.py:398
 msgid "Create Home Directory In"
@@ -7366,7 +7373,7 @@ msgstr "挂载错误 (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:220
 msgid "A file is required"
-msgstr "此项必须提供一个文件"
+msgstr "必须提供一个文件"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
@@ -7380,7 +7387,7 @@ msgstr "无效的网络：%s"
 
 #: freeadmin/navtree.py:576
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
-msgstr "未序列化错误 %(url)s (%(error)s)，取得的数据："
+msgstr "反序列化错误 %(url)s (%(error)s)，取得的数据："
 
 #: jails/admin.py:75
 #: jails/forms.py:859
@@ -7435,7 +7442,7 @@ msgstr "IPv6 别名"
 
 #: jails/models.py:296
 msgid "This jail is required by %d plugin(s)"
-msgstr "插件 %d plugin(s) 依赖此 jail"
+msgstr "插件 %d 依赖此 Jail"
 
 #: jails/models.py:337
 msgid "IPv4 Network"
@@ -7464,7 +7471,7 @@ msgstr "查看 Jails"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
-msgstr "插件安装错误：%s"
+msgstr "插件安装失败：%s"
 
 #: jails/views.py:95
 msgid "Jail successfully edited."
@@ -7506,7 +7513,7 @@ msgstr "网络 %s 已被另一个网卡使用。"
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
-msgstr "需要一个域，例如：hostname.domain"
+msgstr "需要一个域名，例如：hostname.domain"
 
 #: network/models.py:83
 msgid ""
@@ -7518,7 +7525,7 @@ msgid ""
 "that the network is usable."
 msgstr ""
 "如果启用，则推迟启动 network-reliant（网络信任）服务，直到 ICMP 包发送到 netwait IP列表设置的IP地址。首先会通过 "
-"\\\"pinging\\\"  命令检查连接状态，验证网络是否可用。如果无法PING通或严重超时，将启动网络服务，无论网络是否保证可用。"
+"\"pinging\"  命令检查连接状态，验证网络是否可用。如果无法PING通或严重超时，将启动网络服务，无论网络是否保证可用。"
 
 #: network/models.py:94
 msgid ""
@@ -7540,7 +7547,7 @@ msgstr "安装"
 
 #: plugins/models.py:102
 msgid "Plugin jail name"
-msgstr "插件 jail 名称"
+msgstr "插件 Jail 名称"
 
 #: plugins/models.py:180
 msgid "Plugin Kernel Module"
@@ -7584,7 +7591,7 @@ msgstr "该 IP 和端口已被使用。"
 
 #: services/forms.py:1659
 msgid "A target with that name already exists."
-msgstr "Target名称已经存在。"
+msgstr "Target 名称已经存在。"
 
 #: services/models.py:224
 msgid "Hostnames lookups"
@@ -7592,7 +7599,7 @@ msgstr "主机名lookups"
 
 #: services/models.py:246
 msgid "Allow execute always"
-msgstr "总是允许执行"
+msgstr "始终允许执行"
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -7616,11 +7623,11 @@ msgstr "mountd(8) 绑定端口"
 msgid ""
 "This option forces the rpc.statd daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
-msgstr "此选项强制 rpc.statd 守护进程绑定到指定的端口，同时适用于 IPv4 和 IPv6."
+msgstr "此选项强制 rpc.statd 守护进程绑定到指定的端口，同时适用于 IPv4 和 IPv6。"
 
 #: services/models.py:763
 msgid "Initiator side user name."
-msgstr "Initiator端用户名。"
+msgstr "Initiator 端用户名。"
 
 #: services/models.py:952
 msgid "These parameters will be added to global settings in inadyn-mt.conf."
@@ -7641,7 +7648,7 @@ msgstr "登陆消息"
 #: services/models.py:1196
 msgid ""
 "Use this option to override the directory creation mask (077 by default)."
-msgstr "使用这个选项来改变目录创建时默认的权限掩码（默认值为0666）。"
+msgstr "使用这个选项来改变目录创建时默认的权限掩码 (默认值 077)。"
 
 #: services/models.py:1308
 msgid "TLS export certificate data"
@@ -7792,7 +7799,7 @@ msgstr "频率"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr "指定描述尺寸的 IEC 后缀，例如：10 GiB"
+msgstr "指定 IEC 后缀或0，例如：10 GiB"
 
 #: storage/forms.py:558
 msgid ""
@@ -7836,7 +7843,7 @@ msgstr "共享类型"
 #: storage/forms.py:1441
 #: storage/forms.py:1446
 msgid "0=None; example: 1 GiB"
-msgstr "0=不预留；例如：GiB"
+msgstr "0=无；例如：1 GiB"
 
 #: storage/forms.py:1459
 msgid ""
@@ -7859,8 +7866,8 @@ msgid ""
 "less than the volume size. Consequently, writes to a sparse volume can fail "
 "with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
-"创建一个无预留空间的松散卷（sparse volume），称为 \\\"自动精简配置（Thin "
-"Provisioning）\\\"。\\\"松散卷\\\"的预留空间小于卷空间。因此，当存储池空间不足时，写数据到松散卷将会导致 ENOSPC 错误。"
+"创建一个无预留空间的松散卷（sparse volume），称为 \"自动精简配置（Thin "
+"Provisioning）\"。\"松散卷\"的预留空间小于卷空间。因此，当存储池空间不足时，写数据到松散卷将会导致 ENOSPC 错误。"
 
 #: storage/forms.py:1624
 msgid "Block size"
@@ -7871,9 +7878,8 @@ msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
 msgstr "快照名只能使用如下字符 [-a-zA-Z0-9_.] "
 
 #: storage/forms.py:2026
-#, fuzzy
 msgid "Dedicated User"
-msgstr "删除用户"
+msgstr "专用用户"
 
 #: storage/forms.py:2034
 msgid ""
@@ -7883,9 +7889,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:2312
-#, fuzzy
 msgid "Admin password"
-msgstr "旧密码"
+msgstr "管理员密码"
 
 #: storage/forms.py:2316
 msgid "New Passphrase"
@@ -7893,12 +7898,11 @@ msgstr "新密码短语"
 
 #: storage/forms.py:2456
 msgid "Volume could not be imported: %d devices failed to decrypt"
-msgstr ""
+msgstr "无法导入卷：设备 %d 解密失败"
 
 #: storage/forms.py:2473
-#, fuzzy
 msgid "Root password"
-msgstr "Root 绑定密码"
+msgstr "Root 密码"
 
 #: storage/models.py:131
 msgid "LOCKED"
@@ -7923,7 +7927,7 @@ msgstr "Replication 流压缩"
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "发送中"
 
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
@@ -7952,24 +7956,20 @@ msgid "GELI recovery key download starting..."
 msgstr "GELI recovery key 开始下载..."
 
 #: storage/views.py:1171
-#, fuzzy
 msgid "Disks successfully edited"
-msgstr "成功擦除磁盘"
+msgstr "磁盘已编辑"
 
 #: support/models.py:41
-#, fuzzy
 msgid "Support subject."
-msgstr "支持问题"
+msgstr "支持主题。"
 
 #: support/models.py:45
-#, fuzzy
 msgid "A description of the issue."
 msgstr "对问题的描述。"
 
 #: support/views.py:86
-#, fuzzy
 msgid "Support request successfully sent"
-msgstr "快照成功删除"
+msgstr "支持请求已送出"
 
 #: system/forms.py:68
 msgid "The path '%s' requires execute permission bit"
@@ -8007,13 +8007,13 @@ msgstr "启用自动上传内核崩溃记录"
 #: system/models.py:444
 msgid ""
 "Redirect the standard output to /dev/null. In other words, disable output."
-msgstr "将标准输出重定向到 /dev/null。换句话说，即禁用输出。"
+msgstr "将标准输出重定向到 /dev/null。即禁用输出。"
 
 #: system/models.py:450
 msgid ""
 "Redirect the standard error output to /dev/null. In other words, disable "
 "error output."
-msgstr "将标准错误输出重定向到 /dev/null。换句话说，即禁用错误输出。"
+msgstr "将标准错误输出重定向到 /dev/null。即禁用错误输出。"
 
 #: system/models.py:1011
 #: system/models.py:1023
@@ -8042,9 +8042,8 @@ msgstr "工作电话"
 
 #: system/models.py:1123
 #: templates/system/settings.html:14
-#, fuzzy
 msgid "Registration"
-msgstr "目的端"
+msgstr "注册"
 
 #: system/models.py:1138
 msgid "Syslog"
@@ -8052,24 +8051,20 @@ msgstr "系统日志"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "编辑数据集"
+msgstr "系统数据集"
 
 #: system/views.py:191
-#, fuzzy
 msgid "The cron process has started"
-msgstr "擦除过程开始"
+msgstr "计划进程已启动"
 
 #: system/views.py:541
-#, fuzzy
 msgid "The rsync process has started"
-msgstr "擦除过程开始"
+msgstr "Rsync进程已启动"
 
 #: system/alertmods/httpd_bindaddr.py:20
-#, fuzzy
 msgid "The WebGUI Address could not bind to %s; using wildcard"
-msgstr "WebGUI地址不能绑定到%s;请使用wildcard"
+msgstr "WebGUI 地址不能绑定到 %s; 请使用通配符"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
@@ -8096,9 +8091,8 @@ msgid "Stop "
 msgstr "停止"
 
 #: templates/plugins/available_install.html:3
-#, fuzzy
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
-msgstr "确定销毁\"%(name)s\"?"
+msgstr "是否安装 \"%(plugin)s\" 插件？"
 
 #: templates/plugins/index.html:12
 msgid "Installed"
@@ -8109,9 +8103,8 @@ msgid "For security reasons, you must now set a new root password:"
 msgstr "出于安全考虑，现在必须设置一个 root 密码："
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "LDAP设置"
+msgstr "LLDP 设置"
 
 #: templates/storage/key.html:3
 msgid "You are about to download the global GELI key"
@@ -8280,12 +8273,14 @@ msgid "Disable password login"
 msgstr "禁用密码登录"
 
 #: account/models.py:264
+#, fuzzy
 msgid "Group Membership"
-msgstr "Group Membership"
+msgstr "组成员身份"
 
 #: account/models.py:265
+#, fuzzy
 msgid "Group Memberships"
-msgstr "Group Memberships"
+msgstr "组成员身份"
 
 #: api/resources.py:986
 msgid "on every %(days)s"
@@ -8293,7 +8288,7 @@ msgstr "每 %(days)s 天"
 
 #: freeadmin/navtree.py:611
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "无法反响解析URL，跳过节点 %(node)s: %(error)s"
+msgstr "无法反向解析URL，跳过节点 %(node)s: %(error)s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
@@ -8454,15 +8449,15 @@ msgstr "频道"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr "HTTP代理"
+msgstr "HTTP 代理"
 
 #: network/views.py:66
 msgid "IPMI successfully edited"
-msgstr "IPMI 已更新"
+msgstr "IPMI 已编辑"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr "IPMI 失败"
+msgstr "IPMI 错误"
 
 #: plugins/admin.py:73
 msgid "Install plugin"
@@ -8494,8 +8489,8 @@ msgid ""
 "ip addresses instead. An example place where hostname lookups are currently "
 "used is when checking the hosts deny and hosts allow."
 msgstr ""
-"指定Samba是否使用(高开销)的主机名查找(hostname "
-"lookups)功能，或是直接用IP地址作为替代。主机名查找功能主要用于实现阻止和允许客户机访问功能。"
+"指定 Samba 是否使用(高开销)的主机名查找(hostname lookups)功能，或是直接用 IP "
+"地址作为替代。主机名查找功能主要用于实现阻止和允许客户机访问功能。"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
@@ -8558,15 +8553,17 @@ msgstr "监察员密码"
 
 #: services/models.py:1221
 msgid "Perform Reverse DNS Lookups"
-msgstr "执行DNS反向解析"
+msgstr "执行 DNS 反向解析"
 
 #: services/models.py:1292
+#, fuzzy
 msgid "TLS allow dot login"
-msgstr "允许点登录"
+msgstr "TLS 允许点登录"
 
 #: services/models.py:1296
+#, fuzzy
 msgid "TLS allow per user"
-msgstr "TLS允许每用户"
+msgstr "TLS 允许每用户"
 
 #: services/models.py:1312
 msgid "TLS no certificate request"
@@ -8671,9 +8668,7 @@ msgstr "启用此项，则开启 Time Machine 备份功能。"
 msgid ""
 "Networks that are authorized to access the NFS share. Specify network "
 "numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
-msgstr ""
-"允许访问 NFS 共享的网络或IP列表。网络标识格式为 1.2.3.4/xx ，其中xx为子网掩码的位数；IP地址表格式为 1.2.3.4 "
-"1.2.3.5 1.2.3.6。"
+msgstr "授权访问 NFS 共享的网络。网络标识格式为 1.2.3.4/xx ，其中xx为子网掩码的位数。"
 
 #: sharing/models.py:238
 msgid "Authorized IP addresses or hosts"
@@ -8847,9 +8842,8 @@ msgid "Disabling will not stop any replications which are in progress."
 msgstr "禁用操作将不会停止任何正在进行的Replications任务。"
 
 #: storage/views.py:115
-#, fuzzy
 msgid "Please enter a hostname"
-msgstr "系统主机名"
+msgstr "请输入主机名"
 
 #: storage/views.py:128
 msgid "Key could not be retrieved for unknown reason"
@@ -8865,18 +8859,16 @@ msgid "Volume failed unlocked"
 msgstr "卷解锁失败"
 
 #: storage/views.py:1129
-#, fuzzy
 msgid "Recovery has been removed"
-msgstr "磁盘已移除"
+msgstr "Recovery 已被移除"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
 msgstr "存储池已升级"
 
 #: support/models.py:40
-#, fuzzy
 msgid "Subject"
-msgstr "邮件主题"
+msgstr "主题"
 
 #: system/admin.py:59
 #: system/admin.py:66
@@ -8886,7 +8878,6 @@ msgid "Run Now"
 msgstr "立即运行"
 
 #: system/forms.py:754
-#, fuzzy
 msgid "Memory device"
 msgstr "内存"
 
@@ -9008,27 +8999,23 @@ msgid "Templates"
 msgstr "模板"
 
 #: templates/plugins/plugin_update.html:3
-#, fuzzy
 msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
-msgstr "确定销毁\"%(name)s\"?"
+msgstr "是否更新 \"%(plugin)s\" 插件？"
 
 #: templates/plugins/plugins_datagrid.html:4
 #: templates/plugins/plugins_datagrid.html:6
-#, fuzzy
 msgid "Available Plugins"
-msgstr "可用操作"
+msgstr "可用插件"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
-msgstr "欢迎使用 %(sw_name)s&trade; %(sw_login_version)s"
+msgstr "欢迎使用 %(sw_name)s&reg; %(sw_login_version)s"
 
 #: templates/reporting/index.html:11
 msgid "Partition"
 msgstr "分区"
 
 #: templates/services/core.html:33
-#, fuzzy
 msgid "Directory Service Settings"
 msgstr "活动目录设置"
 
@@ -9131,7 +9118,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr "Extent名称必须唯一。"
+msgstr "Extent 名称必须唯一。"
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -9149,7 +9136,7 @@ msgstr "NT4 重载错误。"
 
 #: directoryservice/forms.py:222
 msgid "Active Directory failed to reload."
-msgstr "Active Directory 重载错误。"
+msgstr "Active Directory 重载失败。"
 
 #: directoryservice/forms.py:316
 msgid "LDAP failed to reload."
@@ -9167,6 +9154,7 @@ msgid "Bind DN"
 msgstr "绑定 DN"
 
 #: directoryservice/models.py:302
+#, fuzzy
 msgid "Bind password"
 msgstr "Bind 密码"
 
@@ -9197,9 +9185,8 @@ msgstr "从系统状态进程中收集 Round-Robin Database (RRD) 并保存到�
 
 #: system/nav.py:45
 #: templates/system/index.html:3
-#, fuzzy
 msgid "Information"
-msgstr "非正式"
+msgstr "信息"
 
 #: tasks/nav.py:4
 #: templates/menubar.html:13
@@ -9208,9 +9195,8 @@ msgid "Tasks"
 msgstr "任务"
 
 #: templates/services/core.html:32
-#, fuzzy
 msgid "Domain Controller Settings"
-msgstr "域控制器名称"
+msgstr "域控制器设置"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
@@ -9334,7 +9320,7 @@ msgstr "Range High"
 
 #: directoryservice/models.py:142
 msgid "Schema Mode"
-msgstr "Schema模式"
+msgstr "Schema 模式"
 
 #: directoryservice/models.py:145
 msgid ""
@@ -9376,11 +9362,11 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
-"指定每个domain range可用的uids/gids数量。最小值为2000。SIDs with RIDs larger than this "
-"value will be mapped into extension ranges depending upon number of "
-"available ranges. If the autorid backend runs out of available ranges, "
-"mapping requests for new domains (or new extension ranges for domains "
-"already known) are ignored and the corresponding map is discarded."
+"指定每个域可用的 uids/gids 数量范围。最小值为2000。SIDs with RIDs larger than this value will "
+"be mapped into extension ranges depending upon number of available ranges. "
+"If the autorid backend runs out of available ranges, mapping requests for "
+"new domains (or new extension ranges for domains already known) are ignored "
+"and the corresponding map is discarded."
 
 #: directoryservice/models.py:197
 #, fuzzy
@@ -9388,7 +9374,7 @@ msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
-"将模块切为只读模式。No new ranges will be allocated nor will new mappings be created "
+"将模块切换为只读模式。No new ranges will be allocated nor will new mappings be created "
 "in the idmap pool."
 
 #: directoryservice/models.py:204
@@ -9436,6 +9422,7 @@ msgid "User DN"
 msgstr "用户 DN"
 
 #: directoryservice/models.py:271
+#, fuzzy
 msgid ""
 "Defines the user DN to be used for authentication. The secret for "
 "authenticating this user should be stored with net idmap secret (see net(8))"
@@ -9443,10 +9430,13 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
+"定义用于身份认证的用户DN。用于验证该用户的密码应该与net idmap secret一同被存储(参见 net(8))。If absent, the "
+"ldap credentials from the ldap passdb configuration are used, and if these "
+"are also absent, an anonymous bind will be performed as last fallback."
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
-msgstr "指定 SID/uid/gid 映射记录所使用的 LDAP server。"
+msgstr "指定 SID/uid/gid 映射记录所使用的 LDAP 服务器。"
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
@@ -9474,7 +9464,7 @@ msgstr "独立的"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr "用户 Bind 路径"
+msgstr "用户绑定路径"
 
 #: directoryservice/models.py:343
 msgid ""
@@ -9488,7 +9478,7 @@ msgstr "用户组 Bind 路径"
 #: directoryservice/models.py:350
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
-msgstr "设置 Bind 路径，即 LDAP 服务器中能查找到用户组对象的位置。"
+msgstr "设置绑定路径，即 LDAP 服务器中能查找到用户组对象的位置。"
 
 #: directoryservice/models.py:355
 msgid "User CN"
@@ -9503,8 +9493,9 @@ msgid "CN Realm"
 msgstr "CN Realm"
 
 #: directoryservice/models.py:363
+#, fuzzy
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
-msgstr ""
+msgstr "在 LDAP 中为组(若设置了user_cn 则也包括用户)附加 @realm 到 CN。"
 
 #: directoryservice/models.py:369
 msgid "LDAP Domain"
@@ -9536,11 +9527,14 @@ msgid "LDAP User DN"
 msgstr "LDAP 用户 DN"
 
 #: directoryservice/models.py:394
+#, fuzzy
 msgid ""
 "Defines the user DN to be used for authentication. The secret for "
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"定义用于身份认证的用户DN。用于验证该用户的密码应该与net idmap secret一同被存储(参见 net(8))。If absent, an "
+"anonymous bind will be performed."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
@@ -9682,38 +9676,36 @@ msgstr "未找到可用的磁盘。"
 msgid ""
 "You are about to leave the Initial Wizard and perform all pending (saved) "
 "actions."
-msgstr ""
+msgstr "你将离开设置向导并使所有设置生效。"
 
 #: templates/system/initialwizard_confirm.html:32
-#, fuzzy
 msgid "Are you sure?"
-msgstr "你确定要擦除吗？"
+msgstr "你确定吗？"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "配置"
+msgstr "确认"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
-msgstr ""
+msgstr "返回设置向导"
 
 #: templates/system/initialwizard_confirm.html:62
 msgid "Exit without saving"
-msgstr ""
+msgstr "退出不保存"
 
 #: templates/system/initialwizard_shares.html:28
 msgid "Previous"
-msgstr ""
+msgstr "上一步"
 
 #: templates/system/initialwizard_shares.html:44
 #: templates/system/initialwizard_volume.html:85
 msgid "Next"
-msgstr ""
+msgstr "下一步"
 
 #: templates/system/initialwizard_volume.html:77
 msgid "Estimated Total Size"
-msgstr ""
+msgstr "估计总大小"
 
 #: freeadmin/navtree.py:256
 msgid "Wizard"
@@ -9721,7 +9713,7 @@ msgstr "设置向导"
 
 #: services/forms.py:302
 msgid "This field is required to enable NFSv4."
-msgstr "启用NFSv4，此项必填。"
+msgstr "如果启用 NFSv4，此项必填。"
 
 #: services/models.py:351
 msgid "Enable NFSv4"
@@ -9811,7 +9803,7 @@ msgstr "安全"
 #: storage/models.py:819
 #, fuzzy
 msgid "Encryption Cipher"
-msgstr "加密模式"
+msgstr "加密密码"
 
 #: storage/models.py:821
 msgid "Standard"
@@ -9826,9 +9818,8 @@ msgid "Kerberos Realms"
 msgstr "Kerberos Realm"
 
 #: templates/directoryservice/index.html:18
-#, fuzzy
 msgid "Kerberos Keytabs"
-msgstr "服务器数量"
+msgstr "Kerberos Keytabs"
 
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
@@ -9841,11 +9832,11 @@ msgstr "跳过"
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "基础身份认证"
+msgstr "基础认证"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "摘要身份认证"
+msgstr "Digest 认证"
 
 #: choices.py:799
 msgid "adex"
@@ -9913,7 +9904,7 @@ msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
-msgstr "NIS 重载错误。"
+msgstr "NIS 重载失败。"
 
 #: api/resources.py:2488
 msgid "On Reboot"
@@ -9965,15 +9956,15 @@ msgstr "模板"
 
 #: jails/utils.py:706
 msgid "You need to create a ZFS volume to proceed!"
-msgstr "执行此操作必须先创建一个用于存储的ZFS卷！"
+msgstr "执行此操作必须先创建一个 ZFS 卷！"
 
 #: jails/views.py:492
 msgid "Jail Template successfully created."
-msgstr "Jail模板已创建。"
+msgstr "Jail 模板已创建。"
 
 #: jails/views.py:512
 msgid "Jail Template successfully edited."
-msgstr "Jail模板已更新。"
+msgstr "Jail 模板已编辑。"
 
 #: services/forms.py:1541
 msgid "Confirm WebDAV Password"
@@ -10084,7 +10075,7 @@ msgstr "创建数据集"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
-msgstr ""
+msgstr "大小写敏感"
 
 #: system/admin.py:49
 msgid "Internal"
@@ -10154,9 +10145,8 @@ msgstr "在此处粘贴证书内容"
 
 #: system/forms.py:1935
 #: system/forms.py:1963
-#, fuzzy
 msgid "Serial for next Certificate"
-msgstr "下一个证书的序列号"
+msgstr "用于下一个证书的序列号"
 
 #: system/forms.py:1997
 #: system/forms.py:2089
@@ -10186,15 +10176,13 @@ msgid "Private Key"
 msgstr "私有密钥"
 
 #: system/forms.py:2242
-#, fuzzy
 msgid "Certificate Signing Request"
-msgstr "自签名证书"
+msgstr "证书签发请求"
 
 #: system/forms.py:2249
 #: system/models.py:595
-#, fuzzy
 msgid "Cut and paste the contents of your private key here"
-msgstr "在此剪切并粘贴您的私有和公共证书文件内容。"
+msgstr "此处粘贴你的私有密钥内容"
 
 #: system/models.py:550
 msgid "Check Automatically For Updates"
@@ -10329,9 +10317,8 @@ msgid "Internal Certificate successfully edited."
 msgstr "内部证书已编辑。"
 
 #: system/views.py:1083
-#, fuzzy
 msgid "CSR successfully edited."
-msgstr "编辑成功"
+msgstr "CSR 已编辑。"
 
 #: templates/freeadmin/generic_model_delete.html:31
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
@@ -10346,7 +10333,6 @@ msgid "Scrubs"
 msgstr "垃圾清理"
 
 #: templates/storage/index.html:31
-#, fuzzy
 msgid "Snapshots"
 msgstr "快照"
 
@@ -10355,9 +10341,8 @@ msgid "You're about to upgrade. The following packages will be changed:"
 msgstr ""
 
 #: templates/system/upgrade.html:24
-#, fuzzy
 msgid "Are you sure you want to continue?"
-msgstr "确定离线?"
+msgstr "是否继续？"
 
 #: templates/system/upgrade.html:26
 msgid "No updates available"
@@ -10391,9 +10376,8 @@ msgid "Create Certificate Signing Request"
 msgstr "创建证书签名请求"
 
 #: templates/system/bootenv_delete.html:4
-#, fuzzy
 msgid "Are you sure you want to delete %(name)s?"
-msgstr "确定销毁\"%(name)s\"?"
+msgstr "是否删除 %(name)s？"
 
 #: templates/system/bootenv_datagrid.html:9
 msgid "Create Boot"
@@ -10419,9 +10403,8 @@ msgstr "重命名启动环境 %(name)s"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "应用更新"
+msgstr "手动更新"
 
 #: services/models.py:268
 msgid ""
@@ -10432,9 +10415,8 @@ msgstr ""
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
 #: templates/storage/volume_datagrid.html:19
-#, fuzzy
 msgid "Import Disk"
-msgstr "导入"
+msgstr "导入磁盘"
 
 #: system/forms.py:1852
 msgid "Root E-mail"
@@ -10464,7 +10446,7 @@ msgstr "网站名称"
 
 #: directoryservice/models.py:806
 msgid "Name of site to use."
-msgstr "要使用的网站名称。"
+msgstr "要使用的站点名称。"
 
 #: services/models.py:263
 msgid ""
@@ -10501,9 +10483,8 @@ msgid "Only one row for the vitual device of type %s is allowed."
 msgstr "类型为 %s 的虚拟驱动器仅允许一行。"
 
 #: storage/views.py:494
-#, fuzzy
 msgid "Zvol successfully edited."
-msgstr "成功导入Jail。"
+msgstr "Zvol 已编辑。"
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
@@ -10521,7 +10502,7 @@ msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
 msgid "IPv6 Autoconfigure"
-msgstr "自动配置 IPv6"
+msgstr "IPv6 自动配置"
 
 #: sharing/models.py:336
 msgid ""
@@ -10531,9 +10512,8 @@ msgstr ""
 "用于访问你的WebDAV共享。<br />例如：http(s)://ip-of-freenas-machine:webdav_port/'共享名称'"
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "警告"
+msgstr "警告！"
 
 #: storage/views.py:205
 msgid ""
@@ -10552,7 +10532,7 @@ msgstr "这种加密类型主要适用于那些存储敏感数据的用户，他
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
-msgstr ""
+msgstr "使用此功能造成数据丢失或数据无法恢复等后果 iXsystems 公司不承担任何责任。"
 
 #: choices.py:807
 msgid "rc.conf"
@@ -10584,24 +10564,24 @@ msgstr "VFS 对像"
 
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
-msgstr ""
+msgstr "我知道快照目前被 Replication 任务占用"
 
 #: storage/forms.py:2098
 msgid "Also delete the share's configuration"
 msgstr "同时删除共享配置"
 
 #: tasks/forms.py:116
+#, fuzzy
 msgid "Rsync Create"
-msgstr ""
+msgstr "Rsync 创建"
 
 #: tasks/forms.py:118
 msgid ""
 "Check this if the remotepath specified does<br>not exist, and you want to "
 "create it."
-msgstr ""
+msgstr "如果指定的远程路径<br>不存在，并且你希望创建它，则启用此项。"
 
 #: tasks/forms.py:263
-#, fuzzy
 msgid ""
 "The Remote Path you specified does not exist or is not a directory.<br>"
 "Either create one yourself on the remote machine or check the<br>"
@@ -10614,6 +10594,7 @@ msgstr ""
 "设置了远程路径也可能出现此错误<br>请将路径总字符数缩减至255个以内。也可能是SSH证书错误。"
 
 #: directoryservice/models.py:857
+#, fuzzy
 msgid "SASL wrapping"
 msgstr "SASL wrapping"
 
@@ -10699,15 +10680,15 @@ msgstr ""
 
 #: common/system.py:301
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "卸载错误 (%(retcode)s) -> %(output)s"
+msgstr "卸载失败 (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr "Jail名称中不允许包含'.'号"
+msgstr "Jail 名称中不允许包含'.'号"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "路径无法被挂载 %(source)s: %(error)s"
+msgstr "路径无法被卸载 %(source)s: %(error)s"
 
 #: jails/utils.py:609
 msgid "Unable to determine IPv6 for plugin"
@@ -10719,7 +10700,7 @@ msgstr "下列地址不正确: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr "此身份认证组不支持双向CHAP"
+msgstr "认证组不支持 CHAP MUTUAL"
 
 #: services/models.py:440
 msgid "iSNS Servers"
@@ -10777,9 +10758,8 @@ msgstr "块级存储(iSCSI)"
 
 #: storage/admin.py:629
 #: storage/forms.py:1741
-#, fuzzy
 msgid "VMWare Sync"
-msgstr "插件"
+msgstr "VMWare 同步"
 
 #: storage/forms.py:1576
 msgid "Apply Owner (user)"
@@ -10812,19 +10792,19 @@ msgstr "自动 - 为可用的驱动器选择合理的缺省值"
 msgid ""
 "Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
 "Storage)"
-msgstr ""
+msgstr "虚拟化存储 (RAID 10: 可靠，性能更好，可用空间最少)"
 
 #: system/forms.py:1618
 msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
-msgstr ""
+msgstr "媒体 (RAID Z1: 可靠性一般, 性能良好, 更多可用空间)"
 
 #: system/forms.py:1622
 msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
-msgstr ""
+msgstr "媒体 (RAID Z1: 可靠性一般，性能好，可用空间大)"
 
 #: system/forms.py:1626
 msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
-msgstr ""
+msgstr "日志 (RAID 0: 不可靠，性能最佳，可用空间最大)"
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
@@ -10863,23 +10843,20 @@ msgstr "正在对启动存储池进行垃圾清理..."
 
 #: system/views.py:1064
 #: system/views.py:1118
-#, fuzzy
 msgid "System dataset not configured"
-msgstr "未配置 Jail 根目录！"
+msgstr "系统数据集未配置"
 
 #: system/views.py:185
-#, fuzzy
 msgid "DeleteBulk"
-msgstr "删除"
+msgstr "批量删除"
 
 #: system/views.py:1138
 msgid "Packages downloaded"
 msgstr "已下载包"
 
 #: system/utils.py:230
-#, fuzzy
 msgid "Verifying"
-msgstr "验证"
+msgstr "验证中"
 
 #: system/alertmods/boot_volume_status.py:19
 #, fuzzy
@@ -10935,9 +10912,8 @@ msgid "The following packages will be downloaded:"
 msgstr "将下载下列包："
 
 #: templates/system/update_check.html:31
-#, fuzzy
 msgid "Do you want to continue?"
-msgstr "确定离线?"
+msgstr "是否继续?"
 
 #: templates/system/update_check.html:32
 msgid "Apply updates after downloading"
@@ -10947,11 +10923,10 @@ msgstr "下载后应用更新"
 #: templates/system/vmwareplugin_edit.html:6
 #, fuzzy
 msgid "Fetch Datastores"
-msgstr "创建ZFS数据集"
+msgstr "获取数据存储"
 
 #: templates/vmware/index.html:3
 #: vmware/models.py:67
-#, fuzzy
 msgid "Configure"
 msgstr "配置"
 
@@ -11011,14 +10986,12 @@ msgid "Only alphanumeric, underscores and dashes are allowed."
 msgstr "仅允许使用字母、数字、“-”和 “_”。"
 
 #: system/views.py:361
-#, fuzzy
 msgid "Disk successfully attached."
-msgstr "成功擦除磁盘"
+msgstr "磁盘已附加。"
 
 #: system/views.py:379
-#, fuzzy
 msgid "Disk is being replaced."
-msgstr "磁盘已移除"
+msgstr "磁盘已替换。"
 
 #: system/views.py:1249
 #: system/views.py:1321
@@ -11042,9 +11015,8 @@ msgid "Done"
 msgstr "完成"
 
 #: templates/system/bootenv_pool_attach.html:3
-#, fuzzy
 msgid "Attach Disk"
-msgstr "替换磁盘"
+msgstr "附加磁盘"
 
 #: templates/system/update.html:31
 msgid ""
@@ -11075,6 +11047,5 @@ msgstr "卷 %(volume)s 状态为 %(state)s: %(status)s"
 
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
-#, fuzzy
 msgid "Changelog"
-msgstr "更改"
+msgstr "更新日志"
