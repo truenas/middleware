@@ -57,11 +57,21 @@ class DiskProvider(Provider):
     def is_online(self, name):
         return os.path.exists(name)
 
-    def get_config(self, name):
+    def get_disk_config(self, name):
         if not diskinfo_cache.exists(name):
             raise RpcException(errno.ENOENT, "Disk {0} not found".format(name))
 
         return diskinfo_cache.get(name)
+
+    def get_partition_config(self, part_name):
+        for name, disk in diskinfo_cache.itervalid():
+            for part in disk['partitions']:
+                if part_name in part['paths']:
+                    result = part.copy()
+                    result['disk'] = name
+                    return result
+
+        raise RpcException(errno.ENOENT, "Partition {0} not found".format(part_name))
 
 
 @accepts(
@@ -74,6 +84,9 @@ class DiskGPTFormatTask(Task):
         return "Formatting disk {0}".format(os.path.basename(disk))
 
     def verify(self, disk, fstype, params=None):
+        if not diskinfo_cache.exists(disk):
+            raise VerifyException(errno.ENOENT, "Disk {0} not found".format(disk))
+
         if fstype not in ['freebsd-zfs']:
             raise VerifyException(errno.EINVAL, "Unsupported fstype {0}".format(fstype))
 
@@ -88,20 +101,20 @@ class DiskGPTFormatTask(Task):
         bootcode = params.pop('bootcode', '/boot/pmbr-datadisk')
 
         try:
-            system('gpart', 'destroy', '-F', disk)
+            system('/sbin/gpart', 'destroy', '-F', disk)
         except SubprocessException:
             # ignore
             pass
 
         try:
-            system('gpart', 'create', '-s', 'gpt', disk)
+            system('/sbin/gpart', 'create', '-s', 'gpt', disk)
             if swapsize > 0:
-                system('gpart', 'add', '-a', str(blocksize), '-b', '128', '-s', swapsize, '-t', 'freebsd-swap', disk)
-                system('gpart', 'add', '-a', str(blocksize), '-t', fstype, disk)
+                system('/sbin/gpart', 'add', '-a', str(blocksize), '-b', '128', '-s', swapsize, '-t', 'freebsd-swap', disk)
+                system('/sbin/gpart', 'add', '-a', str(blocksize), '-t', fstype, disk)
             else:
-                system('gpart', 'add', '-a', str(blocksize), '-b', '128', '-t', fstype, disk)
+                system('/sbin/gpart', 'add', '-a', str(blocksize), '-b', '128', '-t', fstype, disk)
 
-            system('gpart', 'bootcode', '-b', bootcode, disk)
+            system('/sbin/gpart', 'bootcode', '-b', bootcode, disk)
         except SubprocessException, err:
             raise TaskException(errno.EFAULT, 'Cannot format disk: {0}'.format(err.err))
 
@@ -110,14 +123,42 @@ class DiskGPTFormatTask(Task):
 
 
 class DiskEraseTask(Task):
+    def __init__(self, dispatcher):
+        super(DiskEraseTask, self).__init__(dispatcher)
+        self.started = False
+        self.mediasize = 0
+        self.remaining = 0
+
     def verify(self, disk, erase_data=False):
-        pass
+        if not diskinfo_cache.exists(disk):
+            raise VerifyException(errno.ENOENT, "Disk {0} not found".format(disk))
 
     def run(self, disk, erase_data=False):
-        pass
+        try:
+            system('/sbin/zpool', 'labelclear', '-f', disk)
+            system('/sbin/gpart', 'destroy', '-F', disk)
+        except SubprocessException, err:
+            raise TaskException(errno.EFAULT, 'Cannot erase disk: {0}'.format(err.err))
+
+        if erase_data:
+            diskinfo = diskinfo_cache.get(disk)
+            fd = open(disk, 'w')
+            zeros = b'\0' * (1024 * 1024)
+            self.mediasize = diskinfo['mediasize']
+            self.remaining = self.mediasize
+            self.started = True
+
+            while self.remaining > 0:
+                amount = min(len(zeros), self.remaining)
+                fd.write(zeros[:amount])
+                fd.flush()
+                self.remaining -= amount
 
     def get_status(self, disk):
-        pass
+        if not self.started:
+            return TaskStatus(0, 'Erasing disk...')
+
+        return TaskStatus(self.remaining / self.mediasize, 'Erasing disk...')
 
 
 @accepts({
@@ -294,8 +335,19 @@ def generate_disk_cache(dispatcher, path):
 
     if gpart:
         for p in gpart.findall('provider'):
+            paths = [os.path.join("/dev", p.find("name").text)]
+            label = p.find("config/label").text
+            uuid = p.find("config/rawuuid").text
+
+            if label:
+                paths.append(os.path.join("/dev/gpt", label))
+
+            if uuid:
+                paths.append(os.path.join("/dev/gptid", uuid))
+
             partitions.append({
                 'name': p.find("name").text,
+                'paths': paths,
                 'mediasize': int(p.find("mediasize").text),
                 'uuid': p.find("config/rawuuid").text,
                 'type': p.find("config/type").text,
@@ -328,6 +380,7 @@ def generate_disk_cache(dispatcher, path):
         dispatcher.datastore.insert('disks', {
             'id': identifier,
             'path': path,
+            'mediasize': disk['mediasize'],
             'serial': disk['serial'],
             'data-partition-uuid': disk['data-partition-uuid']
         })
