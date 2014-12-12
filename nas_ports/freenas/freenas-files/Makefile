@@ -175,8 +175,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-start ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-start
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-stop ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-stop
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/iso_3166_2_countries.csv ${STAGEDIR}/${PREFIX}/etc/iso_3166_2_countries.csv
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}/${PREFIX}/etc/netcli
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}/${PREFIX}/etc/netcli.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/find_alias_for_smtplib.py ${STAGEDIR}/${PREFIX}/etc/find_alias_for_smtplib.py
 
 .include <bsd.port.mk>
