@@ -147,7 +147,6 @@ add_port www/py-gevent-websocket
 add_port www/py-flask
 add_port www/py-flask-bootstrap
 add_port devel/py-argh
-add_port devel/py-fusepy
 add_port devel/py-texttable
 add_port devel/py-pip
 add_port devel/py-pyee
@@ -156,6 +155,7 @@ add_port devel/py-watchdog
 add_port devel/py-setproctitle
 add_port devel/py-jsonschema
 add_port devel/py-jsonpointer
+add_port devel/py-natural
 add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py
