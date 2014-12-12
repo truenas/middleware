@@ -26,6 +26,7 @@
 #####################################################################
 
 import sysctl
+from lib.system import system
 
 
 def get_sysctl(name):
@@ -35,3 +36,26 @@ def get_sysctl(name):
         return node[0].value
 
     return {i.name[len(name) + 1:]: i.value for i in node}
+
+
+def sockstat(only_connected=False, ports=None):
+    args = ['/usr/bin/sockstat', '-4']
+
+    if only_connected:
+        args.append('-c')
+
+    if ports:
+        args.append('-p')
+        args.append(','.join([str(p) for p in ports]))
+
+    out, _ = system(*args)
+    for line in out.strip().splitlines()[1:]:
+        items = line.split()
+        yield {
+            'user': items[0],
+            'command': items[1],
+            'pid': items[2],
+            'proto': items[4],
+            'local': items[5],
+            'remote': items[6]
+        }

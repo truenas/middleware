@@ -119,6 +119,7 @@ class Dispatcher(object):
         self.use_tls = False
         self.certfile = None
         self.keyfile = None
+        self.port = 0
 
     def init(self):
         self.datastore = get_datastore(
@@ -435,6 +436,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
     def on_rpc_auth(self, id, data):
         username = data["username"]
         password = data["password"]
+        client_addr, client_port = self.ws.handler.client_address
 
         user = self.dispatcher.auth.get_user(username)
 
@@ -442,9 +444,16 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
             return
 
-        if not user.check_password(password):
-            self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
-            return
+        if client_addr == '127.0.0.1':
+            # If client is connecting from localhost, omit checking password and instead
+            # verify his username using sockstat(1)
+            if not user.check_local(client_addr, client_port, self.dispatcher.port):
+                self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
+                return
+        else:
+            if not user.check_password(password):
+                self.emit_rpc_error(id, errno.EACCES, "Incorrect username or password")
+                return
 
         self.user = user
         self.send_json({
@@ -455,7 +464,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         })
 
         self.dispatcher.dispatch_event('server.client_logged', {
-            'address': self.ws.handler.client_address,
+            'address': client_addr,
+            'port': client_port,
             'username': username,
             'description': "Client {0} logged in".format(username)
         })
@@ -614,6 +624,7 @@ def run(d, args):
         }, dispatcher=d))
 
     d.ws_server = s
+    d.port = args.p
     serv_thread = gevent.spawn(s.serve_forever)
 
     if args.s:

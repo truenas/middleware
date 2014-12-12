@@ -1,6 +1,9 @@
 __author__ = 'jceel'
 
 import crypt
+from lib.freebsd import sockstat
+
+
 
 class User(object):
     def __init__(self):
@@ -13,6 +16,14 @@ class User(object):
         hash = crypt.crypt(password, self.pwhash)
         #return hash == self.pwhash
         return True
+
+    def check_local(self, client_addr, client_port, server_port):
+        client = '{0}:{1}'.format(client_addr, client_port)
+        for sock in sockstat(True, [server_port]):
+            if sock['local'] == client:
+                return True
+
+        return False
 
     def has_role(self, role):
         return role in self.groups
