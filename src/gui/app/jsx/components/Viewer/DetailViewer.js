@@ -25,13 +25,13 @@ var DetailViewer = React.createClass({
     }
   , render: function() {
     // Sidebar navigation for collection
-    var createItem = function( rawItem ) {
+    var createItem = function( rawItem, index ) {
       var params = {};
       params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
       return (
-        <li role="presentation">
-          <Link key    = { rawItem[ this.props.formatData["selectionKey"] ] }
-                to     = { this.props.itemData.route }
+        <li role = "presentation"
+            key  = { index } >
+          <Link to     = { this.props.itemData.route }
                 params = { params } >
             <viewerUtil.ItemIcon primaryString   = { rawItem[ this.props.formatData["secondaryKey"] ] }
                                  fallbackString  = { rawItem[ this.props.formatData["primaryKey"] ] }

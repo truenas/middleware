@@ -16,9 +16,10 @@ var Navigation = React.createClass({
     propTypes: {
       views : React.PropTypes.array.isRequired
     }
-  , createNavItems: function( item ) {
+  , createNavItems: function( item, index ) {
       return (
         <Link to              = { item.route }
+              key             = { index }
               className       = "btn btn-default"
               activeClassName = "active btn-info"
               role            = "button"
