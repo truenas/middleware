@@ -27,7 +27,9 @@
 
 
 from namespace import Namespace, Command, IndexCommand, description
-from output import output_dict
+from output import output_dict, output_table, format_datetime
+from descriptions import events
+from utils import parse_query_args
 
 
 @description("Provides status information about the server")
@@ -44,15 +46,25 @@ class LoginCommand(Command):
         context.login_plugins()
 
 
+@description("Prints events history")
+class EventsCommand(Command):
+    def run(self, context, args, kwargs):
+        items = context.connection.call_sync('event.query', *parse_query_args(args, kwargs))
+        output_table(items, [
+            ('Event name', lambda t: events.translate(context, t['name'], t['args'])),
+            ('Occurred at', lambda t: format_datetime(t['timestamp']))
+        ])
+
 @description("System namespace")
 class SystemNamespace(Namespace):
     def commands(self):
         return {
             '?': IndexCommand(self),
             'login': LoginCommand(),
-            'status': StatusCommand()
+            'status': StatusCommand(),
+            'events': EventsCommand()
         }
 
 
 def _init(context):
-    context.attach_namespace('/system', SystemNamespace())
+    context.attach_namespace('/', SystemNamespace('system'))

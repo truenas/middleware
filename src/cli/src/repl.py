@@ -40,10 +40,11 @@ import termios
 import config
 import json
 import gettext
-import signal
+import getpass
 import traceback
+import signal
 from descriptions import events, tasks
-from namespace import RootNamespace
+from namespace import Namespace, RootNamespace, Command
 from output import output_lock, output_msg
 from dispatcher.client import Client, ClientError
 from commands import ExitCommand, PrintenvCommand, SetenvCommand
@@ -61,6 +62,16 @@ t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
+EVENT_MASKS = [
+    'client.logged',
+    'task.created',
+    'task.updated',
+    'service.stopped',
+    'service.started',
+    'volume.created',
+]
+
+
 class VariableStore(object):
     class Variable(object):
         def __init__(self, default, type, choices=None):
@@ -68,6 +79,15 @@ class VariableStore(object):
             self.type = type
             self.choices = choices
             self.value = default
+
+        def __str__(self):
+            if self.type == int:
+                return str(self.value)
+
+            if self.type == bool:
+                return 'true' if self.value else 'false'
+
+            return self.value
 
         def set(self, value):
             try:
@@ -79,13 +99,16 @@ class VariableStore(object):
             if self.choices is not None and value not in self.choices:
                 raise ValueError(_("Value not on the list of possible choices"))
 
+            self.value = value
+
     def __init__(self):
         self.variables = {
             'output-format': self.Variable('ascii', str, ['ascii', 'json']),
             'datetime-format': self.Variable('natural', str),
-            'language': self.Variable(os.environ['LANG'], str),
+            'language': self.Variable(os.getenv('LANG', 'C'), str),
             'prompt': self.Variable('{host}:{path}>', str),
             'timeout': self.Variable(10, int),
+            'tasks-blocking': self.Variable(False, bool),
             'show-events': self.Variable(True, bool)
         }
 
@@ -102,6 +125,10 @@ class VariableStore(object):
         for name, var in self.variables.items():
             yield (name, var.value)
 
+    def get_all_printable(self):
+        for name, var in self.variables.items():
+            yield (name, str(var))
+
     def set(self, name, value):
         self.variables[name].set(value)
 
@@ -115,7 +142,7 @@ class Context(object):
         self.plugin_dirs = []
         self.plugins = {}
         self.variables = VariableStore()
-        self.root_ns = RootNamespace()
+        self.root_ns = RootNamespace('')
         self.event_masks = ['*']
         config.instance = self
 
@@ -166,7 +193,9 @@ class Context(object):
             return
 
         self.logger.debug(_("Loading plugin from %s"), path)
-        plugin = imp.load_source('plugin', path)
+        name, ext = os.path.splitext(os.path.basename(path))
+        plugin = imp.load_source(name, path)
+
         if hasattr(plugin, '_init'):
             plugin._init(self)
             self.plugins[path] = plugin
@@ -185,7 +214,7 @@ class Context(object):
 
             ptr = ptr.namespaces()[n]
 
-        ptr.register_namespace(splitpath[-1], ns)
+        ptr.register_namespace(ns)
 
     def connection_error(self, event):
         if event == ClientError.CONNECTION_CLOSED:
@@ -193,20 +222,23 @@ class Context(object):
             return
 
     def print_event(self, event, data):
-        self.ml.blank_readline()
         output_lock.acquire()
-        output_msg(events.translate(event, data))
-        output_lock.release()
+        self.ml.blank_readline()
+
+        translation = events.translate(self, event, data)
+        if translation:
+            output_msg(translation)
+
+        sys.stdout.flush()
         self.ml.restore_readline()
+        output_lock.release()
 
     def submit_task(self, name, *args):
-        return self.connection.call_sync('task.submit', name, args)
+        tid = self.connection.call_sync('task.submit', name, args)
 
+        #if self.variables.get('blocking'):
 
-class PathItem(object):
-    def __init__(self, name, ns):
-        self.name = name
-        self.ns = ns
+        return tid
 
 
 class MainLoop(object):
@@ -218,16 +250,35 @@ class MainLoop(object):
 
     def __init__(self, context):
         self.context = context
-        self.root_path = [PathItem(self.context.hostname, self.context.root_ns)]
+        self.root_path = [self.context.root_ns]
         self.path = self.root_path[:]
         self.namespaces = []
         self.connection = None
 
     def __get_prompt(self):
-        return '/'.join([x.name for x in self.path]) + '> '
+        variables = {
+            'path': '/'.join([x.get_name() for x in self.path]),
+            'host': self.context.hostname
+        }
+        return self.context.variables.get('prompt').format(**variables)
 
-    def cd(self, name, ns):
-        self.path.append(PathItem(name, ns))
+    def greet(self):
+        print _("Welcome to FreeNAS CLI! Type '?' for help at any point.")
+        print
+
+    def cd(self, ns):
+        if not self.cwd.on_leave():
+            return
+
+        self.path.append(ns)
+        self.cwd.on_enter()
+
+    def cd_up(self):
+        if not self.cwd.on_leave():
+            return
+
+        del self.path[-1]
+        self.cwd.on_enter()
 
     @property
     def cwd(self):
@@ -259,6 +310,9 @@ class MainLoop(object):
     def repl(self):
         readline.parse_and_bind('tab: complete')
         readline.set_completer(self.complete)
+
+        self.greet()
+
         while True:
             line = raw_input(self.__get_prompt()).strip()
 
@@ -271,7 +325,7 @@ class MainLoop(object):
 
             if line == '..':
                 if len(self.path) > 1:
-                    del self.path[-1]
+                    self.cd_up()
                     continue
 
             tokens, kwargs = self.tokenize(line)
@@ -287,13 +341,13 @@ class MainLoop(object):
                     break
 
                 try:
-                    for name, ns in self.cwd.ns.namespaces().items():
-                        if token == name:
-                            self.cd(token, ns)
+                    for ns in self.cwd.namespaces():
+                        if token == ns.get_name():
+                            self.cd(ns)
                             nsfound = True
                             break
 
-                    for name, cmd in self.cwd.ns.commands().items():
+                    for name, cmd in self.cwd.commands().items():
                         if token == name:
                             output_lock.acquire()
                             cmd.run(self.context, tokens, kwargs)
@@ -314,13 +368,49 @@ class MainLoop(object):
                         self.path = oldpath
                         break
 
+    def get_relative_object(self, ns, tokens):
+        ptr = ns
+        while len(tokens) > 0:
+            token = tokens.pop(0)
+
+            if issubclass(type(ptr), Namespace):
+                nss = ptr.namespaces()
+                for ns in ptr.namespaces():
+                    if ns.get_name() == token:
+                        ptr = ns
+                        break
+
+                cmds = ptr.commands()
+                if token in cmds:
+                    return cmds[token]
+
+                if token in self.builtin_commands:
+                    return self.builtin_commands[token]
+
+        return ptr
+
     def complete(self, text, state):
-        choices = self.cwd.ns.namespaces().keys() + self.cwd.ns.commands().keys() + self.builtin_commands.keys()
+        tokens = shlex.split(readline.get_line_buffer(), posix=False)
+        obj = self.get_relative_object(self.cwd, tokens)
+
+        if issubclass(type(obj), Namespace):
+            choices = [x.get_name() for x in obj.namespaces()] + obj.commands().keys() + self.builtin_commands.keys()
+            choices = [i + ' ' for i in choices]
+
+        elif issubclass(type(obj), Command):
+            choices = obj.complete(self.context, tokens)
+
+        else:
+            choices = []
+
         options = [i for i in choices if i.startswith(text)]
         if state < len(options):
             return options[state]
         else:
             return None
+
+    def sigint(self):
+        pass
 
     def blank_readline(self):
         rows, cols = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, '1234'))
@@ -337,9 +427,8 @@ class MainLoop(object):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
-    parser.add_argument('hostname', metavar='HOSTNAME', default='127.0.0.1')
-    parser.add_argument('--config', metavar='CONFIGFILE', default=DEFAULT_CONFIGFILE)
-    parser.add_argument('-c', metavar='COMMANDS')
+    parser.add_argument('hostname', metavar='HOSTNAME', nargs='?', default='127.0.0.1')
+    parser.add_argument('-c', metavar='COMMANDS', default=DEFAULT_CONFIGFILE)
     parser.add_argument('-l', metavar='LOGIN')
     parser.add_argument('-p', metavar='PASSWORD')
     parser.add_argument('-D', metavar='DEFINE', action='append')
@@ -351,7 +440,11 @@ def main():
 
     if args.l:
         context.connection.login_user(args.l, args.p)
-        context.connection.subscribe_events('*')
+        context.connection.subscribe_events(*EVENT_MASKS)
+        context.login_plugins()
+    elif args.l is None and args.p is None and args.hostname == '127.0.0.1':
+        context.connection.login_user(getpass.getuser(), '')
+        context.connection.subscribe_events(*EVENT_MASKS)
         context.login_plugins()
 
     ml = MainLoop(context)

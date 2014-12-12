@@ -26,64 +26,64 @@
 #####################################################################
 
 
-from texttable import Texttable
-from namespace import Namespace, EntityNamespace, Command, description
+import os
+from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
+from output import output_msg, output_table, format_datetime
 
 
-class ServiceManageCommand(Command):
-    def __init__(self, name, action):
-        self.name = name
-        self.action = action
-
-    @property
-    def description(self):
-        return '{0}s service'.format(self.action.title())
-
-    def run(self, context, args, kwargs):
-        context.submit_task('service.manage', self.name, self.action)
-
-
-@description("Service namespace")
-class ServicesNamespace(EntityNamespace):
+@description("Provides information about installed disks")
+class DisksNamespace(EntityNamespace):
     def __init__(self, name, context):
-        super(ServicesNamespace, self).__init__(name, context)
+        super(DisksNamespace, self).__init__(name, context)
 
         self.add_property(
-            descr='Service name',
+            descr='Disk name',
             name='name',
-            get='/name',
+            get=lambda row: os.path.basename(row['path']),
             set=None,
-            list=True
-        )
+            list=True)
+
+        #self.add_property(
+        #    descr='Size',
+        #    name='name',
+        #    get='/mediasize',
+        #    set=None,
+        #    list=True)
 
         self.add_property(
-            descr='State',
-            name='state',
-            get='/state',
+            descr='Online',
+            name='builtin',
+            get='/online',
             set=None,
-            list=True
-        )
+            list=True,
+            type=bool)
 
         self.primary_key = self.get_mapping('name')
-        self.allow_edit = False
-        self.allow_creation = False
-        self.entity_commands = lambda name: {
-            'start': ServiceManageCommand(name, 'start'),
-            'stop': ServiceManageCommand(name, 'stop'),
-            'restart': ServiceManageCommand(name, 'restart'),
-            'reload': ServiceManageCommand(name, 'reload')
+        self.allow_create = False
+        self.entity_commands = lambda n: {
+            'format': FormatDiskCommand(self, n),
+            'erase': EraseDiskCommand(self, n)
         }
 
     def query(self):
-        return self.context.connection.call_sync('service.query')
+        return self.context.connection.call_sync('disk.query')
 
     def get_one(self, name):
-        return self.context.connection.call_sync('service.query', [('name', '=', name)]).pop()
+        return self.context.connection.call_sync('disk.query', [('path', '=', os.path.join('/dev', name))])[0]
 
 
-class ServiceConfigNamespace(Namespace):
-    pass
+@description("Formats given disk")
+class FormatDiskCommand(Command):
+    def __init__(self, parent, name):
+        pass
+
+
+@description("Erases all data on disk safely")
+class EraseDiskCommand(Command):
+    def __init__(self, parent, name):
+        pass
+
 
 
 def _init(context):
-    context.attach_namespace('/', ServicesNamespace('services', context))
+    context.attach_namespace('/', DisksNamespace('disks', context))

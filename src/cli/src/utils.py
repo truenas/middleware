@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -26,28 +27,11 @@
 #####################################################################
 
 
-import gettext
+def parse_query_args(args, kwargs):
+    filters = []
+    params = {}
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+    if 'limit' in kwargs:
+        params['limit'] = int(kwargs['limit'])
 
-
-tasks = {
-    'zfs.pool.scrub': (_("Scrub volume"), lambda a: _("Scrub volume {0}").format(a[0])),
-    'service.manage': (_("Manage service"), lambda a: _("{0} service {1}".format(a[1].title(), a[0]))),
-    'service.configure': (_("Update service configuration"), lambda a: _("Update configuration for service {0}".format(a[0]))),
-    'users.update': (_("Update user profile"), lambda a: _("Update user {0} profile".format(a[0])))
-}
-
-
-def translate(name, args=None):
-    if name not in tasks.keys():
-        return None
-
-    first, second = tasks[name]
-
-    if args is None:
-        return first
-
-    return second(args)
-
+    return filters, params

@@ -1,0 +1,5 @@
+#!/bin/sh
+export TERM=xterm
+export PATH=$PATH:/usr/local/bin/
+clear
+exec cli

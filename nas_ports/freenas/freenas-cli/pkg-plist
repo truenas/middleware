@@ -3,6 +3,7 @@
 /usr/local/lib/freenascli/src/namespace.py
 /usr/local/lib/freenascli/src/output.py
 /usr/local/lib/freenascli/src/repl.py
+/usr/local/lib/freenascli/src/utils.py
 /usr/local/lib/freenascli/src/descriptions/__init__.py
 /usr/local/lib/freenascli/src/descriptions/events.py
 /usr/local/lib/freenascli/src/descriptions/tasks.py
@@ -10,4 +11,6 @@
 /usr/local/lib/freenascli/plugins/service.py
 /usr/local/lib/freenascli/plugins/system.py
 /usr/local/lib/freenascli/plugins/tasks.py
+/usr/local/lib/freenascli/plugins/volumes.py
 /usr/local/bin/cli
+/usr/local/bin/logincli

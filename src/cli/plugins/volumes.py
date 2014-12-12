@@ -27,54 +27,51 @@
 
 
 import time
-from descriptions import tasks
-from namespace import Namespace, IndexCommand, Command, description
+from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
 from output import output_msg, output_table, format_datetime
 
 
-@description("Lists system services")
-class ListCommand(Command):
-    def run(self, context, args, kwargs):
-        tasks = context.connection.call_sync('task.query')
-        output_table(tasks, [
-            ('ID', '/id'),
-            ('Started at', lambda t: format_datetime(t['started_at'])),
-            ('Finished at', lambda t: format_datetime(t['finished_at'])),
-            ('Description', self.describe_task),
-            ('State', self.describe_state)
-        ])
-
-    def describe_state(self, task):
-        if task['state'] == 'EXECUTING':
-            state = self.context.call_sync('task.status', task['id'])
-
-        return task['state']
-
-    def describe_task(self, task):
-        return tasks.translate(task['name'], task['args'])
+class VolumeCreateNamespace(Namespace):
+    pass
 
 
-@description("Submits new task")
-class SubmitCommand(Command):
+class VolumeCreateCommand(Command):
     def run(self, context, args, kwargs):
         name = args.pop(0)
-        tid = context.connection.call_sync('task.submit', name, args)
-        output_msg('Task {0} started'.format(tid))
+        type = kwargs.pop('mode', 'auto')
+        disks = args
+        topology = {}
 
 
-@description("Service namespace")
-class TasksNamespace(Namespace):
+
+
+@description("Volumes namespace")
+class VolumesNamespace(EntityNamespace):
+    class ShowTopologyCommand(Command):
+        def run(self, context, args, kwargs):
+            pass
+
     def __init__(self, name, context):
-        super(TasksNamespace, self).__init__(name)
-        self.context = context
+        super(VolumesNamespace, self).__init__(name, context)
 
-    def commands(self):
-        return {
-            '?': IndexCommand(self),
-            'list': ListCommand(),
-            'submit': SubmitCommand()
-        }
+        self.add_property(
+            descr='Volume name',
+            name='name',
+            get='/name',
+            list=True)
+
+        self.add_property(
+            descr='Status',
+            name='builtin',
+            get='/status',
+            set=None,
+            list=True)
+
+        self.primary_key = '/name'
+
+    def query(self):
+        return self.context.connection.call_sync('volume.query')
 
 
 def _init(context):
-    context.attach_namespace('/', TasksNamespace('tasks', context))
+    context.attach_namespace('/', VolumesNamespace('volumes', context))

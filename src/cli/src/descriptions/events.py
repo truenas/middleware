@@ -27,26 +27,35 @@
 
 
 import gettext
+from descriptions import tasks
+
 
 t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
-def task_updated(args):
-    return ''
+def task_created(context, args):
+    task = context.connection.call_sync('task.status', int(args['id']))
+    return _("Task {0} created: {1}".format(args['id'], tasks.translate(task['name'], task['args'])))
+
+
+def task_updated(context, args):
+    task = context.connection.call_sync('task.status', int(args['id']))
+    translation = tasks.translate(task['name'], task['args'])
+    return _("Task {0} {1}: {2}".format(args['id'], _(args['state'].lower()), translation))
 
 
 events = {
-    'server.client_connected': (_("Client connected"), lambda a: _("Client connected from {0}").format(a['address'])),
-    'server.client_logged': (_("User logged in"), lambda a: _("User {0} logged in").format(a['username'])),
-    'server.service_logged': (_("Service logged in"), lambda a: _("Service {0} logged in").format(a['name'])),
-    'server.client_disconnected': (_("Client disconnected"), lambda a: _("Client {0} disconnected").format(a['address'])),
-    'task.created': (_("Task created"), lambda a: _("Task {0} created").format(a['id'])),
+    'server.client_logged': (_("User logged in"), lambda c, a: _("User {0} logged in").format(a['username'])),
+    'server.client_disconnected': (_("Client disconnected"), lambda c, a: _("Client {0} disconnected").format(a['address'])),
+    'service.started': (_("Service started"), lambda c, a: _("Service {0} started").format(a['name'])),
+    'service.stopped': (_("Service stopped"), lambda c, a: _("Service {0} stopped").format(a['name'])),
+    'task.created': (_("Task created"), task_created),
     'task.updated': (_("Task updated"), task_updated),
 }
 
 
-def translate(name, args=None):
+def translate(context, name, args=None):
     if name not in events.keys():
         return name
 
@@ -55,4 +64,4 @@ def translate(name, args=None):
     if args is None:
         return first
 
-    return second(args)
+    return second(context, args)

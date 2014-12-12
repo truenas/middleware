@@ -30,6 +30,7 @@ import json
 import config
 import time
 import natural.date
+import gettext
 from threading import Lock
 from xml.etree import ElementTree
 from texttable import Texttable
@@ -37,6 +38,8 @@ from jsonpointer import resolve_pointer
 
 
 output_lock = Lock()
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
 
 
 class JsonOutputFormatter(object):
@@ -149,8 +152,15 @@ def output_msg(message, fmt=None):
     print message
 
 
+def output_is_ascii():
+    return config.instance.variables.get('output-format') == 'ascii'
+
+
 def format_datetime(timestamp):
     fmt = config.instance.variables.get('datetime-format')
+    if timestamp is None:
+        return _("none")
+
     if fmt == 'natural':
         return natural.date.duration(timestamp)
 

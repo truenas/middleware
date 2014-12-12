@@ -38,11 +38,14 @@ class SetenvCommand(Command):
 
         context.variables.set(args[0], args[1])
 
+    def complete(self, context, tokens):
+        return [k for k, _ in context.variables.get_all()]
+
 @description("Prints variable value")
 class PrintenvCommand(Command):
     def run(self, context, args, kwargs):
         if len(args) == 0:
-            output_dict(context.variables.get_all(), key_label='Variable name', value_label='Value')
+            output_dict({k: v for k, v in context.variables.get_all_printable()}, key_label='Variable name', value_label='Value')
             return
 
         if len(args) == 1:

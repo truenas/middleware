@@ -32,8 +32,8 @@ from namespace import Namespace, Command, EntityNamespace, IndexCommand, descrip
 @description("foo")
 class UsersNamespace(EntityNamespace):
 
-    def __init__(self, context):
-        super(UsersNamespace, self).__init__(context)
+    def __init__(self, name, context):
+        super(UsersNamespace, self).__init__(name, context)
 
         self.add_property(
             descr='User name',
@@ -52,12 +52,14 @@ class UsersNamespace(EntityNamespace):
             name='uid',
             get='/id',
             set=None,
-            list=True)
+            list=True,
+            type=int)
 
         self.add_property(
             descr='Primary group',
             name='group',
-            get=self.display_group)
+            get=self.display_group,
+            set=self.set_group)
 
         self.add_property(
             descr='Login shell',
@@ -68,6 +70,7 @@ class UsersNamespace(EntityNamespace):
             descr='Home directory',
             name='home',
             get='/home',
+            set=self.set_home,
             list=True)
 
         self.add_property(
@@ -78,7 +81,7 @@ class UsersNamespace(EntityNamespace):
             list=False
         )
 
-        self.primary_key = '/username'
+        self.primary_key = self.get_mapping('username')
 
     def query(self):
         return self.context.connection.call_sync('users.query')
@@ -92,19 +95,32 @@ class UsersNamespace(EntityNamespace):
     def save(self, entity, new=False):
         if new:
             self.context.submit_task('users.create', entity)
+            return
 
-        self.context.submit_task('users.update', entity['id'], entity)
-        return
+        entity = entity.copy()
+        uid = entity.pop('id')
+        del entity['builtin']
+        self.context.submit_task('users.update', uid, entity)
 
     def display_group(self, entity):
         group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
         return group['name'] if group else 'GID:{0}'.format(entity['group'])
 
+    def set_group(self, entity, value):
+        group = self.context.connection.call_sync('groups.query', [('name', '=', value)]).pop()
+        entity['group'] = group['id']
+
+    def set_home(self, entity, value):
+        if not value:
+            value = '/home/{0}'.format(entity['username'])
+
+        entity['home'] = value
+
 
 @description("blah")
 class GroupsNamespace(EntityNamespace):
-    def __init__(self, context):
-        super(GroupsNamespace, self).__init__(context)
+    def __init__(self, name, context):
+        super(GroupsNamespace, self).__init__(name, context)
 
         self.add_property(
             descr='Group name',
@@ -126,13 +142,13 @@ class GroupsNamespace(EntityNamespace):
             set=None,
             list=True)
 
-        self.primary_key = '/name'
+        self.primary_key = self.get_mapping('name')
 
     def query(self):
         return self.context.connection.call_sync('groups.query')
 
-    def get_one(self, name, context):
-        return context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
+    def get_one(self, name):
+        return self.context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
 
     def set(self, entity, name, value, context):
         pass
@@ -140,8 +156,8 @@ class GroupsNamespace(EntityNamespace):
 
 @description("Service namespace")
 class AccountNamespace(Namespace):
-    def __init__(self, context):
-        super(AccountNamespace, self).__init__()
+    def __init__(self, name, context):
+        super(AccountNamespace, self).__init__(name)
         self.context = context
 
     def commands(self):
@@ -150,11 +166,11 @@ class AccountNamespace(Namespace):
         }
 
     def namespaces(self):
-        return {
-            'users': UsersNamespace(self.context),
-            'groups': GroupsNamespace(self.context)
-        }
+        return [
+            UsersNamespace('users', self.context),
+            GroupsNamespace('groups', self.context)
+        ]
 
 
 def _init(context):
-    context.attach_namespace('/account', AccountNamespace(context))
+    context.attach_namespace('/', AccountNamespace('account', context))
