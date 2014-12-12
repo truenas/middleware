@@ -163,7 +163,8 @@ class DevdEventSource(EventSource):
     def __process_zfs(self, args):
         event_mapping = {
             "misc.fs.zfs.scrub_start": ("fs.zfs.scrub.start", "Scrub on volume {0} started"),
-            "misc.fs.zfs.scrub_finish": ("fs.zfs.scrub.finish", "Scrub on volume {0} finished")
+            "misc.fs.zfs.scrub_finish": ("fs.zfs.scrub.finish", "Scrub on volume {0} finished"),
+            "misc.fs.zfs.pool_destroy": ("fs.zfs.pool.destroy", "Pool {0} destroyed")
         }
 
         params = {

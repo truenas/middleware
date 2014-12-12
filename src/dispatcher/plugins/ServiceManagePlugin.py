@@ -176,6 +176,9 @@ def _init(dispatcher):
             # ignore unknown actions
             return
 
+        if cmd == 'stop':
+            cmd += 'p'
+
         dispatcher.dispatch_event('service.{0}ed'.format(cmd), {
             'name': svc['name']
         })

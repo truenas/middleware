@@ -349,16 +349,16 @@ def _init(dispatcher):
             'builtin': {'type': 'boolean', 'readOnly': True},
             'username': {'type': 'string'},
             'full_name': {'type': 'string', 'default': 'User &'},
-            'email': {'type': 'string'},
+            'email': {'type': ['string', 'null']},
             'locked': {'type': 'boolean'},
             'sudo': {'type': 'boolean'},
             'password_disabled': {'type': 'boolean'},
-            'group': {'type': 'number'},
+            'group': {'type': 'integer'},
             'shell': {'type': 'string'},
             'home': {'type': 'string'},
             'unixhash': {'type': 'string', 'default': '*'},
-            'smbhash': {'type': 'string'},
-            'sshpubkey': {'type': 'string'}
+            'smbhash': {'type': ['string', 'null']},
+            'sshpubkey': {'type': ['string', 'null']}
         }
     })
 
