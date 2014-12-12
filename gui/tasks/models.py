@@ -24,6 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+import os
+import pwd
 import subprocess
 
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -31,9 +34,12 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
+from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.models import Model, UserField, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
+
+log = logging.getLogger('tasks.models')
 
 
 class CronJob(Model):
@@ -172,16 +178,35 @@ class CronJob(Model):
         return line
 
     def run(self):
-        subprocess.Popen(
-            '%s | logger -t cron' % self.commandline(),
-            shell=True,
-            env={
-                'PATH': (
-                    '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
-                    '/usr/local/sbin:/root/bin'
-                ),
-            },
-        )
+        if os.fork() == 0:
+            for i in xrange(1, 1024):
+                try:
+                    os.close(i)
+                except OSError:
+                    pass
+            try:
+                passwd = pwd.getpwnam(self.cron_user.encode('utf8'))
+                os.umask(0)
+                os.setgid(passwd.pw_gid)
+                os.setuid(passwd.pw_uid)
+                try:
+                    os.chdir(passwd.pw_dir)
+                except:
+                    pass
+                proc = subprocess.Popen(
+                    '%s | logger -t cron' % self.commandline(),
+                    shell=True,
+                    env={
+                        'PATH': (
+                            '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                            '/usr/local/sbin:/root/bin'
+                        ),
+                    },
+                )
+            except Exception, e:
+                log.debug("Failed to run cron")
+                log_traceback(log=log)
+            os._exit(0)
 
     def delete(self):
         super(CronJob, self).delete()
