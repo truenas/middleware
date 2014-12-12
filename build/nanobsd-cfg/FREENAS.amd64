@@ -328,7 +328,7 @@ options 	TMPFS			#Efficient memory filesystem
 
 # Watchdog support
 device		ichwd
-device		amdsbwd
+#device		amdsbwd			# #7094: driver must not set watchdog if requested value is too high
 device		viawd
 device		wbwd
 
