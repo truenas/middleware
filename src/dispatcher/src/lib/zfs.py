@@ -29,8 +29,8 @@ import bisect
 import logging
 import os
 import re
-import subprocess
 import geom
+from lib.system import system, SubprocessException
 from collections import OrderedDict
 
 log = logging.getLogger('middleware.zfs')
@@ -412,12 +412,8 @@ class Dev(Tnode):
                 self.disk = self.name
             elif self.name.isdigit():
                 # Lets check whether it is a guid
-                p1 = subprocess.Popen(
-                    ["/usr/sbin/zdb", "-C", self.parent.parent.name],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
-                zdb = p1.communicate()[0]
-                if p1.returncode == 0:
+                try:
+                    zdb, _ = system("/usr/sbin/zdb", "-C", self.parent.parent.name)
                     reg = re.search(
                         r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % (
                             self.name,
@@ -425,6 +421,8 @@ class Dev(Tnode):
                         zdb, re.M | re.S)
                     if reg:
                         self.path = reg.group("path")
+                except SubprocessException:
+                    pass
 
         if provider:
             search = self._doc.xpath(
@@ -461,6 +459,9 @@ class ZFSList(OrderedDict):
         self.pools[item.pool].remove(item)
         super(ZFSList, self).__delitem__(item)
 
+    def __getstate__(self):
+        return [i.__getstate__() for i in self]
+
 
 class ZFSDataset(object):
 
@@ -491,6 +492,16 @@ class ZFSDataset(object):
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
+
+    def __getstate__(self):
+        return {
+            'name': self.name,
+            'path': self.path,
+            'used': self.used,
+            'avail': self.avail,
+            'refer': self.refer,
+            'mountpoint': self.mountpoint
+        }
 
     @property
     def full_name(self):
@@ -600,7 +611,7 @@ class Snapshot(object):
         return zfs_size_to_bytes(self.refer)
 
 
-def parse_status(name, doc, data):
+def parse_status(name, doc, data, params):
 
     """
     Parse the scrub statistics from zpool status
@@ -718,12 +729,7 @@ def parse_status(name, doc, data):
         resilver['status'] = 'NONE'
 
     status = data.split('config:')[1]
-    pid = re.search(r'id: (?P<id>\d+)', data)
-    if pid:
-        pid = pid.group("id")
-    else:
-        pid = None
-    pool = Pool(pid=pid, name=name, scrub=scrub, resilver=resilver)
+    pool = Pool(pid=params['guid'], name=name, scrub=scrub, resilver=resilver)
     lastident = None
     pnode = None
     for line in status.split('\n'):
@@ -824,14 +830,29 @@ def parse_status(name, doc, data):
 
 
 def zpool_status(pool):
-    status = subprocess.check_output(["/sbin/zpool", "status", pool])
+    status, _ = system("/sbin/zpool", "status", pool)
     confxml = geom.confxml()
-    return parse_status(pool, confxml, status)
+    zpool = parse_status(pool, confxml, status, zpool_get_all(pool)).__getstate__()
+    zpool['datasets'] = list_datasets(pool).__getstate__()
+
+
+def zpool_get_all(pool):
+    result = {}
+    out, _ = system('/sbin/zpool', 'get', '-H', '-o', 'property,value', 'all', pool)
+    for line in out.strip().split('\n'):
+        name, value = line.split()
+        result[name] = value
+
+    return result
+
+
+def zpool_set(pool, prop, value):
+    system('/sbin/zpool', 'set', '{0}={1}'.format(prop, value), 'pool')
 
 
 def list_pools():
-    out = subprocess.check_output(["/sbin/zpool", "list", "-H", "-o", "name"]).strip()
-    return [i.strip() for i in out.split("\n")]
+    out, _ = system("/sbin/zpool", "list", "-H", "-o", "name")
+    return [i.strip() for i in out.strip().split("\n")]
 
 
 def list_datasets(path="", recursive=False, hierarchical=False,
@@ -853,12 +874,7 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     if path:
         args.append(path)
 
-    zfsproc = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-
-    zfs_output, zfs_err = zfsproc.communicate()
+    zfs_output, zfs_err = system(*args)
     zfs_output = zfs_output.split('\n')
     zfslist = ZFSList()
     last_dataset = None
