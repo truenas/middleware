@@ -35,10 +35,10 @@ def run(context):
     except subprocess.CalledProcessError:
         raise
 
-    context.emit_event('etcd.regenerated_file', {
+    context.emit_event('etcd.file_generated', {
         'filename': '/etc/pwd.db'
     })
 
-    context.emit_event('etcd.regenerated_file', {
+    context.emit_event('etcd.file_generated', {
         'filename': '/etc/spwd.db'
     })
