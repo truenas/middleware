@@ -71,3 +71,14 @@ class CacheStore(object):
         item = self.store.get(key)
         if item:
             item.valid.clear()
+
+    def itervalid(self):
+        for key, value in self.store.items():
+            if value.valid.is_set():
+                yield (key, value.data)
+
+    def validvalues(self):
+        for value in self.store.values():
+            if value.valid.is_set():
+                yield value.data
+
