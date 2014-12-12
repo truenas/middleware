@@ -684,7 +684,8 @@ def testmail(request):
         error, errmsg = send_mail(
             subject=_('Test message from %s') % sw_name,
             text=_('This is a message test from %s') % sw_name,
-            to=[email])
+            to=[email],
+	    timeout=10)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
