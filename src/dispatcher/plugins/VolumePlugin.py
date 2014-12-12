@@ -30,7 +30,7 @@ import os
 from task import Provider, Task, TaskException, VerifyException, query
 from lib.system import system
 from lib import zfs
-from dispatcher.rpc import description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns
 
 
 @description("Provides access to volumes information")
@@ -45,41 +45,12 @@ class VolumeProvider(Provider):
     def get_config(self, vol):
         return self.datastore.get_one('volumes', ('name', '=', vol))
 
-    def get_capabilities(self, vol):
-        return {
-            'vdev-types': {
-                'disk': {
-                    'min-devices': 1,
-                    'max-devices': 1
-                },
-                'mirror': {
-                    'min-devices': 2
-                },
-                'raidz1': {
-                    'min-devices': 2
-                },
-                'raidz2': {
-                    'min-devices': 3
-                },
-                'raidz3': {
-                    'min-devices': 4
-                },
-                'spare': {
-                    'min-devices': 1
-                }
-            },
-            'vdev-groups': {
-                'data': {
-                    'allowed-vdevs': ['disk', 'file', 'mirror', 'raidz1', 'raidz2', 'raidz3', 'spare']
-                },
-                'log': {
-                    'allowed-vdevs': ['disk', 'mirror']
-                },
-                'cache': {
-                    'allowed-vdevs': ['disk']
-                }
-            }
-        }
+    def get_capabilities(self, type):
+        if type == 'zfs':
+            return self.dispatcher.rpc.call_sync('zfs.pool.get_capabilities')
+
+        raise RpcException(errno.EINVAL, 'Invalid volume type')
+
 
 @description("Creates new volume")
 @accepts({
@@ -108,20 +79,13 @@ class VolumeCreateTask(Task):
         config = self.dispatcher.rpc.call_sync('disk.get_config', disk)
         return config.get('data-partition-path', disk)
 
-    def __get_vdevs(self, topology):
-        result = []
+    def __convert_topology_to_gptids(self, topology):
+        topology = topology.copy()
         for name, grp in topology['groups'].items():
-            if name in ('cache', 'log', 'spare'):
-                result.append(name)
+            for vdev in grp['vdevs']:
+                vdev['disks'] = [self.__get_disk_gptid(d) for d in vdev['disks']]
 
-            for i in filter(lambda x: x['type'] == 'stripe', grp['vdevs']):
-                result += i['disks']
-
-            for i in filter(lambda x: x['type'] != 'stripe', grp['vdevs']):
-                result.append(i['type'])
-                result += i['disks']
-
-        return [self.__get_disk_gptid(i) for i in result]
+        return topology
 
     def verify(self, name, type, topology, params=None):
         if self.datastore.exists('volumes', ('name', '=', name)):
@@ -142,19 +106,7 @@ class VolumeCreateTask(Task):
             }))
 
         self.join_subtasks(*subtasks)
-
-        system(
-            'zpool', 'create',
-            '-o', 'cachefile=/data/zfs/zpool.cache',
-            '-o', 'failmode=continue',
-            '-o', 'autoexpand=on',
-            '-o', 'altroot=' + altroot,
-            '-O', 'compression=lz4',
-            '-O', 'aclmode=passthrough',
-            '-O', 'aclinherit=passthrough',
-            '-f', '-m', mountpoint,
-            name, *self.__get_vdevs(topology)
-        )
+        self.join_subtasks(self.run_subtask('zfs.pool.create', name, self.__convert_topology_to_gptids(topology)))
 
         pool = zfs.zpool_status(name)
 
@@ -174,15 +126,15 @@ class VolumeCreateTask(Task):
 
 
 class VolumeDestroyTask(Task):
-    def verify(self, name, params=None):
+    def verify(self, name):
         pass
 
-    def run(self, name, params=None):
+    def run(self, name):
         pass
 
 
 class VolumeUpdateTask(Task):
-    def verify(self, name):
+    def verify(self, name, ):
         pass
 
 
@@ -198,7 +150,21 @@ class DatasetCreateTask(Task):
     pass
 
 
+def _depends():
+    return ['DevdPlugin']
+
+
 def _init(dispatcher):
+    def on_pool_destroy(args):
+        guid = args['guid']
+        dispatcher.datastore.delete('volumes', guid)
+
+        dispatcher.dispatch_event('volume.destroyed', {
+            'name': args['name'],
+            'id': guid,
+            'type': 'zfs'
+        })
+
     dispatcher.register_schema_definition('volume-vdev', {
         'type': 'object',
         'properties': {
@@ -234,7 +200,8 @@ def _init(dispatcher):
         }
     })
 
+    dispatcher.register_event_handler('fs.zfs.pool.destroy', on_pool_destroy)
     dispatcher.require_collection('volumes')
-    dispatcher.register_provider('volume.info', VolumeProvider)
+    dispatcher.register_provider('volumes', VolumeProvider)
     dispatcher.register_task_handler('volume.create', VolumeCreateTask)
     dispatcher.register_task_handler('volume.import', VolumeImportTask)
