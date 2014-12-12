@@ -104,6 +104,7 @@ def send_mail(subject=None,
               to=None,
               extra_headers=None,
               attachments=None,
+              timeout=300,
               ):
     from freenasUI.account.models import bsdUsers
     from freenasUI.network.models import GlobalConfiguration
@@ -164,13 +165,13 @@ def send_mail(subject=None,
             server = smtplib.SMTP_SSL(
                 em.em_outgoingserver,
                 em.em_port,
-                timeout=10,
+                timeout=timeout,
                 local_hostname=local_hostname)
         else:
             server = smtplib.SMTP(
                 em.em_outgoingserver,
                 em.em_port,
-                timeout=10,
+                timeout=timeout,
                 local_hostname=local_hostname)
             if em.em_security == 'tls':
                 server.starttls()
