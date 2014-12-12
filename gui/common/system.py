@@ -188,12 +188,12 @@ def send_mail(subject=None,
         #    server.connect()
         server.sendmail(em.em_fromemail, to, msg)
         server.quit()
-    except ValueError, ve:
+    except ValueError as ve:
         # Don't spam syslog with these messages. They should only end up in the
         # test-email pane.
         errmsg = str(ve)
         error = True
-    except Exception, e:
+    except Exception as e:
         syslog.openlog(channel, syslog.LOG_PID,
                        facility=syslog.LOG_MAIL)
         try:
@@ -203,8 +203,13 @@ def send_mail(subject=None,
             syslog.closelog()
         errmsg = str(e)
         error = True
+    except smtplib.SMTPAuthenticationError as e:
+        errmsg = "%d %s" % (e.smtp_code, e.smtp_error)
+        error = True
+    except:
+        errmsg = "Unexpected error."
+        error = True
     return error, errmsg
-
 
 def get_fstype(path):
     assert path
