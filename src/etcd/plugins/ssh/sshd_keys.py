@@ -28,12 +28,14 @@
 
 import os
 import subprocess
+import base64
 
 
 def run(context):
     for keytype in ('host', 'rsa', 'dsa', 'ecdsa', 'ed25519'):
-        private_key = context.config.get('service.sshd.keys.{0}.private'.format(keytype))
-        public_key = context.config.get('service.sshd.keys.{0}.public'.format(keytype))
+        config = context.configstore
+        private_key = config.get('service.sshd.keys.{0}.private'.format(keytype))
+        public_key = config.get('service.sshd.keys.{0}.public'.format(keytype))
         private_key_file = '/etc/ssh/ssh_host_{0}_key'.format(keytype) \
             if keytype != 'host' \
             else '/etc/ssh/ssh_host_key'
@@ -50,19 +52,29 @@ def run(context):
                 subprocess.check_call(['/usr/bin/ssh-keygen', '-l', '-f', public_key_file])
             except subprocess.CalledProcessError:
                 raise
-        else:
-            fd = open(private_key_file, 'w')
-            fd.write(private_key)
+
+            # Save generated keys back to config db
+            fd = open(private_key_file, 'r')
+            config.set('service.sshd.keys.{0}.private'.format(keytype), base64.b64encode(fd.read()))
             fd.close()
+
+            fd = open(public_key_file, 'r')
+            config.set('service.sshd.keys.{0}.public'.format(keytype), base64.b64encode(fd.read()))
+            fd.close()
+        else:
+            fd = open(private_key_file, 'w', )
+            fd.write(base64.b64decode(private_key))
+            fd.close()
+            os.chmod(private_key_file, 0600)
 
             fd = open(public_key_file, 'w')
-            fd.write(public_key)
+            fd.write(base64.b64decode(public_key))
             fd.close()
 
-        context.emit_event('etcd.regenerated_file', {
+        context.emit_event('etcd.file_generated', {
             'filename': private_key_file
         })
 
-        context.emit_event('etcd.regenerated_file', {
+        context.emit_event('etcd.file_generated', {
             'filename': public_key_file
         })
