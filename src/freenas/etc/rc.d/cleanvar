@@ -32,9 +32,7 @@ purgedir()
 			do
 				# Skip over early services pidfiles and logfiles
 				[ -f "dispatcher.pid" ] && continue
-				[ -f "dispatcher.log"] && continue
 				[ -f "etcd.pid" ] && continue
-				[ -f "etcd.log" ] && continue
 				# Skip over logging sockets
 				[ -S "$file" -a "$file" = "log" ] && continue
 				[ -S "$file" -a "$file" = "logpriv" ] && continue
