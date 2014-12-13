@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-12-11 09:34+0000\n"
+"PO-Revision-Date: 2014-12-13 07:38+0000\n"
 "Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418290495.0\n"
+"X-POOTLE-MTIME: 1418456336.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7121,7 +7121,7 @@ msgstr "密码短语已更新"
 
 #: storage/views.py:1068
 msgid "Encryption re-key succeeded"
-msgstr "Re-key 已加密"
+msgstr "已解除所有加密"
 
 #: storage/views.py:1151
 msgid "The pool failed to upgraded: %s"
@@ -7265,7 +7265,7 @@ msgstr "此操作将令此前所有 recovery key 失效"
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
-msgstr "此操会删除当前密码短语，操作完成后请创建一个新的密码短语"
+msgstr "此操将删除当前密码短语，操作完成后建议您创建新的密码短语"
 
 #: templates/storage/snapshots.html:107
 msgid "Available Actions"
@@ -7787,7 +7787,7 @@ msgstr "创建 zvol"
 
 #: storage/admin.py:324
 msgid "Encryption Re-key"
-msgstr "加密 Re-key"
+msgstr "解除加密"
 
 #: storage/admin.py:502
 msgid "Edit Disk"
@@ -8120,7 +8120,7 @@ msgstr "要为这个卷添加一个recovery key"
 
 #: templates/storage/rekey.html:4
 msgid "You are about to re-key the encryption"
-msgstr "你想re-key此加密"
+msgstr "是否要解除所选设备的加密设置"
 
 #: templates/storage/replication_datagrid.html:16
 msgid ""
