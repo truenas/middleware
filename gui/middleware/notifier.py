@@ -43,7 +43,6 @@ import errno
 import glob
 import grp
 import logging
-from lxml import etree
 import os
 import pipes
 import platform
@@ -4059,6 +4058,7 @@ class notifier:
         self.__confxml = None
 
     def _geom_confxml(self):
+        from lxml import etree
         if self.__confxml is None:
             self.__confxml = etree.fromstring(self.sysctl('kern.geom.confxml'))
         return self.__confxml
