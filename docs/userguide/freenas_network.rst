@@ -1,3 +1,4 @@
+.. index:: Network Settings
 .. _Network:
 
 Network
@@ -231,6 +232,7 @@ prompt for a username and the password that you configured. Refer to the documen
 Once you have logged into the management interface, you can change the default administrative username as well as create additional users. The appearance of
 the utility and the functions that are available within the IPMI management utility will vary depending upon the hardware.
 
+.. index:: Link Aggregation, LAGG, LACP, EtherChannel
 .. _Link Aggregations:
 
 Link Aggregations
@@ -444,6 +446,7 @@ Network Summary
 :menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
 configured IPv4 and IPv6 address(es), DNS server(s), and default gateway will be displayed.
 
+.. index:: Route, Static Route
 .. _Static Routes:
 
 Static Routes
@@ -483,6 +486,7 @@ The available options are summarized in Table 7.6a.
 
 If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
 
+.. index:: VLAN, Trunking, 802.1Q
 .. _VLANs:
 
 VLANs

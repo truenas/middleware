@@ -31,6 +31,7 @@ This section also describes the following utilities:
 
 * :ref:`Dmidecode`: reports information about system hardware as described in the system's BIOS
 
+.. index:: Iperf
 .. _Iperf:
 
 Iperf
@@ -166,6 +167,7 @@ are not sure if the traffic that you wish to test is UDP or TCP, run this comman
 
 When you are finished testing, either type :command:`killall iperf` or close Shell to terminate the iperf server process.
 
+.. index:: Netperf
 .. _Netperf:
 
 Netperf
@@ -230,6 +232,7 @@ separate them with a comma.
 For these options taking two parms, specifying one value with no comma will only set the first parms and will leave the second at the default value. To set
 the second value it must be preceded with a comma or be a comma-separated pair. This is to retain previous netperf behaviour.
 
+.. index:: IOzone
 .. _IOzone:
 
 IOzone
@@ -372,6 +375,7 @@ Alternatively, consider temporarily disabling compression on the ZFS pool or dat
 	  -+P Service  Service of the PIT server.
 	  -+z Enable latency histogram logging.
 
+.. index:: arcstat
 .. _arcstat:
 
 arcstat
@@ -700,6 +704,7 @@ changes first at the command line using :command:`sysctl`. For example, to disab
 The output will indicate the old value followed by the new value. If the change is not beneficial, change it back to the original value. If the change turns
 out to be beneficial, you can make it permanent by creating a "sysctl" using the instructions in :ref:`Tunables`.
 
+.. index:: XDD
 .. _XDD:
 
 XDD
@@ -821,6 +826,7 @@ This allows the user to change the disk or starting offset and observe the effec
 :command:`xdd` run by using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to
 run using the **-seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
 
+.. index:: tw_cli
 .. _tw_cli:
 
 tw_cli
@@ -913,6 +919,7 @@ This
 `forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`__
 contains a handy wrapper script that will notify you of errors.
 
+.. index:: MegaCli
 .. _MegaCli:
 
 MegaCli
@@ -928,6 +935,7 @@ The :command:`MegaCli` command is quite complex with several dozen options. Whil
 `Emergency Cheat Sheet <http://tools.rapidsoft.de/perc/perc-cheat-sheet.html>`_
 can get you started.
 
+.. index:: freenas-debug
 .. _freenas-debug:
 
 freenas-debug
@@ -969,6 +977,7 @@ For example, if you are troubleshooting your Active Directory configuration, try
 
  more /var/tmp/fndebug
 
+.. index:: tmux
 .. _tmux:
 
 tmux
@@ -1005,6 +1014,7 @@ These resources provide more information about using :command:`tmux`:
 
 * `TMUX - The Terminal Multiplexer <http://blog.hawkhost.com/2010/06/28/tmux-the-terminal-multiplexer/>`_
 
+.. index:: Dmidecode
 .. _Dmidecode:
 
 Dmidecode

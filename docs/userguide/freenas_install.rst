@@ -22,6 +22,7 @@ This section describes the following:
 
 * :ref:`Virtualization`
 
+.. index:: Getting Freenas, Download
 .. _Getting FreeNAS®:
 
 Getting FreeNAS®
@@ -39,6 +40,8 @@ The download page contains the following types of files:
 * **.GUI_Upgrade.txz:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download this file and see the section on
   :ref:`Upgrading`.
 
+.. index:: Checksum
+
 Each file has an associated :file:`sha256.txt` file which should be used to verify the integrity of the downloaded file. The command you use to verify the
 checksum varies by operating system:
 
@@ -55,6 +58,7 @@ checksum varies by operating system:
 
 The value produced by running the command should match the value of the :file:`sha256.txt` file.
 
+.. index:: Burn ISO, ISO, USB Stick
 .. _Preparing the Media:
 
 Preparing the Media
@@ -162,6 +166,7 @@ executable.
 Once installed, launch Win32DiskImager and use its "browse" button to browse to the location of the :file:`.iso` file. Insert a USB thumb drive and select its
 drive letter from the "Device" drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
 
+.. index:: Install
 .. _Performing the Installation:
 
 Performing the Installation
@@ -289,6 +294,7 @@ If the burned image fails to boot and the image was burned using a Windows syste
 `Active@ KillDisk <http://how-to-erase-hard-drive.com/>`_. Otherwise, the second burn attempt will fail as Windows does not understand the partition which was
 written from the image file. Be very careful that you specify the USB stick when using a wipe utility!
 
+.. index:: Upgrade
 .. _Upgrading:
 
 Upgrading
@@ -447,6 +453,7 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 * Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
   the system.
 
+.. index:: Update
 .. _Updating Between Releases:
 
 Updating Between Releases
@@ -513,6 +520,7 @@ You can always:
 
 #.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
 
+.. index:: Upgrade ZFS Pool
 .. _Upgrading a ZFS Pool:
 
 Upgrading a ZFS Pool
@@ -522,7 +530,8 @@ Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical admin
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
-* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version of FreeNAS® that does not support those feature flags.**
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
+  of FreeNAS® that does not support those feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
@@ -550,6 +559,7 @@ The upgrade itself should only take a seconds and is non-disruptive. This means 
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
 nearly instantaneous on a quiet pool.
 
+.. index:: Virtualization, VM
 .. _Virtualization:
 
 Virtualization

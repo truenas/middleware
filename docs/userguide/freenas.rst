@@ -31,3 +31,10 @@ FreeNAS User Guide |release|
    freenas_contribute
    freenas_api
 
+.. only:: html
+
+   Index
+   =====
+
+   * :ref:`genindex`
+

@@ -1,3 +1,4 @@
+.. index:: Plugin
 .. _Plugins:
 
 Plugins

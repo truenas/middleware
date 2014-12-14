@@ -1,3 +1,4 @@
+.. index:: Shutdown
 .. _Shutdown:
 
 Shutdown

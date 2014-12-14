@@ -1,3 +1,4 @@
+.. index:: Services
 .. _Services Configuration:
 
 Services Configuration
@@ -38,6 +39,7 @@ following built-in services:
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
+.. index:: Start Service, Stop Service
 .. _Control Services:
 
 Control Services
@@ -64,6 +66,7 @@ messages. Watch these messages for errors when you stop and start the problemati
 
 If you would like to read the system logs to get more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
 
+.. index:: AFP, Apple Filing Protocol
 .. _AFP:
 
 AFP
@@ -136,6 +139,7 @@ AFP share::
 This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the
 CNIIDs stored in the AppleDouble files.
 
+.. index:: CIFS, Samba, Windows File Share, SMB
 .. _CIFS:
 
 CIFS
@@ -367,6 +371,7 @@ The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
 section of the Samba documentation contains additional troubleshooting tips.
 
+.. index:: Domain Controller, DC
 .. _Domain Controller:
 
 Domain Controller
@@ -431,6 +436,7 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
+.. index:: Dynamic DNS, DDNS
 .. _Dynamic DNS:
 
 Dynamic DNS
@@ -487,6 +493,7 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
+.. index:: FTP, File Transfer Protocol
 .. _FTP:
 
 FTP
@@ -831,6 +838,7 @@ iSCSI
 
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
+.. index:: LLDP, Link Layer Discovery Protocol
 .. _LLDP:
 
 LLDP
@@ -866,6 +874,7 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
+.. index:: NFS, Network File System
 .. _NFS:
 
 NFS
@@ -922,6 +931,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
+.. index:: Rsync
 .. _Rsync:
 
 Rsync
@@ -1024,6 +1034,7 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
 
+.. index:: S.M.A.R.T.
 .. _S.M.A.R.T.:
 
 S.M.A.R.T.
@@ -1093,6 +1104,7 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
+.. index:: SNMP, Simple Network Management Protocol
 .. _SNMP:
 
 SNMP
@@ -1137,6 +1149,7 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 +----------------------+------------+----------------------------------------------------------------+
 
 
+.. index:: SSH, Secure Shell
 .. _SSH:
 
 SSH
@@ -1218,6 +1231,7 @@ A few sshd_config(5) options that are useful to input in the "Extra Options" fie
 * *ClientMaxStartup* defaults to 
   *10*; increase this value if you need more concurrent SSH connections
 
+.. index:: SCP, Secure Copy
 .. _SCP Only:
 
 SCP Only
@@ -1256,6 +1270,7 @@ to what the problem is. Type the following command within :ref:`Shell` to read t
 
 Additional messages regarding authentication errors may be found in :file:`/var/log/auth.log`.
 
+.. index:: TFTP, Trivial File Transfer Protocol
 .. _TFTP:
 
 TFTP
@@ -1310,6 +1325,7 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 
+.. index:: UPS, Uninterruptible Power Supply
 .. _UPS:
 
 UPS
@@ -1411,6 +1427,7 @@ man page gives some other usage examples.
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
 this command. These users are created in the "Extra users" field.
 
+.. index:: WebDAV
 .. _WebDAV:
 
 WebDAV
@@ -1467,5 +1484,4 @@ options.
 | Webdav Password           | string         | default is *davtest*; this should be changed as it is a known value                                   |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-
 

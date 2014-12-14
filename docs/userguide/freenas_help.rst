@@ -1,3 +1,4 @@
+.. index:: Help
 .. _Help:
 
 Help

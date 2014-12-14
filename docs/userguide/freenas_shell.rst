@@ -1,3 +1,4 @@
+.. index:: Shell
 .. _Shell:
 
 Shell

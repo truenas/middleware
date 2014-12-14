@@ -1,3 +1,4 @@
+.. index:: API
 .. _Using the FreeNAS® API:
 
 Using the FreeNAS® API

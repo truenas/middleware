@@ -102,6 +102,7 @@ system that has been optimized for file storage and sharing.
 FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
 wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.
 
+.. index:: What's New, Changelog
 .. _What's New in 9.3:
 
 What's New in 9.3
@@ -152,12 +153,12 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
-* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMWare Snapshots`.
+* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMware Snapshots`.
 
 * The :command:`afpusers` command has been added. Similar to
   `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
 
-* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMWare VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
+* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMware VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
   2012 clustering. Zvol based LUNs can now be grown from the GUI. LUNs can now be grown on-the-fly, without having to first disconnect initiators or stop the
   iSCSI service.
 
@@ -251,9 +252,7 @@ The following fields have been added or deleted:
 * An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
   you no longer need to upgrade a ZFS pool from the command line.
 
-* The "Change Permissions" screen for a volume or dataset now has three "Permission Type"s: *Unix*, 
-  *Mac*, and
-  *Windows*.
+* The "Change Permissions" screen for a volume or dataset now has three "Permission Type"s: *Unix*, *Mac*, and *Windows*.
 
 * The "Volume Status" screen now shows the status of the latest ZFS scrub, the number of errors, number of repaired blocks, and the date of the last scrub.
 
@@ -324,6 +323,7 @@ The following fields have been added or deleted:
 
 * The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
 
+.. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
 Hardware Recommendations

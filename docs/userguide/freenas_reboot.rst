@@ -1,3 +1,4 @@
+.. index:: Reboot
 .. _Reboot:
 
 Reboot

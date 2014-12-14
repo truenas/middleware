@@ -41,6 +41,7 @@ Users are welcome to network on the FreeNAS® social media sites:
 * `Twitter <http://twitter.com/freenasteam>`_
 
 
+.. index:: Forums
 .. _Forums:
 
 Forums
@@ -151,6 +152,7 @@ When asking a question on the forum, it is important that you:
   checked. If you want to be notified by email, also check the "and receive email notifications" box. That way you will be notified whenever anyone
   answers your question.
 
+.. index:: IRC
 .. _IRC:
 
 IRC
@@ -181,6 +183,7 @@ To get the most out of the IRC channel, keep the following points in mind:
   `pastebin <http://www.pastebin.com/>`_
   and paste the resulting URL into the IRC discussion.
 
+.. index:: Mailing Lists
 .. _Mailing Lists:
 
 Mailing Lists
@@ -254,6 +257,7 @@ A series of instructional videos are available for FreeNAS® 9.x. They include:
 .. note:: videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
    doubt, refer to the documentation specific to your version of FreeNAS®. 
 
+.. index:: Professional Support
 .. _Professional Support:
 
 Professional Support

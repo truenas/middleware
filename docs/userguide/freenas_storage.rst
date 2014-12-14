@@ -15,10 +15,11 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Snapshots`: used to manage local snapshots.
 
-* :ref:`VMWare Snapshots`: are used to coordinate ZFS snapshots with a VWware datastore.
+* :ref:`VMware Snapshots`: are used to coordinate ZFS snapshots with a VWware datastore.
 
 These configurations are described in more detail in this section.
 
+.. index:: Volumes
 .. _Volumes:
 
 Volumes
@@ -123,6 +124,7 @@ Depending upon the size and number of disks, the type of controller, and whether
 the volume is created, the screen will refresh and the new volume will be listed in the tree under :menuselection:`Storage --> Volumes`. Click the *+* next to
 the volume name to access its :ref:`Change Permissions`, :ref:`Create Dataset`, and :ref:`Create zvol` options.
 
+.. index:: Encryption
 .. _Encryption:
 
 Encryption
@@ -350,6 +352,7 @@ If you change your mind about the "Permission Type", you do not have to recreate
 When you select the *Windows* "Permission Type", the ACLs are set to what Windows sets on new files and directories by default. The Windows client should then
 be used to fine-tune the permissions as required.
 
+.. index:: Create Dataset
 .. _Create Dataset:
 
 Create Dataset
@@ -429,6 +432,7 @@ Once a dataset is created, you can click on that dataset and select "Create Data
 also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
 If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
 
+.. index:: Deduplication
 .. _Deduplication:
 
 Deduplication
@@ -460,6 +464,7 @@ the block contents are identical. Since hash collisions are extremely rare, *Ver
    back in again. Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original
    dataset.
 
+.. index:: Compression
 .. _Compression:
 
 Compression
@@ -484,6 +489,7 @@ is read. The following compression algorithms are supported:
 If you select *Off* as the "Compression level" when creating a dataset or zvol, compression will not be used on the dataset/zvol. This is not recommended as
 using *lz4* has a negligible performance impact and allows for more storage capacity.
 
+.. index:: ZVOL
 .. _Create zvol:
 
 Create zvol
@@ -860,6 +866,7 @@ multipath-capable hardware.
 Figure 8.1p provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
 capable of active/read.
 
+.. index:: Replace Failed Drive
 .. _Replacing a Failed Drive:
 
 Replacing a Failed Drive
@@ -1083,10 +1090,8 @@ In this example, a ZFS mirror named :file:`test` contains three drives::
  da0		ONLINE  0    0     0
  da4		ONLINE  0    0     0
 
-The following command splits from the existing three disk mirror :file:`test` a new ZFS volume named :file:`migrant` containing one disk,
-*da4*. Disks
-*da0* and
-*da1* remain in :file:`test`.::
+The following command splits from the existing three disk mirror :file:`test` a new ZFS volume named :file:`migrant` containing one disk, *da4*. Disks *da0* and
+*da1* remain in :file:`test`::
 
  zpool split test migrant da4
 
@@ -1161,6 +1166,7 @@ Should you ever need to create a new clone, remember to remove the old clone fir
 
  zpool destroy migrant
 
+.. index:: Periodic Snapshot, Snapshot
 .. _Periodic Snapshot Tasks:
 
 Periodic Snapshot Tasks
@@ -1241,6 +1247,7 @@ Click an entry to access its "Edit" and "Delete" buttons.
     :width: 4.9in
     :height: 4.5in
 
+.. index:: Replication
 .. _Replication Tasks:
 
 Replication Tasks
@@ -1443,13 +1450,9 @@ If the key is correct and replication is still not working, try deleting all sna
 :menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
-Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the
-*local/data* dataset of
-*PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of
-*PULL* is
-*192.168.2.6*, and the ZFS volume on
-*PULL* is :file:`remote`. Note that the
-**@** is used to separate the volume/dataset name from the snapshot name.::
+Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the *local/data*
+dataset of *PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of *PULL* is *192.168.2.6*, and the ZFS volume on *PULL* is :file:`remote`. Note that
+the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
@@ -1463,6 +1466,7 @@ transmitted. If it is still not working, you can manually send the specified sna
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
  
+.. index:: Scrub
 .. _Scrubs:
 
 Scrubs
@@ -1538,6 +1542,7 @@ While a "Delete" button is provided,
 **deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
 too intensive for your hardware, consider unchecking the "Enabled" button for the scrub as a temporary measure until the hardware can be upgraded.
 
+.. index:: Snapshots
 .. _Snapshots:
 
 Snapshots
@@ -1617,12 +1622,13 @@ If you create multiple filters, select the filter you wish to use before leaving
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
 available snapshots will be listed.
 
-.. _VMWare Snapshots:
+.. index:: VMware Snapshot
+.. _VMware Snapshots:
 
-VMWare Snapshots
+VMware Snapshots
 ----------------
 
-:menuselection:`Storage --> VMWare Snapshots` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once a "VMWare Snapshot" is created,
+:menuselection:`Storage --> VMware Snapshots` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once a "VMware Snapshot" is created,
 FreeNAS® will automatically snapshot any running VMware virtual machines before taking a scheduled or manual ZFS snapshot of the dataset or zvol backing that
 VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
 resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
@@ -1637,7 +1643,7 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
     :width: 5.1in
     :height: 3.8in
 
-**Table 8.6a: VMWare Snapshot Options**
+**Table 8.6a: VMware Snapshot Options**
 
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**    | **Value**                   | **Description**                                                                                             |

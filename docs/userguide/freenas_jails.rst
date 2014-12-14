@@ -1,3 +1,4 @@
+.. index:: Jails
 .. _Jails:
 
 Jails
@@ -142,6 +143,7 @@ setting for "IPv4 Network". If you are using VMware, make sure that the vswitch 
 
 Once you click the "Save" button to save the configuration, you are now ready to create and manage jails as described in the rest of this chapter.
 
+.. index:: Add Jail, New Jail, Create Jail
 .. _Adding Jails:
 
 Adding Jails
@@ -668,6 +670,7 @@ The startup script will also indicate if any additional parameters are available
  # NAME_dir="/usr/local/etc/openvpn"
  # --cd directory
 
+.. index:: phpVirtualBox Template, VirtualBox Template, VirtualBox Jail
 .. _Using the phpVirtualBox Template:
 
 Using the phpVirtualBox Template

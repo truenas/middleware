@@ -17,6 +17,7 @@ This section demonstrates how you can:
 
 * :ref:`Beta Test`
 
+.. index:: Bug, Report a Bug, Issue
 .. _Report a Bug:
 
 Report a Bug
@@ -63,6 +64,7 @@ account, confirm your registration email address, and be logged in before you ca
 An email will automatically be sent to the address you used when registering which contains a copy of the new issue. If necessary, check your SPAM filter and
 allow emails from no-reply@ixsystems.com. Additional emails will be sent whenever a comment or action occurs on your issue.
 
+.. index:: Localize, Translate
 .. _Localize:
 
 Localize

@@ -1,3 +1,4 @@
+.. index:: Tasks
 .. _Tasks:
 
 Tasks
@@ -15,6 +16,7 @@ The Tasks section of the administrative GUI can be used to configure the followi
 
 Each of these tasks is described in more detail in this section.
 
+.. index:: Cron Jobs
 .. _Cron Jobs:
 
 Cron Jobs
@@ -129,6 +131,7 @@ When scheduling a script, make sure that the script is executable and has been f
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
 
+.. index:: Rsync Tasks
 .. _Rsync Tasks:
 
 Rsync Tasks
@@ -442,6 +445,7 @@ automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the con
 If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
 
+.. index:: S.M.A.R.T. Tests
 .. _S.M.A.R.T. Tests:
 
 S.M.A.R.T. Tests
@@ -512,5 +516,4 @@ type::
 
 If you enter an email address in the "Email to report" field of :menuselection:`Services --> S.M.A.R.T.`, the system will email the specified address when a
 test fails. 
-
 

@@ -1,3 +1,4 @@
+.. index:: Alert
 .. _Alert:
 
 Alert
@@ -39,7 +40,7 @@ alert is detected. Some of the conditions that trigger an alert include:
 
 * a replication task fails
 
-* a VMware login or a :ref:`VMWare Snapshots` task fails
+* a VMware login or a :ref:`VMware Snapshots` task fails
 
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_

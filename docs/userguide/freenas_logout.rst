@@ -1,3 +1,4 @@
+.. index:: Log Out
 .. _Log Out:
 
 Log Out

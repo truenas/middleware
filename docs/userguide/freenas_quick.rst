@@ -118,6 +118,7 @@ This
 `blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
 describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
 
+.. index:: Initial Configuration Wizard, Configuration Wizard, Wizard
 .. _Initial Configuration Wizard:
 
 Initial Configuration Wizard

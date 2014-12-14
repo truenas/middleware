@@ -51,6 +51,7 @@ encryption, but the data passing through the network will be encrypted.
 This section will demonstrate how to create AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
 :ref:`Services Configuration`.
 
+.. index:: AFP, Apple Filing Protocol
 .. _Apple (AFP) Shares:
 
 Apple (AFP) Shares
@@ -211,6 +212,7 @@ The user can now copy files to and from the share.
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
+.. index:: Time Machine
 .. _Using Time Machine:
 
 Using Time Machine
@@ -273,6 +275,7 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
     :width: 6.9252in
     :height: 4.6055in
 
+.. index:: NFS, Network File System
 .. _Unix (NFS) Shares:
 
 Unix (NFS) Shares
@@ -573,6 +576,7 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
+.. index:: WebDAV
 .. _WebDAV Shares:
 
 WebDAV Shares
@@ -642,6 +646,7 @@ Once you click "OK", a pop-up will ask if you would like to enable the service. 
 :menuselection:`Services --> WebDAV` as they are used to determine which URL is used to access the WebDAV share and whether or not authentication is required
 to access the share. These settings are described in :ref:`WebDAV`.
 
+.. index:: CIFS, Samba, Windows Shares, SMB
 .. _Windows (CIFS) Shares:
 
 Windows (CIFS) Shares
@@ -860,6 +865,7 @@ Choose a drive letter from the drop-down menu and click the "Finish" button as s
     :width: 6.9252in
     :height: 5.5016in
 
+.. index:: Shadow Copies
 .. _Configuring Shadow Copies:
 
 Configuring Shadow Copies
@@ -947,6 +953,7 @@ one of the previous versions, which will overwrite the existing file on the Wind
     :width: 6.9252in
     :height: 5.8945in
 
+.. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
 
 Block (iSCSI)

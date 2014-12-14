@@ -269,6 +269,7 @@ Figure 5.3c shows a sample boot menu containing entries for the default, wizard 
     :width: 5.4in
     :height: 4.0in
 
+.. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
 
 Mirroring the Boot Device
@@ -386,6 +387,7 @@ This tab also contains the following buttons:
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
 
+.. index:: Autotune
 .. _Autotune:
 
 Autotune
@@ -409,6 +411,7 @@ autotune.
 
 If you wish to read the script to see which checks are performed, the script is located in :file:`/usr/local/bin/autotune`.
 
+.. index:: Email
 .. _Email:
 
 Email
@@ -497,6 +500,7 @@ If you make any changes, click the "Save" button to save them.
 If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
 location.
 
+.. index:: Tunables
 .. _Tunables:
 
 Tunables
@@ -675,6 +679,7 @@ The "Manual Update" button can be used to manually upgrade the operating system 
 is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead apply the necessary
 updates to upgrade the operating system.
 
+.. index:: CA, Certificate Authority
 .. _CAs:
 
 CAs
@@ -800,6 +805,7 @@ If you click the entry for a CA, the following buttons become available:
 
 * **Delete:** will prompt to confirm before deleting the CA.
 
+.. index:: Certificates
 .. _Certificates:
 
 Certificates
