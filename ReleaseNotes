@@ -8,7 +8,7 @@ FreeNAS 9.3-RELEASE offers the following improvements:
 [ Installation / Booting ]
 
 * FreeNAS now uses ZFS for the boot device(s), also supporting selection
-and mirroring of one or more boot devices for greater reliabilty.
+and mirroring of one or more boot devices for greater reliability.
 The features of ZFS are also utilized to provide cloned "boot environments"
 which allow the system to be rolled back (or even forked) to different OS
 versions.
@@ -67,7 +67,7 @@ tampering or inadvertent corruption of the system.
 
 * Samba upgraded to 4.1.13.
 
-* NFSv4 support added, including kerberized NFS.
+* NFSv4 support added, including Kerberized NFS.
 
 * Kernel iSCSI (CTL) has completely replaced the old iSCSI code, adding
 support for VMWare VAAI (all 7 primitives), MS ODX and Windows 2012 Clustering
@@ -75,10 +75,10 @@ as well as much higher performance and space efficiency (zero'd blocks can now
 be reclaimed).  Support for STUN and pool storage thresholds also makes VMWare
 behavior far more robust when ZFS pools fill up.
 
-* Kernel iSCSI sequently read performance has been sped up considerably by
+* Kernel iSCSI sequential read performance has been sped up considerably by
 improving the way such read requests interact with ZFS
 
-* iSCSI nows supports associating to an iSNS server.
+* iSCSI now supports associating to an iSNS server.
 
 * AFP now allows allowhosts and denyhosts per share.
 
@@ -86,7 +86,7 @@ improving the way such read requests interact with ZFS
 
 * AD / LDAP configurations are validated immediately after input.
 
-* Kerberos Realms and Keytabs have joined the Direcory Services UI.
+* Kerberos Realms and Keytabs have joined the Directory Services UI.
 
 * Directory Services now based on SSSD (System Security Services Daemon) and
 connections to LDAP servers done with SSL/TLS.
