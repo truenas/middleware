@@ -1,0 +1,15 @@
+#6980	Unable to find domain controller in latest FreeNAS 9.3
+#7027	aria2 is huge why do we have it
+#7033	Acknowledged alerts present in the API
+#7035	dap_user_home_directory wrong in /usr/local/etc/sssd/sssd.conf
+#7042	Don't use debugging kernel when doing upgrade
+#7048	Set the jails url to the right place
+#7049	9.3 BETA + 9.1.1 config => WebGUI authentication failure
+#7054	Cannot generate Certificate Signing Request
+#7064	Allow translation of the update UI
+#7074	Samba AD DC: BIND9_DLZ option not usable?
+#7091	Traceback when testing email from System/Email
+#7093	Missing throttling setting and files in replication task
+#7104	outgoing e-mail breaks on 9.3
+#7118	Shared object "libiconv.so.3" not found when running adtool
+50ec38f	Disable amdsbwd for now
