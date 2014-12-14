@@ -193,7 +193,7 @@ Update resource
 CIFS
 ----
 
-The CIFS resource represents the configuration settings for Apple Filing
+The CIFS resource represents the configuration settings for Server Message Block
 Protocol (CIFS).
 
 List resource
