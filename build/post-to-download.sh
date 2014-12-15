@@ -32,5 +32,5 @@ fi
 ssh ${ID}@download.freenas.org rm -rf /tank/downloads/nightlies/$TRAIN/$DATE
 ssh ${ID}@download.freenas.org mkdir -p /tank/downloads/nightlies/$TRAIN/$DATE
 scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:/tank/downloads/nightlies/$TRAIN/$DATE/
-ssh ${ID}@download.freenas.org "(cd /tank/downloads; ln -fs nightlies/$TRAIN/$DATE latest; cd ${PUSHIT}; ln -fs ../nightlies/$TRAIN/$DATE latest)"
+ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; ln -fs ../nightlies/$TRAIN/$DATE latest)"
 exit 0
