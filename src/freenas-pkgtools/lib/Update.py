@@ -460,9 +460,16 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
         return False
 
     if latest_mani is None:
-        # That really shouldnt happen
+        # This probably means we have no network.  Which means we have
+        # to trust what we've already downloaded, if anything.
         log.error("Unable to find latest manifest for train %s" % train)
-        raise UpdateManifestNotFound("Latest manifest could not be loaded")
+        try:
+            VerifyUpdate(directory)
+            log.debug("Possibly with no network, cached update looks good")
+            return True
+        except:
+            log.debug("Possibly with no network, either no cached update or it is bad")
+            return False
 
     cache_mani = Manifest.Manifest(require_signature = True)
     try:
@@ -487,6 +494,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
         log.error("Got exception %s while trying to prepare update cache" % str(e))
         raise e
     # If we're here, then we don't have a (valid) cached update.
+    log.debug("Removing invalid or incomplete cached update")
     RemoveUpdate(directory)
     try:
         os.makedirs(directory)

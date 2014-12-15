@@ -331,9 +331,7 @@ class Manifest(object):
             if crl_file:
                 verify_cmd.extend(["-R", crl_file.name])
             else:
-                if SIGNATURE_FAILURE:
-                    log.error("Could not get CRL %s, but signature check is mandated" % IX_CRL)
-                    return False
+                log.debug("Could not get CRL %s, so we'll just continue" % IX_CRL)
 
             log.debug("Verify command = %s" % verify_cmd)
 
