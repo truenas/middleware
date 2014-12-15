@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-01-29 14:48+0000\n"
-"Last-Translator: Zdeněk <linuz@centrum.cz>\n"
+"PO-Revision-Date: 2014-12-14 10:10+0000\n"
+"Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1391006925.0\n"
+"X-POOTLE-MTIME: 1418551850.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -262,7 +262,7 @@ msgstr "Název svazku"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Ruční nastavení"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 #, fuzzy
@@ -271,7 +271,7 @@ msgstr "Název svazku"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Potvrdit"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 #, fuzzy
@@ -280,7 +280,7 @@ msgstr "Poplachový systém"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Úlohy"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
 #, fuzzy
@@ -312,26 +312,28 @@ msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Toto pole může obsahovat pouze písmena a číslice a dále ještě znaky: \"_\", "
+"\"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Zadejte velikost s použitím předpon (jednotek) B, K, M, G a T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Přidat"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Smazat"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Aktualizovat"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Vlastnictví"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
@@ -339,11 +341,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Tato skupina neexistuje."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Návrat"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #, fuzzy
@@ -356,21 +358,23 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Varování!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Tato volba ZAKÁŽE ŠIFROVÁNÍ u replikačních úloh a měla by být použita POUZE "
+"v prostředí zabezpečené místní sítě!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Opravdu to chcete udělat?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Ruční nastavení"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -404,25 +408,25 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Ano"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Ne"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Načítání..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Nezjištěny žádné čekající aktualizace."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Ověřit instalaci"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "Zadání hesla se neshodují."
