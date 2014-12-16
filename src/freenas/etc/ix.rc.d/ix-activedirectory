@@ -166,8 +166,11 @@ setup_homedirs()
 			done
 
 		else
-			local workgroup=$(AD_get ad_workgroup)
-			mkdir -p "/var/home/${workgroup}"
+			local workgroup=$(AD_get ad_netbiosname)
+                        local homedir="/var/home/${workgroup}"
+
+			mkdir -p "${homedir}"
+                        /usr/local/bin/winacl -a reset -p "${homedir}"
 		fi
 
 	elif [ ! -d "/var/home" ]

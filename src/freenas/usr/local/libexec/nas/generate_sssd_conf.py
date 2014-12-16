@@ -45,6 +45,7 @@ from freenasUI.services.models import (
     CIFS,
     services
 )
+from freenasUI.sharing.models import CIFS_Share
 from freenasUI.system.models import Settings
 
 SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
@@ -614,6 +615,20 @@ def add_activedirectory(sc):
 
     if activedirectory.ad_use_default_domain:
         ad_section.use_fully_qualified_names = 'false'
+
+    try:
+        shares = CIFS_Share.objects.all()
+        for share in shares:  
+            if share.cifs_home:
+                if ad.use_default_domain:
+                    homedir_path = "%s/%%u" % share.cifs_path
+                else:
+                    homedir_path = "%s/%%d/%%u" % share.cifs_path
+
+                ad_section.override_homedir = homedir_path
+        
+    except Exception as e:
+        pass
 
     #
     # XXX re-work this to use ad object
