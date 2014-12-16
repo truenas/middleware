@@ -43,7 +43,7 @@
 	     </thead>
              {% if default %}
           <tr class="{% cycle 'odd' 'even' %}">
-              <td colspan="3">{{ default }}</td>
+              <td colspan="3">{% for def in default %}{{ def }}{% if not forloop.last %}<br />{% endif %}{% endfor %}</td>
           </tr>
           {% else %}
           <tr>
