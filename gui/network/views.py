@@ -182,7 +182,7 @@ def summary(request):
     default = None
     if p3.returncode == 0:
         output = p3.communicate()[0]
-        default = output.replace('\n', '')
+        default = output.split('\n')
 
     return render(request, 'network/summary.html', {
         'ifaces': ifaces,
