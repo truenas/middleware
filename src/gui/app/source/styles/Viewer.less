@@ -1,10 +1,27 @@
 .viewer {
 }
 
+
+@user-icon-detail-width: 40px;
+
 .viewer-detail {
-  .text-container { display : inline-block; }
-  .user-icon      { margin-right: 15px; }
+
+  .text-container {
+    width          : 100%;
+    display        : inline-block;
+    padding        : 0 10px 0 50px;
+    overflow       : hidden;
+    vertical-align : top;
+    white-space    : nowrap;
+    text-overflow  : ellipsis;
+  }
+
   .nav-pills {
+    .user-icon {
+      height        : @user-icon-detail-width;
+      width         : @user-icon-detail-width;
+      margin-right  : -@user-icon-detail-width;
+    }
     .primary-text   { color : @gray-dark; }
     .secondary-text { color : @gray-light; }
       .primary-text

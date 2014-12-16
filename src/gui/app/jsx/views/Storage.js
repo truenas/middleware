@@ -14,9 +14,9 @@ var React = require("react");
 var Storage = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h2>Storage View</h2>
-      </div>
+      </main>
     );
   }
 });

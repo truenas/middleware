@@ -12,9 +12,9 @@ var React  = require("react");
 var Network = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h2>Network View</h2>
-      </div>
+      </main>
     );
   }
 });

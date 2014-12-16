@@ -15,14 +15,11 @@ var MiddlewareStore  = require("../stores/MiddlewareStore");
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
-var Icon = require("../components/Icon");
-
-var LoginBox = require("../components/LoginBox");
-
-var LeftMenu   = require("../components/LeftMenu");
-var WarningBox   = require("../components/WarningBox");
-var QueueBox   = require("../components/QueueBox");
-var InfoBox   = require("../components/InfoBox");
+// WebApp Components
+var LoginBox          = require("../components/LoginBox");
+var NotificationBar   = require("../components/WebApp/NotificationBar");
+var InformationBar    = require("../components/WebApp/InformationBar");
+var PrimaryNavigation = require("../components/PrimaryNavigation");
 
 
 // Middleware Utilies
@@ -36,12 +33,8 @@ function getMiddlewareStateFromStores () {
 var FreeNASWebApp = React.createClass({
 
     getInitialState: function () {
-      return _.assign({
-        warningBoxIsVisible: 0,
-        infoBoxIsVisible: 0,
-        queueBoxIsVisible: 0,
-        gridClass: "collapsed"
-      }, getMiddlewareStateFromStores() );
+      return _.assign( { /* Non-Flux state goes here */ },
+                       getMiddlewareStateFromStores() );
     }
 
   , componentDidMount: function () {
@@ -52,116 +45,29 @@ var FreeNASWebApp = React.createClass({
       this.setState( getMiddlewareStateFromStores() );
   }
 
-  , handleBox: function(event) {
-    //ultimate if
-    //this.setState({ warningBoxIsVisible: ((event.currentTarget.className.indexOf("icoAlert") > -1)? ((this.state.warningBoxIsVisible) ? 0 : 1) :  0) });
-
-    if(event.currentTarget.className.indexOf("icoQueue") > -1){
-      if (this.state.queueBoxIsVisible === 0){
-        this.setState({ infoBoxIsVisible: 0 });
-        this.setState({ warningBoxIsVisible: 0 });
-        this.setState({ queueBoxIsVisible: 1 });
-      }else{
-        this.setState({ queueBoxIsVisible: 0 });
-      }
-    }
-    if(event.currentTarget.className.indexOf("icoAlert") > -1){
-      if (this.state.warningBoxIsVisible === 0){
-        this.setState({ infoBoxIsVisible: 0 });
-        this.setState({ warningBoxIsVisible: 1 });
-        this.setState({ queueBoxIsVisible: 0 });
-      }else{
-        this.setState({ warningBoxIsVisible: 0 });
-      }
-    }
-    if(event.currentTarget.className.indexOf("icoInfo") > -1){
-      if (this.state.infoBoxIsVisible === 0){
-        this.setState({ infoBoxIsVisible: 1 });
-        this.setState({ warningBoxIsVisible: 0 });
-        this.setState({ queueBoxIsVisible: 0 });
-      }else{
-        this.setState({ infoBoxIsVisible: 0 });
-      }
-    }
-
-
-  },
-  menuChange: function(gClass) {
-    if (gClass === "expanded")
-    {
-      Velocity(this.refs.gridRef.getDOMNode()
-      , { paddingLeft: "54px;" }
-      , { duration: 1500,
-          easing: "easeInOutBounce",
-          complete: this.setState({ gridClass: gClass })
-        }
-      );
-    }
-    else
-    {
-      Velocity(this.refs.gridRef.getDOMNode()
-      , { paddingLeft: "240px;" }
-      , { duration: 1500,
-          easing: "easeInOutBounce",
-          complete: this.setState({ gridClass: gClass })
-        }
-      );
-    }
-
-
-  },
-
-  render: function() {
+  , render: function() {
 
     return (
-      <div>
+      <div className="app-wrapper">
+        {/* TODO: Add Modal mount div */}
 
-        <div ref="mainWrapper">
-          <div className = "notificationBar">
-           <WarningBox isVisible = {this.state.warningBoxIsVisible} />
-           <InfoBox isVisible = {this.state.infoBoxIsVisible} />
-           <QueueBox isVisible = {this.state.queueBoxIsVisible} />
+        {/* Modal window for FreeNAS login - hidden when authenticated */}
+        <LoginBox isHidden={ this.state.authenticated } />
 
+        {/* Header containing system status and information */}
+        <NotificationBar />
 
+        {/* Primary navigation menu */}
+        <PrimaryNavigation />
 
-            <div className="userInfo">
-            <Icon glyph="warning" icoClass="icoAlert" icoSize="3x" warningFlag="1" onClick={this.handleBox} />
-            <Icon glyph="info-circle" icoClass="icoInfo" icoSize="3x" warningFlag="2" onClick={this.handleBox} />
-            <Icon glyph="list-alt" icoClass="icoQueue" icoSize="3x" warningFlag="3" onClick={this.handleBox} />
-            <Icon glyph = "user" icoSize = "2x" />
+        {/* Primary view */}
+        <this.props.activeRouteHandler />
 
-             <TWBS.SplitButton title="Kevin Spacey" pullRight>
-              <TWBS.MenuItem key="1">Camera!</TWBS.MenuItem>
-              <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
-              <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
-              <TWBS.MenuItem divider />
-              <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
-            </TWBS.SplitButton>
+        {/* User-customizable component showing system events */}
+        <InformationBar />
 
-            </div>
-          </div>
-
-          <LeftMenu handleMenuChange={this.menuChange} />
-
-          <TWBS.Grid fluid ref="gridRef" className={"mainGrid " + this.state.gridClass}>
-            {/* Modal window for FreeNAS login */}
-            <LoginBox isHidden={ this.state.authenticated } />
-
-            {/* TODO: Add Modal mount div */}
-            <TWBS.Row>
-              {/* Primary view */}
-              <TWBS.Col xs={12} sm={12} md={12} lg={12} xl={12}
-                        xsOffset={0} smOffset={0} mdOffset={0} lgOffset={0} xlOffset={0}>
-                <this.props.activeRouteHandler />
-              </TWBS.Col>
-
-              {/* Tasks and active users */}
-              <TWBS.Col xs={2} sm={2} md={2} lg={2} xl={2}>
-                {/* TODO: Add tasks/users component */}
-              </TWBS.Col>
-            </TWBS.Row>
-          </TWBS.Grid>
-        </div>
+        <footer className="app-footer">
+        </footer>
       </div>
     );
   }

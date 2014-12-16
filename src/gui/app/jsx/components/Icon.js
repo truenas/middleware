@@ -2,27 +2,47 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 
 var Icon = React.createClass({
-  render: function() {
-    var sizeString  = "";
-    var classString = "";
-    var flagElement = null;
+  propTypes: {
+      glyph         : React.PropTypes.string.isRequired
+    , icoSize       : React.PropTypes.string
+    , icoClass      : React.PropTypes.string
+    , badgeStyle    : React.PropTypes.string
+    , badgeContent  : React.PropTypes.oneOfType([
+          React.PropTypes.string
+        , React.PropTypes.number
+        , React.PropTypes.bool
+      ])
+  }
 
-    if ( this.props.icoSize ) {
-      sizeString = " fa-" + this.props.icoSize;
-    }
-    if ( this.props.icoClass ) {
-      classString = " " + this.props.icoClass;
-    }
-    if ( this.props.warningFlag ) {
-      flagElement = <span> { this.props.warningFlag } </span>;
+  , getDefaultProps: function () {
+    return {
+        icoSize      : null
+      , icoClass     : null
+      , bsBadgeStyle : "info"
+    };
+  }
+
+  , render: function () {
+    var iconBadge = null;
+
+    if ( this.props.badgeContent ){
+      iconBadge = <span className="badge">{ this.props.badgeContent }</span>;
     }
 
     return (
       <i onClick   = { this.props.onClick }
-         className = { "fa fa-" + this.props.glyph + sizeString + classString }>{ flagElement }</i>
+         className = { _.without([
+                          "fa"
+                        , ( "fa-" + this.props.glyph )
+                        , this.props.icoSize
+                        , ( "badge-" + this.props.bsBadgeStyle )
+                        , this.props.icoClass ], null ).join(" ") }>
+        { iconBadge }
+      </i>
     );
   }
 });

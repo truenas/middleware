@@ -2,7 +2,7 @@
 
 // System Tools
 // =======
-// 
+//
 
 "use strict";
 
@@ -12,9 +12,9 @@ var React = require("react");
 var SystemTools = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h2>System Tools View</h2>
-      </div>
+      </main>
     );
   }
 });

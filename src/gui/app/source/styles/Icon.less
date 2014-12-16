@@ -1,0 +1,39 @@
+// TODO: Once we switch away from FontAwesome, some of this will need
+// to be reevaluated.
+
+.fa {
+  position: relative;
+
+  .badge {
+    .icon-badge();
+  }
+
+  &.badge-primary .badge {
+    #gradient > .directional( @brand-primary, darken( @brand-primary, 25% ), @golden-angle )
+  }
+  &.badge-success .badge {
+    #gradient > .directional( @brand-success, darken( @brand-success, 25% ), @golden-angle )
+  }
+  &.badge-warning .badge {
+    #gradient > .directional( @brand-warning, darken( @brand-warning, 25% ), @golden-angle )
+  }
+  &.badge-info .badge {
+    #gradient > .directional( @brand-info, darken( @brand-info, 25% ), @golden-angle )
+  }
+  &.badge-danger .badge {
+    #gradient > .directional( @brand-danger, darken( @brand-danger, 25% ), @golden-angle )
+  }
+}
+
+.icon-badge() {
+  min-height    : 0.5em;
+  position      : absolute;
+  left          : 60%;
+  bottom        : 0;
+  padding       : 0 0.3em;
+  font-size     : 0.6em;
+  font-weight   : 700;
+  text-align    : center;
+  border-radius : 4px;
+  box-shadow    : 0px 0px 7px rgba(0, 0, 0, 0.75);
+}

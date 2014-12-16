@@ -1,306 +1,63 @@
-@left-menu-width: 230px;
-@collapsed-left-menu-width: 44px;
-@notification-bar-height: 70px;
-@almost-white: #f3f3f3;
 
-// Overlays
-//
-.overlay,
-.overlay-dark,
-.overlay-light {
-  position : absolute;
-  top      : 0;
-  right    : 0;
-  bottom   : 0;
-  left     : 0;
-  z-index  : 1000;
-}
-.overlay-dark  { background-color: fade( black, 50% ); }
-.overlay-light { background-color: fade( white, 50% ); }
+@almost-white      : #f3f3f3;
+@freenas-dark-gray : #1f1f1f;
 
-.overlay-window {
-  width      : 450px;
-  height     : 260px;
-  padding    : 10px 45px;
-  border     : 1px solid #F5F5F5;
-  box-shadow : 2px 2px 8px 0 rgba(0, 0, 0, 0.035);
-  .absolute-center();
-  #gradient.directional( white, #FAFAFA, 135deg );
-}
+// Single-page setup
+html, body { height: 100%; width: 100%; }
 
-.notificationBar {
-    position: fixed;
-    top: 0px;
-    background-color: #1f1f1f;
-    height: @notification-bar-height;
-    width: 100%;
-    z-index: 200;
-    background-image: url("../img/freenas-logo.png");
-    background-repeat: no-repeat;
-    background-position: 15px 7px;
-}
-
-    .notificationBar .userInfo {
-        float: right;
-        height: 70px;
-        line-height: 70px;
-        margin-right: 10px;
-        color: @almost-white;
-    }
-
-        .notificationBar .userInfo i.fa {
-            font-size: 200%;
-            padding: 0 15px 0 0;
-        }
-
-        .notificationBar .userInfo span.userName {
-            font-size: 100%;
-            padding: 0 5px;
-        }
-
-                .userInfo i.icoAlert {
-                    padding-right: 0px;
-                    padding-left: 5px;
-                }
-
-                    .userInfo i.icoWarning > span,
-                    .userInfo i.icoInfo > span,
-                    .userInfo i.icoQueue > span,
-                    .userInfo i.icoAlert > span {
-                        position: absolute;
-                        border-radius: 4px;
-                        display: block;
-                        font-weight: 700;
-                        min-height: 17px;
-                        line-height: 17px;
-                        margin-left: 20px;
-                        margin-top: -15px;
-                        text-align: center;
-                        min-width: 11px;
-                        font-size: 40%;
-                        box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-                        font-family: sans-serif;
-
-                    }
-                    .userInfo i.icoAlert > span {
-                        #gradient > .vertical(#fa3c45, #dc0d17);
-                        color: #FFFFFF;
-                        display: block;
-                    }
-
-                    .userInfo i.icoWarning > span {
-                        #gradient > .vertical(#fcca00, #fbe178);
-                        border-radius: 4px;
-                        color: #000000;
-                    }
-                    .userInfo i.icoInfo > span {
-                        #gradient > .vertical(#428bca, #5db4ff);
-                        border-radius: 4px;
-                        color: #000000;
-                    }
-                    .userInfo i.icoQueue > span {
-                        #gradient > .vertical(#fcca00, #fbe178);
-                        border-radius: 4px;
-                        color: #000000;
-                    }
-
-
-.notifyBoxes{
-    position: absolute;
-    background-color: #f8f8f8;
-    border: #3d3d3d 2px solid;
-    width: 600px;
-    top: 75px;
-    right: 150px;
-    border-radius:10px;
-    padding: 10px;
-    box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-}
-
-.notifyBoxes:after {
-    bottom: ~"calc(100% + 2px)";
-    border: solid transparent;
-    border-bottom-color: #e7e7e7;
-    content: " ";
-    height: 0;
-    width: 0;
-    position: absolute;
-    pointer-events: none;
-    border-width: 20px;
-    margin-left: -20px;
+body {
+  .flex-display(flex);
+  .flex-direction(column);
 }
 
 
-.notifyBoxes.warningBox:after
-{
-        right: 121px;
-}
-.notifyBoxes.infoBox:after
-{
-        right: 80px;
-}
-.notifyBoxes.queueBox:after
-{
-        right: 38px;
-}
+@notification-bar-height   : 70px;
+@left-menu-width           : 230px;
+@collapsed-left-menu-width : 44px;
+@footer-height             : 20px;
 
-.notifyBoxes.warningBox
-{
-        background-color: lighten(#dc0d17,30%);
-}
-.notifyBoxes.infoBox
-{
-        background-color: lighten(#5db4ff,15%);
-}
-.notifyBoxes.queueBox
-{
-        background-color: lighten(#fbe178,15%);
-}
-
-
-
-.notifyBoxes .item {
-    border: 2px solid #e7e7e7;
-    background-color: #e7e7e7;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    padding: 0 5px;
-    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.75);
+.app-wrapper {
+  .flex-display(flex);
+  .flex-flow(row wrap);
+  .flex(1);
+  .align-content(flex-start);
+  height  : inherit;
+  padding : @notification-bar-height
+            0
+            @footer-height
+            0;
+  margin  : -@notification-bar-height
+            0
+            0
+            0;
+  & > header,
+  & > footer {
+    .flex(0 0 100%);
+  }
+  & > main {
+    .flex(1 0 0);
+    height     : inherit;
+    overflow-y : scroll;
+  }
 }
 
-.notifyBoxes h3 {
-    font-size: 135%;
+.app-sidebar {
+  .flex-display(flex);
+  height     : inherit;
+  overflow-y : scroll;
 }
 
-.visible{
-    visibility: visible;
-}
-.hidden{
-    visibility: hidden;
+.app-footer {
+  height           : @footer-height;
+  background-color : @freenas-dark-gray;
 }
 
-
-.leftMenu {
-    position: fixed;
-    background-color: #3d3d3d;
-    /* #gradient > .horizontal(#1f1f1f, #3d3d3d); */
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    width: @left-menu-width;
-    z-index: 100;
-}
-
-.leftMenu.collapsed {
-    width: @collapsed-left-menu-width;
-}
-
-
-.leftMenuContent {
-    height: 100%;
-    overflow: hidden;
-    padding-top: 80px;
-}
-
-
-.ellipsis {
-    color: @almost-white;
-    font-size: 125%;
-    font-weight: 700;
-    padding-right: 5px;
-    text-align: right;
-    cursor: pointer;
-    width: 25px;
-    float: right;
-}
-
-
-    .leftMenuContent ul {
-        clear: both;
-        list-style-type: none;
-        width: 100%;
-        padding: 0;
-    }
-
-        .leftMenuContent ul li {
-            display: block;
-        }
-
-            .leftMenuContent ul li a {
-                display: block;
-                padding-left: 15px;
-                transition: all 0.25s ease-in-out;
-            }
-            .collapsed .leftMenuContent ul li a {
-                padding-left: 10px;
-            }
-
-            .collapsed .leftMenuContent ul li a > span {
-                display: none;
-            }
-
-                .leftMenuContent ul li a:hover {
-                    background-color: #d1d1d1;
-                    text-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-                }
-
-            .leftMenuContent ul li a, .leftMenuContent ul li i {
-                font-size: 125%;
-                font-weight: 400;
-                text-decoration: none;
-                line-height: 2;
-                color: @almost-white;
-            }
-
-            .leftMenuContent ul li i {
-                padding-right: 5px;
-                width: 30px;
-                text-align: left;
-            }
-
-                    .leftMenuContent ul li i.icoWarning > span,
-                    .leftMenuContent ul li i.icoAlert > span {
-                        position: absolute;
-                        border-radius: 4px;
-                        display: block;
-                        font-weight: 700;
-                        min-height: 17px;
-                        line-height: 17px;
-                        margin-left: 15px;
-                        margin-top: -22px;
-                        text-align: center;
-                        min-width: 11px;
-                        font-size: 60%;
-                        box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.75);
-
-                    }
-                    .leftMenuContent ul li i.icoAlert > span {
-                        #gradient > .vertical(#fa3c45, #dc0d17);
-                        color: #FFFFFF;
-                        display: block;
-                    }
-
-                    .leftMenuContent ul li i.icoWarning > span {
-                        #gradient > .vertical(#fcca00, #fbe178);
-                        border-radius: 4px;
-                        color: #000000;
-                    }
-
-
-
-.mainGrid {
-    margin-top: @notification-bar-height;
-    width: 100%;
-}
-
-.mainGrid.collapsed {
-    padding-left: @left-menu-width + 10;
-}
-.mainGrid.expanded {
-    padding-left: @collapsed-left-menu-width + 10;
-}
 
 /* Widgets */
+.widget-wrapper {
+  position: relative;
+}
+
 .widget {
     background-color: #fcfcfc;
     #gradient > .vertical(#ffffff, #f7f7f7);

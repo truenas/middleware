@@ -12,9 +12,9 @@ var React = require("react");
 var Tasks = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h2>Tasks View</h2>
-      </div>
+      </main>
     );
   }
 });

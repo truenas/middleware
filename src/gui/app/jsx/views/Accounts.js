@@ -22,10 +22,10 @@ var sections = [{
 var Accounts = React.createClass({
     render: function() {
       return (
-        <div>
+        <main>
           <SectionNav views = { sections } />
           { this.props.activeRouteHandler() }
-        </div>
+        </main>
       );
     }
 });

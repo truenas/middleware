@@ -36,7 +36,6 @@ var DetailViewer = React.createClass({
             <viewerUtil.ItemIcon primaryString   = { rawItem[ this.props.formatData["secondaryKey"] ] }
                                  fallbackString  = { rawItem[ this.props.formatData["primaryKey"] ] }
                                  seedNumber      = { rawItem[ this.props.formatData["uniqueKey"] ] }
-                                 size            = { 40 }
                                  fontSize        = { 1 } />
             <div className="text-container">
               <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>

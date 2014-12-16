@@ -1,0 +1,70 @@
+.notification-bar {
+  background-color    : @freenas-dark-gray;
+  height              : @notification-bar-height;
+  background-image    : url("../img/freenas-logo.png");
+  background-repeat   : no-repeat;
+  background-position : 15px 7px;
+
+  .user-info {
+    float        : right;
+    height       : 70px;
+    margin-right : 10px;
+    color        : @almost-white;
+    line-height  : 70px;
+
+    .fa {
+      font-size : 2em;
+      margin    : 0 8px;
+    }
+
+    .userName {
+      font-size: 100%;
+      padding: 0 5px;
+    }
+  }
+}
+
+.notification-bar-icon {
+  position : relative;
+  display  : inline-block;
+}
+
+
+.notification-box {
+  @notification-box-padding: 10px;
+  width            : 600px;
+  position         : absolute;
+  padding          : @notification-box-padding;
+  top              : 60px;
+  right            : -(@notification-box-padding/2);
+  color            : @gray-darker;
+  background-color : #f8f8f8;
+  border           : #3d3d3d 2px solid;
+  border-radius    : @notification-box-padding;
+  box-shadow       : 0 0 7px rgba(0, 0, 0, 0.75);
+  z-index          : 100;
+
+  &:after {
+    content             : "";
+    position            : absolute;
+    top                 : -40px;
+    right               : 5px;
+    border              : solid transparent;
+    border-width        : 20px;
+    border-bottom-color : #e7e7e7;
+  }
+
+  &.notification-warning { background-color: lighten(@brand-warning,20%); }
+  &.notification-info    { background-color: lighten(@brand-info,35%); }
+  &.notification-default { background-color: @gray-lighter; }
+
+  .item {
+    border: 2px solid #e7e7e7;
+    background-color: #e7e7e7;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 0 5px;
+    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.75);
+  }
+
+}

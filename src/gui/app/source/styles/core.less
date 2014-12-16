@@ -60,6 +60,9 @@
 // Typefaces
 @import "open-sans.less";
 
+
+// Iconography
+
 // NOTE: FontAwesome is NOT A PERMANENT ADDITION. It's going to be removed.
 // Don't get used to it, don't decide you like it, don't convince others of its
 // merits. FreeNAS is going to roll its OWN icon font to match our own visual
@@ -69,13 +72,20 @@
 @fontsPath    : "../font";
 @fa-font-path : "@{fontsPath}";
 
+
 // Layout
 @import "utility.less";
 @import "structure.less";
-@import "Viewer.less";
 
-// Iconography
+
+// Components
+@import "Icon.less";
+@import "NotificationBar.less";
+@import "PrimaryNavigation.less";
+@import "InformationBar.less";
+@import "Viewer.less";
 
 
 // Variables
 @import "variables.less";
+

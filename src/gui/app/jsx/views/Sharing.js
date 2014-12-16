@@ -2,7 +2,7 @@
 
 // Sharing
 // =======
-// 
+//
 
 "use strict";
 
@@ -12,9 +12,9 @@ var React = require("react");
 var Sharing = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h2>Sharing View</h2>
-      </div>
+      </main>
     );
   }
 });

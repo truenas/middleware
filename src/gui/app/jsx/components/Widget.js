@@ -15,18 +15,14 @@ var Widget = React.createClass({
     };
 
     return (
-                <div className={"widget " + this.props.size} style={divStyle}>
-                    <header>
-                        <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
-                    </header>
-                    <div className="widgetContent">
-                        <img src={this.props.content} />    
-                    </div>
-                </div>
-
-
-
-
+      <div className={"widget " + this.props.size} style={divStyle}>
+        <header>
+          <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
+        </header>
+        <div className="widgetContent">
+          <img src={this.props.content} />
+        </div>
+      </div>
     );
   }
 });

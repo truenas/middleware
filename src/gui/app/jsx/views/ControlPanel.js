@@ -12,9 +12,9 @@ var React = require("react");
 var ControlPanel = React.createClass({
   render: function() {
     return (
-      <div>
+      <main>
         <h1>Control Panel View</h1>
-      </div>
+      </main>
     );
   }
 });
