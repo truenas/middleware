@@ -46,7 +46,11 @@
 {% for css in css_hook %}
     <link rel="stylesheet" href="{{ STATIC_URL }}{{ css }}?cache={{ cache_hash }}" type="text/css" />
 {% endfor %}
+{% if request.is_secure  %}
+    <link href="{{ STATIC_URL }}favicon_ssl.ico" rel="shortcut icon" type="image/x-icon" />
+{% else %}
     <link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
+{% endif %}
 {% block dojango_header_extra %}{% endblock %}
 </head>
 <body class="{{ DOJANGO.THEME }}">
