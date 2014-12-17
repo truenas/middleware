@@ -183,7 +183,8 @@ Available options:
             "ad_keytab_file",
             "ad_timeout",
             "ad_dns_timeout",
-            "ad_ssl"
+            "ad_ssl",
+            "ad_unix_extensions"
         ]
 
         for k in keys:
