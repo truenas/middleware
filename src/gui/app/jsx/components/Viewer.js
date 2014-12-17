@@ -6,8 +6,7 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
-var Icon   = require("./Icon");
-
+var Icon         = require("./Icon");
 var DetailViewer = require("./Viewer/DetailViewer");
 var IconViewer   = require("./Viewer/IconViewer");
 var TableViewer  = require("./Viewer/TableViewer");
@@ -15,6 +14,7 @@ var TableViewer  = require("./Viewer/TableViewer");
 
 // Main Viewer Wrapper Component
 var Viewer = React.createClass({
+
     propTypes: {
       defaultMode  : React.PropTypes.string
     , allowedModes : React.PropTypes.array
@@ -22,6 +22,7 @@ var Viewer = React.createClass({
     , inputData    : React.PropTypes.array.isRequired
     , formatData   : React.PropTypes.object.isRequired
   }
+
   , changeViewMode: function( targetMode ) {
     var newMode;
 
@@ -42,11 +43,13 @@ var Viewer = React.createClass({
 
     return newMode;
   }
+
   , handleModeSelect: function( selectedKey ) {
      this.setState({
        currentMode: this.changeViewMode( selectedKey )
      });
   }
+
   , getDefaultProps: function() {
       // Viewer allows all modes by default, except for heirarchical. This list
       // can be overwritten by passing allowedModes into your <Viewer />.
@@ -59,6 +62,7 @@ var Viewer = React.createClass({
         allowedModes: [ "detail", "icon", "table" ]
       };
     }
+
   , getInitialState: function() {
       // render will always use currentMode - in an uninitialized Viewer, the
       // mode will not have been set, and should therefore come from either a
@@ -82,6 +86,7 @@ var Viewer = React.createClass({
         , tableCols    : defaultTableCols
       };
     }
+
   , render: function() {
     // Navigation
     var modeIcons = {
@@ -134,54 +139,51 @@ var Viewer = React.createClass({
     }.bind(this);
 
     return (
-      <TWBS.Grid fluid>
-        <TWBS.Row>
-          <TWBS.Navbar fluid>
-            {/* Searchbox for Viewer (1) */}
-            <TWBS.Input type="text"
-                        placeholder="Search"
-                        groupClassName="navbar-form navbar-left"
-                        addonBefore={ <Icon glyph ="search" /> } />
-            {/* Dropdown buttons (2) */}
-            <TWBS.Nav className="navbar-left">
-              {/* Select properties to group by */}
-              <TWBS.DropdownButton title="Group">
-                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-                <TWBS.MenuItem divider />
-                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-              </TWBS.DropdownButton>
-              {/* Select properties to filter by */}
-              <TWBS.DropdownButton title="Filter">
-                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-                <TWBS.MenuItem divider />
-                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-              </TWBS.DropdownButton>
-              {/* Select property to sort by */}
-              <TWBS.DropdownButton title="Sort">
-                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-                <TWBS.MenuItem divider />
-                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-              </TWBS.DropdownButton>
-            </TWBS.Nav>
-            {/* Select view mode (3) */}
-            <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
-              { this.props.allowedModes.map( createModeNav ) }
-            </TWBS.ButtonGroup>
-          </TWBS.Navbar>
-        </TWBS.Row>
+      <div className="viewer">
+        <TWBS.Navbar fluid className="viewer-nav">
+          {/* Searchbox for Viewer (1) */}
+          <TWBS.Input type="text"
+                      placeholder="Search"
+                      groupClassName="navbar-form navbar-left"
+                      addonBefore={ <Icon glyph ="search" /> } />
+          {/* Dropdown buttons (2) */}
+          <TWBS.Nav className="navbar-left">
+            {/* Select properties to group by */}
+            <TWBS.DropdownButton title="Group">
+              <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+              <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+              <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+              <TWBS.MenuItem divider />
+              <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+            </TWBS.DropdownButton>
+            {/* Select properties to filter by */}
+            <TWBS.DropdownButton title="Filter">
+              <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+              <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+              <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+              <TWBS.MenuItem divider />
+              <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+            </TWBS.DropdownButton>
+            {/* Select property to sort by */}
+            <TWBS.DropdownButton title="Sort">
+              <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+              <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+              <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+              <TWBS.MenuItem divider />
+              <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+            </TWBS.DropdownButton>
+          </TWBS.Nav>
+          {/* Select view mode (3) */}
+          <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
+            { this.props.allowedModes.map( createModeNav ) }
+          </TWBS.ButtonGroup>
+        </TWBS.Navbar>
 
-        <TWBS.Row>
         { viewerContent() }
-        </TWBS.Row>
-      </TWBS.Grid>
+      </div>
     );
   }
+
 });
 
 module.exports = Viewer;

@@ -1,10 +1,27 @@
 .viewer {
+  .flex-display(flex);
+  .flex-flow(column wrap);
+  .flex(1);
+  .align-content(flex-start);
+
+  height: inherit;
+  margin-top: -50px;
+  padding-top: 50px;
+  overflow: hidden;
 }
 
+.viewer-nav {
+  height: 50px;
+}
 
 @user-icon-detail-width: 40px;
 
 .viewer-detail {
+  .flex(1);
+  .flex-display(flex);
+  .flex-flow(row nowrap);
+  .flex(1);
+  .align-content(flex-start);
 
   .text-container {
     width          : 100%;
@@ -14,6 +31,11 @@
     vertical-align : top;
     white-space    : nowrap;
     text-overflow  : ellipsis;
+  }
+
+  .viewer-detail-nav {
+    .flex(1 0 150px);
+    overflow-y: auto;
   }
 
   .nav-pills {
@@ -50,6 +72,11 @@
   }
   .well {
     padding : 0;
+    margin  : 0;
+  }
+
+  .viewer-item-info {
+    .flex(10);
   }
 }
 

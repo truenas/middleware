@@ -13,7 +13,7 @@ var SectionNav = require("../components/SectionNav");
 
 var sections = [{
     route   : "users"
-  , display : "Accounts"
+  , display : "Users"
 },{
     route   : "groups"
   , display : "Groups"

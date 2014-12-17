@@ -35,16 +35,19 @@ body {
     .flex(0 0 100%);
   }
   & > main {
-    .flex(1 0 0);
-    height     : inherit;
-    overflow-y : scroll;
+    .flex(1);
+    height     : 100%;
+    overflow-x : hidden;
+    overflow-y : auto;
+    position   : relative;
   }
 }
 
 .app-sidebar {
   .flex-display(flex);
   height     : inherit;
-  overflow-y : scroll;
+  overflow-x : hidden;
+  overflow-y : auto;
 }
 
 .app-footer {

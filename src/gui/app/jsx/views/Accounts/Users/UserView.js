@@ -35,7 +35,7 @@ var UserView = React.createClass({
     }
 
     return (
-      <TWBS.Grid fluid>
+      <TWBS.Grid fluid className="viewer-item-info">
         {/* "Edit User" Button - Top */}
         <TWBS.Row>
           <TWBS.Col xs={12}>

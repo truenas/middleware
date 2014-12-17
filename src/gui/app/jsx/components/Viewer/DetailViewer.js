@@ -47,25 +47,19 @@ var DetailViewer = React.createClass({
     }.bind(this);
 
     return (
-      <TWBS.Grid fluid
-                 className = "viewer-detail">
-        <TWBS.Row>
-          <TWBS.Col xs={3}>
-            <TWBS.Nav bsStyle   = "pills"
-                      className = "well"
-                      stacked
-                      activeKey = { this.props.selectedKey } >
-              { this.props.inputData.map( createItem ) }
-            </TWBS.Nav>
-          </TWBS.Col>
-          <TWBS.Col xs={9}>
-            <this.props.Editor inputData  = { this.props.inputData }
-                               itemData   = { this.props.itemData }
-                               formatData = { this.props.formatData }
-                               ItemView   = { this.props.ItemView } />
-          </TWBS.Col>
-        </TWBS.Row>
-      </TWBS.Grid>
+      <div className = "viewer-detail">
+        <TWBS.Nav bsStyle   = "pills"
+                  className = "viewer-detail-nav well"
+                  stacked
+                  activeKey = { this.props.selectedKey } >
+          { this.props.inputData.map( createItem ) }
+        </TWBS.Nav>
+
+        <this.props.Editor inputData  = { this.props.inputData }
+                           itemData   = { this.props.itemData }
+                           formatData = { this.props.formatData }
+                           ItemView   = { this.props.ItemView } />
+      </div>
     );
   }
 });
