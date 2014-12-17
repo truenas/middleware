@@ -340,16 +340,6 @@ class FreeNAS_LDAP_Directory(object):
         if not filter: 
             filter = ''
 
-        m = hashlib.sha256()
-        m.update(repr(filter) + self.host + str(self.port) +
-            (basedn if basedn else ''))
-        key = m.hexdigest()
-        m = None
-
-        if filter is not None and self._cache.has_key(key):
-            log.debug("FreeNAS_LDAP_Directory._search: query in cache")
-            return self._cache[key]
-
         result = []
         results = []
         paged = SimplePagedResultsControl(
@@ -435,8 +425,6 @@ class FreeNAS_LDAP_Directory(object):
             for i in range(len(results)):
                 for entry in results[i]:
                     result.append(entry)
-
-            self._cache[key] = result
 
         log.debug("FreeNAS_LDAP_Directory._search: %d results", len(result))
         log.debug("FreeNAS_LDAP_Directory._search: leave")
