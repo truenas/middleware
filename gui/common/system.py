@@ -27,6 +27,7 @@
 import glob
 import logging
 import os
+import base64
 import re
 import shutil
 import smtplib
@@ -137,9 +138,18 @@ def send_mail(subject=None,
         msg = MIMEText(text, _charset='utf-8')
     if subject:
         msg['Subject'] = subject
+
     msg['From'] = em.em_fromemail
     msg['To'] = ', '.join(to)
     msg['Date'] = formatdate()
+
+    try:
+        gc = GlobalConfiguration.objects.order_by('-id')[0]
+        local_hostname = "%s.%s" % (gc.gc_hostname, gc.gc_domain)
+    except:
+        local_hostname = "%s.local" % get_sw_name()
+
+    msg['Message-ID'] = "<%s-%s.%s@%s>" % (get_sw_name().lower(), datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"), base64.urlsafe_b64encode(os.urandom(3)), local_hostname)
 
     if not extra_headers:
         extra_headers = {}
@@ -149,12 +159,6 @@ def send_mail(subject=None,
         else:
             msg[key] = val
     msg = msg.as_string()
-
-    try:
-        gc = GlobalConfiguration.objects.order_by('-id')[0]
-        local_hostname = "%s.%s" % (gc.gc_hostname, gc.gc_domain)
-    except:
-        local_hostname = None
 
     try:
         if not em.em_outgoingserver or not em.em_port:
