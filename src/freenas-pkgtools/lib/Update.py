@@ -745,6 +745,10 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     # Create the SEQUENCE file.
     with open(directory + "/SEQUENCE", "w") as f:
         f.write("%s" % conf.SystemManifest().Sequence())
+    # And create the SERVER file.
+    with open(directory + "/SERVER", "w") as f:
+        f.write("%s" % conf.UpdateServerName())
+        
     # Then return True!
     mani_file.close()
     return True
@@ -1157,11 +1161,25 @@ def VerifyUpdate(directory):
         log.error("Could not sequence file in cache directory %s: %s" % (directory, str(e)))
         raise UpdateIncompleteCacheException("Cache directory %s does not have a sequence file" % directory)
 
+        
     # Now let's see if the sequence matches us.
     if cached_sequence != mani.Sequence():
         log.error("Cached sequence, %s, does not match system sequence, %s" % (cached_sequence, mani.Sequence()))
         raise UpdateInvalidCacheException("Cached sequence does not match system sequence")
 
+    # Second easy thing to do:  if there is a SERVER file, make sure it's the same server
+    # name we're using
+    cached_server = "default"
+    try:
+        cached_server = open(directory + "/SERVER", "r").read().rstrip()
+    except (IOError, Exception) as e:
+        log.debug("Could not open SERVER file in cache direcory %s: %s" % (directory, str(e)))
+        cached_server = "default"
+
+    if cached_server != conf.UpdateServerName():
+        log.error("Cached server, %s, does not match system update server, %s" % (cached_server, conf.UpdateServerName()))
+        raise UpdateInvalidCacheException("Cached server name does not match system update server")
+    
     # Next thing to do is go through the manifest, and decide which package files we need.
     diffs = Manifest.DiffManifests(mani, cached_mani)
     # This gives us an array to examine.
