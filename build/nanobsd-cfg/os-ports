@@ -51,7 +51,9 @@ add_port freenas/freenas-10gui PRODUCT_VERSION=${VERSION} \
 add_port freenas/freenas-cli PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
-
+add_port freenas/py-libzfs PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 if ! is_truenas ; then
 	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
@@ -107,6 +109,7 @@ add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UN
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
 add_port lang/python2
 add_port lang/python
+add_port lang/cython
 # conflicting version of python (the below is installed as dependency of another port albeit as a different version)
 #add_port devel/py-setuptools
 add_port dns/py-bonjour
@@ -156,6 +159,7 @@ add_port devel/py-setproctitle
 add_port devel/py-jsonschema
 add_port devel/py-jsonpointer
 add_port devel/py-natural
+add_port devel/py-enum34
 add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py
