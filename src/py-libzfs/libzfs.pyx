@@ -25,10 +25,145 @@
 #
 
 from libc.stdint cimport uintptr_t
+import enum
 import nvpair
 cimport nvpair
 cimport libzfs
 cimport zfs
+
+
+class Error(enum.IntEnum):
+    EZFSSUCCESS = libzfs.SUCCESS
+    EZFSNOMEM = libzfs.NOMEM
+    EZFSBADPROP = libzfs.BADPROP
+    EZFSPROPREADONLY = libzfs.PROPREADONLY
+    EZFSPROPTYPE = libzfs.PROPTYPE
+    EZFSPROPNONINHERIT = libzfs.PROPNONINHERIT
+    EZFSPROPSPACE = libzfs.PROPSPACE
+    EZFSBADTYPE = libzfs.BADTYPE
+    EZFSBUSY = libzfs.BUSY
+    EZFSEXISTS = libzfs.EXISTS
+    EZFSNOENT = libzfs.NOENT
+    EZFSBADSTREAM = libzfs.BADSTREAM
+    EZFSDSREADONLY = libzfs.DSREADONLY
+    EZFSVOLTOOBIG = libzfs.VOLTOOBIG
+    EZFSINVALIDNAME = libzfs.INVALIDNAME
+    EZFSBADRESTORE = libzfs.BADRESTORE
+    EZFSBADBACKUP = libzfs.BADBACKUP
+    EZFSBADTARGET = libzfs.BADTARGET
+    EZFSNODEVICE = libzfs.NODEVICE
+    EZFSBADDEV = libzfs.BADDEV
+    EZFSNOREPLICAS = libzfs.NOREPLICAS
+    EZFSRESILVERING = libzfs.RESILVERING
+    EZFSBADVERSION = libzfs.BADVERSION
+    EZFSPOOLUNAVAIL = libzfs.POOLUNAVAIL
+    EZFSDEVOVERFLOW = libzfs.DEVOVERFLOW
+    EZFSBADPATH = libzfs.BADPATH
+    EZFSCROSSTARGET = libzfs.CROSSTARGET
+    EZFSZONED = libzfs.ZONED
+    EZFSMOUNTFAILED = libzfs.MOUNTFAILED
+    EZFSUMOUNTFAILED = libzfs.UMOUNTFAILED
+    EZFSUNSHARENFSFAILED = libzfs.UNSHARENFSFAILED
+    EZFSSHARENFSFAILED = libzfs.SHARENFSFAILED
+    EZFSPERM = libzfs.PERM
+    EZFSNOSPC = libzfs.NOSPC
+    EZFSFAULT = libzfs.FAULT
+    EZFSIO = libzfs.IO
+    EZFSINTR = libzfs.INTR
+    EZFSISSPARE = libzfs.ISSPARE
+    EZFSINVALCONFIG = libzfs.INVALCONFIG
+    EZFSRECURSIVE = libzfs.RECURSIVE
+    EZFSNOHISTORY = libzfs.NOHISTORY
+    EZFSPOOLPROPS = libzfs.POOLPROPS
+    EZFSPOOL_NOTSUP = libzfs.POOL_NOTSUP
+    EZFSPOOL_INVALARG = libzfs.POOL_INVALARG
+    EZFSNAMETOOLONG = libzfs.NAMETOOLONG
+    EZFSOPENFAILED = libzfs.OPENFAILED
+    EZFSNOCAP = libzfs.NOCAP
+    EZFSLABELFAILED = libzfs.LABELFAILED
+    EZFSBADWHO = libzfs.BADWHO
+    EZFSBADPERM = libzfs.BADPERM
+    EZFSBADPERMSET = libzfs.BADPERMSET
+    EZFSNODELEGATION = libzfs.NODELEGATION
+    EZFSUNSHARESMBFAILED = libzfs.UNSHARESMBFAILED
+    EZFSSHARESMBFAILED = libzfs.SHARESMBFAILED
+    EZFSBADCACHE = libzfs.BADCACHE
+    EZFSISL2CACHE = libzfs.ISL2CACHE
+    EZFSVDEVNOTSUP = libzfs.VDEVNOTSUP
+    EZFSNOTSUP = libzfs.NOTSUP
+    EZFSACTIVE_SPARE = libzfs.ACTIVE_SPARE
+    EZFSUNPLAYED_LOGS = libzfs.UNPLAYED_LOGS
+    EZFSREFTAG_RELE = libzfs.REFTAG_RELE
+    EZFSREFTAG_HOLD = libzfs.REFTAG_HOLD
+    EZFSTAGTOOLONG = libzfs.TAGTOOLONG
+    EZFSPIPEFAILED = libzfs.PIPEFAILED
+    EZFSTHREADCREATEFAILED = libzfs.THREADCREATEFAILED
+    EZFSPOSTSPLIT_ONLINE = libzfs.POSTSPLIT_ONLINE
+    EZFSSCRUBBING = libzfs.SCRUBBING
+    EZFSNO_SCRUB = libzfs.NO_SCRUB
+    EZFSDIFF = libzfs.DIFF
+    EZFSDIFFDATA = libzfs.DIFFDATA
+    EZFSPOOLREADONLY = libzfs.POOLREADONLY
+    EZFSUNKNOWN = libzfs.UNKNOWN
+
+
+class PropertySource(enum.IntEnum):
+    NONE = zfs.ZPROP_SRC_NONE
+    DEFAULT = zfs.ZPROP_SRC_DEFAULT
+    TEMPORARY = zfs.ZPROP_SRC_TEMPORARY
+    LOCAL = zfs.ZPROP_SRC_LOCAL
+    INHERITED = zfs.ZPROP_SRC_INHERITED
+    RECEIVED = zfs.ZPROP_SRC_RECEIVED
+
+
+class VDevState(enum.IntEnum):
+    UNKNOWN = zfs.VDEV_STATE_UNKNOWN
+    CLOSED = zfs.VDEV_STATE_CLOSED
+    OFFLINE = zfs.VDEV_STATE_OFFLINE
+    REMOVED = zfs.VDEV_STATE_REMOVED
+    CANT_OPEN = zfs.VDEV_STATE_CANT_OPEN
+    FAULTED = zfs.VDEV_STATE_FAULTED
+    DEGRADED = zfs.VDEV_STATE_DEGRADED
+    HEALTHY = zfs.VDEV_STATE_HEALTHY
+
+
+class PoolState(enum.IntEnum):
+    ACTIVE = zfs.POOL_STATE_ACTIVE
+    EXPORTED = zfs.POOL_STATE_EXPORTED
+    DESTROYED = zfs.POOL_STATE_DESTROYED
+    SPARE = zfs.POOL_STATE_SPARE
+    L2CACHE = zfs.POOL_STATE_L2CACHE
+    UNINITIALIZED = zfs.POOL_STATE_UNINITIALIZED
+    UNAVAIL = zfs.POOL_STATE_UNAVAIL
+    POTENTIALLY_ACTIVE = zfs.POOL_STATE_POTENTIALLY_ACTIVE
+
+
+class PoolStatus(enum.IntEnum):
+    CORRUPT_CACHE = libzfs.ZPOOL_STATUS_CORRUPT_CACHE
+    MISSING_DEV_R = libzfs.ZPOOL_STATUS_MISSING_DEV_R
+    MISSING_DEV_NR = libzfs.ZPOOL_STATUS_MISSING_DEV_NR
+    CORRUPT_LABEL_R = libzfs.ZPOOL_STATUS_CORRUPT_LABEL_R
+    CORRUPT_LABEL_NR = libzfs.ZPOOL_STATUS_CORRUPT_LABEL_NR
+    BAD_GUID_SUM = libzfs.ZPOOL_STATUS_BAD_GUID_SUM
+    CORRUPT_POOL = libzfs.ZPOOL_STATUS_CORRUPT_POOL
+    CORRUPT_DATA = libzfs.ZPOOL_STATUS_CORRUPT_DATA
+    FAILING_DEV = libzfs.ZPOOL_STATUS_FAILING_DEV
+    VERSION_NEWER = libzfs.ZPOOL_STATUS_VERSION_NEWER
+    HOSTID_MISMATCH = libzfs.ZPOOL_STATUS_HOSTID_MISMATCH
+    IO_FAILURE_WAIT = libzfs.ZPOOL_STATUS_IO_FAILURE_WAIT
+    IO_FAILURE_CONTINUE = libzfs.ZPOOL_STATUS_IO_FAILURE_CONTINUE
+    BAD_LOG = libzfs.ZPOOL_STATUS_BAD_LOG
+    UNSUP_FEAT_READ = libzfs.ZPOOL_STATUS_UNSUP_FEAT_READ
+    UNSUP_FEAT_WRITE = libzfs.ZPOOL_STATUS_UNSUP_FEAT_WRITE
+    FAULTED_DEV_R = libzfs.ZPOOL_STATUS_FAULTED_DEV_R
+    FAULTED_DEV_NR = libzfs.ZPOOL_STATUS_FAULTED_DEV_NR
+    VERSION_OLDER = libzfs.ZPOOL_STATUS_VERSION_OLDER
+    FEAT_DISABLED = libzfs.ZPOOL_STATUS_FEAT_DISABLED
+    RESILVERING = libzfs.ZPOOL_STATUS_RESILVERING
+    OFFLINE_DEV = libzfs.ZPOOL_STATUS_OFFLINE_DEV
+    REMOVED_DEV = libzfs.ZPOOL_STATUS_REMOVED_DEV
+    NON_NATIVE_ASHIFT = libzfs.ZPOOL_STATUS_NON_NATIVE_ASHIFT
+    OK = libzfs.ZPOOL_STATUS_OK
 
 
 cdef class ZFS(object):
@@ -101,13 +236,6 @@ cdef class ZPoolProperty(object):
     cdef libzfs.zpool_handle_t* _zpool
     cdef zfs.zpool_prop_t _propid
     cdef readonly object name
-
-    ZPROP_SRC_NONE = zfs.ZPROP_SRC_NONE
-    ZPROP_SRC_DEFAULT = zfs.ZPROP_SRC_DEFAULT
-    ZPROP_SRC_TEMPORARY = zfs.ZPROP_SRC_TEMPORARY
-    ZPROP_SRC_LOCAL = zfs.ZPROP_SRC_LOCAL
-    ZPROP_SRC_INHERITED = zfs.ZPROP_SRC_INHERITED
-    ZPROP_SRC_RECEIVED = zfs.ZPROP_SRC_RECEIVED
 
     def __init__(self, ZFS root, ZFSPool pool, zfs.zpool_prop_t propid):
         self._root = <libzfs.libzfs_handle_t*>root.handle()
@@ -237,6 +365,20 @@ cdef class ZFSVdev(object):
             self.nvlist['children'] = [i.nvlist for i in value]
 
 
+cdef class ZPoolScrub(object):
+    cdef readonly ZFS root
+    cdef readonly ZFSPool pool
+
+    def __init__(self, ZFS root, ZFSPool pool):
+        self.root = root
+        self.pool = pool
+
+    def __getstate__(self):
+        return {
+
+        }
+
+
 cdef class ZFSPool(object):
     cdef libzfs.zpool_handle_t *_zpool
     cdef readonly ZFS root
@@ -325,6 +467,10 @@ cdef class ZFSPool(object):
             proptypes = []
             libzfs.zprop_iter(self.__iterate_props, <void*>proptypes, True, True, zfs.ZFS_TYPE_POOL)
             return [ZPoolProperty(self.root, self, x) for x in proptypes]
+
+    property scrub:
+        def __get__(self):
+            return ZPoolScrub(self.root, self)
 
     def create(self, name, fsopts):
         pass
