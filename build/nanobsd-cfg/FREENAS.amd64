@@ -298,7 +298,7 @@ options		IPFIREWALL_VERBOSE
 options		IPFIREWALL_FORWARD
 options		IPFIREWALL_DEFAULT_TO_ACCEPT
 options		IPFIREWALL_NAT
-options		DUMMYNET
+#options		DUMMYNET
 options		LIBALIAS
 ## End FreeNAS specific section
 
