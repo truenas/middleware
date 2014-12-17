@@ -331,6 +331,7 @@ add_port sysutils/lsof
 add_port sysutils/grub2-pcbsd
 add_port sysutils/beadm-devel
 add_port net/py-pysphere
+add_port sysutils/throttle
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
