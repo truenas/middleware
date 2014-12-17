@@ -436,8 +436,6 @@ class Scrub(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            if m in ('10', '11', '12'):
-                m = chr(87 + int(m))
             labels.append(unicode(mchoices[m]))
         return ', '.join(labels)
 
