@@ -73,6 +73,7 @@ start_command()
 
 	if [ -n "${proxy}" ]; then
 		export http_proxy="${proxy}"
+		export https_proxy="${proxy}"
 	fi
 
 	/usr/local/bin/python -R ${path}/manage.py runfcgi method=threaded \
