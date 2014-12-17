@@ -321,12 +321,10 @@ Hello,
 
     for snapname in wanted_list:
         local_fs, local_snap = snapname.split('@')
-        # [#7093] throttle is no longer available.
-        #if replication.repl_limit != 0:
-        #    limit = '/usr/local/bin/throttle -K %d | ' % replication.repl_limit
-        #else:
-        #    limit = ''
-        limit = ''
+        if replication.repl_limit != 0:
+            limit = '/usr/local/bin/throttle -K %d | ' % replication.repl_limit
+        else:
+            limit = ''
         cmd = ['/sbin/zfs', 'send', '-V']
         if replication.repl_userepl:
             cmd.append('-R')
