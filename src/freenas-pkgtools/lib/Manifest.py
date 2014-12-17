@@ -3,7 +3,6 @@ import json
 import hashlib
 import logging
 
-from . import Avatar, UPDATE_SERVER
 import Configuration
 import Exceptions
 import Package
@@ -172,6 +171,11 @@ class Manifest(object):
         if PACKAGES_KEY not in self._dict \
            or len(self._dict[PACKAGES_KEY]) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
+        if self._config and self._config.UpdateServerSigned() == False:
+            log.debug("Update server %s [%s] does not sign, so not checking" %
+                      (self._config.UpdateServerName(),
+                       self._config.UpdateServerURL()))
+            return True
         if SIGNATURE_KEY not in self._dict:
             # If we don't have a signature, but one is required,
             # raise an exception
@@ -223,7 +227,7 @@ class Manifest(object):
     def SetNote(self, name, location):
         if NOTES_KEY not in self._dict:
             self._dict[NOTES_KEY] = {}
-        if location.startswith(UPDATE_SERVER):
+        if location.startswith(self._config.UpdateServerURL()):
             location = location[len(location):]
         self._dict[NOTES_KEY][name] = location
 
@@ -232,8 +236,8 @@ class Manifest(object):
             rv = {}
             for name in self._dict[NOTES_KEY].keys():
                 loc = self._dict[NOTES_KEY][name]
-                if not loc.startswith(UPDATE_SERVER):
-                    loc = "%s/%s/Notes/%s" % (UPDATE_SERVER, self.Train(), loc)
+                if not loc.startswith(self._config.UpdateServerURL()):
+                    loc = "%s/%s/Notes/%s" % (self._config.UpdateServerURL(), self.Train(), loc)
                 rv[name] = loc
             return rv
         return None
@@ -242,8 +246,8 @@ class Manifest(object):
         self._notes = {}
         for name in notes.keys():
             loc = notes[name]
-            if loc.startswith(UPDATE_SERVER):
-                loc = loc[len(UPDATE_SERVER):]
+            if loc.startswith(self._config.UpdateServerURL()):
+                loc = loc[len(self._config.UpdateServerURL()):]
             self._notes[name] = os.path.basename(loc)
         return
 
@@ -254,8 +258,8 @@ class Manifest(object):
         if name not in notes:
             return None
         loc = notes[name]
-        if not loc.startswith(UPDATE_SERVER):
-            loc = UPDATE_SERVER + loc
+        if not loc.startswith(self._config.UpdateServerURL()):
+            loc = self._config.UpdateServerURL + loc
         return loc
 
     def Train(self):
@@ -316,7 +320,7 @@ class Manifest(object):
             if crl_file is None:
                 log.debug("Could not create CRL, ignoring for now")
             else:
-                if not self._config.TryGetNetworkFile(IX_CRL,
+                if not self._config.TryGetNetworkFile(url = IX_CRL,
                                                   pathname = crl_file.name,
                                                   reason = "FetchCRL"):
                     log.error("Could not get CRL file %s" % IX_CRL)
