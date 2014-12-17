@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-12-16 09:14+0000\n"
+"PO-Revision-Date: 2014-12-17 09:34+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418721282.0\n"
+"X-POOTLE-MTIME: 1418808889.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,7 +110,7 @@ msgstr "Vždy zapnuto"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Vypnuto"
+msgstr "Zakázáno"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -122,7 +122,7 @@ msgstr "Stupeň 64 - Střední spotřeba s pohotovostním režimem"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Stupeň 127 - střední spotřeba s pohotovostním režimem"
+msgstr "Stupeň 127 - Střední spotřeba s pohotovostním režimem"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
@@ -144,7 +144,7 @@ msgstr "Nejméně"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "Střední"
+msgstr "Středně"
 
 #: choices.py:98
 msgid "Maximum"
@@ -240,7 +240,7 @@ msgstr "Běžné"
 
 #: choices.py:190
 msgid "Full"
-msgstr "Plný"
+msgstr "Plné"
 
 #: choices.py:191
 msgid "Debug"
@@ -251,7 +251,7 @@ msgstr "Ladění"
 
 #: choices.py:196
 msgid "Time Machine"
-msgstr ""
+msgstr "Apple Time Machine"
 
 #: choices.py:199
 msgid "No case folding"
@@ -263,11 +263,11 @@ msgstr "Názvy malými písmeny v obou směrech"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Klient vidí malá písmena, server velká písmena"
+msgstr "Klient vidí malá, server velká písmena"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Klient vidí velká písmena, server malá písmena"
+msgstr "Klient vidí velká, server malá písmena"
 
 #: choices.py:207
 msgid "File"
@@ -424,7 +424,9 @@ msgstr "%(week)s týden"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nikdy - zařízení je kontrolováno bez ohledu na režim napájení"
+msgstr ""
+"Nikdy - zařízení je kontrolováno bez ohledu na to, v jakém režimu napájení "
+"se nachází"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -434,18 +436,18 @@ msgstr ""
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Úsporný režim - zařízení je kontrolováno jen pokud není v režimu spánku nebo "
-"úsporném režimu"
+"Úsporný režim - zařízení je kontrolováno jen pokud není v režimu SPÁNKU nebo "
+"ÚSPORNÉM režimu"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Nečinný režim - zařízení je kontrolováno jen pokud není v režimu spánku, "
-"úspory nebo nečinnosti"
+"Nečinný režim - zařízení je kontrolováno jen pokud není v režimu SPÁNKU, "
+"ÚSPORNÉM nebo NEČINNOSTI"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Dlouhý inicializační test"
+msgstr "Dlouhý samotest"
 
 #: choices.py:531
 msgid "Short Self-Test"
@@ -454,8 +456,7 @@ msgstr "Zkrácený samotest"
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr ""
-"Test možného poškození disku, které bylo způsobeno při přepravě (Pouze pro "
-"ATA disky)"
+"Test případného poškození disku vzniklého při přepravě (Pouze pro ATA disky)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -504,12 +505,11 @@ msgstr "Uživatelské jméno"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Vyžadováno. 16 a méně znaků. Pouze písmena, číslice nebo @/./+/-/_."
+msgstr "Vyžadováno. 16 a méně znaků. Pouze písmena, číslice a znaky ./-/_."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Tato hodnota smí obsahovat pouze písmena, čísla nebo tyto znaky @/./+/-/_."
+msgstr "Tato hodnota může obsahovat pouze písmena, čísla a znaky  ./-/_."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -523,7 +523,7 @@ msgstr "Potvrzení hesla"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr "Pro potvrzení vložte stejné heslo."
+msgstr "Pro ověření správného zadání vložte stejné heslo jako výše."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
@@ -540,11 +540,11 @@ msgstr "Zamknout uživatele"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr "Vytvořit novou hlavní skupinu pro uživatele"
+msgstr "Vytvořit pro uživatele novou hlavní skupinu"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr "výchozí skupina"
+msgstr "Hlavní skupina"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -556,20 +556,20 @@ msgstr "Režim domovské složky"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr "Vedlejší skupiny"
+msgstr "Pomocné skupiny"
 
 #~ msgid "A user with that uid already exists."
 #~ msgstr "Uživatelské jméno tohoto UID již existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "Uživatelské jméno už existuje."
+msgstr "Toto uživatelské jméno je již v systému používáno - zvolte si jiné."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr "Toto pole je povinné"
+msgstr "Toto pole je třeba vyplnit"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -579,7 +579,9 @@ msgstr "Hesla nesouhlasí."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Je třeba, aby domovská složka začínala na /mnt/ nebo byla /nonexistent"
+msgstr ""
+"Je třeba, aby souborová cesta k domovské složce začínala na /mnt/ nebo aby "
+"byla /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
@@ -597,22 +599,22 @@ msgstr "Heslo je zakázáno, ponechte prázdné"
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "Toto pole je vyžadováno."
+msgstr "Toto pole je třeba vyplnit."
 
 #~ msgid "Home directory has to start with /mnt or be /nonexistent"
 #~ msgstr "Domovský adresář musí začínat /mnt/ nebo /nonexistent"
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr "Povolit opakující se GIDs"
+msgstr "Povolit opakující se identifikátory GIDs"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "Skupina s tímto názvem již existuje."
+msgstr "Skupina s tímto názvem již v systému existuje - zvolte jiný."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "Skupina s tímto GID již existuje"
+msgstr "Skupina s tímto identifikátorem GID již existuje - zvolte jiný."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -620,15 +622,15 @@ msgstr "Členové skupiny"
 
 #: account/forms.py:852
 msgid "New password"
-msgstr "nové heslo"
+msgstr "Nové heslo"
 
 #: account/forms.py:856
 msgid "New password confirmation"
-msgstr "potvrzení nového hesla"
+msgstr "Potvrzení nového hesla"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Změnit i heslo uživatele root"
+msgstr "Změnit i heslo správce systému (root)"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -636,18 +638,18 @@ msgstr "Původní heslo"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Původní heslo je chybné. Vložte jej znovu."
+msgstr "Nebylo zadáno správné původní heslo. Zkuste to znovu."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr "Chcete smazat všechny uživatele s touto primární skupinou?"
+msgstr "Chcete smazat všechny uživatele s touto hlavní skupinou?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "IID skupiny"
+msgstr "ID skupiny"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -666,7 +668,7 @@ msgstr "Skupiny"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Skupina %s je systémová a nemůže být smazána!"
+msgstr "Skupina %s je systémová (vestavěná) a proto nemůže být smazána!"
 
 #: account/models.py:82
 msgid "User ID"
@@ -678,15 +680,15 @@ msgstr "Uživatel &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Otisk UNIX hesla"
+msgstr "Zašifrované UNIX heslo"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "otisk hesla pro SMB"
+msgstr "Zašifrované SMB heslo"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "ID výchozí skupiny"
+msgstr "ID hlavní skupiny"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -714,7 +716,7 @@ msgstr "Uživatelé"
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Uživatel %s je systémový a nemůže být smazán!"
+msgstr "Uživatel %s je systémový (vestavěný) a proto nemůže být smazán!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -752,11 +754,11 @@ msgstr "Uživatel %s není platný."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr "Skupina %s je neplatná."
+msgstr "Skupina %s není platná."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr "Cesta se musí nacházet uvnitř přípojného bodu svazku"
+msgstr "Souborová cesta se musí nacházet uvnitř přípojného bodu svazku"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
@@ -788,7 +790,7 @@ msgstr "Vypnout"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr "Z %s byla vrácena prázdná data"
+msgstr "Z %s byla obdržena prázdná data"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
@@ -798,11 +800,11 @@ msgstr "Nelze načíst %(url)s: %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Během deserializace %(url)s došlo k chybě: %(error)s"
+msgstr "Během deserializace z %(url)s došlo k chybě: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr "Nebylo možné získat současný stav"
+msgstr "Nebylo možné zjistit současný stav"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
@@ -811,7 +813,7 @@ msgstr "%s úspěšně aktualizováno."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr "Pokus o restart služby byl neúspěšný."
+msgstr "Pokus o restart služby nebyl úspěšný."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
@@ -843,7 +845,8 @@ msgstr "Síťové rozhraní"
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr "Nelze nastavit na více rozhraních stejnou IP adresu (%s)"
+msgstr ""
+"Jedna a tatáž IP adresa (%s) nemůže být použita na více rozhraních naráz"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -851,7 +854,7 @@ msgstr "Je třeba zadat též IPv4 adresu"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr "Je třeba zadat též IPv4 masku"
+msgstr "Je třeba zvolit též IPv4 masku sítě"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
@@ -859,7 +862,7 @@ msgstr "Je třeba zadat též IPv6 adresu"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr "Je třeba zadat též IPv6 masku sítě"
+msgstr "Je třeba zvolit též IPv6 masku sítě"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
@@ -883,11 +886,11 @@ msgstr "Podsíť 169.254/16 není platná pro jmenný server"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Je třeba zadat název druhého DNS serveru před zadáním třetího serveru"
+msgstr "Před zadáním druhého je nejprve třeba zadat třetí jmenný server"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Je vyžadováno při použití třetího DNS serveru"
+msgstr "Je vyžadováno při použití třetího jmenného serveru"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
@@ -895,11 +898,11 @@ msgstr "Před zadáním třetího je nejprve třeba zadat první jmenný server"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "je nutné zadat název prvního DNS server před zadáním druhého servru"
+msgstr "Před zadáním druhého je nejprve třeba zadat první jmenný server"
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr "Hlavní rozhraní"
+msgstr "Nadřazené rozhraní"
 
 #~ msgid "The name must be vlanXX where XX is an integer"
 #~ msgstr "Jméno musí být ve tvaru vlanXX kde XX je číslo"
@@ -910,40 +913,40 @@ msgstr "Značení VLAN je od 1 do 4095 včetně"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr "síťové karty v LAGG (připojení přes více linek)"
+msgstr "Fyzické síťové karty v LAGG (propojení více linkami)"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
-msgstr "Fyzická síťová karta pro LAGG (Link AGGregations)"
+msgstr "Fyzická síťová karta pro LAGG (propojení více linkami)"
 
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "síť '%s' není platná, je očekávano CIDR."
+msgstr "Síť %s není platná, je očekáván zápis v CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr "IPv4 adresu je třeba zadat i pro přezdívku"
+msgstr "Je třeba zadat i alternativní IPv4 adresu"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr "Je třeba vybrat masku sítě IPv4 i pro alias"
+msgstr "Je třeba zvolit i alternativní IPv4 masku sítě"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr "Je třeba zadat IPv6 adresu i pro alias"
+msgstr "Je třeba zadat i alternativní IPv6 adresu"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "Je třeba vybrat masku sítě IPv6 i pro alias"
+msgstr "Je třeba zvolit i alternativní IPv6 masku sítě"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr "Musíte vybrat mezi IPv4 nebo IPv6 aliasem"
+msgstr "Je třeba vybrat si mezi alternativními IPv4 nebo IPv6 adresami"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr "Musíte zadat buď platnou IPv4 nebo IPv6 s maskou na alias"
+msgstr "Je třeba zadat platnou alternativní IPv4 nebo IPv6 adresu s maskou"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
@@ -964,20 +967,20 @@ msgstr "IPv6 výchozí brána"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "DNS 1"
+msgstr "Jmenný server 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "DNS 2"
+msgstr "Jmenný server 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "DNS 3"
+msgstr "Jmenný server 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
 msgid "Global Configuration"
-msgstr "Hlavní nastavení"
+msgstr "Celkové nastavení"
 
 #: network/models.py:87
 msgid "Pick your NIC"
@@ -989,7 +992,7 @@ msgstr "Název rozhraní"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Zadejte název síťového rozhraní."
+msgstr "Pojmenujte síťového rozhraní."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -999,12 +1002,13 @@ msgstr ""
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Pokud je povoleno, je DHCP použit k získání IPv4 adresy, adresy routeru, atd."
+"Pokud je povoleno, použít protokol DHCP k získání IPv4 adresy, adresy "
+"směrovače, atd."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4 addresa"
+msgstr "IPv4 adresa"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
@@ -1012,7 +1016,7 @@ msgstr "IPv4 síťová maska"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
-msgstr "Samočinné nastavení IPv6"
+msgstr "Samonastavení IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -1025,7 +1029,7 @@ msgstr "IPv6 adresa"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr "Délka IPv6 přípony"
+msgstr "Délka IPv6 předpony"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
@@ -1043,11 +1047,11 @@ msgstr "Rozhraní"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr "Přezdívka"
+msgstr "Alternativa"
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr "Přezdívky"
+msgstr "Alternativy"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1056,7 +1060,8 @@ msgstr "Virtuální rozhraní"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "Rozhraní se musí jmenovat vlanX kde X je jméno. Například: vlan0."
+msgstr ""
+"Je třeba, aby název rozhraní byl vlanX, kde X je číslo. Například: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1089,18 +1094,18 @@ msgstr "Typ protokolu"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "Seskupování spojení"
+msgstr "Propojení pomocí více linek"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "Seskupování linek"
+msgstr "Propojení pomocí více linek"
 
 #~ msgid "LAGG Interface group"
 #~ msgstr "rozhraní skupiny LAGG"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr "LAGG prioritní číslo"
+msgstr "Stupeň důležitosti v rámci propojení více linkami"
 
 #: network/models.py:354
 msgid "Physical NIC"
@@ -1128,15 +1133,15 @@ msgstr "Síť"
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr "Přehled sítí"
+msgstr "Přehled sítě"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr "Vytvořit seskupení linky"
+msgstr "Vytvořit propojení více linkami"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
-msgstr "Zobrazit všechna seskupení linek"
+msgstr "Zobrazit vícelinková propojení"
 
 #~ msgid "LAGG successfully added"
 #~ msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
@@ -1192,7 +1197,7 @@ msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr "Připojeno?"
+msgstr "Připojeno (mount)?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
@@ -1512,7 +1517,7 @@ msgstr ""
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Ověřovací skupina pro objevování"
 
 #: services/forms.py:656
 #, python-format
@@ -1771,6 +1776,8 @@ msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Tato rozšíření umožní službě Samba lépe obsluhovat unixové CIFS klienty tím, "
+"že umožní funkce jako symbolické odkazy, pevné odkazy, atd..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1788,6 +1795,8 @@ msgstr "Minimální hodnota asynchronního vst/výst pro čtení"
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
+"Pokud bude velikost požadavku převyšovat tuto hodnotu, Samba bude číst "
+"asynchronně."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1797,10 +1806,12 @@ msgstr "Minimální hodnota asynchronního I/O pro zápis"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
+"Pokud bude velikost požadavku převyšovat tuto hodnotu, Samba bude zapisovat "
+"asynchronně."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Zveřejnění sdílení pomocí technologie Zeroconf"
 
 #: services/models.py:189
 msgid ""
@@ -1808,6 +1819,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"Technologie Zeroconf, prostřednictvím služby Avahi, umožnuje klientům ("
+"konkrétně aplikaci finder v Mac OSX) samočinně objevit CIFS sdílení na "
+"systému, podobně jako je tomu u služby Prohlížeč počítače v systému Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -2036,29 +2050,33 @@ msgstr ""
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr ""
+msgstr "Typ úložné jednotky"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr ""
+msgstr "Typ použitý jako úložná jednotka"
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr ""
+msgstr "Cesta k úložné jednotce"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Umístění (např. /mnt/nazevsdileni/uloznajednotka/uloznajednotka0) použité "
+"jako úložná jednotka."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr ""
+msgstr "Velkost úložné jednotky"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Velikost úložné jednotky, 0 znamená samočinně, holé číslo znamená Bajty, či "
+"(pohodlněji) příponami KB, MB či TB."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2073,13 +2091,13 @@ msgstr "Poznámka"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Zde můžete zadat popis pro svou informaci."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr ""
+msgstr "Úložná jednotka"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
@@ -2099,13 +2117,15 @@ msgstr "IP portálu"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Uvaděči"
 
 #: services/models.py:546
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Uvadeč, pověřený pro přístup k iSCSI cíli. Lze uvést název nebo, pro všechny "
+"uvaděče, \"ALL\"."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2121,11 +2141,12 @@ msgstr ""
 
 #: services/models.py:562
 msgid "Initiator"
-msgstr ""
+msgstr "Uvaděč"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Uživatelské jméno na straně cíle. Obvykle (výchozí) se jedná o název uvaděče"
 
 #: services/models.py:604
 msgid "Peer User"
@@ -2150,6 +2171,7 @@ msgstr "Název cíle"
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr ""
+"Základní název bude samočinně připojen, pokud bude začínat bez \"iqn.\"."
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -2161,7 +2183,7 @@ msgstr "Volitelný uživatelský název cíle."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
-msgstr ""
+msgstr "Sériové"
 
 #: services/models.py:647
 msgid "Serial number for the logical unit"
@@ -2230,15 +2252,15 @@ msgstr "Cíl"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Cíl, do kterého tato úložná jednotka náleží"
 
 #: services/models.py:734
 msgid "Target / Extent"
-msgstr ""
+msgstr "Cíl / Úložná jednotka"
 
 #: services/models.py:735
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Cíle / Úložné jednotky"
 
 #: services/models.py:759
 msgid "Provider"
@@ -2339,7 +2361,7 @@ msgstr "Ve většině případů se zde používá \"public\"."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Posílat SNMP hlášení"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
@@ -2558,6 +2580,14 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Nejvyšší číslo portu zabrané pro datová spojení ve stylu PASV (0 = použít "
+"libovolný port). Pasivní porty omezují rozsah portů ze kterých server vybírá "
+"když obdrží od klienta příkaz PASV. Server náhodně zvolí číslo z udaného "
+"rozsahu a pokračuje, dokud nenajde volný. Zvolený rozsah portů musí ležet v "
+"neprivilegovaném rozsahu (např. vyšším nebo rovno 1024). Je silně doporučeno "
+"zvolit dostatečně široký rozsah, aby bylo možné obsloužit mnoho pasivních "
+"spojení naráz (např. 49152-65534, rozsah portů registrovaných organizací "
+"IANA)."
 
 #: services/models.py:1062
 msgid "Local user upload bandwidth"
@@ -2636,7 +2666,7 @@ msgstr ""
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Určuje uživatelský účet, pod kterým služba poběží."
 
 #: services/models.py:1131
 msgid "umask"
@@ -2647,6 +2677,8 @@ msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Nastaví umask pro nově vytvářené soubory na zadanou hodnotu. Výchozí je 022 ("
+"všichni mohou číst, nikdo, kdo není vlastník, zapisovat)."
 
 #: services/models.py:1136 services/models.py:1174 system/models.py:570
 msgid "Extra options"
@@ -2706,6 +2738,8 @@ msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Volby navíc do /etc/ssh/sshd_config (obvykle prázdné). Poznamenejme, že "
+"nesprávně zadané volby zabrání službě SSH ve spuštění."
 
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
@@ -2720,7 +2754,7 @@ msgstr ""
 
 #: services/models.py:1244
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Název domény (DNS/název Kerberos oblasti)"
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
@@ -2781,6 +2815,8 @@ msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Výchozí základ rozlišeného názvu (DN), který bude použit pro vyhledávání, "
+"např. dc=zkouska,dc=cz"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
@@ -2795,6 +2831,8 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Rozlišený název (dn), kterým se spojovat s adresářovým serverem, např. "
+"cn=spravce,dc=zkouska,dc=cz"
 
 #: services/models.py:1304
 msgid "Root bind password"
@@ -2802,7 +2840,7 @@ msgstr ""
 
 #: services/models.py:1306
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Přihlašovací údaje kterými se spojit."
 
 #: services/models.py:1311
 msgid "Password Encryption"
@@ -2817,7 +2855,6 @@ msgid "User Suffix"
 msgstr "Uživatelská přípona"
 
 #: services/models.py:1318
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
@@ -2834,6 +2871,8 @@ msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Tento parametr určuje příponu, která je použita pro skupiny, když jsou "
+"přidávány do LDAP adresáře, např. ou=Skupiny"
 
 #: services/models.py:1328
 msgid "Password Suffix"
@@ -2844,6 +2883,8 @@ msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Tento parametru určuje příponu použitou pro hesla, když jsou přidávány do "
+"LDAP adresáře, např. ou=Hesla"
 
 #: services/models.py:1334
 msgid "Machine Suffix"
@@ -2854,6 +2895,8 @@ msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Tento parametr určuje příponu použitou pro stroje, když jsou přidávány do "
+"LDAP adresáře, např. ou=Pocitace"
 
 #: services/models.py:1341
 msgid "Encryption Mode"
@@ -2861,7 +2904,7 @@ msgstr "Režim šifrování"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Tento parametru určuje, zda použít SSL/TLS, např. on/off/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
@@ -2930,16 +2973,21 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Tato volba určuje uživatele, který by měl provádět přenosy souborů do a z "
+"modulu. Ve spojení s volbou Skupina toto určuje, jaká práva na soubory budou "
+"k dispozici. Pro výchozí nastavení ponechte toto pole prázdné"
 
 #: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Tato volba určuje skupinu, která by měla provádět přenosy souborů do a z "
+"modulu. Pro výchozí nastavení ponechte toto pole prázdné"
 
 #: services/models.py:1428
 msgid "Hosts allow"
-msgstr ""
+msgstr "Povolené systémy"
 
 #: services/models.py:1429
 msgid ""
@@ -2947,10 +2995,13 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Tato volba je čárkami, mezerami či tabulátory oddělený seznam systémů, ze "
+"kterých je dovoleno přistupovat k tomuto modulu. Systémy můžete určit jejich "
+"názvy či IP adresami. Pro výchozí nastavení ponechte toto pole prázdné"
 
 #: services/models.py:1433
 msgid "Hosts deny"
-msgstr ""
+msgstr "Odepřené systémy"
 
 #: services/models.py:1434
 msgid ""
@@ -2961,6 +3012,12 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"Tato volba je čárkami, mezerami či tabulátory oddělený seznam systémů, "
+"kterým NENÍ povoleno přistupovat k tomuto modulu. V případě uvedení v obou, "
+"je seznam povolených důležitější. V případě, že je třeba odepřít všem (kdo "
+"nejsou uvedeni v povolených), použijte klíčové slovo ALL (případně masku "
+"sítě 0.0.0.0/0) a poté výslovně uvést v seznamu povolených hostů ty, kteří "
+"přístup mít mají. Pro výchozí nastavení ponechte toto pole prázdné "
 
 #: services/models.py:1439
 msgid ""
@@ -3043,11 +3100,11 @@ msgstr ""
 
 #: services/nav.py:79
 msgid "View Device Extents"
-msgstr ""
+msgstr "Zobrazit počet úložných jednotek, poskytovaných zařízením"
 
 #: services/nav.py:92
 msgid "File Extents"
-msgstr ""
+msgstr "Počet úložných jednotek, zabraných souborem"
 
 #: services/nav.py:111 templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
@@ -3056,7 +3113,7 @@ msgstr ""
 
 #: services/nav.py:118
 msgid "View File Extents"
-msgstr ""
+msgstr "Zobrazit počet úložných jednotek, zabraných souborem"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -3135,7 +3192,7 @@ msgstr "Exportovat pouze pro čtení"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Možné procházet síťovými klienty"
 
 #: sharing/models.py:53
 msgid "Inherit Owner"
@@ -3162,6 +3219,8 @@ msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
+"Je-li v platnosti (true), pak pro přístup ke sdílení není vyžadováno heslo. "
+"Oprávnění budou na úrovni účtu hosta."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
@@ -3172,6 +3231,9 @@ msgid ""
 "If true then only guest connections to the share are permitted. This "
 "parameter will have no effect if Allow Guest Access is not set for the share."
 msgstr ""
+"Je-li v platnosti (true), pak k tomuto sdílení budou mít přístup pouze "
+"hosté. Tento parametr nemá význam pokud na daném sdílení není současně "
+"nastaven parametr Allow Guest Access."
 
 #: sharing/models.py:71
 msgid "Hosts Allow"
@@ -3192,7 +3254,6 @@ msgid "Hosts Deny"
 msgstr "Odepřené systémy"
 
 #: sharing/models.py:77
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this share. Where the lists conflict, the allow list "
@@ -3231,6 +3292,13 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Název svazku je tím, co se objeví v nabídce dialogu \"připojit k serveru\" "
+"na strojích s Mac OS a představuje tak příslušné sdílení. Pokud svazek nemá "
+"název, bude namísto toho použita koncová část popisu souborové cesty. Stejný "
+"název nelze použít pro více svazků. Název též nemůže obsahovat znak \":\" "
+"(dvojtečka). U opravdu velmi dlouhých názvů hrozí zkomolení. U starších "
+"verzí Mac OS je délka omezena na 27 znaků. U novějších systémů rozhoduje "
+"parametr \"Volume Name Length\" v Services:Apple Share"
 
 #: sharing/models.py:118
 msgid "Share Comment"
@@ -3267,6 +3335,9 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Tato volba umožňuje určit uživatele a skupiny, kteří přistupují ke sdílení. "
+"Jednotlivé položky seznamu jsou oddělovány čárkami. Skupiny jsou rozlišeny "
+"přidáním @ před název skupiny."
 
 #: sharing/models.py:143
 msgid "Deny List"
@@ -3277,6 +3348,8 @@ msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Volba deny (odepřít) určuje uživatele a skupiny, kterým není dovolen přístup "
+"na sdílení. Forma zápisu je shodná s volbou \"allow\"."
 
 #: sharing/models.py:149
 msgid "Read-only Access"
@@ -3287,6 +3360,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Povolí určitým uživatelům a skupinám přístup na sdílení pouze pro čtení. "
+"Forma zápisu je shodná s volbou \"allow\"."
 
 #: sharing/models.py:155
 msgid "Read-write Access"
@@ -3297,6 +3372,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Povolí určitým uživatelům a skupinám přístup na sdílení pro čtení i zápis. "
+"Forma zápisu je shodná s volbou \"allow\"."
 
 #: sharing/models.py:160
 msgid "Disk Discovery"
@@ -3328,6 +3405,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Nastaví cestu k uložení databáze. Je třeba zadat umístění, do kterého lze "
+"zapisovat, a to i v případě, že je svazek pouze pro čtení."
 
 #: sharing/models.py:177
 msgid "Cache CNID"
@@ -3375,7 +3454,7 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Čísla nulového zařízení"
 
 #: sharing/models.py:197
 msgid ""
@@ -3420,6 +3499,8 @@ msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Neuvádět cestu svazku při vyčíslování seznamu svazků, užitečné pro "
+"automatické připojování (mount) či svazky vytvářené skriptem preexec."
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
@@ -3488,7 +3569,7 @@ msgstr "Potlačit syslog varování pokud nastane problém s exportem sdílení.
 
 #: sharing/models.py:285
 msgid "Maproot User"
-msgstr ""
+msgstr "Uživatel pro maproot"
 
 #: sharing/models.py:289
 msgid "User to map root to"
@@ -3496,7 +3577,7 @@ msgstr ""
 
 #: sharing/models.py:292
 msgid "Maproot Group"
-msgstr ""
+msgstr "Skupina pro maproot"
 
 #: sharing/models.py:296
 msgid "Group to map root to"
@@ -3504,7 +3585,7 @@ msgstr ""
 
 #: sharing/models.py:299
 msgid "Mapall User"
-msgstr ""
+msgstr "Uživatel pro Mapall"
 
 #: sharing/models.py:303
 msgid "User to map all users to"
@@ -3512,7 +3593,7 @@ msgstr ""
 
 #: sharing/models.py:306
 msgid "Mapall Group"
-msgstr "Skupina Mapall"
+msgstr "Skupina pro Mapall"
 
 #: sharing/models.py:310
 msgid "Group to map all users to"
@@ -3646,6 +3727,8 @@ msgstr "Je třeba vybrat svazek."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
+"Svazek %s nelze importovat, bližší informace jsou uvedeny v stavu fondu "
+"úložišť"
 
 #: storage/forms.py:673
 msgid "The SMART service failed to restart."
@@ -3653,7 +3736,7 @@ msgstr "Pokus o restart služby SMART byl neúspěšný."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
-msgstr ""
+msgstr "Název sady dat"
 
 #: storage/forms.py:683 storage/forms.py:744 storage/forms.py:799
 #: storage/forms.py:850
@@ -3666,7 +3749,7 @@ msgstr "Povolit atime"
 
 #: storage/forms.py:691 storage/forms.py:752
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kvóta pro tuto sadu dat"
 
 #: storage/forms.py:692 storage/forms.py:697 storage/forms.py:753
 #: storage/forms.py:758 storage/forms.py:808
@@ -3753,11 +3836,11 @@ msgstr "Je třeba zvolit alespoň jeden den"
 
 #: storage/forms.py:974
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Rekurzivní zachycený stav"
 
 #: storage/forms.py:975
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Název zachyceného stavu"
 
 #: storage/forms.py:986
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
@@ -3765,7 +3848,7 @@ msgstr ""
 
 #: storage/forms.py:996
 msgid "Snapshot"
-msgstr ""
+msgstr "Zachycený stav"
 
 #: storage/forms.py:997
 msgid "Clone Name (must be on same volume)"
@@ -3789,7 +3872,7 @@ msgstr "Číslo portu na vzdáleném systému"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Klíč vzdáleného systému"
 
 #: storage/forms.py:1183
 msgid "Mark the disks as new (destroy data)"
@@ -3839,7 +3922,7 @@ msgstr "Prahové dny"
 
 #: storage/models.py:207
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Určuje kolik dnů může uplynout mezi kontrolami"
 
 #: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -3946,11 +4029,11 @@ msgstr "Víkendy"
 
 #: storage/models.py:340
 msgid "Multipath name"
-msgstr ""
+msgstr "Název multipath"
 
 #: storage/models.py:346
 msgid "Multipath member"
-msgstr ""
+msgstr "Člen multipath"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
@@ -3994,11 +4077,11 @@ msgstr "Sem zadejte volby pro připojení (mount)"
 
 #: storage/models.py:643
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Systém pro vzdálenou replikaci"
 
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Systémy pro vzdálenou replikaci"
 
 #: storage/models.py:657 storage/models.py:718
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
@@ -4027,10 +4110,13 @@ msgstr ""
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Rekurzivně replikovat a odebrat zamrzlé zachycené stavy na vzdálené straně"
 
 #: storage/models.py:681
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
+"Jedinkrát inicializovat vzdálenou stranu (může způsobit ztrátu dat na "
+"vzdálené straně!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
@@ -4038,45 +4124,43 @@ msgstr "Omezení (kB/s)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
-msgstr ""
+msgstr "Omezit rychlost replikace. V kilobajtech/sekundu. 0 = neomezené."
 
 #: storage/models.py:692
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikační úloha"
 
 #: storage/models.py:693
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikační úlohy"
 
 #: storage/models.py:722 system/models.py:526 templates/storage/tasks.html:22
 msgid "Recursive"
-msgstr ""
+msgstr "Rekurzivní"
 
 #: storage/models.py:726
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Délka životnosti (číslo) zachyceného stavu"
 
 #: storage/models.py:732
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Jednotka životnosti zachyceného stavu"
 
 #: storage/models.py:736
 msgid "Begin"
-msgstr ""
+msgstr "Začátek"
 
 #: storage/models.py:737
-#, fuzzy
 msgid "Do not snapshot before"
-msgstr "Zrušit tento snapshot"
+msgstr "Nezachycovat stav před"
 
 #: storage/models.py:741
 msgid "End"
-msgstr ""
+msgstr "Konec"
 
 #: storage/models.py:742
-#, fuzzy
 msgid "Do not snapshot after"
-msgstr "Zrušit tento snapshot"
+msgstr "Nezachycovat stav po"
 
 #: storage/models.py:748
 msgid "Interval"
@@ -4084,7 +4168,7 @@ msgstr "Časové rozmezí"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Kolik času musí uběhnout mezi dvěma pokusy o zachycení stavu."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4134,7 +4218,7 @@ msgstr "Zobrazit disky"
 #: storage/nav.py:74 templates/storage/volumes.html:37
 #: templates/storage/volumes.html.py:39
 msgid "View Multipaths"
-msgstr ""
+msgstr "Zobrazit zařízení Multipath"
 
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
@@ -4190,7 +4274,7 @@ msgstr "ZFS svazek byl úspěšně přidán."
 
 #: storage/views.py:470
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "Toto je použito iSCSI cílem, nejprve odeberte zde."
 
 #: storage/views.py:475
 msgid "ZFS Volume successfully destroyed."
@@ -4198,7 +4282,7 @@ msgstr "ZFS svazek byl úspěšně zrušen."
 
 #: storage/views.py:524
 msgid "Native dataset successfully edited."
-msgstr ""
+msgstr "Přirozená datová sada byla úspěšně upravena."
 
 #: storage/views.py:544
 msgid "Mount Point permissions successfully updated."
@@ -4206,31 +4290,31 @@ msgstr "Práva na přípojném bodu byla úspěšně aktualizována."
 
 #: storage/views.py:564
 msgid "Dataset successfully destroyed."
-msgstr ""
+msgstr "Sada dat byla úspěšně zničena."
 
 #: storage/views.py:583
 msgid "Snapshot successfully deleted."
-msgstr ""
+msgstr "Zachycený stav byl úspěšně smazán."
 
 #: storage/views.py:604
 msgid "Snapshots successfully deleted."
-msgstr ""
+msgstr "Zachycené stavy byly úspěšně smazány."
 
 #: storage/views.py:616
 msgid "Rollback successful."
-msgstr ""
+msgstr "Vrácení změn bylo úspěšné."
 
 #: storage/views.py:634
 msgid "Snapshot successfully added."
-msgstr ""
+msgstr "Zachycený stav byl úspěšně přidán."
 
 #: storage/views.py:648
 msgid "Snapshot successfully taken."
-msgstr ""
+msgstr "Zachycení stavu proběhlo úspěšně."
 
 #: storage/views.py:664
 msgid "Snapshot successfully cloned."
-msgstr ""
+msgstr "Zachycený stav byl úspěšně naklonován."
 
 #: storage/views.py:684 storage/views.py:835
 msgid "Disk replacement has been initiated."
@@ -4246,7 +4330,7 @@ msgstr "Disk byl úspěšně odpojen."
 
 #: storage/views.py:723
 msgid "Disk offline operation has been issued."
-msgstr ""
+msgstr "Byla zahájena offline disková operace."
 
 #: storage/views.py:740
 msgid "Disk has been removed."
@@ -4328,6 +4412,8 @@ msgid ""
 "In order to use rsync over SSH you need a user<br />with a public key (DSA/"
 "ECDSA/RSA) set up in home dir."
 msgstr ""
+"Pro provozování rsync nad SSH je zapotřebí, aby uživatel<br />měl v domovské "
+"složce nastaven veřejnou část (DSA/ECDSA/RSA) klíče."
 
 #: system/forms.py:792 system/forms.py:810
 msgid "Quotes are not allowed"
@@ -4394,20 +4480,24 @@ msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
+"Označí server jako odkazovaný. Všechny ostatní věci jsou rovné, tento systém "
+"bude zvolen pro synchronizaci mezi sadou správně fungujících systémů."
 
 #: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr ""
+msgstr "Min. fondu"
 
 #: system/models.py:122
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
+"Nejkratší časové rozmezí mezi NTP zprávami, jako mocniny 2 v sekundách. "
+"Výchozí je 6 (64 s), ale je možné snížit na dolní mez 4 (16 s)"
 
 #: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr ""
+msgstr "Max. fondů"
 
 #: system/models.py:130
 msgid ""
@@ -4415,6 +4505,8 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
+"Nejdelší časové rozmezí mezi NTP zprávami, jako mocniny 2 v sekundách. "
+"Výchozí je 10 (1024 s), ale je možné zvýšit na horní mez 17 (36,4 h)"
 
 #: system/models.py:144
 msgid "NTP Server"
@@ -4549,7 +4641,7 @@ msgstr "Organizace"
 
 #: system/models.py:267
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Název organizace (např. společnost)"
 
 #: system/models.py:273
 msgid "Organizational Unit"
@@ -4608,7 +4700,7 @@ msgstr ""
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
-msgstr ""
+msgstr "Jako jaký uživatel spouštět příkaz"
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
@@ -4645,7 +4737,7 @@ msgstr "Vzdálené umístění"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Cesta na vzdáleném systému pro rsync, např. /mnt/zasobnik"
 
 #: system/models.py:481 templates/system/rsync.html:8
 msgid "Direction"
@@ -4659,7 +4751,7 @@ msgstr ""
 
 #: system/models.py:527
 msgid "Recurse into directories"
-msgstr ""
+msgstr "Včetně podsložek"
 
 #: system/models.py:531
 msgid "Times"
@@ -4737,6 +4829,7 @@ msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Tato volba způsobí, že rsync nastaví práva v cíli na stejná jako na zdroji"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
@@ -4747,6 +4840,8 @@ msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
+"Tato volba způsobí, že rsync aktualizuje vzdálené rozšířené atributy tak, "
+"aby byly stejné jako ty místní"
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
@@ -4812,11 +4907,11 @@ msgstr "Nahraný soubor není platný."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
-msgstr ""
+msgstr "Je vyvolán restart"
 
 #: system/views.py:264
 msgid "Shutdown is being issued"
-msgstr ""
+msgstr "Je vyvoláno vypnutí"
 
 #: system/views.py:297
 #, python-format
@@ -5061,7 +5156,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:84
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Systém pro správu hlášení o chybách"
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
@@ -5243,7 +5338,7 @@ msgstr "Odstranit zásuvný modul"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
-msgstr ""
+msgstr "Importovat"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
@@ -5409,7 +5504,7 @@ msgstr "Cíle"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr ""
+msgstr "Úložných jednotek"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
@@ -5610,10 +5705,10 @@ msgstr ""
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Klonovat zachycený stav"
 
 #: templates/storage/dataset_confirm_delete.html:5
-#, fuzzy, python-format
+#, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
 msgstr "Opravdu chcete zničit \"%(name)s\"?"
 
@@ -5627,12 +5722,19 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"Toto smaže všechny soubory v datové sadě.\n"
 msgstr[1] ""
+"\n"
+"Toto smaže všechny soubory v této a podřízených datových sadách.\n"
 msgstr[2] ""
+"\n"
+"Toto smaže všechny soubory v této a podřízených datových sadách.\n"
+"       "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Upravit datovou sadu"
 
 #: templates/storage/datasets.html:3
 #, python-format
@@ -5753,11 +5855,11 @@ msgstr "Opravdu chcete překontrolovat svazek?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "Průběh této operace zvýší zátěž na systém"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr ""
+msgstr "Opravdu chcete vrátit datovou sadu do tohoto zachyceného stavu?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
@@ -5773,7 +5875,7 @@ msgstr "Zrušit tento snapshot"
 
 #: templates/storage/snapshots.html:48
 msgid "Rollback Snapshot"
-msgstr ""
+msgstr "Vrátit na tento zachycený stav"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
@@ -5900,7 +6002,7 @@ msgstr "Typ skupiny"
 
 #: templates/storage/wizard.html:105
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS navíc"
 
 #: templates/storage/wizard.html:109
 msgid "The use of only 1 log disk is highly discouraged"
@@ -6047,7 +6149,7 @@ msgstr "Obecné"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr "Obnovení továrního nastavení"
+msgstr "Vrátit na nastavení na prvotní hodnoty"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -6372,7 +6474,7 @@ msgstr "Ladění2"
 
 #: choices.py:670
 msgid "Daemon"
-msgstr "Démon"
+msgstr "Služba"
 
 #: choices.py:686
 msgid "NT4"
@@ -6420,7 +6522,7 @@ msgstr "Potvrdit nové heslo"
 
 #: account/forms.py:68
 msgid "Passwords do not match"
-msgstr "Hesla se neshodují            "
+msgstr "Hesla se neshodují"
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
@@ -6433,7 +6535,7 @@ msgstr "Domovská složka musí končit uživatelským jménem"
 #: account/models.py:56
 #: account/models.py:150
 msgid "Permit Sudo"
-msgstr "Povolit Sudo            "
+msgstr "Povolit Sudo"
 
 #: account/models.py:135
 msgid "Built-in User"
@@ -6460,7 +6562,7 @@ msgstr "Zamknuto"
 
 #: api/resources.py:860
 msgid "on every %(days)s"
-msgstr "každý %s den"
+msgstr "každý %(days)s"
 
 #: api/resources.py:866
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -6493,7 +6595,7 @@ msgstr "Nelze přeložit url, vynechávám %(node)s: %(error)s"
 #: jails/models.py:403
 #: templates/plugins/plugins.html:21
 msgid "Jail"
-msgstr "Žalář"
+msgstr "Omezené prostředí (jail)"
 
 #: jails/admin.py:192
 msgid "Edit Jail"
@@ -6587,7 +6689,7 @@ msgstr "Tento žalář je vyžadován %d pluginem(ny)"
 
 #: jails/models.py:260
 msgid "Jail Root"
-msgstr "Root žaláře"
+msgstr "Kořenová složka omezeného prostředí"
 
 #: jails/models.py:261
 msgid "Path where to store jail data"
@@ -7026,7 +7128,7 @@ msgstr ""
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (\"běh nul\")"
 
 #: choices.py:312
 msgid "lzjb (legacy, not recommended)"
@@ -7034,11 +7136,11 @@ msgstr "lzjb (pro zpětnou slučitelnost, nedoporučeno)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (vše zaokrouhleno)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr "plzip (nejsilnější komprese)"
+msgstr "plzip (nejúčinnější komprese)"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -7050,11 +7152,11 @@ msgstr "Řadič domény"
 
 #: choices.py:711
 msgid "auth"
-msgstr "ověřování"
+msgstr "ověř."
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr "ověření+!data"
+msgstr "ověř.+!data"
 
 #: jails/admin.py:200
 msgid "Start"
@@ -7063,7 +7165,7 @@ msgstr "Začátek"
 #: jails/forms.py:182
 #: jails/forms.py:629
 msgid "No jail root configured."
-msgstr ""
+msgstr "Není nastavena kořenová složka omezeného prostředí."
 
 #: jails/forms.py:906
 msgid "The path could not be mounted %(source)s: %(error)s"
@@ -7071,7 +7173,7 @@ msgstr "Umístění nelze připojit %(source)s: %(error)s"
 
 #: jails/models.py:97
 msgid "IPv4 aliases"
-msgstr "Další IPv4"
+msgstr "Alternativní IPv4"
 
 #: jails/models.py:103
 msgid "IPv4 bridge address"
@@ -7087,7 +7189,7 @@ msgstr "Šablona nesmí mít žádný výskyt!"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr ""
+msgstr "Kořen omezeného prostředí není nastaven!"
 
 #: jails/models.py:537
 #, fuzzy
@@ -7108,11 +7210,11 @@ msgstr "Úložiště bylo úspěšně přidáno."
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "Žádný RPC token!"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Vypnuto"
 
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
@@ -7129,11 +7231,11 @@ msgstr "Povolit funkci netwait"
 
 #: network/models.py:93
 msgid "Netwait IP list"
-msgstr ""
+msgstr "Seznam IP pro Netwait"
 
 #: network/models.py:102
 msgid "Host name data base"
-msgstr ""
+msgstr "Databáze názvů systémů"
 
 #: network/models.py:441
 msgid "Link Aggregation Member"
@@ -7186,7 +7288,7 @@ msgstr "Heslo protistrany (potvrzení)"
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr ""
+msgstr "Sériové číslo nebylo nalezeno a glabel pro %(disk)s selhalo: %(error)s"
 
 #: services/forms.py:1659
 msgid "A target with that name already exists."
@@ -7220,6 +7322,15 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Tento ano/ne (boolean) parametr určuje chování služby smbd(8) při obdržení "
+"požadavku protokolu \"otevřít pro spuštění\" od Windows klienta. U Samba "
+"verze 3.6 a starších, právo spouštění nebylo kontrolováno v seznamech ACL, "
+"takže klient mohl soubor spustit, i když neměl potřebné právo. V Samba 4.0 "
+"toto bylo opraveno, takže ve výchozím stavu, tj. když je tento parametr "
+"nastaven na \"False\" (ne), pak je \"otevřít pro spuštění\" v případě, že "
+"není příslušné právo k dispozici, odepřen. je-li tento parametr nastaven na "
+"\"True\" (ano), Samba nekontroluje právo \"otevřít pro spuštění\" a chová se "
+"tak tedy stejně, jako Samba 3.6 "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -7230,9 +7341,8 @@ msgid "Allow non-root mount"
 msgstr "Povolit připojování (mount) i uživatelům (nejen správcům)"
 
 #: services/models.py:350
-#, fuzzy
 msgid "Bind IP Addresses"
-msgstr "IPv4 adresa"
+msgstr "IP adresa pro spojení"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
@@ -7260,7 +7370,7 @@ msgstr "Uživatelský účet pro dohledování"
 
 #: services/models.py:1177
 msgid "Display Login"
-msgstr ""
+msgstr "Zobrazení přihlášení"
 
 #: services/models.py:1180
 msgid "Message which will be displayed to the user when they initially login."
@@ -7271,6 +7381,8 @@ msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
 msgstr ""
+"Pro místní uživatele, povolit přístup pouze do uživatelovo domovské složky "
+"pokud není členem skupiny wheel (spráci)."
 
 #: services/models.py:1278
 msgid "Enable TLS"
@@ -7282,31 +7394,31 @@ msgstr "TLS pravidlo"
 
 #: services/models.py:1288
 msgid "TLS allow client renegotiations"
-msgstr ""
+msgstr "TLS povolit opětovné dohodnutí klienta"
 
 #: services/models.py:1300
 msgid "TLS common name required"
-msgstr ""
+msgstr "TLS vyžadováno common name"
 
 #: services/models.py:1304
 msgid "TLS enable diagnostics"
-msgstr ""
+msgstr "TLS povolit diagnostiku"
 
 #: services/models.py:1308
 msgid "TLS export certificate data"
-msgstr ""
+msgstr "TLS exportovat údaje certifikátu"
 
 #: services/models.py:1320
 msgid "TLS no session reuse required"
-msgstr ""
+msgstr "TLS nevyžadováno opětovné využití relace"
 
 #: services/models.py:1324
 msgid "TLS export standard vars"
-msgstr ""
+msgstr "TLS exportovat běžné proměnné"
 
 #: services/models.py:1332
 msgid "TLS DNS name required"
-msgstr ""
+msgstr "TLS vyžadován DNS název"
 
 #: services/models.py:1340
 msgid "Certificate and private key"
@@ -7338,13 +7450,12 @@ msgid "Use keytab"
 msgstr ""
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Kerberos server"
+msgstr "Soubor s uloženými Kerberos pověřeními"
 
 #: services/models.py:1629
 msgid "Set this if you want to allow Trusted Domains."
-msgstr ""
+msgstr "Pokud chcete povolit důvěryhodné domény, nastavte toto."
 
 #: services/models.py:1652
 msgid "Hostname of the kerberos server to use."
@@ -7373,7 +7484,7 @@ msgstr "Zabezpečený režim"
 
 #: services/models.py:1722
 msgid "Cause ypbind to run in secure mode"
-msgstr ""
+msgstr "Způsobí, že služba ypbind poběží v bezpečném režimu"
 
 #: services/models.py:1735
 #: services/models.py:1736
@@ -7408,12 +7519,16 @@ msgid ""
 "Report as informational in the system log if the temperature is greater or "
 "equal than N degrees Celsius. 0 to disable"
 msgstr ""
+"Hlásit jako informační v protokolu systému a pokud je teplota vyšší nebo "
+"rovná N stupňům Celsia. Pro zakázání nastavte 0"
 
 #: services/models.py:2017
 msgid ""
 "Report as critical in the system log and send an email if the temperature is "
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
+"Hlásit jako kritické v protokolu systému a poslat e-mail pokud je teplota "
+"vyšší nebo rovná N stupňům Celsia. Pro zakázání nastavte 0"
 
 #: services/models.py:2075
 msgid "DNS Backend"
@@ -7429,7 +7544,7 @@ msgstr "Přeposílač DNS"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
-msgstr ""
+msgstr "Úroveň stromu domény"
 
 #: services/nav.py:118
 #: templates/services/core.html:27
@@ -7454,6 +7569,7 @@ msgid ""
 "The network %s is already being shared and cannot be used twice for the same "
 "filesystem"
 msgstr ""
+"Síť %s je již sdílena a nelze ji použít dvakrát pro stejný souborový systém"
 
 #: sharing/models.py:48
 msgid "Apply Default Permissions"
@@ -7534,6 +7650,11 @@ msgid ""
 "fixed-size records.  ZFS automatically tunes block sizes according to "
 "internal algorithms optimized for typical access patterns."
 msgstr ""
+"Určuje doporučenou velikost bloku pro soubory na souborovém systému. Tato "
+"vlastnost byla navržena výhradně pro potřeby ukládání databází takových, "
+"které přistupují k souborům v záznamech o neměnné velikosti. ZFS samočinně "
+"upravuje velikostí bloků dle vnitřních algoritmů uzpůsobených pro typické "
+"vzorce přístupu."
 
 #: storage/forms.py:1613
 msgid "Sparse volume"
@@ -7546,6 +7667,11 @@ msgid ""
 "less than the volume size. Consequently, writes to a sparse volume can fail "
 "with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
+"Vytvoří \"řídký\" (sparse) svazek bez rezervace, známé též jako \""
+"přidělování dle okamžité potřeby\" (thin provisioning). \"řídký svazek\" je "
+"takový, výhradně jemuž vyhrazené místo je menší, než je jeho kapacita. "
+"Následkem toho, zápis na řídký svazek může v okamžiku, kdy na fondu úložišť "
+"dochází místo, skončit chybou ENOSPC (nedostak místa)"
 
 #: storage/forms.py:1624
 msgid "Block size"
@@ -7563,7 +7689,7 @@ msgstr "Typ práv"
 
 #: storage/forms.py:1817
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr ""
+msgstr "V názvu zachyceného stavu je možné použít pouze [-a-zA-Z0-9_. ]"
 
 #: storage/forms.py:1860
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
@@ -7579,11 +7705,11 @@ msgstr "Heslo není platné"
 
 #: storage/forms.py:2021
 msgid "Dedicated User Enabled"
-msgstr ""
+msgstr "Vyhrazený uživatel povolen"
 
 #: storage/forms.py:2022
 msgid "If disabled then root will be used for replication."
-msgstr ""
+msgstr "Pokud je zakázáno, bude pro replikaci použit účet správce (root)."
 
 #: storage/forms.py:2030
 msgid "Enable High Speed Ciphers"
@@ -7597,9 +7723,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:2237
-#, fuzzy
 msgid "A scrub with this volume already exists."
-msgstr "Skupina s tímto jménem již existuje."
+msgstr "Pro tento svazek je kontrola již nastavena."
 
 #: storage/forms.py:2316
 msgid "New Passphrase"
@@ -7633,24 +7758,24 @@ msgstr "Odebrat vyhrazeného uživatele"
 #: storage/models.py:849
 #: storage/models.py:968
 #: templates/storage/snapshots.html:82
-#, fuzzy
 msgid "Volume/Dataset"
-msgstr "Svazky"
+msgstr "Svazek/Datová sada"
 
 #: storage/models.py:856
 msgid "Last snapshot sent to remote side"
-msgstr ""
+msgstr "Nejnovější zachycený stav, který byl odeslán na vzdálenou stranu"
 
 #: storage/models.py:864
-#, fuzzy
 msgid "Remote ZFS Volume/Dataset"
-msgstr "Vytvořit ZFS Dataset"
+msgstr "Vzdálený ZFS svazek/datová sada"
 
 #: storage/models.py:866
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: Volumename/"
 "Datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Toto by měl být název ZFS souborového systému na vzdálené straně. Např.: "
+"název svazku / název datové sady, nikoli přípojný bod či souborová cesta"
 
 #: storage/models.py:886
 msgid "Replication Stream Compression"
@@ -7679,7 +7804,7 @@ msgstr "Znovuopatření šifrování klíčem proběhlo úspěšně"
 
 #: storage/views.py:1088
 msgid "GELI recovery key download starting..."
-msgstr ""
+msgstr "Zahajování stahování obnovovacího klíče GELI šifrování..."
 
 #: storage/views.py:1151
 msgid "The pool failed to upgraded: %s"
@@ -7691,7 +7816,7 @@ msgstr "Předmět"
 
 #: support/models.py:41
 msgid "Support subject."
-msgstr ""
+msgstr "Předmět podpory."
 
 #: support/models.py:49
 msgid "Support"
@@ -7761,7 +7886,7 @@ msgstr "Přesměrovat standardní chybový výstup"
 
 #: system/models.py:1030
 msgid "Pre Init"
-msgstr ""
+msgstr "Před inicializací"
 
 #: system/models.py:1067
 msgid "Last Name"
@@ -7773,9 +7898,8 @@ msgstr "Telefon domů"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "Odstranit dataset"
+msgstr "Systémová datová sada"
 
 #: system/views.py:191
 msgid "The cron process has started"
@@ -7784,6 +7908,7 @@ msgstr "Proces cron byl spuštěn"
 #: system/alertmods/httpd_bindaddr.py:20
 msgid "The WebGUI Address could not bind to %s; using wildcard"
 msgstr ""
+"Adresa webového rozhraní nemohla být spojena s %s; použití zástupných znaků"
 
 #: system/alertmods/multipaths_status.py:19
 msgid "The following multipaths are not optimal: %s"
@@ -7944,7 +8069,7 @@ msgstr "Ladění3"
 
 #: choices.py:685
 msgid "Auth"
-msgstr "Ověřování"
+msgstr "Ověř."
 
 #: choices.py:686
 msgid "Local 0"
@@ -7990,7 +8115,7 @@ msgstr "Vestavěná skupina"
 #: storage/views.py:778
 #: storage/views.py:1144
 msgid "Pool output could not be parsed. Is the pool imported?"
-msgstr ""
+msgstr "Výstup z fondu nemohl být zpracován. Je fond importován?"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
@@ -8017,6 +8142,8 @@ msgstr ""
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
 msgstr ""
+"Je třeba, aby se kořenová složka omezeného prostředí nacházela na svazku "
+"nebo sadě dat!"
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
@@ -8040,7 +8167,7 @@ msgstr "Přezdívky IPv6 mostu"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
-msgstr ""
+msgstr "Čárkami oddělený seznam voleb sysctl"
 
 #: jails/models.py:357
 msgid "IPv6 Network Start Address"
@@ -8095,12 +8222,17 @@ msgid ""
 "are specified, each will be tried until one is successful or the list is "
 "exhausted. If it is empty the default gateway will be used."
 msgstr ""
+"Mezerami oddělený seznam IP adres, které zkoušet nástrojem ping(8). Při "
+"zadání vícero IP adres, budou zkoušeny jedna po druhé, dokud se nepodaří či "
+"se dojde na konec seznamu. Pokud nebude vyplněno, bude použita výchozí brána."
 
 #: network/models.py:103
 msgid ""
 "This field is appended to /etc/hosts which contains information regarding "
 "known hosts on the network. hosts(5)"
 msgstr ""
+"Obsah tohoto pole je připojen do souboru /etc/hosts, který obsahuje "
+"informace ohledně známých systémů na sít. Viz hosts(5)"
 
 #: network/views.py:66
 msgid "IPMI successfully edited"
@@ -8145,9 +8277,8 @@ msgid "Allow execute always"
 msgstr "Povolit vždy vykonat"
 
 #: services/models.py:298
-#, fuzzy
 msgid "Enable/disable home directories for afp user."
-msgstr "Povolit/zakázat domovské adresáře pro uživatele protokolu samba."
+msgstr "Povolit/zakázat domovské složky pro uživatele protokolu afp."
 
 #: services/models.py:340
 msgid ""
@@ -8156,6 +8287,10 @@ msgid ""
 "vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
 "NFS requests from reserved ports only."
 msgstr ""
+"Povolit obsloužení požadavků na připojení (mount) i od uživatelů, kteří "
+"nejsou správci (root). Toto by mělo být nastaveno pouze v případě potřeby. "
+"Způsobí samočinné vypnutí sysctl příznaku vfs.nfsrv.nfs_privports, který "
+"řídí, zda jádro systému přijímá NFS požadavky pouze z vyhrazených portů."
 
 #: services/models.py:351
 msgid ""
@@ -8164,16 +8299,22 @@ msgid ""
 "specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
 "and if IPv6 is enabled, ::1 to the list."
 msgstr ""
+"Určuje konkrétní IP adresy (oddělené čárkami) se kterými se spojovat pro TCP "
+"a UDP požadavky. Tato volba může být použita opakovaně. Není-li určena žádná "
+"adresa, bude spojovat na INADDR_ANY. Na seznam budou samočinně přidány "
+"adresy 127.0.0.1 a (je-li zapnuto IPv6) ::1."
 
 #: services/models.py:359
 msgid "mountd(8) bind port"
-msgstr ""
+msgstr "Spojovací port pro mountd(8)"
 
 #: services/models.py:376
 msgid ""
 "This option forces the rpc.statd daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
+"Tato volba vynutí, aby se služba rpc.statd spojila na určený port, na "
+"protokolech IPv4 i IPv6."
 
 #: services/models.py:874
 msgid "LUN ID"
@@ -8184,33 +8325,36 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a comma to separate multiple alias names."
 msgstr ""
+"Alternativní název systému. Tato volba může být použita vícekrát, pro každou "
+"doménu, která má stejnou IP adresu. Při použití vícero alternativních názvů "
+"je oddělujte čárkami."
 
 #: services/models.py:952
-#, fuzzy
 msgid "These parameters will be added to global settings in inadyn-mt.conf."
-msgstr "Tyto parametry jsou přidány do [Share] sekce smb.conf "
+msgstr "Tyto parametry budou přidány do celkových nastavení v inadyn-mt.conf."
 
 #: services/models.py:1016
 msgid "Slave"
 msgstr "Podřízené"
 
 #: services/models.py:1196
-#, fuzzy
 msgid ""
 "Use this option to override the directory creation mask (077 by default)."
-msgstr "Použijte tuto možnost k přepsání masky (výchozí hodnota 0777)."
+msgstr ""
+"Použijte tuto možnost k přepsání masky vytváření složek (výchozí hodnota "
+"0777)."
 
 #: services/models.py:1292
 msgid "TLS allow dot login"
-msgstr ""
+msgstr "TLS povolit tečkové přihlášení"
 
 #: services/models.py:1296
 msgid "TLS allow per user"
-msgstr ""
+msgstr "TLS povolit na uživatele"
 
 #: services/models.py:1312
 msgid "TLS no certificate request"
-msgstr ""
+msgstr "TLS žádný požadavek na certifikát"
 
 #: services/models.py:1316
 msgid "TLS no empty fragments"
@@ -8230,6 +8374,10 @@ msgid ""
 "transactions that sftp-server performs on behalf of the client. DEBUG2 and "
 "DEBUG3 each specify higher levels of debugging output. The default is ERROR."
 msgstr ""
+"Určuje, které zprávy budou zaznamenány sftp serverem. Stupně INFO a VERBOSE "
+"(podrobnější) protokolují transakce, které sftp-server provádí na požadavek "
+"klienta. DEBUG2 a DEBUG3 (ladění) znamenají vyšší a vyšší úrovně ladícího "
+"výstupu. Výchozí je ERROR (chyby)."
 
 #: services/models.py:1532
 #: services/models.py:1640
@@ -8259,7 +8407,7 @@ msgstr "Použít výchozí doménu"
 
 #: services/models.py:1645
 msgid "Global Catalog Server"
-msgstr ""
+msgstr "Server s celkovým katalogem"
 
 #: services/models.py:1658
 msgid "Hostname of the kerberos password server to use."
@@ -8291,7 +8439,7 @@ msgstr ""
 
 #: services/models.py:1727
 msgid "Cause ypbind to use 'many-cast' instead of broadcast"
-msgstr ""
+msgstr "Způsobí, že ypbind použije \"many-cast\" namísto všesměrového vysílání"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
@@ -8330,7 +8478,7 @@ msgstr "IP adresa DNS přeposílače"
 
 #: services/models.py:2088
 msgid "Domain and Forest Level, eg 2003"
-msgstr ""
+msgstr "Úroveň domény a doménového stromu, např. 2003"
 
 #: sharing/forms.py:174
 msgid "This is not a valid network: %s"
@@ -8338,7 +8486,7 @@ msgstr "Toto není platná síť: %s"
 
 #: sharing/forms.py:288
 msgid "This option is only available once per mountpoint"
-msgstr ""
+msgstr "Tuto volbu je možné v rámci přípojného bodu použít pouze jednou"
 
 #: sharing/forms.py:320
 msgid "You need at least one path for the share"
@@ -8346,18 +8494,21 @@ msgstr "Pro sdílení je třeba alespoň jednu cestu"
 
 #: sharing/models.py:49
 msgid "Recursively set sane default windows permissions on share"
-msgstr ""
+msgstr "Nastavit rozumná výchozí Widnows oprávnění na sdílení, včetně podsložek"
 
 #: sharing/models.py:232
 msgid ""
 "Networks that are authorized to access the NFS share. Specify network "
 "numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
 msgstr ""
+"Sítě, které jsou pověřeny pro přístup na NFS sdílení. Zadejte adresu sítě ve "
+"formě 1.2.3.4/xx, kde xx je počet bitů síťové masky."
 
 #: sharing/models.py:270
 msgid ""
 "If a user is selected, the root user is limited to that user's permissions"
 msgstr ""
+"Je-li zvolen uživatel, správce (root) je omezen na oprávnění tohoto uživatele"
 
 #: sharing/models.py:288
 msgid "The specified user's permissions are used by all clients"
@@ -8399,18 +8550,26 @@ msgid ""
 "impact your ability to access your data.<br /> Consider using compression "
 "instead."
 msgstr ""
+"Zapnutí deduplikace dat může drastický snížit výkon,<br /> a mít tak dopad "
+"na přístup k datům.<br /> Zvažte proto namísto deduplikace data spíše "
+"komprimovat."
 
 #: storage/forms.py:558
 msgid ""
 "You are trying to add a virtual device of type '%(addtype)s' in a pool that "
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
+"Pokoušíte se přidat virtuální zařízení typu '%(addtype)s' ve fondu úložišť, "
+"které má virtuální zařízení typu '%(vdevtype)s'"
 
 #: storage/forms.py:568
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"Pokoušíte se přidat virtuální zařízení, sestávající se z %(addnum)s zařízení "
+"ve fondu úložišť, které má virtuální zařízení, sestávající se z %(vdevnum)s "
+"zařízení"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
@@ -8422,6 +8581,8 @@ msgid ""
 "The selected disks were not verified for these import rules. Filesystem "
 "check failed."
 msgstr ""
+"Zvolené disky nebyly ověřeny vůči těmto importním pravidlům. Kontrola "
+"souborového systému se nezdařila."
 
 #: storage/forms.py:1084
 msgid "Volume imported"
@@ -8520,11 +8681,11 @@ msgstr "Svazek nelze odemknout"
 
 #: storage/views.py:1029
 msgid "GELI key download starting..."
-msgstr ""
+msgstr "Zahajování stahování klíče GELI sifrování..."
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "Přechod na novější verzi fondu úložišť byl dokončen"
 
 #: storage/views.py:1171
 msgid "Disks successfully edited"
@@ -8547,7 +8708,7 @@ msgstr "Spustit nyní"
 
 #: system/forms.py:68
 msgid "The path '%s' requires execute permission bit"
-msgstr ""
+msgstr "Souborová cesta %s vyžaduje oprávnění ke spouštění"
 
 #: system/forms.py:587
 msgid "RSA or DSA private key is not valid"
@@ -8563,7 +8724,7 @@ msgstr "Paměť"
 
 #: system/forms.py:888
 msgid "Usernames cannot exceed 17 characters for rsync tasks"
-msgstr ""
+msgstr "U úloh rsync nemohou uživatelská jména svou délkou přesáhnout 17 znaků"
 
 #: system/forms.py:893
 msgid "Usernames cannot have spaces"
@@ -8629,7 +8790,7 @@ msgstr "Skript"
 
 #: system/models.py:1050
 msgid "Init/Shutdown Scripts"
-msgstr ""
+msgstr "Inicializační/vypínací skripty"
 
 #: system/models.py:1063
 msgid "First Name"
@@ -8662,12 +8823,11 @@ msgstr "Registrace"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Fond"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Syslog server"
+msgstr ""
 
 #: system/views.py:341
 msgid "You must configure the root email (Accounts->Users->root)"
@@ -8820,7 +8980,7 @@ msgstr ""
 
 #: choices.py:715
 msgid "auth+data"
-msgstr "ověření+data"
+msgstr "ověř.+data"
 
 #: jails/models.py:91
 msgid "IPv4 netmask"
@@ -8841,7 +9001,7 @@ msgstr "Aktivní"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Bez signálu"
 
 #: network/views.py:68
 msgid "IPMI failed"
@@ -8857,6 +9017,10 @@ msgid ""
 "ip addresses instead. An example place where hostname lookups are currently "
 "used is when checking the hosts deny and hosts allow."
 msgstr ""
+"Určuje, zda by samba měla používat (náročný) překlad IP adres na názvů "
+"systémů či namísto toho použít jen IP adresy. Příkladem použití názvů "
+"systémů je v současnosti jejich použití v seznamech povolených a odepřených "
+"systémů. "
 
 #: services/models.py:240
 msgid "Server maximum protocol"
@@ -8868,26 +9032,33 @@ msgid ""
 "families. This is typically done to ensure that the port which mountd binds "
 "to is a known value which can be used in firewall rulesets."
 msgstr ""
+"Vynutí, aby se mountd spojil na zadaný port, platí pro protokoly IPv4 i "
+"IPv6. Užitečné pro zajištění toho, že spojovací port mountd bude znám a díky "
+"tomu pro něj bude možné nastavit pravidlo na firewallu. "
 
 #: services/models.py:371
 msgid "rpc.statd(8) bind port"
-msgstr ""
+msgstr "spojovací port rpc.statd(8)"
 
 #: services/models.py:381
 msgid "rpc.lockd(8) bind port"
-msgstr ""
+msgstr "spojovací port rpc.lockd(8)"
 
 #: services/models.py:386
 msgid ""
 "This option forces rpc.lockd the daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
+"Tato volba vynutí, aby se služba rpc.lockd spojila na určený port, na "
+"protokolech IPv4 i IPv6."
 
 #: services/models.py:916
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"IP adresa klienta je zjišťována voláním \"url\" z této "
+"\"ip_server_name:port\". Výchozí je checkip.dyndns.org:80."
 
 #: services/models.py:1018
 msgid "UPS Mode"
@@ -8909,7 +9080,7 @@ msgstr "Sem zadejte obsah svého certifikátu a soukromého klíče."
 msgid ""
 "Specifies the facility code that is used when logging messages from sftp-"
 "server."
-msgstr ""
+msgstr "Určuje kód použitý při protokolování zpráv z sftp-server."
 
 #: services/models.py:1619
 msgid "Verbose logging"
@@ -8946,6 +9117,7 @@ msgstr ""
 #: sharing/models.py:169
 msgid "Check this to enable Time Machine backups on this share."
 msgstr ""
+"Zaškrtněte pro povolení ukládání záloh Apple Time Machine na tomto sdílení."
 
 #: sharing/models.py:246
 msgid ""
@@ -8961,6 +9133,8 @@ msgid ""
 "If a group is selected, the root user will also be limited to that group's "
 "permissions"
 msgstr ""
+"Je-li zvolena skupina, správce (root) bude též omezen na oprávnění této "
+"skupiny"
 
 #: storage/admin.py:304
 msgid "Create Passphrase"
@@ -8996,12 +9170,13 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
+"Je třeba, aby názvy datových sad začínaly písmeny nebo čísly, mimo to mohou "
+"obsahovat již jen  \"-\", \"_\", \":\", \" \" a \".\"."
 
 #: storage/forms.py:2289
 #: storage/forms.py:2355
-#, fuzzy
 msgid "The passphrases do not match"
-msgstr "Hesla se neshodují            "
+msgstr "Hesla se neshodují"
 
 #: storage/forms.py:2473
 msgid "Root password"
@@ -9036,12 +9211,11 @@ msgstr "Přesměrování standardního výstupu"
 
 #: system/models.py:1031
 msgid "Post Init"
-msgstr ""
+msgstr "Po inicializaci"
 
 #: system/models.py:1049
-#, fuzzy
 msgid "Init/Shutdown Script"
-msgstr "Heslo iniciátora"
+msgstr "Inicializační/vypínací skript"
 
 #: system/models.py:1142
 msgid "RRD"
@@ -9059,6 +9233,14 @@ msgid_plural ""
 "There are %(related_num)s related entries that will also be deleted as they "
 "depend upon this item"
 msgstr[0] ""
+"Je zde %(related_num)s související položka, která též bude smazána, protože "
+"závisí na této"
+msgstr[1] ""
+"Je zde %(related_num)s souvisejících položek, které též budou smazány, "
+"protože závisí na této"
+msgstr[2] ""
+"Je zde %(related_num)s souvisejících položek, které též budou smazány, "
+"protože závisí na této"
 
 #: templates/storage/create_passphrase.html:5
 msgid ""
@@ -9086,7 +9268,7 @@ msgstr "Chcete spustit tuto rsync úlohu nyní?"
 
 #: freeadmin/options.py:633
 msgid "Are you sure you want to edit this?"
-msgstr "Opravdu toto chcete upravovat?"
+msgstr "Opravdu chcete toto upravovat?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9110,7 +9292,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "Je třeba , aby se název úložné jednotky neopakoval"
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -9130,7 +9312,7 @@ msgstr "Znovunačtení NT4 selhalo."
 
 #: directoryservice/forms.py:222
 msgid "Active Directory failed to reload."
-msgstr "Službu Acctive Directory se nepodařilo znovu načíst."
+msgstr "Znovunačtení služby Active Directory selhalo."
 
 #: directoryservice/forms.py:316
 msgid "LDAP failed to reload."
@@ -9145,7 +9327,7 @@ msgstr "Povolit"
 
 #: directoryservice/models.py:295
 msgid "Bind DN"
-msgstr ""
+msgstr "Spojovací rozlišený název (DN)"
 
 #: directoryservice/models.py:302
 msgid "Bind password"
@@ -9167,15 +9349,16 @@ msgid "Upload your certificate file here."
 msgstr ""
 
 #: system/models.py:1148
-#, fuzzy
 msgid "Reporting Database"
-msgstr "Grafy"
+msgstr "Databáze pro hlášení"
 
 #: system/models.py:1150
 msgid ""
 "Save the Round-Robin Database (RRD) used by system statistics collection "
 "daemon into the system dataset"
 msgstr ""
+"Uložit databázi typu Round-Robin Database (RRD) na systémovou datovou sadu. "
+"Slouží pro sběr statistik systému."
 
 #: system/nav.py:45
 #: templates/system/index.html:3
@@ -9205,7 +9388,7 @@ msgstr "Test výkonu"
 
 #: system/views.py:545
 msgid "System dataset is required to perform this action."
-msgstr ""
+msgstr "Pro provedení této akce je třeba systémové datové sady."
 
 #: templates/system/perftest.html:20
 msgid "You are about to start a performance test."
@@ -9244,7 +9427,7 @@ msgstr "Povolit TPC"
 
 #: services/models.py:596
 msgid "Allow initiators to xcopy without authenticating to foreign targets."
-msgstr ""
+msgstr "Povolit uvaděčům operaci xcopy bez ověřování vzdáleným cílům."
 
 #: templates/directoryservice/activedirectory_edit.html:8
 #: templates/directoryservice/ldap_edit.html:8
@@ -9328,6 +9511,12 @@ msgid ""
 ". Please note that primary group membership is currently always calculated "
 "via the \"primaryGroupID\" LDAP attribute."
 msgstr ""
+"Určuje schéma, které by idmap_ad mělo použít při dotazování do Active "
+"Directory ohledně informací o uživateli a skupině. Toto může být buď podpora "
+"schématu dle normy RFC 2307, obsažená ve Windows 2003 R2 nebo schéma Service "
+"for Unix (SFU - služba pro Unix). Pro SFU 3.0 nebo 3.5 zvolte \"sfu\", pro "
+"SFU 2.0 zvolte \"sfu20\". Nezapomeňte, že členství v hlavní skupině je v "
+"současnosti vždy určováno prostřednictvím LDAP atributu \"primaryGroupID\"."
 
 #: directoryservice/models.py:156
 msgid "sfu"
@@ -9355,20 +9544,29 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Určuje počet identifikátorů uid/gid, dostupných na rozsah domény. Nejnižší "
+"nutná hodnota je 2000. Identifikátory SID s RID vyšším než tato hodnota "
+"budou mapovány do rozšířených rozsahů v závislosti na počtu dostupných "
+"rozsahů. Když podpůrné vrstvě autorid dojdou dostupné rozsahy, mapovací "
+"požadavky pro nové domény (nebo nové rozšířené rozsahy pro již známé domény) "
+"jsou přehlíženy a příslušná mapa je zahozena."
 
 #: directoryservice/models.py:197
 msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Přepnout modul do režimu pouze pro čtení. Nebudou zabírány žádné nové "
+"rozsahy ani vytvářena nová mapování ve fondu idmap."
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
-msgstr "Nevšímat si vestavěného"
+msgstr "Nevšímat si vestavěné (builtin)"
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
 msgstr ""
+"Nevšímat si jakýchkoli mapovacích požadavků pro doménu BUILTIN (vestavěná)."
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
@@ -9377,7 +9575,7 @@ msgstr ""
 
 #: directoryservice/models.py:229
 msgid "Name Map"
-msgstr ""
+msgstr "Mapa názvů"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -9385,11 +9583,15 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
+"Určuje úplnou cestu k umístění souboru s mapou jmen použitou aplikačním "
+"programovým rozhraním (API) nss_info. Položky v souboru mají podobu \""
+"unixový název = kvalifikovaný doménový název\". Podporováno je mapování jak "
+"uživatelů, tak skupin."
 
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Idmap otisku"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -9397,6 +9599,9 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
+"Určuje základní příponu adresáře použitou položkami pro mapování SID/uid/"
+"gid. Pokud není určeno, idmap_ldap použije hodnotu volby \"ldap idmap "
+"suffix\" ze smb.conf"
 
 #: directoryservice/models.py:268
 msgid "User DN"
@@ -9410,10 +9615,15 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
+"Určuje rozlišené jméno (DN) uživatele, použitého pro ověření. Heslo pro "
+"ověření tohoto uživatele by mělo být uloženo s net idmap secret (viz net(8))"
+". Pokud chybí, jsou použity přihlašovací údaje z nastavení ldap passdb, a "
+"pokud chybí i ty, bude provedeno anonymní spojení, jako poslední možnost."
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
 msgstr ""
+"Určuje LDAP server, který má být použit pro položky mapování SID/uid/gid."
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
@@ -9434,6 +9644,8 @@ msgid ""
 "Defines the type of LDAP server to use. This can either be the LDAP server "
 "provided by the Active Directory server (ad) or a stand-alone LDAP server."
 msgstr ""
+"Určuje typ LDAP serveru, který má být použit. To může být buď LDAP server "
+"poskytovaný v rámci Active Directory (AD) nebo samostatný LDAP server."
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
@@ -9441,21 +9653,21 @@ msgstr "samostatné"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr ""
+msgstr "Spojovací cesta k uživatelům"
 
 #: directoryservice/models.py:343
 msgid ""
 "Specifies the bind path where user objects can be found in the LDAP server."
-msgstr ""
+msgstr "Určuje, kde se na LDAP serveru nacházejí objekty uživatelů."
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
-msgstr ""
+msgstr "Spojovací cesta ke skupinám"
 
 #: directoryservice/models.py:350
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
-msgstr ""
+msgstr "Určuje, kde se na LDAP serveru nacházejí objekty skupin."
 
 #: directoryservice/models.py:355
 msgid "User CN"
@@ -9464,14 +9676,17 @@ msgstr "CN uživatele"
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
+"U uživatelských jmen v LDAP dotazovat na atribut CN namísto atributu uid."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
-msgstr ""
+msgstr "Oblast CN"
 
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"V LDAP připojit k cn skupin (a uživatelů, pokud je nastaveno user_cn) "
+"@oblast."
 
 #: directoryservice/models.py:369
 msgid "LDAP Domain"
@@ -9485,6 +9700,11 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
+"Při použití LDAP serveru, který je součástí Active Directory, toto umožňuje "
+"určit doménu, ve které přistupovat k serveru Active Directory. Toto umožňuje "
+"vztahy důvěry a přitom na jednom místě uchovávat všechny záznamy, spadající "
+"pod normu RFC 2307. Tento parametr je volitelný, výchozím chováním je "
+"dotazovat se na LDAP záznamy AD serveru v současné doméně."
 
 #: directoryservice/models.py:383
 msgid "LDAP URL"
@@ -9508,6 +9728,9 @@ msgid ""
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"Určuje rozlišený název (DN) uživatele, použitého pro ověření. Heslo pro "
+"ověření tohoto uživatele by mělo být uloženo s net idmap secret (viz net(8))"
+". Pokud chybí, bude provedeno anonymní spojení."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
@@ -9518,6 +9741,8 @@ msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
 msgstr ""
+"Určuje oblast, kterou použít v názvech uživatelů a skupin. Je zapotřebí "
+"pouze při používání cn_realm současně se samostatným LDAP serverem."
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
@@ -9540,6 +9765,9 @@ msgid ""
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
 msgstr ""
+"Touto volbou může být určen vnější program pro provádění mapování "
+"identifikátorů namísto tdb čítače. Mapování jsou pak ukládána jako vnitřní "
+"tdb2 idmap databáze."
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -9563,13 +9791,13 @@ msgstr "Použít výchozí doménu"
 #: directoryservice/models.py:702
 #: directoryservice/models.py:867
 msgid "Idmap backend"
-msgstr ""
+msgstr "Podpůrná vrstva pro Idmap"
 
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "Idmap podpůrná vrstva pro winbind."
 
 #: freeadmin/navtree.py:256
 msgid "Initial Wizard"
@@ -9609,18 +9837,16 @@ msgid "Block Storage (iSCSI)"
 msgstr "Blokové úložiště (iSCSI)"
 
 #: system/forms.py:1149
-#, fuzzy
 msgid "Allow Guest"
-msgstr "Povolit přístup nepřihlášeným uživatelům"
+msgstr "Povolit přístup neověřeným uživatelům (hostům)"
 
 #: system/forms.py:1157
-#, fuzzy
 msgid "iSCSI Size"
-msgstr "velikost iSCSI"
+msgstr "Velikost iSCSI"
 
 #: system/forms.py:1208
 msgid "Pool Name"
-msgstr ""
+msgstr "Název fondu úložišť"
 
 #: system/forms.py:1223
 msgid "Automatic"
@@ -9700,7 +9926,6 @@ msgid "NFSv4 Root Path"
 msgstr ""
 
 #: system/forms.py:1468
-#, fuzzy
 msgid "A pool with this name already exists."
 msgstr "Svazek s tímto názvem již existuje."
 
@@ -9713,15 +9938,15 @@ msgstr ""
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
 msgid "Kerberos Keytab"
-msgstr ""
+msgstr "Uložená Kerberos pověření (keytab)"
 
 #: directoryservice/forms.py:498
 msgid "A keytab is required."
-msgstr ""
+msgstr "Je vyžadováno uložené pověření pro Kerberos."
 
 #: directoryservice/models.py:549
 msgid "Kerberos realm."
-msgstr ""
+msgstr "Kerberos oblast."
 
 #: directoryservice/models.py:552
 msgid "KDC"
@@ -9729,7 +9954,7 @@ msgstr "Distribuční centrum klíčů (KDC)"
 
 #: directoryservice/models.py:554
 msgid "KDC for this realm."
-msgstr ""
+msgstr "KDC pro tuto oblast."
 
 #: directoryservice/models.py:557
 msgid "Admin Server"
@@ -9740,6 +9965,8 @@ msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
+"Určuje správní server pro tuto oblast, kde jsou prováděny veškeré úpravy "
+"databáze."
 
 #: directoryservice/models.py:565
 msgid "Password Server"
@@ -9755,15 +9982,15 @@ msgstr ""
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Protějšek"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Protějšek Kerberos, např.: hlavní/instance@OBLAST"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
-msgstr ""
+msgstr "Soubor s uloženými Kerberos pověřeními"
 
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
@@ -9834,7 +10061,7 @@ msgstr "Vytvořit vnitřní certifikační autoritu"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Vytvořit zprostředkovatelskou certifikační autoritu"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
@@ -9886,7 +10113,7 @@ msgstr ""
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
-msgstr "Službu NIS se nezdařilo načíst znovu."
+msgstr "Znovunačtení služby NIS selhalo."
 
 #: api/resources.py:2488
 msgid "On Reboot"
@@ -9908,11 +10135,11 @@ msgstr "Popisný název."
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
 msgid "FQDN of the domain controller to use."
-msgstr ""
+msgstr "Úplný doménový název doménového řadiče, který má být použit."
 
 #: directoryservice/models.py:812
 msgid "FQDN of the global catalog server to use."
-msgstr ""
+msgstr "Úplný doménový název serveru s celkovým katalogem, který má být použit."
 
 #: directoryservice/models.py:993
 msgid "SUDO Suffix"
@@ -9928,11 +10155,11 @@ msgstr ""
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Podpůrná vrstva pro Idmap"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Schéma pro Samba"
 
 #: jails/forms.py:92
 msgid "Template"
@@ -9948,7 +10175,7 @@ msgstr "Šablona žaláře byla úspěšně upravena"
 
 #: services/forms.py:1541
 msgid "Confirm WebDAV Password"
-msgstr "Potvrdit heslo chránící WebDAV"
+msgstr "Potvrdit heslo pro WebDAV"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
@@ -10032,6 +10259,8 @@ msgid ""
 "(including all subdirectories)<br />If disabled, you will need to manually<"
 "br />add the 'webdav' user & group to the share."
 msgstr ""
+"Změní vlastnící uživatele a skupinu na sdílené složce na \"webdav:webdav\" ("
+"včetně všech podsložek)<br />Ije-li zakázáno, bude třeba to udělat ručně."
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
@@ -10141,14 +10370,14 @@ msgstr ""
 #: system/forms.py:2404
 #: system/models.py:613
 msgid "Digest Algorithm"
-msgstr ""
+msgstr "Algoritmus krátkého obsahu (digest)"
 
 #: system/forms.py:2009
 #: system/forms.py:2101
 #: system/forms.py:2294
 #: system/models.py:619
 msgid "Lifetime"
-msgstr ""
+msgstr "Životnost"
 
 #: system/forms.py:2246
 #: system/models.py:594
@@ -10408,7 +10637,7 @@ msgstr "E-mail správce systému (root)"
 
 #: system/forms.py:1843
 msgid "Administrative email address used for alerts."
-msgstr ""
+msgstr "Správní e-mailová adresa pro účely posílání výstrah."
 
 #: system/forms.py:1847
 msgid "Console messages"
@@ -10437,22 +10666,28 @@ msgid ""
 "This parameter controls whether or not Samba should obey PAM's account and "
 "session management directives"
 msgstr ""
+"Tento parametr řídí, zda se Samba bude řídit pokyny systému správy účtů a "
+"relací PAM"
 
 #: services/models.py:268
 msgid ""
 "IP address(es) to bind to. If none specified, all available interfaces that "
 "are up will be listened on."
 msgstr ""
+"IP adresa (adresy) pro spojení. Pokud nezadáno, bude nasloucháno na všech "
+"aktivních rozhraních."
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
-msgstr ""
+msgstr "Z jedné datové sady lze dělat pouze jednu replikaci."
 
 #: storage/forms.py:1973
 msgid ""
 "Only one replication allowed per dataset, including parent dataset set up "
 "recursively."
 msgstr ""
+"Na jednu datovou sadu je povolena pouze jediná replikace, včetně nadřazené "
+"datové datové sady, nastaveno rekurzivně."
 
 #: system/forms.py:1889
 msgid "Trains"
@@ -10479,6 +10714,9 @@ msgid ""
 "This parameter is designed to control how Winbind retrieves Name Service "
 "Information to construct a user's home directory and login"
 msgstr ""
+"Tento parametr je navržen pro řízení toho, jak služba Winbind získává "
+"informace o jmenné službě pro vytváření domovských složek uživatelů a "
+"přihlašování"
 
 #: jails/models.py:359
 msgid "IPv4 DHCP"
@@ -10493,6 +10731,8 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For example http(s)://ip-"
 "of-freenas-machine:webdav_port/'Share Name'"
 msgstr ""
+"Toto bude sloužit pro přístup na vaše WebDAV sdílení.<br />Např. http(s"
+")://ip-adresa-stroje-s-freenas:webdav_port/'nazev sdileni'"
 
 #: storage/views.py:203
 msgid "WARNING!"
@@ -10555,6 +10795,7 @@ msgstr "VFS objekty"
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
 msgstr ""
+"Uvědomuji si, že zachycené stavy jsou v tuto chvíli zadrženy pro replikaci"
 
 #: storage/forms.py:2098
 msgid "Also delete the share's configuration"
@@ -10590,7 +10831,7 @@ msgstr ""
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
-msgstr ""
+msgstr "SASL \"obalování\""
 
 #: directoryservice/models.py:860
 msgid ""
@@ -10601,12 +10842,20 @@ msgid ""
 "key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
 "Integrity\" on the Windows server side."
 msgstr ""
+"LDAP SASL \"obalování\" určuje zda budou přenášená LDAP data podepisována či "
+"podepisována a ještě šifrována (pečetěna). Této volby je třeba v případě "
+"doménového řadiče vynucujícího používání podepsaných LDAP spojení (např. "
+"Windows 2000 SP3 a vyšší). LDAP podpis a pečeť lze nastavovat "
+"prostřednictvím klíče registrů \"HKLM\\System\\CurrentControlSet\\Services\\N"
+"TDS\\Parameters\\LDAPServerIntegrity\" na straně Windows serveru."
 
 #: services/models.py:291
 msgid ""
 "IP address(es) to advertise and listens to. If none specified, advertise the "
 "first IP address of the system, but to listen for any incoming request."
 msgstr ""
+"IP adresa (adresy) na kterých se propagovat a naslouchat. Pokud nezadáno, "
+"propaguje první IP adresu systému, ale jakýmkoli příchozím požadavkům."
 
 #: services/models.py:744
 msgid "The authentication method accepted by the target."
@@ -10614,7 +10863,7 @@ msgstr "Metoda ověření přijatá cílem."
 
 #: system/forms.py:1905
 msgid "Current Train"
-msgstr ""
+msgstr "Současný průběh"
 
 #: system/forms.py:1930
 msgid "Train"
@@ -10684,7 +10933,7 @@ msgstr "Odpojení selhalo (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr ""
+msgstr "Název omezeného prostředí nemůže obsahovat \".\" (tečku)"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
@@ -10700,7 +10949,7 @@ msgstr "Následující adresy jsou neplatné: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr ""
+msgstr "Tato ověřovací skupina nepodporuje protokol vzájemný CHAP"
 
 #: services/models.py:440
 msgid "iSNS Servers"
@@ -10708,7 +10957,7 @@ msgstr "servery iSNS"
 
 #: services/models.py:444
 msgid "Pool Available Size Threshold (%)"
-msgstr ""
+msgstr "Práh dostupné kapacity fondu úložišť (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
@@ -10736,6 +10985,9 @@ msgid ""
 "the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
 "of the password is sent over the network (more secure)"
 msgstr ""
+"Typ HTTP ověřování pro WebDAV<br>Základní ověř.: Heslo je po síti posláno "
+"jako holý text (nepoužívat, pokud je zakázáno HTTPS))<br>Ověřování otiskem: "
+"Otisk hesla je posílán po síti (bezpečnější)"
 
 #: services/models.py:1767
 msgid "Webdav SSL Certificate"
@@ -10765,32 +11017,29 @@ msgid "VMWare Sync"
 msgstr "Synchronizace VMWare"
 
 #: storage/forms.py:1576
-#, fuzzy
 msgid "Apply Owner (user)"
-msgstr "Vlastník (uživatel)"
+msgstr "Použít vlastníka (uživatel)"
 
 #: storage/forms.py:1582
-#, fuzzy
 msgid "Apply Owner (group)"
-msgstr "Vlastník (skupina)"
+msgstr "Použít vlastníka (skupina)"
 
 #: storage/forms.py:1588
-#, fuzzy
 msgid "Apply Mode"
-msgstr "Použít aktualizaci"
+msgstr "Režim použití"
 
 #: storage/forms.py:1522
-#, fuzzy
 msgid ""
 "The default of the zvol block size is chosen automatically based on the "
 "number of the disks in the pool for a general use case."
-msgstr "Výchozí velikost bloku svazku je zvolena samočinně dle počtu disků"
+msgstr ""
+"Výchozí velikost bloku svazku je zvolena samočinně dle počtu disků ve fondu "
+"úložišť a je vhodná pro všeobecné použití."
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMWare-Snapshot"
-msgstr "Zobrazit snapshoty"
+msgstr "Zachycené stavy VMWare"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -10816,7 +11065,7 @@ msgstr "Protokoly (RAID 0: žádná odolnost, nejlepší výkon, nejvíce kapaci
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
-msgstr ""
+msgstr "Datové úložiště nebylo na serveru nalezeno."
 
 #: system/forms.py:2757
 msgid "Failed to connect: %s"
@@ -10960,7 +11209,7 @@ msgstr "Časový limit pro příkazy týkající se LDAP."
 
 #: directoryservice/models.py:1105
 msgid "Timeout for LDAP DNS queries."
-msgstr ""
+msgstr "Časový limit pro DNS dotazy LDAP."
 
 #: directoryservice/models.py:1108
 msgid "These parameters are added to sssd.conf"
@@ -10968,7 +11217,7 @@ msgstr "Tyto parametry jsou přidány do sssd.conf"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
-msgstr ""
+msgstr "Režim slučitelnosti s Xen uvaděčem"
 
 #: services/models.py:515
 msgid ""
@@ -10976,6 +11225,9 @@ msgid ""
 "naming scheme.  Checking this alters the naming scheme to be more Xen-"
 "friendly"
 msgstr ""
+"Uvaděče Xen hlásí chyby při připojování k LUN, které používají výchozí "
+"strukturu názvů FreeNAS. Zaškrtnutí tohoto pozmění jmenné schéma tak, aby "
+"bylo více vstřícnější pro Xen"
 
 #: storage/forms.py:1505
 msgid "Force size"
