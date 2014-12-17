@@ -141,7 +141,6 @@ ldapctl_stop()
 	ldapctl_cmd ${service} ix-ldap forcestop
 	ldapctl_cmd ${service} ix-nsswitch quietstop
 	ldapctl_cmd ${service} ix-pam quietstop
-	ldapctl_cmd ${service} ix-kinit quietstop
 	ldapctl_cmd "${service} ix-cache quietstop &"
 
 	ldap_set 0
@@ -151,6 +150,7 @@ ldapctl_stop()
 		cifs_restart
 	fi
 
+	ldapctl_cmd ${service} ix-kinit quietstop
 	rm -f "${status_file}"
 
 	return 0

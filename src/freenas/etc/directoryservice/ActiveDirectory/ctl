@@ -169,7 +169,6 @@ adctl_stop()
 	adctl_cmd ${service} ix-kerberos quietstop
 	adctl_cmd ${service} ix-nsswitch quietstop
 	adctl_cmd ${service} ix-pam quietstop
-	adctl_cmd ${service} ix-kinit forcestop
 	adctl_cmd ${service} ix-activedirectory forcestop
 	adctl_cmd "${service} ix-cache quietstop &"
 
@@ -202,6 +201,7 @@ adctl_stop()
 		cifs_start
 	fi
 
+	adctl_cmd ${service} ix-kinit forcestop
 	activedirectory_set 0
 	rm -f "${status_file}"
 
