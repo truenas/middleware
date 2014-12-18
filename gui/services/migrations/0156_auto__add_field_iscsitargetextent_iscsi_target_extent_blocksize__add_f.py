@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'iSCSITargetExtent.iscsi_target_extent_pblocksize'
         db.add_column(u'services_iscsitargetextent', 'iscsi_target_extent_pblocksize',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
 
         if not db.dry_run:
