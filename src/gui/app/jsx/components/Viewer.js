@@ -315,13 +315,13 @@ var Viewer = React.createClass({
             </TWBS.DropdownButton>
 
             {/* Select property to sort by */}
-            <TWBS.DropdownButton title="Sort">
+            {/* <TWBS.DropdownButton title="Sort">
               <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
               <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
               <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
               <TWBS.MenuItem divider />
               <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-            </TWBS.DropdownButton>
+            </TWBS.DropdownButton> */}
           </TWBS.Nav>
           {/* Select view mode (3) */}
           <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
