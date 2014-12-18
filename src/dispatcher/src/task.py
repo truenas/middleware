@@ -25,7 +25,18 @@
 #
 #####################################################################
 
+import errno
+import logging
 from dispatcher.rpc import RpcService, RpcException
+
+
+class TaskState(object):
+    CREATED = 'CREATED'
+    WAITING = 'WAITING'
+    EXECUTING = 'EXECUTING'
+    FINISHED = 'FINISHED'
+    FAILED = 'FAILED'
+    ABORTED = 'ABORTED'
 
 
 class Task(object):
@@ -34,6 +45,7 @@ class Task(object):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
         self.datastore = dispatcher.datastore
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     @classmethod
     def _get_metadata(cls):
@@ -49,10 +61,29 @@ class Task(object):
         return self.dispatcher.balancer.run_subtask(self, classname, args)
 
     def join_subtasks(self, *tasks):
-        return self.dispatcher.balancer.join_subtasks(*tasks)
+        self.dispatcher.balancer.join_subtasks(*tasks)
+        for i in tasks:
+            state, progress = i.value
+            if state != TaskState.FINISHED:
+                raise TaskException(errno.EFAULT, 'Subtask failed: {0}'.format(progress.message))
 
     def chain(self, task, *args):
         self.dispatcher.balancer.submit(task, *args)
+
+
+class ProgressTask(Task):
+    def __init__(self, dispatcher):
+        super(ProgressTask, self).__init__(dispatcher)
+        self.progress = 0
+        self.message = 'Executing...'
+
+    def get_status(self):
+        return TaskStatus(self.progress, self.message)
+
+    def set_progress(self, percentage, message=None):
+        self.progress = percentage
+        if message:
+            self.message = message
 
 
 class TaskException(RpcException):

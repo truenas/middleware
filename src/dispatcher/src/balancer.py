@@ -35,7 +35,7 @@ from dispatcher import validator
 from dispatcher.rpc import RpcException
 from gevent.queue import Queue
 from gevent.event import Event
-from task import TaskException, TaskStatus
+from task import TaskException, TaskStatus, TaskState
 
 
 class QueueClass(object):
@@ -44,15 +44,6 @@ class QueueClass(object):
     VOLUME = 'VOLUME'
     DATASET = 'DATASET'
     SNAPSHOT = 'SNAPSHOT'
-
-
-class TaskState(object):
-    CREATED = 'CREATED'
-    WAITING = 'WAITING'
-    EXECUTING = 'EXECUTING'
-    FINISHED = 'FINISHED'
-    FAILED = 'FAILED'
-    ABORTED = 'ABORTED'
 
 
 class WorkerState(object):
@@ -102,7 +93,7 @@ class Task(object):
 
     def run(self):
         gevent.spawn(self.progress_watcher)
-        return self.instance.run(*self.args)
+        return self.instance.run(*copy.deepcopy(self.args))
 
     def set_state(self, state, progress=None):
         event = {'id': self.id, 'state': state}
@@ -246,6 +237,10 @@ class Balancer(object):
                 self.logger.debug("Picked up task %d: %s with args %s", task.id, task.name, task.args)
                 task.instance = task.clazz(self.dispatcher)
                 task.queues = task.instance.verify(*task.args)
+
+                if type(task.queues) is not list:
+                    raise ValueError("verify() returned something else than queues list")
+
             except Exception as err:
                 self.logger.warning("Cannot verify task %d: %s", task.id, err)
                 task.set_state(TaskState.FAILED, TaskStatus(0, str(err)))
@@ -296,11 +291,12 @@ class Worker(object):
             task.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
                 "stacktrace": traceback.format_exc()
             }))
-            return
+            return task.state, task.progress
 
         task.ended.set()
         task.result = result
         task.set_state(TaskState.FINISHED, TaskStatus(100, ''))
+        return task.state, task.progress
 
     def run(self):
         self.logger.info("Started")

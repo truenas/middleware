@@ -144,7 +144,6 @@ class Dispatcher(object):
         for name, clazz in self.event_sources.items():
             source = clazz(self)
             greenlet = gevent.spawn(source.run)
-            greenlet.link(source.run)
             self.threads.append(greenlet)
 
         self.started_at = time.time()
@@ -275,6 +274,9 @@ class Dispatcher(object):
             'args': event_data
         })
 
+    def call_sync(self, name, *args):
+        return self.rpc.call_sync(name, *args)
+
     def register_event_handler(self, name, handler):
         if name not in self.event_handlers:
             self.event_handlers[name] = []
@@ -291,7 +293,6 @@ class Dispatcher(object):
         if self.started_at is not None:
             source = clazz(self)
             greenlet = gevent.spawn(source.run)
-            greenlet.link(source.run)
             self.threads.append(greenlet)
 
     def register_task_handler(self, name, clazz):
