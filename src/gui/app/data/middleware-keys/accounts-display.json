@@ -3,7 +3,6 @@
   , "secondaryKey" : "full_name"
   , "selectionKey" : "username"
   , "uniqueKey"    : "id"
-  , "groups"       : [ "builtin" ]
   , "dataKeys": [
       {
           "key"         : "builtin"

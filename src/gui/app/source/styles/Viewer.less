@@ -23,7 +23,14 @@
   .flex(1);
   .align-content(flex-start);
 
-  .text-container {
+  mark {
+    background-color : @brand-primary;
+    padding          : 0;
+    border-radius    : 2px;
+    color            : white;
+  }
+
+  .viewer-detail-nav-item-text {
     width          : 100%;
     display        : inline-block;
     padding        : 0 10px 0 50px;
@@ -31,6 +38,13 @@
     vertical-align : top;
     white-space    : nowrap;
     text-overflow  : ellipsis;
+  }
+
+  .viewer-detail-nav-group {
+    text-transform : uppercase;
+    color          : @gray-light;
+    text-align     : center;
+    margin         : 16px 0 8px;
   }
 
   .viewer-detail-nav {

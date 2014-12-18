@@ -2,6 +2,7 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
@@ -12,48 +13,92 @@ var viewerUtil = require("./viewerUtil");
 
 // Detail Viewer
 var DetailViewer = React.createClass({
-   propTypes: {
-      defaultMode  : React.PropTypes.string
-    , allowedModes : React.PropTypes.array
-    , itemData     : React.PropTypes.object.isRequired
-    , inputData    : React.PropTypes.array.isRequired
-    , formatData   : React.PropTypes.object.isRequired
-  }
-  , handleChangeItem: function( key ) {
-      // Pass selected key back to controller for global use
-      this.props.handleItemSelect( key );
+
+    propTypes: {
+        itemData     : React.PropTypes.object.isRequired
+      , filteredData : React.PropTypes.object.isRequired
+      , formatData   : React.PropTypes.object.isRequired
     }
-  , render: function() {
-    // Sidebar navigation for collection
-    var createItem = function( rawItem, index ) {
+
+  // Sidebar navigation for collection
+  , createItem: function ( rawItem, index ) {
       var params = {};
       params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
+      var primaryText   = rawItem[ this.props.formatData["primaryKey"] ];
+      var secondaryText = rawItem[ this.props.formatData["secondaryKey"] ];
+
+      if ( this.props.searchString.length ) {
+        var searchTemp    = this.props.searchString;
+        var primaryTemp   = primaryText.split( searchTemp );
+        var secondaryTemp = secondaryText.split( searchTemp );
+
+        var markSearch = function ( searchArray ) {
+          return searchArray.map( function( subString, index ) {
+            if ( index === ( searchArray.length - 1 ) ) {
+              return <span>{ subString }</span>;
+            } else {
+              return <span>{ subString }<mark>{ searchTemp }</mark></span>;
+            }
+          });
+        };
+
+        primaryText   = markSearch( primaryTemp );
+        secondaryText = markSearch( secondaryTemp );
+      }
+
       return (
         <li role = "presentation"
             key  = { index } >
           <Link to     = { this.props.itemData.route }
                 params = { params } >
-            <viewerUtil.ItemIcon primaryString   = { rawItem[ this.props.formatData["secondaryKey"] ] }
-                                 fallbackString  = { rawItem[ this.props.formatData["primaryKey"] ] }
-                                 seedNumber      = { rawItem[ this.props.formatData["uniqueKey"] ] }
-                                 fontSize        = { 1 } />
-            <div className="text-container">
-              <strong className="primary-text">{ rawItem[ this.props.formatData["primaryKey"] ] }</strong>
-              <small className="secondary-text">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+            <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.formatData["secondaryKey"] ] }
+                                 fallbackString = { rawItem[ this.props.formatData["primaryKey"] ] }
+                                 seedNumber     = { rawItem[ this.props.formatData["uniqueKey"] ] }
+                                 fontSize       = { 1 } />
+            <div className="viewer-detail-nav-item-text">
+              <strong className="primary-text">{ primaryText }</strong>
+              <small className="secondary-text">{ secondaryText }</small>
             </div>
           </Link>
         </li>
       );
-    }.bind(this);
+    }
+
+  , render: function () {
+
+    var navItems;
+    var fd = this.props.filteredData;
+
+    if ( fd["grouped"] ) {
+      navItems = fd.groups.map( function ( group ) {
+        if ( group.entries.length ) {
+          return (
+            <TWBS.Nav bsStyle   = "pills"
+                      stacked
+                      activeKey = { this.props.selectedKey } >
+              <h5 className="viewer-detail-nav-group">{ group.name }</h5>
+              { group.entries.map( this.createItem ) }
+            </TWBS.Nav>
+          );
+        } else {
+          return null;
+        }
+      }.bind(this) );
+    } else if ( fd["remaining"].entries.length ) {
+      navItems = (
+        <TWBS.Nav bsStyle   = "pills"
+                  stacked
+                  activeKey = { this.props.selectedKey } >
+          { fd["remaining"].entries.map( this.createItem ) }
+        </TWBS.Nav>
+      );
+    }
 
     return (
       <div className = "viewer-detail">
-        <TWBS.Nav bsStyle   = "pills"
-                  className = "viewer-detail-nav well"
-                  stacked
-                  activeKey = { this.props.selectedKey } >
-          { this.props.inputData.map( createItem ) }
-        </TWBS.Nav>
+        <div className = "viewer-detail-nav well">
+          { navItems }
+        </div>
 
         <this.props.Editor inputData  = { this.props.inputData }
                            itemData   = { this.props.itemData }
@@ -62,6 +107,7 @@ var DetailViewer = React.createClass({
       </div>
     );
   }
+
 });
 
 module.exports = DetailViewer;
