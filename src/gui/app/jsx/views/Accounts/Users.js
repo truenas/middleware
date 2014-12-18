@@ -91,26 +91,24 @@ var demoUserData = [
 var displaySettings = {
     filterCriteria: {
         current: {
-            name     : "Current User Account"
-          , group    : true
-          , filter   : true
+            name     : "current user account"
           // TODO: Fix dummy data
           , testProp : { "username": "root" }
         }
       , userCreated: {
-            name     : "FreeNAS User Accounts"
-          , group    : true
-          , filter   : true
+            name     : "FreeNAS user accounts"
           , testProp : { "builtin": false }
         }
       , builtIn: {
-            name     : "Built-In User Accounts"
-          , group    : true
-          , filter   : true
+            name     : "built-in user accounts"
           , testProp : { "builtin": true }
         }
     }
+  , remainingName  : "other user accounts"
+  , ungroupedName  : "all user accounts"
+  , allowedFilters : [ "current", "userCreated", "builtIn" ]
   , defaultFilters : [  ]
+  , allowedGroups  : [ "current", "userCreated", "builtIn" ]
   , defaultGroups  : [ "current", "userCreated", "builtIn" ]
 };
 

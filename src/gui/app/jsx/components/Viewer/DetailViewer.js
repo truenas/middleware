@@ -66,49 +66,53 @@ var DetailViewer = React.createClass({
     }
 
   , render: function () {
+      var fd = this.props.filteredData;
+      var groupedNavItems   = null;
+      var remainingNavItems = null;
 
-    var navItems;
-    var fd = this.props.filteredData;
+      if ( fd["grouped"] ) {
+        groupedNavItems = fd.groups.map( function ( group, index ) {
+          if ( group.entries.length ) {
+            return (
+              <TWBS.Nav bsStyle   = "pills"
+                        stacked
+                        key       = { index }
+                        activeKey = { this.props.selectedKey } >
+                <h5 className="viewer-detail-nav-group">{ group.name }</h5>
+                { group.entries.map( this.createItem ) }
+              </TWBS.Nav>
+            );
+          } else {
+            return null;
+          }
+        }.bind(this) );
+      }
 
-    if ( fd["grouped"] ) {
-      navItems = fd.groups.map( function ( group, index ) {
-        if ( group.entries.length ) {
-          return (
-            <TWBS.Nav bsStyle   = "pills"
-                      stacked
-                      key       = { index }
-                      activeKey = { this.props.selectedKey } >
-              <h5 className="viewer-detail-nav-group">{ group.name }</h5>
-              { group.entries.map( this.createItem ) }
-            </TWBS.Nav>
-          );
-        } else {
-          return null;
-        }
-      }.bind(this) );
-    } else if ( fd["remaining"].entries.length ) {
-      navItems = (
-        <TWBS.Nav bsStyle   = "pills"
-                  stacked
-                  activeKey = { this.props.selectedKey } >
-          { fd["remaining"].entries.map( this.createItem ) }
-        </TWBS.Nav>
+      if ( fd["remaining"].entries.length ) {
+        remainingNavItems = (
+          <TWBS.Nav bsStyle   = "pills"
+                    stacked
+                    activeKey = { this.props.selectedKey } >
+            <h5 className="viewer-detail-nav-group">{ fd["remaining"].name }</h5>
+            { fd["remaining"].entries.map( this.createItem ) }
+          </TWBS.Nav>
+        );
+      }
+
+      return (
+        <div className = "viewer-detail">
+          <div className = "viewer-detail-nav well">
+            { groupedNavItems }
+            { remainingNavItems }
+          </div>
+
+          <this.props.Editor inputData  = { this.props.inputData }
+                             itemData   = { this.props.itemData }
+                             formatData = { this.props.formatData }
+                             ItemView   = { this.props.ItemView } />
+        </div>
       );
     }
-
-    return (
-      <div className = "viewer-detail">
-        <div className = "viewer-detail-nav well">
-          { navItems }
-        </div>
-
-        <this.props.Editor inputData  = { this.props.inputData }
-                           itemData   = { this.props.itemData }
-                           formatData = { this.props.formatData }
-                           ItemView   = { this.props.ItemView } />
-      </div>
-    );
-  }
 
 });
 
