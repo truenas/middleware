@@ -12,5 +12,8 @@
 #7168	Alerts should have Message-Id headers
 #7169	Specifying the HTTP Proxy should also set the HTTPS Proxy
 #7175	View Rsync tasks broken
+#7182	No alert for pools fuller than 80%
 #7186	Ubuntu jail filesystem out of sync with actual underlying filesystem in directory with lots of files
 12dacc0	Don't cache LDAP query results... this causes more pain than gain
+b0329cc	Remove DUMMYNET from FreeNAS kernel as unused, keep module
+1ea520a	Commit model for corresponding migration
