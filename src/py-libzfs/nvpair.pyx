@@ -67,13 +67,17 @@ cdef class NVList(object):
 	cdef nvpair.nvlist_t* _nvlist
 	cdef int _foreign
 
-	def __init__(self, uintptr_t nvlist=0):
-		if nvlist != 0:
+	def __init__(self, uintptr_t nvlist=0, otherdict=None):
+		if nvlist:
 			self._foreign = True
 			self._nvlist = <nvpair.nvlist_t*>nvlist
 		else:
 			self._foreign = False
 			nvpair.nvlist_alloc(&self._nvlist, nvpair.NV_UNIQUE_NAME, 0)
+
+		if otherdict:
+			for k, v in otherdict.items():
+				self[k] = v
 
 	def __dealloc__(self):
 		if not self._foreign:
@@ -388,7 +392,7 @@ cdef class NVList(object):
 		if type(value) is long:
 			self.set(key, value, nvpair.DATA_TYPE_INT64)
 
-		if type(value) is str:
+		if type(value) is str or type(value) is unicode:
 			self.set(key, value, nvpair.DATA_TYPE_STRING)
 
 		if type(value) is NVList:
