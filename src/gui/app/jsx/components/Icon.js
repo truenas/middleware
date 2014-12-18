@@ -10,6 +10,7 @@ var Icon = React.createClass({
       glyph         : React.PropTypes.string.isRequired
     , icoSize       : React.PropTypes.string
     , icoClass      : React.PropTypes.string
+    , className     : React.PropTypes.string
     , badgeStyle    : React.PropTypes.string
     , badgeContent  : React.PropTypes.oneOfType([
           React.PropTypes.string
@@ -38,6 +39,7 @@ var Icon = React.createClass({
          className = { _.without([
                           "fa"
                         , ( "fa-" + this.props.glyph )
+                        , this.props.className
                         , this.props.icoSize
                         , ( "badge-" + this.props.bsBadgeStyle )
                         , this.props.icoClass ], null ).join(" ") }>

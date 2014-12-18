@@ -42,7 +42,7 @@ editorUtil.writeString = function( entry, falseValue ) {
 editorUtil.writeBool = function( entry ) {
   if ( entry ) {
     return (
-      <Icon className = "text-success"
+      <Icon className = "text-primary"
             glyph     = "check" />
     );
   } else {
