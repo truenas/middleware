@@ -2,6 +2,7 @@
     "primaryKey"   : "username"
   , "secondaryKey" : "full_name"
   , "selectionKey" : "username"
+  , "imageKey"     : "user_icon"
   , "uniqueKey"    : "id"
   , "dataKeys": [
       {

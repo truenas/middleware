@@ -50,6 +50,7 @@ var UserView = React.createClass({
                     className="text-center">
             <viewerUtil.ItemIcon primaryString   = { this.props.item["full_name"] }
                                  fallbackString  = { this.props.item["username"] }
+                                 iconImage       = { this.props.item["user_icon"] }
                                  seedNumber      = { this.props.item["id"] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>

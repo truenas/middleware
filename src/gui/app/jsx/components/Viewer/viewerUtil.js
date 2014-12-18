@@ -40,6 +40,7 @@ viewerUtil.getPastelColor = function( seed ) {
 };
 
 viewerUtil.ItemIcon = React.createClass({
+
     propTypes: {
         iconImage       : React.PropTypes.string
       , size            : React.PropTypes.number
@@ -48,12 +49,15 @@ viewerUtil.ItemIcon = React.createClass({
       , fallbackString  : React.PropTypes.string.isRequired
       , seedNumber      : React.PropTypes.number.isRequired
     }
+
   , componentWillMount: function() {
       this.setFallbackIcon( this.props );
   }
+
   , componentWillReceiveProps: function( nextProps ) {
       this.setFallbackIcon( nextProps );
   }
+
   , setFallbackIcon: function( props ) {
       // If there's a profile picture we can use, don't bother with setup
       if ( props.iconImage ) {
@@ -76,10 +80,17 @@ viewerUtil.ItemIcon = React.createClass({
         });
       }
     }
+
   , render: function() {
       if ( this.props.iconImage ) {
         // TODO: BASE64 encoded user images from middleware
-        // userIcon = <img />;
+        return (
+          <div className = "user-icon"
+               style     = { { height : this.props.size ? this.props.size : null
+                             , width  : this.props.size ? this.props.size : null } }>
+            <img className="user-icon-image" src={ "data:image/jpg;base64," + this.props.iconImage } />
+          </div>
+        );
       } else {
         return (
           <div className = "user-icon"
@@ -94,4 +105,5 @@ viewerUtil.ItemIcon = React.createClass({
         );
       }
     }
+
 });

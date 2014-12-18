@@ -89,6 +89,7 @@ var Viewer = React.createClass({
       };
 
       // Reduce the array by applying exclusion filters (defined in the view)
+      // TODO: Debug this - doesn't work right!
       if ( this.state.enabledFilters ) {
         this.state.enabledFilters.map(
           function ( filter ) {
@@ -111,11 +112,12 @@ var Viewer = React.createClass({
       if ( this.state.enabledGroups ) {
         this.state.enabledGroups.map(
           function ( group ) {
-            var groupData = this.props.displayData.filterCriteria[ group ];
+            var groupData  = this.props.displayData.filterCriteria[ group ];
+            var newEntries = _.remove( inputDataArray, groupData.testProp );
 
             filteredData.groups.push({
                 name    : groupData.name
-              , entries : _.remove( inputDataArray, groupData.testProp )
+              , entries : newEntries
             });
           }.bind(this)
         );

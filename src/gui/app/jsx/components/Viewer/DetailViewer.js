@@ -53,6 +53,7 @@ var DetailViewer = React.createClass({
                 params = { params } >
             <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.formatData["secondaryKey"] ] }
                                  fallbackString = { rawItem[ this.props.formatData["primaryKey"] ] }
+                                 iconImage      = { rawItem[ this.props.formatData["imageKey"] ] }
                                  seedNumber     = { rawItem[ this.props.formatData["uniqueKey"] ] }
                                  fontSize       = { 1 } />
             <div className="viewer-detail-nav-item-text">
@@ -70,11 +71,12 @@ var DetailViewer = React.createClass({
     var fd = this.props.filteredData;
 
     if ( fd["grouped"] ) {
-      navItems = fd.groups.map( function ( group ) {
+      navItems = fd.groups.map( function ( group, index ) {
         if ( group.entries.length ) {
           return (
             <TWBS.Nav bsStyle   = "pills"
                       stacked
+                      key       = { index }
                       activeKey = { this.props.selectedKey } >
               <h5 className="viewer-detail-nav-group">{ group.name }</h5>
               { group.entries.map( this.createItem ) }
