@@ -112,7 +112,7 @@ class UserCreateTask(Task):
         try:
             user['builtin'] = False
             self.datastore.insert('users', user, pkey=uid)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
             raise TaskException(errno.EBADMSG, 'Cannot add user: {0}'.format(str(e)))
         except RpcException, e:
@@ -153,7 +153,7 @@ class UserDeleteTask(Task):
     def run(self, uid):
         try:
             self.datastore.delete('users', uid)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete user: {0}'.format(str(e)))
 
@@ -187,7 +187,7 @@ class UserUpdateTask(Task):
             user = self.datastore.get_by_id('users', uid)
             user.update(updated_fields)
             self.datastore.update('users', uid, user)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot update user: {0}'.format(str(e)))
         except RpcException, e:
@@ -241,7 +241,7 @@ class GroupCreateTask(Task):
         try:
             group['builtin'] = False
             self.datastore.insert('groups', group, pkey=gid)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot add group: {0}'.format(str(e)))
         except RpcException, e:
@@ -283,7 +283,7 @@ class GroupUpdateTask(Task):
             group = self.datastore.get_by_id('groups', gid)
             group.update(updated_fields)
             self.datastore.update('groups', gid, group)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot update group: {0}'.format(str(e)))
         except RpcException, e:
@@ -324,7 +324,7 @@ class GroupDeleteTask(Task):
     def run(self, gid, force=False):
         try:
             self.datastore.delete('groups', gid)
-            self.dispatcher.rpc.call_sync('etcd.generation.generate_group', 'accounts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DatastoreException, e:
             raise TaskException(errno.EBADMSG, 'Cannot delete group: {0}'.format(str(e)))
         except RpcException, e:
