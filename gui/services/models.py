@@ -484,6 +484,24 @@ class iSCSITargetExtent(Model):
             help_text=_("Size of extent, 0 means auto, a raw number is bytes"
                 ", or suffix with KB, MB, TB for convenience."),
             )
+    iscsi_target_extent_blocksize = models.IntegerField(
+        max_length=4,
+        choices=choices.TARGET_BLOCKSIZE_CHOICES,
+        default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
+        verbose_name=_("Logical Block Size"),
+        help_text=_("You may specify logical block length (512 by "
+            "default). The recommended length for compatibility is 512."),
+    )
+    iscsi_target_extent_pblocksize = models.BooleanField(
+        default=False,
+        verbose_name=_("Physical Block Size"),
+        help_text=_(
+            'By default the physical blocksize is reported as the ZFS block '
+            'size, which can be up to 128K. Some initiators do not work with '
+            'values above 4K, checking this disables reporting the physical '
+            'blocksize.'
+        ),
+    )
     iscsi_target_extent_avail_threshold = models.IntegerField(
         verbose_name=_(' Available Size Threshold (%)'),
         blank=True,
@@ -782,13 +800,13 @@ class iSCSITarget(Model):
                 "both none and authentication."),
             )
     iscsi_target_logical_blocksize = models.IntegerField(
-            max_length=4,
-            choices=choices.TARGET_BLOCKSIZE_CHOICES,
-            default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
-            verbose_name=_("Logical Block Size"),
-            help_text=_("You may specify logical block length (512 by "
-                "default). The recommended length for compatibility is 512."),
-            )
+        max_length=4,
+        choices=choices.TARGET_BLOCKSIZE_CHOICES,
+        default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
+        verbose_name=_("Logical Block Size"),
+        help_text=_("You may specify logical block length (512 by "
+            "default). The recommended length for compatibility is 512."),
+    )
 
     class Meta:
         verbose_name = _("Target")
