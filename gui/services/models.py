@@ -799,14 +799,6 @@ class iSCSITarget(Model):
             help_text=_("The method can be accepted by the target. Auto means "
                 "both none and authentication."),
             )
-    iscsi_target_logical_blocksize = models.IntegerField(
-        max_length=4,
-        choices=choices.TARGET_BLOCKSIZE_CHOICES,
-        default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
-        verbose_name=_("Logical Block Size"),
-        help_text=_("You may specify logical block length (512 by "
-            "default). The recommended length for compatibility is 512."),
-    )
 
     class Meta:
         verbose_name = _("Target")
