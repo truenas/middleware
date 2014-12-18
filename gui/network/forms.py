@@ -432,8 +432,12 @@ class GlobalConfigurationForm(ModelForm):
         http_proxy = self.cleaned_data.get('gc_httpproxy')
         if http_proxy:
             os.environ['http_proxy'] = http_proxy
-        elif not http_proxy and 'http_proxy' in os.environ:
-            del os.environ['http_proxy']
+            os.environ['https_proxy'] = http_proxy
+        elif not http_proxy:
+            if 'http_proxy' in os.environ:
+                del os.environ['http_proxy']
+            if 'https_proxy' in os.environ:
+                del os.environ['https_proxy']
 
         # Reset global opener so ProxyHandler can be recalculated
         urllib2.install_opener(None)
