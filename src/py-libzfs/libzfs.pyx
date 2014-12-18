@@ -33,78 +33,78 @@ cimport zfs
 
 
 class Error(enum.IntEnum):
-    EZFSSUCCESS = libzfs.SUCCESS
-    EZFSNOMEM = libzfs.NOMEM
-    EZFSBADPROP = libzfs.BADPROP
-    EZFSPROPREADONLY = libzfs.PROPREADONLY
-    EZFSPROPTYPE = libzfs.PROPTYPE
-    EZFSPROPNONINHERIT = libzfs.PROPNONINHERIT
-    EZFSPROPSPACE = libzfs.PROPSPACE
-    EZFSBADTYPE = libzfs.BADTYPE
-    EZFSBUSY = libzfs.BUSY
-    EZFSEXISTS = libzfs.EXISTS
-    EZFSNOENT = libzfs.NOENT
-    EZFSBADSTREAM = libzfs.BADSTREAM
-    EZFSDSREADONLY = libzfs.DSREADONLY
-    EZFSVOLTOOBIG = libzfs.VOLTOOBIG
-    EZFSINVALIDNAME = libzfs.INVALIDNAME
-    EZFSBADRESTORE = libzfs.BADRESTORE
-    EZFSBADBACKUP = libzfs.BADBACKUP
-    EZFSBADTARGET = libzfs.BADTARGET
-    EZFSNODEVICE = libzfs.NODEVICE
-    EZFSBADDEV = libzfs.BADDEV
-    EZFSNOREPLICAS = libzfs.NOREPLICAS
-    EZFSRESILVERING = libzfs.RESILVERING
-    EZFSBADVERSION = libzfs.BADVERSION
-    EZFSPOOLUNAVAIL = libzfs.POOLUNAVAIL
-    EZFSDEVOVERFLOW = libzfs.DEVOVERFLOW
-    EZFSBADPATH = libzfs.BADPATH
-    EZFSCROSSTARGET = libzfs.CROSSTARGET
-    EZFSZONED = libzfs.ZONED
-    EZFSMOUNTFAILED = libzfs.MOUNTFAILED
-    EZFSUMOUNTFAILED = libzfs.UMOUNTFAILED
-    EZFSUNSHARENFSFAILED = libzfs.UNSHARENFSFAILED
-    EZFSSHARENFSFAILED = libzfs.SHARENFSFAILED
-    EZFSPERM = libzfs.PERM
-    EZFSNOSPC = libzfs.NOSPC
-    EZFSFAULT = libzfs.FAULT
-    EZFSIO = libzfs.IO
-    EZFSINTR = libzfs.INTR
-    EZFSISSPARE = libzfs.ISSPARE
-    EZFSINVALCONFIG = libzfs.INVALCONFIG
-    EZFSRECURSIVE = libzfs.RECURSIVE
-    EZFSNOHISTORY = libzfs.NOHISTORY
-    EZFSPOOLPROPS = libzfs.POOLPROPS
-    EZFSPOOL_NOTSUP = libzfs.POOL_NOTSUP
-    EZFSPOOL_INVALARG = libzfs.POOL_INVALARG
-    EZFSNAMETOOLONG = libzfs.NAMETOOLONG
-    EZFSOPENFAILED = libzfs.OPENFAILED
-    EZFSNOCAP = libzfs.NOCAP
-    EZFSLABELFAILED = libzfs.LABELFAILED
-    EZFSBADWHO = libzfs.BADWHO
-    EZFSBADPERM = libzfs.BADPERM
-    EZFSBADPERMSET = libzfs.BADPERMSET
-    EZFSNODELEGATION = libzfs.NODELEGATION
-    EZFSUNSHARESMBFAILED = libzfs.UNSHARESMBFAILED
-    EZFSSHARESMBFAILED = libzfs.SHARESMBFAILED
-    EZFSBADCACHE = libzfs.BADCACHE
-    EZFSISL2CACHE = libzfs.ISL2CACHE
-    EZFSVDEVNOTSUP = libzfs.VDEVNOTSUP
-    EZFSNOTSUP = libzfs.NOTSUP
-    EZFSACTIVE_SPARE = libzfs.ACTIVE_SPARE
-    EZFSUNPLAYED_LOGS = libzfs.UNPLAYED_LOGS
-    EZFSREFTAG_RELE = libzfs.REFTAG_RELE
-    EZFSREFTAG_HOLD = libzfs.REFTAG_HOLD
-    EZFSTAGTOOLONG = libzfs.TAGTOOLONG
-    EZFSPIPEFAILED = libzfs.PIPEFAILED
-    EZFSTHREADCREATEFAILED = libzfs.THREADCREATEFAILED
-    EZFSPOSTSPLIT_ONLINE = libzfs.POSTSPLIT_ONLINE
-    EZFSSCRUBBING = libzfs.SCRUBBING
-    EZFSNO_SCRUB = libzfs.NO_SCRUB
-    EZFSDIFF = libzfs.DIFF
-    EZFSDIFFDATA = libzfs.DIFFDATA
-    EZFSPOOLREADONLY = libzfs.POOLREADONLY
-    EZFSUNKNOWN = libzfs.UNKNOWN
+    SUCCESS = libzfs.EZFS_SUCCESS
+    NOMEM = libzfs.EZFS_NOMEM
+    BADPROP = libzfs.EZFS_BADPROP
+    PROPREADONLY = libzfs.EZFS_PROPREADONLY
+    PROPTYPE = libzfs.EZFS_PROPTYPE
+    PROPNONINHERIT = libzfs.EZFS_PROPNONINHERIT
+    PROPSPACE = libzfs.EZFS_PROPSPACE
+    BADTYPE = libzfs.EZFS_BADTYPE
+    BUSY = libzfs.EZFS_BUSY
+    EXISTS = libzfs.EZFS_EXISTS
+    NOENT = libzfs.EZFS_NOENT
+    BADSTREAM = libzfs.EZFS_BADSTREAM
+    DSREADONLY = libzfs.EZFS_DSREADONLY
+    VOLTOOBIG = libzfs.EZFS_VOLTOOBIG
+    INVALIDNAME = libzfs.EZFS_INVALIDNAME
+    BADRESTORE = libzfs.EZFS_BADRESTORE
+    BADBACKUP = libzfs.EZFS_BADBACKUP
+    BADTARGET = libzfs.EZFS_BADTARGET
+    NODEVICE = libzfs.EZFS_NODEVICE
+    BADDEV = libzfs.EZFS_BADDEV
+    NOREPLICAS = libzfs.EZFS_NOREPLICAS
+    RESILVERING = libzfs.EZFS_RESILVERING
+    BADVERSION = libzfs.EZFS_BADVERSION
+    POOLUNAVAIL = libzfs.EZFS_POOLUNAVAIL
+    DEVOVERFLOW = libzfs.EZFS_DEVOVERFLOW
+    BADPATH = libzfs.EZFS_BADPATH
+    CROSSTARGET = libzfs.EZFS_CROSSTARGET
+    ZONED = libzfs.EZFS_ZONED
+    MOUNTFAILED = libzfs.EZFS_MOUNTFAILED
+    UMOUNTFAILED = libzfs.EZFS_UMOUNTFAILED
+    UNSHARENFSFAILED = libzfs.EZFS_UNSHARENFSFAILED
+    SHARENFSFAILED = libzfs.EZFS_SHARENFSFAILED
+    PERM = libzfs.EZFS_PERM
+    NOSPC = libzfs.EZFS_NOSPC
+    FAULT = libzfs.EZFS_FAULT
+    IO = libzfs.EZFS_IO
+    INTR = libzfs.EZFS_INTR
+    ISSPARE = libzfs.EZFS_ISSPARE
+    INVALCONFIG = libzfs.EZFS_INVALCONFIG
+    RECURSIVE = libzfs.EZFS_RECURSIVE
+    NOHISTORY = libzfs.EZFS_NOHISTORY
+    POOLPROPS = libzfs.EZFS_POOLPROPS
+    POOL_NOTSUP = libzfs.EZFS_POOL_NOTSUP
+    INVALARG = libzfs.EZFS_POOL_INVALARG
+    NAMETOOLONG = libzfs.EZFS_NAMETOOLONG
+    OPENFAILED = libzfs.EZFS_OPENFAILED
+    NOCAP = libzfs.EZFS_NOCAP
+    LABELFAILED = libzfs.EZFS_LABELFAILED
+    BADWHO = libzfs.EZFS_BADWHO
+    BADPERM = libzfs.EZFS_BADPERM
+    BADPERMSET = libzfs.EZFS_BADPERMSET
+    NODELEGATION = libzfs.EZFS_NODELEGATION
+    UNSHARESMBFAILED = libzfs.EZFS_UNSHARESMBFAILED
+    SHARESMBFAILED = libzfs.EZFS_SHARESMBFAILED
+    BADCACHE = libzfs.EZFS_BADCACHE
+    ISL2CACHE = libzfs.EZFS_ISL2CACHE
+    VDEVNOTSUP = libzfs.EZFS_VDEVNOTSUP
+    NOTSUP = libzfs.EZFS_NOTSUP
+    SPARE = libzfs.EZFS_ACTIVE_SPARE
+    LOGS = libzfs.EZFS_UNPLAYED_LOGS
+    RELE = libzfs.EZFS_REFTAG_RELE
+    HOLD = libzfs.EZFS_REFTAG_HOLD
+    TAGTOOLONG = libzfs.EZFS_TAGTOOLONG
+    PIPEFAILED = libzfs.EZFS_PIPEFAILED
+    THREADCREATEFAILED = libzfs.EZFS_THREADCREATEFAILED
+    ONLINE = libzfs.EZFS_POSTSPLIT_ONLINE
+    SCRUBBING = libzfs.EZFS_SCRUBBING
+    SCRUB = libzfs.EZFS_NO_SCRUB
+    DIFF = libzfs.EZFS_DIFF
+    DIFFDATA = libzfs.EZFS_DIFFDATA
+    POOLREADONLY = libzfs.EZFS_POOLREADONLY
+    UNKNOWN = libzfs.EZFS_UNKNOWN
 
 
 class PropertySource(enum.IntEnum):
@@ -166,6 +166,19 @@ class PoolStatus(enum.IntEnum):
     OK = libzfs.ZPOOL_STATUS_OK
 
 
+class ScanState(enum.IntEnum):
+    NONE = libzfs.DSS_NONE
+    SCANNING = libzfs.DSS_SCANNING
+    FINISHED = libzfs.DSS_FINISHED
+    CANCELED = libzfs.DSS_CANCELED
+
+
+class ZFSException(RuntimeError):
+    def __init__(self, code, message):
+        super(ZFSException, self).__init__(message)
+        self.code = code
+
+
 cdef class ZFS(object):
     cdef libzfs.libzfs_handle_t *_root
 
@@ -179,7 +192,7 @@ cdef class ZFS(object):
         return <uintptr_t>self._root
 
     def __getstate__(self):
-        return {p.name: p.__getstate__() for p in self.pools}
+        return [p.__getstate__() for p in self.pools]
 
     @staticmethod
     cdef int __iterate_pools(libzfs.zpool_handle_t *handle, void *arg):
@@ -201,18 +214,34 @@ cdef class ZFS(object):
 
         return root
 
-    @property
-    def pools(self):
-        pools = []
-        libzfs.zpool_iter(self._root, self.__iterate_pools, <void *>pools)
-        return [ZFSPool(self, h) for h in pools]
+    property errno:
+        def __get__(self):
+            return Error(libzfs.libzfs_errno(self._root))
+
+    property errstr:
+        def __get__(self):
+            return libzfs.libzfs_error_description(self._root)
+
+    property pools:
+        def __get__(self):
+            pools = []
+            libzfs.zpool_iter(self._root, self.__iterate_pools, <void *>pools)
+            return [ZFSPool(self, h) for h in pools]
 
     def get(self, name):
         cdef libzfs.zpool_handle_t *handle = libzfs.zpool_open(self._root, name)
         if handle == NULL:
-            raise KeyError('Pool {0} not found'.format(name))
+            raise ZFSException(Error.NOENT, 'Pool {0} not found'.format(name))
 
         return ZFSPool(self, <uintptr_t>handle)
+
+    def get_dataset(self, name):
+        cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
+        cdef libzfs.zpool_handle_t *pool = libzfs.zfs_get_pool_handle(handle)
+        if handle == NULL:
+            raise ZFSException(Error.NOENT, 'Dataset {0} not found'.format(name))
+
+        return ZFSDataset(self, ZFSPool(self, <uintptr_t>pool), <uintptr_t>handle)
 
     def create(self, name, topology, opts, fsopts):
         root = self.__make_vdev_tree(topology)
@@ -220,15 +249,21 @@ cdef class ZFS(object):
         cdef uintptr_t copts = opts.handle()
         cdef uintptr_t cfsopts = fsopts.handle()
 
-        libzfs.zpool_create(
+        if libzfs.zpool_create(
             self._root,
             name,
             <nvpair.nvlist_t*>croot,
             <nvpair.nvlist_t*>copts,
-            <nvpair.nvlist_t*>cfsopts)
+            <nvpair.nvlist_t*>cfsopts) != 0:
+            raise ZFSException(self.errno, self.errstr)
 
     def destroy(self, name):
-        pass
+        cdef libzfs.zpool_handle_t *handle = libzfs.zpool_open(self._root, name)
+        if handle == NULL:
+            raise ZFSException(Error.NOENT, 'Pool {0} not found'.format(name))
+
+        if libzfs.zpool_destroy(handle) != 0:
+            raise ZFSException(self.errno, self.errstr)
 
 
 cdef class ZPoolProperty(object):
@@ -364,18 +399,69 @@ cdef class ZFSVdev(object):
         def __set__(self, value):
             self.nvlist['children'] = [i.nvlist for i in value]
 
+    property disks:
+        def __get__(self):
+            if self.type == 'disk':
+                return [self.path]
+            elif self.type == 'file':
+                return []
+            else:
+                result = []
+                for i in self.children:
+                    result += i.disks
+
+                return result
+
+
 
 cdef class ZPoolScrub(object):
     cdef readonly ZFS root
     cdef readonly ZFSPool pool
+    cdef readonly object nvlist
 
     def __init__(self, ZFS root, ZFSPool pool):
         self.root = root
         self.pool = pool
+        self.stat = pool.config['vdev_tree']['scan_stats']
+
+    property state:
+        def __get__(self):
+            return ScanState(self.stat[1])
+
+    property start_time:
+        def __get__(self):
+            pass
+
+    property end_time:
+        def __get__(self):
+            pass
+
+    property bytes_to_process:
+        def __get__(self):
+            pass
+
+    property bytes_processed:
+        def __get__(self):
+            pass
+
+    property errors:
+        def __get__(self):
+            pass
+
+    property percentage:
+        def __get__(self):
+            pass
 
     def __getstate__(self):
         return {
-
+            'func': self.stat[0],
+            'state': self.state,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'percentage': self.percentage,
+            'bytes_to_process': self.bytes_to_process,
+            'bytes_processed': self.bytes_processed,
+            'errors': self.errors
         }
 
 
@@ -466,14 +552,29 @@ cdef class ZFSPool(object):
         def __get__(self):
             proptypes = []
             libzfs.zprop_iter(self.__iterate_props, <void*>proptypes, True, True, zfs.ZFS_TYPE_POOL)
-            return [ZPoolProperty(self.root, self, x) for x in proptypes]
+            return {p.name: p for p in [ZPoolProperty(self.root, self, x) for x in proptypes]}
+
+    property disks:
+        def __get__(self):
+            result = []
+            for g in self.groups.values():
+                for v in g:
+                    result += v.disks
+
+            return result
 
     property scrub:
         def __get__(self):
             return ZPoolScrub(self.root, self)
 
     def create(self, name, fsopts):
-        pass
+        cdef uintptr_t cfsopts = fsopts.handle()
+        if libzfs.zfs_create(
+            <libzfs.libzfs_handle_t*>self.root.handle(),
+            name,
+            zfs.ZFS_TYPE_FILESYSTEM,
+            <nvpair.nvlist_t*>cfsopts) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
 
     def destroy(self, name):
         pass
@@ -526,7 +627,7 @@ cdef class ZFSDataset(object):
         def __get__(self):
             proptypes = []
             libzfs.zprop_iter(self.__iterate_props, <void*>proptypes, True, True, zfs.ZFS_TYPE_FILESYSTEM)
-            return [ZFSProperty(self.root, self, x) for x in proptypes]
+            return {p.name: p for p in [ZFSProperty(self.root, self, x) for x in proptypes]}
 
     def rename(self, new_name):
         pass
