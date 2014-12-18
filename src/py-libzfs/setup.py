@@ -50,6 +50,8 @@ system_includes = [
 system_includes = [os.path.expandvars(x) for x in system_includes]
 
 setup(
+    name='libzfs',
+    version='1.0',
     cmdclass={'build_ext': build_ext},
     ext_modules=[
         Extension(
