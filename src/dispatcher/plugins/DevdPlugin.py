@@ -167,6 +167,9 @@ class DevdEventSource(EventSource):
             "misc.fs.zfs.pool_destroy": ("fs.zfs.pool.destroy", "Pool {0} destroyed")
         }
 
+        if args["type"] not in event_mapping:
+            return
+
         params = {
             "pool": args.get("pool_name"),
             "guid": args.get("pool_guid"),
