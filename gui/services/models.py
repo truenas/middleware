@@ -1433,6 +1433,18 @@ class SSH(Model):
             blank=True,
             null=True
             )
+    ssh_host_ed25519_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_ed25519_key = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
     ssh_host_ecdsa_key_pub = models.TextField(
             max_length=1024,
             editable=False,
