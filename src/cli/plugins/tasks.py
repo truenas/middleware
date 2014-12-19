@@ -35,6 +35,7 @@ from output import output_msg, output_table, format_datetime
 @description("Lists system services")
 class ListCommand(Command):
     def run(self, context, args, kwargs):
+        self.context = context
         tasks = context.connection.call_sync('task.query')
         output_table(tasks, [
             ('ID', '/id'),
@@ -46,12 +47,16 @@ class ListCommand(Command):
 
     def describe_state(self, task):
         if task['state'] == 'EXECUTING':
-            state = self.context.call_sync('task.status', task['id'])
+            state = self.context.connection.call_sync('task.status', task['id'])
+            if 'progress' not in state:
+                return task['state']
+
+            return '{0:2.0f}% ({1})'.format(state['progress']['percentage'], state['progress']['message'])
 
         return task['state']
 
     def describe_task(self, task):
-        return tasks.translate(task['name'], task['args'])
+        return tasks.translate(self.context, task['name'], task['args'])
 
 
 @description("Submits new task")
