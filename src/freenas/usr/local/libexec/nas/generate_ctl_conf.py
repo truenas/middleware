@@ -203,7 +203,7 @@ def main():
                 if unmap:
                     cf_contents.append("\t\t\toption unmap on\n")
                 cf_contents.append("\t\t\tpath %s\n" % path)
-                cf_contents.append("\t\t\tblocksize %s\n" % t2e.iscsi_extent.iscsi_target_extent_blocksize
+                cf_contents.append("\t\t\tblocksize %s\n" % t2e.iscsi_extent.iscsi_target_extent_blocksize)
                 if t2e.iscsi_extent.iscsi_target_extent_pblocksize:
                     cf_contents.append("\t\t\toption pblocksize 0\n")
                 if t2e.iscsi_lunid is None:
