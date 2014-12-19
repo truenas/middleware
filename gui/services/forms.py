@@ -65,9 +65,26 @@ log = logging.getLogger('services.form')
 
 
 class servicesForm(ModelForm):
+
     class Meta:
         fields = '__all__'
         model = models.services
+
+    def __init__(self, *args, **kwargs):
+        self._force = kwargs.pop('force', False)
+        self._extra_events = []
+        super(servicesForm, self).__init__(*args, **kwargs)
+
+    def precheck_iscsitarget(self, obj):
+        if obj.srv_enable is False:
+            connections = notifier().iscsi_active_connections()
+            if connections > 0:
+                obj.srv_enable = True
+                obj.save()
+                notifier().start("iscsitarget")
+                return _('You have %d pending active iSCSI connection(s).' % (
+                    connections
+                ))
 
     def save(self, *args, **kwargs):
         obj = super(servicesForm, self).save(*args, **kwargs)
@@ -75,11 +92,26 @@ class servicesForm(ModelForm):
 
         self.enabled_svcs = []
         self.disabled_svcs = []
+
+        method = 'precheck_%s' % obj.srv_service
+        method = getattr(self, method, None)
+        if not self._force and method and callable(method):
+            rv = method(obj)
+            if rv:
+                self._extra_events.append(
+                    "confirm_service('%s', '%s');" % (
+                        obj.srv_service,
+                        rv,
+                    ),
+                )
+                self.started = obj.srv_enable
+                return obj
+
         if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
             obj.srv_enable = True
             obj.save()
             started = True
-        
+
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable == True:
                 if _notifier._started_domaincontroller():
@@ -95,7 +127,7 @@ class servicesForm(ModelForm):
                     started = _notifier.restart("domaincontroller")
                 else:
                     started = _notifier.start("domaincontroller")
-            else: 
+            else:
                 started = _notifier.stop("domaincontroller")
 
         else:
@@ -130,7 +162,12 @@ class servicesForm(ModelForm):
         return obj
 
     def done(self, request=None, events=None, **kwargs):
-	return super(servicesForm, self).done(request=request, events=events, **kwargs)
+        if events is None:
+            events = []
+        if self._extra_events:
+            events.extend(self._extra_events)
+        return super(servicesForm, self).done(request=request, events=events, **kwargs)
+
 
 class CIFSForm(ModelForm):
 
@@ -146,7 +183,7 @@ class CIFSForm(ModelForm):
         exclude = [ 'cifs_SID', 'cifs_srv_bindip' ]
         model = models.CIFS
 
-    def __init__(self, *args, **kwargs): 
+    def __init__(self, *args, **kwargs):
         super(CIFSForm, self).__init__(*args, **kwargs)
         if self.data and self.data.get('cifs_srv_bindip'):
             if ',' in self.data['cifs_srv_bindip']:
