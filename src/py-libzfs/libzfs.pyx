@@ -26,6 +26,7 @@
 
 from libc.stdint cimport uintptr_t
 import enum
+import datetime
 import nvpair
 cimport nvpair
 cimport libzfs
@@ -167,10 +168,10 @@ class PoolStatus(enum.IntEnum):
 
 
 class ScanState(enum.IntEnum):
-    NONE = libzfs.DSS_NONE
-    SCANNING = libzfs.DSS_SCANNING
-    FINISHED = libzfs.DSS_FINISHED
-    CANCELED = libzfs.DSS_CANCELED
+    NONE = zfs.DSS_NONE
+    SCANNING = zfs.DSS_SCANNING
+    FINISHED = zfs.DSS_FINISHED
+    CANCELED = zfs.DSS_CANCELED
 
 
 class ZFSException(RuntimeError):
@@ -262,7 +263,7 @@ cdef class ZFS(object):
         if handle == NULL:
             raise ZFSException(Error.NOENT, 'Pool {0} not found'.format(name))
 
-        if libzfs.zpool_destroy(handle) != 0:
+        if libzfs.zpool_destroy(handle, "destroy") != 0:
             raise ZFSException(self.errno, self.errstr)
 
 
@@ -413,11 +414,10 @@ cdef class ZFSVdev(object):
                 return result
 
 
-
 cdef class ZPoolScrub(object):
     cdef readonly ZFS root
     cdef readonly ZFSPool pool
-    cdef readonly object nvlist
+    cdef readonly object stat
 
     def __init__(self, ZFS root, ZFSPool pool):
         self.root = root
@@ -430,27 +430,30 @@ cdef class ZPoolScrub(object):
 
     property start_time:
         def __get__(self):
-            pass
+            return datetime.datetime.fromtimestamp(self.stat[2])
 
     property end_time:
         def __get__(self):
-            pass
+            return datetime.datetime.fromtimestamp(self.stat[3])
 
-    property bytes_to_process:
+    property bytes_to_scan:
         def __get__(self):
-            pass
+            return self.stat[4]
 
-    property bytes_processed:
+    property bytes_scanned:
         def __get__(self):
-            pass
+            return self.stat[5]
 
     property errors:
         def __get__(self):
-            pass
+            return self.stat[8]
 
     property percentage:
         def __get__(self):
-            pass
+            if not self.bytes_to_scan:
+                return 0
+
+            return (<float>self.bytes_scanned / <float>self.bytes_to_scan) * 100
 
     def __getstate__(self):
         return {
@@ -459,8 +462,8 @@ cdef class ZPoolScrub(object):
             'start_time': self.start_time,
             'end_time': self.end_time,
             'percentage': self.percentage,
-            'bytes_to_process': self.bytes_to_process,
-            'bytes_processed': self.bytes_processed,
+            'bytes_to_process': self.bytes_scanned,
+            'bytes_processed': self.bytes_to_scan,
             'errors': self.errors
         }
 
@@ -490,6 +493,7 @@ cdef class ZFSPool(object):
             'name': self.name,
             'guid': self.guid,
             'hostname': self.hostname,
+            'status': self.status,
             'root_dataset': self.root_dataset.__getstate__(),
             'groups': {
                 'data': [i.__getstate__() for i in self.data_vdevs],
@@ -543,6 +547,11 @@ cdef class ZFSPool(object):
         def __get__(self):
             return self.config['hostname']
 
+    property status:
+        def __get__(self):
+            stats = self.config['vdev_tree']['vdev_stats']
+            return libzfs.zpool_state_to_name(stats[1], stats[2])
+
     property config:
         def __get__(self):
             cdef uintptr_t nvl = <uintptr_t>libzfs.zpool_get_config(self._zpool, NULL)
@@ -581,6 +590,14 @@ cdef class ZFSPool(object):
 
     def attach_vdev(self, vdev):
         pass
+
+    def start_scrub(self):
+        if libzfs.zpool_scan(self._zpool, zfs.POOL_SCAN_SCRUB) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
+
+    def stop_scrub(self):
+        if libzfs.zpool_scan(self._zpool, zfs.POOL_SCAN_NONE) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
 
 
 cdef class ZFSDataset(object):
@@ -630,12 +647,6 @@ cdef class ZFSDataset(object):
             return {p.name: p for p in [ZFSProperty(self.root, self, x) for x in proptypes]}
 
     def rename(self, new_name):
-        pass
-
-    def start_scrub(self):
-        pass
-
-    def stop_scrub(self):
         pass
 
     def mount(self):

@@ -149,7 +149,7 @@ cdef extern from "libzfs.h":
     extern void zpool_close(zpool_handle_t *)
     extern const char *zpool_get_name(zpool_handle_t *)
     extern int zpool_get_state(zpool_handle_t *)
-    extern const char *zpool_state_to_name(vdev_state_t, vdev_aux_t)
+    extern const char *zpool_state_to_name(zfs.vdev_state_t, zfs.vdev_aux_t)
     extern const char *zpool_pool_state_to_name(pool_state_t)
     extern void zpool_free_handles(libzfs_handle_t *)
     ctypedef int (*zpool_iter_f)(zpool_handle_t *, void *)
@@ -159,7 +159,7 @@ cdef extern from "libzfs.h":
     extern int zpool_destroy(zpool_handle_t *, const char *)
     extern int zpool_add(zpool_handle_t *, nvpair.nvlist_t *)
 
-    extern int zpool_scan(zpool_handle_t *, pool_scan_func_t)
+    extern int zpool_scan(zpool_handle_t *, zfs.pool_scan_func_t)
     extern int zpool_clear(zpool_handle_t *, const char *, nvpair.nvlist_t *)
     extern int zpool_reguid(zpool_handle_t *)
     extern int zpool_reopen(zpool_handle_t *)
@@ -172,8 +172,8 @@ cdef extern from "libzfs.h":
     extern int zpool_vdev_detach(zpool_handle_t *, const char *)
     extern int zpool_vdev_remove(zpool_handle_t *, const char *)
 
-    extern int zpool_vdev_fault(zpool_handle_t *, uint64_t, vdev_aux_t)
-    extern int zpool_vdev_degrade(zpool_handle_t *, uint64_t, vdev_aux_t)
+    extern int zpool_vdev_fault(zpool_handle_t *, uint64_t, zfs.vdev_aux_t)
+    extern int zpool_vdev_degrade(zpool_handle_t *, uint64_t, zfs.vdev_aux_t)
     extern int zpool_vdev_clear(zpool_handle_t *, uint64_t)
 
     extern nvpair.nvlist_t *zpool_find_vdev(zpool_handle_t *, const char *, int *,
@@ -386,7 +386,7 @@ cdef extern from "libzfs.h":
     void libzfs_add_handle(get_all_cb_t *, zfs_handle_t *)
     int libzfs_dataset_cmp(const void *, const void *)
 
-    extern int zfs_create(libzfs_handle_t *, const char *, zfs_type_t,
+    extern int zfs_create(libzfs_handle_t *, const char *, zfs.zfs_type_t,
         nvpair.nvlist_t *)
     extern int zfs_create_ancestors(libzfs_handle_t *, const char *)
     extern int zfs_destroy(zfs_handle_t *, int)
