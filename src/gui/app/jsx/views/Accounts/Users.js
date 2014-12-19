@@ -106,8 +106,8 @@ var displaySettings = {
     }
   , remainingName  : "other user accounts"
   , ungroupedName  : "all user accounts"
-  , allowedFilters : [ "current", "userCreated", "builtIn" ]
-  , defaultFilters : [  ]
+  , allowedFilters : [ "builtIn" ]
+  , defaultFilters : [ "builtIn" ]
   , allowedGroups  : [ "current", "userCreated", "builtIn" ]
   , defaultGroups  : [ "current", "userCreated", "builtIn" ]
 };

@@ -24,6 +24,9 @@ var Viewer = React.createClass({
     , displayData  : React.PropTypes.object
   }
 
+
+  // REACT LIFECYCLE
+
   , getDefaultProps: function() {
       // Viewer allows all modes by default, except for heirarchical. This list
       // can be overwritten by passing allowedModes into your <Viewer />.
@@ -72,20 +75,27 @@ var Viewer = React.createClass({
     }
 
   , componentWillReceiveProps: function ( nextProps ) {
-      this.processDisplayData( nextProps.inputData, null, null );
+      this.processDisplayData({ inputData: nextProps.inputData });
     }
 
-  , processDisplayData: function ( input, search, groups ) {
-      var inputData     = ( input  === null ) ? this.props.inputData     : input;
-      var searchString  = ( search === null ) ? this.state.searchString  : search;
-      var enabledGroups = ( groups === null ) ? this.state.enabledGroups : groups;
 
-      // This function applys filters, searches, and then groups before handing
-      // the data to any of its sub-views. The structure is deliberately generic
-      // so that any sub-view may display the resulting data as it sees fit
+  // VIEWER DATA HANDLING
+
+    // processDisplayData applys filters, searches, and then groups before handing
+    // the data to any of its sub-views. The structure is deliberately generic
+    // so that any sub-view may display the resulting data as it sees fit.
+  , processDisplayData: function ( options ) {
+      var displayParams = {
+          inputData      : this.props.inputData
+        , searchString   : this.state.searchString
+        , enabledGroups  : this.state.enabledGroups
+        , enabledFilters : this.state.enabledFilters
+      };
+
+      _.assign( displayParams, options );
 
       // Prevent function from modifying nextProps
-      var inputDataArray = _.cloneDeep( inputData );
+      var inputDataArray = _.cloneDeep( displayParams.inputData );
       var filteredData = {
           grouped   : false
         , groups    : []
@@ -95,13 +105,13 @@ var Viewer = React.createClass({
 
       // Reduce the array by applying exclusion filters (defined in the view)
       // TODO: Debug this - doesn't work right!
-      // if ( this.state.enabledFilters ) {
-      //   this.state.enabledFilters.map(
-      //     function ( filter ) {
-      //       inputDataArray = _.remove( inputDataArray, this.props.displayData.filterCriteria[ filter ].testProp );
-      //     }.bind(this)
-      //   );
-      // }
+      if ( displayParams.enabledFilters ) {
+        displayParams.enabledFilters.map(
+          function ( filter ) {
+            _.remove( inputDataArray, this.props.displayData.filterCriteria[ filter ].testProp );
+          }.bind(this)
+        );
+      }
 
 
       // Reduce the array to only items which contain a substring match for the
@@ -110,14 +120,14 @@ var Viewer = React.createClass({
         // TODO: Are keys always strings? May want to rethink this
         var searchableString = item[ this.props.formatData.primaryKey ] + item[ this.props.formatData.secondaryKey ];
 
-        return ( searchableString.indexOf( searchString ) !== -1 );
+        return ( searchableString.indexOf( displayParams.searchString ) !== -1 );
 
       }.bind(this) );
 
 
       // Convert array into object based on groups
-      if ( enabledGroups.length ) {
-        enabledGroups.map(
+      if ( displayParams.enabledGroups.length ) {
+        displayParams.enabledGroups.map(
           function ( group ) {
             var groupData  = this.props.displayData.filterCriteria[ group ];
             var newEntries = _.remove( inputDataArray, groupData.testProp );
@@ -142,14 +152,15 @@ var Viewer = React.createClass({
       };
 
       this.setState({
-          filteredData  : filteredData
-        , searchString  : searchString
-        , enabledGroups : enabledGroups
+          filteredData   : filteredData
+        , searchString   : displayParams.searchString
+        , enabledGroups  : displayParams.enabledGroups
+        , enabledFilters : displayParams.enabledFilters
       });
     }
 
   , handleSearchChange: function ( event ) {
-      this.processDisplayData( null, event.target.value, null );
+      this.processDisplayData({ searchString: event.target.value });
     }
 
   , createGroupMenuOption: function ( group, index ) {
@@ -169,6 +180,23 @@ var Viewer = React.createClass({
       );
     }
 
+  , createFilterMenuOption: function ( filter, index ) {
+      var toggleText;
+
+      if ( this.state.enabledFilters.indexOf( filter ) !== -1 ) {
+        toggleText = "Show ";
+      } else {
+        toggleText = "Hide ";
+      }
+
+      return (
+        <TWBS.MenuItem key        = { index }
+                       onClick    = { this.handleEnabledFiltersToggle.bind( null, filter ) }>
+          { toggleText + this.props.displayData.filterCriteria[ filter ].name }
+        </TWBS.MenuItem>
+      );
+    }
+
   , handleEnabledGroupsToggle: function ( targetGroup ) {
       var tempEnabledArray = _.clone( this.state.enabledGroups );
       var tempDisplayArray = this.props.displayData.allowedGroups;
@@ -182,7 +210,24 @@ var Viewer = React.createClass({
         tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
       }
 
-      this.processDisplayData( null, null, tempEnabledArray );
+      this.processDisplayData({ enabledGroups: tempEnabledArray });
+    }
+
+  , handleEnabledFiltersToggle: function ( targetFilter ) {
+      var tempEnabledArray = _.clone( this.state.enabledFilters );
+      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
+
+      console.log( targetFilter );
+
+      console.log( tempEnabledArray );
+      if ( enabledIndex !== -1 ) {
+        tempEnabledArray.splice( enabledIndex, 1 );
+      } else {
+        tempEnabledArray.push( targetFilter );
+      }
+      console.log( tempEnabledArray );
+
+      this.processDisplayData({ enabledFilters: tempEnabledArray });
     }
 
   , changeViewMode: function ( targetMode ) {
@@ -207,9 +252,7 @@ var Viewer = React.createClass({
     }
 
   , handleModeSelect: function( selectedKey ) {
-     this.setState({
-       currentMode: this.changeViewMode( selectedKey )
-     });
+     this.setState({ currentMode: this.changeViewMode( selectedKey ) });
   }
 
   , changeTargetItem: function( params ) {
@@ -248,12 +291,21 @@ var Viewer = React.createClass({
       );
     }.bind(this);
 
-    var groupDropdown = null;
+    var groupDropdown  = null;
+    var filterDropdown = null;
 
     if ( this.props.displayData.allowedGroups ) {
       groupDropdown = (
         <TWBS.DropdownButton title="Group">
           { this.props.displayData.allowedGroups.map( this.createGroupMenuOption ) }
+        </TWBS.DropdownButton>
+      );
+    }
+
+    if ( this.props.displayData.allowedFilters ) {
+      filterDropdown = (
+        <TWBS.DropdownButton title="Filter">
+          { this.props.displayData.allowedFilters.map( this.createFilterMenuOption ) }
         </TWBS.DropdownButton>
       );
     }
@@ -306,13 +358,7 @@ var Viewer = React.createClass({
             { groupDropdown }
 
             {/* Select properties to filter by */}
-            <TWBS.DropdownButton title="Filter">
-              <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-              <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-              <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-              <TWBS.MenuItem divider />
-              <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-            </TWBS.DropdownButton>
+            { filterDropdown }
 
             {/* Select property to sort by */}
             {/* <TWBS.DropdownButton title="Sort">
