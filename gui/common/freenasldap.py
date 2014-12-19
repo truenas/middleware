@@ -1395,6 +1395,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
         self.set_kwargs()
+        self.load_config()
 
         if self.bindname and self.domainname:  
             self.binddn = self.adset(self.binddn,
@@ -1476,6 +1477,18 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             elif key in self.__keys():
                 self.__dict__[key] = kwargs[key]
+
+    def configval(self, var):
+        return get_freenas_var_by_file(FREENAS_AD_CONFIG_FILE, var)
+
+    def load_config(self):
+        if not os.path.exists(FREENAS_AD_CONFIG_FILE):
+            return
+
+        for var in self.__keys():
+            val = self.configval(var)
+            if val:
+                setattr(self, var.replace("ad_", ""), val)
 
     def set_domain_controller(self):
         if self.dcname:

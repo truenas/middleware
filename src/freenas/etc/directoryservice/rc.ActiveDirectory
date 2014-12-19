@@ -983,8 +983,16 @@ AD_load_values()
 
 AD_generate_config()
 {
-	${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
-	/bin/chmod 600 "${AD_CONFIG_FILE}"
+	if [ ! -f "${AD_CONFIG_FILE}" ]
+	then
+		${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
+		/bin/chmod 600 "${AD_CONFIG_FILE}"
+	fi
+}
+
+AD_remove_config()
+{
+	rm -f "${AD_CONFIG_FILE}"
 }
 
 AD_load_bindpw()
