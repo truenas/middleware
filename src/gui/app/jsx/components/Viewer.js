@@ -319,9 +319,12 @@ var Viewer = React.createClass({
       var viewerModeNav  = null;
 
       if ( this.props.displayData.allowedGroups ) {
+        // Don't show grouping toggle for hidden groups
+        var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
+
         groupDropdown = (
           <TWBS.DropdownButton title="Group">
-            { this.props.displayData.allowedGroups.map( this.createGroupMenuOption ) }
+            { visibleGroups.map( this.createGroupMenuOption ) }
           </TWBS.DropdownButton>
         );
       }

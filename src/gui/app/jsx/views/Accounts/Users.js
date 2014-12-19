@@ -93,7 +93,7 @@ var displaySettings = {
         current: {
             name     : "current user account"
           // TODO: Fix dummy data
-          , testProp : { "username": "root" }
+          , testProp : { "username": "jakub" }
         }
       , userCreated: {
             name     : "FreeNAS user accounts"
