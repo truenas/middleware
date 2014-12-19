@@ -315,58 +315,60 @@ class MainLoop(object):
 
         while True:
             line = raw_input(self.__get_prompt()).strip()
+            self.process(line)
 
-            if len(line) == 0:
-                continue
+    def process(self, line):
+        if len(line) == 0:
+            return
 
-            if line[0] == '/':
-                self.path = self.root_path[:]
-                line = line[1:]
+        if line[0] == '/':
+            self.path = self.root_path[:]
+            line = line[1:]
 
-            if line == '..':
-                if len(self.path) > 1:
-                    self.cd_up()
-                    continue
+        if line == '..':
+            if len(self.path) > 1:
+                self.cd_up()
+                return
 
-            tokens, kwargs = self.tokenize(line)
-            oldpath = self.path[:]
+        tokens, kwargs = self.tokenize(line)
+        oldpath = self.path[:]
 
-            while tokens:
-                token = tokens.pop(0)
-                nsfound = False
-                cmdfound = False
+        while tokens:
+            token = tokens.pop(0)
+            nsfound = False
+            cmdfound = False
 
-                if token in self.builtin_commands.keys():
-                    self.builtin_commands[token].run(self.context, tokens, kwargs)
-                    break
+            if token in self.builtin_commands.keys():
+                self.builtin_commands[token].run(self.context, tokens, kwargs)
+                break
 
-                try:
-                    for ns in self.cwd.namespaces():
-                        if token == ns.get_name():
-                            self.cd(ns)
-                            nsfound = True
-                            break
-
-                    for name, cmd in self.cwd.commands().items():
-                        if token == name:
-                            output_lock.acquire()
-                            cmd.run(self.context, tokens, kwargs)
-                            cmdfound = True
-                            output_lock.release()
-                            break
-
-                except Exception, err:
-                    print 'Error: {0}'.format(str(err))
-                    traceback.print_exc()
-                    break
-                else:
-                    if not nsfound and not cmdfound:
-                        print _("Command not found! Type \"?\" for help.")
+            try:
+                for ns in self.cwd.namespaces():
+                    if token == ns.get_name():
+                        self.cd(ns)
+                        nsfound = True
                         break
 
-                    if cmdfound:
-                        self.path = oldpath
+                for name, cmd in self.cwd.commands().items():
+                    if token == name:
+                        output_lock.acquire()
+                        cmd.run(self.context, tokens, kwargs)
+                        cmdfound = True
+                        output_lock.release()
                         break
+
+            except Exception, err:
+                print 'Error: {0}'.format(str(err))
+                traceback.print_exc()
+                break
+            else:
+                if not nsfound and not cmdfound:
+                    print _("Command not found! Type \"?\" for help.")
+                    break
+
+                if cmdfound:
+                    self.path = oldpath
+                    break
 
     def get_relative_object(self, ns, tokens):
         ptr = ns
@@ -428,7 +430,8 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('hostname', metavar='HOSTNAME', nargs='?', default='127.0.0.1')
-    parser.add_argument('-c', metavar='COMMANDS', default=DEFAULT_CONFIGFILE)
+    parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE)
+    parser.add_argument('-e', metavar='COMMANDS')
     parser.add_argument('-l', metavar='LOGIN')
     parser.add_argument('-p', metavar='PASSWORD')
     parser.add_argument('-D', metavar='DEFINE', action='append')
@@ -449,6 +452,16 @@ def main():
 
     ml = MainLoop(context)
     context.ml = ml
+
+    if args.D:
+        for i in args.D:
+            name, value = i.split('=')
+            context.variables.set(name, value)
+
+    if args.e:
+        ml.process(args.e)
+        return
+
     ml.repl()
 
 
