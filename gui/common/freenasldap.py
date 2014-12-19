@@ -1414,7 +1414,6 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gcount = 0
 
         if not self.site: 
-            print "GOTTA FIND SITE"
 
             # locate_site() requires an open connection
             self.site = self.locate_site()
