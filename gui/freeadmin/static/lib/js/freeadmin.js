@@ -305,6 +305,43 @@ require([
 
     }
 
+    confirm_service = function(srv, msg) {
+
+        console.log(srv, msg, dom.byId(srv + "_toggle"));
+        var dialog = new Dialog({
+            title: gettext('Warning!'),
+            parseOnLoad: true,
+            closable: true,
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            onHide: function() {
+                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+            }
+        });
+
+        var content = domConstruct.toDom('<p>' + msg + '</p><p>Are you sure you want to continue?</p><br/ >');
+
+        var confirmb = new Button({
+          label: gettext('Yes'),
+          onClick: function() {
+            toggle_service(dom.byId(srv + "_toggle"), null, true);
+            cancelDialog(this);
+          }
+        });
+        confirmb.placeAt(content);
+
+        var cancelb = new Button({
+          label: gettext('Cancel'),
+          onClick: function() {
+            cancelDialog(this);
+          }
+        });
+        cancelb.placeAt(content);
+
+        dialog.set('content', content);
+        dialog.show();
+
+    }
+
     add_formset = function(a, url, name) {
         xhr.get(url, {
             query: {
@@ -345,7 +382,7 @@ require([
         });
     }
 
-    toggle_service = function(obj, onSuccess) {
+    toggle_service = function(obj, onSuccess, force) {
         var td = obj.parentNode;
         var n = domConstruct.create("div", {  }, td);
         domClass.add(n, "dijitIconLoading");
@@ -353,7 +390,7 @@ require([
         domStyle.set(n, "float", "left");
 
         xhr.post("/services/toggle/"+obj.name+"/", {
-            data: "Some random text",
+            data: {"force": force},
             handleAs: "json",
             headers: {"X-CSRFToken": CSRFToken}
             }).then(function(data) {

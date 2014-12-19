@@ -198,11 +198,17 @@ def servicesToggleView(request, formname):
         svc_entry.srv_enable = False
     else:
         svc_entry.srv_enable = True
+
+    if request.POST.get('force', None) == 'true':
+        force = True
+    else:
+        force = False
+
     original_srv = svc_entry.srv_enable
     mf = servicesForm(instance=svc_entry, data={
         'srv_enable': svc_entry.srv_enable,
         'srv_service': changing_service,
-    })
+    }, force=force)
     if not mf.is_valid():
         return
     svc_entry = mf.save()

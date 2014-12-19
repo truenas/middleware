@@ -5641,6 +5641,14 @@ class notifier:
 
         return True
 
+    def iscsi_active_connections(self):
+        from lxml import etree
+        proc = self._pipeopen('ctladm islist -x')
+        xml = proc.communicate()[0]
+        xml = etree.fromstring(xml)
+        connections = xml.xpath('//connection')
+        return len(connections)
+
 
 def usage():
     usage_str = """usage: %s action command
