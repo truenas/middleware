@@ -57,6 +57,14 @@ class DiskProvider(Provider):
     def is_online(self, name):
         return os.path.exists(name)
 
+    def partition_to_disk(self, part_name):
+        part = self.get_partition_config(part_name)
+        return part['disk']
+
+    def disk_to_data_partition(self, disk_name):
+        disk = diskinfo_cache.get(disk_name)
+        return disk['data-partition-path']
+
     def get_disk_config(self, name):
         if not diskinfo_cache.exists(name):
             raise RpcException(errno.ENOENT, "Disk {0} not found".format(name))
@@ -90,7 +98,7 @@ class DiskGPTFormatTask(Task):
         if fstype not in ['freebsd-zfs']:
             raise VerifyException(errno.EINVAL, "Unsupported fstype {0}".format(fstype))
 
-        return [os.path.basename(disk)]
+        return ['disk:{0}'.format(disk)]
 
     def run(self, disk, fstype, params=None):
         if params is None:
@@ -118,8 +126,7 @@ class DiskGPTFormatTask(Task):
         except SubprocessException, err:
             raise TaskException(errno.EFAULT, 'Cannot format disk: {0}'.format(err.err))
 
-        # Yield to allow firing mediachange event
-        gevent.sleep(0)
+        generate_disk_cache(self.dispatcher, disk)
 
 
 class DiskEraseTask(Task):
@@ -132,6 +139,8 @@ class DiskEraseTask(Task):
     def verify(self, disk, erase_data=False):
         if not diskinfo_cache.exists(disk):
             raise VerifyException(errno.ENOENT, "Disk {0} not found".format(disk))
+
+        return ['disk:{0}'.format(disk)]
 
     def run(self, disk, erase_data=False):
         try:
@@ -154,6 +163,8 @@ class DiskEraseTask(Task):
                 fd.flush()
                 self.remaining -= amount
 
+        generate_disk_cache(self.dispatcher, disk)
+
     def get_status(self, disk):
         if not self.started:
             return TaskStatus(0, 'Erasing disk...')
@@ -173,6 +184,7 @@ class DiskConfigureTask(Task):
 
     def run(self, name, updated_fields):
         disk = self.datastore.query('disks', ('name', '=', name))
+        diskinfo_cache.invalidate(disk)
 
 
 class DiskDeleteTask(Task):
@@ -428,9 +440,14 @@ def _init(dispatcher):
         generate_camcontrol_cache()
         generate_disk_cache(dispatcher, args['path'])
 
+        # Disk may be detached in the meantime
+        disk = diskinfo_cache.get(args['path'])
+        if not disk:
+            return
+
         dispatcher.dispatch_event('disk.updated', {
             'name': args['path'],
-            'identifier': diskinfo_cache.get(args['path'])['identifier']
+            'identifier': disk['identifier']
         })
 
     dispatcher.register_schema_definition('disk', {

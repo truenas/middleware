@@ -28,7 +28,7 @@
 import os
 import re
 import netifaces
-from balancer import QueueClass
+from resources import Resource
 from event import EventSource
 from task import Provider
 from dispatcher.rpc import accepts, returns, description
@@ -40,9 +40,12 @@ from lxml import etree
 @description("Provides information about devices installed in the system")
 class DeviceInfoPlugin(Provider):
     def initialize(self, context):
-        # Enumerate disks and create initial disk queues
+        # Enumerate disks and network interface and create initial resources
         for disk in self._get_class_disk():
-            context.dispatcher.balancer.create_queue(QueueClass.DISK, disk["name"])
+            context.dispatcher.register_resource(Resource('disk:{0}'.format(disk)))
+
+        for net in self._get_class_network():
+            context.dispatcher.register_resource(Resource('net:{0}'.format(net)))
 
     @description("Returns list of available device classes")
     @returns({

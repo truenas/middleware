@@ -31,19 +31,13 @@ import logging
 import traceback
 import errno
 import copy
+from threading import Thread
 from dispatcher import validator
 from dispatcher.rpc import RpcException
 from gevent.queue import Queue
 from gevent.event import Event
+from resources import ResourceGraph, Resource
 from task import TaskException, TaskStatus, TaskState
-
-
-class QueueClass(object):
-    SYSTEM = 'SYSTEM'
-    DISK = 'DISK'
-    VOLUME = 'VOLUME'
-    DATASET = 'DATASET'
-    SNAPSHOT = 'SNAPSHOT'
 
 
 class WorkerState(object):
@@ -65,7 +59,7 @@ class Task(object):
         self.user = None
         self.state = TaskState.CREATED
         self.progress = None
-        self.queues = []
+        self.resources = []
         self.thread = None
         self.instance = None
         self.parent = None
@@ -92,8 +86,25 @@ class Task(object):
         })
 
     def run(self):
-        gevent.spawn(self.progress_watcher)
-        return self.instance.run(*copy.deepcopy(self.args))
+        self.set_state(TaskState.EXECUTING)
+        try:
+            result = self.instance.run(*(copy.deepcopy(self.args)))
+        except BaseException, e:
+            self.ended.set()
+            self.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
+                "stacktrace": traceback.format_exc()
+            }))
+            return self.state, self.progress
+
+        self.ended.set()
+        self.result = result
+        self.set_state(TaskState.FINISHED, TaskStatus(100, ''))
+        return self.state, self.progress
+
+    def start(self):
+        t = Thread(target=self.run)
+        t.start()
+        return t
 
     def set_state(self, state, progress=None):
         event = {'id': self.id, 'state': state}
@@ -124,23 +135,12 @@ class Task(object):
             self.__emit_progress()
 
 
-class TaskQueue(Queue):
-    def __init__(self, name, clazz):
-        self.name = name
-        self.clazz = clazz
-        self.worker = None
-        super(TaskQueue, self).__init__()
-
-    def create_worker(self):
-        self.worker = Worker(self)
-        return gevent.spawn(self.worker.run)
-
-
 class Balancer(object):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
         self.task_list = []
         self.task_queue = Queue()
+        self.resource_graph = dispatcher.resource_graph
         self.queues = {}
         self.threads = []
         self.logger = logging.getLogger('Balancer')
@@ -148,12 +148,7 @@ class Balancer(object):
         self.create_initial_queues()
 
     def create_initial_queues(self):
-        self.create_queue(QueueClass.SYSTEM, 'system')
-
-    def create_queue(self, queue_class, name):
-        self.queues[name] = TaskQueue(name, queue_class)
-        self.threads.append(self.queues[name].create_worker())
-        self.logger.info("Created queue %s (class: %s)", name, queue_class)
+        self.resource_graph.add_resource(Resource('system'))
 
     def start(self):
         self.threads.append(gevent.spawn(self.distribution_thread))
@@ -192,14 +187,12 @@ class Balancer(object):
         task.args = copy.deepcopy(args)
         task.state = TaskState.CREATED
         task.id = self.dispatcher.datastore.insert("tasks", task)
-        self.task_list.append(task)
         self.task_queue.put(task)
         self.dispatcher.dispatch_event('task.created', {'id': task.id, 'type': name, 'state': task.state})
         self.logger.info("Task %d submitted (type: %s, class: %s)", task.id, name, task.clazz)
         return task.id
 
     def run_subtask(self, parent, name, args):
-        worker = Worker()
         task = Task(self.dispatcher, name)
         task.created_at = time.time()
         task.clazz = self.dispatcher.tasks[name]
@@ -208,10 +201,11 @@ class Balancer(object):
         task.instance = task.clazz(self.dispatcher)
         task.instance.verify(*task.args)
         task.id = self.dispatcher.datastore.insert("tasks", task)
-        return worker.spawn_single(task)
+        return task.start()
 
     def join_subtasks(self, *tasks):
-        gevent.joinall(tasks)
+        for i in tasks:
+            i.join()
 
     def abort(self, id):
         task = self.get_task(id)
@@ -229,6 +223,36 @@ class Balancer(object):
             task.ended.set()
             task.set_state(TaskState.ABORTED, TaskStatus(0, "Aborted"))
 
+    def task_exited(self, task):
+        self.resource_graph.lock()
+        for i in task.resources:
+            self.resource_graph.release(i)
+
+        self.resource_graph.unlock()
+        self.schedule_tasks()
+
+    def schedule_tasks(self):
+        """
+        This function is called when:
+        1) any new task is submitted to any of the queues
+        2) any task exists
+
+        :return:
+        """
+
+        self.resource_graph.lock()
+
+        for task in filter(lambda t: t.state == TaskState.WAITING, self.task_list):
+            if not self.resource_graph.can_acquire_all(task.resources):
+                continue
+
+            for i in task.resources:
+                self.resource_graph.acquire(i)
+
+            self.threads.append(task.start())
+
+        self.resource_graph.unlock()
+
     def distribution_thread(self):
         while True:
             task = self.task_queue.get()
@@ -236,20 +260,19 @@ class Balancer(object):
             try:
                 self.logger.debug("Picked up task %d: %s with args %s", task.id, task.name, task.args)
                 task.instance = task.clazz(self.dispatcher)
-                task.queues = task.instance.verify(*task.args)
+                task.resources = task.instance.verify(*task.args)
 
-                if type(task.queues) is not list:
-                    raise ValueError("verify() returned something else than queues list")
+                if type(task.resources) is not list:
+                    raise ValueError("verify() returned something else than resource list")
 
             except Exception as err:
                 self.logger.warning("Cannot verify task %d: %s", task.id, err)
                 task.set_state(TaskState.FAILED, TaskStatus(0, str(err)))
                 continue
 
-            for i in task.queues:
-                self.queues[i].put(task)
-
             task.set_state(TaskState.WAITING)
+            self.task_list.append(task)
+            self.schedule_tasks()
             self.logger.debug("Task %d assigned to queues %s", task.id, task.queues)
 
     def get_active_tasks(self):
@@ -269,42 +292,3 @@ class Balancer(object):
         ret = filter(lambda x: x.id == id, self.task_list)
         if len(ret) > 0:
             return ret[0]
-
-
-class Worker(object):
-    def __init__(self, queue=None):
-        self.thread = None
-        self.queue = queue
-        self.state = WorkerState.IDLE
-        self.logger = logging.getLogger("Worker:{}".format(self.queue.name if self.queue else "temp"))
-
-    def spawn_single(self, task):
-        return gevent.spawn(self.run_single, task)
-
-    def run_single(self, task):
-        self.state = WorkerState.EXECUTING
-        task.set_state(TaskState.EXECUTING)
-        try:
-            result = task.run()
-        except BaseException, e:
-            task.ended.set()
-            task.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
-                "stacktrace": traceback.format_exc()
-            }))
-            return task.state, task.progress
-
-        task.ended.set()
-        task.result = result
-        task.set_state(TaskState.FINISHED, TaskStatus(100, ''))
-        return task.state, task.progress
-
-    def run(self):
-        self.logger.info("Started")
-        while True:
-            self.state = WorkerState.WAITING
-            task = self.queue.get()
-            if task.state == TaskState.EXECUTING:
-                task.ended.wait()
-                continue
-
-            self.run_single(task)

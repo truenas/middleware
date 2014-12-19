@@ -52,6 +52,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from datastore import get_datastore
 from datastore.config import ConfigStore
 from dispatcher.rpc import RpcContext, RpcException
+from resources import ResourceGraph
 from services import ManagementService, EventService, TaskService, PluginService
 from api.handler import ApiHandler
 from balancer import Balancer
@@ -108,6 +109,7 @@ class Dispatcher(object):
         self.queues = {}
         self.providers = {}
         self.tasks = {}
+        self.resource_graph = ResourceGraph()
         self.logger = logging.getLogger('Main')
         self.rpc = None
         self.balancer = None
@@ -310,6 +312,12 @@ class Dispatcher(object):
     def require_collection(self, collection, pkey_type='uuid', type='config'):
         if not self.datastore.collection_exists(collection):
             self.datastore.collection_create(collection, pkey_type, {'type': type})
+
+    def register_resource(self, res, parents=None):
+        self.resource_graph.add_resource(res, parents)
+
+    def unregister_resource(self, name):
+        self.resource_graph.remove_resource(name)
 
     def die(self):
         self.logger.warning('Exiting from "die" command')
