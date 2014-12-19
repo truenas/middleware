@@ -144,6 +144,8 @@ adctl_stop()
 	local cifs_started=1
 	local prev_cifs_started=0
 
+	AD_generate_config
+
 	if [ -s "${cifs_file}" ]
 	then
 		prev_cifs_started="$(cat "${cifs_file}")"
@@ -205,6 +207,7 @@ adctl_stop()
 	activedirectory_set 0
 	rm -f "${status_file}"
 
+	AD_remove_config
 	return 0
 }
 
