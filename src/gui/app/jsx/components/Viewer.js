@@ -59,7 +59,7 @@ var Viewer = React.createClass({
       });
 
       return {
-          currentMode    : this.changeViewMode( initialMode )
+          currentMode    : this.changeViewerMode( initialMode )
         , tableCols      : defaultTableCols
         , enabledGroups  : this.props.displayData.defaultGroups.length ? this.props.displayData.defaultGroups : null
         , enabledFilters : this.props.displayData.defaultFilters.length ? this.props.displayData.defaultFilters : null
@@ -163,6 +163,74 @@ var Viewer = React.createClass({
       this.processDisplayData({ searchString: event.target.value });
     }
 
+  , handleEnabledGroupsToggle: function ( targetGroup ) {
+      var tempEnabledArray = _.clone( this.state.enabledGroups );
+      var tempDisplayArray = this.props.displayData.allowedGroups;
+      var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
+
+      if ( enabledIndex !== -1 ) {
+        tempEnabledArray.splice( enabledIndex, 1 );
+      } else {
+        tempEnabledArray.push( targetGroup );
+        // _.intersection will return array to the original defined order
+        tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
+      }
+
+      this.processDisplayData({ enabledGroups: tempEnabledArray });
+    }
+
+  , handleEnabledFiltersToggle: function ( targetFilter ) {
+      var tempEnabledArray = _.clone( this.state.enabledFilters );
+      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
+
+      if ( enabledIndex !== -1 ) {
+        tempEnabledArray.splice( enabledIndex, 1 );
+      } else {
+        tempEnabledArray.push( targetFilter );
+      }
+
+      this.processDisplayData({ enabledFilters: tempEnabledArray });
+    }
+
+  , changeViewerMode: function ( targetMode ) {
+      var newMode;
+
+      // See if a disallowed mode has been requested
+      if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
+        console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
+        if ( this.props.defaultMode ) {
+          // Use the default mode, if provided
+          console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
+          newMode = this.props.defaultMode;
+        } else {
+          // If no default, use the first allowed mode in the list
+          newMode = this.props.allowedModes[0];
+        }
+      } else {
+        newMode = targetMode;
+      }
+
+      return newMode;
+    }
+
+  , handleModeSelect: function( selectedKey ) {
+     this.setState({ currentMode: this.changeViewerMode( selectedKey ) });
+  }
+
+  , changeTargetItem: function( params ) {
+      return _.find( this.props.inputData, function( item ) {
+          // Returns the first object from the input array whose selectionKey matches
+          // the current route's dynamic portion. For instance, /accounts/users/root
+          // with bsdusr_usrname as the selectionKey would match the first object
+          // in inputData whose username === "root"
+          return params[ this.props.itemData["param"] ] === item[ this.props.formatData["selectionKey"] ];
+        }.bind(this)
+      );
+    }
+
+
+  // VIEWER DISPLAY
+
   , createGroupMenuOption: function ( group, index ) {
       var toggleText;
 
@@ -197,121 +265,25 @@ var Viewer = React.createClass({
       );
     }
 
-  , handleEnabledGroupsToggle: function ( targetGroup ) {
-      var tempEnabledArray = _.clone( this.state.enabledGroups );
-      var tempDisplayArray = this.props.displayData.allowedGroups;
-      var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
-
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetGroup );
-        // _.intersection will return array to the original defined order
-        tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
-      }
-
-      this.processDisplayData({ enabledGroups: tempEnabledArray });
-    }
-
-  , handleEnabledFiltersToggle: function ( targetFilter ) {
-      var tempEnabledArray = _.clone( this.state.enabledFilters );
-      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
-
-      console.log( targetFilter );
-
-      console.log( tempEnabledArray );
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetFilter );
-      }
-      console.log( tempEnabledArray );
-
-      this.processDisplayData({ enabledFilters: tempEnabledArray });
-    }
-
-  , changeViewMode: function ( targetMode ) {
-      var newMode;
-
-      // See if a disallowed mode has been requested
-      if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
-        console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
-        if ( this.props.defaultMode ) {
-          // Use the default mode, if provided
-          console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
-          newMode = this.props.defaultMode;
-        } else {
-          // If no default, use the first allowed mode in the list
-          newMode = this.props.allowedModes[0];
-        }
-      } else {
-        newMode = targetMode;
-      }
-
-      return newMode;
-    }
-
-  , handleModeSelect: function( selectedKey ) {
-     this.setState({ currentMode: this.changeViewMode( selectedKey ) });
-  }
-
-  , changeTargetItem: function( params ) {
-      return _.find( this.props.inputData, function( item ) {
-          // Returns the first object from the input array whose selectionKey matches
-          // the current route's dynamic portion. For instance, /accounts/users/root
-          // with bsdusr_usrname as the selectionKey would match the first object
-          // in inputData whose username === "root"
-          return params[ this.props.itemData["param"] ] === item[ this.props.formatData["selectionKey"] ];
-        }.bind(this)
-      );
-    }
-
-  , render: function() {
-
-    // Navigation
-    var modeIcons = {
-        "detail" : "th-list"
-      , "icon"   : "th"
-      , "table"  : "align-justify"
-      , "heir"   : "bell"
-    };
-
-    var createModeNav = function( mode ) {
-      var changeMode = function() {
-        this.handleModeSelect( mode );
-      }.bind(this);
+  , createModeNav: function ( mode ) {
+      var modeIcons = {
+          "detail" : "th-list"
+        , "icon"   : "th"
+        , "table"  : "align-justify"
+        , "heir"   : "bell"
+      };
 
       return (
-        <TWBS.Button onClick = { changeMode }
+        <TWBS.Button onClick = { function() { this.handleModeSelect( mode ); }.bind(this) }
                      key     = { this.props.allowedModes.indexOf( mode ) }
                      bsStyle = { ( mode === this.state.currentMode ) ? "info" : "default" }
                      active  = { false } >
           <Icon glyph = { modeIcons[ mode ] } />
         </TWBS.Button>
       );
-    }.bind(this);
-
-    var groupDropdown  = null;
-    var filterDropdown = null;
-
-    if ( this.props.displayData.allowedGroups ) {
-      groupDropdown = (
-        <TWBS.DropdownButton title="Group">
-          { this.props.displayData.allowedGroups.map( this.createGroupMenuOption ) }
-        </TWBS.DropdownButton>
-      );
     }
 
-    if ( this.props.displayData.allowedFilters ) {
-      filterDropdown = (
-        <TWBS.DropdownButton title="Filter">
-          { this.props.displayData.allowedFilters.map( this.createFilterMenuOption ) }
-        </TWBS.DropdownButton>
-      );
-    }
-
-    // Select view based on current mode
-    var viewerContent = function() {
+  , createViewerContent: function () {
       switch ( this.state.currentMode ) {
         default:
         case "detail":
@@ -339,46 +311,75 @@ var Viewer = React.createClass({
           // TODO: Heirarchical Viewer
           break;
       }
-    }.bind(this);
+    }
 
-    return (
-      <div className="viewer">
-        <TWBS.Navbar fluid className="viewer-nav">
-          {/* Searchbox for Viewer (1) */}
-          <TWBS.Input type           = "text"
-                      placeholder    = "Search"
-                      value          = { this.state.searchString }
-                      groupClassName = "navbar-form navbar-left"
-                      onChange       = { this.handleSearchChange }
-                      addonBefore    = { <Icon glyph ="search" /> } />
-          {/* Dropdown buttons (2) */}
-          <TWBS.Nav className="navbar-left">
+  , render: function() {
+      var groupDropdown  = null;
+      var filterDropdown = null;
+      var viewerModeNav  = null;
 
-            {/* Select properties to group by */}
-            { groupDropdown }
+      if ( this.props.displayData.allowedGroups ) {
+        groupDropdown = (
+          <TWBS.DropdownButton title="Group">
+            { this.props.displayData.allowedGroups.map( this.createGroupMenuOption ) }
+          </TWBS.DropdownButton>
+        );
+      }
 
-            {/* Select properties to filter by */}
-            { filterDropdown }
+      if ( this.props.displayData.allowedFilters ) {
+        filterDropdown = (
+          <TWBS.DropdownButton title="Filter">
+            { this.props.displayData.allowedFilters.map( this.createFilterMenuOption ) }
+          </TWBS.DropdownButton>
+        );
+      }
 
-            {/* Select property to sort by */}
-            {/* <TWBS.DropdownButton title="Sort">
-              <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-              <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-              <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-              <TWBS.MenuItem divider />
-              <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-            </TWBS.DropdownButton> */}
-          </TWBS.Nav>
-          {/* Select view mode (3) */}
+      if ( this.props.allowedModes.length > 1 ) {
+        viewerModeNav = (
           <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
-            { this.props.allowedModes.map( createModeNav ) }
+            { this.props.allowedModes.map( this.createModeNav ) }
           </TWBS.ButtonGroup>
-        </TWBS.Navbar>
+        );
+      }
 
-        { viewerContent() }
-      </div>
-    );
-  }
+      return (
+        <div className="viewer">
+          <TWBS.Navbar fluid className="viewer-nav">
+            {/* Searchbox for Viewer (1) */}
+            <TWBS.Input type           = "text"
+                        placeholder    = "Search"
+                        value          = { this.state.searchString }
+                        groupClassName = "navbar-form navbar-left"
+                        onChange       = { this.handleSearchChange }
+                        addonBefore    = { <Icon glyph ="search" /> } />
+            {/* Dropdown buttons (2) */}
+            <TWBS.Nav className="navbar-left">
+
+              {/* Select properties to group by */}
+              { groupDropdown }
+
+              {/* Select properties to filter by */}
+              { filterDropdown }
+
+              {/* Select property to sort by */}
+              {/* <TWBS.DropdownButton title="Sort">
+                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
+                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
+                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
+                <TWBS.MenuItem divider />
+                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
+              </TWBS.DropdownButton> */}
+            </TWBS.Nav>
+
+            {/* Select view mode (3) */}
+            { viewerModeNav }
+
+          </TWBS.Navbar>
+
+          { this.createViewerContent() }
+        </div>
+      );
+    }
 
 });
 
