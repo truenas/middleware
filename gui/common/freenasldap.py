@@ -1395,11 +1395,12 @@ class FreeNAS_ActiveDirectory_Base(object):
         super(FreeNAS_ActiveDirectory_Base, self).__init__()
 
         self.set_kwargs()
-        self.load_config()
 
         if self.bindname and self.domainname:  
             self.binddn = self.adset(self.binddn,
                 self.bindname + '@' + self.domainname.upper())
+
+        self.load_config()
 
         # here we open a connection
         self.get_kerberos_ticket()
@@ -1413,6 +1414,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gcount = 0
 
         if not self.site: 
+            print "GOTTA FIND SITE"
 
             # locate_site() requires an open connection
             self.site = self.locate_site()
@@ -1486,9 +1488,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             return
 
         for var in self.__keys():
-            val = self.configval(var)
+            val = self.configval("ad_%s" % var)
             if val:
-                setattr(self, var.replace("ad_", ""), val)
+                setattr(self, var, val)
 
     def set_domain_controller(self):
         if self.dcname:
