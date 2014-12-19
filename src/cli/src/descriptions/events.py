@@ -36,13 +36,13 @@ _ = t.ugettext
 
 def task_created(context, args):
     task = context.connection.call_sync('task.status', int(args['id']))
-    return _("Task {0} created: {1}".format(args['id'], tasks.translate(task['name'], task['args'])))
+    return _("Task #{0} created: {1}".format(args['id'], tasks.translate(context, task['name'], task['args'])))
 
 
 def task_updated(context, args):
     task = context.connection.call_sync('task.status', int(args['id']))
-    translation = tasks.translate(task['name'], task['args'])
-    return _("Task {0} {1}: {2}".format(args['id'], _(args['state'].lower()), translation))
+    translation = tasks.translate(context, task['name'], task['args'])
+    return _("Task #{0} {1}: {2}".format(args['id'], _(args['state'].lower()), translation))
 
 
 events = {

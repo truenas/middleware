@@ -35,14 +35,46 @@ class VolumeCreateNamespace(Namespace):
     pass
 
 
+@description("Creates new volume in simple way")
 class VolumeCreateCommand(Command):
+    def __init__(self, parent):
+        self.parent = parent
+
     def run(self, context, args, kwargs):
         name = args.pop(0)
-        type = kwargs.pop('mode', 'auto')
         disks = args
-        topology = {}
+
+        if 'alldisks' in disks:
+            disks = context.connection.call_sync('volumes.get_available_disks')
+
+        context.submit_task('volume.create_auto', name, 'zfs', disks)
 
 
+@description("Shows volume topology")
+class ShowTopologyCommand(Command):
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+
+    def __print_vdev(self):
+        pass
+
+    def run(self, context, args, kwargs):
+        volume = self.parent.get_one(self.name)
+
+
+@description("Scrubs volume")
+class ScrubCommand(Command):
+    def __init__(self, name):
+        self.name = name
+
+    def run(self, context, args, kwargs):
+        context.submit_task('zfs.pool.scrub', self.name)
+
+
+class DatasetsNamespace(EntityNamespace):
+    def __init__(self, volume, path):
+        pass
 
 
 @description("Volumes namespace")
@@ -53,7 +85,7 @@ class VolumesNamespace(EntityNamespace):
 
     def __init__(self, name, context):
         super(VolumesNamespace, self).__init__(name, context)
-
+        self.create_command = VolumeCreateCommand
         self.add_property(
             descr='Volume name',
             name='name',
@@ -62,15 +94,31 @@ class VolumesNamespace(EntityNamespace):
 
         self.add_property(
             descr='Status',
-            name='builtin',
+            name='status',
             get='/status',
             set=None,
             list=True)
 
-        self.primary_key = '/name'
+        self.add_property(
+            descr='Mount point',
+            name='mountpoint',
+            get='/mountpoint',
+            list=True)
+
+        self.primary_key = self.get_mapping('name')
+        self.entity_commands = lambda vol: {
+            'show-topology': ShowTopologyCommand(self, vol),
+            'scrub': ScrubCommand(vol)
+        }
 
     def query(self):
-        return self.context.connection.call_sync('volume.query')
+        return self.context.connection.call_sync('volumes.query')
+
+    def get_one(self, name):
+        return self.context.connection.call_sync('volumes.query', [('name', '=', name)])[0]
+
+    def delete(self, name):
+        self.context.submit_task('volume.destroy', name)
 
 
 def _init(context):

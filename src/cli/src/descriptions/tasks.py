@@ -32,15 +32,28 @@ t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
+def get_username(context, uid):
+    return context.connection.call_sync('users.query', [('id', '=', uid)])[0]['username']
+
 tasks = {
-    'zfs.pool.scrub': (_("Scrub volume"), lambda a: _("Scrub volume {0}").format(a[0])),
-    'service.manage': (_("Manage service"), lambda a: _("{0} service {1}".format(a[1].title(), a[0]))),
-    'service.configure': (_("Update service configuration"), lambda a: _("Update configuration for service {0}".format(a[0]))),
-    'users.update': (_("Update user profile"), lambda a: _("Update user {0} profile".format(a[0])))
+    'zfs.pool.scrub': (_("Scrub volume"), lambda c, a: _("Scrub volume {0}").format(a[0])),
+    'service.manage': (_("Manage service"), lambda c, a: _("{0} service {1}".format(a[1].title(), a[0]))),
+    'service.configure': (_("Update service configuration"), lambda c, a: _("Update configuration for service {0}".format(a[0]))),
+    'users.create': (_("Create user"), lambda c, a: _("Create user".format(a[0]['username']))),
+    'users.update': (_("Update user profile"), lambda c, a: _("Update user {0} profile".format(get_username(c, a[0])))),
+    'groups.create': (_("Create group"), lambda c, a: _("Create group {0}".format(a[0]['name']))),
+    'groups.update': (_("Update group"), lambda c, a: _("Update group {0}".format(a[0]))),
+    'volume.create': (_("Create volume"), lambda c, a: _("Create volume {0}".format(a[0]))),
+    'volume.create_auto': (_("Create volume"), lambda c, a: _("Create volume {0}".format(a[0]))),
+    'volume.destroy': (_("Destroy volume"), lambda c, a: _("Destroy volume {0}".format(a[0]))),
+    'disk.format.gpt': (_("Format disk"), lambda c, a: _("Format disk {0}".format(a[0]))),
+    'zfs.pool.create': (_("Create ZFS pool"), lambda c, a: _("Create ZFS pool {0}".format(a[0]))),
+    'zfs.pool.destroy': (_("Destroy ZFS pool"), lambda c, a: _("Destroy ZFS pool {0}".format(a[0]))),
+    'zfs.mount': (_("Mount ZFS dataset"), lambda c, a: _("Mount ZFS dataset {0}".format(a[0])))
 }
 
 
-def translate(name, args=None):
+def translate(context, name, args=None):
     if name not in tasks.keys():
         return None
 
@@ -49,5 +62,5 @@ def translate(name, args=None):
     if args is None:
         return first
 
-    return second(args)
+    return second(context, args)
 
