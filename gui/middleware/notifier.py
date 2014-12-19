@@ -431,7 +431,7 @@ class notifier:
 
     def _start_iscsitarget(self):
         self._system("/usr/sbin/service ix-ctld quietstart")
-        self._system("/usr/sbin/service ctld restart")
+        self._system("/usr/sbin/service ctld start")
 
     def _stop_iscsitarget(self):
         self._system("/usr/sbin/service ctld forcestop")
