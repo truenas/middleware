@@ -494,7 +494,7 @@ class iSCSITargetExtent(Model):
     )
     iscsi_target_extent_pblocksize = models.BooleanField(
         default=False,
-        verbose_name=_("Physical Block Size"),
+        verbose_name=_("Disable Physical Block Size Reporting"),
         help_text=_(
             'By default the physical blocksize is reported as the ZFS block '
             'size, which can be up to 128K. Some initiators do not work with '
