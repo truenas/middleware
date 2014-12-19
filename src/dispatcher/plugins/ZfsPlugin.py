@@ -25,18 +25,16 @@
 #
 #####################################################################
 
+import os
 import errno
+import libzfs
+import nvpair
 from gevent.event import Event
 from query import filter_query
-from lib import zfs
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException
-from dispatcher.rpc import accepts, returns, description
+from dispatcher.rpc import RpcException, accepts, returns, description
 from balancer import TaskState
-from cache import CacheStore
-
-
-zpool_cache = CacheStore()
 
 
 @description("Provides information about ZFS pools")
@@ -45,22 +43,24 @@ class ZpoolProvider(Provider):
     @returns({
         'type': 'array',
         'items': {
-            'type': {'$ref': '#/definitions/pool'}
+            'type': {'$ref': 'definitions/pool'}
         }
     })
     def query(self, filter=None, params=None):
+        zfs = libzfs.ZFS()
         return filter_query(
-            zpool_cache.validvalues(),
+            zfs.__getstate__(),
             *(filter or []),
             **(params or {})
         )
 
-    @description("Gets ZFS pool status")
-    @returns({
-        '$ref': '#/definitions/pool'
-    })
-    def pool_status(self, pool):
-        return str(zfs.zpool_status(pool))
+    def get_disks(self, name):
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(name)
+            return pool.disks
+        except libzfs.ZFSException, err:
+            raise RpcException(errno.EFAULT, str(err))
 
     def get_capabilities(self):
         return {
@@ -131,20 +131,25 @@ class ZpoolScrubTask(Task):
         self.pool = pool
         self.dispatcher.register_event_handler("fs.zfs.scrub.finish", self.__scrub_finished)
         self.finish_event.clear()
+
         try:
-            system("/sbin/zpool", "scrub", self.pool)
+            zfs = libzfs.ZFS()
+            pool = zfs.get(self.pool)
+            pool.start_scrub()
             self.started = True
-        except SubprocessException, e:
-            raise TaskException(errno.EINVAL, e.err)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
         self.finish_event.wait()
         return self.state
 
     def abort(self):
         try:
-            system("/sbin/zpool", "scrub", "-s", self.pool)
-        except SubprocessException, e:
-            raise TaskException(errno.EINVAL, e.err)
+            zfs = libzfs.ZFS()
+            pool = zfs.get(self.pool)
+            pool.start_scrub()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
         self.state = TaskState.ABORTED
         self.finish_event.set()
@@ -154,99 +159,144 @@ class ZpoolScrubTask(Task):
         if not self.started:
             return TaskStatus(0, "Waiting to start...")
 
-        scrub = zfs.zpool_status(self.pool).scrub
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(self.pool)
+            scrub = pool.scrub
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
-        if scrub["status"] == "IN_PROGRESS":
-            self.progress = float(scrub["progress"])
+        if scrub.state == libzfs.ScanState.SCANNING:
+            self.progress = scrub.percentage
             return TaskStatus(self.progress, "In progress...")
 
-        if scrub["status"] == "CANCELED":
+        if scrub.state == libzfs.ScanState.CANCELED:
             self.state = TaskState.ABORTED
             self.finish_event.set()
             return TaskStatus(self.progress, "Canceled")
 
-        if scrub["status"] == "CANCELED":
+        if scrub.state == libzfs.ScanState.FINISHED:
             self.finish_event.set()
             return TaskStatus(100, "Finished")
 
     def verify(self, pool):
-        pool = zfs.zpool_status(pool)
-        return pool.get_disks()
+        zfs = libzfs.ZFS()
+        pool = zfs.get(pool)
+        return get_disk_names(self.dispatcher, pool)
 
 
 class ZpoolCreateTask(Task):
     def __partition_to_disk(self, part):
-        result = self.dispatcher.rpc.call_sync('disk.get_partition_config', part)
-        return result['disk']
+        result = self.dispatcher.call_sync('disk.get_partition_config', part)
+        return os.path.basename(result['disk'])
 
     def __get_disks(self, topology):
         result = []
-        for gname, g in topology['groups'].items():
-            for t in g['vdevs']:
-                result += [self.__partition_to_disk(i) for i in t['disks']]
+        for gname, vdevs in topology.items():
+            for vdev in vdevs:
+                if vdev['type'] == 'disk':
+                    result.append(self.__partition_to_disk(vdev['path']))
+                    continue
 
-        return result
-
-    def __get_vdevs(self, topology):
-        result = []
-        for name, grp in topology['groups'].items():
-            if name in ('cache', 'log', 'spare'):
-                result.append(name)
-
-            for i in filter(lambda x: x['type'] == 'stripe', grp['vdevs']):
-                result += i['disks']
-
-            for i in filter(lambda x: x['type'] != 'stripe', grp['vdevs']):
-                result.append(i['type'])
-                result += i['disks']
+                if 'children' in vdev:
+                    result += [self.__partition_to_disk(i['path']) for i in vdev['children']]
 
         return result
 
     def verify(self, name, topology, params=None):
-        if name in zfs.list_pools():
+        zfs = libzfs.ZFS()
+        if name in zfs.pools:
             raise VerifyException(errno.EEXIST, 'Pool with same name already exists')
 
         return self.__get_disks(topology)
 
     def run(self, name, topology, params=None):
-        mountpoint = params.get('mountpoint', '/{0}'.format(name))
-        altroot = params.get('altroot', '/volumes')
-        system(
-            'zpool', 'create',
-            '-o', 'cachefile=/data/zfs/zpool.cache',
-            '-o', 'failmode=continue',
-            '-o', 'autoexpand=on',
-            '-o', 'altroot=' + altroot,
-            '-O', 'compression=lz4',
-            '-O', 'aclmode=passthrough',
-            '-O', 'aclinherit=passthrough',
-            '-f', '-m', mountpoint,
-            name, *self.__get_vdevs(topology)
-        )
+        params = params or {}
+        zfs = libzfs.ZFS()
+        mountpoint = params.get('mountpoint', '/volumes/{0}'.format(name))
+        nvroot = {}
 
-        generate_zpool_cache()
+        opts = nvpair.NVList(otherdict={
+            'feature@async_destroy': 'enabled',
+            'feature@empty_bpobj': 'enabled',
+            'feature@lz4_compress': 'enabled',
+            'feature@enabled_txg': 'enabled',
+            'feature@extensible_dataset': 'enabled',
+            'feature@bookmarks': 'enabled',
+            'feature@filesystem_limits': 'enabled',
+            'feature@embedded_data': 'enabled',
+            'cachefile': '/data/zfs/zpool.cache',
+            'failmode': 'continue',
+            'autoexpand': 'on',
+        })
+
+        fsopts = nvpair.NVList(otherdict={
+            'compression': 'lz4',
+            'aclmode': 'passthrough',
+            'aclinherit': 'passthrough',
+            'mountpoint': mountpoint
+        })
+
+        for group, vdevs in topology.items():
+            nvroot[group] = []
+            for i in vdevs:
+                vdev = libzfs.ZFSVdev(zfs)
+                vdev.type = i['type']
+
+                if i['type'] == 'disk':
+                    vdev.path = i['path']
+
+                if 'children' in i:
+                    ret = []
+                    for c in i['children']:
+                        cvdev = libzfs.ZFSVdev(zfs)
+                        cvdev.type = c['type']
+                        cvdev.path = c['path']
+                        ret.append(cvdev)
+
+                    vdev.children = ret
+
+                nvroot[group].append(vdev)
+
+        try:
+            zfs.create(name, nvroot, opts, fsopts)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
-class ZpoolConfigureTask(Task):
-    def verify(self, pool, updated_props):
-        if not zpool_cache.exists(pool):
+class ZpoolBaseTask(Task):
+    def verify(self, pool):
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool)
+        except libzfs.ZFSException:
             raise VerifyException(errno.ENOENT, "Pool {0} not found".format(pool))
 
-        return get_pool_disks(pool)
+        return get_disk_names(self.dispatcher, pool)
+
+
+class ZpoolConfigureTask(ZpoolBaseTask):
+    def verify(self, pool, updated_props):
+        super(ZpoolConfigureTask, self).verify(pool)
 
     def run(self, pool, updated_props):
-        for prop, value in updated_props:
-            zfs.zpool_set(pool, prop, value)
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool)
+            for name, value in updated_props:
+                prop = pool.properties[name]
+                prop.value = value
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
-        generate_zpool_cache()
 
-
-class ZpoolDestroyTask(Task):
-    def verify(self, pool):
-        pass
-
-    def run(self, pool):
-        pass
+class ZpoolDestroyTask(ZpoolBaseTask):
+    def run(self, name):
+        try:
+            zfs = libzfs.ZFS()
+            zfs.destroy(name)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 class ZpoolExtendTask(Task):
@@ -265,42 +315,70 @@ class ZpoolExportTask(Task):
     pass
 
 
+class ZfsBaseTask(Task):
+    def verify(self, path):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(path)
+            if not dataset:
+                raise VerifyException(errno.ENOENT, 'Dataset {0} not found'.format(path))
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+        return ['system']
+
+
+class ZfsDatasetMountTask(ZfsBaseTask):
+    def run(self, name):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(name)
+            dataset.mount()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+
+class ZfsDatasetUmountTask(ZfsBaseTask):
+    def run(self, name):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(name)
+            dataset.umount()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+
 class ZfsDatasetCreateTask(Task):
-    def verify(self, pool, path, params=None):
-        pool = zpool_cache.get(pool)
-        if path in pool['datasets']:
-            raise VerifyException(errno.EEXIST, "Dataset {0} on pool {1} already exists".format(pool, path))
+    def verify(self, pool_name, path, params=None):
+        return ['system']
 
-        return
+    def run(self, pool_name, path, params=None):
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool_name)
+            pool.create(path, nvpair.NVList(otherdict=params))
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
-    def run(self, pool, path, params=None):
-        system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
 
-
-class ZfsVolumeCreateTask(Task):
+class ZfsVolumeCreateTask(ZfsBaseTask):
     def verify(self, pool, path, size, params=None):
         pool = zpool_cache.get(pool)
         if path in pool['datasets']:
             raise VerifyException(errno.EEXIST, "Dataset {0} on pool {1} already exists".format(pool, path))
 
-        return
+        return get_disk_names(self.dispatcher, pool)
 
     def run(self, pool, path, size, params=None):
         system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
-        generate_zpool_cache()
 
 
-class ZfsConfigureTask(Task):
+class ZfsConfigureTask(ZfsBaseTask):
     def verify(self, pool, path, params=None):
-        pool = zpool_cache.get(pool)
-        if path in pool['datasets']:
-            raise VerifyException(errno.EEXIST, "Dataset {0} on pool {1} already exists".format(pool, path))
-
-        return
+        return super(ZfsConfigureTask, self).verify(path)
 
     def run(self, pool, path, params=None):
         system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
-        generate_zpool_cache()
 
 
 class ZfsDestroyTask(Task):
@@ -313,19 +391,10 @@ class ZfsDestroyTask(Task):
 
     def run(self, pool, path, params=None):
         system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
-        generate_zpool_cache()
 
 
-def get_pool_disks(pool):
-    pass
-
-
-def generate_zpool_cache():
-    for pname in zfs.list_pools():
-        zpool_cache.put(pname, {
-            'pool': zfs.zpool_status(pname),
-            'datasets': zfs.list_datasets(pname, recursive=True, include_root=True)
-        })
+def get_disk_names(dispatcher, pool):
+    return [os.path.basename(dispatcher.call_sync('disk.partition_to_disk', x)) for x in pool.disks]
 
 
 def _depends():
@@ -333,10 +402,43 @@ def _depends():
 
 
 def _init(dispatcher):
-    def on_zfs_config_sync(args):
-        generate_zpool_cache()
+    dispatcher.register_schema_definition('zfs-vdev', {
+        'type': 'object',
+        'properties': {
+            'path': {'type': 'string'},
+            'type': {
+                'type': 'string',
+                'enum': ['disk', 'file', 'mirror', 'raidz1', 'raidz2', 'raidz3']
+            },
+            'children': {
+                'type': 'array',
+                'items': {'$ref': '/definitions/volume-vdev'}
+            }
+        }
+    })
 
-    dispatcher.register_event_handler('fs.zfs.config_sync', on_zfs_config_sync)
+    dispatcher.register_schema_definition('zfs-topology', {
+        'type': 'object',
+        'properties': {
+            'data': {
+                'type': 'array',
+                'items': {'$ref': 'definitions/zfs-vdev'},
+            },
+            'logs': {
+                'type': 'array',
+                'items': {'$ref': 'definitions/zfs-vdev'},
+            },
+            'cache': {
+                'type': 'array',
+                'items': {'$ref': 'definitions/zfs-vdev'},
+            },
+            'spare': {
+                'type': 'array',
+                'items': {'$ref': 'definitions/zfs-vdev'},
+            },
+        }
+    })
+
     dispatcher.register_provider('zfs.pool', ZpoolProvider)
     dispatcher.register_task_handler('zfs.pool.create', ZpoolCreateTask)
     dispatcher.register_task_handler('zfs.pool.configure', ZpoolConfigureTask)
@@ -346,9 +448,9 @@ def _init(dispatcher):
     dispatcher.register_task_handler('zfs.pool.destroy', ZpoolDestroyTask)
     dispatcher.register_task_handler('zfs.pool.scrub', ZpoolScrubTask)
 
+    dispatcher.register_task_handler('zfs.mount', ZfsDatasetMountTask)
+    dispatcher.register_task_handler('zfs.umount', ZfsDatasetUmountTask)
     dispatcher.register_task_handler('zfs.create_dataset', ZfsDatasetCreateTask)
     dispatcher.register_task_handler('zfs.create_zvol', ZfsVolumeCreateTask)
     dispatcher.register_task_handler('zfs.configure', ZfsConfigureTask)
     dispatcher.register_task_handler('zfs.destroy', ZfsDestroyTask)
-
-    generate_zpool_cache()
