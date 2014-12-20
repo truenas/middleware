@@ -1073,7 +1073,7 @@ Target Global Configuration
 |                                 |                              | system's iSCSI targets and portals with                                                   |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Pool Available Size Threshold   | integer                      | input the pool percentage; when the pool's specified capacity is reached, the system will |
+| Pool Available Space Threshold  | integer                      | input the pool percentage; when the pool's specified capacity is reached, the system will |
 |                                 |                              | issue an alert                                                                            |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
