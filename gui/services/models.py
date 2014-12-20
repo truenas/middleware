@@ -444,6 +444,7 @@ class iSCSITargetGlobalConfiguration(Model):
         verbose_name=_('Pool Available Space Threshold (%)'),
         blank=True,
         null=True,
+        default=10,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
     )
 
