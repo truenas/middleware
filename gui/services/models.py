@@ -441,7 +441,7 @@ class iSCSITargetGlobalConfiguration(Model):
         blank=True,
     )
     iscsi_pool_avail_threshold = models.IntegerField(
-        verbose_name=_('Pool Available Size Threshold (%)'),
+        verbose_name=_('Pool Available Space Threshold (%)'),
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
@@ -503,7 +503,7 @@ class iSCSITargetExtent(Model):
         ),
     )
     iscsi_target_extent_avail_threshold = models.IntegerField(
-        verbose_name=_(' Available Size Threshold (%)'),
+        verbose_name=_('Available Space Threshold (%)'),
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],

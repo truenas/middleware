@@ -290,9 +290,9 @@ The following fields have been added or deleted:
 * The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
 * :menuselection:`Storage --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
-  Servers" and "Pool Available Size Threshold" fields have been added.
+  Servers" and "Pool Available Space Threshold" fields have been added.
 
-* The "Available Size Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
+* The "Available Space Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
   :menuselection:`Storage --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from
