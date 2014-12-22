@@ -218,6 +218,13 @@ class AFP_ShareForm(ModelForm):
         path = self.cleaned_data.get('afp_path')
         if path and not name:
             name = path.rsplit('/', 1)[-1]
+        qs = models.AFP_Share.objects.filter(afp_name=name)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_(
+                'A share with this name already exists.'
+            ))
         return name
 
     def clean_afp_umask(self):
