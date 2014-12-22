@@ -654,7 +654,7 @@ class JailsEditForm(ModelForm):
             'jail_vnet',
             'jail_nat'
         ]
-        #exclude = [ 'jail_status' ]
+        exclude = [ 'jail_status' ]
         #FIXME: translate in dojango
         widgets = {
             'jail_defaultrouter_ipv4': forms.widgets.TextInput(),
@@ -732,10 +732,22 @@ class JailsEditForm(ModelForm):
         except Exception as e:
             raise MiddlewareError(e.message)
 
+        jail_ipv4_dhcp = False
+        jail_ipv6_autoconf = False
+
         if self.jc.jc_ipv4_dhcp:
-            self.fields['jail_ipv4_dhcp'].initial = True
+            jail_ipv4_dhcp = True
         if self.jc.jc_ipv6_autoconf:
-            self.fields['jail_ipv6_autoconf'].initial = True
+            jail_ipv6_autoconf = True
+
+        if self.instance:
+            if self.instance.jail_ipv4 and self.instance.jail_ipv4.startswith("DHCP"):
+                jail_ipv4_dhcp = True
+            if self.instance.jail_ipv6 and self.instance.jail_ipv6.startswith("AUTOCONF"):
+                jail_ipv6_autoconf = True
+
+        self.fields['jail_ipv4_dhcp'].initial = jail_ipv4_dhcp 
+        self.fields['jail_ipv6_autoconf'].initial = jail_ipv6_autoconf
 
         if self._api and self.instance and self.instance.id:
             self.instance = Jails.objects.get(id=self.instance.id)
@@ -789,6 +801,9 @@ class JailsEditForm(ModelForm):
             if len(parts) > 1:
                 jc_ipv6_prefix = parts[1]
 
+        jail_ipv4_dhcp = self.cleaned_data.get('jail_ipv4_dhcp', False)
+        jail_ipv6_autoconf = self.cleaned_data.get('jail_ipv6_autoconf', False)
+
         for cf in changed_fields:
             if cf == 'jail_autostart':
                 Warden().auto(jail=jail_host)
@@ -799,7 +814,10 @@ class JailsEditForm(ModelForm):
                 if cf == 'jail_ipv4' or cf == 'jail_ipv4_netmask':
                     ipv4 = self.cleaned_data.get('jail_ipv4')
                     mask = self.cleaned_data.get('jail_ipv4_netmask', jc_ipv4_netmask)
-                    jail_ipv4 = "%s/%s" % (ipv4, mask)
+                    if jail_ipv4_dhcp:
+                        jail_ipv4 = ipv4
+                    else:
+                        jail_ipv4 = "%s/%s" % (ipv4, mask)
 
                     flags |= WARDEN_SET_FLAGS_IPV4
                     args['ipv4'] = jail_ipv4
@@ -807,7 +825,10 @@ class JailsEditForm(ModelForm):
                 elif cf == 'jail_ipv6' or cf == 'jail_ipv6_prefix':
                     ipv6 = self.cleaned_data.get('jail_ipv6')
                     prefix = self.cleaned_data.get('jail_ipv6_prefix', jc_ipv6_prefix)
-                    jail_ipv6 = "%s/%s" % (ipv6, prefix)
+                    if jail_ipv6_autoconf:
+                        jail_ipv6 = ipv6
+                    else: 
+                        jail_ipv6 = "%s/%s" % (ipv6, prefix)
 
                     flags |= WARDEN_SET_FLAGS_IPV6
                     args['ipv6'] = jail_ipv6

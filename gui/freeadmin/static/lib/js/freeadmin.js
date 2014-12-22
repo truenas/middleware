@@ -620,18 +620,17 @@ require([
         var jail_type = type.get("value");
         var jail_vnet = vnet.get("value");
 
-
         if (jail_is_linuxjail()) {
             vnet.set("checked", false);
-            vnet.set("disabled", true);
+            vnet.set("readOnly", true);
 
         } else if (jail_is_x86()) {
             vnet.set("checked", false);
-            vnet.set("disabled", true);
+            vnet.set("readOnly", true);
 
         } else {
             vnet.set("checked", true);
-            vnet.set("disabled", false);
+            vnet.set("readOnly", false);
         }
     }
 
@@ -686,9 +685,9 @@ require([
         }
 
         if (jail_is_linuxjail() || jail_is_x86()) {
-            vnet.set("disabled", true);  
+            vnet.set("readOnly", true);  
         } else {
-            vnet.set("disabled", false);  
+            vnet.set("readOnly", false);  
         }
     }
 
@@ -720,7 +719,7 @@ require([
             bridge_ipv6.set("disabled", true);
             bridge_ipv4_netmask.set("disabled", true);
             bridge_ipv6_prefix.set("disabled", true);
-            nat.set("disabled", true);
+            nat.set("readOnly", true);
 
         } else if (!jail_nat && jail_vnet == 'on') {
             defaultrouter_ipv4.set("disabled", false);
@@ -760,7 +759,7 @@ require([
             ipv4.set("value", ipv4.get("value") ? ipv4.get("value") : "DHCP");
             vnet.set("checked", true);
 
-            ipv4.set("disabled", true);
+            ipv4.set("readOnly", true);
             ipv4_netmask.set("disabled", true);
             bridge_ipv4.set("disabled", true);
             bridge_ipv4_netmask.set("disabled", true);
@@ -773,11 +772,11 @@ require([
             }
 
             defaultrouter_ipv4.set("disabled", true);
-            vnet.set("disabled", true);
-            nat.set("disabled", true);
+            vnet.set("readOnly", true);
+            nat.set("readOnly", true);
 
         } else {
-            ipv4.set("disabled", false);
+            ipv4.set("readOnly", false);
             ipv4_netmask.set("disabled", false);
             bridge_ipv4.set("disabled", false);
             bridge_ipv4_netmask.set("disabled", false);
@@ -792,8 +791,8 @@ require([
             defaultrouter_ipv4.set("disabled", false);
 
             if (!jail_ipv6_autoconf) {
-                vnet.set("disabled", false);
-                nat.set("disabled", false);
+                vnet.set("readOnly", false);
+                nat.set("readOnly", false);
             }
         }
     }
@@ -818,7 +817,7 @@ require([
             ipv6.set("value", ipv6.get("value") ? ipv6.get("value") : "AUTOCONF");
             vnet.set("checked", true);
 
-            ipv6.set("disabled", true);
+            ipv6.set("readOnly", true);
             ipv6_prefix.set("disabled", true);
             bridge_ipv6.set("disabled", true);
             bridge_ipv6_prefix.set("disabled", true);
@@ -831,11 +830,11 @@ require([
             }
 
             defaultrouter_ipv6.set("disabled", true);
-            vnet.set("disabled", true);
-            nat.set("disabled", true);
+            vnet.set("readOnly", true);
+            nat.set("readOnly", true);
 
         } else {
-            ipv6.set("disabled", false);
+            ipv6.set("readOnly", false);
             ipv6_prefix.set("disabled", false);
             bridge_ipv6.set("disabled", false);
             bridge_ipv6_prefix.set("disabled", false);
@@ -850,8 +849,8 @@ require([
             defaultrouter_ipv6.set("disabled", false);
 
             if (!jail_ipv4_dhcp) {
-                vnet.set("disabled", false);
-                nat.set("disabled", false);
+                vnet.set("readOnly", false);
+                nat.set("readOnly", false);
             }
         }
     }
