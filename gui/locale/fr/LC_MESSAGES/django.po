@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-10-29 13:15+0000\n"
-"Last-Translator: Glenn <cahizer@hotmail.fr>\n"
+"PO-Revision-Date: 2014-12-18 00:30+0000\n"
+"Last-Translator: Julien <j.four@live.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1414588529.0\n"
+"X-POOTLE-MTIME: 1418862625.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9881,21 +9881,21 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Les mots de passe contenant un point d'interrogation (?) ne sont "
+"actuellement pas autorisés à cause de problèmes avec CIFS."
 
 #: directoryservice/forms.py:104
 #, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Le rechargement du service AFP a échoué."
+msgstr "le redémarrage de NT4 a échoué."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Le rechargement du service Active Directory a échoué."
+msgstr "Le redémarrage d'Active Directory a échoué."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Le rechargement du service AFP a échoué."
+msgstr "le redémarrage de LDAP a échoué."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -10108,12 +10108,13 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:156
+#, fuzzy
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
@@ -10662,26 +10663,23 @@ msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Importer une Autorité de Certification existante"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Créer une Autorité de Certification interne"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Créer une Autorité de Certification intermédiaire"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Importer une Certification existante"
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr ""
-"                                    Créer une Certification "
-"interne                                "
+msgstr "Créer une Certification interne"
 
 #: choices.py:819
 #, fuzzy
@@ -10706,23 +10704,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10732,7 +10730,7 @@ msgstr "Le rechargement du service AFP a échoué."
 #: api/resources.py:2488
 #, fuzzy
 msgid "On Reboot"
-msgstr "Redémarrer"
+msgstr "Redémarrage en cours"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2014-10-12 18:33+0000\n"
+"PO-Revision-Date: 2014-12-17 16:07+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1413138802.0\n"
+"X-POOTLE-MTIME: 1418832441.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -349,7 +349,7 @@ msgstr "lzjb (рекомендовано)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr "gzip (рівень типово, 6)"
+msgstr "gzip (типовий рівень, 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
@@ -428,8 +428,7 @@ msgstr "%(week)s тиждень"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
-"Ніколи - Перевіряти пристрій незалежно від його режиму енергозбереження"
+msgstr "Ніколи - Перевіряти пристрій незалежно від його режиму живлення"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -8708,9 +8707,8 @@ msgid "LANMAN2"
 msgstr ""
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:176
 msgid "SMB2"
@@ -8741,9 +8739,8 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (найшвидший)"
+msgstr "lz4 (найшвидший)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -8786,29 +8783,25 @@ msgid "auth+!data"
 msgstr ""
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Домашній каталог"
+msgstr "Створити домашній каталог у"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Останній знимок"
+msgstr "Невірний знимок"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
 msgstr ""
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "Розділений комами список серверів NIS"
+msgstr "Розділений комами список sysctl"
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Не встановлено корiнь jail."
+msgstr "Не встановлено корiнь jail!"
 
 #: jails/models.py:537
 #, fuzzy
@@ -8816,14 +8809,12 @@ msgid "Filesystem"
 msgstr "Тип файлової системи"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
-msgstr "Ви повинні створити том ZFS для продовження!"
+msgstr "Ви повинні створити том для продовження!"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Не вдалося створити каталог %(name)s: %(error)s"
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
@@ -8831,18 +8822,16 @@ msgstr ""
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Дія"
+msgstr "Активний"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
 msgstr ""
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "До iнiцiалiзацii"
+msgstr "Ініціалізація"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -8857,9 +8846,8 @@ msgid "Down"
 msgstr ""
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Статус"
+msgstr "Стан носія"
 
 #: network/forms.py:311
 #, fuzzy
@@ -8895,9 +8883,8 @@ msgid "jail not found"
 msgstr "Сторінка не знайдена"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "Шлях %s не існує"
+msgstr "Цього шляху не існує."
 
 #: services/forms.py:222
 #, fuzzy
@@ -9350,9 +9337,8 @@ msgid "Volume locked"
 msgstr "Том разблоковано"
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "Том не вдалося експортувати"
+msgstr "Том не вдалося поновити: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
@@ -9447,7 +9433,7 @@ msgstr ""
 #: system/alertmods/volume_version.py:44
 #, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "Ви повинні створити том ZFS для продовження!"
+msgstr "Ви повинні поновити том ZFS %s"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
@@ -9555,9 +9541,8 @@ msgid ""
 msgstr ""
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Ви впевнені, що хочете відокремити?"
+msgstr "Ви впевнені, що хочете змінити?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9595,37 +9580,31 @@ msgid ""
 msgstr ""
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Службу AFP не вдалося перезавантажити."
+msgstr "Не вдалося перезавантажити NT4."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Не вдалося перезапустити службу Active Directory."
+msgstr "Не вдалося перезапустити Active Directory."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Службу AFP не вдалося перезавантажити."
+msgstr "Не вдалося перезавантажити LDAP."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
-msgstr "Включити"
+msgstr "Увімкнено"
 
 #: directoryservice/models.py:295
-#, fuzzy
 msgid "Bind DN"
-msgstr "Кореневий зв'язок DN"
+msgstr "DN для прив'язки"
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Пароль адміністратора"
+msgstr "Пароль прив’язки"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -9737,14 +9716,12 @@ msgstr "Служба каталогу"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Читання"
+msgstr "ad"
 
 #: choices.py:788
-#, fuzzy
 msgid "autorid"
-msgstr "автозапуск"
+msgstr "авто-rid"
 
 #: choices.py:789
 msgid "hash"
@@ -9764,9 +9741,8 @@ msgid "rfc2307"
 msgstr ""
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "П'ятниця"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
@@ -9786,7 +9762,7 @@ msgstr ""
 #: directoryservice/models.py:444
 #: directoryservice/models.py:464
 msgid "Range Low"
-msgstr ""
+msgstr "Низ діапазону"
 
 #: directoryservice/models.py:138
 #: directoryservice/models.py:178
@@ -9798,12 +9774,11 @@ msgstr ""
 #: directoryservice/models.py:448
 #: directoryservice/models.py:468
 msgid "Range High"
-msgstr ""
+msgstr "Верх діапазону"
 
 #: directoryservice/models.py:142
-#, fuzzy
 msgid "Schema Mode"
-msgstr "Режим доступу"
+msgstr "Схема"
 
 #: directoryservice/models.py:145
 msgid ""
@@ -9829,9 +9804,8 @@ msgid "AD Idmap"
 msgstr ""
 
 #: directoryservice/models.py:182
-#, fuzzy
 msgid "Range Size"
-msgstr "Розмір запису"
+msgstr "Розмір діапазону"
 
 #: directoryservice/models.py:184
 msgid ""
@@ -9863,9 +9837,8 @@ msgid "AutoRID Idmap"
 msgstr ""
 
 #: directoryservice/models.py:229
-#, fuzzy
 msgid "Name Map"
-msgstr "Ім'я"
+msgstr "Мапа імен"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -9887,9 +9860,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "ID користувача"
+msgstr "DN користувача"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -9915,9 +9887,8 @@ msgid "NSS Idmap"
 msgstr ""
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "NTP-сервер"
+msgstr "Сервер LDAP"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -9948,9 +9919,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:355
-#, fuzzy
 msgid "User CN"
-msgstr "Користувач &"
+msgstr "CN користувача"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
@@ -9965,9 +9935,8 @@ msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Домен"
+msgstr "Домен LDAP"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -9979,9 +9948,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "Адрес LDAP"
 
 #: directoryservice/models.py:385
 msgid ""
@@ -9990,9 +9958,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "ID користувача"
+msgstr "DN користувача LDAP"
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10044,15 +10011,13 @@ msgid "Domain administrator account name"
 msgstr "Ім'я адміністратора домену."
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
 msgstr "Пароль адміністратора домену."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Використовувати домен за замовченям"
+msgstr "Використати домен за замовченям"
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
@@ -10072,24 +10037,20 @@ msgid "Initial Wizard"
 msgstr "Ініціатор"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Не вдалося оновити плагiн"
+msgstr "Не вдалося створити групу %s"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "jail не існує"
+msgstr "Групи не існує: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "jail не існує"
+msgstr "Користувача не існує: %s"
 
 #: system/forms.py:306
-#, fuzzy
 msgid "Failed to create ZFS: %s"
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Неможливо створити ZFS: %s"
 
 #: system/forms.py:1136
 #, fuzzy
@@ -10189,9 +10150,8 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Ініціатор"
+msgstr "Майстер"
 
 #: services/forms.py:302
 #, fuzzy
@@ -10221,28 +10181,24 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Сервер Kerberos"
+msgstr "Kerberos Keytab"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Потрібен файл"
+msgstr "Потрібен keytab."
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Сервер Kerberos"
+msgstr "Область Kerberos"
 
 #: directoryservice/models.py:552
 msgid "KDC"
 msgstr ""
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "KDC for this realm."
-msgstr "Квота для цього тому"
+msgstr ""
 
 #: directoryservice/models.py:557
 #, fuzzy
@@ -10256,9 +10212,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Сервер паролей Kerberos"
+msgstr "Сервер паролей"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10281,14 +10236,12 @@ msgstr ""
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
 #: services/models.py:1662
-#, fuzzy
 msgid "Kerberos Realm"
-msgstr "Сервер Kerberos"
+msgstr "Область Kerberos"
 
 #: services/views.py:269
-#, fuzzy
 msgid "CIFS successfully updated."
-msgstr "%s успішно оновлено."
+msgstr "CIFS успішно оновлено."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -10382,14 +10335,12 @@ msgid "Import an existing Certificate"
 msgstr ""
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Сертифікат SSL"
+msgstr "Створити внутришній сертифікат"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "Самопідписаний сертифікат"
+msgstr "Створити запрос на підписання сертифікату"
 
 #: choices.py:823
 msgid "512"
@@ -10428,14 +10379,12 @@ msgid "SHA512"
 msgstr ""
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "Службу AFP не вдалося перезавантажити."
+msgstr "Не вдалося перезавантажити NIS."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Перезавантажити"
+msgstr "У разі перезавантаження"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10443,30 +10392,25 @@ msgid "ADEX Idmap"
 msgstr ""
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Ні"
+msgstr "Зараз"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Опис"
+msgstr "Описове ім'я."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "FQDN of the domain controller to use."
 msgstr "Iм'я хоста контролера домену."
 
 #: directoryservice/models.py:812
-#, fuzzy
 msgid "FQDN of the global catalog server to use."
 msgstr "Iм'я хоста серверу глобального каталогу."
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Користувач Suffix"
+msgstr "Суфікс SUDO"
 
 #: directoryservice/models.py:996
 #, fuzzy
@@ -10650,14 +10594,12 @@ msgid "Until"
 msgstr ""
 
 #: system/forms.py:163
-#, fuzzy
 msgid "Failed to create a new Boot."
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Не вдалося створити нове Оточення Завантаження."
 
 #: system/forms.py:183
-#, fuzzy
 msgid "Failed to rename Boot Environment."
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Не вдалося перейменувати Оточення Завантаження."
 
 #: system/forms.py:1028
 #, fuzzy
@@ -10910,9 +10852,8 @@ msgid "CSR successfully edited."
 msgstr "успішно змінено"
 
 #: templates/freeadmin/generic_model_delete.html:31
-#, fuzzy
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "Ви дійсно хочете видалити \"%(name)s\"?"
+msgstr "Ви дійсно хочете видалити %(verbose_name)s %(object)s?"
 
 #: templates/services/core.html:170
 #, fuzzy
@@ -11048,14 +10989,12 @@ msgid "Clone"
 msgstr ""
 
 #: directoryservice/models.py:804
-#, fuzzy
 msgid "Site Name"
-msgstr "Ім'я сервера"
+msgstr "Назва сайту"
 
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "Name of site to use."
-msgstr "Назва плагіна"
+msgstr "Назва сайту, що треба використати."
 
 #: services/models.py:263
 msgid ""
@@ -11152,9 +11091,8 @@ msgid "rc.conf"
 msgstr ""
 
 #: sharing/forms.py:94
-#, fuzzy
 msgid "Failed to create %(path)s: %(error)s"
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Неможливо створити %(path)s: %(error)s"
 
 #: sharing/forms.py:389
 #, fuzzy
@@ -11284,9 +11222,8 @@ msgid "NOTICE"
 msgstr ""
 
 #: templates/system/update.html:30
-#, fuzzy
 msgid "The following packages will be changed:"
-msgstr "Не вдалося пiдключити наступні диски: %s"
+msgstr "Наступні пакеты буде змінено:"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
@@ -11297,9 +11234,8 @@ msgid "Check For Update"
 msgstr ""
 
 #: common/system.py:301
-#, fuzzy
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "Сбiй монтування (%(retcode)s) -> %(output)s"
+msgstr "Сбiй демонтування (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 #, fuzzy
@@ -11364,9 +11300,8 @@ msgstr "Сертифікат SSL"
 
 #: sharing/forms.py:188
 #: sharing/forms.py:212
-#, fuzzy
 msgid "Invalid IP or Network."
-msgstr "Некоректна мережа: %s"
+msgstr "Некоректний IP або мережа."
 
 #: sharing/models.py:223
 msgid "Allow only listed hosts and/or networks access to this volume"
@@ -11443,9 +11378,8 @@ msgid "Datastore not found in the server."
 msgstr ""
 
 #: system/forms.py:2757
-#, fuzzy
 msgid "Failed to connect: %s"
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Не вдалося підключитися: %s"
 
 #: system/models.py:898
 msgid ""
@@ -11508,19 +11442,16 @@ msgid "Boot Environments successfully deleted."
 msgstr "Знимки успішно вилучена."
 
 #: system/alertmods/boot_volume_status.py:28
-#, fuzzy
 msgid "The boot volume status is %(status)s"
-msgstr "Стан тому %(volume)s %(status)s"
+msgstr "Стан тому завантаження - %(status)s"
 
 #: system/views.py:322
-#, fuzzy
 msgid "Failed to delete Boot Environments."
-msgstr "Неможливо створити %(name)s: %(error)s"
+msgstr "Не вдалося видалити Оточення Завантаження."
 
 #: system/alertmods/boot_volume_status.py:44
-#, fuzzy
 msgid "The boot volume status is DEGRADED"
-msgstr "Стан тому %s - ЗРУЙНОВАНО"
+msgstr "Том завантаження ПОШКОДЖЕНО"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
@@ -11550,14 +11481,12 @@ msgid "Last Scrub Run on"
 msgstr ""
 
 #: templates/system/bootenv_deletebulk.html:6
-#, fuzzy
 msgid "Are you sure you want to delete the following boot environments?"
-msgstr "Ви дійсно хочете видалити \"%(name)s\"?"
+msgstr "Ви дійсно хочете видалити наступні отоження завантаження?"
 
 #: templates/system/update_check.html:29
-#, fuzzy
 msgid "The following packages will be downloaded:"
-msgstr "Не вдалося пiдключити наступні диски: %s"
+msgstr "Наступні пакети буде завантажено:"
 
 #: templates/system/update_check.html:31
 #, fuzzy
@@ -11693,9 +11622,8 @@ msgstr "Система перезавантажується"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s тиждень"
+msgstr "%(weeks)s тиждень"
 
 #: system/views.py:419
 #, fuzzy
@@ -11703,14 +11631,12 @@ msgid "Disk has been successfully detached."
 msgstr "Том був успішно відключений"
 
 #: system/alertmods/boot_volume_status.py:15
-#, fuzzy
 msgid "The boot volume state is %(state)s: %(status)s"
-msgstr "Том %(volume)s status is %(status)s: %(message)s"
+msgstr "Стан тому завантаження %(state)s: %(status)s"
 
 #: system/alertmods/volume_status.py:17
-#, fuzzy
 msgid "The volume %(volume)s state is %(state)s: %(status)s"
-msgstr "Том %(volume)s status is %(status)s: %(message)s"
+msgstr "Стан тому %(volume)s - %(state)s: %(status)s"
 
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
