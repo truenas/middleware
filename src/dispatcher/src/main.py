@@ -111,6 +111,7 @@ class Dispatcher(object):
         self.tasks = {}
         self.resource_graph = ResourceGraph()
         self.logger = logging.getLogger('Main')
+        self.token_store = TokenStore(self)
         self.rpc = None
         self.balancer = None
         self.datastore = None
@@ -441,6 +442,10 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             'name': service_name,
             'description': "Service {0} logged in".format(service_name)
         })
+
+    def on_rpc_auth_token(self, id, data):
+        token = data["token"]
+        client_addr, client_port = self.ws.handler.client_address
 
     def on_rpc_auth(self, id, data):
         username = data["username"]
