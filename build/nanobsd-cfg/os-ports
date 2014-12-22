@@ -160,6 +160,7 @@ add_port devel/py-jsonschema
 add_port devel/py-jsonpointer
 add_port devel/py-natural
 add_port devel/py-enum34
+add_port math/py-networkx
 add_port net/py-netifaces
 add_port textproc/py-mako
 add_port www/py-ws4py

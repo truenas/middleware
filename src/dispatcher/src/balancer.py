@@ -31,7 +31,7 @@ import logging
 import traceback
 import errno
 import copy
-from threading import Thread
+import threading
 from dispatcher import validator
 from dispatcher.rpc import RpcException
 from gevent.queue import Queue
@@ -64,13 +64,14 @@ class Task(object):
         self.instance = None
         self.parent = None
         self.result = None
-        self.ended = Event()
+        self.ended = threading.Event()
 
     def __getstate__(self):
         return {
             "created_at": self.created_at,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
+            "resources": self.resources,
             "name": self.name,
             "args": self.args,
             "state": self.state
@@ -99,11 +100,17 @@ class Task(object):
         self.ended.set()
         self.result = result
         self.set_state(TaskState.FINISHED, TaskStatus(100, ''))
+        self.dispatcher.balancer.task_exited(self)
         return self.state, self.progress
 
     def start(self):
-        t = Thread(target=self.run)
+        # Start actual thread
+        t = threading.Thread(target=self.run, name='{0} #{1}'.format(self.name, self.id))
         t.start()
+
+        # Start progress watcher
+        gevent.spawn(self.progress_watcher)
+
         return t
 
     def set_state(self, state, progress=None):
@@ -224,11 +231,7 @@ class Balancer(object):
             task.set_state(TaskState.ABORTED, TaskStatus(0, "Aborted"))
 
     def task_exited(self, task):
-        self.resource_graph.lock()
-        for i in task.resources:
-            self.resource_graph.release(i)
-
-        self.resource_graph.unlock()
+        self.resource_graph.release(*task.resources)
         self.schedule_tasks()
 
     def schedule_tasks(self):
@@ -239,19 +242,12 @@ class Balancer(object):
 
         :return:
         """
-
-        self.resource_graph.lock()
-
         for task in filter(lambda t: t.state == TaskState.WAITING, self.task_list):
-            if not self.resource_graph.can_acquire_all(task.resources):
+            if not self.resource_graph.can_acquire(*task.resources):
                 continue
 
-            for i in task.resources:
-                self.resource_graph.acquire(i)
-
+            self.resource_graph.acquire(*task.resources)
             self.threads.append(task.start())
-
-        self.resource_graph.unlock()
 
     def distribution_thread(self):
         while True:
@@ -273,7 +269,7 @@ class Balancer(object):
             task.set_state(TaskState.WAITING)
             self.task_list.append(task)
             self.schedule_tasks()
-            self.logger.debug("Task %d assigned to queues %s", task.id, task.queues)
+            self.logger.debug("Task %d assigned to resources %s", task.id, ','.join(task.resources))
 
     def get_active_tasks(self):
         return filter(lambda x: x.state in (

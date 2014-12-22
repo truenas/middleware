@@ -26,6 +26,8 @@
 #####################################################################
 
 
+import logging
+import threading
 import networkx as nx
 from threading import Lock
 
@@ -38,6 +40,7 @@ class Resource(object):
 
 class ResourceGraph(object):
     def __init__(self):
+        self.logger = logging.getLogger('ResourceGraph')
         self.mutex = Lock()
         self.root = Resource('root')
         self.resources = nx.DiGraph()
@@ -48,6 +51,10 @@ class ResourceGraph(object):
 
     def unlock(self):
         self.mutex.release()
+
+    @property
+    def nodes(self):
+        return self.resources.nodes()
 
     def add_resource(self, resource, parents=None):
         self.resources.add_node(resource)
@@ -68,33 +75,58 @@ class ResourceGraph(object):
 
         return None
 
-    def acquire(self, name):
+    def get_resource_dependencies(self, name):
         res = self.get_resource(name)
-        for i in nx.ancestors(self.resources, res):
-            if i.busy:
-                raise Exception('Cannot acquire')
+        for i in self.resources.out_edges(res):
+            yield i.name
 
-        res.busy = True
+    def acquire(self, *names):
+        self.lock()
+        self.logger.debug(
+            'Acquiring following resources by thread %s: %s',
+            threading.current_thread().name,
+            ','.join(names))
 
-    def can_acquire_all(self, names):
-        for i in names:
-            if not self.can_acquire(i):
+        for name in names:
+            res = self.get_resource(name)
+            for i in nx.ancestors(self.resources, res):
+                if i.busy:
+                    self.unlock()
+                    raise Exception('Cannot acquire')
+
+            res.busy = True
+
+        self.unlock()
+
+    def can_acquire(self, *names):
+        self.lock()
+        self.logger.debug(
+            'Trying to acquire following resources by thread %s: %s',
+            threading.current_thread().name,
+            ','.join(names))
+        for name in names:
+            res = self.get_resource(name)
+
+            if res.busy:
+                self.unlock()
                 return False
 
+            for i in nx.ancestors(self.resources, res):
+                if i.busy:
+                    self.unlock()
+                    return False
+
+        self.unlock()
         return True
 
-    def can_acquire(self, name):
-        res = self.get_resource(name)
+    def release(self, *names):
+        self.lock()
+        self.logger.debug(
+            'Releasing following resources by thread %s: %s',
+            threading.current_thread().name,
+            ','.join(names))
 
-        if res.busy:
-            return False
-
-        for i in nx.ancestors(self.resources, res):
-            if i.busy:
-                return False
-
-        return True
-
-    def release(self, name):
-        res = self.get_resource(name)
-        res.busy = False
+        for name in names:
+            res = self.get_resource(name)
+            res.busy = False
+        self.unlock()
