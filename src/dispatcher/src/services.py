@@ -28,6 +28,7 @@
 import errno
 from gevent.event import Event
 from dispatcher.rpc import RpcService, RpcException, pass_sender
+from auth import ShellToken
 
 
 class ManagementService(RpcService):
@@ -142,6 +143,7 @@ class PluginService(RpcService):
 
 class TaskService(RpcService):
     def initialize(self, context):
+        self.__dispatcher = context.dispatcher
         self.__datastore = context.dispatcher.datastore
         self.__balancer = context.dispatcher.balancer
         pass
@@ -162,13 +164,12 @@ class TaskService(RpcService):
     def abort(self, id):
         self.__balancer.abort(id)
 
-    def list_queues(self):
+    def list_resources(self):
         result = []
-        for name, queue in self.__balancer.queues.items():
+        for res in self.__dispatcher.resource_graph.nodes:
             result.append({
-                'name': name,
-                'type': queue.clazz,
-                'status': queue.worker.state
+                'name': res.name,
+                'busy': res.busy,
             })
 
         return result
@@ -177,3 +178,19 @@ class TaskService(RpcService):
         filter = filter if filter else []
         params = params if params else {}
         return list(self.__datastore.query('tasks', *filter, **params))
+
+
+class ShellService(RpcService):
+    def initialize(self, context):
+        self.dispatcher = context.dispatcher
+
+    def get_shells(self):
+        return self.dispatcher.configstore.get('system.shells')
+
+    @pass_sender
+    def spawn(self, shell, sender):
+        shells = self.dispatcher.configstore.get('system.shells')
+        if shell not in shells:
+            raise RpcException(errno.EPERM, "Cannot launch non-standard shell")
+
+        return self.dispatcher.token_store.issue_token(ShellToken(user=sender.user, lifetime=60, shell=shell))

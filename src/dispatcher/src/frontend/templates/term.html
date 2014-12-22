@@ -1,0 +1,131 @@
+{% extends "bootstrap/base.html" %}
+{% import "nav.html" as nav %}
+{% block title %}Terminal{% endblock %}
+{% block styles %}
+    {{ super() }}
+    <style type="text/css">
+        body {
+            margin: 20px;
+        }
+
+        .terminal {
+            float: left;
+            border: #000 solid 5px;
+            font-family: "DejaVu Sans Mono", "Liberation Mono", monospace;
+            font-size: 11px;
+            color: #f0f0f0;
+            background: #000;
+            margin-top: 15px;
+        }
+
+        .terminal-cursor {
+            color: #000;
+            background: #f0f0f0;
+        }
+    </style>
+{% endblock %}
+{% block scripts %}
+    {{super()}}
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+    <script src="/static/emitter.js"></script>
+    <script src="/static/middleware.js"></script>
+    <script src="/static/term.js"></script>
+    <script type="text/javascript">
+        var sock = new Middleware();
+        var authenticated = false;
+        var ws;
+        var term;
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
+
+        function connect_term(token)
+        {
+            authenticated = false;
+            ws = new WebSocket(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/shell");
+
+            term = new Terminal({
+                cols: 80,
+                rows: 24,
+                screenKeys: true
+            });
+
+            term.on('data', function(data) {
+                ws.send(data)
+            });
+
+            ws.onopen = function(event) {
+                ws.send(JSON.stringify({"token": token}));
+            };
+
+            ws.onmessage = function(event) {
+                if (!authenticated) {
+                    var payload = JSON.parse(event.data);
+                    if (payload.status == "ok")
+                        authenticated = true;
+                    else
+                        alert('Login failed: ' + payload.message);
+
+                    return;
+                }
+
+                term.write(event.data)
+            };
+
+            term.open($("#terminal")[0])
+        }
+
+        $(document).ready(function (){
+            sock.on("error", function(err) {
+                alert("Error: " + err.message);
+            });
+
+            sock.on("connected", function() {
+                var username = prompt("Username:");
+                var password = prompt("Password:");
+                sock.login(username, password);
+            });
+
+            sock.on("login", function() {
+                sock.call("shell.get_shells", null, function(response) {
+                    $.each(response, function(idx, i) {
+                        var li = $("<li/>")
+                            .appendTo($("#shells"));
+                        var a = $("<a/>")
+                            .addClass("shell-entry")
+                            .attr("role", "menuitem")
+                            .attr("href", "#")
+                            .text(i)
+                            .appendTo(li);
+                    });
+                });
+
+                sock.call("shell.spawn", ["/bin/sh"], function (response) {
+                    connect_term(response)
+                });
+            });
+
+            $("#shells").on("click", "a.shell-entry", function() {
+                ws.close();
+                term.destroy();
+                sock.call("shell.spawn", [this.text], function (response) {
+                    connect_term(response)
+                });
+            });
+
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ nav.nav() }}
+    <h1>Terminal</h1>
+    <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+        Shell type
+        <span class="caret"></span>
+      </button>
+      <ul id="shells" class="dropdown-menu" role="menu">
+      </ul>
+    </div>
+    <div id="terminal">
+    </div>
+{% endblock %}

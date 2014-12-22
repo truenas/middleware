@@ -17,3 +17,7 @@ def rpc():
 @app.route('/tasks')
 def tasks():
     return render_template('tasks.html')
+
+@app.route('/term')
+def term():
+    return render_template('term.html')

@@ -32,6 +32,7 @@ import fnmatch
 import glob
 import imp
 import json
+import fcntl
 import logging
 import logging.config
 import logging.handlers
@@ -41,10 +42,17 @@ import time
 import uuid
 import errno
 import setproctitle
+import pty
+import termios
+import networkx as nx
 
 import gevent
 from pyee import EventEmitter
+from gevent.os import tp_read, tp_write
 from gevent import monkey, Greenlet
+from gevent.queue import Queue
+from gevent.event import Event
+from gevent.subprocess import Popen, PIPE
 from gevent.event import AsyncResult
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
@@ -53,10 +61,10 @@ from datastore import get_datastore
 from datastore.config import ConfigStore
 from dispatcher.rpc import RpcContext, RpcException
 from resources import ResourceGraph
-from services import ManagementService, EventService, TaskService, PluginService
+from services import ManagementService, EventService, TaskService, PluginService, ShellService
 from api.handler import ApiHandler
 from balancer import Balancer
-from auth import PasswordAuthenticator
+from auth import PasswordAuthenticator, TokenStore, Token
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
@@ -142,6 +150,7 @@ class Dispatcher(object):
         self.rpc.register_service('event', EventService)
         self.rpc.register_service('task', TaskService)
         self.rpc.register_service('plugin', PluginService)
+        self.rpc.register_service('shell', ShellService)
 
     def start(self):
         for name, clazz in self.event_sources.items():
@@ -249,7 +258,6 @@ class Dispatcher(object):
     def __init_syslog(self):
         handler = logging.handlers.SysLogHandler('/var/run/log', facility='local3')
         logging.root.setLevel(logging.DEBUG)
-        logging.root.handlers = []
         logging.root.addHandler(handler)
 
     def dispatch_event(self, name, args):
@@ -404,10 +412,10 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if not type(message) is str:
             return
 
+        message = json.loads(message)
+
         if "namespace" not in message:
             return
-
-        message = json.loads(message)
 
         getattr(self, "on_{}_{}".format(message["namespace"], message["name"]))(message["id"], message["args"])
 
@@ -616,6 +624,103 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.ws.send(json.dumps(obj))
 
 
+class ShellConnection(WebSocketApplication, EventEmitter):
+    BUFSIZE = 1024
+
+    def __init__(self, ws, dispatcher):
+        super(ShellConnection, self).__init__(ws)
+        self.dispatcher = dispatcher
+        self.logger = logging.getLogger('ShellConnection')
+        self.authenticated = False
+        self.master = None
+        self.slave = None
+        self.proc = None
+        self.inq = Queue()
+
+    def worker(self, user, shell):
+        self.logger.info('Opening shell %s...', shell)
+        self.master, self.slave = pty.openpty()
+        env = os.environ.copy()
+        env['TERM'] = 'xterm'
+
+        def preexec():
+            try:
+                fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
+            except OSError:
+                pass
+            else:
+                try:
+                    fcntl.ioctl(fd, termios.TIOCNOTTY, '')
+                except:
+                    pass
+                os.close(fd)
+
+            os.setsid()
+            fcntl.ioctl(0, termios.TIOCSCTTY)
+
+        def read_worker():
+            while True:
+                data = tp_read(self.master, self.BUFSIZE)
+                if not data:
+                    return
+
+                self.ws.send(data)
+
+        def write_worker():
+            for i in self.inq:
+                tp_write(self.master, i)
+
+        self.proc = Popen(
+            ['/usr/bin/su', '-m', user, '-c', shell],
+            stdout=self.slave,
+            stderr=self.slave,
+            stdin=self.slave,
+            close_fds=True,
+            env=env,
+            preexec_fn=preexec)
+
+        self.logger.info('Shell %s spawned as PID %d', shell, self.proc.pid)
+
+        wr = gevent.spawn(write_worker)
+        rd = gevent.spawn(read_worker)
+        gevent.joinall([rd, wr])
+
+    def on_open(self, *args, **kwargs):
+        pass
+
+    def on_close(self, *args, **kwargs):
+        self.inq.put(StopIteration)
+        self.logger.info('Terminating shell PID %d', self.proc.pid)
+        self.proc.terminate()
+        os.close(self.master)
+
+    def on_message(self, message, *args, **kwargs):
+        if message is None:
+            return
+
+        if not self.authenticated:
+            message = json.loads(message)
+
+            if type(message) is not dict:
+                return
+
+            if 'token' not in message:
+                return
+
+            token = self.dispatcher.token_store.lookup_token(message['token'])
+
+            self.authenticated = True
+            gevent.spawn(self.worker, token.user.name, token.shell)
+            self.ws.send(json.dumps({'status': 'ok'}))
+            return
+
+        self.logger.debug('Sending string %s to shell', message)
+        for i in message:
+            if i == '\r':
+                i = '\n'
+            self.inq.put(i)
+
+
 def run(d, args):
     setproctitle.setproctitle('server')
     monkey.patch_all()
@@ -629,11 +734,13 @@ def run(d, args):
     if d.use_tls:
         s = Server(('', args.p), ServerResource({
             '/socket': ServerConnection,
+            '/shell': ShellConnection,
             '/api': ApiHandler(d)
         }, dispatcher=d), certfile=d.certfile, keyfile=d.keyfile)
     else:
         s = Server(('', args.p), ServerResource({
             '/socket': ServerConnection,
+            '/shell': ShellConnection,
             '/api': ApiHandler(d)
         }, dispatcher=d))
 
