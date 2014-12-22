@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-12-03 16:13+0000\n"
+"PO-Revision-Date: 2014-12-21 03:58+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1417623205.0\n"
+"X-POOTLE-MTIME: 1419134320.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7309,7 +7309,7 @@ msgstr "Versleutelingssleutel"
 
 #: storage/forms.py:839
 msgid "The following disks failed to attach: %s"
-msgstr "Bijvoegen van de volgende schijven is mislukt: %s"
+msgstr "Koppelen van de volgende schijven is mislukt: %s"
 
 #: storage/forms.py:1128
 msgid ""
@@ -8977,7 +8977,7 @@ msgstr "Jail-hoofdmap moet op een volume of gegevensset staan!"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
-msgstr "Door komma's gescheiden lijst van sysctl’s"
+msgstr "Door komma's gescheiden lijst van sysctl's"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
@@ -11125,8 +11125,9 @@ msgid ""
 "This parameter is designed to control how Winbind retrieves Name Service "
 "Information to construct a user's home directory and login"
 msgstr ""
-"Deze parameter is ontworpen om te bepalen hoe Winbind naamserverinformatie "
-"ophaalt om de basismap en aanmelding van een gebruiker aan te maken"
+"Deze parameter is ontworpen om te bepalen hoe Winbind gegevens over de "
+"naamgevingsservice ophaalt om een basismap en aanmelding voor een gebruiker "
+"aan te maken"
 
 #: jails/models.py:359
 msgid "IPv4 DHCP"
@@ -11254,7 +11255,7 @@ msgid ""
 "key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
 "Integrity\" on the Windows server side."
 msgstr ""
-"De  client-ldap-sasl-wrapping definieert of ldap-verkeer ondertekend of "
+"De client-ldap-sasl-wrapping definieert of ldap-verkeer ondertekend of "
 "ondertekend en versleuteld (verzegeld) zal zijn. Deze optie is nodig in het "
 "geval van domeincontrollers die het gebruik van ondertekende LDAP-"
 "verbindingen afdwingen (zoals Windows 2000 SP3 of hoger). LDAP-ondertekenen "
@@ -11672,7 +11673,7 @@ msgid ""
 "naming scheme.  Checking this alters the naming scheme to be more Xen-"
 "friendly"
 msgstr ""
-"Xen-inititors geven fouten bij het verbinden met LUN’s die het standaard "
+"Xen-inititors geven fouten bij het verbinden met LUN's die het standaard "
 "naamgevingsschema van FreeNAS gebruiken. Aanvinken hiervan maakt het "
 "naamgevingsschema wat Xen-vriendelijker"
 
@@ -11690,7 +11691,7 @@ msgstr "Fout bij importeren van volume"
 
 #: system/admin.py:129
 msgid "Attach"
-msgstr "Bijvoegen"
+msgstr "Koppelen"
 
 #: system/forms.py:164
 msgid "Only alphanumeric, underscores and dashes are allowed."
@@ -11699,7 +11700,7 @@ msgstr ""
 
 #: system/views.py:361
 msgid "Disk successfully attached."
-msgstr "Schijf met succes bijgevoegd."
+msgstr "Schijf met succes gekoppeld."
 
 #: system/views.py:379
 msgid "Disk is being replaced."
@@ -11734,7 +11735,7 @@ msgstr "Gereed"
 
 #: templates/system/bootenv_pool_attach.html:3
 msgid "Attach Disk"
-msgstr "Schijf bijvoegen"
+msgstr "Schijf koppelen"
 
 #: templates/system/update.html:31
 msgid ""

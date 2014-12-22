@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-12-16 08:05+0000\n"
+"PO-Revision-Date: 2014-12-19 08:42+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418717129.0\n"
+"X-POOTLE-MTIME: 1418978522.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -28,7 +28,7 @@ msgstr "Nastavení"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr "Systémové informace"
+msgstr "Informace o systému"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -110,11 +110,11 @@ msgstr "Povolit službu"
 
 #: freeadmin/static/lib/js/freeadmin.js:994
 msgid "The cache is being rebuilt."
-msgstr "Mezipaměť je obnovována."
+msgstr "Mezipaměť je znovu vytvářena."
 
 #: freeadmin/static/lib/js/freeadmin.js:996
 msgid "The cache could not be rebuilt: "
-msgstr "Mezipaměť nemohla být obnovena: "
+msgstr "Znovuvytvoření mezipaměti se nezdařilo: "
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
@@ -122,7 +122,7 @@ msgstr "Sdílení"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:212
 msgid "Jails"
-msgstr "Žaláře"
+msgstr "Omezená prostředí (jail)"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:398
 msgid "Support"
@@ -146,7 +146,7 @@ msgstr "zobrazit"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:276
 msgid "no more drives"
-msgstr "žádné další disky"
+msgstr "žádné další jednotky"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
 msgid "Disk size mismatch"
@@ -160,10 +160,10 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
-"Toto uspořádání je optimální!<br /><br />Při tomto počtu disků jejich "
-"současné uspořádání podává nejlepší možný výkon.<br /><br />Vysvětleno je to "
-"v <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>dokumentaci</a>."
+"Toto nastavení je optimální!<br /><br />Při tomto počtu disků a jejich "
+"současném uspořádání podává nejlepší možný výkon.<br /><br />Blíže je to "
+"vysvětleno <a href='http://doc.freenas.org/index.php/Volumes#"
+"ZFS_Volume_Manager' target='_blank'>dokumentaci</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
 msgid ""
@@ -173,10 +173,10 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
-"Toto uspořádání není optimální!<br /><br />Při tomto počtu disků jejich "
-"současné uspořádání nepodává nejlepší možný výkon.<br /><br />Vysvětleno je "
-"to v <a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>dokumentaci</a>."
+"Toto nastavení není optimální!<br /><br />Při tomto počtu disků a jejich "
+"současném uspořádání nepodává nejlepší možný výkon.<br /><br />Blíže je to "
+"vysvětleno v <a href='http://doc.freenas.org/index.php/Volumes#"
+"ZFS_Volume_Manager' target='_blank'>dokumentaci</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
 msgid "Capacity"
@@ -205,7 +205,8 @@ msgstr "Svazek, který má být zvětšen"
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr "Rozšíření šifrovaného svazku resetuje heslo a obnovovací klíč!"
+msgstr ""
+"Zvětšením šifrovaného svazku dojde k resetování hesla a obnovovacího klíče!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
@@ -213,11 +214,11 @@ msgstr "Šifrování"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Initialize Safely"
-msgstr "Inicializovat bezpečně"
+msgstr "Bezpečně inicializovat"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid "Available disks"
-msgstr "Dostupné disky"
+msgstr "Disky k dispozici"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1070
 msgid "Estimated capacity"
@@ -233,7 +234,7 @@ msgstr "Zrušit"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr ""
+msgstr "Příkazový řádek"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
@@ -305,7 +306,7 @@ msgid ""
 ", \"-\", \".\"."
 msgstr ""
 "Toto pole může obsahovat pouze písmena a číslice a dále ještě znaky: \"_\", "
-"\"-\", \".\"."
+"\"-\" a \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
@@ -356,7 +357,7 @@ msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
-"Tato volba ZAKÁŽE ŠIFROVÁNÍ u replikačních úloh a měla by být použita POUZE "
+"Tato volba u replikačních úloh ZAKÁŽE ŠIFROVÁNÍ a měla by být použita POUZE "
 "v prostředí zabezpečené místní sítě!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
@@ -416,7 +417,7 @@ msgstr "Nezjištěny žádné čekající aktualizace."
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr "Ověřit instalaci"
+msgstr "Ověřit neporušenost instalace"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
