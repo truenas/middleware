@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-12-21 20:22+0000\n"
+"PO-Revision-Date: 2014-12-22 20:14+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1419193377.0\n"
+"X-POOTLE-MTIME: 1419279265.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1333,11 +1333,11 @@ msgstr "Službě CIFS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
-msgstr "Znovunačení služby AFP selhalo."
+msgstr "Znovunačtení služby AFP selhalo."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr "Službě NFS se nepodařilo znovu načíst nastavení."
+msgstr "Znovunačtení služby NFS selhalo."
 
 #~ msgid "This IP already exists."
 #~ msgstr "Tato IP adresa již existuje."
@@ -1372,7 +1372,7 @@ msgstr "Toto pole je vyžadováno pro anonymní přihlášení"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
-msgstr "Pokus o start služby ftp nebyl úspěšný."
+msgstr "Spuštění služby ftp selhalo."
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
@@ -1407,13 +1407,15 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Kontakt může obsahovat pouze písmena a čísla, dále podtržítka a rozdělovník, "
-"případně to může být platná e-mailová adresa"
+"Kontakt může obsahovat pouze písmena a číslice, dále znaky „_“ (podtržítko) "
+"a „-“ (rozdělovník). Tyto náležitosti pochopitelně případně splňuje i platná "
+"e-mailová adresa"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
 msgstr ""
-"Komunita může obsahovat pouze písmena a čísla, dále podtržítko a rozdělovník"
+"„komunita“ (= heslo v SNMP terminologii) může obsahovat pouze písmena a "
+"číslice, dále znaky „_“ (podtržítko) a „-“ (rozdělovník)"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
@@ -1426,7 +1428,9 @@ msgstr ""
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr "Použijte písmena a čísla, dále \".\", \"-\" a \"_\"."
+msgstr ""
+"Použijte písmena a číslice, dále znaky „.“ (tečka), „-“ (rozdělovník) a „_“ "
+"(pomlčka)."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -7216,7 +7220,7 @@ msgstr "Aby toto bylo možné, šablona nesmí být v používání!"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr "Kořen omezeného prostředí není nastaven!"
+msgstr "Kořenová složka omezeného prostředí není nastavena!"
 
 #: jails/models.py:537
 #, fuzzy
@@ -8197,7 +8201,7 @@ msgstr "Alternativní adresy IPv6 mostu"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
-msgstr "Čárkami oddělený seznam voleb sysctl"
+msgstr "Čárkami oddělený seznam sysctl"
 
 #: jails/models.py:357
 msgid "IPv6 Network Start Address"
@@ -9031,7 +9035,7 @@ msgstr "Délka IPv6 předpony"
 
 #: jails/models.py:147
 msgid "IPv6 bridge address"
-msgstr "adresa IPv6 mostu"
+msgstr "Adresa IPv6 mostu"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
@@ -9739,11 +9743,11 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
-"Při použití LDAP serveru, který je součástí Active Directory, toto umožňuje "
-"určit doménu, ve které přistupovat k serveru Active Directory. Toto umožňuje "
-"vztahy důvěry a přitom na jednom místě uchovávat všechny záznamy, spadající "
-"pod normu RFC 2307. Tento parametr je volitelný, výchozím chováním je "
-"dotazovat se na LDAP záznamy AD serveru v současné doméně."
+"Při použití LDAP serveru, poskytovanému serverem s Active Directory, toto "
+"umožňuje určit jinou doménu, jejíž takový server bude používán. Toto "
+"umožňuje vztahy důvěry a přitom na jednom místě uchovávat všechny záznamy, "
+"spadající pod normu RFC 2307. Tento parametr je volitelný, výchozím chováním "
+"je dotazovat se na LDAP záznamy AD serveru v současné doméně."
 
 #: directoryservice/models.py:383
 msgid "LDAP URL"
@@ -9805,8 +9809,8 @@ msgid ""
 "tdb2 idmap database."
 msgstr ""
 "Touto volbou může být určen vnější program pro provádění mapování "
-"identifikátorů namísto tdb čítače. Mapování jsou pak ukládána jako vnitřní "
-"tdb2 idmap databáze."
+"identifikátorů namísto tdb čítače. Mapování jsou pak ukládána do tdb2 idmap "
+"databáze."
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -10174,7 +10178,8 @@ msgstr "Popisný název."
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
 msgid "FQDN of the domain controller to use."
-msgstr "Úplný doménový název doménového řadiče, který má být použit."
+msgstr ""
+"Úplný kvalifikovaný doménový název doménového řadiče, který má být použit."
 
 #: directoryservice/models.py:812
 msgid "FQDN of the global catalog server to use."
