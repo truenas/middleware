@@ -4,9 +4,9 @@ earlier builds of FreeNAS (any version) to 9.3-RELEASE
 1. This build now uses ZFS, the GRUB boot loader, and GPT partition labels for
 all boot media.  This is a significant change from earlier releases and may
 cause interoperability issues with older hardware / BIOSes.  In the event of a
-failed upgrade, one possible remedy may be to back up your config database and
-try a fresh install using the 9.3-RELEASE ISO installation image (which can
-also be used from USB devices).
+failed upgrade, one possible remedy may be to back up your configuration
+database and try a fresh install using the 9.3-RELEASE ISO installation image
+(which can also be used from USB devices).
 
 2. Because it is now possible to accumulate an arbitrary number of ZFS boot
 environments, the recommended default installation media size is now 8GB.
