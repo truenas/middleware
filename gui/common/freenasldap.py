@@ -1281,7 +1281,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
 
-    def __name_to_host(self, name):
+    def __name_to_host(self, name, default_port=None):
         host = None  
         port = None  
         if name:
@@ -1289,6 +1289,8 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = parts[0]
             if len(parts) > 1:
                 port = long(parts[1])
+        if not port:
+            port = default_port
         return (host, port)
 
     def kerberos_cache_has_ticket(self):
@@ -1493,7 +1495,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def set_domain_controller(self):
         if self.dcname:
-            (self.dchost, self.dcport) = self.__name_to_host(self.dcname)
+            (self.dchost, self.dcport) = self.__name_to_host(self.dcname, 389)
         if not self.dchost:
             dcs = self.get_domain_controllers(self.domainname, site=self.site)
             if not dcs:
@@ -1504,7 +1506,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def set_global_catalog_server(self):
         if self.gcname:
-            (self.gchost, self.gcport) = self.__name_to_host(self.gcname)
+            (self.gchost, self.gcport) = self.__name_to_host(self.gcname, 3268)
         if not self.gchost:
             root = self.get_root_domain()
             if root:
@@ -1518,7 +1520,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def set_kerberos_server(self):
         if self.krbname:
-            (self.krbhost, self.krbport) = self.__name_to_host(self.krbname)
+            (self.krbhost, self.krbport) = self.__name_to_host(self.krbname, 88)
         if not self.krbhost:
             krbs = self.get_kerberos_servers(self.domainname, site=self.site)
             if not krbs: 
@@ -1530,7 +1532,7 @@ class FreeNAS_ActiveDirectory_Base(object):
     def set_kpasswd_server(self):
         if self.kpwdname:
             (self.kpwdhost, self.kpwdport) = self.__name_to_host(
-                self.kpwdname)
+                self.kpwdname, 464)
         if not self.kpwdhost:
             kpwds = self.get_kpasswd_servers(self.domainname)
             if not kpwds: 
