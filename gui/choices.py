@@ -531,14 +531,7 @@ v4NetmaskBitList = (
         ('1', '/1 (128.0.0.0)'),
         )
 
-v6NetmaskBitList = (
-        ('0', '/0'),
-        ('48', '/48'),
-        ('60', '/60'),
-        ('64', '/64'),
-        ('80', '/80'),
-        ('96', '/96'),
-        )
+v6NetmaskBitList = tuple([(str(i), '/' + str(i)) for i in range(0, 132, 4)])
 
 RetentionUnit_Choices = (
         ('hour', _('Hour(s)')),
