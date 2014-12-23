@@ -35,6 +35,7 @@ from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException
 from dispatcher.rpc import RpcException, accepts, returns, description
 from balancer import TaskState
+from resources import Resource
 
 
 @description("Provides information about ZFS pools")
@@ -394,7 +395,21 @@ class ZfsDestroyTask(Task):
 
 
 def get_disk_names(dispatcher, pool):
-    return [os.path.basename(dispatcher.call_sync('disk.partition_to_disk', x)) for x in pool.disks]
+    return ['disk:' + dispatcher.call_sync('disk.partition_to_disk', x) for x in pool.disks]
+
+
+def zpool_create_resources(dispatcher, pool):
+    def iter_dataset(ds):
+        dispatcher.register_resource('zfs:{0}'.format(ds.name), parents=[])
+        for i in ds.children:
+            iter_dataset(i)
+
+    dispatcher.register_resource('zpool:{0}'.format(pool.name), parents=get_disk_names(dispatcher, pool))
+    iter_dataset(pool.root_dataset)
+
+
+def zpool_remove_resources(dispatcher, pool):
+    dispatcher.unregister_resource('zpool:{0}'.format(pool.name))
 
 
 def _depends():
@@ -454,3 +469,10 @@ def _init(dispatcher):
     dispatcher.register_task_handler('zfs.create_zvol', ZfsVolumeCreateTask)
     dispatcher.register_task_handler('zfs.configure', ZfsConfigureTask)
     dispatcher.register_task_handler('zfs.destroy', ZfsDestroyTask)
+
+    try:
+        zfs = libzfs.ZFS()
+        for pool in zfs.pools:
+            dispatcher.register_resource(Resource('zpool:{0}'.format(pool.name)), get_disk_names(dispatcher, pool))
+    except libzfs.ZFSException:
+        pass
