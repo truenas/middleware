@@ -1115,7 +1115,7 @@ SNMP (Simple Network Management Protocol) is used to monitor network-attached de
 
 * UDP 161 (listens here for SNMP requests)
 
-Available MIBS are located in :file:`/usr/share/snmp/mibs` and :file:`/usr/local/share/snmp/mibs`.
+Available MIBS are located in :file:`/usr/local/share/snmp/mibs`.
 
 Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
