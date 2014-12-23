@@ -104,16 +104,16 @@ start_jail_vimage()
      exit 1
   fi
 
-  #
-  # Configure lo0 interface
-  #
-  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
-
   if [ "${NETWORKING}" = "0" ] ; then
      return 0
   fi
 
   JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`"
+
+  #
+  # Configure lo0 interface
+  #
+  jexec ${JID} ifconfig lo0 inet 127.0.0.1 up
 
   if [ -e "${JMETADIR}/mac" ] ; then
     MAC="$(cat "${JMETADIR}/mac")"
