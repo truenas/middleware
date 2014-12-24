@@ -57,6 +57,7 @@ class Task(object):
         self.clazz = None
         self.args = None
         self.user = None
+        self.error = None
         self.state = TaskState.CREATED
         self.progress = None
         self.resources = []
@@ -74,7 +75,8 @@ class Task(object):
             "resources": self.resources,
             "name": self.name,
             "args": self.args,
-            "state": self.state
+            "state": self.state,
+            "error": self.error
         }
 
     def __emit_progress(self):
@@ -91,27 +93,34 @@ class Task(object):
         try:
             result = self.instance.run(*(copy.deepcopy(self.args)))
         except BaseException, e:
+            self.error = {
+                'type': type(e).__name__,
+                'message': str(e),
+                'stacktrace': traceback.format_exc()
+            }
+
             self.ended.set()
             self.set_state(TaskState.FAILED, TaskStatus(0, str(e), extra={
                 "stacktrace": traceback.format_exc()
             }))
-            return self.state, self.progress
+
+            self.dispatcher.balancer.task_exited(self)
+            return
 
         self.ended.set()
         self.result = result
         self.set_state(TaskState.FINISHED, TaskStatus(100, ''))
         self.dispatcher.balancer.task_exited(self)
-        return self.state, self.progress
 
     def start(self):
         # Start actual thread
-        t = threading.Thread(target=self.run, name='{0} #{1}'.format(self.name, self.id))
-        t.start()
+        self.thread = threading.Thread(target=self.run, name='{0} #{1}'.format(self.name, self.id))
+        self.thread.start()
 
         # Start progress watcher
         gevent.spawn(self.progress_watcher)
 
-        return t
+        return self.thread
 
     def set_state(self, state, progress=None):
         event = {'id': self.id, 'state': state}
@@ -195,7 +204,7 @@ class Balancer(object):
         task.state = TaskState.CREATED
         task.id = self.dispatcher.datastore.insert("tasks", task)
         self.task_queue.put(task)
-        self.dispatcher.dispatch_event('task.created', {'id': task.id, 'type': name, 'state': task.state})
+        self.dispatcher.dispatch_event('task.created', {'id': task.id, 'name': name, 'state': task.state})
         self.logger.info("Task %d submitted (type: %s, class: %s)", task.id, name, task.clazz)
         return task.id
 
@@ -208,11 +217,12 @@ class Balancer(object):
         task.instance = task.clazz(self.dispatcher)
         task.instance.verify(*task.args)
         task.id = self.dispatcher.datastore.insert("tasks", task)
-        return task.start()
+        task.start()
+        return task
 
     def join_subtasks(self, *tasks):
         for i in tasks:
-            i.join()
+            i.thread.join()
 
     def abort(self, id):
         task = self.get_task(id)
