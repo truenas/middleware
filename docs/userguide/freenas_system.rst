@@ -644,28 +644,45 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.2in
-    :height: 3.2in
+    :width: 6.25in
+    :height: 3.38in
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
 
-This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
-a different selection. It also lists the URL of the official update server should that information be needed in a network with outbound firewall restrictions.
+This screen also shows which software branch, or train, the system is currently tracking updates for. The following trains are available:
+
+* **FreeNAS-10-Nightlies:** this train should
+  **not be used in production**. It represents the experimental branch for the future 10 version and is meant only for bleeding edge testers and developers.
+
+* **FreeNAS-9.3-BETA:** this was the train for the BETA version of 9.3. Now that 9.3 has been released, any users still on this train should switch to
+  either the "FreeNAS-9.3-Nightlies" or the "FreeNAS-9.3-STABLE" train.
+
+* **FreeNAS-9.3-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
+  run this train in production.
+
+* **FreeNAS-9.3-STABLE:** this is the
+  **recommended train for production use**. Once new fixes and features have been tested, they are added to this train. It is recommended to follow this train
+  and to apply any of its pending updates.
+
+To change the train, use the drop-down menu to make a different selection. It also lists the URL of the official update server should that information be
+needed in a network with outbound firewall restrictions.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
 
-To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. In the example shown in Figure 5.8b, three
-updates are available.
+To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
+be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
+`bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
+of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9.3 Release Notes in your web browser.
 
 **Figure 5.8b: Reviewing Updates**
 
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.6in
-    :height: 2.1in
+    :width: 6.95in
+    :height: 3.4in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -676,8 +693,8 @@ in Figure 5.8a. When you are ready to apply the previously downloaded updates, c
 reboot after the updates are applied.
 
 The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead apply the necessary
-updates to upgrade the operating system.
+is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
+necessary updates to upgrade the operating system.
 
 .. index:: CA, Certificate Authority
 .. _CAs:
