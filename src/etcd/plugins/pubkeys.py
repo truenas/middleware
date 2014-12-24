@@ -49,6 +49,6 @@ def run(context):
             fd.write(user['sshpubkey'])
             fd.close()
 
-            context.emit_event('etcd.regenerated_file', {
+            context.emit_event('etcd.file_generated', {
                 'filename': filename
             })
