@@ -42,10 +42,10 @@ class DeviceInfoPlugin(Provider):
     def initialize(self, context):
         # Enumerate disks and network interface and create initial resources
         for disk in self._get_class_disk():
-            context.dispatcher.register_resource(Resource('disk:{0}'.format(disk)))
+            context.dispatcher.register_resource(Resource('disk:{0}'.format(disk['path'])))
 
         for net in self._get_class_network():
-            context.dispatcher.register_resource(Resource('net:{0}'.format(net)))
+            context.dispatcher.register_resource(Resource('net:{0}'.format(net['name'])))
 
     @description("Returns list of available device classes")
     @returns({

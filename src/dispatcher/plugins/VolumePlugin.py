@@ -115,7 +115,7 @@ class VolumeCreateTask(ProgressTask):
         if self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-        return [os.path.basename(i) for i, _ in self.__get_disks(topology)]
+        return ['disk:{0}'.format(i) for i, _ in self.__get_disks(topology)]
 
     def run(self, name, type, topology, params=None):
         subtasks = []
@@ -148,7 +148,7 @@ class VolumeCreateTask(ProgressTask):
         self.set_progress(90)
         self.dispatcher.dispatch_event('volume.created', {
             'name': name,
-            'id': pool['guid'],
+            'id': str(pool['guid']),
             'type': type,
             'mountpoint': os.path.join(mountpoint)
         })
@@ -171,21 +171,21 @@ class VolumeAutoCreateTask(VolumeCreateTask):
         if self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-        return [os.path.basename(d) for d in disks]
+        return ['disk:{0}'.format(i) for i in disks]
 
     def run(self, name, type, disks, params=None):
         vdevs = []
         if len(disks) % 3 == 0:
             for i in xrange(0, len(disks), 3):
                 vdevs.append({
-                    'type': 'raidz1',
+                    'type': 'raidz',
                     'children': [{'type': 'disk', 'path': i} for i in disks[i:i+3]]
                 })
         elif len(disks) % 2 == 0:
             for i in xrange(0, len(disks), 2):
                 vdevs.append({
                     'type': 'mirror',
-                    'children': [{'type': 'disk', 'path': i} for i in disks[i:i+3]]
+                    'children': [{'type': 'disk', 'path': i} for i in disks[i:i+2]]
                 })
         else:
             vdevs = [{'type': 'disk', 'path': i} for i in disks]
@@ -198,10 +198,11 @@ class VolumeDestroyTask(Task):
         if not self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(name))
 
-        return [os.path.basename(d) for d in self.dispatcher.call_sync('volumes.get_volume_disks', name)]
+        return ['disk:{0}'.format(d) for d in self.dispatcher.call_sync('volumes.get_volume_disks', name)]
 
     def run(self, name):
         vol = self.datastore.get_one('volumes', ('name', '=', name))
+        self.join_subtasks(self.run_subtask('zfs.umount', name))
         self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
         self.datastore.delete('volumes', vol['id'])
 
@@ -224,7 +225,7 @@ class DatasetCreateTask(Task):
         if not self.datastore.exists('volumes', ('name', '=', pool_name)):
             raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(pool_name))
 
-        return ['system']
+        return ['zpool:{0}'.format(pool_name)]
 
     def run(self, pool_name, path, params=None):
         self.join_subtasks(self.run_subtask('zfs.create_dataset', pool_name, path, params))
