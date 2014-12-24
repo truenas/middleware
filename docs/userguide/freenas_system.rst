@@ -225,7 +225,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment.
+* **Rename:** used to change the name of the boot environment. Note that you cannot rename the active boot environment.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
