@@ -201,7 +201,7 @@ The GUI has been reorganized as follows:
 
 * A :ref:`Snapshots` menu has been added to Storage.
 
-* iSCSI configuration has been moved to :menuselection:`Storage --> Block (iSCSI)`.
+* iSCSI configuration has been moved to :menuselection:`Sharing --> Block (iSCSI)`.
 
 * :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
 
@@ -289,14 +289,14 @@ The following fields have been added or deleted:
 
 * The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
 
-* :menuselection:`Storage --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
-  Servers" and "Pool Available Space Threshold" fields have been added.
+* :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
+  Servers" and the "Pool Available Size Threshold" fields have been added.
 
-* The "Available Space Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
-  :menuselection:`Storage --> Block (iSCSI) --> Extents --> Add Extent`.
+* The "Available Size Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from
-  :menuselection:`Storage --> (Block) iSCSI --> Targets --> Add Target`.
+  :menuselection:`Sharing --> (Block) iSCSI --> Targets --> Add Target`.
 
 * The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
   :menuselection:`Services --> CIFS`. The "Enable home directories", "Enable home directories browsing", "Home directories", and "Homes auxiliary parameters"
@@ -322,6 +322,24 @@ The following fields have been added or deleted:
 * The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
 
 * The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
+
+.. _What's New Since 9.3-RELEASE:
+
+What's New Since 9.3-RELEASE
+----------------------------
+
+Beginning with version 9.3, FreeNAS® uses a "rolling release" model instead of point releases. The new :ref:`Update` mechanism makes it easy to keep
+up-to-date with the latest security fixes, bug fixes, and new features. Some updates affect the user interface so this section lists any functional changes
+that have occurred since 9.3-RELEASE.
+
+.. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
+   system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
+
+* The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
+  :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
+
+* The "Available Size Threshold" field has been renamed to "Available Space Threshold" in
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
