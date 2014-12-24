@@ -274,10 +274,7 @@ class Manifest(object):
     def Packages(self):
         pkgs = []
         for p in self._dict[PACKAGES_KEY]:
-            pkg = Package.Package(p[Package.NAME_KEY], p[Package.VERSION_KEY], p[Package.CHECKSUM_KEY])
-            if Package.UPGRADES_KEY in p:
-                for upd in p[Package.UPGRADES_KEY]:
-                    pkg.AddUpdate(upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
+            pkg = Package.Package(p)
             pkgs.append(pkg)
         return pkgs
 
