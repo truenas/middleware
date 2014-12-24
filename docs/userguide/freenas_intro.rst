@@ -167,6 +167,8 @@ issued since FreeBSD 9.3 RELEASE.
 
 * `Net-SNMP <http://net-snmp.sourceforge.net/>`_ has replaced :command:`bsnmpd` as the SNMP service.
 
+* The :file:`/usr/local/share/snmp/mibs/FREENAS-MIB.txt` MIB has been added for making ZFS statistics available via :command:`net-snmp`.
+
 * Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
   and optional SSL encryption.
 
