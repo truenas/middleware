@@ -858,7 +858,7 @@ summarized in Table 5.10a.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               | mandatory; input a descriptive name for the certificate                                         |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Certificate          | string               | mandatory; paste the contents of the certificate                                                |
@@ -892,7 +892,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Signing Certificate  | drop-down menu       | mandatory; select the CA which was previously imported or created using :ref:`CAs`              |
 | Authority            |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |
