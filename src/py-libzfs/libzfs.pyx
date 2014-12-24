@@ -362,6 +362,7 @@ cdef class ZFSVdev(object):
             'type': self.type,
             'path': self.path,
             'guid': self.guid,
+            'status': self.status,
             'children': [i.__getstate__() for i in self.children]
         }
 
@@ -370,11 +371,19 @@ cdef class ZFSVdev(object):
 
     property type:
         def __get__(self):
-            return self.nvlist.get('type')
+            value = self.nvlist.get('type')
+            if value == 'raidz':
+                return value + str(self.nvlist.get('nparity'))
+
+            return value
 
         def __set__(self, value):
-            if value not in ('root', 'disk', 'file', 'raidz', 'raidz2', 'raidz3', 'mirror'):
+            if value not in ('root', 'disk', 'file', 'raidz1', 'raidz2', 'raidz3', 'mirror'):
                 raise ValueError('Invalid vdev type')
+
+            if value.startswith('raidz'):
+                self.nvlist['type'] = 'raidz'
+                self.nvlist['nparity'] = value[-1]
 
             self.nvlist['type'] = value
 
@@ -384,6 +393,11 @@ cdef class ZFSVdev(object):
 
         def __set__(self, value):
             self.nvlist['path'] = value
+
+    property status:
+        def __get__(self):
+            stats = self.nvlist['vdev_stats']
+            return libzfs.zpool_state_to_name(stats[1], stats[2])
 
     property size:
         def __get__(self):
@@ -591,6 +605,10 @@ cdef class ZFSPool(object):
     def attach_vdev(self, vdev):
         pass
 
+    def delete(self):
+        if libzfs.zpool_destroy(self._zpool, "destroy") != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
+
     def start_scrub(self):
         if libzfs.zpool_scan(self._zpool, zfs.POOL_SCAN_SCRUB) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
@@ -649,11 +667,17 @@ cdef class ZFSDataset(object):
     def rename(self, new_name):
         pass
 
+    def delete(self):
+        if libzfs.zfs_destroy(self._handle, True) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
+
     def mount(self):
-        libzfs.zfs_mount(self._handle, NULL, 0)
+        if libzfs.zfs_mount(self._handle, NULL, 0) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
 
     def umount(self):
-        libzfs.zfs_unmountall(self._handle, 0)
+        if libzfs.zfs_unmountall(self._handle, 0) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
 
 
 cdef class ZFSSnapshot(object):
