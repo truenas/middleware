@@ -351,7 +351,7 @@ class ZfsDatasetUmountTask(ZfsBaseTask):
 
 class ZfsDatasetCreateTask(Task):
     def verify(self, pool_name, path, params=None):
-        return ['system']
+        return ['zpool:{0}'.format(pool_name)]
 
     def run(self, pool_name, path, params=None):
         try:
@@ -362,36 +362,38 @@ class ZfsDatasetCreateTask(Task):
             raise TaskException(errno.EFAULT, str(err))
 
 
-class ZfsVolumeCreateTask(ZfsBaseTask):
+class ZfsVolumeCreateTask(Task):
     def verify(self, pool, path, size, params=None):
-        pool = zpool_cache.get(pool)
-        if path in pool['datasets']:
-            raise VerifyException(errno.EEXIST, "Dataset {0} on pool {1} already exists".format(pool, path))
-
-        return get_disk_names(self.dispatcher, pool)
+        return ['zpool:{0}'.format(pool)]
 
     def run(self, pool, path, size, params=None):
-        system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool)
+            pool.create(path, nvpair.NVList(otherdict=params))
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 class ZfsConfigureTask(ZfsBaseTask):
-    def verify(self, pool, path, params=None):
-        return super(ZfsConfigureTask, self).verify(path)
+    def run(self, name, properties):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(name)
+            for k, v in properties.items():
+                dataset.properties[k].value = v
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
-    def run(self, pool, path, params=None):
-        system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
 
-
-class ZfsDestroyTask(Task):
-    def verify(self, pool, path, params=None):
-        pool = zpool_cache.get(pool)
-        if path in pool['datasets']:
-            raise VerifyException(errno.EEXIST, "Dataset {0} on pool {1} already exists".format(pool, path))
-
-        return
-
-    def run(self, pool, path, params=None):
-        system('/sbin/zfs', 'create', '{0}/{1}'.format(pool, path))
+class ZfsDestroyTask(ZfsBaseTask):
+    def run(self, name):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(name)
+            dataset.delete()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 def get_disk_names(dispatcher, pool):
