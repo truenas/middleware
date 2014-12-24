@@ -18,11 +18,23 @@ class Package(object):
     _dirty = False
 
 
-    def __init__(self, name, version, checksum):
+    def __init__(self, *args):
         self._dict = {}
-        self.SetName(name)
-        self.SetVersion(version)
-        self.SetChecksum(checksum)
+        # We can be called with a dictionary, or with (name, version, checksum)
+        if len(args) == 1 and isinstance(args[0], dict):
+            tdict = args[0]
+            for k in tdict.keys():
+                if k == UPGRADES_KEY:
+                    updates = []
+                    for update in tdict[UPGRADES_KEY]:
+                        updates.append(update.copy())
+                    self._dict[UPGRADES_KEY] = updates
+                else:
+                    self._dict[k] = tdict[k]
+        else:
+            if len(args) > 0: self.SetName(args[0])
+            if len(args) > 1: self.SetVersion(args[1])
+            if len(args) > 2: self.SetChecksum(args[2])
         return
 
     def dict(self):
