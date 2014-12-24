@@ -334,6 +334,9 @@ Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found
 `2.1 amd64 <https://www.freebsd.org/releases/9.3R/hardware.html#proc>`_. Beginning with version 9.3, FreeNAS® is only available for 64-bit (also known as
 amd64) processors.
 
+.. note:: beginning with version 9.3, FreeNAS® boots from a GPT partition. This means that the system BIOS must be able to boot using either the legacy BIOS
+          firmware interface or EFI.
+
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
 You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions

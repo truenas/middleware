@@ -280,6 +280,8 @@ If the system does not boot into FreeNAS®, there are several things that you ca
 First, check the system BIOS and see if there is an option to change the USB emulation from CD/DVD/floppy to hard drive. If it still will not boot, check to
 see if the card/drive is UDMA compliant.
 
+If the system BIOS does not support EFI with BIOS emulation, see if it has an option to boot using legacy BIOS mode.
+
 Some users have found that some brands of 4 GB USB sticks do not work as they are not really 4 GB in size, but changing to a 8 GB stick fixes the problem.
 
 If you are writing the image to a compact flash card, make sure that it is MSDOS formatted.
@@ -289,6 +291,9 @@ If the system starts to boot but hangs with this repeated error message::
  run_interrupt_driven_hooks: still waiting after 60 seconds for xpt_config
 
 go into the system BIOS and see if there is an onboard device configuration for a 1394 Controller. If so, disable the device and try booting again.
+
+If the system starts to boot but hangs at a *mountroot>* prompt, follow the instructions in
+`Workaround/Semi-Fix for Mountroot Issues with 9.3 <https://forums.freenas.org/index.php?threads/workaround-semi-fix-for-mountroot-issues-with-9-3.26071/>`_.
 
 If the burned image fails to boot and the image was burned using a Windows system, wipe the USB stick before trying a second burn using a utility such as
 `Active@ KillDisk <http://how-to-erase-hard-drive.com/>`_. Otherwise, the second burn attempt will fail as Windows does not understand the partition which was
