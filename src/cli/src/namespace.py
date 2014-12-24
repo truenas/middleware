@@ -26,10 +26,10 @@
 #####################################################################
 
 
-import socket
+import collections
 from texttable import Texttable
 from jsonpointer import resolve_pointer, set_pointer
-from output import output_dict, output_table, output_msg
+from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii
 
 
 def description(descr):
@@ -116,14 +116,11 @@ class EntityNamespace(Namespace):
         self.entity_commands = None
         self.allow_edit = True
         self.allow_create = True
+        self.create_command = self.CreateEntityCommand
+        self.delete_command = self.DeleteEntityCommand
 
     class PropertyMapping(object):
-        type_conversions = {
-            int: lambda x: int(x),
-            bool: lambda x: bool(x)
-        }
-
-        def __init__(self, name, descr, get, set=None, list=False, type=str):
+        def __init__(self, name, descr, get, set=None, list=False, type=ValueType.STRING):
             self.name = name
             self.descr = descr
             self.get = get
@@ -138,9 +135,6 @@ class EntityNamespace(Namespace):
             return resolve_pointer(obj, self.get)
 
         def do_set(self, obj, value):
-            if self.type != str:
-                value = self.type_conversions[self.type]
-
             if callable(self.set):
                 self.set(obj, value)
                 return
@@ -201,7 +195,7 @@ class EntityNamespace(Namespace):
         def run(self, context, args, kwargs):
             cols = []
             for col in filter(lambda x: x.list, self.parent.property_mappings):
-                cols.append((col.descr, col.get))
+                cols.append(Column(col.descr, col.get, col.type))
 
             output_table(self.parent.query(), cols)
 
@@ -214,14 +208,14 @@ class EntityNamespace(Namespace):
             if len(args) != 0:
                 pass
 
-            values = {}
+            values = collections.OrderedDict()
             entity = self.parent.entity
 
             for mapping in self.parent.parent.property_mappings:
                 if not mapping.get:
                     continue
 
-                values[mapping.name] = mapping.do_get(entity)
+                values[mapping.descr if output_is_ascii() else mapping.name] = mapping.do_get(entity)
 
             output_dict(values)
 
@@ -254,6 +248,8 @@ class EntityNamespace(Namespace):
             for k, v in kwargs.items():
                 prop = self.parent.parent.get_mapping(k)
                 prop.do_set(entity, v)
+
+            self.parent.modified = True
 
     @description("Saves item")
     class SaveEntityCommand(Command):
@@ -302,6 +298,9 @@ class EntityNamespace(Namespace):
         def __init__(self, parent):
             self.parent = parent
 
+        def run(self, context, args, kwargs):
+            self.parent.delete(args[0])
+
     def has_property(self, prop):
         return any(filter(lambda x: x.name == prop, self.property_mappings))
 
@@ -332,8 +331,8 @@ class EntityNamespace(Namespace):
 
         if self.allow_create:
             base.update({
-                'create': self.CreateEntityCommand(self),
-                'delete': self.DeleteEntityCommand(self)
+                'create': self.create_command(self),
+                'delete': self.delete_command(self)
             })
 
         return base

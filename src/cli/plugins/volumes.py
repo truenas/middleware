@@ -28,7 +28,7 @@
 
 import time
 from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
-from output import output_msg, output_table, format_datetime
+from output import output_msg, output_table, output_tree
 
 
 class VolumeCreateNamespace(Namespace):
@@ -56,11 +56,55 @@ class ShowTopologyCommand(Command):
         self.parent = parent
         self.name = name
 
-    def __print_vdev(self):
-        pass
+    def run(self, context, args, kwargs):
+        def print_vdev(vdev):
+            if vdev['type'] == 'disk':
+                return '{0} (disk)'.format(vdev['path'])
+            else:
+                return vdev['type']
+
+        volume = self.parent.get_one(self.name)
+        tree = filter(lambda x: len(x['children']) > 0, map(lambda (k, v): {'type': k, 'children': v}, volume['topology'].items()))
+        output_tree(tree, '/children', print_vdev)
+
+
+@description("Shows volume disks status")
+class ShowDisksCommand(Command):
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
 
     def run(self, context, args, kwargs):
         volume = self.parent.get_one(self.name)
+        result = []
+
+        for i in iterate_vdevs(volume['topology']):
+            disk = context.connection.call_sync('disk.query', [('name', '=', i['path'])])
+            result.append({
+                'name': i['path'],
+                'status': i['status'],
+                'size': disk['mediasize'],
+                'serial': disk['serial']
+            })
+
+        output_table(result, [
+            ('Name', '/path'),
+            ('Status', '/status')
+        ])
+
+@description("Shows volume disks status")
+class ShowDisksCommand(Command):
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+
+    def run(self, context, args, kwargs):
+        volume = self.parent.get_one(self.name)
+        result = list(iterate_vdevs(volume['topology']))
+        output_table(result, [
+            ('Name', '/path'),
+            ('Status', '/status')
+        ])
 
 
 @description("Scrubs volume")
@@ -73,8 +117,40 @@ class ScrubCommand(Command):
 
 
 class DatasetsNamespace(EntityNamespace):
-    def __init__(self, volume, path):
-        pass
+    def __init__(self, volume, path, context):
+        super(DatasetsNamespace, self).__init__(path, context)
+        self.add_property(
+            descr='Name',
+            name='name',
+            get='/name',
+            list=True)
+
+        self.add_property(
+            descr='Used',
+            name='status',
+            get='/status',
+            set=None,
+            list=True)
+
+        self.add_property(
+            descr='Available',
+            name='mountpoint',
+            get='/mountpoint',
+            list=True)
+
+        self.add_property(
+            descr='Compression',
+            name='mountpoint',
+            get='/mountpoint',
+            list=True)
+
+        self.add_property(
+            descr='Compression ratio',
+            name='mountpoint',
+            get='/mountpoint',
+            list=True)
+
+        self.primary_key = self.get_mapping('name')
 
 
 @description("Volumes namespace")
@@ -108,8 +184,13 @@ class VolumesNamespace(EntityNamespace):
         self.primary_key = self.get_mapping('name')
         self.entity_commands = lambda vol: {
             'show-topology': ShowTopologyCommand(self, vol),
+            'show-disks': ShowDisksCommand(self, vol),
             'scrub': ScrubCommand(vol)
         }
+
+        self.entity_namespaces = lambda vol: [
+            DatasetsNamespace(vol, vol, context)
+        ]
 
     def query(self):
         return self.context.connection.call_sync('volumes.query')
@@ -119,6 +200,16 @@ class VolumesNamespace(EntityNamespace):
 
     def delete(self, name):
         self.context.submit_task('volume.destroy', name)
+
+
+def iterate_vdevs(topology):
+    for group in topology.values():
+        for vdev in group:
+            if vdev['type'] == 'disk':
+                yield vdev
+            elif 'children' in vdev:
+                for subvdev in vdev['children']:
+                    yield subvdev
 
 
 def _init(context):

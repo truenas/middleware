@@ -42,10 +42,11 @@ import json
 import gettext
 import getpass
 import traceback
+import Queue
 import signal
 from descriptions import events, tasks
 from namespace import Namespace, RootNamespace, Command
-from output import output_lock, output_msg
+from output import ValueType, ProgressBar, output_lock, output_msg, read_value
 from dispatcher.client import Client, ClientError
 from commands import ExitCommand, PrintenvCommand, SetenvCommand
 
@@ -66,6 +67,7 @@ EVENT_MASKS = [
     'client.logged',
     'task.created',
     'task.updated',
+    'task.progress',
     'service.stopped',
     'service.started',
     'volume.created',
@@ -80,22 +82,8 @@ class VariableStore(object):
             self.choices = choices
             self.value = default
 
-        def __str__(self):
-            if self.type == int:
-                return str(self.value)
-
-            if self.type == bool:
-                return 'true' if self.value else 'false'
-
-            return self.value
-
         def set(self, value):
-            try:
-                if self.type == int:
-                    value = int(value)
-            except ValueError:
-                raise
-
+            value = read_value(value, self.type)
             if self.choices is not None and value not in self.choices:
                 raise ValueError(_("Value not on the list of possible choices"))
 
@@ -103,13 +91,13 @@ class VariableStore(object):
 
     def __init__(self):
         self.variables = {
-            'output-format': self.Variable('ascii', str, ['ascii', 'json']),
-            'datetime-format': self.Variable('natural', str),
-            'language': self.Variable(os.getenv('LANG', 'C'), str),
-            'prompt': self.Variable('{host}:{path}>', str),
-            'timeout': self.Variable(10, int),
-            'tasks-blocking': self.Variable(False, bool),
-            'show-events': self.Variable(True, bool)
+            'output-format': self.Variable('ascii', ValueType.STRING, ['ascii', 'json']),
+            'datetime-format': self.Variable('natural', ValueType.STRING),
+            'language': self.Variable(os.getenv('LANG', 'C'), ValueType.STRING),
+            'prompt': self.Variable('{host}:{path}>', ValueType.STRING),
+            'timeout': self.Variable(10, ValueType.NUMBER),
+            'tasks-blocking': self.Variable(False, ValueType.BOOLEAN),
+            'show-events': self.Variable(True, ValueType.BOOLEAN)
         }
 
     def load(self, filename):
@@ -122,8 +110,7 @@ class VariableStore(object):
         return self.variables[name].value
 
     def get_all(self):
-        for name, var in self.variables.items():
-            yield (name, var.value)
+        return self.variables.items()
 
     def get_all_printable(self):
         for name, var in self.variables.items():
@@ -144,6 +131,8 @@ class Context(object):
         self.variables = VariableStore()
         self.root_ns = RootNamespace('')
         self.event_masks = ['*']
+        self.event_divert = False
+        self.event_queue = Queue.Queue()
         config.instance = self
 
     def start(self):
@@ -222,6 +211,13 @@ class Context(object):
             return
 
     def print_event(self, event, data):
+        if self.event_divert:
+            self.event_queue.put((event, data))
+            return
+
+        if event == 'task.progress':
+            return
+
         output_lock.acquire()
         self.ml.blank_readline()
 
@@ -234,10 +230,26 @@ class Context(object):
         output_lock.release()
 
     def submit_task(self, name, *args):
-        tid = self.connection.call_sync('task.submit', name, args)
+        if not self.variables.get('tasks-blocking'):
+            tid = self.connection.call_sync('task.submit', name, args)
+            return tid
+        else:
+            self.event_divert = True
+            tid = self.connection.call_sync('task.submit', name, args)
+            progress = ProgressBar()
+            while True:
+                event, data = self.event_queue.get()
 
-        #if self.variables.get('blocking'):
+                if event == 'task.progress' and data['id'] == tid:
+                    progress.update(percentage=data['percentage'], message=data['message'])
 
+                if event == 'task.updated' and data['id'] == tid:
+                    progress.update(message=data['state'])
+                    if data['state'] == 'FINISHED':
+                        progress.finish()
+                        break
+
+        self.event_divert = False
         return tid
 
 
@@ -338,11 +350,11 @@ class MainLoop(object):
             nsfound = False
             cmdfound = False
 
-            if token in self.builtin_commands.keys():
-                self.builtin_commands[token].run(self.context, tokens, kwargs)
-                break
-
             try:
+                if token in self.builtin_commands.keys():
+                    self.builtin_commands[token].run(self.context, tokens, kwargs)
+                    break
+
                 for ns in self.cwd.namespaces():
                     if token == ns.get_name():
                         self.cd(ns)

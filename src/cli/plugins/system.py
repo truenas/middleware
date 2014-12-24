@@ -27,7 +27,7 @@
 
 
 from namespace import Namespace, Command, IndexCommand, description
-from output import output_dict, output_table, format_datetime
+from output import Column, ValueType, output_dict, output_table
 from descriptions import events
 from utils import parse_query_args
 
@@ -51,8 +51,8 @@ class EventsCommand(Command):
     def run(self, context, args, kwargs):
         items = context.connection.call_sync('event.query', *parse_query_args(args, kwargs))
         output_table(items, [
-            ('Event name', lambda t: events.translate(context, t['name'], t['args'])),
-            ('Occurred at', lambda t: format_datetime(t['timestamp']))
+            Column('Event name', lambda t: events.translate(context, t['name'], t['args'])),
+            Column('Occurred at', '/timestamp', ValueType.TIME)
         ])
 
 @description("System namespace")

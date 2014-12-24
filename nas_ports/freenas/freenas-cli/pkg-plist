@@ -8,6 +8,7 @@
 /usr/local/lib/freenascli/src/descriptions/events.py
 /usr/local/lib/freenascli/src/descriptions/tasks.py
 /usr/local/lib/freenascli/plugins/accounts.py
+/usr/local/lib/freenascli/plugins/disks.py
 /usr/local/lib/freenascli/plugins/service.py
 /usr/local/lib/freenascli/plugins/system.py
 /usr/local/lib/freenascli/plugins/tasks.py

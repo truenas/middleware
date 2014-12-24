@@ -28,6 +28,7 @@
 
 import crypt
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
+from output import ValueType
 
 @description("foo")
 class UsersNamespace(EntityNamespace):
@@ -53,7 +54,7 @@ class UsersNamespace(EntityNamespace):
             get='/id',
             set=None,
             list=True,
-            type=int)
+            type=ValueType.NUMBER)
 
         self.add_property(
             descr='Primary group',
@@ -150,9 +151,15 @@ class GroupsNamespace(EntityNamespace):
     def get_one(self, name):
         return self.context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
 
-    def set(self, entity, name, value, context):
-        pass
+    def save(self, entity, new=False):
+        if new:
+            self.context.submit_task('groups.create', entity)
+            return
 
+        entity = entity.copy()
+        gid = entity.pop('id')
+        del entity['builtin']
+        self.context.submit_task('groups.update', gid, entity)
 
 @description("Service namespace")
 class AccountNamespace(Namespace):

@@ -29,7 +29,7 @@
 import time
 from descriptions import tasks
 from namespace import Namespace, IndexCommand, Command, description
-from output import output_msg, output_table, format_datetime
+from output import Column, ValueType, output_msg, output_table
 
 
 @description("Lists system services")
@@ -38,11 +38,11 @@ class ListCommand(Command):
         self.context = context
         tasks = context.connection.call_sync('task.query')
         output_table(tasks, [
-            ('ID', '/id'),
-            ('Started at', lambda t: format_datetime(t['started_at'])),
-            ('Finished at', lambda t: format_datetime(t['finished_at'])),
-            ('Description', self.describe_task),
-            ('State', self.describe_state)
+            Column('ID', '/id'),
+            Column('Started at', '/started_at', ValueType.TIME),
+            Column('Finished at', '/finished_at', ValueType.TIME),
+            Column('Description', self.describe_task),
+            Column('State', self.describe_state)
         ])
 
     def describe_state(self, task):
@@ -63,8 +63,7 @@ class ListCommand(Command):
 class SubmitCommand(Command):
     def run(self, context, args, kwargs):
         name = args.pop(0)
-        tid = context.connection.call_sync('task.submit', name, args)
-        output_msg('Task {0} started'.format(tid))
+        context.submit_task(name, *args)
 
 
 @description("Service namespace")

@@ -28,7 +28,7 @@
 
 import os
 from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
-from output import output_msg, output_table, format_datetime
+from output import ValueType, output_msg, output_table
 
 
 @description("Provides information about installed disks")
@@ -43,12 +43,13 @@ class DisksNamespace(EntityNamespace):
             set=None,
             list=True)
 
-        #self.add_property(
-        #    descr='Size',
-        #    name='name',
-        #    get='/mediasize',
-        #    set=None,
-        #    list=True)
+        self.add_property(
+            descr='Size',
+            name='mediasize',
+            get='/mediasize',
+            set=None,
+            list=True,
+            type=ValueType.SIZE)
 
         self.add_property(
             descr='Online',
@@ -56,7 +57,7 @@ class DisksNamespace(EntityNamespace):
             get='/online',
             set=None,
             list=True,
-            type=bool)
+            type=ValueType.BOOLEAN)
 
         self.primary_key = self.get_mapping('name')
         self.allow_create = False
@@ -75,7 +76,12 @@ class DisksNamespace(EntityNamespace):
 @description("Formats given disk")
 class FormatDiskCommand(Command):
     def __init__(self, parent, name):
-        pass
+        self.disk = parent.get_one(name)
+
+    def run(self, context, args, kwargs):
+        fstype = kwargs.pop('fstype', 'freebsd-zfs')
+        swapsize = kwargs.pop('swapsize', '2048M')
+        context.submit_task('disk.format.gpt', self.disk['path'], fstype)
 
 
 @description("Erases all data on disk safely")

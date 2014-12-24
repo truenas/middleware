@@ -27,7 +27,7 @@
 
 import sys
 from namespace import Command, CommandException, description
-from output import output_value, output_dict
+from output import Column, ValueType, output_value, output_table, format_value
 
 
 @description("Sets variable value")
@@ -45,7 +45,10 @@ class SetenvCommand(Command):
 class PrintenvCommand(Command):
     def run(self, context, args, kwargs):
         if len(args) == 0:
-            output_dict({k: v for k, v in context.variables.get_all_printable()}, key_label='Variable name', value_label='Value')
+            output_table(context.variables.get_all(), [
+                Column('Name', lambda (name, var): name),
+                Column('Value', lambda (name, var): format_value(var.value, var.type))
+            ])
             return
 
         if len(args) == 1:
