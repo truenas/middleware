@@ -232,7 +232,7 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 |                           |                | is needed, input it here                                                                                     |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| NIC                       | drop-down menu | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; can be used to specify    |
+| NIC                       | drop-down menu | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is checked; can be used to specify      |
 |                           |                | the interface to use for jail connections                                                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
