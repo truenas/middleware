@@ -343,6 +343,9 @@ that have occurred since 9.3-RELEASE.
 * The "Available Size Threshold" field has been renamed to "Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
+* The "Logical Block Size" field and "Disable Physical Block Size Reporting" checkbox have been added to
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 

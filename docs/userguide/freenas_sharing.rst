@@ -1386,6 +1386,15 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | Threshold          |                | alert                                                                                                                |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
+|                    |                | the default if the initiator requires a different block size                                                         |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K, check this box                                 |
+| Block Size         |                |                                                                                                                      |
+| Reporting          |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
