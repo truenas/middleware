@@ -238,10 +238,10 @@ If no users or groups are listed in the output of those commands, these commands
 If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
 taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of "AD timeout" to 60 seconds.
 
-.. _Troubleshooting AD:
+.. _Troubleshooting Tips:
 
-Troubleshooting AD
-~~~~~~~~~~~~~~~~~~
+Troubleshooting Tips
+~~~~~~~~~~~~~~~~~~~~
 
 If you are running AD in a 2003/2008 mixed domain, see this
 `forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
@@ -268,6 +268,41 @@ Try creating a Computer entry on the Windows server's OU. When creating this ent
 under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
 "NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
 Controller" field of :menuselection:`Directory Service --> Active Directory`.
+
+.. _If the System Will not Join the Domain:
+
+If the System Will not Join the Domain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the system will not join the active directory domain, try running the following commands in the order listed. If any of the commands fail or result in a
+traceback, create a bug report at `bugs.freenas.org <http://bugs.freenas.org>`_ that includes the commands in the order which they were run and the exact
+wording of the error message or traceback.
+
+Start with these commands, where the :command:`echo` command should return a value of *0* and the :command:`klist` command should show a Kerberos ticket:
+::
+ sqlite3 /data/freenas-v1.db "update directoryservice_activedirectory set ad_enable=1;"
+ echo $?
+ service ix-kerberos start
+ service ix-nsswitch start
+ service ix-kinit start
+ service ix-kinit status
+ klist
+
+Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode"::
+
+ service ix-sssd start
+ service sssd start
+
+Finally, run these commands. Again, the :command:`echo` command should return a *0*:
+::
+ python /usr/local/www/freenasUI/middleware/notifier.py start cifs
+ service ix-activedirectory start
+ service ix-activedirectory status
+ echo $?
+ python /usr/local/www/freenasUI/middleware/notifier.py restart cifs
+ service ix-pam start
+ service ix-cache start &
+
 
 .. _LDAP:
 
