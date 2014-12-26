@@ -1250,6 +1250,9 @@ on the FreeNAS® system, while restricting them from logging into the system usi
 Test the configuration from another system by running the :command:`sftp`, :command:`ssh`, and :command:`scp` commands as the user. The :command:`sftp`
 and :command:`scp` commands should work but the :command:`ssh`  should fail.
 
+.. note:: some utilities such as WinSCP and Filezilla can bypass the scponly shell. This section assumes that users are accessing the system using the command
+   line versions of :command:`scp` and :command:`sftp`.
+
 .. _Troubleshooting SSH:
 
 Troubleshooting SSH
