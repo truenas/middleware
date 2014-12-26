@@ -346,6 +346,9 @@ that have occurred since 9.3-RELEASE.
 * The "Logical Block Size" field and "Disable Physical Block Size Reporting" checkbox have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
+* A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
+  connected initiators.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
