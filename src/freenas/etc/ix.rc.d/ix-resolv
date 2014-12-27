@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-resolv
-# REQUIRE: resolv
+# BEFORE: resolv
 # KEYWORD: nojail
 
 . /etc/rc.freenas
@@ -16,7 +16,7 @@ ix_resolv_start()
 		cp /etc/resolv.conf /etc/resolv.conf.bak
 	fi
 
-	/usr/local/libexec/nas/generate_resolv_conf.py
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/libexec/nas/generate_resolv_conf.py
 }
 
 ix_resolv_stop()
