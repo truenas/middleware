@@ -20,7 +20,10 @@ from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled
 )
-from freenasUI.network.models import GlobalConfiguration
+from freenasUI.network.models import (
+    GlobalConfiguration,
+    Interfaces
+)
 from freenasUI.services.models import (
     CIFS,
     DomainController
@@ -62,7 +65,7 @@ def main():
             print >> sys.stderr, "ix-resolv: ERROR: %s" % e
             sys.exit(1)
 
-    if not nameservers:
+    if not nameservers and Interfaces.objects.filter(int_dhcp=True):
         sys.exit(0)
 
     try:
