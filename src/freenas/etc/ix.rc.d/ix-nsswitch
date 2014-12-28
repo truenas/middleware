@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-nsswitch
-# REQUIRE: nsswitch
+# BEFORE: nsswitch
+# REQUIRE: resolv
 
 . /etc/rc.freenas
 
