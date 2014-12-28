@@ -6,6 +6,7 @@
 # PROVIDE: ix-resolv
 # BEFORE: resolv
 # KEYWORD: nojail
+# REQUIRE: nsswitch
 
 . /etc/rc.freenas
 

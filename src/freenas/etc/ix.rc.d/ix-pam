@@ -4,8 +4,7 @@
 #
 
 # PROVIDE: ix-pam
-# REQUIRE: root
-# REQUIRE: ix-nsswitch
+# REQUIRE: root resolv
 # BEFORE: NETWORK
 
 . /etc/rc.freenas
