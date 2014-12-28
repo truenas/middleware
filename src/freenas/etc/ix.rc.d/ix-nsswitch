@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-nsswitch
 # BEFORE: nsswitch
+# REQUIRE: rtsold
 
 . /etc/rc.freenas
 
