@@ -307,7 +307,6 @@ require([
 
     confirm_service = function(srv, msg) {
 
-        console.log(srv, msg, dom.byId(srv + "_toggle"));
         var dialog = new Dialog({
             title: gettext('Warning!'),
             parseOnLoad: true,
