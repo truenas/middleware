@@ -503,7 +503,9 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             else:
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = _notifier.user_create(
-                username=str(self.cleaned_data['bsdusr_username']),
+                username=self.cleaned_data['bsdusr_username'].encode(
+                    'utf8', 'ignore'
+                ),
                 fullname=self.cleaned_data['bsdusr_full_name'].encode(
                     'utf8', 'ignore'
                 ).replace(':', ''),
