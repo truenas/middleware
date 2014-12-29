@@ -190,6 +190,13 @@ def main():
                             lunthreshold = int(zfslist[zvolname].volsize * (t2e.iscsi_extent.iscsi_target_extent_avail_threshold / 100.0))
                     path = "/dev/" + path
                     unmap = True
+                else:
+                    if t2e.iscsi_extent.iscsi_target_extent_avail_threshold and os.path.exists(path):
+                        try:
+                            stat = os.stat(path)
+                            lunthreshold = int(stat.st_size * (t2e.iscsi_extent.iscsi_target_extent_avail_threshold / 100.0))
+                        except OSError:
+                            pass
             if os.path.exists(path):
                 cf_contents.append("\t\t\n")
                 if t2e.iscsi_lunid is None:
