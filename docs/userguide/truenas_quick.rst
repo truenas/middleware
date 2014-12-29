@@ -70,48 +70,6 @@ seen in Example 3a. In this example, the TrueNAS® system has one network interf
  You may try the following URLs to access the web user interface:
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
-Activating the License and Logging In
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the TrueNAS®
-system.
-
-The first time you connect, you will be presented with the EULA shown in `Appendix A`_. Click the "I agree" button to proceed to the license activation screen
-shown in Figure 3.1a.
-
-**Figure 3.1a: License Activation Screen**
-
-|1000000000000351000001FE0607567B_png|
-
-.. |1000000000000351000001FE0607567B_png| image:: images/activate.png
-    :width: 6.9252in
-    :height: 4.1252in
-
-Click the hyperlink "TrueNAS® Request File" and email the automatically generated file to activate@ixsystems.com. Once you receive the license file, use the
-Browse button to locate the file and press Activate to apply the license. A message will indicate that the system is rebooting. After a moment or so, refresh
-your browser.
-
-Next, you should be prompted to create a password for the *root* user, as seen in Figure 3.1b.
-
-**Figure 3.1b: Set the Root Password**
-
-|10000000000001E000000191AA80FB08_png|
-
-.. |10000000000001E000000191AA80FB08_png| image:: images/root.png
-    :width: 4.0335in
-    :height: 3.3417in
-
-Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
-password. Once the password has been input and confirmed, you should see the administrative GUI as shown in the example in Figure 3.1c.
-
-**Figure 3.1c: TrueNAS® Graphical Configuration Menu**
-
-|100000000000062E00000213491B6158_png|
-
-.. |100000000000062E00000213491B6158_png| image:: images/gui.png
-    :width: 6.9252in
-    :height: 2.3047in
-
 The rest of this Guide describes all of the configuration screens available within the TrueNAS® graphical administrative interface. The screens are listed in
 the order that they appear within the tree, or the left frame of the graphical interface.
 **iXsystems recommends that you contact your support technician for initial setup and configuration assistance.**
