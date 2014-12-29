@@ -1405,6 +1405,11 @@ class ZFSDataset(Form):
                 "Dataset names must begin with an "
                 "alphanumeric character and may only contain "
                 "\"-\", \"_\", \":\", \" \" and \".\"."))
+        path = '/mnt/%s/%s' % (self._fs, name)
+        if os.path.exists(path):
+            raise forms.ValidationError(
+                _('The path %s already exists.') % path
+            )
         return name
 
     def clean_dataset_recordsize(self):
