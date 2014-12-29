@@ -2281,7 +2281,11 @@ class notifier:
         command = "/usr/local/bin/net groupmap add type=%s unixgroup='%s' ntgroup='%s'"
 
         ret = False
-        proc = self._pipeopen(command % (type, unixgroup, ntgroup))
+        proc = self._pipeopen(command % (
+            type,
+            unixgroup.encode('utf8'),
+            ntgroup.encode('utf8')
+        ))
         proc.communicate()
         if proc.returncode == 0:
             ret = True
