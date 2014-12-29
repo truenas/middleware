@@ -9,6 +9,8 @@ class Migration(DataMigration):
     def forwards(self, orm):
         for o in orm['system.Sysctl'].objects.all():
             tun = orm['system.Tunable']()
+            if orm['system.Tunable'].objects.filter(tun_var=o.sysctl_mib).exists():
+                continue
             tun.tun_var = o.sysctl_mib
             tun.tun_value = o.sysctl_value
             tun.tun_type = 'sysctl'
