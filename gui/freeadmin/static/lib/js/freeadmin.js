@@ -1222,6 +1222,8 @@ require([
 
         if(type.get('value') == 'Disk' && select.get('value').indexOf('zvol/') == 0) {
             domStyle.set(trt, "display", "table-row");
+        } else if(type.get('value') == 'File') {
+            domStyle.set(trt, "display", "table-row");
         } else {
             domStyle.set(trt, "display", "none");
         }
