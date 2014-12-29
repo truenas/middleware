@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-01-30 08:36+0000\n"
-"Last-Translator: Ersan <yakazan@gmail.com>\n"
+"PO-Revision-Date: 2014-12-25 22:18+0000\n"
+"Last-Translator: Simor <batio3pzt@aol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1391071017.0\n"
+"X-POOTLE-MTIME: 1419545898.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4115,6 +4115,7 @@ msgstr "Bağlantı noktası seçeneklerini buraya girin"
 msgid "Remote Replication Host"
 msgstr "Ana Bilgisayarı Uzaktan Kopyala"
 
+# Çeviri anlamı hatalı
 #: storage/models.py:644
 msgid "Remote Replication Hosts"
 msgstr "Ana Bilgisayarları Uzaktan Kopyala"
@@ -4206,7 +4207,7 @@ msgstr "Aralık"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr "İki anlık görüntü girişimleri arasında ne kadar zaman geçmiştir."
+msgstr "İki anlık görüntü girişimleri arasında ne kadar zaman geçmiştir?"
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -5770,7 +5771,7 @@ msgstr "Aktif Birimler"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
-msgstr "ZFS Anlık Durum Görüntüsü"
+msgstr "ZFS Anlık Durum Görüntüleri"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
@@ -5851,7 +5852,8 @@ msgstr "İlerleme sırasında sistem yükü artacaktır."
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "Önceki anlık durum görüntüsüne almak istediğinize emin misiniz?"
+msgstr ""
+"Dataset'i bu anlık durum görüntüsü'ne geri almak istediğinize emin misiniz?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
@@ -5881,9 +5883,10 @@ msgstr "Sil"
 msgid "Delete snapshots"
 msgstr "Anlık durum görüntüsünü sil"
 
+# "peryodik" diye bir kelime yoktur. Kökü "periyot" tur.
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr "Peryodik Anlık Durum Görüntüsü"
+msgstr "Periyodik Anlık Durum Görüntüsü"
 
 #~ msgid "Periodic Snapshot Schedule"
 #~ msgstr "Periyodik Anlık Durum Görüntüsü Takvimi"
@@ -8806,57 +8809,62 @@ msgstr "Tara"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
+# Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 #, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (en hızlı)"
+msgstr "lz4 (en hızlı)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -8864,7 +8872,7 @@ msgstr ""
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (en iyi sıkıştırma)"
 
 #: choices.py:707
 #, fuzzy
@@ -8884,7 +8892,7 @@ msgstr ""
 #: api/resources.py:1875
 #, fuzzy
 msgid "Invalid snapshot"
-msgstr "Son Anlık Durum Görüntüsü"
+msgstr "Geçersiz Anlık Durum Görüntüsü"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -8923,7 +8931,7 @@ msgstr "Eylem"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Yedekleme"
 
 #: middleware/notifier.py:3822
 #, fuzzy
@@ -8936,7 +8944,7 @@ msgstr ""
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Bozulmuş"
 
 #: middleware/notifier.py:3849
 msgid "Down"
@@ -9363,7 +9371,7 @@ msgstr ""
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr ""
+msgstr "%(anlık durum görüntüsü)nün (%(yüzde)%%) gönderiliyor"
 
 #: storage/models.py:951
 msgid "Sending"
@@ -9599,7 +9607,7 @@ msgstr "Alan adı"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "Ağ bağlantısı kesilecek. Devam etmek istiyor musunuz?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -9777,21 +9785,20 @@ msgstr ""
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Cuma"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
@@ -9932,12 +9939,12 @@ msgstr ""
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP ldmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
 #, fuzzy
@@ -10317,7 +10324,7 @@ msgstr "%s başarıyla yüklendi"
 
 #: sharing/models.py:290
 msgid "Security"
-msgstr ""
+msgstr "Güvenlik"
 
 #: storage/forms.py:2052
 #, fuzzy
@@ -10406,7 +10413,7 @@ msgstr ""
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Varolan Sertifikayı içe aktar"
 
 #: choices.py:818
 #, fuzzy
@@ -10436,23 +10443,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10581,7 +10588,7 @@ msgstr "Yeni Parola"
 
 #: services/models.py:1747
 msgid "The Default Password is: davtest"
-msgstr ""
+msgstr "Öntanımlı parola: davtest"
 
 #: services/models.py:1752
 #, fuzzy
@@ -10600,7 +10607,7 @@ msgstr ""
 #: templates/services/core.html:164
 #: templates/sharing/index.html:21
 msgid "WebDAV"
-msgstr ""
+msgstr "WebDAV"
 
 #: sharing/models.py:335
 #, fuzzy
@@ -10626,7 +10633,7 @@ msgstr ""
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
-msgstr ""
+msgstr "WebDAV Paylaşımı"
 
 #: sharing/models.py:375
 #, fuzzy
@@ -11172,7 +11179,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -11437,7 +11444,7 @@ msgstr ""
 #: templates/storage/index.html:38
 #, fuzzy
 msgid "VMWare-Snapshot"
-msgstr "Anlık Durum Görüntüsü"
+msgstr "VMWare-Anlık Durum Görüntüsü"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
