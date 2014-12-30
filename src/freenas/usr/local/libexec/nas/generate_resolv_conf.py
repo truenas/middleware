@@ -65,7 +65,7 @@ def main():
             print >> sys.stderr, "ix-resolv: ERROR: %s" % e
             sys.exit(1)
 
-    if not nameservers and Interfaces.objects.filter(int_dhcp=True):
+    if not nameservers and Interfaces.objects.filter(int_dhcp=True) and len(Interfaces.objects.all()) != 0:
         sys.exit(0)
 
     try:
