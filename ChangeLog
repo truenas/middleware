@@ -1,8 +1,3 @@
-#6980	Unable to find domain controller in latest FreeNAS 9.3
-#7045	Plex PBI not transcoding mkv's post upgrade to 9.3 release
-#7122	Warn when stopping iscsi if there are connected sessions
-#7187	Changing MAC on DHCP jail corrupts jail meta files
-#7193	Error when trying to "Verify Install"
-#7203	FreeNAS_ActiveDirectory_Exception during boot: Unable to find DC
-#7254	"mount root" problem plaguing new 9.3 installs worked-around
-#7293	DNS configuration removed from GUI, but still in /etc/resolv.conf
+#7309	Misleading confirmation in "Destroy dataset" popup?
+#7313	can't creat group with chinese
+#7335	Issue with interface configuration after 9.3 upgrade
