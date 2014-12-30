@@ -539,5 +539,6 @@ Table 7.7a summarizes the configurable fields.
 
 The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
 configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to
-:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type *up*.
-This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add Interface" screen.
+:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type
+:command:`up`. This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add
+Interface" screen.

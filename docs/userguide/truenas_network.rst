@@ -1,31 +1,36 @@
-:orphan:
+.. index:: Network Configuration
+
+.. _Network Configuration:
 
 Network Configuration
----------------------
+=====================
 
 The Network section of the administrative GUI contains the following components for viewing and configuring the TrueNAS® system's network settings:
 
-*   `CARPs`_:_ used when configuring high availablility.
+*   :ref:`CARPs`: used when configuring high availablility.
 
-*   `Global Configuration`_: used to to set non-interface specific network settings.
+*   :ref:`Global Configuration`: used to to set non-interface specific network settings.
 
-*   `Interfaces`_: used to configure a specified interface's network settings.
+*   :ref:`Interfaces`: used to configure a specified interface's network settings.
 
-*   `IPMI`_: provides side-band management should the appliance become unavailable through the graphical administrative interface.
+*   :ref:`IPMI`: provides side-band management should the appliance become unavailable through the graphical administrative interface.
 
-*   `Link Aggregations`_: used to configure link aggregation and link failover.
+*   :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
-*   `Network Summary`_: provides an overview of the current network settings.
+*   :ref:`Network Summary`: provides an overview of the current network settings.
 
-*   `Static Routes`_: used to add static routes.
+*   :ref:`Static Routes`: used to add static routes.
 
-*   `VLANs`_: used to configure IEEE 802.1q tagging.
+*   :ref:`VLANs`: used to configure IEEE 802.1q tagging.
 
 Each of these is described in more detail in this section.
 
+.. index:: CARPs:
+
+.. _CARPs:
 
 CARPs
-~~~~~
+-----
 
 `Network -> CARPs` is used to configure the CARP information that is used when configuring high availability in `System -> Failovers`.
 
@@ -56,9 +61,9 @@ options.
 
 **Figure 7.1a: Adding a CARP**
 
-|10000000000002A7000001515FF73B30_png|
+|carp.png|
 
-.. |10000000000002A7000001515FF73B30_png| image:: images/carp.png
+.. |carp.png| image:: images/carp.png
     :width: 5.7063in
     :height: 2.8083in
 
@@ -81,16 +86,19 @@ options.
 |                     |         |                                                                                                                 |
 +---------------------+---------+-----------------------------------------------------------------------------------------------------------------+
 
+.. index:: Global Configuration
+
+.. _Global Configuration:
 
 Global Configuration
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Network --> Global Configuration, shown in Figure 7.2a, allows you to set non-interface specific network settings.
 
 Table 7.2a summarizes the settings that can be configured using the "Global Configuration" tab. The hostname and domain will be pre-filled for you, as seen in
 Figure 5.1a, but can be changed to meet the local network's requirements.
 
-If you will be using `Active Directory`_, set the IP address of the DNS server used in the realm.
+If you will be using :ref:`Active Directory`, set the IP address of the DNS server used in the realm.
 
 If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or timeout errors, add an entry for the IP address of the
 TrueNAS® system in the "Host name database" field.
@@ -99,9 +107,9 @@ TrueNAS® system in the "Host name database" field.
 
 **Figure 7.2a: Global Configuration Screen**
 
-|100000000000038D0000028C66149C2D_png|
+|global.png|
 
-.. |100000000000038D0000028C66149C2D_png| image:: images/global.png
+.. |global.png| image:: images/global.png
     :width: 6.9252in
     :height: 4.9252in
 
@@ -132,6 +140,10 @@ TrueNAS® system in the "Host name database" field.
 | Nameserver 3           | IP address | tertiary DNS server                                                                                                  |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
+| HTTP Proxy             | string     | enter the proxy information for the network in the format *http://my.proxy.server:3128* or                           |
+|                        |            | *http://user@password:my.proxy.server:3128*                                                                          |
+|                        |            |                                                                                                                      |
++------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Enable netwait feature | checkbox   | if enabled, network services will not be started at boot time until the interface is able to ping the addresses      |
 |                        |            | listed in "Netwait IP list"                                                                                          |
 |                        |            |                                                                                                                      |
@@ -148,12 +160,15 @@ TrueNAS® system in the "Host name database" field.
 .. note:: in many cases, a TrueNAS® configuration will deliberately exclude default gateway information as a way to make it more difficult for a remote
    attacker to communicate with the server. While this is a reasonable precaution, such a configuration does **not** restrict inbound traffic from sources
    within the local network. However, omitting a default gateway will prevent the TrueNAS® system from communicating with DNS servers, time servers, and mail
-   servers that are located outside of the local network. In this case, it is recommended that `Static Routes`_ be added in order to reach external DNS, NTP,
-   and mail servers which are configured with static IP addresses.
+   servers that are located outside of the local network. In this case, it is recommended that :ref:`Static Routes` be added in order to reach external DNS,
+   NTP, and mail servers which are configured with static IP addresses.
 
+.. index::Interfaces:
+
+.. _Interfaces:
 
 Interfaces
-~~~~~~~~~~
+----------
 
 `Network --> Interfaces` is used to view which interfaces have been manually configured, to add a manually configured interface, and to edit an interface's
 manual configuration.
@@ -162,11 +177,17 @@ manual configuration.
    though it is already dynamically configured and in use.
 
 Figure 7.3a shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.3a summarizes the configuration options when you "Add" an
-interface or Edit an already configured interface.
+interface or Edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
+click the "OK" button and a pop-up message will remind you that network connectivity to the FreeNAS® system will be interrupted while the changes are
+applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
 
 **Figure 7.3a: Adding or Editing an Interface**
 
 |interface.png|
+
+.. |interface.png| image:: images/interface.png
+    :width: 8.0in
+    :height: 4.5in
 
 **Table 7.3a: Interface Configuration Settings**
 
@@ -216,8 +237,12 @@ on multiple interfaces.
 When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
 fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
 
+.. index::IPMI
+
+.. _IPMI:
+
 IPMI
-~~~~
+----
 
 TrueNAS® provides a graphical screen for configuring the built-in IPMI interface.
 
@@ -227,13 +252,15 @@ another person remote access to the system in order to assist with a configurati
 management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
 be a dedicated IPMI interface.
 
-IPMI should be configured from Network --> IPMI. Figure 7.4a shows the configuration screen and Table 7.4a summarizes the options when configuring IPMI.
+IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.4a, provides a shortcut to the most basic
+IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.4a summarizes the options when configuring
+IPMI using the TrueNAS® GUI.
 
 **Figure 7.4a: IPMI Configuration**
 
-|10000000000002CE000001EDD264D4BF_png|
+|ipmi.png|
 
-.. |10000000000002CE000001EDD264D4BF_png| image:: images/ipmi.png
+.. |ipmipng| image:: images/ipmi.png
     :width: 5.3291in
     :height: 3.6854in
 
@@ -244,6 +271,9 @@ IPMI should be configured from Network --> IPMI. Figure 7.4a shows the configura
 |                      |                |                                                                             |
 |                      |                |                                                                             |
 +======================+================+=============================================================================+
+| Channel              | drop-down menu | select the channel to use                                                   |
+|                      |                |                                                                             |
++----------------------+----------------+-----------------------------------------------------------------------------+
 | Password             | string         | input the password used to connect to the IPMI interface from a web browser |
 |                      |                |                                                                             |
 +----------------------+----------------+-----------------------------------------------------------------------------+
@@ -262,14 +292,15 @@ IPMI should be configured from Network --> IPMI. Figure 7.4a shows the configura
 
 
 Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
-prompt for a username and the password that you configured. Refer to the documentation for the IPMI device to determine the default administrative username.
+prompt for a username, where the default username is *ADMIN* (in all caps), and the password that you configured. Once you have logged into the management
+interface, you can change the administrative username as well as create additional users.
 
-The default username is *ADMIN* (in all caps). Once you have logged into the management interface, you can change the administrative username as well as
-create additional users. The appearance of the utility and the functions that are available within the IPMI management utility will vary depending upon the
-hardware.
+.. index::Link Aggregations
+
+.. _Link Aggregations:
 
 Link Aggregations
-~~~~~~~~~~~~~~~~~
+-----------------
 
 TrueNAS® uses FreeBSD's
 `lagg(4) <http://www.freebsd.org/cgi/man.cgi?query=lagg>`_ interface to provide link aggregation and link failover. The lagg interface allows aggregation of
@@ -314,7 +345,7 @@ Requires a switch which supports IEEE 802.3ad static link aggregation.
 
 
 Considerations When Using LACP, MPIO, NFS, or ESXi
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 LACP bonds Ethernet connections in order to improve bandwidth. For example, four physical interfaces can be used to create one mega interface. However, it
 cannot increase the bandwidth for a single conversation. It is designed to increase bandwidth when multiple clients are simultaneously accessing the same 
@@ -339,26 +370,24 @@ not work well to increase the bandwidth for point-to-point NFS (one server and o
 many clients.
 
 Creating a Link Aggregation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before creating a link aggregation, double-check that no interfaces have been manually configured in `Network --> Interfaces --> View Interfaces`. If any
+**Before** creating a link aggregation, double-check that no interfaces have been manually configured in `Network --> Interfaces --> View Interfaces`. If any
 configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
 
 Figure 7.5a shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
 
 **Figure 7.5a: Creating a lagg Interface**
 
-|100000000000027500000196C95D4CF2_png|
+|lagg.png|
 
-.. |100000000000027500000196C95D4CF2_png| image:: images/lagg.png
+.. |lagg.png| image:: images/lagg.png
     :width: 5.6165in
     :height: 3.561in
 
-Select the desired aggregation protocol, highlight the interface(s) to associate with the lagg device, and click the OK button.
+Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
-Once the lagg device has been created, it will be listed in the tree under an entry which indicates the type of protocol. It will also appear in "View Link
-Aggregations". Click a link aggregation entry to see the buttons to edit that lagg interface, delete the link aggregation, or edit the lagg's member
-interfaces.
+Once the lagg device has been created, click its entry to enable its "Edit", "Delete", and "Edit Members" buttons.
 
 After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
 so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
@@ -446,14 +475,22 @@ To see if the link aggregation is load balancing properly, run the following com
 More information about this command can be found at
 `systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_.
 
-Network Summary
-~~~~~~~~~~~~~~~
+.. index::Network Summary
 
-`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the configured IP
-address(es), DNS server(s), and default gateway will be displayed.
+.. _Network Summary:
+
+Network Summary
+---------------
+
+`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the configured
+IPv4 and IPv6 address(es), DNS server(s), and default gateway will be displayed.
+
+.. index::Static Routes
+
+.. _Static Routes:
 
 Static Routes
-~~~~~~~~~~~~~
+-------------
 
 By default, no static routes are defined on the TrueNAS® system. Should you need a static route to reach portions of your network, add the route using
 `Network --> Static Routes --> Add Static Route`, shown in Figure 7.7a.
@@ -461,6 +498,10 @@ By default, no static routes are defined on the TrueNAS® system. Should you nee
 **Figure 7.7a: Adding a Static Route**
 
 |route.png|
+
+.. |route.png| image:: images/route.png
+    :width: 5.6in
+    :height: 2.5in
 
 The available options are summarized in Table 7.7a.
 
@@ -485,9 +526,12 @@ The available options are summarized in Table 7.7a.
 
 If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
 
+.. index::VLANs
+
+.. _VLANs:
 
 VLANs
-~~~~~
+-----
 
 TrueNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
@@ -501,10 +545,13 @@ tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen sho
 
 |vlan.png|
 
+.. |vlan.png| image:: images/vlan.png
+    :width: 5.6in
+    :height: 2.5in
+
 Table 7.8a summarizes the configurable fields.
 
 **Table 7.8a: Adding a VLAN**
-
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Setting           | Value          | Description                                                                                       |
