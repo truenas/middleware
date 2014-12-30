@@ -2231,7 +2231,7 @@ class Dataset_Destroy(Form):
             important=False,
         )
         data = proc.communicate()[0]
-        if proc.returncode == 0 and data.find('freenas:repl'):
+        if proc.returncode == 0 and data.find('freenas:repl') != -1:
             self.hold = names
             self.fields['replication'] = forms.BooleanField(
                 label=_(
