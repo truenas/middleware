@@ -3,7 +3,7 @@
 Booting Into FreeNAS®
 ----------------------
 
-When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the the FreeNAS®
+When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the FreeNAS®
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
 .. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
