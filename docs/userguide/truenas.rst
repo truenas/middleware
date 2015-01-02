@@ -16,8 +16,7 @@
    Reporting <truenas_reporting>
    Additional Options <truenas_options>
    Upgrading TrueNAS® <truenas_upgrade>
-   Using the FreeNAS® API <freenas_api>
-   Appendix A <truenas_appendix>
+   Using the FreeNAS® API <truenas_api>
 
 .. |cover.jpg| image:: images/cover.jpg
     :width: 6.9543in

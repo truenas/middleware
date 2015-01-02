@@ -67,7 +67,7 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
 * Chapter 3: Accessing TrueNAS®: this chapter introduces the console, shows how to access the graphical administrative interface, and introduces the
   initial configuration wizard.
 
-* Chapters 4-11: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order
+* Chapters 4-13: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order
   reflects the order that the configuration options appear within the administrative interface's tree structure. Chapter 5 describes how to create users and
   groups. Chapter 6 describes the tasks that can be accomplished using the System Configuration section of the administrative interface. Chapter 7
   demonstrates the various network configuration options. Chapter 8 deals with storage: how to manage storage volumes, snapshots, and replication. Chapter 9
@@ -75,9 +75,9 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
   overview of the Reporting mechanism. Chapter 12 covers the remaining configuration options that appear below the interface's tree structure or which appear
   as icons in the upper right portion of the interface.
 
-* Chapter 12: Upgrading TrueNAS®: this chapter demonstrates how to upgrade the TrueNAS® operating system to a newer version.
+* Chapter 14: Upgrading TrueNAS®: this chapter demonstrates how to upgrade the TrueNAS® operating system to a newer version.
 
-* Chapter 13: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
+* Chapter 15: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
 
 **Typographic Conventions**
 
