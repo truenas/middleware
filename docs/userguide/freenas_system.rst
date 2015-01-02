@@ -213,7 +213,7 @@ environment called *Wizard-date* is also created indicating the date and time th
 
 .. |be1.png| image:: images/be1.png
     :width: 6.3in
-    :height: 1.9in
+    :height: 4.2in
 
 Each boot environment entry contains the following information:
 
