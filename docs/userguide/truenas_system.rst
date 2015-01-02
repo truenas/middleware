@@ -208,7 +208,7 @@ environment called *Wizard-date* is also created indicating the date and time th
 
 .. |be1.png| image:: images/be1.png
     :width: 6.3in
-    :height: 1.9in
+    :height: 4.2in
 
 Each boot environment entry contains the following information:
 
@@ -308,11 +308,11 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-|system3.png|
+|tn_system3.png|
 
-.. |system3.png| image:: images/system3.png
-    :width: 9.4in
-    :height: 4.5in
+.. |tn_system3.png| image:: images/tn_system3.png
+    :width: 6.3in
+    :height: 4.2in
 
 **Table 5.4a: Advanced Configuration Settings**
 
