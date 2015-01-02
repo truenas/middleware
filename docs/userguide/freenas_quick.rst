@@ -37,12 +37,12 @@ password.
 
 **8) Reset to factory defaults:** if you wish to delete
 **all** of the configuration changes made in the administrative GUI, select this option. Once the configuration is reset, the system will reboot. You will
-need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-import your volume.
+need to go to :menuselection:`Storage --> Volumes --> Import Volume` to re-import your volume.
 
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
 **10) System Update:** if any system updates are available, they will automatically be downloaded and applied. The functionality is the same as described in
-:ref:`Updating Between Major Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
+:ref:`Updating Between Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
 required.
 
 **11) Reboot:** reboots the system.
