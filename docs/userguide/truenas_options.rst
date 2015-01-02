@@ -10,13 +10,13 @@ Display System Processes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you click Display System Processes, a screen will open showing the output of
-`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 12.1a.
+`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 13.1a.
 
-**Figure 12.1a: System Processes Running on TrueNAS®**
+**Figure 13.1a: System Processes Running on TrueNAS®**
 
-|10000000000001F70000019B91B24E55_png|
+|process.png|
 
-.. |10000000000001F70000019B91B24E55_png| image:: images/processes.png
+.. |process.png| image:: images/process.png
     :width: 6.0598in
     :height: 3.8055in
 
@@ -27,11 +27,19 @@ is read-only, meaning that you won't be able to issue a :command:`kill` command 
 Shell
 ~~~~~
 
-The TrueNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user. The link to Shell is the third
-entry from the bottom of the menu tree. In Figure 12.2a, the link has been clicked and Shell is open.
+The TrueNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user. The link to Shell is the
+fourth entry from the bottom of the menu tree. In Figure 13.2a, the link has been clicked and Shell is open.
+
+**Figure 13.2a: Web Shell**
+
+|shell.png|
+
+.. |shell.png| image:: images/shell.png
+    :width: 6.9252in
+    :height: 4.9319in
 
 The prompt indicates that the current user is *root*, the hostname is
-*freenas*, and the current working directory is :file:`~`
+*truenas*, and the current working directory is :file:`~`
 (*root*'s home directory).
 
 To change the size of the shell, click the *80x25* drop-down menu and select a different size.
@@ -39,20 +47,12 @@ To change the size of the shell, click the *80x25* drop-down menu and select a d
 To copy text from shell, highlight the text, right-click, and select Copy from the right-click menu. To paste into the shell, click the "Paste" button, paste
 the text into the box that opens, and click the OK button to complete the paste operation.
 
-**Figure 12.2a: Web Shell**
+While you are in Shell, you will not have access to any of the other GUI menus. If you need to have access to a prompt while using the GUI menus, use
+:command:`tmux` instead as it supports multiple shell sessions and the detachment and reattachment of sessions.
 
-|100000000000036900000273BD5795E8_png|
-
-.. |100000000000036900000273BD5795E8_png| image:: images/shell.png
-    :width: 6.9252in
-    :height: 4.9319in
-
-While you are in Shell, you will not have access to any of the other GUI menus. If you are using Shell for troubleshooting purposes and need to leave the
-Shell in order to modify a configuration, click the "x" in the window's upper right corner. The next time you enter Shell, you will return to your last
-session. When you are finished using Shell, type :command:`exit` to leave the session completely.
-
-Shell provides history (use your up arrow to see previously entered commands and press enter to repeat the currently displayed command) and tab completion
-(type a few letters and press tab to complete a command name or filename in the current directory).
+Shell provides history (use your up arrow to see previously entered commands and press :kbd:`Enter` to repeat the currently displayed command) and tab
+completion (type a few letters and press tab to complete a command name or filename in the current directory). When you are finished using Shell, type
+:command:`exit` to leave the session.
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 
@@ -60,23 +60,29 @@ Due to the embedded nature of TrueNAS®, some FreeBSD components are missing and
 FreeBSD man pages are available
 `online <http://www.freebsd.org/cgi/man.cgi>`_. Most FreeBSD command line utilities should be available in Shell.
 
+.. index:: Log Out
+.. _Log Out:
+
+Log Out
+~~~~~~~
+
+To log out of the TrueNAS® GUI, simply click the "Log Out" entry in the tree. You will immediately be logged out. An informational message will indicate that
+you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root* password.
+
+
 Reboot
 ~~~~~~
 
-If you click "Reboot", you will receive the warning message shown in Figure 12.3a and your browser color will change to red to indicate that you have selected
+If you click "Reboot", you will receive the warning message shown in Figure 13.4a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the TrueNAS® system.
 
-.. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key as
-   described in `Creating an Encrypted`_ before performing a reboot. 
-   **Without these, you will not be able to unlock the encrypted volume as described in `Unlocking an Encrypted Volume`_ after the reboot.**
+**Figure 13.4a: Reboot Warning Message**
 
-**Figure 12.3a: Reboot Warning Message**
+|reboot.png|
 
-|10000000000002BE000001A574FBAE48_png|
-
-.. |10000000000002BE000001A574FBAE48_png| image:: images/reboot.png
-    :width: 5.8984in
-    :height: 3.5083in
+.. |reboot.png| image:: images/reboot.png
+    :width: 6.0in
+    :height: 1.9in
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -85,34 +91,29 @@ process is complete. Once complete, the reboot request can be re-issued.
 Click the "Cancel" button if you wish to cancel the reboot request. Otherwise, click the Reboot button to reboot the system. Rebooting the system will
 disconnect all clients, including the web administration GUI. The URL in your web browser will change to add */system/reboot/* to the end of the IP address.
 Wait a few minutes for the system to boot, then use your browser's back button to return to the TrueNAS® system's IP address. If all went well, you should
-receive the GUI login screen. If the login screen does not appear, you will need physical access to the TrueNAS® system's monitor and keyboard so that you
-can determine what problem is preventing the system from resuming normal operation.
+receive the GUI login screen. If the login screen does not appear, access the system using IPMI in order to determine what problem is preventing the system
+from resuming normal operation.
 
 Shutdown
 ~~~~~~~~
 
-If you click "Shutdown", you will receive the warning message shown in Figure 12.4a and your browser color will change to red to indicate that you have
+If you click "Shutdown", you will receive the warning message shown in Figure 13.5a and your browser color will change to red to indicate that you have
 selected an option that will negatively impact users of the TrueNAS® system.
 
-.. note:: if any volumes are encrypted, make sure that you have set the passphrase and have copies of the encryption key and the latest recovery key as
-   described in `Creating an Encrypted`_ before performing a reboot. 
-   **Without these, you will not be able to unlock the encrypted volume as described in `Unlocking an Encrypted Volume`_ after the reboot.**
+**Figure 13.5a: Shutdown Warning Message**
 
-**Figure 12.4a: Shutdown Warning Message**
+|shutdown.png|
 
-|10000000000002C10000019740B2F0FB_png|
-
-.. |10000000000002C10000019740B2F0FB_png| image:: images/shutdown.png
-    :width: 5.9244in
-    :height: 3.3917in
+.. |shutdown.png| image:: images/shutdown.png
+    :width: 6.0in
+    :height: 1.9in
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
 process is complete. Once complete, the shutdown request can be re-issued.
 
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
-disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system. You will need physical access to the TrueNAS® system
-in order to turn it back on.
+disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system.
 
 Help
 ~~~~
@@ -129,13 +130,13 @@ Creating a Support Ticket
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As an iXsystems customer, you have access to the resources available at
-`http://support.ixsystems.com <http://support.ixsystems.com/>`_, shown in Figure 12.5a.
+`https://support.ixsystems.com <https://support.ixsystems.com/>`_, shown in Figure 13.6a.
 
-**Figure 12.5a: iXsystems Support Website**
+**Figure 13.6a: iXsystems Support Website**
 
-|1000000000000458000002652BE624B1_png|
+|support.png|
 
-.. |1000000000000458000002652BE624B1_png| image:: images/support.png
+.. |support.png| image:: images/support.png
     :width: 6.9252in
     :height: 3.7492in
 
@@ -161,25 +162,18 @@ email will be sent to the provided email address; you will not be able to login 
 To view the status of your tickets, click the "View Tickets" tab while logged in. In addition to the status, you can view any comments by support staff as
 well as click a ticket's Post Reply button in order to respond to a comment or to provide additional requested information.
 
-Log Out
-~~~~~~~
-
-To log out of the TrueNAS® GUI, simply click the "Log Out" button in the upper right corner. You will immediately be logged out. An informational message
-will indicate that you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the
-*root* password.
-
 Alert
 ~~~~~
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 12.7a. one of the disks in a ZFS pool is offline which has
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 13.7a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
-**Figure 12.7a: Example Alert Message**
+**Figure 13.7a: Example Alert Message**
 
-|10000000000001860000009EEEECF771_png|
+|alert.png|
 
-.. |10000000000001860000009EEEECF771_png| image:: images/alert.png
+.. |alert.png| image:: images/alert.png
     :width: 4.0618in
     :height: 1.6453in
 
@@ -191,14 +185,33 @@ Behind the scenes, an alert script checks for various alert conditions, such as 
 :file:`/var/tmp/alert`. A javascript retrieves the current alert status every 5 minutes and will change the solid green alert icon to flashing red if a new
 alert is detected. Some of the conditions that trigger an alert include:
 
-*   UPS ONBATT/LOWBATT event
+* a volume's capacity goes over 80%
 
-*   ZFS pool status changes from HEALTHY
+* new OpenZFS feature flags are available for the pool; this alert can be unchecked if you choose not to upgrade the pool at this time
 
-*   the system is unable to bind to the WebGUI Address set in `System --> Settings --> General`
+* non-optimal multipath states
 
-*   the system can not find an IP address configured on an iSCSI portal
+* a UPS "ONBATT" or "LOWBATT" event
 
-*   a hot spare is automatically replaced
+* ZFS pool status changes from "HEALTHY"
 
-*   a HA system can not sync to its peer
+* the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
+
+* the system can not find an IP address configured on an iSCSI portal
+
+* a replication task fails
+
+* a VMware login or a :ref:`VMware Snapshots` task fails
+
+* the status of a LSI MegaRAID SAS controller has changed;
+  `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
+  is included for managing these devices
+
+An alert will also be generated when the LSI HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
+target) firmware, not the IR (integrated RAID) firmware, from the LSI website. Then, specify the name of the firmware image and bios as well as the
+controller to flash::
+
+ sas2flash -f firmwareimagename -v biosname -c controllernumber
+
+When finished, reboot the system. The new firmware version should appear in the system messages and the alert will be cleared.
+
