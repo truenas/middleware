@@ -78,7 +78,7 @@ seen in Example 3a. In this example, the TrueNAS® system has one network interf
  `http://192.168.1.108 <http://192.168.1.108/>`_
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the TrueNAS®
-system. You should be prompted to input the password for the root user, as seen in Figure 3b.
+system. You should be prompted to input the password for the *root* user, as seen in Figure 3b.
 
 **Figure 3b: Input the Root Password**
 
@@ -88,7 +88,10 @@ system. You should be prompted to input the password for the root user, as seen 
     :width: 5.2in
     :height: 3.8in
 
-Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
+Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3c. You can then change the
+default *root* password to a more secure value by going to `Account --> Users --> View Users`. Highlight the entry for
+*root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new password
+to use on subsequent logins.
 
 **Figure 3c: TrueNAS® Graphical Configuration Menu**
 
