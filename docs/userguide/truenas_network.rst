@@ -107,11 +107,11 @@ TrueNAS® system in the "Host name database" field.
 
 **Figure 7.2a: Global Configuration Screen**
 
-|global.png|
+|tn_network1.png|
 
-.. |global.png| image:: images/global.png
-    :width: 6.9252in
-    :height: 4.9252in
+.. |tn_network1.png| image:: images/tn_network1.png
+    :width: 5.5in
+    :height: 4.2in
 
 **Table 7.2a: Global Configuration Settings**
 
@@ -186,8 +186,8 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 8.0in
-    :height: 4.5in
+    :width: 3.2in
+    :height: 4.2in
 
 **Table 7.3a: Interface Configuration Settings**
 
@@ -497,11 +497,11 @@ By default, no static routes are defined on the TrueNAS® system. Should you nee
 
 **Figure 7.7a: Adding a Static Route**
 
-|route.png|
+|static.png|
 
-.. |route.png| image:: images/route.png
-    :width: 5.6in
-    :height: 2.5in
+.. |static.png| image:: images/static.png
+    :width: 3.0in
+    :height: 1.8in
 
 The available options are summarized in Table 7.7a.
 
@@ -546,8 +546,8 @@ tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen sho
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 5.6in
-    :height: 2.5in
+    :width: 3.0in
+    :height: 2.1in
 
 Table 7.8a summarizes the configurable fields.
 

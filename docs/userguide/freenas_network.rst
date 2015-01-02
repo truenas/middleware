@@ -116,8 +116,8 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 8.0in
-    :height: 4.5in
+    :width: 3.2in
+    :height: 4.2in
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -460,8 +460,8 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 |static.png|
 
 .. |static.png| image:: images/static.png
-    :width: 5.6in
-    :height: 2.5in
+    :width: 3.0in
+    :height: 1.8in
 
 The available options are summarized in Table 7.6a.
 
@@ -510,8 +510,8 @@ If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the s
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 5.1in
-    :height: 2.6in
+    :width: 3.0in
+    :height: 2.1in
 
 Table 7.7a summarizes the configurable fields.
 
