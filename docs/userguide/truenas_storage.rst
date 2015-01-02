@@ -277,8 +277,8 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |perms1.png|
 
 .. |perms1.png| image:: images/perms1.png
-    :width: 5.6in
-    :height: 4.9in
+    :width: 3.3in
+    :height: 4.2in
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -354,11 +354,11 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 
 **Figure 8.1d: Creating a ZFS Dataset**
 
-|dataset.png|
+|tn_dataset.png|
 
-.. |dataset.png| image:: images/dataset.png
-    :width: 7.6in
-    :height: 4.7in
+.. |tn_dataset.png| image:: images/tn_dataset.png
+    :width: 5.2in
+    :height: 3.2in
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -565,8 +565,8 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 4.9in
-    :height: 3.4in
+    :width: 2.9in
+    :height: 1.7in
 
 If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
@@ -575,8 +575,8 @@ If you are importing an unencrypted ZFS pool, select "No: Skip to import" to ope
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 4.9in
-    :height: 3.1in
+    :width: 2.9in
+    :height: 1.7in
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the TrueNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
@@ -602,8 +602,8 @@ access the screen shown in Figure 8.1i.
 |decrypt.png|
 
 .. |decrypt.png| image:: images/decrypt.png
-    :width: 5.2in
-    :height: 3.9in
+    :width: 3.5in
+    :height: 2.4in
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
