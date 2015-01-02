@@ -3,13 +3,13 @@
 Reporting
 ---------
 
-Reporting displays several graphs, as seen in the example in Figure 11a. Click the tab for a device type to see its graphs.
+Reporting displays several graphs, as seen in the example in Figure 12a. Click the tab for a device type to see its graphs.
 
-**Figure 11a: Reporting Graphs**
+**Figure 12a: Reporting Graphs**
 
-|1000000000000338000002731923F2FE_png|
+|reporting.png|
 
-.. |1000000000000338000002731923F2FE_png| image:: images/reporting.png
+.. |reporting.png| image:: images/reporting.png
     :width: 6.9146in
     :height: 5.2173in
 
@@ -38,6 +38,8 @@ to provide reporting statistics. The following collectd plugins are enabled in :
 *   `processes <https://collectd.org/wiki/index.php/Plugin:Processes>`_: displays the number of processes, grouped by state.
 
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_: keeps track of the system uptime, the average running time, and the maximum reached uptime.
+
+*   `zfs <https://collectd.org/wiki/index.php/Plugin:ZFS_ARC>`_: shows ARC and L2ARC size and hit rates.
 
 Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to :file:`/data/rrd_dir.tar.bz2` and
 should be preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in `System -->
