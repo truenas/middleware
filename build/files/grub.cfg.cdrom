@@ -52,6 +52,7 @@ menuentry "%NANO_LABEL% Installer" {
   kfreebsd_loadenv /boot/device.hints
   set kFreeBSD.vfs.root.mountfrom=cd9660:/dev/iso9660/%CDROM_LABEL%
   set kFreeBSD.xconsole=YES
+  set kFreeBSD.hint.wbwd.0.disabled=1
 
   # The following delay during mounting of root file
   # system is needed because mounting of an IPMI CD-ROM
