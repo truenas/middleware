@@ -513,8 +513,8 @@ The options available in System -> Failovers -> Add Failover are shown in Figure
 |failover1.png|
 
 .. |failover1.png| image:: images/failover1.png
-    :width: 5.0083in
-    :height: 2.5165in
+    :width: 2.6in
+    :height: 1.8in
 
 **Table 5.7a: Options When Creating a Failover**
 
