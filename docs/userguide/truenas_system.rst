@@ -238,8 +238,8 @@ The buttons above the boot entries can be used to:
 * **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
   underscores, and dashes are allowed.
 
-* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed after every installation or upgrade
-  and every 30 days. The date and results of the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
+* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. The date and results of
+  the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
 
 * **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
 
