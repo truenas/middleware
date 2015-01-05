@@ -1296,11 +1296,11 @@ assert len(
 # - this doesn't reject all benign input; it just rejects input that would
 #   break system boots.
 # XXX: note that I'm explicitly rejecting input for root sysctl nodes.
-SYSCTL_TUNABLE_VARNAME_FORMAT = """Variable names must:
-1. Start with a letter.
-2. End with a letter or number.
-3. Can contain a combination of alphanumeric characters, numbers, underscores,
-   and/or periods.
+SYSCTL_TUNABLE_VARNAME_FORMAT = """Sysctl variable names must:<br />
+1. Start with a letter.<br />
+2. Contain at least one period.<br />
+3. End with a letter or number.<br />
+4. Can contain a combination of alphanumeric characters, numbers and/or underscores.
 """
 SYSCTL_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
