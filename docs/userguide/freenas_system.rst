@@ -276,7 +276,7 @@ Mirroring the Boot Device
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
-can still boot from the remaining device in the mirror.
+still has a copy of the boot file system and can be configured to boot from the remaining device in the mirror.
 
 In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
 example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
