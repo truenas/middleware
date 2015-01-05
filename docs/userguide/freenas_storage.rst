@@ -877,8 +877,9 @@ the capability of your hardware, you may or may not need to reboot in order to r
 
 .. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
 
-Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status` and locate the failed disk. Once
-you have located the failed device in the GUI, perform the following steps:
+Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes`. Next, select your volume's name. At the bottom of
+the interface you will see several icons, one of which is "Volume Status". Click the "Volume Status" icon and locate the failed disk. Once you have located
+the failed device in the GUI, perform the following steps:
 
 #.  If the disk is formatted with ZFS, click the disk's entry then its "Offline" button in order to change that disk's status to OFFLINE. This step is
     needed to properly remove the device from the ZFS pool and to prevent swap issues. If your hardware supports hot-pluggable disks, click the disk's
