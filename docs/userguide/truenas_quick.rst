@@ -21,7 +21,7 @@ This menu provides the following options:
 
 **1) Configure Network Interfaces:** provides a configuration wizard to configure the system's network interfaces.
 
-**2) Configure Link Aggregation:** allows you to either create a new link aggregation_ or to delete an existing link aggregation.
+**2) Configure Link Aggregation:** allows you to either create a new link aggregation or to delete an existing link aggregation.
 
 **3) Configure VLAN Interface:** used to create or delete a VLAN interface.
 
