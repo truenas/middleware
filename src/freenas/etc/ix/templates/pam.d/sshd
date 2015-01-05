@@ -1,5 +1,5 @@
 #
-# $FreeBSD: src/etc/pam.d/sshd,v 1.18 2009/10/05 09:28:54 des Exp $
+# $FreeBSD: head/etc/pam.d/sshd 197769 2009-10-05 09:28:54Z des $
 #
 # PAM configuration for the "sshd" service
 #

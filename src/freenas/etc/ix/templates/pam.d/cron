@@ -1,5 +1,5 @@
 #
-# $FreeBSD: src/etc/pam.d/cron,v 1.1 2007/06/17 17:25:52 yar Exp $
+# $FreeBSD: head/etc/pam.d/cron 170890 2007-06-17 17:25:53Z yar $
 #
 # PAM configuration for the "cron" service
 #
