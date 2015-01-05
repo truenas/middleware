@@ -62,7 +62,7 @@ ORDER = 25
 
 class ActiveDirectoryView(TreeNode):
 
-    gname = 'Active Directory'
+    gname = 'ActiveDirectory'
     name = _('Active Directory')
     app_name = 'activedirectory'
     type = 'opendirectoryservice'
