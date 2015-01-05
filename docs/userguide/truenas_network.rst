@@ -64,8 +64,8 @@ options.
 |carp.png|
 
 .. |carp.png| image:: images/carp.png
-    :width: 5.7063in
-    :height: 2.8083in
+    :width: 3.2in
+    :height: 2.06in
 
 **Table 7.1a: CARP Configuration Options**
 
@@ -260,7 +260,7 @@ IPMI using the TrueNAS® GUI.
 
 |ipmi.png|
 
-.. |ipmipng| image:: images/ipmi.png
+.. |ipmi.png| image:: images/ipmi.png
     :width: 5.3291in
     :height: 3.6854in
 
@@ -382,8 +382,8 @@ Figure 7.5a shows the configuration options when adding a lagg interface using `
 |lagg.png|
 
 .. |lagg.png| image:: images/lagg.png
-    :width: 5.6165in
-    :height: 3.561in
+    :width: 3.1in
+    :height: 2.7in
 
 Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
