@@ -50,7 +50,7 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 
 |zfs1.png|
 
-.. |zfs1.png| image:: images/zfs1.png
+.. |zfs1.png| image:: images/tn_zfs1.png
     :width: 8.3in
     :height: 4.12in
 
@@ -624,11 +624,11 @@ View Disks
 
 **Figure 8.1j: Viewing Disks**
 
-|view.png|
+|tn_view.png|
 
-.. |view.png| image:: images/view.png
-    :width: 7.6in
-    :height: 4.5in
+.. |tn_view.png| image:: images/tn_view.png
+    :width: 9.7in
+    :height: 3.5in
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
 are described in Table 8.1f.
@@ -669,11 +669,8 @@ are described in Table 8.1f.
 |                                                        |                |                                                                                                                      |
 +--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
-Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
-option before discarding a disk.
-
-.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within :ref:`Shell`. For example, to determine
-   the serial number of disk *ada0*, type :command:`smartctl -a /dev/ada0 | grep Serial`.
+Clicking a disk's entry will also display its "Identify", "Reset LED", and "Wipe" buttons. The "Wipe" button can be used to blank a disk while providing a
+progress bar of the wipe's status. Use this option before discarding a disk.
 
 .. _View Volumes:
 
@@ -692,11 +689,11 @@ space is "Used", how much disk space is "Available", the type of "Compression", 
 
 **Figure 8.1k: Viewing Volumes**
 
-|volume1.png|
+|tn_volume1.png|
 
-.. |volume1.png| image:: images/volume1.png
-    :width: 4.9in
-    :height: 4.5in
+.. |tn_volume1.png| image:: images/tn_volume1.png
+    :width: 6.2in
+    :height: 3.2in
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
@@ -712,11 +709,11 @@ disk, writes data to the disk indicating that the export was done, and removes a
 
 **Figure 8.1l: Detaching or Deleting a Volume**
 
-|detach.png|
+|tn_detach.png|
 
-.. |detach.png| image:: images/detach.png
-    :width: 4.9in
-    :height: 4.5in
+.. |tn_detach.png| image:: images/tn_detach.png
+    :width: 8.4in
+    :height: 3.6in
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
@@ -732,11 +729,11 @@ running the latest versions of feature flags.
 
 **Figure 8.1m: Volume Status**
 
-|volume2.png|
+|tn_volume2.png|
 
-.. |volume2.png| image:: images/volume2.png
-    :width: 3.2in
-    :height: 4.5in
+.. |tn_volume2.png| image:: images/tn_volume2.png
+    :width: 4.2in
+    :height: 3.1in
 
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
 configurable options.
