@@ -1,5 +1,5 @@
 #
-# $FreeBSD: src/etc/pam.d/login,v 1.17 2007/06/10 18:57:20 yar Exp $
+# $FreeBSD: head/etc/pam.d/login 170510 2007-06-10 18:57:20Z yar $
 #
 # PAM configuration for the "login" service
 #
