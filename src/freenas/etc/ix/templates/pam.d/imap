@@ -1,5 +1,5 @@
 #
-# $FreeBSD: src/etc/pam.d/imap,v 1.7 2007/06/15 11:33:13 yar Exp $
+# $FreeBSD: head/etc/pam.d/imap 170771 2007-06-15 11:33:13Z yar $
 #
 # PAM configuration for the "imap" service
 #

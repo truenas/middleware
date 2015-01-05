@@ -1,5 +1,5 @@
 #
-# $FreeBSD: src/etc/pam.d/system,v 1.3 2009/10/05 09:28:54 des Exp $
+# $FreeBSD: head/etc/pam.d/system 197769 2009-10-05 09:28:54Z des $
 #
 # System-wide defaults
 #
