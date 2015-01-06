@@ -21,7 +21,7 @@ the root user account. If you are aware of a critical condition but wish to remo
 message.
 
 Behind the scenes, an alert script checks for various alert conditions, such as volume and disk status, and writes the current conditions to
-:file:`/var/tmp/alert`. A javascript retrieves the current alert status every 5 minutes and will change the solid green alert icon to flashing red if a new
+:file:`/var/tmp/alert`. A javascript retrieves the current alert status every minute and will change the solid green alert icon to flashing red if a new
 alert is detected. Some of the conditions that trigger an alert include:
 
 * a volume's capacity goes over 80%
@@ -29,8 +29,6 @@ alert is detected. Some of the conditions that trigger an alert include:
 * new OpenZFS feature flags are available for the pool; this alert can be unchecked if you choose not to upgrade the pool at this time
 
 * non-optimal multipath states
-
-* a UPS "ONBATT" or "LOWBATT" event
 
 * ZFS pool status changes from "HEALTHY"
 
