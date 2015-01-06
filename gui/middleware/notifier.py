@@ -3673,8 +3673,8 @@ class notifier:
             if line != '':
                 _list = line.split('\t')
                 snapname = _list[0]
-                used = _list[1]
-                refer = _list[3]
+                used = int(_list[1])
+                refer = int(_list[3])
                 vmsynced = _list[5]
                 fs, name = snapname.split('@')
 
