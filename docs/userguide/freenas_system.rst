@@ -516,7 +516,8 @@ Tunables
 
 #. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ is used to
    pass system configuration options to the system startup scripts as the system boots. Since FreeNAS® has been optimized for storage, not all of the
-   services mentioned in rc.conf(5) are available for configuration.
+   services mentioned in rc.conf(5) are available for configuration. Note that in FreeNAS®, customized rc.conf options are stored in
+   :file:`/tmp/rc.conf.freenas`.
 
 .. warning:: adding a sysctl, loader, or rc.conf option is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a
    loader could adversely affect the ability of the FreeNAS® system to successfully boot.
