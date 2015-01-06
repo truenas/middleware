@@ -978,8 +978,13 @@ class FreeNAS_ActiveDirectory_Base(object):
         for srv_host in srv_hosts:
             host = srv_host.target.to_text(True)
             port = long(srv_host.port)
-            FreeNAS_ActiveDirectory_Base.AsyncConnect(host,
-                long(port), callback)
+
+            try:
+                FreeNAS_ActiveDirectory_Base.AsyncConnect(
+                    host, long(port), callback)
+            except:
+                log.debug("get_best_host: Unable to connect to %s:%d",
+                    host, long(port))
 
         count = len(srv_hosts)
         asyncore.loop(timeout=1, count=count)
