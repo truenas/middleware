@@ -34,6 +34,7 @@ import cProfile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
@@ -193,7 +194,9 @@ class LocaleMiddleware(object):
 class CatchError(object):
 
     def process_response(self, request, response):
-        if sys.exc_type and sys.exc_type in (MiddlewareError, ServiceFailed):
+        if sys.exc_type and sys.exc_type in (
+            MiddlewareError, ServiceFailed, OperationalError
+        ):
             excp = sys.exc_info()[1]
             kwargs = {
                 'error': True,
