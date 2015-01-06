@@ -172,7 +172,7 @@ __EOF__
 	section_header "Active Directory all domains"
 	wbinfo --all-domains
 	section_footer
-	section_header "Active Directory down domain"
+	section_header "Active Directory own domain"
 	wbinfo --own-domain
 	section_footer
 	section_footer
