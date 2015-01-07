@@ -17,6 +17,10 @@ generate_crontab()
 	local sf=$(var_to_sf $f)
 	local cron_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin"
 	cp /conf/base/etc/crontab /etc/crontab
+
+	local boot_scrub=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_boot_scrub FROM system_advanced ORDER BY -id LIMIT 1")
+	echo "45	3	*	*	*	root	/usr/local/sbin/scrub -t ${boot_scrub} freenas-boot" >> /etc/crontab
+
 	# Generate cronjobs
 	${FREENAS_SQLITE_CMD} -separator "" ${FREENAS_CONFIG} \
 	"SELECT $sf FROM tasks_cronjob WHERE cron_enabled = 1 ORDER BY id" | \

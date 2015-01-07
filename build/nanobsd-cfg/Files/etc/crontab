@@ -33,4 +33,3 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 30	3	*	*	*	root 	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1
 0	3	*	*	*	root	find /tmp/ -iname "sessionid*" -ctime +1d -delete
 30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew
-45	3	*	*	*	root	/usr/local/sbin/scrub -t 35 freenas-boot
