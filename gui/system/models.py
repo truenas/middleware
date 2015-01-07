@@ -281,6 +281,10 @@ class Advanced(Model):
         verbose_name=_("MOTD banner"),
         default='Welcome',
     )
+    adv_boot_scrub = models.IntegerField(
+        default=35,
+        editable=False,
+    )
 
     class Meta:
         verbose_name = _("Advanced")
