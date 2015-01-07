@@ -3,20 +3,6 @@ FreeNAS 10 WebApp Architecture
 
 ![A stacked diagram representing the FreeNAS 10 UI's "layers"](images/architecture/freenas_webapp.png)
 
-## Middleware Channels
-A key aspect of the FreeNAS 10 Middleware is its use of discrete "channels" for different information. A more traditional web application model might make use of asyncronous AJAX requests with different callbacks, depending on the status of an operation.
-
-FreeNAS 10 uses a persistent WebSocket connection with multiple concurrent "subscriptions", and routes the resulting data through the Flux dispatcher into session-persistent data stores. This is significant for a few reasons:
-
-1. Rather than requesting specific data, the FreeNAS 10 UI is able to request an initial payload of data when subscribing to a "channel", and will then receive subsequent patch updates as they become available.
-
-2. Views are wholly uncoupled from the Middleware Client, and instead subscribe to Flux stores. When the contents of the store are modified, the view (if open) will automatically update its own internal state with the new data, and perform any necessary processing or re-rendering.
-
-3. Because of this granular subscription model, and because views access persistent stores, rather than requesting information when they open and garbage collecting it when they close, views are highly performant, and the architecture avoids a "firehose" design, where all new information is constantly streamed to the UI. A handy side effect is that any view which requires data from an already-initialized store will load with the current contents of that store, and its initial setup operation will be an update, rather than a initialization.
-
-More information on the technical aspects of this architecture is available in ["Understanding the Flux Application Architecture"](flux.md).
-
-
 ## Layers of the UI
 The FreeNAS 10 UI is divided into layers, which map well to Middleware channels. In simplest terms, the "wrapper" (persistent toolbars, titlebar, footer) subscribes to general system information (authentication status, events, alerts, uptime, hostname, etc), and then each view will subscribe to a specific and more detailed stream of information (users, network interfaces, volumes) for the duration of its open state, and unsubscribe/garbage collect before unmounting.
 
@@ -28,16 +14,16 @@ The Main Mount is rendered directly into `<body>`, and all other components are 
 Each nested route is rendered within its parent, enforcing a strict visual and architectural heirarchy.
 
 ### Modal Windows
-(TBD)
+Modal Windows aren't heavily used in FreeNAS 10, but may be used for things like login, unexpected disconnect, etc. In general, they can receive data from the primary connections managed by the Main Mount.
 
 ### Notification Bar
 The persistent titlebar in the FreeNAS 10 UI also functions as a kind of notification center, handling the events, alerts, and notifications passed into it from the Main Mount's system-general subscription.
 
 ### Navigation
-(TBD)
+The Navigation is currently hard-coded, but in the future, may receive its routes from a web permissions context that doesn't exist yet. TBD.
 
 ### The Primary View
-(TBD)
+The Primary View is generally a React Controller-View which maps to a specific Middleware channel, like "Users" or "Network Interfaces". This is the primary area of the UI, and is not persistent. For more on how this is handled, pleaes refer to the [Flux Architecture](flux.md) documentation.
 
 ### Widgets
 (TBD)
