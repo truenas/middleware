@@ -6,4 +6,3 @@ build:
 
 install:
 	${PYTHON} setup.py install --prefix ${PREFIX}
-	install zconfig ${PREFIX}/sbin
