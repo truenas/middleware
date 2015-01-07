@@ -1,7 +1,7 @@
-:orphan:
+.. _Reporting:
 
 Reporting
----------
+=========
 
 Reporting displays several graphs, as seen in the example in Figure 12a. Click the tab for a device type to see its graphs.
 

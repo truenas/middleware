@@ -1,13 +1,14 @@
-:orphan:
+.. _Additional Options:
 
 Additional Options
-------------------
+==================
 
 This section covers the remaining miscellaneous options available from the TrueNAS® graphical administrative interface.
 
+.. _Display System Processes:
 
 Display System Processes
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 If you click Display System Processes, a screen will open showing the output of
 `top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 13.1a.
@@ -23,9 +24,10 @@ If you click Display System Processes, a screen will open showing the output of
 The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
 
+.. _Shell:
 
 Shell
-~~~~~
+-----
 
 The TrueNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user. The link to Shell is the
 fourth entry from the bottom of the menu tree. In Figure 13.2a, the link has been clicked and Shell is open.
@@ -64,14 +66,15 @@ FreeBSD man pages are available
 .. _Log Out:
 
 Log Out
-~~~~~~~
+-------
 
 To log out of the TrueNAS® GUI, simply click the "Log Out" entry in the tree. You will immediately be logged out. An informational message will indicate that
 you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root* password.
 
+.. _Reboot:
 
 Reboot
-~~~~~~
+------
 
 If you click "Reboot", you will receive the warning message shown in Figure 13.4a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the TrueNAS® system.
@@ -94,8 +97,10 @@ Wait a few minutes for the system to boot, then use your browser's back button t
 receive the GUI login screen. If the login screen does not appear, access the system using IPMI in order to determine what problem is preventing the system
 from resuming normal operation.
 
+.. _Shutdown:
+
 Shutdown
-~~~~~~~~
+--------
 
 If you click "Shutdown", you will receive the warning message shown in Figure 13.5a and your browser color will change to red to indicate that you have
 selected an option that will negatively impact users of the TrueNAS® system.
@@ -115,8 +120,10 @@ process is complete. Once complete, the shutdown request can be re-issued.
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
 disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system.
 
+.. _Help:
+
 Help
-~~~~
+----
 
 The Help button in the upper right corner provides a pop-up menu containing hyperlinks to the following TrueNAS® support resources:
 
@@ -126,8 +133,10 @@ The Help button in the upper right corner provides a pop-up menu containing hype
 
 *   the email address of the support team
 
+.. _Creating a Support Ticket:
+
 Creating a Support Ticket
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As an iXsystems customer, you have access to the resources available at
 `https://support.ixsystems.com <https://support.ixsystems.com/>`_, shown in Figure 13.6a.
@@ -162,8 +171,10 @@ email will be sent to the provided email address; you will not be able to login 
 To view the status of your tickets, click the "View Tickets" tab while logged in. In addition to the status, you can view any comments by support staff as
 well as click a ticket's Post Reply button in order to respond to a comment or to provide additional requested information.
 
+.. _Alert:
+
 Alert
-~~~~~
+-----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
 corner will flash red when there is an outstanding alert. In the example alert shown in Figure 13.7a. one of the disks in a ZFS pool is offline which has
