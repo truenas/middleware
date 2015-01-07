@@ -1,3 +1,5 @@
+.. index:: Reporting
+
 .. _Reporting:
 
 Reporting

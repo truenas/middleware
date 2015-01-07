@@ -5,6 +5,8 @@ Additional Options
 
 This section covers the remaining miscellaneous options available from the TrueNAS® graphical administrative interface.
 
+.. index:: Processes
+
 .. _Display System Processes:
 
 Display System Processes
@@ -23,6 +25,8 @@ If you click Display System Processes, a screen will open showing the output of
 
 The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
+
+.. index:: Shell
 
 .. _Shell:
 
@@ -71,6 +75,8 @@ Log Out
 To log out of the TrueNAS® GUI, simply click the "Log Out" entry in the tree. You will immediately be logged out. An informational message will indicate that
 you are logged out and will provide a hyperlink which you can click on to log back in. When logging back in, you will be prompted for the *root* password.
 
+.. index:: Reboot
+
 .. _Reboot:
 
 Reboot
@@ -97,6 +103,8 @@ Wait a few minutes for the system to boot, then use your browser's back button t
 receive the GUI login screen. If the login screen does not appear, access the system using IPMI in order to determine what problem is preventing the system
 from resuming normal operation.
 
+.. index:: Shutdown
+
 .. _Shutdown:
 
 Shutdown
@@ -120,6 +128,8 @@ process is complete. Once complete, the shutdown request can be re-issued.
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
 disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system.
 
+.. index:: Help
+
 .. _Help:
 
 Help
@@ -132,6 +142,8 @@ The Help button in the upper right corner provides a pop-up menu containing hype
 *   the link to the TrueNAS® knowledge base
 
 *   the email address of the support team
+
+.. index:: Support
 
 .. _Creating a Support Ticket:
 
@@ -170,6 +182,8 @@ email will be sent to the provided email address; you will not be able to login 
 
 To view the status of your tickets, click the "View Tickets" tab while logged in. In addition to the status, you can view any comments by support staff as
 well as click a ticket's Post Reply button in order to respond to a comment or to provide additional requested information.
+
+.. index:: Alert
 
 .. _Alert:
 

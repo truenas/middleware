@@ -17,6 +17,8 @@ It also supports :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs`.
 
 This section summarizes each of these services and their available configurations within the TrueNAS® GUI.
 
+.. index:: Active Directory
+
 .. _Active Directory:
 
 Active Directory
@@ -303,6 +305,8 @@ Finally, run these commands. Again, the :command:`echo` command should return a 
  service ix-cache start &
 
 
+.. index:: LDAP
+
 .. _LDAP:
 
 LDAP
@@ -423,6 +427,8 @@ If the users and groups are not listed, refer to the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
 for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in :file:`/var/log/auth.log`.
 
+.. index:: NIS
+
 .. _NIS:
 
 NIS
@@ -471,6 +477,8 @@ options.
 
 Click the "Rebuild Directory Service Cache" button if you add a user to NIS who needs immediate access to TrueNAS®; otherwise this occurs automatically once
 a day as a cron job.
+
+.. index:: NT4
 
 .. _NT4:
 
@@ -528,6 +536,8 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to TrueNAS®; otherwise this occurs
 automatically once a day as a cron job.
+
+.. index:: Kerberos
 
 .. _Kerberos Realms:
 

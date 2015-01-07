@@ -183,6 +183,8 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
+.. index:: Boot
+
 .. _Boot:
 
 Boot
@@ -456,6 +458,8 @@ that can be configured using the Email tab.
 Click the "Send Test Mail" button to verify that the configured email settings are working. If the test email fails, double-check the email address to send
 emails to by clicking the "Change E-mail" button for the *root* account in :menuselection:`Account --> Users --> View Users`.
 
+.. index:: System Dataset
+
 .. _System Dataset:
 
 System Dataset
@@ -487,6 +491,8 @@ If you make any changes, click the "Save" button to save them.
 
 If you change the pool storing the system dataset at a later time, TrueNAS® will automatically migrate the existing data in the system dataset to the new
 location.
+
+.. index:: Failovers
 
 .. _Failovers:
 

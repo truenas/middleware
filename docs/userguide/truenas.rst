@@ -22,3 +22,9 @@
     :width: 8.5in
     :height: 11.0in
 
+.. only:: html
+
+   Index
+   =====
+
+   * :ref:`genindex`
