@@ -4,8 +4,8 @@
 #
 
 # PROVIDE: ix-nginx
-# REQUIRE: ix-warden django
-# BEFORE: nginx
+# REQUIRE: ix-warden
+# BEFORE: nginx django
 
 . /etc/rc.freenas
 

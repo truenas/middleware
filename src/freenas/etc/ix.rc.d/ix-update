@@ -105,6 +105,12 @@ db_update()
 	mount -uw /
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
+
+	if [ -f /data/uploaded.db ]; then
+		echo "Moving uploaded config to ${FREENAS_CONFIG}"
+		mv /data/uploaded.db ${FREENAS_CONFIG}
+	fi
+
 	# The call below checks if the version of freenas we are updating form is
 	# a pre-cert-UI version or not and stores its result in a local var.
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select * from system_ssl;" > /dev/null 2>&1
@@ -112,10 +118,6 @@ db_update()
 	if [ "${precertman}" == 0 ]; then
 		# The step below will parse and write the old cert and key to /root/precertman.crt/.key
 		upgrade_cert_migration "/root" ${FREENAS_CONFIG}
-	fi
-	if [ -f /data/uploaded.db ]; then
-		echo "Moving uploaded config to ${FREENAS_CONFIG}"
-		mv /data/uploaded.db ${FREENAS_CONFIG}
 	fi
 
 	set +e
