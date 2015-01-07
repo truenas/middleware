@@ -1265,11 +1265,11 @@ Key" button and copy its contents. An example is shown in Figure 8.3a.
 
 **Figure 8.3a: Copy the Replication Key**
 
-|replication1.png|
+|tn_replication1.png|
 
-.. |replication1.png| image:: images/replication1.png
-    :width: 5.8in
-    :height: 3.0in
+.. |tn_replication1.png| image:: images/tn_replication1.png
+    :width: 5.9in
+    :height: 2.9in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1304,8 +1304,8 @@ For this example, the required configuration is as follows:
 |replication2.png|
 
 .. |replication2.png| image:: images/replication2.png
-    :width: 7.98in
-    :height: 5.2in
+    :width: 6.2in
+    :height: 3.6in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
@@ -1608,8 +1608,8 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |vmware1.png|
 
 .. |vmware1.png| image:: images/vmware1.png
-    :width: 5.1in
-    :height: 3.8in
+    :width: 3.2in
+    :height: 2.5in
 
 **Table 8.6a: VMware Snapshot Options**
 

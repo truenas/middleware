@@ -1337,8 +1337,8 @@ For this example, the required configuration is as follows:
 |replication2.png|
 
 .. |replication2.png| image:: images/replication2.png
-    :width: 7.98in
-    :height: 5.2in
+    :width: 6.2in
+    :height: 3.6in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
@@ -1641,8 +1641,8 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |vmware1.png|
 
 .. |vmware1.png| image:: images/vmware1.png
-    :width: 5.1in
-    :height: 3.8in
+    :width: 3.2in
+    :height: 2.5in
 
 **Table 8.6a: VMware Snapshot Options**
 
