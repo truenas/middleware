@@ -19,6 +19,6 @@
    Using the FreeNAS® API <truenas_api>
 
 .. |cover.jpg| image:: images/cover.jpg
-    :width: 6.9543in
-    :height: 9.411in
+    :width: 8.5in
+    :height: 11.0in
 
