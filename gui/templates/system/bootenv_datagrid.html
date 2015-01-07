@@ -33,7 +33,49 @@
             </p>
             -->
           {% endif %}
-        <p>{% if bootme.scrub.date %}{% trans "Last Scrub Run on" %}: {{ bootme.scrub.date }} &nbsp; &nbsp; {% endif %}</p>
+        {% if bootme.scrub.date %}<p style="padding-bottom: 0px;">{% trans "Last Scrub Run on" %}: {{ bootme.scrub.date }} &nbsp; &nbsp; </p>{% endif %}
       </div>
     {% endif %}
+    <div style="clear: both;"></div>
+    <div class="gridAdd" style="padding: 4px;">
+        <div data-dojo-type="dijit/form/TextBox" style="width: 30px; margin-right: 2px;" value="{{ advanced.adv_boot_scrub }}">
+            <script type="dojo/method" data-dojo-event="onChange" data-dojo-args="value">
+	        var textbox = this;
+                this.set('disabled', true);
+                require([
+                    "dojo/request/xhr",
+	            "dijit/TooltipDialog",
+	            "dijit/popup"
+                ], function(
+	            xhr,
+	            TooltipDialog,
+	            popup
+	        ) {
+                    xhr.post('{% url "system_bootenv_scrub_interval" %}', {
+                       headers: {"X-CSRFToken": CSRFToken},
+                       data: {"interval": value},
+	               handleAs: 'json'
+	            }).then(function(data) {
+
+                        if(data.error == true) {
+                          var td = new TooltipDialog({
+                            content: data.message,
+                            onMouseLeave: function() {
+                              popup.close(td);
+                              td.destroyRecursive();
+                            }
+                          });
+                          popup.open({
+                            popup: td,
+                            around: textbox.domNode,
+                            orient: ["above", "after", "below-alt"]
+                          });
+                        }
+                        textbox.set('disabled', false);
+
+	            });
+                });
+            </script>
+	</div> <span>{% trans "Automatic scrub interval (in days)" %}</span>
+    </div>
 {% endblock %}

@@ -136,6 +136,11 @@ def system_info(request):
 def bootenv_datagrid(request):
     bootzvolstats = notifier().zpool_status('freenas-boot')
     bootme = notifier().zpool_parse('freenas-boot')
+    try:
+        advanced = models.Advanced.objects.order_by('-id')[0]
+    except:
+        advanced = models.Advanced.objects.create()
+
     return render(request, 'system/bootenv_datagrid.html', {
         'actions_url': reverse('system_bootenv_datagrid_actions'),
         'resource_url': reverse('api_dispatch_list', kwargs={
@@ -145,6 +150,7 @@ def bootenv_datagrid(request):
         'structure_url': reverse('system_bootenv_datagrid_structure'),
         'bootme': bootme,
         'stats': bootzvolstats,
+        'advanced': advanced,
     })
 
 
@@ -278,6 +284,31 @@ def bootenv_scrub(request):
         except Exception, e:
             return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
+
+
+def bootenv_scrub_interval(request):
+    assert request.method == 'POST'
+
+    interval = request.POST.get('interval')
+    if not interval.isdigit():
+        return JsonResp(
+            request,
+            error=True,
+            message=_('Interval must be an integer.'),
+        )
+
+    try:
+        advanced = models.Advanced.objects.order_by('-id')[0]
+    except:
+        advanced = models.Advanced.objects.create()
+
+    advanced.adv_boot_scrub = int(interval)
+    advanced.save()
+
+    return JsonResp(
+        request,
+        message=_('Scrub interval successfully changed.'),
+    )
 
 
 def bootenv_delete(request, name):
