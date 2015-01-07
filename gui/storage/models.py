@@ -990,6 +990,23 @@ class Replication(Model):
                 notifier().zfs_dataset_release_snapshots(zfsname, True)
         except:
             pass
+        if os.path.exists(REPL_RESULTFILE):
+            with open(REPL_RESULTFILE, 'rb') as f:
+                data = f.read()
+            try:
+                results = cPickle.loads(data)
+                results.pop(self.id, None)
+                with open(REPL_RESULTFILE, 'w') as f:
+                    f.write(cPickle.dumps(results))
+            except Exception, e:
+                log.debug('Failed to remove replication from state file %s', e)
+        progressfile = '/tmp/.repl_progress_%d' % self.id
+        if os.path.exists(progressfile):
+            try:
+                os.unlink(progressfile)
+            except:
+                # Possible race condition?
+                pass
         super(Replication, self).delete()
 
 
