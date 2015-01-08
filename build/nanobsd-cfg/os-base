@@ -43,7 +43,7 @@ fi
 
 . "$NANO_CFG_BASE/os-base-functions.sh"
 
-FlashDevice generic 2g
+FlashDevice generic 4g
 
 # Pull in common definitions.
 . ${NANO_CFG_BASE}/common

@@ -42,6 +42,7 @@ import ctypes
 import errno
 import glob
 import grp
+import json
 import logging
 import os
 import pipes
@@ -51,6 +52,7 @@ import re
 import select
 import shutil
 import signal
+import socket
 import sqlite3
 import stat
 from subprocess import Popen, PIPE
@@ -71,6 +73,7 @@ PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
 PWENC_PADDING = '{'
 PWENC_CHECK = 'Donuts!'
+BACKUP_SOCK = '/var/run/backupd.sock'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -261,7 +264,8 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
-            'webdav': ('httpd',None),
+            'webdav': ('httpd', None),
+            'backup': (None, '/var/run/backup.pid')
         }
 
     def _started_notify(self, verb, what):
@@ -414,6 +418,9 @@ class notifier:
 
     def _start_webshell(self):
         self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+
+    def _start_backup(self):
+        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
 
     def _restart_webshell(self):
         try:
@@ -5667,6 +5674,48 @@ class notifier:
         xml = etree.fromstring(xml)
         connections = xml.xpath('//connection')
         return len(connections)
+
+    def call_backupd(self, args):
+        ntries = 5
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+        # Try for a while in case daemon is just starting
+        while ntries > 0:
+            try:
+                sock.connect(BACKUP_SOCK)
+                break
+            except socket.error:
+                ntries -= 1
+                time.sleep(1)
+
+        if ntries == 0:
+            # Mark backup as failed at this point
+            from freenasUI.system.models import Backup
+            backup = Backup.objects.all().order_by('-id').first()
+            backup.bak_failed = True
+            backup.bak_status = 'Backup process died'
+            backup.save()
+            return {'status': 'ERROR'}
+
+        sock.settimeout(5)
+        f = sock.makefile(bufsize=0)
+
+        try:
+            f.write(json.dumps(args) + '\n')
+            resp_json = f.readline()
+            response = json.loads(resp_json)
+        except (IOError, ValueError, socket.timeout):
+            # Mark backup as failed at this point
+            from freenasUI.system.models import Backup
+            backup = Backup.objects.all().order_by('-id').first()
+            backup.bak_failed = True
+            backup.bak_status = 'Backup process died'
+            backup.save()
+            response = {'status': 'ERROR'}
+
+        f.close()
+        sock.close()
+        return response
 
 
 def usage():

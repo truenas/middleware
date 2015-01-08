@@ -36,7 +36,9 @@ define([
     _mainProgress: "",
     _subProgress: "",
     _iter: 0,
+    _message: "",
     name : "",
+    backupProgress: false,
     fileUpload: false,
     importProgress: false,
     _message: "",
@@ -60,6 +62,10 @@ define([
         style: {width: "280px"}
       }, this.dapSubProgress);
 
+      if(this.mode == "backup") {
+        domStyle.set(this.dapSub, "display", "none");
+      }
+
       if(this.mode == "simple") {
         domStyle.set(this.dapMain, "display", "none");
         domStyle.set(this.dapSubLabel, "display", "none");
@@ -79,7 +85,7 @@ define([
         domStyle.set(this.dapMainLabel, "word-break", "break-word");
       }
 
-      if(this.importProgress) {
+      if(this.backupProgress) {
         this.update("");
       }
 
@@ -98,7 +104,7 @@ define([
       var me = this;
       if(uuid) this.uuid = uuid;
       if(!this.dapMainLabel) return;
-      if(!this.importProgress) {
+      if(!this.importProgress && !this.backupProgress) {
         this.message = this.steps[this._curStep - 1];
         this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.message.label);
       } else
@@ -145,6 +151,14 @@ define([
         }).then(function(data) {
           if(data.status && data.volume && data.ftrans) {
             me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);;
+          }
+        });
+      } else if (this.backupProgress) {
+        xhr.get(me.poolUrl, {
+          handleAs: "json"
+        }).then(function(data) {
+          if(data.message) {
+            me._message = data.message;
           }
           if(data.status == 'error' || data.status == 'finished') {
             me.onFinished();
@@ -205,6 +219,8 @@ define([
     destroy: function() {
       //this.timer.stop();
       this.inherited(arguments);
+    },
+    onFinished: function() {
     }
   });
   return Progress;

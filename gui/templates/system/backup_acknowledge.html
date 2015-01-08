@@ -1,0 +1,10 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+    {% if backup.bak_failed  %}
+        <b>Backup failed!</b><br/>
+        Reason: {{ backup.bak_status }}
+    {% else %}
+        Backup finished!
+    {% endif %}
+{% endblock %}
+{% block oklabel %}Dismiss{% endblock %}
