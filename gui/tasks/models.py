@@ -119,7 +119,7 @@ class CronJob(Model):
         if self.cron_minute == '*':
             return _(u'Every minute')
         elif self.cron_minute.startswith('*/'):
-            return _(u'Every %s minute(s)') % self.cron_minute.split('*/')[1]
+            return _(u'Every {0} minute(s)').format(self.cron_minute.split('*/')[1])
         else:
             return self.cron_minute
 
@@ -127,7 +127,7 @@ class CronJob(Model):
         if self.cron_hour == '*':
             return _(u'Every hour')
         elif self.cron_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.cron_hour.split('*/')[1]
+            return _(u'Every {0} hour(s)').format(self.cron_hour.split('*/')[1])
         else:
             return self.cron_hour
 
@@ -135,7 +135,7 @@ class CronJob(Model):
         if self.cron_daymonth == '*':
             return _(u'Everyday')
         elif self.cron_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.cron_daymonth.split('*/')[1]
+            return _(u'Every {0} days').format(self.cron_daymonth.split('*/')[1])
         else:
             return self.cron_daymonth
 
@@ -437,7 +437,7 @@ class Rsync(Model):
         if self.rsync_minute == '*':
             return _(u'Every minute')
         elif self.rsync_minute.startswith('*/'):
-            return _(u'Every %s minute(s)') % self.rsync_minute.split('*/')[1]
+            return _(u'Every {0} minute(s)').format(self.rsync_minute.split('*/')[1])
         else:
             return self.rsync_minute
 
@@ -445,7 +445,7 @@ class Rsync(Model):
         if self.rsync_hour == '*':
             return _(u'Every hour')
         elif self.rsync_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.rsync_hour.split('*/')[1]
+            return _(u'Every {0} hour(s)').format(self.rsync_hour.split('*/')[1])
         else:
             return self.rsync_hour
 
@@ -453,7 +453,7 @@ class Rsync(Model):
         if self.rsync_daymonth == '*':
             return _(u'Everyday')
         elif self.rsync_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.rsync_daymonth.split('*/')[1]
+            return _(u'Every {0} days').format(self.rsync_daymonth.split('*/')[1])
         else:
             return self.rsync_daymonth
 
@@ -607,7 +607,7 @@ class SMARTTest(Model):
         if self.smarttest_hour in ('..', '*'):
             return _(u'Every hour')
         elif self.smarttest_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.smarttest_hour.split('*/')[1]
+            return _(u'Every {0} hour(s)').format(self.smarttest_hour.split('*/')[1])
         else:
             return self.smarttest_hour
 
@@ -615,7 +615,7 @@ class SMARTTest(Model):
         if self.smarttest_daymonth in ('..', '*'):
             return _(u'Everyday')
         elif self.smarttest_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.smarttest_daymonth.split('*/')[1]
+            return _(u'Every {0} days').format(self.smarttest_daymonth.split('*/')[1])
         else:
             return self.smarttest_daymonth
 
