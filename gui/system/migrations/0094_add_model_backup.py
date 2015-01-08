@@ -35,6 +35,7 @@ class Migration(SchemaMigration):
             'adv_anonstats': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'adv_anonstats_token': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'adv_autotune': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'adv_boot_scrub': ('django.db.models.fields.IntegerField', [], {'default': '35'}),
             'adv_consolemenu': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'adv_consolemsg': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'adv_consolescreensaver': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -65,6 +66,46 @@ class Migration(SchemaMigration):
             'bak_started_at': ('django.db.models.fields.DateTimeField', [], {}),
             'bak_status': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'blank': 'True'}),
             'bak_worker_pid': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
+        u'system.certificate': {
+            'Meta': {'object_name': 'Certificate'},
+            'cert_CSR': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_certificate': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_city': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_common': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_country': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_digest_algorithm': ('django.db.models.fields.CharField', [], {'default': "'SHA256'", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_email': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_key_length': ('django.db.models.fields.IntegerField', [], {'default': '2048', 'null': 'True', 'blank': 'True'}),
+            'cert_lifetime': ('django.db.models.fields.IntegerField', [], {'default': '3650', 'null': 'True', 'blank': 'True'}),
+            'cert_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
+            'cert_organization': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_privatekey': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_serial': ('django.db.models.fields.IntegerField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_signedby': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['system.CertificateAuthority']", 'null': 'True', 'blank': 'True'}),
+            'cert_state': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_type': ('django.db.models.fields.IntegerField', [], {}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
+        u'system.certificateauthority': {
+            'Meta': {'object_name': 'CertificateAuthority'},
+            'cert_CSR': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_certificate': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_city': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_common': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_country': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_digest_algorithm': ('django.db.models.fields.CharField', [], {'default': "'SHA256'", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_email': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_key_length': ('django.db.models.fields.IntegerField', [], {'default': '2048', 'null': 'True', 'blank': 'True'}),
+            'cert_lifetime': ('django.db.models.fields.IntegerField', [], {'default': '3650', 'null': 'True', 'blank': 'True'}),
+            'cert_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
+            'cert_organization': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_privatekey': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'cert_serial': ('django.db.models.fields.IntegerField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_signedby': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['system.CertificateAuthority']", 'null': 'True', 'blank': 'True'}),
+            'cert_state': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'cert_type': ('django.db.models.fields.IntegerField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'system.email': {
@@ -107,6 +148,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Settings'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'stg_guiaddress': ('django.db.models.fields.CharField', [], {'default': "'0.0.0.0'", 'max_length': '120', 'blank': 'True'}),
+            'stg_guicertificate': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['system.Certificate']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
             'stg_guihttpsport': ('django.db.models.fields.IntegerField', [], {'default': '443'}),
             'stg_guihttpsredirect': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'stg_guiport': ('django.db.models.fields.IntegerField', [], {'default': '80'}),
@@ -114,29 +156,18 @@ class Migration(SchemaMigration):
             'stg_guiv6address': ('django.db.models.fields.CharField', [], {'default': "'::'", 'max_length': '120', 'blank': 'True'}),
             'stg_kbdmap': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'stg_language': ('django.db.models.fields.CharField', [], {'default': "'en'", 'max_length': '120'}),
+            'stg_pwenc_check': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'stg_syslogserver': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
             'stg_timezone': ('django.db.models.fields.CharField', [], {'default': "'America/Los_Angeles'", 'max_length': '120'}),
             'stg_wizardshown': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
-        },
-        u'system.ssl': {
-            'Meta': {'object_name': 'SSL'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'ssl_certfile': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'ssl_city': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_common': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_country': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_email': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_org': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_passphrase': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_state': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'ssl_unit': ('django.db.models.fields.CharField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'})
         },
         u'system.systemdataset': {
             'Meta': {'object_name': 'SystemDataset'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'sys_pool': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'blank': 'True'}),
             'sys_rrd_usedataset': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'sys_syslog_usedataset': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'sys_syslog_usedataset': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'sys_uuid': ('django.db.models.fields.CharField', [], {'max_length': '32'})
         },
         u'system.tunable': {
             'Meta': {'ordering': "['tun_var']", 'object_name': 'Tunable'},
@@ -146,6 +177,12 @@ class Migration(SchemaMigration):
             'tun_type': ('django.db.models.fields.CharField', [], {'default': "'loader'", 'max_length': '20'}),
             'tun_value': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'tun_var': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
+        },
+        u'system.update': {
+            'Meta': {'object_name': 'Update'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'upd_autocheck': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'upd_train': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
         }
     }
 
