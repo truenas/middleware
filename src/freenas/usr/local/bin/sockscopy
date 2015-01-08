@@ -168,7 +168,7 @@ if __name__ == '__main__':
         os.makedirs(src)
         loop_thread = Loop_Sockserver(socket_path)
         loop_thread.start()
-        if fstype == 'NTFS':
+        if fstype == 'ntfs':
             subprocess.call("kldload fuse >/dev/null 2>&1", shell=True)
             if subprocess.call("kldstat -n fuse >/dev/null 2>&1", shell=True) != 0:
                 raise Exception("Fuse (kernel module) failed to load")
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         umount(src)
         os.rmdir(src)
         #os.unlink(tempfile)
-        if fstype == 'NTFS':
+        if fstype == 'ntfs':
             subprocess.call("kldunload fuse >/dev/null 2>&1", shell=True)
     except Exception:
         pass
