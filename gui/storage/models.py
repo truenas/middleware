@@ -80,7 +80,7 @@ class Volume(Model):
             version = notifier().zpool_version(str(self.vol_name))
         except ValueError:
             return True
-        if version ==  '-':
+        if version == '-':
             proc = subprocess.Popen([
                        "zpool",
                        "get",
@@ -235,7 +235,8 @@ class Volume(Model):
                         notifier().destroy_zfs_vol(zvol)
                     qs.delete()
                 reloads = map(sum, zip(
-                    reloads, (False, False, False, True, False, reload_collectd)
+                    reloads, (False, False, False, True, False,
+                              reload_collectd)
                 ))
 
         else:
@@ -409,7 +410,7 @@ class Scrub(Model):
         if self.scrub_minute == '*':
             return _(u'Every minute')
         elif self.scrub_minute.startswith('*/'):
-            return _(u'Every %s minute(s)') % self.scrub_minute.split('*/')[1]
+            return _(u'Every {0} minute(s)').format(self.scrub_minute.split('*/')[1])
         else:
             return self.scrub_minute
 
@@ -417,7 +418,7 @@ class Scrub(Model):
         if self.scrub_hour == '*':
             return _(u'Every hour')
         elif self.scrub_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.scrub_hour.split('*/')[1]
+            return _(u'Every {0} hour(s)').format(self.scrub_hour.split('*/')[1])
         else:
             return self.scrub_hour
 
@@ -425,7 +426,7 @@ class Scrub(Model):
         if self.scrub_daymonth == '*':
             return _(u'Everyday')
         elif self.scrub_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.scrub_daymonth.split('*/')[1]
+            return _(u'Every {0} days').format(self.scrub_daymonth.split('*/')[1])
         else:
             return self.scrub_daymonth
 
@@ -574,7 +575,7 @@ class Disk(Model):
             return self.disk_name
 
     def get_disk_size(self):
-        #FIXME
+        # FIXME
         p1 = subprocess.Popen(
             ["/usr/sbin/diskinfo", self.devname],
             stdout=subprocess.PIPE,
@@ -592,7 +593,7 @@ class Disk(Model):
 
     def delete(self):
         from freenasUI.services.models import iSCSITargetExtent
-        #Delete device extents depending on this Disk
+        # Delete device extents depending on this Disk
         qs = iSCSITargetExtent.objects.filter(
             iscsi_target_extent_type='Disk',
             iscsi_target_extent_path=str(self.id))
@@ -730,7 +731,8 @@ class MountPoint(Model):
             reload_iscsi = True
         reload_jails = len(attachments['jails']) > 0
 
-        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi, reload_jails, reload_collectd)
+        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
+                reload_jails, reload_collectd)
 
     def delete(self, do_reload=True):
         if do_reload:
