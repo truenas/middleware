@@ -2916,3 +2916,37 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_common'
         ]
         model = models.Certificate
+
+
+class BackupForm(Form):
+    def __init__(self, *args, **kwargs):
+        super(BackupForm, self).__init__(*args, **kwargs)
+
+    backup_hostname = forms.CharField(
+        label=_("Hostname or IP address"),
+        required=True)
+
+    backup_username = forms.CharField(
+        label=_("User name"),
+        required=True)
+
+    backup_password = forms.CharField(
+        label=_("Password"),
+        required=False)
+
+    backup_directory = forms.CharField(
+        label=_("Remote directory"),
+        required=True)
+
+    backup_data = forms.BooleanField(
+        label=_("Backup data"),
+        required=False)
+
+    backup_compression = forms.BooleanField(
+        label=_("Compress backup"),
+        required=False)
+
+    backup_auth_keys = forms.BooleanField(
+        label=_("Use key authentication"),
+        required=False)
+
