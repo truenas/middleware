@@ -96,11 +96,11 @@ var displaySettings = {
           , testProp : { "username": "jakub" }
         }
       , userCreated: {
-            name     : "FreeNAS user accounts"
+            name     : "local user accounts"
           , testProp : { "builtin": false }
         }
       , builtIn: {
-            name     : "built-in user accounts"
+            name     : "built-in system accounts"
           , testProp : { "builtin": true }
         }
     }
