@@ -334,23 +334,24 @@ var Viewer = React.createClass({
   , render: function() {
       var viewDropdown   = null;
       var allowedFilters = this.props.displayData.allowedFilters;
-      var allowedGroups  = this.props.displayData.allowedGroups;
+      // var allowedGroups  = this.props.displayData.allowedGroups;
       var viewerModeNav  = null;
 
       // Create View Menu
-      if ( allowedFilters || allowedGroups ) {
+      if ( allowedFilters ) {
+      // if ( allowedFilters || allowedGroups ) {
         var menuSections = [];
 
         // Don't show grouping toggle for hidden groups
-        var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
+        // var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
 
         if ( allowedFilters ) {
           this.createDropdownSection( menuSections, null, allowedFilters.map( this.createFilterMenuOption ) );
         }
 
-        if ( visibleGroups ) {
-          this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
-        }
+        // if ( visibleGroups ) {
+        //   this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
+        // }
 
 
         viewDropdown = (
