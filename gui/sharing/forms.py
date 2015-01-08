@@ -245,9 +245,21 @@ class AFP_ShareForm(ModelForm):
         return umask
 
     def save(self):
-        ret = super(AFP_ShareForm, self).save()
+        obj = super(AFP_ShareForm, self).save(commit=False)
+        path = self.cleaned_data.get('afp_path').encode('utf8')
+        if path and not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError, e:
+                raise MiddlewareError(_(
+                    'Failed to create %(path)s: %(error)s' % {
+                        'path': path,
+                        'error': e,
+                    }
+                ))
+        obj.save()
         notifier().reload("afp")
-        return ret
+        return obj
 
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
@@ -443,13 +455,20 @@ class NFS_SharePathForm(ModelForm):
         fields = '__all__'
         model = models.NFS_Share_Path
 
-    def clean_path(self):
-        path = self.cleaned_data.get("path")
-        if not os.path.exists(path):
-            raise forms.ValidationError(_("The path %s does not exist") % (
-                path,
-            ))
-        return path
+    def save(self, *args, **kwargs):
+        path = self.cleaned_data.get('path').encode('utf8')
+        if path and not os.path.exists(path):
+            try:
+                os.makedirs(path)
+            except OSError, e:
+                raise MiddlewareError(_(
+                    'Failed to create %(path)s: %(error)s' % {
+                        'path': path,
+                        'error': e,
+                    }
+                ))
+        return super(NFS_SharePathForm, self).save(*args, **kwargs)
+
 
 class WebDAV_ShareForm(ModelForm):
 

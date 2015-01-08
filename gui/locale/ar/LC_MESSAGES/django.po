@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-07-09 18:42+0000\n"
-"Last-Translator: Fahad <fmail747@gmail.com>\n"
+"PO-Revision-Date: 2015-01-02 12:41+0000\n"
+"Last-Translator: raafat <raafat1991@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1404931367.0\n"
+"X-POOTLE-MTIME: 1420202471.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -604,7 +604,7 @@ msgstr ""
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "اسمح بهويات المجموعات المكررة (GID)"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
@@ -664,7 +664,7 @@ msgid "Groups"
 msgstr "مجموعات"
 
 #: account/models.py:67
-#, fuzzy, python-format
+#, python-format
 msgid "Group %s is built-in and can not be deleted!"
 msgstr "المجموعة %s مدمجة ولا يمكن حذفها"
 
@@ -6277,7 +6277,7 @@ msgstr "مصادقة"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "ctrl+!data"
 
 #: choices.py:716
 msgid "auth+!data"
@@ -7150,7 +7150,6 @@ msgid "Local 2"
 msgstr "محلي 2"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
 msgstr "محلي 5"
 
@@ -7160,7 +7159,7 @@ msgstr "خدمة معلومات الشّبكة NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data"
 
 #: account/forms.py:66
 msgid "Passwords do not match"
@@ -7993,11 +7992,11 @@ msgstr "إتش تي تي بي + إتش تي تي بي إس"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "النواة"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "النواة+                "
 
 #: choices.py:176
 msgid "SMB2"
@@ -8048,12 +8047,10 @@ msgid "Local 4"
 msgstr "محلي 4"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
 msgstr "محلي 6"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
 msgstr "محلي 7"
 
@@ -8066,9 +8063,8 @@ msgid "on"
 msgstr "مفعل"
 
 #: choices.py:708
-#, fuzzy
 msgid "off"
-msgstr "غير مفعل"
+msgstr "مغلق"
 
 #: choices.py:710
 msgid "!data"
@@ -8080,7 +8076,7 @@ msgstr "Ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "المصادقة + البيانات"
 
 #: account/forms.py:53
 #, fuzzy
@@ -9707,11 +9703,11 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr ""
+msgstr "المصادقة الأساسية"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr ""
+msgstr "المصادقة الموجزة"
 
 #: choices.py:799
 msgid "adex"
