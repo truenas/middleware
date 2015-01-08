@@ -32,6 +32,7 @@ import re
 import signal
 import subprocess
 import urllib
+from time import sleep
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -315,6 +316,8 @@ def volimport(request):
             subprocess.Popen(msg,
                 shell=True,
             )
+            # give the background disk import code time to create a socket
+            sleep(2)
             return render(request, 'storage/import_progress.html')
         else:
 
