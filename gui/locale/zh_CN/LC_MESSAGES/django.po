@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-12-13 07:38+0000\n"
-"Last-Translator: Herald <yuhr123@gmail.com>\n"
+"PO-Revision-Date: 2015-01-03 09:35+0000\n"
+"Last-Translator: iarbor <iarbor@tom.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418456336.0\n"
+"X-POOTLE-MTIME: 1420277713.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9154,9 +9154,8 @@ msgid "Bind DN"
 msgstr "绑定 DN"
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Bind 密码"
+msgstr "绑定密码"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -9353,7 +9352,6 @@ msgid "Range Size"
 msgstr "Range Size"
 
 #: directoryservice/models.py:184
-#, fuzzy
 msgid ""
 "Defines the number of uids/gids available per domain range. The minimum "
 "needed value is 2000. SIDs with RIDs larger than this value will be mapped "
@@ -9362,20 +9360,15 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
-"指定每个域可用的 uids/gids 数量范围。最小值为2000。SIDs with RIDs larger than this value will "
-"be mapped into extension ranges depending upon number of available ranges. "
-"If the autorid backend runs out of available ranges, mapping requests for "
-"new domains (or new extension ranges for domains already known) are ignored "
-"and the corresponding map is discarded."
+"指定每个域可用的用户编号/组编号数值范围。最小值为2000。比该值更大的带有RID(Relative ID)的SID将被映射成一个可用范围更大的数值。 "
+"如果后端自动生成的RID超过了可用范围，对新域的映射请求（或者是已知域的新扩展）将被忽略，同时相应的映射将被取消。"
 
 #: directoryservice/models.py:197
 #, fuzzy
 msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
-msgstr ""
-"将模块切换为只读模式。No new ranges will be allocated nor will new mappings be created "
-"in the idmap pool."
+msgstr "将模块切换为只读模式。在idmap池中不会定位新范围，也不会创建新的映射。"
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
@@ -9430,9 +9423,8 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
-"定义用于身份认证的用户DN。用于验证该用户的密码应该与net idmap secret一同被存储(参见 net(8))。If absent, the "
-"ldap credentials from the ldap passdb configuration are used, and if these "
-"are also absent, an anonymous bind will be performed as last fallback."
+"定义用于身份认证的用户DN。用于验证该用户的密钥应该与net idmap 密钥一同被存储(参见 net(8))。若缺少它, "
+"将使用来自LDAP数据配置的LDAP凭证，若同时没有LDAP凭证，将在最终回退为匿名绑定。"
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
@@ -9527,14 +9519,12 @@ msgid "LDAP User DN"
 msgstr "LDAP 用户 DN"
 
 #: directoryservice/models.py:394
-#, fuzzy
 msgid ""
 "Defines the user DN to be used for authentication. The secret for "
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
-"定义用于身份认证的用户DN。用于验证该用户的密码应该与net idmap secret一同被存储(参见 net(8))。If absent, an "
-"anonymous bind will be performed."
+"定义用于身份认证的用户DN。用于验证该用户的密码应该与net idmap secret一同被存储(参见 net(8))。若缺少它，将执行匿名绑定。"
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
@@ -9544,7 +9534,7 @@ msgstr "LDAP Realm"
 msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
-msgstr ""
+msgstr "定义使用用户名和组名的范围。这只有当cn_realm与单独的LDAP服务器同时使用时才需要。"
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
