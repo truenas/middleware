@@ -858,6 +858,7 @@ class DynamicDNS(Model):
     ddns_ipserver = models.CharField(
         max_length=150,
         verbose_name=_('IP Server'),
+	default='checkip.dyndns.org:80 /.',
         help_text=_(
             'The client IP is detected by calling \'url\' from this '
             '\'ip_server_name:port\'. Defaults to checkip.dyndns.org:80 /.'
