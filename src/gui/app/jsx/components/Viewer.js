@@ -231,6 +231,22 @@ var Viewer = React.createClass({
 
   // VIEWER DISPLAY
 
+  , createDropdownSection: function ( targetArray, sectionName, dynamicContent ) {
+      if ( targetArray.length > 0 ) {
+        targetArray.push( <li key       = { targetArray.length - 1 }
+                              role      = "presentation"
+                              className = "divider" /> );
+      }
+
+      if ( sectionName ) {
+        targetArray.push( <li key       = { targetArray.length - 1 }
+                              role      = "presentation"
+                              className = "dropdown-header">{ sectionName }</li> );
+      }
+
+      targetArray.push( dynamicContent );
+    }
+
   , createGroupMenuOption: function ( group, index ) {
       var toggleText;
 
@@ -265,7 +281,7 @@ var Viewer = React.createClass({
       );
     }
 
-  , createModeNav: function ( mode ) {
+  , createModeNav: function ( mode, index ) {
       var modeIcons = {
           "detail" : "th-list"
         , "icon"   : "th"
@@ -275,7 +291,7 @@ var Viewer = React.createClass({
 
       return (
         <TWBS.Button onClick = { function() { this.handleModeSelect( mode ); }.bind(this) }
-                     key     = { this.props.allowedModes.indexOf( mode ) }
+                     key     = { index }
                      bsStyle = { ( mode === this.state.currentMode ) ? "info" : "default" }
                      active  = { false } >
           <Icon glyph = { modeIcons[ mode ] } />
@@ -316,29 +332,39 @@ var Viewer = React.createClass({
     }
 
   , render: function() {
-      var groupDropdown  = null;
-      var filterDropdown = null;
+      var viewDropdown   = null;
+      var allowedFilters = this.props.displayData.allowedFilters;
+      var allowedGroups  = this.props.displayData.allowedGroups;
       var viewerModeNav  = null;
 
-      if ( this.props.displayData.allowedGroups ) {
+      // Create View Menu
+      if ( allowedFilters || allowedGroups ) {
+        var menuSections = [];
+
         // Don't show grouping toggle for hidden groups
         var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
 
-        groupDropdown = (
-          <TWBS.DropdownButton title="Group">
-            { visibleGroups.map( this.createGroupMenuOption ) }
+        if ( allowedFilters ) {
+          this.createDropdownSection( menuSections, null, allowedFilters.map( this.createFilterMenuOption ) );
+        }
+
+        if ( visibleGroups ) {
+          this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
+        }
+
+
+        viewDropdown = (
+          <TWBS.DropdownButton title="View">
+            { menuSections }
           </TWBS.DropdownButton>
+        );
+      } else {
+        viewDropdown = (
+          <TWBS.DropdownButton title="View" disabled />
         );
       }
 
-      if ( this.props.displayData.allowedFilters ) {
-        filterDropdown = (
-          <TWBS.DropdownButton title="Filter">
-            { this.props.displayData.allowedFilters.map( this.createFilterMenuOption ) }
-          </TWBS.DropdownButton>
-        );
-      }
-
+      // Create navigation mode icons
       if ( this.props.allowedModes.length > 1 ) {
         viewerModeNav = (
           <TWBS.ButtonGroup className="navbar-btn navbar-right" activeMode={ this.state.currentMode } >
@@ -359,21 +385,8 @@ var Viewer = React.createClass({
                         addonBefore    = { <Icon glyph ="search" /> } />
             {/* Dropdown buttons (2) */}
             <TWBS.Nav className="navbar-left">
-
-              {/* Select properties to group by */}
-              { groupDropdown }
-
-              {/* Select properties to filter by */}
-              { filterDropdown }
-
-              {/* Select property to sort by */}
-              {/* <TWBS.DropdownButton title="Sort">
-                <TWBS.MenuItem key="1">Action</TWBS.MenuItem>
-                <TWBS.MenuItem key="2">Another action</TWBS.MenuItem>
-                <TWBS.MenuItem key="3">Something else here</TWBS.MenuItem>
-                <TWBS.MenuItem divider />
-                <TWBS.MenuItem key="4">Separated link</TWBS.MenuItem>
-              </TWBS.DropdownButton> */}
+              {/* View Menu */}
+              { viewDropdown }
             </TWBS.Nav>
 
             {/* Select view mode (3) */}
