@@ -95,6 +95,43 @@
 }
 
 .viewer-icon {
+  .flex(1);
+  overflow-y: auto;
+
+  .viewer-icon-section {
+    .flex(1 1 100px);
+    .flex-display(flex);
+    .flex-flow(row wrap);
+    .align-content(flex-start);
+
+    margin: 0 20px 25px;
+
+    &> h4 {
+      .flex(0 0 100%);
+      text-transform: uppercase;
+    }
+    &> hr {
+      .flex(0 0 100%);
+      margin: 0 0 10px;
+    }
+  }
+
+  .viewer-icon-item {
+    .flex(0 1 100px);
+    text-align: center;
+    margin: 10px;
+
+    .user-icon {
+      height : 50px;
+      width  : 50px;
+    }
+  }
+  .viewer-icon-item-primary {
+    font-weight: bold
+  }
+  .viewer-icon-item-secondary {
+
+  }
 }
 
 .viewer-table {

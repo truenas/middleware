@@ -290,23 +290,25 @@ var Viewer = React.createClass({
           return( <DetailViewer filteredData = { this.state.filteredData }
                                 searchString = { this.state.searchString }
                                 inputData    = { this.props.inputData }
-                                formatData  = { this.props.formatData }
-                                itemData    = { this.props.itemData }
-                                ItemView    = { this.props.ItemView }
-                                Editor      = { this.props.Editor } /> );
+                                formatData   = { this.props.formatData }
+                                itemData     = { this.props.itemData }
+                                ItemView     = { this.props.ItemView }
+                                Editor       = { this.props.Editor } /> );
         case "icon":
-          return( <IconViewer inputData  = { this.props.inputData }
-                                searchString = { this.state.searchString }
-                              formatData = { this.props.formatData }
-                              ItemView   = { this.props.ItemView }
-                              Editor     = { this.props.Editor } /> );
+          return( <IconViewer filteredData = { this.state.filteredData }
+                              inputData    = { this.props.inputData }
+                              searchString = { this.state.searchString }
+                              formatData   = { this.props.formatData }
+                              ItemView     = { this.props.ItemView }
+                              Editor       = { this.props.Editor } /> );
         case "table":
-          return( <TableViewer inputData  = { this.props.inputData }
-                                searchString = { this.state.searchString }
-                               formatData = { this.props.formatData }
-                               tableCols  = { this.state.tableCols }
-                               ItemView   = { this.props.ItemView }
-                               Editor     = { this.props.Editor } /> );
+          return( <TableViewer filteredData = { this.state.filteredData }
+                               inputData    = { this.props.inputData }
+                               searchString = { this.state.searchString }
+                               formatData   = { this.props.formatData }
+                               tableCols    = { this.state.tableCols }
+                               ItemView     = { this.props.ItemView }
+                               Editor       = { this.props.Editor } /> );
         case "heir":
           // TODO: Heirarchical Viewer
           break;
