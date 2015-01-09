@@ -4,10 +4,62 @@
   .flex(1);
   .align-content(flex-start);
 
-  height: inherit;
-  margin-top: -50px;
-  padding-top: 50px;
-  overflow: hidden;
+  height      : inherit;
+  margin-top  : -50px;
+  padding-top : 50px;
+  overflow    : hidden;
+
+  // Prototype Disclosure Triangle Classes
+  .disclosure-open,
+  .disclosure-closed {
+    .disclosure-toggle {
+      cursor: pointer;
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+
+  @disclosure-triangle-base   : 0.4em;
+  @disclosure-triangle-height : ( @disclosure-triangle-base / 2 );
+
+  .disclosure-toggle {
+    position            : relative;
+    cursor              : default;
+    -webkit-user-select : none;
+       -moz-user-select : none;
+        -ms-user-select : none;
+    padding-left        : 2em;
+
+    // The disclosure triangle is an isocoles right triangle with a base defined
+    // by @disclosure-triangle-base, and a height of half that value.
+    &:before {
+      content  : "";
+      width    : 0;
+      height   : 0;
+      position : absolute;
+      top      : 50%;
+      left     : 0.75em;
+    }
+  }
+  .disclosure-open {
+    .disclosure-toggle:before {
+      border-left  : @disclosure-triangle-base solid transparent;
+      border-right : @disclosure-triangle-base solid transparent;
+      border-top   : @disclosure-triangle-base solid;
+      margin-top   : ( -@disclosure-triangle-height );
+    }
+  }
+  .disclosure-closed {
+    .disclosure-toggle:before {
+      border-top    : @disclosure-triangle-base solid transparent;
+      border-bottom : @disclosure-triangle-base solid transparent;
+      border-left   : @disclosure-triangle-base solid;
+      margin-top    : ( -@disclosure-triangle-base );
+      margin-left   : ( @disclosure-triangle-height );
+    }
+    .disclosure-target { .hidden(); }
+  }
 }
 
 .viewer-nav {
@@ -43,7 +95,6 @@
   .viewer-detail-nav-group {
     text-transform : uppercase;
     color          : @gray-light;
-    text-align     : center;
     margin         : 16px 0 8px;
   }
 

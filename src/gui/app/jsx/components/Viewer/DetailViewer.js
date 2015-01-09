@@ -10,44 +10,53 @@ var Link   = Router.Link;
 
 var viewerUtil = require("./viewerUtil");
 
-// Detail Viewer
-var DetailViewer = React.createClass({
+var disclosureThreshold = 1;
+
+var DetailNavSection = React.createClass({
 
     propTypes: {
-        itemData     : React.PropTypes.object.isRequired
-      , filteredData : React.PropTypes.object.isRequired
-      , formatData   : React.PropTypes.object.isRequired
+        entries      : React.PropTypes.array.isRequired
+      , sectionName  : React.PropTypes.string.isRequired
+      , searchString : React.PropTypes.string
     }
 
-  // Sidebar navigation for collection
+  , isUnderThreshold: function() {
+    return this.props.entries.length <= disclosureThreshold;
+  }
+
+  , getInitialState: function () {
+      return { disclosure: this.props.defaultDisclosureState || "open" };
+    }
+
   , createItem: function ( rawItem, index ) {
+      var searchString = this.props.searchString;
       var params = {};
+
       params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
+
       var primaryText   = rawItem[ this.props.formatData["primaryKey"] ];
       var secondaryText = rawItem[ this.props.formatData["secondaryKey"] ];
 
-      if ( this.props.searchString.length ) {
-        var searchTemp    = this.props.searchString;
-        var primaryTemp   = primaryText.split( searchTemp );
-        var secondaryTemp = secondaryText.split( searchTemp );
+      if ( searchString.length ) {
 
         var markSearch = function ( searchArray ) {
           return searchArray.map( function( subString, index ) {
             if ( index === ( searchArray.length - 1 ) ) {
               return <span>{ subString }</span>;
             } else {
-              return <span>{ subString }<mark>{ searchTemp }</mark></span>;
+              return <span>{ subString }<mark>{ searchString }</mark></span>;
             }
           });
         };
 
-        primaryText   = markSearch( primaryTemp );
-        secondaryText = markSearch( secondaryTemp );
+        primaryText   = markSearch( primaryText.split( searchString ) );
+        secondaryText = markSearch( secondaryText.split( searchString ) );
       }
 
       return (
-        <li role = "presentation"
-            key  = { index } >
+        <li role      = "presentation"
+            key       = { index }
+            className = "disclosure-target" >
           <Link to     = { this.props.itemData.route }
                 params = { params } >
             <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.formatData["secondaryKey"] ] }
@@ -64,6 +73,47 @@ var DetailViewer = React.createClass({
       );
     }
 
+  , toggleDisclosure: function () {
+      var nextDisclosureState;
+
+      if ( this.state.disclosure === "open" ) {
+        nextDisclosureState = "closed";
+      } else {
+        nextDisclosureState = "open";
+      }
+
+      this.setState({ disclosure: nextDisclosureState });
+    }
+
+  , render: function () {
+      return (
+        <TWBS.Nav bsStyle   = "pills"
+                  stacked
+                  className = { "disclosure-" + ( this.isUnderThreshold() ? "default" : this.state.disclosure ) }
+                  activeKey = { this.props.selectedKey } >
+          <h5 className = "viewer-detail-nav-group disclosure-toggle"
+              onClick   = { this.toggleDisclosure }>
+            { this.props.sectionName }
+          </h5>
+          { this.props.entries.map( this.createItem ) }
+        </TWBS.Nav>
+      );
+    }
+
+});
+
+// Detail Viewer
+var DetailViewer = React.createClass({
+
+    propTypes: {
+        itemData     : React.PropTypes.object.isRequired
+      , filteredData : React.PropTypes.object.isRequired
+      , formatData   : React.PropTypes.object.isRequired
+      , searchString : React.PropTypes.string
+    }
+
+  // Sidebar navigation for collection
+
   , render: function () {
       var fd = this.props.filteredData;
       var groupedNavItems   = null;
@@ -73,13 +123,12 @@ var DetailViewer = React.createClass({
         groupedNavItems = fd.groups.map( function ( group, index ) {
           if ( group.entries.length ) {
             return (
-              <TWBS.Nav bsStyle   = "pills"
-                        stacked
-                        key       = { index }
-                        activeKey = { this.props.selectedKey } >
-                <h5 className="viewer-detail-nav-group">{ group.name }</h5>
-                { group.entries.map( this.createItem ) }
-              </TWBS.Nav>
+              <DetailNavSection itemData     = { this.props.itemData }
+                                formatData   = { this.props.formatData }
+                                searchString = { this.props.searchString }
+                                sectionName  = { group.name }
+                                entries      = { group.entries }
+                                activeKey    = { this.props.selectedKey } />
             );
           } else {
             return null;
@@ -89,12 +138,12 @@ var DetailViewer = React.createClass({
 
       if ( fd["remaining"].entries.length ) {
         remainingNavItems = (
-          <TWBS.Nav bsStyle   = "pills"
-                    stacked
-                    activeKey = { this.props.selectedKey } >
-            <h5 className="viewer-detail-nav-group">{ fd["remaining"].name }</h5>
-            { fd["remaining"].entries.map( this.createItem ) }
-          </TWBS.Nav>
+          <DetailNavSection itemData     = { this.props.itemData }
+                            formatData   = { this.props.formatData }
+                            searchString = { this.props.searchString }
+                            sectionName  = { fd["remaining"].name }
+                            entries      = { fd["remaining"].entries }
+                            activeKey    = { this.props.selectedKey } />
         );
       }
 
