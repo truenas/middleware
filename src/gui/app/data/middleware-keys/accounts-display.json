@@ -6,6 +6,20 @@
   , "uniqueKey"    : "id"
   , "dataKeys": [
       {
+          "key"         : "username"
+        , "name"        : "Username"
+        , "type"        : "string"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "full_name"
+        , "name"        : "Full Name"
+        , "type"        : "string"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      }
+    , {
           "key"         : "builtin"
         , "name"        : "Built-in User"
         , "type"        : "boolean"
@@ -18,13 +32,6 @@
         , "type"        : "string"
         , "mutable"     : true
         , "defaultCol"  : false
-      }
-    , {
-          "key"         : "full_name"
-        , "name"        : "Full Name"
-        , "type"        : "string"
-        , "mutable"     : true
-        , "defaultCol"  : true
       }
     , {
           "key"         : "group"
@@ -95,13 +102,6 @@
         , "type"        : "string"
         , "mutable"     : false
         , "defaultCol"  : false
-      }
-    , {
-          "key"         : "username"
-        , "name"        : "Username"
-        , "type"        : "string"
-        , "mutable"     : true
-        , "defaultCol"  : true
       }
   ]
 }]

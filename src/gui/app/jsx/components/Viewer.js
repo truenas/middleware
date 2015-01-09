@@ -100,6 +100,7 @@ var Viewer = React.createClass({
           grouped   : false
         , groups    : []
         , remaining : {}
+        , rawList   : []
       };
 
 
@@ -123,6 +124,10 @@ var Viewer = React.createClass({
         return ( searchableString.indexOf( displayParams.searchString ) !== -1 );
 
       }.bind(this) );
+
+      // At this point, inputDataArray is an ungrouped (but filtered) list of
+      // items, useful for views like the table.
+      filteredData["rawList"] = _.clone( inputDataArray );
 
 
       // Convert array into object based on groups

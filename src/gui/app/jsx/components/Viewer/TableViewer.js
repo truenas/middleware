@@ -6,52 +6,62 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
+var editorUtil = require("./Editor/editorUtil");
+
 // Table Viewer
 var TableViewer = React.createClass({
-  render: function() {
-    var createHeader = function( key ) {
+
+    propTypes: {
+        Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , filteredData : React.PropTypes.object.isRequired
+      , formatData   : React.PropTypes.object.isRequired
+      , inputData    : React.PropTypes.array
+      , searchString : React.PropTypes.string
+      , tableCols    : React.PropTypes.array.isRequired
+    }
+
+  , createHeader: function( key, index ) {
       var targetKey = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
       return(
-        <th key={ key.id } >
+        <th key={ index } >
           { targetKey["name"] }
         </th>
       );
-    }.bind(this);
+    }
 
-    var createRows = function( item ) {
-      var createCell = function( cellKey ) {
-        var innerContent;
-        if ( typeof item[cellKey] === "boolean" ) {
-          innerContent = ( item ? "Yes" : "No" );
-        } else if ( item[cellKey].length === 0 ) {
-          innerContent = <span className="text-muted">{"--"}</span>;
-        } else {
-          innerContent = item[cellKey];
-        }
-        return ( <td key={ cellKey.id }>{ innerContent }</td> );
-      }.bind( this );
-
+  , createRows: function( item, index ) {
       return(
-        <tr key={ item.id } >
-          { this.props.tableCols.map( createCell ) }
+        <tr key={ index } >
+          { this.props.tableCols.map( function( key, index ) {
+              return ( <td key={ index }>{ editorUtil.identifyAndWrite( item[ key ] ) }</td> );
+            })
+          }
         </tr>
       );
-    }.bind(this);
+    }
+
+  , render: function() {
 
     return(
-      <TWBS.Table striped bordered condensed hover responsive
-                  className = "viewer-table">
-        <thead>
-          <tr>
-            { this.props.tableCols.map( createHeader ) }
-          </tr>
-        </thead>
-        <tbody>
-          { this.props.inputData.map( createRows ) }
-        </tbody>
-      </TWBS.Table>
+      <div className = "viewer-table">
+        <TWBS.Table striped bordered condensed hover responsive>
+
+          <thead>
+            <tr>
+              { this.props.tableCols.map( this.createHeader ) }
+            </tr>
+          </thead>
+
+          <tbody>
+            { this.props.filteredData["rawList"].map( this.createRows ) }
+          </tbody>
+
+        </TWBS.Table>
+      </div>
     );
   }
+
 });
 
 module.exports = TableViewer;
