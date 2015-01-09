@@ -32,6 +32,7 @@ ASIP_PORT_NO = 548
 
 def AFPUsers():
         mac = {}
+        MAIN_PID = None
 
         if platform.system() in ("FreeBSD"):
                 rx = re.compile("^\S+\s+\S+\s+(\d+)\s+\d+\s+[\w\d]+\s+[\d\.:]+\s+([\d\.]+)")
@@ -78,7 +79,7 @@ def AFPUsers():
 				pid = int(m.group(2))
 				ppid = int(m.group(3))
 				time = m.group(4)
-				if ppid != MAIN_PID:
+				if MAIN_PID and ppid != MAIN_PID:
 					uid = 0
 					fname = ""
 					temp = pwd.getpwnam(user)
