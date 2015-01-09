@@ -39,8 +39,6 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'freenas'
 
-exclude_patterns = 'true**'
-
 # General information about the project.
 project = u'FreeNAS User Guide'
 copyright = u'2011-2014, iXsystems'
@@ -66,7 +64,7 @@ release = '9.3'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'truenas*']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
