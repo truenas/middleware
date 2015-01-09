@@ -39,7 +39,7 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'freenas'
 
-exclude_patterns = 'truenas*'
+exclude_patterns = 'true**'
 
 # General information about the project.
 project = u'FreeNAS User Guide'
