@@ -29,7 +29,8 @@ include = /usr/local/www/freenasUI
 #		            /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
 
 post-upgrade = 
-	/usr/bin/touch /data/cd-upgrade
-	/usr/bin/touch /data/need-update
+	     yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations > "/data/update.failed" 2>&1
+#	/usr/bin/touch /data/cd-upgrade
+#	/usr/bin/touch /data/need-update
 #	/usr/bin/yes | /usr/local/bin/python \
 #		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations

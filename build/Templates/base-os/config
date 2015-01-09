@@ -18,8 +18,9 @@ post-install = /usr/bin/touch /boot/kernel/linker.hints
 
 post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
 	     /usr/bin/touch /boot/modules/linker.hints
-	/usr/bin/touch /data/cd-upgrade
-	/usr/bin/touch /data/need-update
+	test -f /usr/local/www/freenasUI/manage.py && yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations > "/data/update.failed" 2>&1
+#	/usr/bin/touch /data/cd-upgrade
+#	/usr/bin/touch /data/need-update
 #	test -f /data/freenas-v1.db && \
 #	     /usr/bin/yes | /usr/local/bin/python \
 #		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations
