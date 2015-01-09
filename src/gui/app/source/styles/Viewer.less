@@ -1,3 +1,4 @@
+// Main Viewer Rules
 .viewer {
   .flex-display(flex);
   .flex-flow(column wrap);
@@ -62,10 +63,14 @@
   }
 }
 
+// Navigation
 .viewer-nav {
-  height: 50px;
+  width  : 100%;
+  height : 50px;
 }
 
+
+// Detail Viewer
 @user-icon-detail-width: 40px;
 
 .viewer-detail {
@@ -73,6 +78,7 @@
   .flex-display(flex);
   .flex-flow(row nowrap);
   .align-content(flex-start);
+  width  : 100%;
 
   mark {
     background-color : @brand-primary;
@@ -144,9 +150,12 @@
   }
 }
 
+
+// Icon Viewer
 .viewer-icon {
   .flex(1);
-  overflow-y: auto;
+  width      : 100%;
+  overflow-y : auto;
 
   .viewer-icon-section {
     .flex(1 1 100px);
@@ -184,9 +193,12 @@
   }
 }
 
+
+// Table Viewer
 .viewer-table {
   .flex(1);
-  overflow-y: auto;
+  width      : 100%;
+  overflow-y : auto;
 }
 
 .user-icon {
