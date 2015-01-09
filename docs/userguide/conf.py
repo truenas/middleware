@@ -39,9 +39,11 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'freenas'
 
+exclude_patterns = 'truenas*'
+
 # General information about the project.
 project = u'FreeNAS User Guide'
-copyright = u'2011-2015, iXsystems'
+copyright = u'2011-2014, iXsystems'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
