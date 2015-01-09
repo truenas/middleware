@@ -1,0 +1,19 @@
+6521	High	Dtrace is unhappy
+7049	Normal	9.3 BETA + 9.1.1 config => WebGUI authentication failure
+7196	Normal	Restoring config (9.2.1.9) locks you out of web interface
+7237	Normal	wbwd causes reboots even with watchdog disabled in bios
+7252	Normal	FreeNAS-9.3-STABLE-201412200530_iSCSI_Connection_Issue
+7305	Normal	Import Disk fails because fuse module not loaded automatically(?)
+7310	Normal	Import Disk status window is not updated after initiating import
+7312	Normal	"Smart test tab returns only ""Unable to load /api/v1.0/tasks/smarttest/ status:500"""
+7324	Normal	Not possible to login to GUI after importing config to a new fresh install FreeNAS 9.3 if this config contains HTTPS and there is no cert
+7326	Normal	AD not starting after reboot
+7365	Normal	Broken link in navigation tree
+7368	Normal	Setting vfs.zfs.vol.mode=1 causes 'Fatal trap 12: page fault while in kernel mode' during boot
+7378	Normal	"Unable to add a Sysctl variable under System -> Tunables
+7392	Normal	proftp logs pam errors
+7407	Normal	stale status message from previous replication that was deleted
+7426	Normal	inconsistent behavior when creating new shares from nonexistent directories
+7396	Low	Database locked exception not handled
+6784	Low	Progress bars when downloading updates are inconsistent
+7410	Low	"Sort is lexicographical
