@@ -305,6 +305,8 @@ def bootenv_scrub_interval(request):
     advanced.adv_boot_scrub = int(interval)
     advanced.save()
 
+    notifier().restart("cron")
+
     return JsonResp(
         request,
         message=_('Scrub interval successfully changed.'),
