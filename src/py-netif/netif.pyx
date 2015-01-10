@@ -570,7 +570,7 @@ cdef class InterfaceInfoMessage(RoutingPacket):
 
     def __init__(self, packet):
         super(InterfaceInfoMessage, self).__init__(packet)
-        self.header = <defs.ifa_msghdr*>self.buffer
+        self.header = <defs.if_msghdr*>self.buffer
 
     def __getstate__(self):
         state = super(InterfaceInfoMessage, self).__getstate__()
