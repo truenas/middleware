@@ -81,10 +81,42 @@ cdef extern from "sys/socket.h":
         char sa_data[14]
 
     enum:
+        AF_UNIX
         AF_INET
-        AF_INET6
-        AF_LINK
+        AF_IMPLINK
+        AF_PUP
+        AF_CHAOS
+        AF_NETBIOS
+        AF_ISO
+        AF_OSI
+        AF_ECMA
+        AF_DATAKIT
+        AF_CCITT
+        AF_SNA
+        AF_DECnet
+        AF_DLI
+        AF_LAT
+        AF_HYLINK
+        AF_APPLETALK
         AF_ROUTE
+        AF_LINK
+        AF_COIP
+        AF_CNT
+        AF_IPX
+        AF_SIP
+        AF_ISDN
+        AF_E164
+        AF_INET6
+        AF_NATM
+        AF_ATM
+        AF_NETGRAPH
+        AF_SLOW
+        AF_SCLUSTER
+        AF_ARP
+        AF_BLUETOOTH
+        AF_IEEE80211
+        AF_INET_SDP
+        AF_INET6_SDP
 
     enum:
         NET_RT_DUMP
@@ -130,6 +162,15 @@ cdef extern from "net/if_dl.h":
 
 
 cdef extern from "net/if.h":
+    enum:
+        LINK_STATE_UNKNOWN
+        LINK_STATE_DOWN
+        LINK_STATE_UP
+
+    enum:
+        IFAN_ARRIVAL
+        IFAN_DEPARTURE
+
     cdef union ifreq_ifru:
         sockaddr ifru_addr
         sockaddr ifru_dstaddr
@@ -155,28 +196,28 @@ cdef extern from "net/if.h":
         int ifra_vhid
 
     cdef struct if_data:
-        u_char ifi_type
-        u_char ifi_physical
-        u_char ifi_addrlen
-        u_char ifi_hdrlen
-        u_char ifi_link_state
-        u_char ifi_vhid
-        u_char ifi_baudrate_pf
-        u_char ifi_datalen
-        u_long ifi_mtu
-        u_long ifi_metric
-        u_long ifi_baudrate
-        u_long ifi_ipackets
-        u_long ifi_ierrors
-        u_long ifi_opackets
-        u_long ifi_oerrors
-        u_long ifi_collisions
-        u_long ifi_ibytes
-        u_long ifi_obytes
-        u_long ifi_imcasts
-        u_long ifi_omcasts
-        u_long ifi_iqdrops
-        u_long ifi_noproto
+        uint8_t ifi_type
+        uint8_t ifi_physical
+        uint8_t ifi_addrlen
+        uint8_t ifi_hdrlen
+        uint8_t ifi_link_state
+        uint8_t ifi_vhid
+        uint8_t ifi_baudrate_pf
+        uint16_t ifi_datalen
+        uint32_t ifi_mtu
+        uint32_t ifi_metric
+        uint64_t ifi_baudrate
+        uint64_t ifi_ipackets
+        uint64_t ifi_ierrors
+        uint64_t ifi_opackets
+        uint64_t ifi_oerrors
+        uint64_t ifi_collisions
+        uint64_t ifi_ibytes
+        uint64_t ifi_obytes
+        uint64_t ifi_imcasts
+        uint64_t ifi_omcasts
+        uint64_t ifi_iqdrops
+        uint64_t ifi_noproto
         uint64_t ifi_hwassist
         time_t ifi_epoch
 
@@ -245,6 +286,28 @@ cdef extern from "net/route.h":
         RTM_DELMADDR
         RTM_IFANNOUNCE
         RTM_IEEE80211
+
+    enum:
+        RTF_UP
+        RTF_GATEWAY
+        RTF_HOST
+        RTF_REJECT
+        RTF_DYNAMIC
+        RTF_MODIFIED
+        RTF_DONE
+        RTF_XRESOLVE
+        RTF_LLINFO
+        RTF_LLDATA
+        RTF_STATIC
+        RTF_BLACKHOLE
+        RTF_PROTO1
+        RTF_PROTO2
+        RTF_PROTO3
+        RTF_PINNED
+        RTF_LOCAL
+        RTF_BROADCAST
+        RTF_MULTICAST
+        RTF_STICKY
 
     enum:
         RTA_DST
@@ -403,3 +466,212 @@ cdef extern from "net/if_media.h":
     enum:
         IFM_AVALID
         IFM_ACTIVE
+        
+        
+cdef extern from "net/if_types.h":
+    enum:
+        IFT_OTHER
+        IFT_1822
+        IFT_HDH1822
+        IFT_X25DDN
+        IFT_X25
+        IFT_ETHER
+        IFT_ISO88023
+        IFT_ISO88024
+        IFT_ISO88025
+        IFT_ISO88026
+        IFT_STARLAN
+        IFT_P10
+        IFT_P80
+        IFT_HY
+        IFT_FDDI
+        IFT_LAPB
+        IFT_SDLC
+        IFT_T1
+        IFT_CEPT
+        IFT_ISDNBASIC
+        IFT_ISDNPRIMARY
+        IFT_PTPSERIAL
+        IFT_PPP
+        IFT_LOOP
+        IFT_EON
+        IFT_XETHER
+        IFT_NSIP
+        IFT_SLIP
+        IFT_ULTRA
+        IFT_DS3
+        IFT_SIP
+        IFT_FRELAY
+        IFT_RS232
+        IFT_PARA
+        IFT_ARCNET
+        IFT_ARCNETPLUS
+        IFT_ATM
+        IFT_MIOX25
+        IFT_SONET
+        IFT_X25PLE
+        IFT_ISO88022LLC
+        IFT_LOCALTALK
+        IFT_SMDSDXI
+        IFT_FRELAYDCE
+        IFT_V35
+        IFT_HSSI
+        IFT_HIPPI
+        IFT_MODEM
+        IFT_AAL5
+        IFT_SONETPATH
+        IFT_SONETVT
+        IFT_SMDSICIP
+        IFT_PROPVIRTUAL
+        IFT_PROPMUX
+        IFT_IEEE80212
+        IFT_FIBRECHANNEL
+        IFT_HIPPIINTERFACE
+        IFT_FRAMERELAYINTERCONNECT
+        IFT_AFLANE8023
+        IFT_AFLANE8025
+        IFT_CCTEMUL
+        IFT_FASTETHER
+        IFT_ISDN
+        IFT_V11
+        IFT_V36
+        IFT_G703AT64K
+        IFT_G703AT2MB
+        IFT_QLLC
+        IFT_FASTETHERFX
+        IFT_CHANNEL
+        IFT_IEEE80211
+        IFT_IBM370PARCHAN
+        IFT_ESCON
+        IFT_DLSW
+        IFT_ISDNS
+        IFT_ISDNU
+        IFT_LAPD
+        IFT_IPSWITCH
+        IFT_RSRB
+        IFT_ATMLOGICAL
+        IFT_DS0
+        IFT_DS0BUNDLE
+        IFT_BSC
+        IFT_ASYNC
+        IFT_CNR
+        IFT_ISO88025DTR
+        IFT_EPLRS
+        IFT_ARAP
+        IFT_PROPCNLS
+        IFT_HOSTPAD
+        IFT_TERMPAD
+        IFT_FRAMERELAYMPI
+        IFT_X213
+        IFT_ADSL
+        IFT_RADSL
+        IFT_SDSL
+        IFT_VDSL
+        IFT_ISO88025CRFPINT
+        IFT_MYRINET
+        IFT_VOICEEM
+        IFT_VOICEFXO
+        IFT_VOICEFXS
+        IFT_VOICEENCAP
+        IFT_VOICEOVERIP
+        IFT_ATMDXI
+        IFT_ATMFUNI
+        IFT_ATMIMA
+        IFT_PPPMULTILINKBUNDLE
+        IFT_IPOVERCDLC
+        IFT_IPOVERCLAW
+        IFT_STACKTOSTACK
+        IFT_VIRTUALIPADDRESS
+        IFT_MPC
+        IFT_IPOVERATM
+        IFT_ISO88025FIBER
+        IFT_TDLC
+        IFT_GIGABITETHERNET
+        IFT_HDLC
+        IFT_LAPF
+        IFT_V37
+        IFT_X25MLP
+        IFT_X25HUNTGROUP
+        IFT_TRANSPHDLC
+        IFT_INTERLEAVE
+        IFT_FAST
+        IFT_IP
+        IFT_DOCSCABLEMACLAYER
+        IFT_DOCSCABLEDOWNSTREAM
+        IFT_DOCSCABLEUPSTREAM
+        IFT_A12MPPSWITCH
+        IFT_TUNNEL
+        IFT_COFFEE
+        IFT_CES
+        IFT_ATMSUBINTERFACE
+        IFT_L2VLAN
+        IFT_L3IPVLAN
+        IFT_L3IPXVLAN
+        IFT_DIGITALPOWERLINE
+        IFT_MEDIAMAILOVERIP
+        IFT_DTM
+        IFT_DCN
+        IFT_IPFORWARD
+        IFT_MSDSL
+        IFT_IEEE1394
+        IFT_IFGSN
+        IFT_DVBRCCMACLAYER
+        IFT_DVBRCCDOWNSTREAM
+        IFT_DVBRCCUPSTREAM
+        IFT_ATMVIRTUAL
+        IFT_MPLSTUNNEL
+        IFT_SRP
+        IFT_VOICEOVERATM
+        IFT_VOICEOVERFRAMERELAY
+        IFT_IDSL
+        IFT_COMPOSITELINK
+        IFT_SS7SIGLINK
+        IFT_PROPWIRELESSP2P
+        IFT_FRFORWARD
+        IFT_RFC1483
+        IFT_USB
+        IFT_IEEE8023ADLAG
+        IFT_BGPPOLICYACCOUNTING
+        IFT_FRF16MFRBUNDLE
+        IFT_H323GATEKEEPER
+        IFT_H323PROXY
+        IFT_MPLS
+        IFT_MFSIGLINK
+        IFT_HDSL2
+        IFT_SHDSL
+        IFT_DS1FDL
+        IFT_POS
+        IFT_DVBASILN
+        IFT_DVBASIOUT
+        IFT_PLC
+        IFT_NFAS
+        IFT_TR008
+        IFT_GR303RDT
+        IFT_GR303IDT
+        IFT_ISUP
+        IFT_PROPDOCSWIRELESSMACLAYER
+        IFT_PROPDOCSWIRELESSDOWNSTREAM
+        IFT_PROPDOCSWIRELESSUPSTREAM
+        IFT_HIPERLAN2
+        IFT_PROPBWAP2MP
+        IFT_SONETOVERHEADCHANNEL
+        IFT_DIGITALWRAPPEROVERHEADCHANNEL
+        IFT_AAL2
+        IFT_RADIOMAC
+        IFT_ATMRADIO
+        IFT_IMT
+        IFT_MVL
+        IFT_REACHDSL
+        IFT_FRDLCIENDPT
+        IFT_ATMVCIENDPT
+        IFT_OPTICALCHANNEL
+        IFT_OPTICALTRANSPORT
+        IFT_INFINIBAND
+        IFT_BRIDGE
+        IFT_STF
+        IFT_GIF
+        IFT_PVC
+        IFT_FAITH
+        IFT_ENC
+        IFT_PFLOG
+        IFT_PFSYNC
