@@ -151,7 +151,7 @@ class MongodbDatastore(object):
     def exists(self, collection, *args, **kwargs):
         return self.get_one(collection, *args, **kwargs) is not None
 
-    def insert(self, collection, obj, pkey=None, upsert=False):
+    def insert(self, collection, obj, pkey=None):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
         elif type(obj) is not dict:
@@ -174,7 +174,7 @@ class MongodbDatastore(object):
         self.db[collection].insert(obj)
         return pkey
 
-    def update(self, collection, pkey, obj):
+    def update(self, collection, pkey, obj, upsert=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
         elif type(obj) is not dict:
@@ -185,10 +185,10 @@ class MongodbDatastore(object):
         if 'id' in obj:
             del obj['id']
 
-        self.db[collection].update({'_id': pkey}, obj)
+        self.db[collection].update({'_id': pkey}, obj, upsert=upsert)
 
     def upsert(self, collection, pkey, obj):
-        return self.insert(collection, obj, pkey=pkey, upsert=True)
+        return self.update(collection, pkey, obj, upsert=True)
 
     def delete(self, collection, pkey):
         self.db[collection].remove(pkey)
