@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-network
+# REQUIRE: dispatcher networkd
+# BEFORE: FILESYSTEMS
+
+. /etc/rc.freenas
+
+network_start()
+{
+	/usr/local/sbin/dispatcherctl call plugin.wait_for_service '"networkd.configuration"'
+	/usr/local/sbin/dispatcherctl call networkd.configuration.configure_network
+}
+
+name="ix-network"
+start_cmd='network_start'
+stop_cmd=':'
+status_cmd=':'
+
+load_rc_config $name
+run_rc_command $*

@@ -44,6 +44,7 @@ etc/rc.subr
 etc/rc.d/cleanvar
 etc/rc.d/ix-bootstrap
 etc/rc.d/ix-etc
+etc/rc.d/ix-network
 etc/directoryservice/ActiveDirectory/ctl
 etc/directoryservice/DomainController/ctl
 etc/directoryservice/LDAP/ctl

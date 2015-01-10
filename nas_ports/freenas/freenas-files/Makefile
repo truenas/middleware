@@ -125,6 +125,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/cleanvar ${STAGEDIR}/${PREFIX}/etc/rc.d/cleanvar
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-bootstrap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-etc
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-network ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-network
 
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController
