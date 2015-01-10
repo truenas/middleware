@@ -30,9 +30,10 @@ purgedir()
 		(
 			cd "$dir" && for file in .* *
 			do
-				# Skip over early services pidfiles and logfiles
+				# Skip over early services pidfiles
 				[ -f "dispatcher.pid" ] && continue
 				[ -f "etcd.pid" ] && continue
+				[ -f "networkd.pid" ] && continue
 				# Skip over logging sockets
 				[ -S "$file" -a "$file" = "log" ] && continue
 				[ -S "$file" -a "$file" = "logpriv" ] && continue
