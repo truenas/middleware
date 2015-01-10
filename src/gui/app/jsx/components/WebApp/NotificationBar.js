@@ -63,9 +63,14 @@ var LogQueue = React.createClass({
         <div key       = { index }
              className = "item">
           <h4>{ rawItem.description }</h4>
+          <div className = "details">{ rawItem.details }</div>
+          <div className = "info">{ rawItem.info }</div>
           <div className="status">
             { statusDisplay }
           </div>
+
+
+
         </div>
       );
     }
@@ -100,6 +105,10 @@ var LogQueue = React.createClass({
                             , this.props.visible ? "visible" : "hidden"
                             ].join(" ") }
                onClick   = { this.handleNullClick }>
+          <div className = "notification-box-header">
+               <span>You have <strong>{ this.props.active.length } new </strong> events </span>
+               <a className = "right" href="#">View all</a>
+          </div>
 
             { activeSection }
             { logSection }
@@ -128,6 +137,14 @@ var NotificationBar = React.createClass({
                 description : <span>Reading Error at position 123 in pool <strong>HONK1</strong></span>
               , status      : "warning"
               , details     : "Error code #1234 Details about this error"
+              },{
+                description : <span>Reading Error at position 123 in pool <strong>HONK1</strong></span>
+              , status      : "warning"
+              , details     : "Error code #1234 Details about this error"
+              },{
+                description : <span>Reading Error at position 123 in pool <strong>HONK1</strong></span>
+              , status      : "warning"
+              , details     : "Error code #1234 Details about this error"
               }
             ]
           , events: [
@@ -142,10 +159,13 @@ var NotificationBar = React.createClass({
                 description : <span>Running <strong>SCRUB</strong> on pool <strong>HONK1</strong></span>
               , status      : "in-progress"
               , progress    : 60
+              , details     : "Run by Jakub Klama 11 minutes ago"
               },{
                 description : <span>Waiting to run <strong>SCRUB</strong> on pool <strong>KEVIN</strong></span>
               , status      : "pending"
               , progress    : 0
+              , details     : "Run by Jakub Klama 3 minutes ago"
+              , info        : "Waiting for previous task (Scrub on pool HONK1)"
               }
             ]
         }

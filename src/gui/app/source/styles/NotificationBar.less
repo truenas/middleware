@@ -34,13 +34,10 @@
   @notification-box-padding: 10px;
   width            : 600px;
   position         : absolute;
-  padding          : @notification-box-padding;
   top              : 60px;
   right            : -(@notification-box-padding/2);
   color            : @gray-darker;
   background-color : #f8f8f8;
-  border           : #3d3d3d 2px solid;
-  border-radius    : @notification-box-padding;
   box-shadow       : 0 0 7px rgba(0, 0, 0, 0.75);
   z-index          : 100;
 
@@ -53,18 +50,40 @@
     border-width        : 20px;
     border-bottom-color : #e7e7e7;
   }
+  .notification-box-header{
+    background: #eaedf2;
+    padding: 15px;
+    line-height: 130%;
+
+
+      .right{
+        float: right;
+      }
+
+  }
 
   &.notification-warning { background-color: lighten(@brand-warning,20%); }
   &.notification-info    { background-color: lighten(@brand-info,35%); }
   &.notification-default { background-color: @gray-lighter; }
 
   .item {
-    border: 2px solid #e7e7e7;
-    background-color: #e7e7e7;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    padding: 0 5px;
-    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.75);
+    background-color: #fefefe;
+    border-bottom: 4px solid #eaedf2;
+    padding: 5px 10px 5px 10px;
+
+    .details{
+        float: right;
+        color: #898888;
+        line-height: 120%;
+        display: block;
+      }
+      .info{
+        color: #66b7e6;
+        line-height: 120%;
+        display: block;
+        clear:right;
+      }
   }
+
 
 }
