@@ -33,6 +33,7 @@ import logging
 import json
 import subprocess
 import errno
+import threading
 import setproctitle
 import netif
 import ipaddress
@@ -45,8 +46,9 @@ from dispatcher.rpc import RpcService, RpcException
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
-class RoutingSocketEventSource(object):
+class RoutingSocketEventSource(threading.Thread):
     def __init__(self, client):
+        super(RoutingSocketEventSource, self).__init__()
         self.client = client
         self.mtu_cache = {}
         self.flags_cache = {}
@@ -59,9 +61,11 @@ class RoutingSocketEventSource(object):
             self.flags_cache[i.name] = i.flags
             self.link_state_cache[i.name] = i.link_state
 
-    def worker(self):
+    def run(self):
         rtsock = netif.RoutingSocket()
         rtsock.open()
+
+        self.build_cache()
 
         while True:
             message = rtsock.read_message()
@@ -85,8 +89,32 @@ class RoutingSocketEventSource(object):
                     })
 
                 if self.link_state_cache[ifname] != message.link_state:
-                    pass
+                    if message.link_state == netif.InterfaceLinkState.LINK_STATE_DOWN:
+                        self.client.emit_event('network.interface.link_down', {
+                            'interface': ifname,
+                        })
 
+                    if message.link_state == netif.InterfaceLinkState.LINK_STATE_UP:
+                        self.client.emit_event('network.interface.link_up', {
+                            'interface': ifname,
+                        })
+
+                if self.flags_cache[ifname] != message.flags:
+                    if (netif.InterfaceFlags.UP in self.flags_cache) and (netif.InterfaceFlags.UP not in message.flags):
+                        self.client.emit_event('network.interface.down', {
+                            'interface': ifname,
+                        })
+
+                    if (netif.InterfaceFlags.UP not in self.flags_cache) and (netif.InterfaceFlags.UP in message.flags):
+                        self.client.emit_event('network.interface.up', {
+                            'interface': ifname,
+                        })
+
+                    self.client.emit_event('network.interface.flags_changed', {
+                        'interface': ifname,
+                        'old-flags': [f.name for f in self.flags_cache[ifname]],
+                        'new-flags': [f.name for f in message.flags]
+                    })
 
             if type(message) is netif.InterfaceAddrMessage:
                 pass
@@ -259,6 +287,7 @@ class Main:
         self.client = None
         self.datastore = None
         self.configstore = None
+        self.rtsock_thread = None
         self.logger = logging.getLogger('networkd')
 
     def configure_dhcp(self, interface):
@@ -294,6 +323,10 @@ class Main:
         self.client.enable_server()
         self.client.register_service('networkd.configuration', ConfigurationService(self))
 
+    def init_routing_socket(self):
+        self.rtsock_thread = RoutingSocketEventSource(self.client)
+        self.rtsock_thread.start()
+
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Middleware config file')
@@ -303,6 +336,7 @@ class Main:
         self.parse_config(args.c)
         self.init_datastore()
         self.init_dispatcher()
+        self.init_routing_socket()
         self.client.wait_forever()
 
 if __name__ == '__main__':
