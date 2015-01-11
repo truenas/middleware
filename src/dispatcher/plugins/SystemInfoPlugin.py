@@ -26,9 +26,10 @@
 #####################################################################
 
 from dispatcher.rpc import description, returns
-from task import Provider
+from task import Provider, Task
 from lib.system import system
 from lib.freebsd import get_sysctl
+
 
 @description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
@@ -56,6 +57,22 @@ class SystemInfoProvider(Provider):
                 'idle': parts[4],
                 'command': parts[5]
             })
+
+
+class SystemRebootTask(Task):
+    def verify(self):
+        return ['root']
+
+    def run(self):
+        system('/sbin/shutdown', '-r', 'now')
+
+
+class SystemHaltTask(Task):
+    def verify(self):
+        return ['root']
+
+    def run(self):
+        system('/sbin/shutdown', '-p', 'now')
 
 
 def _init(dispatcher):
