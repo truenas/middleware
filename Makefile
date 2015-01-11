@@ -111,13 +111,14 @@ release: git-verify
 	script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
+	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
-		sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; \
+		sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 	fi
-	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
 
 update-push:	release
 	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
