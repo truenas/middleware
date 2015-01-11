@@ -104,6 +104,7 @@ release-push: release
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 	fi
+	${MAKE} save-build-env
 	echo "Tell Matt to push his OCD button" | mail -s "Update ${BUILD_TIMESTAMP} now on download.freenas.org" web@ixsystems.com
 
 update-push:	release
