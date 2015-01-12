@@ -11,8 +11,8 @@
           {% if iface.v4 or iface.v6 %}
           <tr class="{% cycle 'odd' 'even' %}">
               <td>{{ name }}</td>
-              <td>{% for i in iface.v4 %}{{ i.inet }}/{{ i.netmask }}{% endfor %}</td>
-              <td>{% for i in iface.v6 %}{{ i.addr }}/{{ i.prefixlen }}{% endfor %}</td>
+              <td>{% for i in iface.v4 %}{{ i.inet }}/{{ i.netmask }}{% if not forloop.last %}<br />{% endif %}{% endfor %}</td>
+              <td>{% for i in iface.v6 %}{{ i.addr }}/{{ i.prefixlen }}{% if not forloop.last %}<br />{% endif %}{% endfor %}</td>
           </tr>
           {% endif %}
           {% empty %}
