@@ -247,6 +247,8 @@ cdef extern from "net/if.h":
         char ifan_name[IFNAMSIZ]
         u_short ifan_what
 
+    unsigned int if_nametoindex(const char* name)
+    char* if_indextoname(unsigned int ifindex, char *ifname)
 
 #cdef extern from "netinet6/in6_var.h":
 #    cdef union in6_ifreq_ifru:
