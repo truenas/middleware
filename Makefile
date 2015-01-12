@@ -111,7 +111,7 @@ release: git-verify
 	script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/${STAGEDIR}/
+	/bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes "objs/${STAGEDIR}/"
@@ -121,7 +121,7 @@ release-push: release
 	fi
 
 update-push:	release
-	/bin/sh -c '. build/nano_env ; sh build/post-to-upgrade.sh objs/$${TRAIN}-$${SEQUENCE}'
+	/bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 rebuild: checkout all
 	@sh build/create_release_distribution.sh
