@@ -40,9 +40,10 @@ if __name__ == "__main__":
     pkgs = []
     outfile = None
     config_file = None
+    timestamp = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "P:C:N:R:T:S:o:qvd")
+        opts, args = getopt.getopt(sys.argv[1:], "P:C:N:R:T:S:o:t:qvd")
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -62,6 +63,8 @@ if __name__ == "__main__":
             sequence = a
         elif o == "-q":
             quiet = True
+        elif o == "-t":
+            timestamp = a
         elif o == "-v":
             verbose += 1
         elif o == "-d":
@@ -85,6 +88,9 @@ if __name__ == "__main__":
     mani = Manifest.Manifest(conf)
     mani.SetTrain(trainname)
     mani.SetSequence(sequence)
+    if timestamp:
+        mani.SetTimeStamp(timestamp)
+
     if releasename is not None: mani.SetVersion(releasename)
     if notesfile is not None:
         notes = []

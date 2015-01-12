@@ -12,9 +12,6 @@ log = logging.getLogger('freenasOS.Manifest')
 
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
-CA_CERTS_FILE = "/etc/certs/ix-CA.pem"
-PUB_CERT_FILE = "/etc/certs/%s.pem" % Avatar()
-
 # The keys are as follows:
 # SEQUENCE_KEY:  A string, uniquely identifying this manifest.
 # PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.
@@ -22,6 +19,7 @@ PUB_CERT_FILE = "/etc/certs/%s.pem" % Avatar()
 # NOTES_KEY:  An array of name, URL pairs.  Typical names are "README" and "Release Notes".
 # TRAIN_KEY:  A string identifying the train for this maifest.
 # VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
+# TIMESTAMP_KEY:	An integer, being the unix time of the build.
 # SCHEME_KEY:  A string, identifying the layout version.  Only one value for now.
 # NOTICE_KEY:  A string, identifying a message to be displayed before installing this manifest.
 # 	This is mainly intended to be used to indicate a particular train is ended.
@@ -37,6 +35,7 @@ SIGNATURE_KEY = "Signature"
 NOTES_KEY = "Notes"
 TRAIN_KEY = "Train"
 VERSION_KEY = "Version"
+TIMESTAMP_KEY = "BuildTime"
 SCHEME_KEY = "Scheme"
 NOTICE_KEY = "Notice"
 SWITCH_KEY = "NewTrainName"
@@ -100,7 +99,7 @@ class ManifestEncoder(json.JSONEncoder):
 class Manifest(object):
     _config = None
     _root = None
-    _sequence = None
+
     _notes = None
     _train = None
     _packages = None
@@ -109,26 +108,20 @@ class Manifest(object):
     _scheme = SCHEME_V1
     _notice = None
     _switch = None
-    _ignoreSignature = False
+    _timestamp = None
+    _requireSignature = False
 
-    def __init__(self, configuration = None, ignore_signature = False):
+    def __init__(self, configuration = None, require_signature = False):
         if configuration is None:
             self._config = Configuration.Configuration()
-        self._ignoreSignature = ignore_signature
+        else:
+            self._config = configuration
+        self._requireSignature = require_signature
+        self._dict = {}
         return
 
     def dict(self):
-        retval = {}
-        if self._sequence is not None: retval[SEQUENCE_KEY] = self._sequence
-        if self._packages is not None: retval[PACKAGES_KEY] = self._packages
-        if self._signature is not None: retval[SIGNATURE_KEY] = self._signature
-        if self._notes is not None: retval[NOTES_KEY] = self._notes
-        if self._train is not None: retval[TRAIN_KEY] = self._train
-        if self._version is not None: retval[VERSION_KEY] = self._version
-        if self._notice is not None:  retval[NOTICE_KEY] = self._notice
-        if self._switch is not None:  retval[SWITCH_KEY] = self._switch
-        retval[SCHEME_KEY] = self._scheme
-        return retval
+        return self._dict
 
     def String(self):
         retval = MakeString(self.dict())
@@ -137,44 +130,8 @@ class Manifest(object):
     def LoadFile(self, file):
         # Load a manifest from a file-like object.
         # It's loaded as a json file, and then parsed
-        tdict = json.load(file)
-        # Now go through the keys
-        self._sequence = None
-        self._notes = None
-        self._train = None
-        self._packages = None
-        self._signature = None
-        self._version = None
-        self._notice = None
-        self._switch = None
+        self._dict = json.load(file)
 
-        for key in tdict.keys():
-            if key == SEQUENCE_KEY:
-                self.SetSequence(tdict[key])
-            elif key == PACKAGES_KEY:
-                for p in tdict[key]:
-                    pkg = Package.Package(p[Package.NAME_KEY], p[Package.VERSION_KEY], p[Package.CHECKSUM_KEY])
-                    if Package.UPGRADES_KEY in p:
-                        for upd in p[Package.UPGRADES_KEY]:
-                            pkg.AddUpdate(upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
-                    self.AddPackage(pkg)
-            elif key == SIGNATURE_KEY:
-                self.SetSignature(tdict[key])
-            elif key == NOTES_KEY:
-                self.SetNotes(tdict[key])
-            elif key == TRAIN_KEY:
-                self.SetTrain(tdict[key])
-            elif key == VERSION_KEY:
-                self.SetVersion(tdict[key])
-            elif key == SCHEME_KEY:
-                self.SetScheme(tdict[key])
-            elif key == NOTICE_KEY:
-                self.SetNotice(tdict[key])
-            elif key == SWITCH_KEY:
-                # Deliberately not a method to set this one
-                self._switch = tdict[key]
-            else:
-                log.debug("Unknown key %s" % key)
         self.Validate()
         return
 
@@ -207,55 +164,74 @@ class Manifest(object):
         # A manifest needs to have a sequence number, train,
         # and some number of packages.  If there is a signature,
         # it needs to match the computed signature.
-        if self._sequence is None:
+        from . import SIGNATURE_FAILURE
+        if SEQUENCE_KEY not in self._dict:
             raise Exceptions.ManifestInvalidException("Sequence is not set")
-        if self._train is None:
+        if TRAIN_KEY not in self._dict:
             raise Exceptions.ManifestInvalidException("Train is not set")
-        if self._packages is None or len(self._packages) == 0:
+        if PACKAGES_KEY not in self._dict \
+           or len(self._dict[PACKAGES_KEY]) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
-        if self._signature is not None:
-            if not self.VerifySignature():
-                if not self._ignoreSignature:
-                    raise ChecksumFailException
+        if SIGNATURE_KEY not in self._dict:
+            # If we don't have a signature, but one is required,
+            # raise an exception
+            if self._requireSignature and SIGNATURE_FAILURE:
+                log.debug("No signature in manifest")
+        else:
+            if self._requireSignature:
+                if not self.VerifySignature():
+                    if self._requireSignature and SIGNATURE_FAILURE:
+                        raise Exceptions.ManifestInvalidSignature("Signature verification failed")
+                    if not self._requireSignature:
+                        log.debug("Ignoring invalid signature due to manifest option")
+                    elif not SIGNATURE_FAILURE:
+                        log.debug("Ignoring invalid signature due to global configuration")
         return True
 
     def Notice(self):
-        if not self._notice and self._switch:
-            # If there's no notice, but there is a train-switch directive,
-            # then make up a notice about it.
-            return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
-        return self._notice
+        if NOTICE_KEY not in self._dict:
+            if (SWITCH_KEY in self._dict):
+                # If there's no notice, but there is a train-switch directive,
+                # then make up a notice about it.
+                return "This train (%s) should no longer be used; please switch to train %s instead" % (self.Train(), self.NewTrain())
+            else:
+                return None
+        else:
+            return self._dict[NOTICE_KEY]
 
     def SetNotice(self, n):
-        self._notice = n
+        self._dict[NOTICE_KEY] = n
         return
 
     def Scheme(self):
-        return self._scheme
+        if SCHEME_KEY in self._dict:
+            return self._dict[SCHEME_KEY]
+        else:
+            return None
 
     def SetScheme(self, s):
-        self._scheme = s
+        self._dict[SCHEME_KEY] = s
         return
 
     def Sequence(self):
-        return self._sequence
+        return self._dict[SEQUENCE_KEY]
 
     def SetSequence(self, seq):
-        self._sequence = seq
+        self._dict[SEQUENCE_KEY] = seq
         return
 
     def SetNote(self, name, location):
-        if self._notes is None:
-            self._notes = {}
+        if NOTES_KEY not in self._dict:
+            self._dict[NOTES_KEY] = {}
         if location.startswith(UPDATE_SERVER):
             location = location[len(location):]
-        self._notes[name] = location
+        self._dict[NOTES_KEY][name] = location
 
     def Notes(self):
-        if self._notes:
+        if NOTES_KEY in self._dict:
             rv = {}
-            for name in self._notes.keys():
-                loc = self._notes[name]
+            for name in self._dict[NOTES_KEY].keys():
+                loc = self._dict[NOTES_KEY][name]
                 if not loc.startswith(UPDATE_SERVER):
                     loc = "%s/%s/Notes/%s" % (UPDATE_SERVER, self.Train(), loc)
                 rv[name] = loc
@@ -272,63 +248,91 @@ class Manifest(object):
         return
 
     def Note(self, name):
-        if self._notes is None or name not in self._Notes:
+        if NOTES_KEY not in self._dict:
             return None
-        loc = self._notes[name]
+        notes = self._dict[NOTES_KEY]
+        if name not in notes:
+            return None
+        loc = notes[name]
         if not loc.startswith(UPDATE_SERVER):
             loc = UPDATE_SERVER + loc
         return loc
 
     def Train(self):
-        if self._train is None:
+        if TRAIN_KEY not in self._dict:
             raise Exceptions.ManifestInvalidException("Invalid train")
-        return self._train
+        return self._dict[TRAIN_KEY]
 
     def SetTrain(self, train):
-        self._train = train
+        self._dict[TRAIN_KEY] = train
         return
 
     def Packages(self):
-        return self._packages
+        pkgs = []
+        for p in self._dict[PACKAGES_KEY]:
+            pkg = Package.Package(p)
+            pkgs.append(pkg)
+        return pkgs
 
     def AddPackage(self, pkg):
-        if self._packages is None: self._packages = []
-        self._packages.append(pkg)
+        if PACKAGES_KEY not in self._dict:
+            self._dict[PACKAGES_KEY] = []
+        self._dict[PACKAGES_KEY].append(pkg.dict())
         return
 
     def AddPackages(self, list):
-        if self._packages is None: self._packages = []
-        self._packages.append(list)
+        if PACKAGES_KEY not in self._dict:
+            self._dict[PACKAGES_KEY] = []
+        for p in list:
+            self.AddPackage(p)
         return
 
     def SetPackages(self, list):
-        self._packages = list
+        self._dict[PACKAGES_KEY] = []
+        self.AddPackages(list)
         return
 
     def VerifySignature(self):
+        from . import IX_ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER, IX_CRL
+        from . import SIGNATURE_FAILURE
         if self.Signature() is None:
-            return True
+            return not SIGNATURE_FAILURE
         # Probably need a way to ignore the signature
         else:
-            from . import ROOT_CA_FILE, UPDATE_CERT_FILE, VERIFIER_HELPER
-            from . import SIGNATURE_FAILURE
             import subprocess
             import tempfile
 
-            if not os.path.isfile(ROOT_CA_FILE) or \
+            if not os.path.isfile(IX_ROOT_CA_FILE) or \
                not os.path.isfile(UPDATE_CERT_FILE) or \
                not os.path.isfile(VERIFIER_HELPER):
                 log.debug("VerifySignature:  Cannot find a required file")
-                return True
+                return False
+
+            # Now need to get the CRL
+            crl_file = tempfile.NamedTemporaryFile(suffix=".pem")
+            if crl_file is None:
+                log.debug("Could not create CRL, ignoring for now")
+            else:
+                if not self._config.TryGetNetworkFile(IX_CRL,
+                                                  pathname = crl_file.name,
+                                                  reason = "FetchCRL"):
+                    log.error("Could not get CRL file %s" % IX_CRL)
+                    crl_file.close()
+                    crl_file = None
 
             tdata = None
             verify_cmd = [VERIFIER_HELPER,
                           "-K", UPDATE_CERT_FILE,
-                          "-C", ROOT_CA_FILE,
+                          "-C", IX_ROOT_CA_FILE,
                           "-S", self.Signature()]
+            if crl_file:
+                verify_cmd.extend(["-R", crl_file.name])
+            else:
+                log.debug("Could not get CRL %s, so we'll just continue" % IX_CRL)
+
             log.debug("Verify command = %s" % verify_cmd)
 
-            temp = self.dict()
+            temp = self.dict().copy()
             if SIGNATURE_KEY in temp:  temp.pop(SIGNATURE_KEY)
             canonical = MakeString(temp)
             if len(canonical) < 10 * 1024:
@@ -352,29 +356,32 @@ class Manifest(object):
                 tdata.close()
                 os.remove(tdata.name)
 
-            if SIGNATURE_FAILURE is True:
-                return rv
-            else:
-                return True
+            return rv
         return False
 
     def Signature(self):
-        return self._signature
+        if SIGNATURE_KEY in self._dict:
+            return self._dict[SIGNATURE_KEY]
 
     def SetSignature(self, signed_hash):
-        self._signature = signed_hash
+        self._dict[SIGNATURE_KEY] = signed_hash
         return
 
     def SignWithKey(self, key_data):
         if key_data is None:
             # We'll cheat, and say this means "get rid of the signature"
-            self._signature = None
+            if SIGNATURE_KEY in self._dict:
+                self._dict.pop(SIGNATURE_KEY)
         else:
             import OpenSSL.crypto as Crypto
             from base64 import b64encode as base64
 
-            # Load the key.  This is most likely to fail.
-            key = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_data)
+            # If it's a PKey, we don't need to load it
+            if isinstance(key_data, Crypto.PKey):
+                key = key_data
+            else:
+                # Load the key.  This is most likely to fail.
+                key = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_data)
 
             # Generate a canonical representation of the manifest
             temp = self.dict()
@@ -385,16 +392,30 @@ class Manifest(object):
             signed_value = base64(Crypto.sign(key, tstr, "sha256"))
 
             # And now set the signature
-            self._signature = signed_value
+            self._dict[SIGNATURE_KEY] = signed_value
         return
 
     def Version(self):
-        return self._version
+        if VERSION_KEY in self._dict:
+            return self._dict[VERSION_KEY]
+        else:
+            return None
 
     def SetVersion(self, version):
-        self._version = version
+        self._dict[VERSION_KEY] = version
         return
 
+    def SetTimeStamp(self, ts):
+        self._dict[TIMESTAMP_KEY] = ts
+
+    def TimeStamp(self):
+        if TIMESTAMP_KEY in self._dict:
+            return self._dict[TIMESTAMP_KEY]
+            return 0
+
     def NewTrain(self):
-        return self._switch
+        if SWITCH_KEY in self._dict:
+            return self._dict[SWITCH_KEY]
+        else:
+            return None
 

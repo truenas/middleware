@@ -6,6 +6,9 @@ import sys
 import tempfile
 import time
 import urllib2
+import httplib
+import socket
+import ssl
 
 from . import Avatar, UPDATE_SERVER
 import Exceptions
@@ -14,6 +17,12 @@ import Train
 import Package
 import Manifest
 
+from stat import (
+    S_ISDIR, S_ISCHR, S_ISBLK, S_ISREG, S_ISFIFO, S_ISLNK, S_ISSOCK,
+    S_IMODE
+)
+
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 
@@ -29,7 +38,7 @@ log = logging.getLogger('freenasOS.Configuration')
 # We may want to use a different update server for
 # TrueNAS.
 #UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
-SEARCH_LOCATIONS = [ "http://beta-update.freenas.org/" + Avatar() ]
+SEARCH_LOCATIONS = [ "http://update.freenas.org/" + Avatar() ]
 
 # List of trains
 TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
@@ -55,6 +64,87 @@ def TryOpenFile(path):
         return None
     else:
         return f
+
+# This code taken from
+# http://stackoverflow.com/questions/1087227/validate-ssl-certificates-with-python
+
+class InvalidCertificateException(httplib.HTTPException, urllib2.URLError):
+    def __init__(self, host, cert, reason):
+        httplib.HTTPException.__init__(self)
+        self.host = host
+        self.cert = cert
+        self.reason = reason
+
+    def __str__(self):
+        return ('Host %s returned an invalid certificate (%s) %s\n' %
+                (self.host, self.reason, self.cert))
+
+class CertValidatingHTTPSConnection(httplib.HTTPConnection):
+    default_port = httplib.HTTPS_PORT
+
+    def __init__(self, host, port=None, key_file=None, cert_file=None,
+                             ca_certs=None, strict=None, **kwargs):
+        httplib.HTTPConnection.__init__(self, host, port, strict, **kwargs)
+        self.key_file = key_file
+        self.cert_file = cert_file
+        self.ca_certs = ca_certs
+        if self.ca_certs:
+            self.cert_reqs = ssl.CERT_REQUIRED
+        else:
+            self.cert_reqs = ssl.CERT_NONE
+
+    def _GetValidHostsForCert(self, cert):
+        if 'subjectAltName' in cert:
+            return [x[1] for x in cert['subjectAltName']
+                         if x[0].lower() == 'dns']
+        else:
+            return [x[0][1] for x in cert['subject']
+                            if x[0][0].lower() == 'commonname']
+
+    def _ValidateCertificateHostname(self, cert, hostname):
+        import re
+        hosts = self._GetValidHostsForCert(cert)
+        for host in hosts:
+            host_re = host.replace('.', '\.').replace('*', '[^.]*')
+            if re.search('^%s$' % (host_re,), hostname, re.I):
+                return True
+        return False
+
+    def connect(self):
+        sock = socket.create_connection((self.host, self.port))
+        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file,
+                                          certfile=self.cert_file,
+                                          cert_reqs=self.cert_reqs,
+                                          ca_certs=self.ca_certs)
+        if self.cert_reqs & ssl.CERT_REQUIRED:
+            cert = self.sock.getpeercert()
+            hostname = self.host.split(':', 0)[0]
+            if not self._ValidateCertificateHostname(cert, hostname):
+                raise InvalidCertificateException(hostname, cert,
+                                                  'hostname mismatch')
+
+
+class VerifiedHTTPSHandler(urllib2.HTTPSHandler):
+    def __init__(self, **kwargs):
+        urllib2.AbstractHTTPHandler.__init__(self)
+        self._connection_args = kwargs
+
+    def https_open(self, req):
+        def http_class_wrapper(host, **kwargs):
+            full_kwargs = dict(self._connection_args)
+            full_kwargs.update(kwargs)
+            return CertValidatingHTTPSConnection(host, **full_kwargs)
+
+        try:
+            return self.do_open(http_class_wrapper, req)
+        except urllib2.URLError, e:
+            if type(e.reason) == ssl.SSLError and e.reason.args[0] == 1:
+                raise InvalidCertificateException(req.host, '',
+                                                  e.reason.args[1])
+            raise
+
+    https_request = urllib2.HTTPSHandler.do_request_
+
 
 class PackageDB:
 #    DB_NAME = "var/db/ix/freenas-db"
@@ -370,21 +460,35 @@ class Configuration(object):
         if os.path.exists(self._system_dataset):
             self._temp = self._system_dataset
 
-    def TryGetNetworkFile(self, url, handler=None, pathname = None):
+    def TryGetNetworkFile(self, url, handler=None, pathname = None, reason = None):
+        from . import DEFAULT_CA_FILE
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
+        host_id = None
         log.debug("TryGetNetworkFile(%s)" % url)
         temp_mani = self.SystemManifest()
         if temp_mani:
             current_version = temp_mani.Sequence()
         try:
+            host_id = open("/etc/hostid").read().rstrip()
+        except:
+            host_id = None
+
+        try:
+            https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
+            opener = urllib2.build_opener(https_handler)
             req = urllib2.Request(url)
-            req.add_header(AVATAR_VERSION, current_version)
+            req.add_header("X-iXSystems-Project", Avatar())
+            req.add_header("X-iXSystems-Version", current_version)
+            if host_id:
+                req.add_header("X-iXSystems-HostID", host_id)
+            if reason:
+                req.add_header("X-iXSystems-Reason", reason)
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
-            furl = urllib2.urlopen(req, timeout=5)
-        except:
-            log.warn("Unable to load %s", url)
+            furl = opener.open(req, timeout=30)
+        except BaseException as e:
+            log.error("Unable to load %s: %s", url, str(e))
             return None
         try:
             totalsize = int(furl.info().getheader('Content-Length').strip())
@@ -505,7 +609,7 @@ class Configuration(object):
         return
 
     def SystemManifest(self):
-        man = Manifest.Manifest(self)
+        man = Manifest.Manifest(configuration = self)
         try:
             man.LoadPath(self._root + Manifest.SYSTEM_MANIFEST_FILE)
         except:
@@ -620,7 +724,7 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        fileref = self.TryGetNetworkFile(TRAIN_FILE)
+        fileref = self.TryGetNetworkFile(TRAIN_FILE, reason = "FetchTrains")
 
         if fileref is None:
             return None
@@ -633,7 +737,7 @@ class Configuration(object):
                 continue
             # Input is <name><white_space><description>
             m = re.search("(\S+)\s+(.*)$", line)
-            if m.lastindex == None:
+            if m is None or m.lastindex == None:
                 log.debug("Input line `%s' is unparsable" % line)
                 continue
             rv[m.group(1)] = m.group(2)
@@ -732,6 +836,7 @@ class Configuration(object):
                 file_ref = self.TryGetNetworkFile(
                     full_pathname,
                     handler=handler,
+                    reason = "SearchForFile(%s)" % path,
                 )
             if file_ref is not None:
                 yield file_ref
@@ -761,11 +866,12 @@ class Configuration(object):
             ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
 
         file_ref = self.TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
-                                     handler=handler,
+                                          handler=handler,
+                                          reason = "GetManifest",
                                  )
         return file_ref
 
-    def FindLatestManifest(self, train = None):
+    def FindLatestManifest(self, train = None, require_signature = False):
         # Gets <UPDATE_SERVER>/<train>/LATEST
         # Returns a manifest, or None.
         rv = None
@@ -784,11 +890,13 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train))
+        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
+                                      reason = "GetLatestManifest",
+                                  )
         if file is None:
             log.debug("Could not get latest manifest file for train %s" % train)
         else:
-            rv = Manifest.Manifest(self)
+            rv = Manifest.Manifest(self, require_signature = require_signature)
             rv.LoadFile(file)
         return rv
 
@@ -803,6 +911,23 @@ class Configuration(object):
             pass
         return None
 
+    def GetChangeLog(self, train, save_dir = None, handler = None):
+        # Look for the changelog file for the specific train, and attempt to
+        # download it.  If save_dir is set, save it as save_dir/ChangeLog.txt
+        # Returns a file for the ChangeLog, or None if it can't be found.
+        changelog_url = "%s/%s/ChangeLog.txt" % (UPDATE_SERVER, train)
+        if save_dir:
+            save_path = "%s/ChangeLog.txt" % save_dir
+        else:
+            save_path = None
+        file = self.TryGetNetworkFile(
+            url = changelog_url,
+            handler = handler,
+            pathname = save_path,
+            reason = "GetChangeLog",
+            )
+        return file
+    
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
@@ -894,6 +1019,7 @@ class Configuration(object):
                 url = url,
                 handler = handler,
                 pathname = save_name,
+                reason = "DownloadPackageFile",
                 )
             if file:
                 if search_attempt["Checksum"]:
@@ -923,6 +1049,126 @@ class Configuration(object):
             if file:
                 return file.read()
         return None
+
+def is_ignore_path(path):
+    for i in VERIFY_SKIP_PATHS:
+        tlen = len(i)
+        if path[:tlen] == i:
+            return True
+    return False
+
+def get_ftype_and_perm(mode):
+    """ Returns a tuple of whether the file is: file(regular file)/dir/slink
+    /char. spec/block spec/pipe/socket and the permission bits of the file.
+    If it does not match any of the cases below (it will return "unknown" twice)"""
+    if S_ISREG(mode):
+        return "file", S_IMODE(mode)
+    if S_ISDIR(mode):
+        return "dir", S_IMODE(mode)
+    if S_ISLNK(mode):
+        return "slink", S_IMODE(mode)
+    if S_ISCHR(mode):
+        return "character special", S_IMODE(mode)
+    if S_ISBLK(mode):
+        return "block special", S_IMODE(mode)
+    if S_ISFIFO(mode):
+        return "pipe", S_IMODE(mode)
+    if S_ISSOCK(mode):
+        return "socket", S_IMODE(mode)
+    return "unknown", "unknown"
+
+def check_ftype(objs):
+    """ Checks the filetype, permissions and uid,gid of the
+    pkgdg object(objs) sent to it. Returns two dicts: ed and pd
+    (the error_dict with a descriptive explanantion of the problem
+    if present, none otherwise, the perm_dict with a description of
+    the incoorect perms if present, none otherwise
+    """
+    ed = None
+    pd = None
+    lst_var = os.lstat(objs["path"])
+    ftype, perm = get_ftype_and_perm(lst_var.st_mode)
+    if ftype != objs["kind"]:
+        ed = dict([('path', objs["path"]),
+                ('problem', 'Expected %s, Got %s' %(objs["kind"], ftype)),
+                ('pkgdb_entry', objs)])
+    pdtmp = ''
+    if perm!=objs["mode"]:
+        pdtmp+="\nExpected MODE: %s, Got: %s" %(oct(objs["mode"]), oct(perm))
+    if lst_var.st_uid!=objs["uid"]:
+        pdtmp+="\nExpected UID: %s, Got: %s" %(objs["uid"], lst_var.st_uid)
+    if lst_var.st_gid!=objs["gid"]:
+        pdtmp+="\nExpected GID: %s, Got: %s" %(objs["gid"], lst_var.st_gid)
+    if pdtmp and not objs["path"].endswith(".pyc"):
+        pd = dict([('path', objs["path"]),
+                ('problem', pdtmp[1:]),
+                ('pkgdb_entry', objs)])
+    return ed, pd
+
+def do_verify(verify_handler=None):
+    """A function that goes through the provided pkgdb filelist and verifies it with
+    the current root filesystem."""
+    error_flag = False
+    error_list = dict([('checksum', []), ('wrongtype',[]), ('notfound',[])])
+    warn_flag = False
+    warn_list = []
+    i=0 # counter for progress indication in the UI
+
+    pkgdb = PackageDB(create = False)
+    if pkgdb is None:
+        raise IOError("Cannot get pkgdb connection")
+    filelist = pkgdb.FindFilesForPackage()
+    total_files  = len(filelist)
+
+    for objs in filelist:
+        i = i+1
+        if verify_handler is not None:
+            verify_handler(i,total_files,objs["path"])
+        tmp = '' # Just a temp. variable to store the text to be hashed
+        if is_ignore_path(objs["path"]):
+            continue
+        if not os.path.lexists(objs["path"]):
+            # This basically just checks if the file/slink/dir exists or not.
+            # Note: not using os.path.exists(path) here as that returns false
+            # even if its a broken symlink and that is a differret problem
+            # and will be caught in one of the if conds below.
+            # For more information: https://docs.python.org/2/library/os.path.html
+            error_flag = True
+            error_list['notfound'].append(dict([('path', objs["path"]),
+                ('problem', 'path does not exsist'),
+                ('pkgdb_entry', objs)]))
+            continue
+
+        ed, pd = check_ftype(objs)
+        if ed:
+            error_flag = True
+            error_list['wrongtype'].append(ed)
+        if pd:
+            warn_flag = True
+            warn_list.append(pd)
+
+        if objs["kind"] == "slink":
+            tmp = os.readlink(objs["path"])
+            if tmp.startswith('/'):
+                tmp = tmp[1:]
+
+        if objs["kind"] == "file":
+            if objs["path"].endswith(".pyc"):
+                continue
+            tmp = open(objs["path"]).read()
+
+        # Do this last (as it needs to be done for all, but dirs, as dirs have no checksum d'oh!)
+        if (
+            objs["kind"] != 'dir' and
+            objs["checksum"] and
+            objs["checksum"] !="-" and
+            hashlib.sha256(tmp).hexdigest()!=objs["checksum"]
+        ):
+            error_flag = True
+            error_list['checksum'].append(dict([('path', objs["path"]),
+                ('problem', 'checksum does not match'),
+                ('pkgdb_entry', objs)]))
+    return error_flag, error_list, warn_flag, warn_list
 
 if __name__ == "__main__":
     conf = Configuration()

@@ -158,6 +158,8 @@ def main():
                     Update.RemoveUpdate(download_dir)
                 sys.exit(1)
             Update.RemoveUpdate(download_dir)
+            # Change this if/when we can do an update without a reboot.
+            print >> sys.stderr, "System should be rebooted now"
             sys.exit(0)
     else:
         usage()

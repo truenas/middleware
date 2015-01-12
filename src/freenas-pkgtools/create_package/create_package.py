@@ -28,7 +28,14 @@ def ScanTree(root, filter_func = None):
             if filter_func is not None:
                 if filter_func(prefix + d) == True:
                     continue
-            directory_list[prefix + d] = "y"
+            # This is really bloody annoying.
+            # os.walk() uses stat, not lstat.
+            # So if this is a symlink, we add it
+            # to files.
+            if os.path.islink(os.path.join(start, d)):
+                files.append(d)
+            else:
+                directory_list[prefix + d] = "y"
         for f in files:
             if filter_func is not None:
                 if filter_func(prefix+f) == True:

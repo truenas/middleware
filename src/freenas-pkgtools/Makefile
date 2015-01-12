@@ -11,6 +11,7 @@ SUBDIR= create_manifest \
 	pkgify \
 	freenas-update \
 	freenas-release \
+	freenas-verify \
 	verify_signature \
 	certificates
 

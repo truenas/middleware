@@ -28,6 +28,7 @@ typedef struct {
 	X509            *issuer;
 	X509_STORE	*store;
 	X509            *sign_cert;
+	X509_CRL	*crl;
 	EVP_PKEY        *sign_key;
 	long            skew;
 	long            maxage;
@@ -49,6 +50,57 @@ typedef enum {
   SPC_OCSPRESULT_CERTIFICATE_REVOKED     = 1
 } spc_ocspresult_t;
  
+static const char *start_cert = "-----BEGIN CERTIFICATE-----\n";
+static const char *end_cert = "-----END CERTIFICATE-----\n";
+
+/*
+ * Given a FILE, search for the start_cert line.
+ * Given that, then look for the end marker.  If found,
+ * return a mallocated buffer containing the gap between
+ * (including the markers).
+ */
+static char *
+GetCertificateBuffer(FILE *fp)
+{
+	char *retval = NULL;
+	char *line;
+	size_t length;
+	enum { STATE_OUTSIDE, STATE_INSIDE } state = STATE_OUTSIDE;
+	off_t start_off, end_off;
+
+	while ((line = fgetln(fp, &length)) != NULL) {
+		if (state == STATE_OUTSIDE) {
+			// Looking for start_cert
+			if (strncmp(line, start_cert, strlen(start_cert)) == 0) {
+				start_off = ftello(fp);
+				state = STATE_INSIDE;
+			}
+		} else if (state == STATE_INSIDE) {
+			// Looking for end_cert
+			if (strncmp(line, end_cert, strlen(end_cert)) == 0) {
+				size_t buflen;
+				end_off = ftello(fp);
+				buflen = (end_off - start_off);
+				buflen += strlen(start_cert);
+				buflen += 1; // For NUL
+				retval = calloc(buflen, 1);
+				if (retval == NULL) {
+					err(1, "cannot allocate %zd bytes", buflen);
+				}
+				strcpy(retval, start_cert);
+				if (pread(fileno(fp),
+					  retval + strlen(start_cert),
+					  buflen - strlen(start_cert) - 1,
+					  start_off) == -1) {
+					err(1, "Could read certificate");
+				}
+				return retval;
+			}
+		}
+	}
+	return NULL;
+}
+
 // Is this failure worth crying over?
 static int
 spc_fatal_error(spc_ocspresult_t err)
@@ -122,6 +174,26 @@ PublicKey(X509 *x509_certificate)
 		errx(1, "Unable to extract public key from x509 certificate");
 	}
 	return pkey;
+}
+
+static X509 *
+ParseCertificateBuffer(const char *buffer)
+{
+	BIO *certbio = NULL;
+	X509 *cert = NULL;
+
+	certbio = BIO_new_mem_buf((void*)buffer, -1);
+	if (certbio == NULL) {
+		errx(1, "%s:  Could not create mem BIO", __FUNCTION__);
+	}
+	cert = PEM_read_bio_X509(certbio, NULL, 0, NULL);
+	if (cert == NULL) {
+		warnx("%s:  Could not read certificate from buffer", __FUNCTION__);
+	}
+	BIO_free_all(certbio);
+	if (verbose)
+		warnx("%s:  %s", __FUNCTION__, cert ? "Success" : "Failure");
+	return cert;
 }
 
 /*
@@ -348,26 +420,18 @@ end:
 }
 
 /*
- * For OCSP, see
- * http://etutorials.org/Programming/secure+programming/Chapter+10.+Public+Key+Infrastructure/10.12+Checking+Revocation+Status+via+OCSP+with+OpenSSL/
+ * Given the OCSP structure (which holds the X509_STORE), let's
+ * verify the certificate.
  */
 static int
-VerifySignature(const char *data,
-		const char *signature,
-		const char *hash,
-		spc_ocsprequest_t *ocsp)
+VerifyCertificate(spc_ocsprequest_t *ocsp)
 {
-	EVP_MD_CTX md_data = { 0 }, *ctx = &md_data;
-	EVP_PKEY *pkey = NULL;
-	int retval = 0;
-	EVP_MD_CTX_init(ctx);
-	const EVP_MD *digest = EVP_get_digestbyname(hash);
-	unsigned char *decoded_signature = NULL;
-	size_t decoded_length;
-
+	X509_STORE_CTX *store_ctx = NULL;
+	int i;
 	/*
 	 * First step:  if we've got a url and issuer, let's check
 	 * and see if the key has been revoked.
+	 * Note that I have no idea if this code works.
 	 */
 	if (ocsp->url) {
 		if (ocsp->issuer) {
@@ -385,6 +449,52 @@ VerifySignature(const char *data,
 			warnx("No issuer, cannot check OCSP");
 	} else if (verbose)
 		warnx("No OCSP URL, cannot check OCSP");
+
+	/*
+	 * Now try to verify the certificate.  The store should
+	 * have any CA certificates already.  Also a CRL if
+	 * one exists.
+	 */
+	store_ctx = X509_STORE_CTX_new();
+	if (store_ctx == NULL) {
+		errx(1, "Could not allocate an X509_STORE_CTX");
+	}
+	if (X509_STORE_CTX_init(store_ctx,
+				ocsp->store,
+				ocsp->cert,
+				NULL) == 0) {
+		errx(1, "Could not initalize store ctx");
+	}
+	i = X509_verify_cert(store_ctx);
+	X509_STORE_CTX_free(store_ctx);
+	if (i > 0) {
+		if (verbose)
+			warnx("%s:  certificate verifies ok", __FUNCTION__);
+		return 1;
+	} else {
+		if (verbose)
+			warnx("Certificate check failed, i = %d", i);
+		return 0;
+	}
+}
+
+/*
+ * For OCSP, see
+ * http://etutorials.org/Programming/secure+programming/Chapter+10.+Public+Key+Infrastructure/10.12+Checking+Revocation+Status+via+OCSP+with+OpenSSL/
+ */
+static int
+VerifySignature(const char *data,
+		const char *signature,
+		const char *hash,
+		spc_ocsprequest_t *ocsp)
+{
+	EVP_MD_CTX md_data = { 0 }, *ctx = &md_data;
+	EVP_PKEY *pkey = NULL;
+	int retval = 0;
+	EVP_MD_CTX_init(ctx);
+	const EVP_MD *digest = EVP_get_digestbyname(hash);
+	unsigned char *decoded_signature = NULL;
+	size_t decoded_length;
 
 	pkey = PublicKey(ocsp->cert);
 
@@ -416,7 +526,7 @@ CreateStore(void)
 static void
 usage(void)
 {
-	errx(1, "Usge: -K certificate_file [-C ca_file] [-H hashtype] -S signature <-D data_file> | <data>");
+	errx(1, "Usge: -K certificate_file [-C ca_file] [-H hashtype] [-R crl_file] -S signature <-D data_file> | <data>");
 }
 
 int
@@ -430,17 +540,21 @@ main(int ac, char **av)
 	X509 *certificate = NULL;
 	char *signature = NULL;
 	char *data_file = NULL;
+	char *crl_file = NULL;
 	char *data = NULL;
 	EVP_PKEY *public_key = NULL;
 	int opt;
 	int retval;
+	size_t cert_index = 0;
+	FILE *cert_fp = NULL;
 
-	while ((opt = getopt(ac, av, "K:C:H:I:S:dv")) != -1) {
+	while ((opt = getopt(ac, av, "K:C:D:H:I:R:S:dv")) != -1) {
 		switch (opt) {
 		case 'K':	cert_file = strdup(optarg); break;
 		case 'C':	ca_file = strdup(optarg); break;
 		case 'H':	hash_type = strdup(optarg); break;
 		case 'I':	issuer_file = strdup(optarg); break;
+		case 'R':	crl_file = strdup(optarg); break;
 		case 'S':	signature = strdup(optarg); break;
 		case 'D':	data_file = strdup(optarg); break;
 		case 'd':	debug++; break;
@@ -512,43 +626,84 @@ main(int ac, char **av)
 			warnx("Added system CA %s to store", PATH_CA_CERT);
 	}
 		
-	// Now load the actual certificate file
-	if ((ocsp.cert = LoadCertificate(cert_file)) == NULL) {
-		errx(1, "Unable to load certificate file %s", cert_file);
-	} else {
-		void *ocsp_urls = NULL;
-		ocsp_urls = X509_get1_ocsp(ocsp.cert);
-		if (ocsp_urls) {
-			switch (sk_num(ocsp_urls)) {
-			case 1:
-				ocsp.url = sk_value(ocsp_urls, 0);
+	if (crl_file) {
+		FILE *crl = NULL;
+		crl = fopen(crl_file, "r");
+		if (crl) {
+//			ocsp.crl = d2i_X509_CRL_fp(crl, NULL);
+			ocsp.crl = PEM_read_X509_CRL(crl, NULL, NULL, NULL);
+			if (ocsp.crl == NULL) {
+				long e = ERR_get_error();
+				warnx("Could not load CRL file %s:  %s:%s:%s", crl_file,
+				      ERR_lib_error_string( e),
+				      ERR_func_error_string( e),
+				      ERR_reason_error_string( e));
+
+			} else {
+				X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+				X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+				X509_STORE_set1_param(ocsp.store, param);
+				X509_VERIFY_PARAM_free(param);
+				X509_STORE_add_crl(ocsp.store, ocsp.crl);
 				if (verbose)
-					warnx("OCSP URL %s", ocsp.url);
-				break;
-			case 0:
-				break;
-			default:
-				warnx("Too many OCSP URLs (%d), don't know what to do", sk_num(ocsp_urls));
+					warnx("CRL file %s loaded", crl_file);
 			}
 		} else {
-			if (verbose)
-				warnx("No OCSP URL");
+			warn("Could not open CRL file %s", crl_file);
 		}
 	}
-
+			
 	// If we've been given an issuer, we can try OCSP.
 	if (issuer_file) {
 		ocsp.issuer = LoadCertificate(issuer_file);
 	}
-	retval = VerifySignature(data, signature, hash_type, &ocsp);
-	if (verbose)
-		warnx("%s", retval ? "Verified" : "FAILURE");
 
+	if ((cert_fp = fopen(cert_file, "r")) != NULL) {
+		// Now load the actual certificate file
+		char *cert_buffer;
+
+		while (cert_buffer = GetCertificateBuffer(cert_fp)) {
+			if ((ocsp.cert = ParseCertificateBuffer(cert_buffer)) == NULL) {
+				warnx("Unable to load certificate index %zu", cert_index);
+			} else {
+				void *ocsp_urls = NULL;
+				ocsp_urls = X509_get1_ocsp(ocsp.cert);
+				if (ocsp_urls) {
+					switch (sk_num(ocsp_urls)) {
+					case 1:
+						ocsp.url = sk_value(ocsp_urls, 0);
+						if (verbose)
+							warnx("OCSP URL %s", ocsp.url);
+						break;
+					case 0:
+						break;
+					default:
+						warnx("Too many OCSP URLs (%d), don't know what to do", sk_num(ocsp_urls));
+					}
+				} else {
+					if (verbose)
+						warnx("No OCSP URL");
+				}
+			}
+			
+			retval = VerifyCertificate(&ocsp);
+			if (retval == 0) {
+				if (verbose)
+					warnx("Could not verify certificate index %zu", cert_index);
+			}
+			if (VerifySignature(data, signature, hash_type, &ocsp) == 1) {
+				if (verbose)
+					warnx("Signature verified using certificate index %zu", cert_index);
+				exit(0);
+			}
+			if (verbose)
+				warnx("Could not verify signature using certificate index %zu", cert_index);
+			cert_index++;
+			free(cert_buffer);
+		}
+	}
 	EVP_cleanup();
 	ERR_free_strings();
 
-	if (retval == 1)
-		exit(0);
-	else
-		exit(1);
+	exit(1);
 }

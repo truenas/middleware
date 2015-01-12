@@ -6,21 +6,24 @@
 # We may want to have more
 # platform-specific stuff.
 
+# Sef likes this line a lot.
 _os_type = "FreeNAS"
-UPDATE_SERVER = "http://beta-update.freenas.org/" + _os_type
+UPDATE_SERVER = "http://update.freenas.org/" + _os_type
 
 # For signature verification
-ROOT_CA_FILE = "/usr/local/share/certs/iX-CA.pem"
+IX_CRL = "https://web.ixsystems.com/updates/ix_crl.pem"
+DEFAULT_CA_FILE = "/usr/local/share/certs/ca-root-nss.crt"
+IX_ROOT_CA_FILE = "/usr/local/share/certs/iX-CA.pem"
 UPDATE_CERT_FILE = "/usr/local/share/certs/freenas-update.pem"
 VERIFIER_HELPER = "/usr/local/libexec/verify_signature"
-SIGNATURE_FAILURE = False
+SIGNATURE_FAILURE = True
 
 try:
     import sys
     sys.path.append("/usr/local/www")
     from freenasUI.common.system import get_sw_name
     _os_type = get_sw_name()
-    UPDATE_SERVER = "http://beta-update.freenas.org/" + _os_type
+    UPDATE_SERVER = "http://update.freenas.org/" + _os_type
 except:
     pass
 

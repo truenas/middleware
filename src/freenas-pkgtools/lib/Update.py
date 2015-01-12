@@ -1,7 +1,9 @@
 from datetime import datetime
+import ctypes
 import logging
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -11,6 +13,7 @@ import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 import freenasOS.Package as Package
 from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
+from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
 
 log = logging.getLogger('freenasOS.Update')
 
@@ -37,10 +40,17 @@ def RunCommand(command, args):
         print >> sys.stderr, proc_args
         child = 0
     else:
+        libc = ctypes.cdll.LoadLibrary("libc.so.7")
+        omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        pmask = ctypes.pointer(mask)
+        pomask = ctypes.pointer(omask)
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
             child = subprocess.call(proc_args)
         except:
             return False
+        libc.sigprocmask(signal.SIGQUIT, pomask, None)
 
     if child == 0:
         return True
@@ -142,8 +152,13 @@ def MountClone(name, mountpoint = None):
     # to get /boot/grub into the clone's mount
     # point, as a nullfs mount.
     # Let's see if we need to do that
-    if os.path.exists(grub_cfg) is True and \
-       os.path.exists(mount_point + grub_cfg) is False:
+    if os.path.exists(grub_cfg) is True:
+        if os.path.exists(mount_point + grub_cfg) is True:
+            # We had a brief bit of insanity
+            try:
+                os.remove(mount_point + grub_cfg)
+            except:
+                pass
         # Okay, it needs to be ounted
         cmd = "/sbin/mount"
         args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
@@ -167,7 +182,7 @@ def UnmountClone(name, mount_point = None):
     # If this fails, we ignore it for now
     if mount_point is not None:
         cmd = "umount"
-        args = [mount_point + grub_dir]
+        args = ["-f", mount_point + grub_dir]
         RunCommand(cmd, args)
 
     # Now we ask beadm to unmount it.
@@ -198,59 +213,59 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
-def CheckForUpdates(root = None, handler = None, train = None, cache_dir = None):
+def CheckForUpdates(handler = None, train = None, cache_dir = None):
     """
-    Check for an updated manifest.
-    Very simple, uses the configuration module.
-    Returns the new manifest if there is an update,
-    and None otherwise.
-    (It determines if there is an update if the latest-found
-    manifest contains differences from the current system
-    manifest.)
-    The optional argument handler is a function that
-    will be called for each difference in the new manifest
-    (if there is one); it will be called with three
-    arguments:  operation, package, old package.
-    operation will be "delete", "upgrade", or "install";
-    old package will be None for delete and install.
-    The optional cache_dir parameter indicates that it
-    should look in that directory first, rather than
-    going over the network.  (Unlike the similar code
-    in freenas-update, this will not [at this time]
-    download the package files and store them in
-    cache_dir.)
+    Check for an updated manifest.  If cache_dir is none, then we try
+    to download just the latest manifest for the given train, and
+    compare it to the current system.  If cache_dir is set, then we
+    use the manifest in that directory.
     """
-    conf = Configuration.Configuration(root)
-    cur = conf.SystemManifest()
-    m = None
-    # Let's check cache_dir if it is set
-    if cache_dir and (not train or train == cur.Train()):
-        if os.path.exists(cache_dir + "/MANIFEST"):
-            # Okay, let's load it up.
-            m = Manifest.Manifest()
-            try:
-                m.LoadPath(cache_dir + "/MANIFEST")
-                if m.Train() != cur.Train():
-                    # Should we get rid of the cache?
-                    m = None
-            except:
-                m = None
 
-    if m is None:
-        m = conf.FindLatestManifest(train = train)
+    conf = Configuration.Configuration()
+    new_manifest = None
+    if cache_dir:
+        try:
+            mfile = VerifyUpdate(cache_dir)
+            if mfile is None:
+                return None
+        except UpdateBusyCacheException:
+            log.debug("Cache directory %s is busy, so no update available" % cache_dir)
+            return None
+        except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+            log.error("CheckForUpdate(train = %s, cache_dir = %s):  Got exception %s, removing cache" % (train, cache_dir, str(e)))
+            RemoveUpdate(cache_dir)
+            return None
+        except BaseException as e:
+            log.error("CheckForUpdate(train=%s, cache_dir = %s):  Got exception %s" % (train, cache_dir, str(e)))
+            raise e
+        # We always want a valid signature when doing an update
+        new_manifest = Manifest.Manifest(require_signature = True)
+        try:
+            new_manifest.LoadFile(mfile)
+        except Exception as e:
+            log.error("Could not load manifest due to %s" % str(e))
+            raise e
+    else:
+        try:
+            new_manifest = conf.FindLatestManifest(train = train, require_signature = True)
+        except Exception as e:
+            log.error("Could not find latest manifest due to %s" % str(e))
 
-    log.debug("Current sequence = %s, available sequence = %s" % (cur.Sequence(), m.Sequence()
-                                                                             if m is not None else "None"))
-    if m is None:
-        raise ValueError("Manifest could not be found!")
-    diffs = Manifest.CompareManifests(cur, m)
-    update = False
-    for (pkg, op,old) in diffs:
-        update = True
-        if handler is not None:
+    if new_manifest is None:
+        raise UpdateManifestNotFound("Manifest could not be found!")
+
+    # If new_manifest is not the requested train, then we don't have an update to do
+    if train and train != new_manifest.Train():
+        log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
+        return None
+
+    diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
+    if diffs is None or len(diffs) == 0:
+        return None
+    if handler:
+        for (pkg, op, old) in diffs:
             handler(op, pkg, old)
-    return m if update else None
-
+    return new_manifest
 
 def Update(root=None, conf=None, train = None, check_handler=None, get_handler=None,
            install_handler=None, cache_dir = None):
@@ -329,11 +344,20 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
     try:
         if root is None:
             # We clone the existing boot environment to
-            # "Avatar()-<sequence>"
-            clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+            # "Avatar()-<sequence>", unless it already does.
+            if new_man.Sequence().startswith(Avatar() + "-"):
+                clone_name = new_man.Sequence()
+            else:
+                clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+                
             if CreateClone(clone_name) is False:
-                log.error("Unable to create boot-environment %s" % clone_name)
-                raise Exception("Unable to create new boot-environment %s" % clone_name)
+                msg = "Unable to create boot-environment %s" % clone_name
+                # We set clone_name to None here because we may have gotten
+                # a failure due to an existing boot environment with that name,
+                # so let's not have the exception handler below delete it.
+                clone_name = None
+                log.error(msg)
+                raise Exception(msg)
 
             mount_point = MountClone(clone_name)
             if mount_point is None:
@@ -352,11 +376,13 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                 if mount_point:
                     UnmountClone(clone_name, mount_point)
                     mount_point = None
-                    DeleteClone(clone_name)
+                DeleteClone(clone_name)
                 raise Exception("Unable to remove contents for package %s" % pkg.Name())
             conf.PackageDB(root).RemovePackage(pkg.Name())
 
+        log.debug("Creating Installer object")
         installer = Installer.Installer(manifest = new_man, root = root, config = conf)
+        log.debug("Getting packages")
         installer.GetPackages(process_packages, handler=get_handler)
 
         log.debug("Packages = %s" % installer._packages)
@@ -390,7 +416,7 @@ def Update(root=None, conf=None, train = None, check_handler=None, get_handler=N
                                     log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
                         rv = True
                         # Start a scrub.  We ignore the return value.
-                        RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+                        # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
 
     except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
@@ -427,13 +453,25 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     conf = Configuration.Configuration()
     mani = conf.SystemManifest()
     # First thing, let's get the latest manifest
-    latest_mani = conf.FindLatestManifest(train)
-    if latest_mani is None:
-        # That really shouldnt happen
-        log.error("Unable to find latest manifest for train %s" % train)
+    try:
+        latest_mani = conf.FindLatestManifest(train, require_signature = True)
+    except ManifestInvalidSignature as e:
+        log.error("Latest manifest has invalid signature: %s" % str(e))
         return False
 
-    cache_mani = Manifest.Manifest()
+    if latest_mani is None:
+        # This probably means we have no network.  Which means we have
+        # to trust what we've already downloaded, if anything.
+        log.error("Unable to find latest manifest for train %s" % train)
+        try:
+            VerifyUpdate(directory)
+            log.debug("Possibly with no network, cached update looks good")
+            return True
+        except:
+            log.debug("Possibly with no network, either no cached update or it is bad")
+            return False
+
+    cache_mani = Manifest.Manifest(require_signature = True)
     try:
         mani_file = VerifyUpdate(directory)
         if mani_file:
@@ -441,22 +479,22 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
             if cache_mani.Sequence() == latest_mani.Sequence():
                 # Woohoo!
                 mani_file.close()
+                log.debug("DownloadUpdate:  Cache directory has latest manifest")
                 return True
             # Not the latest
             mani_file.close()
-        RemoveUpdate(directory)
         mani_file = None
     except UpdateBusyCacheException:
         log.debug("Cache directory %s is busy, so no update available" % directory)
         return False
-    except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+    except (UpdateIncompleteCacheException, UpdateInvalidCacheException, ManifestInvalidSignature) as e:
         # It's incomplete, so we need to remove it
         log.error("DownloadUpdate(%s, %s):  Got exception %s; removing cache" % (train, directory, str(e)))
-        RemoveUpdate(directory)
     except BaseException as e:
         log.error("Got exception %s while trying to prepare update cache" % str(e))
         raise e
     # If we're here, then we don't have a (valid) cached update.
+    log.debug("Removing invalid or incomplete cached update")
     RemoveUpdate(directory)
     try:
         os.makedirs(directory)
@@ -482,6 +520,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     for pkg, op, old in diffs:
         if op == "delete":
             continue
+        log.debug("DownloadUpdate:  Will %s package %s" % (op, pkg.Name()))
         download_packages.append(pkg)
 
     # Next steps:  download the package files.
@@ -494,6 +533,9 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
             RemoveUpdate(directory)
             return False
 
+    # Almost done:  get a changelog if one exists for the train
+    # If we can't get it, we don't care.
+    conf.GetChangeLog(train, save_dir = directory, handler = get_handler)
     # Then save the manifest file.
     latest_mani.StoreFile(mani_file)
     # Create the SEQUENCE file.
@@ -530,8 +572,12 @@ def PendingUpdates(directory):
         log.error("Got exception %s while trying to determine pending updates" % str(e))
         return None
     if mani_file:
-        new_manifest = Manifest.Manifest()
-        new_manifest.LoadFile(mani_file)
+        new_manifest = Manifest.Manifest(require_signature = True)
+        try:
+            new_manifest.LoadFile(mani_file)
+        except ManifestInvalidSignature as e:
+            log.error("Invalid signature in cached manifest: %s" % str(e))
+            return None
         diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
         return diffs
     return None
@@ -551,8 +597,13 @@ def ApplyUpdate(directory, install_handler = None):
         # on error
         return False
     # Do I have to worry about a race condition here?
-    new_manifest = Manifest.Manifest()
-    new_manifest.LoadPath(directory + "/MANIFEST")
+    new_manifest = Manifest.Manifest(require_signature = True)
+    try:
+        new_manifest.LoadPath(directory + "/MANIFEST")
+    except ManifestInvalidSignature as e:
+        log.error("Cached manifest has invalid signature: %s" % str(e))
+        return False
+
     conf.SetPackageDir(directory)
 
     deleted_packages = []
@@ -578,12 +629,48 @@ def ApplyUpdate(directory, install_handler = None):
     clone_name = None
     mount_point = None
     try:
-        clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
+        # We clone the existing boot environment to
+        # "Avatar()-<sequence>", unless it already does.
+        if new_manifest.Sequence().startswith(Avatar() + "-"):
+            clone_name = new_manifest.Sequence()
+        else:
+            clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
         if CreateClone(clone_name) is False:
-            s = "Unable to create boot-environment %s" % clone_name
-            log.error(s)
-            raise Exception(s)
-        mount_point = MountClone(clone_name)
+            log.debug("Failed to create BE %s" % clone_name)
+            # It's possible the boot environment already exists.
+            s = None
+            clones = ListClones()
+            if clones:
+                found = False
+                for c in clones:
+                    if c["name"] == clone_name:
+                        found = True
+                        if c["mountpoint"] != "/":
+                            if c["mountpoint"] != "-":
+                                mount_point = c["mountpoint"]
+                                # We also need to see if grub is mounted
+                                # Note:  if mount_point or mount_point/boot/grub don't exist,
+                                # this is going to throw an exception.
+                                try:
+                                    if os.lstat(mount_point).st_dev == os.lstat(mount_point + grub_dir).st_dev:
+                                        if RunCommand("/sbin/mount", ["-t", "nullfs", grub_dir, mount_point + grub_dir]) == False:
+                                            s = "Unable to mount grub into already-existing boot environment %s" % clone_name
+                                except:
+                                    log.debug("Unable to check %s grub mount" % mount_point)
+                                    s = "Unable to set up %s as an installable mount point" % mount_point
+                        else:
+                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % clone_name
+                        break
+                if found is False:
+                    s = "Unable to create boot-environment %s" % clone_name
+            else:    
+                log.debug("Unable to list clones after creation failure")
+                s = "Unable to create boot-environment %s" % clone_name
+            if s:
+                log.error(s)
+                raise Exception(s)
+        if mount_point is None:
+            mount_point = MountClone(clone_name)
         if mount_point is None:
             s = "Unable to mount boot-environment %s" % clone_name
             log.error(s)
@@ -626,7 +713,7 @@ def ApplyUpdate(directory, install_handler = None):
                     raise Exception(s)
                 RemoveUpdate(directory)
                 rv = True
-                RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+                # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
     except BaseException as e:
         log.error("Update got exception during update: %s" % str(e))
         if mount_point:
@@ -670,7 +757,8 @@ def VerifyUpdate(directory):
         # Well, if we can't acquire the lock, someone else has it.
         # Throw an incomplete exception
         raise UpdateBusyCacheException("Cache directory %s is being modified" % directory)
-    cached_mani = Manifest.Manifest()
+    # We always want a valid signature for an update.
+    cached_mani = Manifest.Manifest(require_signature = True)
     try:
         cached_mani.LoadFile(mani_file)
     except Exception as e:

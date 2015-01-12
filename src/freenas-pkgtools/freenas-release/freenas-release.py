@@ -34,7 +34,7 @@ delta packags we can make.
 """
 
 debug = 0
-verbose = 0
+verbose = 1
 
 
 class ReleaseDB(object):
@@ -987,7 +987,7 @@ def usage():
 """ % sys.argv[0]
     sys.exit(1)
 
-def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"):
+def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS", key_data = None, changelog = None):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/${project}-MANIFEST, which will tell us
@@ -1029,26 +1029,46 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     except:
         pass
     # First, let's try creating the manifest file.
-    # If it already exists, log this and return.
-    try:
-        mani_file = open("%s/%s/%s-%s" % (archive, manifest.Train(), project, manifest.Sequence()), "wxb", 0622)
-    except (IOError, OSError) as e:
-        import errno
-        if e.errno == errno.EEXIST:
-            print >> sys.stderr, "Warning:  Sequence %s already exists, assuming duplicate" % manifest.Sequence()
-            return
-        else:
-            raise e
-    except Exception as e:
-        raise e
+    # If there's a duplicate, let's change the sequence by adding a digit.
+    # Then loop until we're done
+    suffix = None
+    name = manifest.Sequence()
+    while True:
+        if suffix is not None:
+            name = "%s-%d" % (manifest.Sequence(), suffix)
+            print >> sys.stderr, "Due to conflict, trying sequence %s" % name
+        new_mani_path = "%s/%s/%s-%s" % (archive, manifest.Train(), project, name)
+        try:
+            mani_file = open(new_mani_path, "wxb", 0622)
+            break
+        except (IOError, OSError) as e:
+            import errno
+            if e.errno == errno.EEXIST:
+                # Should we instead compare the manifests, and
+                temp_mani = Manifest.Manifest()
+                temp_mani.LoadPath(new_mani_path)
+                if len(Manifest.CompareManifests(manifest, temp_mani)) == 0:
+                    print >> sys.stderr, "New manifest seems to be the same as the old one, doing nothing"
+                    return
+                if suffix is None:
+                    suffix = 1
+                else:
+                    suffix += 1
+                continue
+            else:
+                print >> sys.stderr, "Cannot create manifest file %s: %s" % (name, str(e))
+                raise e
+        except Exception as e:
+                raise e
+
+    manifest.SetSequence(name)
 
     # Okay, let's see if this train has any prior entries in the database
     previous_sequences = db.RecentSequencesForTrain(manifest.Train())
 
     pkg_list = []
     for pkg in manifest.Packages():
-        if verbose or debug:
-            print "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
+        print >> sys.stderr, "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
 
         copied = False
         pkg_path = "%s/%s" % (pkg_source_dir, pkg.FileName())
@@ -1067,31 +1087,36 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         # Now, if we created the file, its size will be 0.
         if os.stat(pkg_file.name).st_size != 0:
             # Okay, let's see if the hash is the same
+            # Note that I think this destroys the lock, due
+            # to posix stupidity.
             hash = ChecksumFile(pkg_dest)
             if hash is None or hash != pkg.Checksum():
                 print >> sys.stderr, "A file exists for package %s-%s in the archive, but the checksum doesn't match (%s for file, %s for package)" % (pkg.Name(), pkg.Version(), hash, pkg.Checksum())
                 print >> sys.stderr, "Using archive checksum, note this for debugging bpurposes"
                 pkg.SetChecksum(hash)
+                pkg.SetSize(os.stat(pkg_dest).st_size)
             else:
                 if verbose or debug:
                     print >> sys.stderr, "Package %s-%s already exists in the destination, so not copying" % (pkg.Name(), pkg.Version())
         else:
             # Okay, we need to copy the file
+            total_bytes = 0
             with open(pkg_path, "rb") as pkg_file_src:
                 kBufSize = 1024 * 1024
                 while True:
                     buf = pkg_file_src.read(kBufSize)
                     if buf:
+                        total_bytes += len(buf)
                         pkg_file.write(buf)
                     else:
                         break
             copied = True
             os.chmod(pkg_file.name, 0664)
-            if verbose or debug:
-                print >> sys.stderr, "Package %s-%s copied to archive" % (pkg.Name(), pkg.Version())
-
+            print >> sys.stderr, "Package %s-%s copied to archive as %s (%d bytes)"  % (pkg.Name(), pkg.Version(), pkg_file.name, total_bytes)
+            pkg.SetSize(total_bytes)
         pkg_file.close()
 
+        older_versions = {}
         # This is where we'd want to go through old versions and see if we can create any delta pachages
         for older in previous_sequences:
             # Given this sequence, let's look up the package for it
@@ -1103,22 +1128,39 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
             if old_pkg:
                 if old_pkg.Version() == pkg.Version():
                     # Nothing to do
+                    print >> sys.stderr, "Older version and current version are the same (%s), skipping" % pkg.Version()
                     continue
+                if old_pkg.Version() in older_versions:
+                    print >> sys.stderr, "Duplicate older version %s, skipping" % old_pkg.Version()
+                    continue
+                older_versions[old_pkg.Version()] = True
                 # We would want to create a delta package
                 pkg1 = "%s/Packages/%s" % (archive, old_pkg.FileName())
                 pkg2 = "%s/Packages/%s" % (archive, pkg.FileName())
                 delta_pkg = "%s/Packages/%s" % (archive, pkg.FileName(old_pkg.Version()))
                 # If the delta package exists, let's just trust it,
                 # since creating delta packages is very time-consuming.
+                delta_file = None
                 try:
+                    print >> sys.stderr, "Looking for delta package file %s" % delta_pkg
                     delta_file = open(delta_pkg, "wxb")
+                    print >> sys.stderr, "Created delta package file %s" % delta_pkg
                     x = PackageFile.DiffPackageFiles(pkg1, pkg2, delta_pkg)
+                    print >> sys.stderr, "Package file diffs %s" % x
                     delta_file.close()
+                    delta_file = None
                     if x is None:
-                        if debug or verbose:
-                            print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
-                                pkg.Name(), old_pkg.Version(), pkg.Version()
-                                )
+                        print >> sys.stderr, "%s:  no diffs between versions %s and %s, downgrading to older version" % (
+                            pkg.Name(), old_pkg.Version(), pkg.Version()
+                        )
+                        # If we got here, then we created the potential delta file, but
+                        # we have no diffs, so we should remove it.
+                        if os.stat(delta_pkg).st_size != 0:
+                            print >> sys.stderr, "*** package file we supposedly created is non-zero bytes!"
+                            print >> sys.stderr, "*** INVESTIGATE!  File is %s" % delta_pkg
+                        else:
+                            print >> sys.stderr, "Removing file %s" % delta_pkg
+                            os.remove(delta_pkg)
                         # We set the version to the old version, and then remove it.
                         # But other versions might be using it, so we can't do that
                         # just yet.
@@ -1130,28 +1172,52 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                         
                         for upd in db.UpdatesForPackage(old_pkg):
                             if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (upd[0], upd[1])
-                            old_pkg.AddUpdate(upd[0], upd[1])
+                            tname = "%s/Packages/%s"  % (archive, old_pkg.FileName(upd[0]))
+                            size = None
+                            if os.path.exists(tname):
+                                size = os.stat(tname).st_size
+                                if debug or verbose:  print >> sys.stderr, "\t\tSize = %d" % size
+                            old_pkg.AddUpdate(upd[0], upd[1], size = size)
+                        print >> sys.stderr, "\tgetting checksum for %s" % pkg1
                         old_pkg.SetChecksum(ChecksumFile(pkg1))
+                        old_pkg.SetSize(os.stat(pkg1).st_size)
+                        print >> sys.stderr, "\t\tGot it"
                         pkg = old_pkg
                         # Should I instead verify through the db
                         # that nobody else is using this package?
-                        if copied:
-                            os.unlink(pkg_dest)
+                        # Doing this causes an exception on the next pass
+                        # if copied:
+                        #    os.unlink(pkg_dest)
+                        # I think the whole concept here needs to be re-written.
 
                     else:
                         print >> sys.stderr, "Created delta package %s" % x
                         cksum = ChecksumFile(x)
+                        size = os.stat(x).st_size
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, %s)" % (old_pkg.Version(), cksum)
-                        pkg.AddUpdate(old_pkg.Version(), cksum)
+                        pkg.AddUpdate(old_pkg.Version(), cksum, size = size)
                 except IOError as e:
                     import errno
                     if e.errno == errno.EEXIST:
+                        print >> sys.stderr, "Delta package %s already exists" % delta_pkg
                         if debug or verbose:  print >> sys.stderr, "\tAddUpdate(%s, checksum)" % (old_pkg.Version())
-                        pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg))
+                        pkg.AddUpdate(old_pkg.Version(), ChecksumFile(delta_pkg), size = os.stat(delta_pkg).st_size)
                     else:
+                        if delta_file:
+                            print >> sys.stderr, "Removing delta package file %s" % delta_file.name
+                            try:
+                                os.remove(delta_file.name)
+                            except:
+                                pass
                         raise e
                 except Exception as e:
                     print >> sys.stderr, "Exception while creating delta package"
+                    if delta_file:
+                        print >> sys.stderr, "Removing delta package file %s" % delta_file.name
+                        try:
+                            os.remove(delta_file.name)
+                        except:
+                            pass
                     raise e
         pkg_list.append(pkg)
 
@@ -1166,35 +1232,48 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     # and is recreated by the library code.)
     if "NOTICE" in notes:
         manifest.SetNotice(notes["NOTICE"])
-    for note_name in ["ReleaseNotes", "ChangeLog"]:
+        notes.pop("NOTICE")
+    for note_name in notes.keys():
         import tempfile
         note_dir = "%s/%s/Notes" % (archive, manifest.Train())
         try:
             os.makedirs(note_dir)
         except:
             pass
-        if note_name in notes:
-            try:
-                # The note goes in:
-                # <archive>/<train>/Notes/<name>-<random>.txt
-                # The manifest gets a dictionary with
-                # <name> : <name>-<random>.txt
-                # which the library code will use to
-                # fetch over the network.
-                note_file = tempfile.NamedTemporaryFile(suffix=".txt",
-                                                        dir=note_dir,
-                                                        prefix="%s-" % note_name,
-                                                        delete = False)
-                if debug or verbose:
-                    print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
-                note_file.write(notes[note_name])
-                os.chmod(note_file.name, 0664)
-                manifest.SetNote(note_name, os.path.basename(note_file.name))
-            except OSError as e:
-                print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
+        try:
+            # The note goes in:
+            # <archive>/<train>/Notes/<name>-<random>.txt
+            # The manifest gets a dictionary with
+            # <name> : <name>-<random>.txt
+            # which the library code will use to
+            # fetch over the network.
+            note_file = tempfile.NamedTemporaryFile(suffix=".txt",
+                                                    dir=note_dir,
+                                                    prefix="%s-" % note_name,
+                                                    delete = False)
+            if debug or verbose:
+                print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
+            note_file.write(notes[note_name])
+            os.chmod(note_file.name, 0664)
+            manifest.SetNote(note_name, os.path.basename(note_file.name))
+        except OSError as e:
+            print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
         
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
+    # If we're given a key file, let's sign it
+    if key_data:
+        try:
+            manifest.SignWithKey(key_data)
+        except:
+            print >> sys.stderr, "Could not sign manifest, so removing file"
+            try:
+                os.remove(mani_file.name)
+                mani_file.close()
+            except:
+                pass
+            return
+
     manifest.StorePath(mani_file.name)
     mani_file.close()
     try:
@@ -1203,6 +1282,29 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
         pass
     os.symlink("%s-%s" % (project, manifest.Sequence()), "%s/%s/LATEST" % (archive, manifest.Train()))
 
+    if changelog:
+        changefile = "%s/%s/ChangeLog.txt" % (archive, manifest.Train())
+        change_input = None
+        if changelog == "-":
+            print "Enter changelog, control-d when done"
+            change_input = sys.stdin
+        else:
+            try:
+                change_input = open(changelog, "r")
+            except:
+                print >> sys.stderr, "Unable to open input change log %s" % changelog
+        if change_input:
+            try:
+                cfile = open(changefile, "ab", 0664)
+            except:
+                print >> sys.stderr, "Unable to open changelog %s" % changefile
+            else:
+                fcntl.lockf(cfile, fcntl.LOCK_EX, 0, 0)
+                cfile.write("### START %s\n" % manifest.Sequence())
+                cfile.write(change_input.read())
+                cfile.write("\n### END %s\n" % manifest.Sequence())
+                cfile.close()
+            
     if db is not None:
         db.AddRelease(manifest)
         for pkg in manifest.Packages():
@@ -1362,16 +1464,22 @@ def main():
     project_name = "FreeNAS"
     # Work on this
     Database = None
-
+    # Signing support
+    key_file = None
+    key_data = None
+    # Changelog
+    changelog = None
     # Locabl variables
     db = None
 
-    options = "a:D:dP:v"
+    options = "a:C:D:dK:P:v"
     long_options = ["archive=", "destination=",
-                 "database=",
-                 "project=",
-                 "debug", "verbose",
-                    ]
+                    "database=",
+                    "key=",
+                    "project=",
+                    "changelog=",
+                    "debug", "verbose",
+                ]
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], options, long_options)
@@ -1391,6 +1499,10 @@ def main():
         elif o in ('-P', '--project'):
             # Not implemented yet, just laying the groundwork
             project_name = a
+        elif o in ('-K', '--key'):
+            key_file = a
+        elif o in ('-C', '--changelog'):
+            changelog = a
         else:
             usage()
 
@@ -1410,6 +1522,15 @@ def main():
         elif Database.startswith("py:"):
             db = PyReleaseDB(dbfile = Database[len("py:"):])
 
+    if key_file and key_file != "/dev/null" and key_file != "":
+        import OpenSSL.crypto as Crypto
+        try:
+            key_contents = open(key_file).read()
+            key_data = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_contents)
+        except:
+            print >> sys.stderr, "Cannot open key file %s, aborting" % key_file
+            sys.exit(1)
+
     cmd = args[0]
     args = args[1:]
 
@@ -1418,7 +1539,7 @@ def main():
             print >> sys.stderr, "No source directories specified"
             usage()
         for source in args:
-            ProcessRelease(source, archive, db, project = project_name)
+            ProcessRelease(source, archive, db, project = project_name, key_data = key_data, changelog = changelog)
     elif cmd == "check":
         Check(archive, db, project = project_name)
     else:
