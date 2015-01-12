@@ -30,13 +30,7 @@ from lib.system import system
 
 
 def get_sysctl(name):
-    node = sysctl.filter(name)
-
-    if len(node) == 1:
-        return node[0].value
-
-    return {i.name[len(name) + 1:]: i.value for i in node}
-
+    return sysctl.sysctlbyname(name)
 
 def sockstat(only_connected=False, ports=None):
     args = ['/usr/bin/sockstat', '-4']
