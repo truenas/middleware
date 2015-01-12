@@ -1,0 +1,58 @@
+Introduction
+============
+
+This module -- simply put -- helps provide glue necessary to interface with
+the sysctl* libc APIs from within python using cython generated APIs instead
+of a C extension. I'm doing this for following reasons:
+
+Why Cython?
+===========
+
+cython (and pyrex) are good marriages of C and python, such that cython is
+faster than native python (in theory if done correctly of course), but easier
+to manipulate when making trivial changes to the structure and flow of the
+module.
+
+Furthermore, python is a complicated enough language that not keeping track
+of memory and the GIL is a good way to introduce hard to track memory leaks
+and deadlocks, as I've seen with some other extensions. Given that I didn't
+have enough time to learn C extensions in python properly (I will eventually!)
+this seemed like the most logical thing to do.
+
+Caveats
+=======
+
+CTLTYPE_OPAQUE is not officially supported because of lack of testing, but
+the rest of the types have testcases exercising common positive and negative
+scenarios, and thus should be considered stable.
+
+Testing and Support
+===================
+
+It has been developed and tested on FreeBSD 9-STABLE and Mac OSX 10.7, but I
+don't see any particular reason why this shouldn't also work [relatively?] out
+of the box on DragonFlyBSD, NetBSD, or OpenBSD. Testers and patches welcome!
+
+Roadmap
+=======
+
+This module (and its aims) are very simple, but it could do some interesting
+things in the future. Items that come to mind are listed below.
+
+CTLTYPE_OPAQUE
+==============
+
+What would be nice is to create a simple test of tests and validate the
+functionality to ensure that it functions as desired; this will require
+writing a kernel module as there doesn't seem to be a deterministic means of
+doing this today across multiple BSDs.
+
+In conclusion, support is untested today.
+
+sysctl 'walking'
+================
+
+sysctl -a (under FreeBSD, etc) effectively walks the entire MIB with a
+particular 'search' criterium and displays the results. What would be cool
+is to create a simple generator that would do this in a pythonic manner,
+similar to the way that snmp's getnext functionality works.

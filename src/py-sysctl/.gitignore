@@ -1,0 +1,4 @@
+build
+*.bz2
+*.pyc
+*.so
