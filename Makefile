@@ -111,7 +111,7 @@ release: git-verify
 	script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/${STAGEDIR}/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes "objs/${STAGEDIR}/"
