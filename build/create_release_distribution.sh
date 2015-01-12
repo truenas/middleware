@@ -131,27 +131,26 @@ TOP="$(pwd)"
 . build/nano_env
 . build/functions.sh
 
-OBJ=objs
-
-STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-rm -rf "${TOP}/${OBJ}/${STAGEDIR}"
 set -x
 set -e
-mkdir -p "${TOP}/${OBJ}/${STAGEDIR}"
 
-arch=x64
-mapped_arch=amd64
-mkdir -p ${TOP}/${OBJ}/${STAGEDIR}/${arch}
+OBJ=objs
+STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
+TARGET="${TOP}/${OBJ}/${STAGEDIR}/x64"
+mkdir -p "${TARGET}"
+
 for ext in GUI_Upgrade.txz iso; do
-	tfile=${TOP}/${OBJ}/os-base/$mapped_arch/${NANO_NAME%-*}-${arch}.${ext}
+	tfile=${TOP}/${OBJ}/os-base/amd64/${NANO_NAME}.${ext}
 	if [ -f ${tfile} ]; then
-		ln ${tfile} ${TOP}/${OBJ}/${STAGEDIR}/${arch}
-		ln ${tfile}.sha256.txt ${TOP}/${OBJ}/${STAGEDIR}/${arch}
+		mv ${tfile} "${TARGET}"
+		mv ${tfile}.sha256.txt "${TARGET}"
+	else
+		echo "** ERROR: Unable to find ${tfile}"
 	fi
 done
 
-sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < ${TOP}/build/README > "${TOP}/${OBJ}/${STAGEDIR}/README"
-cp ${TOP}/FreeBSD/repo-manifest "${TOP}/${OBJ}/${STAGEDIR}/MANIFEST"
+sed -e "s/VERSION/${VERSION}/" -e "s/BUILD_TIMESTAMP/${BUILD_TIMESTAMP}/" < ${TOP}/build/README > "${TARGET}/../README"
+cp ${TOP}/FreeBSD/repo-manifest "${TARGET}/../MANIFEST"
 
 echo "Creating the JSON Checksums file..."
 create_json ${TOP}/${OBJ}/${STAGEDIR} ${TOP} 

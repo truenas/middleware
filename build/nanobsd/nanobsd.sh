@@ -218,6 +218,7 @@ if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
 	-P ${NANO_OBJ}/_.packages/Packages \
 	-o ${NANO_OBJ}/_.packages/${NANO_LABEL}-${SEQUENCE:-0} \
 	-R ${NANO_LABEL}-${VERSION} ${seq_arg} -T ${TRAIN:-FreeNAS} \
+	-t $(date +%s) \
 	base-os=${VERSION}${pkg_version} \
 	${NANO_LABEL}UI=${VERSION}${pkg_version} \
 	freenas-pkg-tools=${VERSION}-${REVISION:-0}
