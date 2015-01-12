@@ -455,6 +455,14 @@ class NFS_SharePathForm(ModelForm):
         fields = '__all__'
         model = models.NFS_Share_Path
 
+    def clean_path(self):
+        path = self.cleaned_data.get('path')
+        if path and ' ' in path:
+            raise forms.ValidationError(_(
+                'Whitespace is not a valid character for NFS shares.'
+            ))
+        return path
+
     def save(self, *args, **kwargs):
         path = self.cleaned_data.get('path').encode('utf8')
         if path and not os.path.exists(path):
