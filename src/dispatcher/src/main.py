@@ -59,6 +59,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 from datastore import get_datastore
 from datastore.config import ConfigStore
+from dispatcher.jsonenc import loads, dumps
 from dispatcher.rpc import RpcContext, RpcException
 from resources import ResourceGraph
 from services import ManagementService, EventService, TaskService, PluginService, ShellService
@@ -412,7 +413,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if not type(message) is str:
             return
 
-        message = json.loads(message)
+        message = loads(message)
 
         if "namespace" not in message:
             return
@@ -621,7 +622,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         return self.send_json(payload)
 
     def send_json(self, obj):
-        self.ws.send(json.dumps(obj))
+        self.ws.send(dumps(obj))
 
 
 class ShellConnection(WebSocketApplication, EventEmitter):
@@ -699,7 +700,7 @@ class ShellConnection(WebSocketApplication, EventEmitter):
             return
 
         if not self.authenticated:
-            message = json.loads(message)
+            message = loads(message)
 
             if type(message) is not dict:
                 return
@@ -711,7 +712,7 @@ class ShellConnection(WebSocketApplication, EventEmitter):
 
             self.authenticated = True
             gevent.spawn(self.worker, token.user.name, token.shell)
-            self.ws.send(json.dumps({'status': 'ok'}))
+            self.ws.send(dumps({'status': 'ok'}))
             return
 
         self.logger.debug('Sending string %s to shell', message)

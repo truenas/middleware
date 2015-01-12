@@ -28,6 +28,7 @@
 import json
 import uuid
 import errno
+from jsonenc import dumps, loads
 from threading import Event, Thread
 from dispatcher import rpc
 from ws4py.client.threadedclient import WebSocketClient
@@ -58,7 +59,7 @@ class Client(object):
 
         def received_message(self, message):
             try:
-                msg = json.loads(unicode(message))
+                msg = loads(unicode(message))
             except ValueError, err:
                 if self.parent.error_callback is not None:
                     self.parent.error_callback(ClientError.INVALID_JSON_RESPONSE, err)
@@ -89,7 +90,7 @@ class Client(object):
         self.default_timeout = 10
 
     def __pack(self, namespace, name, args, id=None):
-        return json.dumps({
+        return dumps({
             'namespace': namespace,
             'name': name,
             'args': args,
@@ -214,6 +215,12 @@ class Client(object):
         call = self.PendingCall(uuid.uuid4(), 'auth')
         self.pending_calls[str(call.id)] = call
         self.__call(call, call_type='auth_service', custom_payload={'name': name})
+        call.completed.wait(timeout)
+
+    def login_task(self, name, timeout=None):
+        call = self.PendingCall(uuid.uuid4(), 'auth')
+        self.pending_calls[str(call.id)] = call
+        self.__call(call, call_type='auth_task', custom_payload={'name': name})
         call.completed.wait(timeout)
 
     def disconnect(self):
