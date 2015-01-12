@@ -1,0 +1,241 @@
+<mockup version="1.0" skin="wireframe" fontFace="Balsamiq Sans" measuredW="1106" measuredH="820" mockupW="1000" mockupH="800" productName="Balsamiq Mockups for Google Drive">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="106" y="20" w="1000" h="800" measuredW="450" measuredH="400" zOrder="0" locked="true" isInGroup="-1">
+      <controlProperties>
+        <text>MyOfficeFreeNAS%20-%20FreeNAS-10.0.1-ALPHA-abcdef-x64%3A%0Ahttp%3A//best.freenas.local</text>
+      </controlProperties>
+    </control>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::LinkBar" x="867" y="754" w="-1" h="-1" measuredW="226" measuredH="19" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderColor>16750848</borderColor>
+        <text>Home%2C%20Products%2C%20Company%2C%20Blog</text>
+      </controlProperties>
+    </control>
+    <control controlID="19" controlTypeID="com.balsamiq.mockups::VRule" x="168" y="104" w="-1" h="595" measuredW="10" measuredH="100" zOrder="2" locked="false" isInGroup="-1"/>
+    <control controlID="125" controlTypeID="__group__" x="958" y="103" w="132" h="52" measuredW="132" measuredH="52" zOrder="4" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::IconLabel" x="0" y="0" w="-1" h="-1" measuredW="132" measuredH="48" zOrder="0" locked="false" isInGroup="125">
+          <controlProperties>
+            <color>0</color>
+            <icon>UserIcon%7Clarge</icon>
+            <labelPosition>right</labelPosition>
+            <text>Franz%20Hansov</text>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::Link" x="72" y="33" w="-1" h="-1" measuredW="41" measuredH="19" zOrder="1" locked="false" isInGroup="125">
+          <controlProperties>
+            <text>Logout</text>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::Icon" x="116" y="34" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="2" locked="false" isInGroup="125">
+          <controlProperties>
+            <icon>ImportIcon%7Cxsmall</icon>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="128" controlTypeID="__group__" x="813" y="105" w="130" h="48" measuredW="130" measuredH="48" zOrder="5" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::Icon" x="0" y="0" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="0" locked="false" isInGroup="128">
+          <controlProperties>
+            <icon>AlertIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::Icon" x="48" y="0" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="1" locked="false" isInGroup="128">
+          <controlProperties>
+            <icon>Info2Icon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::Icon" x="98" y="0" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="2" locked="false" isInGroup="128">
+          <controlProperties>
+            <icon>EmailIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::Icon" x="20" y="24" w="-1" h="-1" measuredW="24" measuredH="24" zOrder="3" locked="false" isInGroup="128">
+          <controlProperties>
+            <color>13576743</color>
+            <icon>Number1Icon%7Csmall</icon>
+          </controlProperties>
+        </control>
+        <control controlID="4" controlTypeID="com.balsamiq.mockups::Icon" x="66" y="24" w="-1" h="-1" measuredW="24" measuredH="24" zOrder="4" locked="false" isInGroup="128">
+          <controlProperties>
+            <color>2848996</color>
+            <icon>Number3Icon%7Csmall</icon>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="129" controlTypeID="com.balsamiq.mockups::Canvas" x="406" y="105" w="384" h="48" measuredW="100" measuredH="70" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>roundedSolid</borderStyle>
+      </controlProperties>
+    </control>
+    <control controlID="131" controlTypeID="com.balsamiq.mockups::Label" x="456" y="119" w="-1" h="-1" measuredW="259" measuredH="21" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>OK%2C%20volume%20%22honk%22%20was%20succesfully%20created.</text>
+      </controlProperties>
+    </control>
+    <control controlID="132" controlTypeID="com.balsamiq.mockups::Icon" x="417" y="113" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>square</borderStyle>
+        <icon>InfoIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="133" controlTypeID="com.balsamiq.mockups::StickyNote" x="689" y="140" w="-1" h="-1" measuredW="109" measuredH="123" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Alerts%2C%20infobox%2C%20confirms</text>
+      </controlProperties>
+    </control>
+    <control controlID="134" controlTypeID="__group__" x="108" y="169" w="229" h="353" measuredW="229" measuredH="353" zOrder="3" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="40" w="64" h="32" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="134">
+          <controlProperties>
+            <backgroundAlpha>0.5</backgroundAlpha>
+            <borderColor>16777215</borderColor>
+            <borderStyle>none</borderStyle>
+            <color>16167531</color>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::FieldSet" x="64" y="34" w="165" h="128" measuredW="200" measuredH="170" zOrder="1" locked="false" isInGroup="134">
+          <controlProperties>
+            <backgroundAlpha>0.25</backgroundAlpha>
+            <color>16167531</color>
+            <text>Storage</text>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::IconLabel" x="75" y="51" w="82" h="-1" measuredW="109" measuredH="24" zOrder="2" locked="false" isInGroup="134">
+          <controlProperties>
+            <borderStyle>none</borderStyle>
+            <color>0</color>
+            <icon>DataBaseIcon%7Csmall</icon>
+            <labelPosition>right</labelPosition>
+            <text>Active%20volume</text>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::IconLabel" x="75" y="77" w="-1" h="-1" measuredW="111" measuredH="24" zOrder="3" locked="false" isInGroup="134">
+          <controlProperties>
+            <borderStyle>none</borderStyle>
+            <color>0</color>
+            <icon>ScreenIcon%7Csmall</icon>
+            <labelPosition>right</labelPosition>
+            <text>ZFS%20Snapshot</text>
+          </controlProperties>
+        </control>
+        <control controlID="4" controlTypeID="com.balsamiq.mockups::IconLabel" x="75" y="103" w="-1" h="-1" measuredW="121" measuredH="24" zOrder="4" locked="false" isInGroup="134">
+          <controlProperties>
+            <borderStyle>none</borderStyle>
+            <color>0</color>
+            <icon>CloudIcon%7Csmall</icon>
+            <labelPosition>right</labelPosition>
+            <text>ZFS%20Replication</text>
+          </controlProperties>
+        </control>
+        <control controlID="5" controlTypeID="com.balsamiq.mockups::IconLabel" x="75" y="129" w="-1" h="-1" measuredW="111" measuredH="24" zOrder="5" locked="false" isInGroup="134">
+          <controlProperties>
+            <borderStyle>none</borderStyle>
+            <color>0</color>
+            <icon>ScreenIcon%7Csmall</icon>
+            <labelPosition>right</labelPosition>
+            <text>ZFS%20Snapshot</text>
+          </controlProperties>
+        </control>
+        <control controlID="6" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="0" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="6" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>UsersIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="7" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="40" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="7" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>FolderClosed%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="8" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="121" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="8" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>ChartColumnIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="9" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="161" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="9" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>ChartLineIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="10" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="200" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="10" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>ChartColumnIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="11" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="240" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="11" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>GearIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="12" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="281" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="12" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>SmallClockIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="13" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="321" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="13" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>PowerIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="14" controlTypeID="com.balsamiq.mockups::Icon" x="13" y="80" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="14" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>LinkGlobeIcon%7Cmedium</icon>
+          </controlProperties>
+        </control>
+        <control controlID="15" controlTypeID="__group__" x="64" y="193" w="106" h="103" measuredW="106" measuredH="103" zOrder="15" locked="false" isInGroup="134">
+          <groupChildrenDescriptors>
+            <control controlID="0" controlTypeID="com.balsamiq.mockups::FieldSet" x="0" y="0" w="106" h="103" measuredW="200" measuredH="170" zOrder="0" locked="false" isInGroup="15">
+              <controlProperties>
+                <text>Storage</text>
+              </controlProperties>
+            </control>
+            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="7" y="14" w="-1" h="-1" measuredW="82" measuredH="21" zOrder="1" locked="false" isInGroup="15">
+              <controlProperties>
+                <text>Active%20volume</text>
+              </controlProperties>
+            </control>
+            <control controlID="2" controlTypeID="com.balsamiq.mockups::Label" x="7" y="34" w="-1" h="-1" measuredW="84" measuredH="21" zOrder="2" locked="false" isInGroup="15">
+              <controlProperties>
+                <text>ZFS%20Snapshot</text>
+              </controlProperties>
+            </control>
+            <control controlID="3" controlTypeID="com.balsamiq.mockups::Label" x="7" y="54" w="-1" h="-1" measuredW="94" measuredH="21" zOrder="3" locked="false" isInGroup="15">
+              <controlProperties>
+                <text>ZFS%20Replication</text>
+              </controlProperties>
+            </control>
+            <control controlID="4" controlTypeID="com.balsamiq.mockups::Label" x="7" y="74" w="-1" h="-1" measuredW="84" measuredH="21" zOrder="4" locked="false" isInGroup="15">
+              <controlProperties>
+                <text>ZFS%20Snapshot</text>
+              </controlProperties>
+            </control>
+          </groupChildrenDescriptors>
+        </control>
+        <control controlID="16" controlTypeID="com.balsamiq.mockups::Icon" x="201" y="56" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="16" locked="false" isInGroup="134">
+          <controlProperties>
+            <icon>AlertIcon%7Cxsmall</icon>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="135" controlTypeID="com.balsamiq.mockups::Image" x="118" y="104" w="-1" h="-1" measuredW="50" measuredH="50" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <filter>true</filter>
+        <src>./assets/sharkIco.jpg</src>
+        <text/>
+      </controlProperties>
+    </control>
+    <control controlID="136" controlTypeID="com.balsamiq.mockups::StickyNote" x="337" y="218" w="138" h="68" measuredW="109" measuredH="123" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Alert%20symbol%20shows%20when%20problem%20on%20volume</text>
+      </controlProperties>
+    </control>
+    <control controlID="137" controlTypeID="com.balsamiq.mockups::Icon" x="152" y="153" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="12" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>EllipsisIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
