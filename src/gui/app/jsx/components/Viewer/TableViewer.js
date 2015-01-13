@@ -21,11 +21,53 @@ var TableViewer = React.createClass({
       , tableCols    : React.PropTypes.array.isRequired
     }
 
+  , getInitialState: function() {
+      return {
+          tableColWidths : this.getInitialColWidths( this.props.tableCols )
+        , tableColOrder  : this.props.tableCols
+      };
+    }
+
+  , componentDidMount: function() {
+      this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
+    }
+
+  , getInitialColWidths: function( colArray ) {
+      var tempWidths = {};
+
+      colArray.map( function( targetCol, index ) {
+        tempWidths[ targetCol ] = "auto";
+      });
+
+      return tempWidths;
+    }
+
+  , getUpdatedColWidths: function( colArray ) {
+      var tempWidths  = {};
+      var viewerRefs  = this.refs;
+      var viewerWidth = this.refs[ "TABLE_VIEWER" ].getDOMNode().offsetWidth;
+
+      colArray.map( function( targetCol, index ) {
+        var colWidth = viewerRefs[ "COL_" + targetCol ].getDOMNode().offsetWidth;
+        tempWidths[ targetCol ] = Math.round( colWidth / viewerWidth * 10000 ) / 100 + "%";
+      });
+
+      return tempWidths;
+    }
+
   , createHeader: function( key, index ) {
-      var targetKey = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
+      var targetEntry = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
       return(
-        <th key={ index } >
-          { targetKey["name"] }
+        <th className = "fixed-table-header-th"
+            ref       = { "COL_" + key }
+            style     = {{ width: this.state.tableColWidths[ key ] }}
+            key       = { index } >
+          <span className="th-spacing">
+            { targetEntry["name"] }
+          </span>
+          <div className="th-content sortable-table-th">
+            { targetEntry["name"] }
+          </div>
         </th>
       );
     }
@@ -44,20 +86,25 @@ var TableViewer = React.createClass({
   , render: function() {
 
     return(
-      <div className = "viewer-table">
-        <TWBS.Table striped bordered condensed hover responsive>
+      <div className = "viewer-table fixed-table-container">
+        <div className = "fixed-table-container-inner">
 
-          <thead>
-            <tr>
-              { this.props.tableCols.map( this.createHeader ) }
-            </tr>
-          </thead>
+          <TWBS.Table striped bordered condensed hover
+                      ref       = "TABLE_VIEWER"
+                      className = "fixed-table">
 
-          <tbody>
-            { this.props.filteredData["rawList"].map( this.createRows ) }
-          </tbody>
+            <thead>
+              <tr>
+                { this.props.tableCols.map( this.createHeader ) }
+              </tr>
+            </thead>
 
-        </TWBS.Table>
+            <tbody>
+              { this.props.filteredData["rawList"].map( this.createRows ) }
+            </tbody>
+
+          </TWBS.Table>
+        </div>
       </div>
     );
   }

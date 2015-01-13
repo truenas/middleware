@@ -25,9 +25,9 @@
   @disclosure-triangle-height : ( @disclosure-triangle-base / 2 );
 
   .disclosure-toggle {
-    position            : relative;
-    cursor              : default;
-    padding-left        : 2em;
+    position     : relative;
+    cursor       : default;
+    padding-left : 2em;
 
     // The disclosure triangle is an isocoles right triangle with a base defined
     // by @disclosure-triangle-base, and a height of half that value.
@@ -57,6 +57,91 @@
       margin-left   : ( @disclosure-triangle-height );
     }
     .disclosure-target { .hidden(); }
+  }
+
+  // Prototype Fixed Table Header code
+  @fixed-table-header-height: 30px;
+
+  .fixed-table-container {
+    height         : inherit;
+    overflow       : visible;
+    position       : relative;
+    padding-top    : @fixed-table-header-height;
+    padding-bottom : ( @fixed-table-header-height * 2 ) + ( @fixed-table-header-height / 3 );
+  }
+
+  .fixed-table-container-inner {
+    overflow-x : hidden;
+    overflow-y : auto;
+    height     : 100%;
+  }
+
+  .fixed-table {
+    table-layout  : fixed;
+    margin-bottom : 0;
+  }
+
+  .fixed-table-header-th {
+    padding     : 0;
+    line-height : 0;
+    border      : 0;
+    .overflow-ellipsis();
+  }
+
+  .th-spacing {
+    visibility : hidden;
+    padding    : 0 5px;
+  }
+
+  .th-content {
+    position    : absolute;
+    width       : inherit;
+    padding     : 0 5px;
+    top         : 0;
+    background  : @gray-dark;
+    line-height : @fixed-table-header-height;
+  }
+
+  // Sortable table prototype
+  .sortable-table-th {
+    font-weight      : normal;
+    color            : #f1f1f1;
+    background-color : @gray-dark;
+    cursor           : pointer;
+
+    &:hover {
+      color            : white;
+      background-color : lighten(@gray-dark, 10%);
+    }
+
+    @table-sort-triangle-base   : 0.4em;
+    @table-sort-triangle-height : ( @table-sort-triangle-base / 2 );
+
+    &.descending,
+    &.ascending {
+      padding-left     : 2em;
+      background-color : black;
+      &:before {
+        content  : "";
+        width    : 0;
+        height   : 0;
+        position : absolute;
+        top      : 50%;
+        left     : 0.75em;
+      }
+    }
+
+    &.descending:before {
+      border-left  : @table-sort-triangle-base solid transparent;
+      border-right : @table-sort-triangle-base solid transparent;
+      border-top   : @table-sort-triangle-base solid;
+    }
+    &.ascending:before {
+      border-left   : @table-sort-triangle-base solid transparent;
+      border-right  : @table-sort-triangle-base solid transparent;
+      border-bottom : @table-sort-triangle-base solid;
+      margin-bottom : ( -@table-sort-triangle-height );
+    }
   }
 }
 
