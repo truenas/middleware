@@ -35,7 +35,7 @@ from dispatcher.rpc import RpcException, description, accepts, returns
 
 @description("Provides access to volumes information")
 class VolumeProvider(Provider):
-    @query
+    @query('definitions/volume')
     def query(self, filter=None, params=None):
         result = []
         for vol in self.datastore.query('volumes', *(filter or []), **(params or {})):

@@ -42,8 +42,7 @@ camcontrol_cache = CacheStore()
 
 
 class DiskProvider(Provider):
-    @query
-    @returns({'$ref': 'definitions/disk'})
+    @query('definitions/disk')
     def query(self, filter=None, params=None):
         result = []
         for disk in self.datastore.query('disks', *(filter or []), **(params or {})):

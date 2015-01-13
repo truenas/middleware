@@ -63,9 +63,8 @@ class Task(object):
     def join_subtasks(self, *tasks):
         self.dispatcher.balancer.join_subtasks(*tasks)
         for i in tasks:
-            state, progress = i.value
-            if state != TaskState.FINISHED:
-                raise TaskException(errno.EFAULT, 'Subtask failed: {0}'.format(progress.message))
+            if i.state != TaskState.FINISHED:
+                raise TaskException(errno.EFAULT, 'Subtask failed: {0}'.format(i.progress.message))
 
     def chain(self, task, *args):
         self.dispatcher.balancer.submit(task, *args)
@@ -112,29 +111,46 @@ class Provider(RpcService):
     def initialize(self, context):
         self.dispatcher = context.dispatcher
         self.datastore = self.dispatcher.datastore
+        self.configstore = self.dispatcher.configstore
 
 
-def query(fn):
-    fn.params_schema = [
-        {
-            'title': 'filter',
-            'type': 'array',
-            'items': {
+def query(result_type):
+    def wrapped(fn):
+        fn.params_schema = [
+            {
+                'title': 'filter',
                 'type': 'array',
-                'minItems': 3,
-                'maxItems': 3
+                'items': {
+                    'type': 'array',
+                    'minItems': 3,
+                    'maxItems': 3
+                }
+            },
+            {
+                'title': 'options',
+                'type': 'object',
+                'properties': {
+                    'sort-field': {'type': 'string'},
+                    'sort-order': {'type': 'string', 'enum': ['asc', 'desc']},
+                    'limit': {'type': 'integer'},
+                    'offset': {'type': 'integer'},
+                    'single': {'type': 'boolean'}
+                }
             }
-        },
-        {
-            'title': 'options',
-            'type': 'object',
-            'properties': {
-                'sort-field': {'type': 'string'},
-                'sort-order': {'type': 'string', 'enum': ['asc', 'desc']},
-                'limit': {'type': 'integer'},
-                'offset': {'type': 'integer'},
-                'single': {'type': 'boolean'}
-            }
+        ]
+
+        fn.result_schema = {
+            'anyOf': [
+                {
+                    'type': 'array',
+                    'items': {'$ref': result_type}
+                },
+                {
+                    '$ref': result_type
+                }
+            ]
         }
-    ]
-    return fn
+
+        return fn
+
+    return wrapped

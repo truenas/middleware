@@ -36,13 +36,7 @@ from datastore import DuplicateKeyException, DatastoreException
 @description("Provides access to users database")
 class UserProvider(Provider):
     @description("Lists users present in the system")
-    @query
-    @returns({
-        'type': 'array',
-        'items': {
-            'type': {'$ref': 'definitions/user'}
-        }
-    })
+    @query('definitions/user')
     def query(self, filter=None, params=None):
         filter = filter or []
         params = params or {}
@@ -55,13 +49,7 @@ class UserProvider(Provider):
 @description("Provides access to groups database")
 class GroupProvider(Provider):
     @description("Lists groups present in the system")
-    @query
-    @returns({
-        'type': 'array',
-        'items': {
-            'type': {'$ref': 'definitions/group'}
-        }
-    })
+    @query('definitions/group')
     def query(self, filter=None, params=None):
         filter = filter or []
         params = params or {}
