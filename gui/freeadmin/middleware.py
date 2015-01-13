@@ -200,7 +200,11 @@ class CatchError(object):
             excp = sys.exc_info()[1]
             kwargs = {
                 'error': True,
-                'message': _("Error: %s") % unicode(excp.value),
+                'message': _("Error: %s") % (
+                    unicode(excp.value)
+                    if sys.exc_type is not OperationalError
+                    else unicode(excp.message)
+                ),
                 }
             return JsonResp(request, **kwargs)
         return response
