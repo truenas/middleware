@@ -3,7 +3,6 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.hook import AppHook
-from freenasUI.middleware.notifier import notifier
 
 
 class SystemHook(AppHook):
@@ -29,6 +28,7 @@ class SystemHook(AppHook):
         return btns
 
     def top_menu(self, request):
+        from freenasUI.middleware.notifier import notifier
         if (
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'BACKUP'
