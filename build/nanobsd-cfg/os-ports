@@ -60,6 +60,9 @@ add_port freenas/py-libzfs PRODUCT_VERSION=${VERSION} \
 add_port freenas/py-netif PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
+add_port freenas/py-sysctl PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
 
 if ! is_truenas ; then
 	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
@@ -159,7 +162,6 @@ add_port devel/py-argh
 add_port devel/py-texttable
 add_port devel/py-pip
 add_port devel/py-pyee
-add_port devel/py-sysctl
 add_port devel/py-watchdog
 add_port devel/py-setproctitle
 add_port devel/py-jsonschema
