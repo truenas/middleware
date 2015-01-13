@@ -111,10 +111,10 @@ class DeviceInfoPlugin(Provider):
             if i.startswith('lo'):
                 continue
 
-            node = get_sysctl(re.sub('(\w+)([0-9]+)', 'dev.\\1.\\2', i))
+            desc = get_sysctl(re.sub('(\w+)([0-9]+)', 'dev.\\1.\\2.%desc', i))
             result.append({
                 'name': i,
-                'description': node['%desc'] if '%desc' in node else 'unknown'
+                'description': desc
             })
 
         return result
