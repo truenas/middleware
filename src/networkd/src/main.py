@@ -1,6 +1,6 @@
 #!/usr/local/bin/python2.7
 #+
-# Copyright 2014 iXsystems, Inc.
+# Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,16 +47,17 @@ DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
 class RoutingSocketEventSource(threading.Thread):
-    def __init__(self, client):
+    def __init__(self, context):
         super(RoutingSocketEventSource, self).__init__()
-        self.client = client
+        self.context = context
+        self.client = context.client
         self.mtu_cache = {}
         self.flags_cache = {}
         self.link_state_cache = {}
 
     def build_cache(self):
         # Build a cache of certain interface states so we'll later know what has changed
-        for i in netif.list_interfaces():
+        for i in netif.list_interfaces().values():
             self.mtu_cache[i.name] = i.mtu
             self.flags_cache[i.name] = i.flags
             self.link_state_cache[i.name] = i.link_state
@@ -74,10 +75,14 @@ class RoutingSocketEventSource(threading.Thread):
                 args = {'name': message.interface}
 
                 if message.type == netif.InterfaceAnnounceType.ARRIVAL:
+                    self.context.interface_attached(message.interface)
                     self.client.emit_event('network.interface.attached', args)
 
                 if message.type == netif.InterfaceAnnounceType.DEPARTURE:
+                    self.context.interface_detached(message.interface)
                     self.client.emit_event('network.interface.detached', args)
+
+                self.build_cache()
 
             if type(message) is netif.InterfaceInfoMessage:
                 ifname = message.interface
@@ -116,15 +121,14 @@ class RoutingSocketEventSource(threading.Thread):
                         'new-flags': [f.name for f in message.flags]
                     })
 
+                self.build_cache()
+
             if type(message) is netif.InterfaceAddrMessage:
                 pass
 
             if type(message) is netif.RoutingMessage:
                 if message.type == netif.RoutingMessageType.ADD:
-                    self.client.emit_event('network.route.added', {
-                        'name': message.interface
-                    })
-
+                    self.client.emit_event('network.route.added', message.__getstate__())
 
         rtsock.close()
 
@@ -138,12 +142,12 @@ class ConfigurationService(RpcService):
         self.client = context.client
 
     def query_interfaces(self):
-        result = []
+        result = {}
 
         def convert_alias(alias):
             ret = {
                 'family': alias.af.name,
-                'address': str(alias.address)
+                'address': alias.address.address if type(alias.address) is netif.LinkAddress else str(alias.address)
             }
 
             if alias.netmask:
@@ -156,11 +160,13 @@ class ConfigurationService(RpcService):
             return ret
 
         for iface in netif.list_interfaces().values():
-            result.append({
+            result[iface.name] = {
                 'name': iface.name,
-                'link-address': iface.link_address.address,
+                'flags': [x.name for x in iface.flags],
+                'link-state': iface.link_state.name,
+                'link-address': iface.link_address.address.address,
                 'aliases': [convert_alias(a) for a in iface.addresses]
-            })
+            }
 
         return result
 
@@ -169,25 +175,26 @@ class ConfigurationService(RpcService):
             # Try DHCP on each interface until we find lease. Mark failed ones as disabled.
             self.logger.warn('Network in autoconfiguration mode')
             for i in netif.list_interfaces().values():
+                entity = self.datastore.get_by_id('network.interfaces', i.name)
                 if i.type == netif.InterfaceType.LOOP:
                     continue
 
                 self.logger.info('Trying to acquire DHCP lease on interface {0}...'.format(i.name))
                 if self.context.configure_dhcp(i.name):
-                    self.config.set('network.autoconfigure', False)
-                    self.datastore.insert('network.interfaces', {
-                        'name': i.name,
-                        'type': 'ethernet',
+                    entity.update({
+                        'enabled': True,
                         'dhcp': True
                     })
 
+                    self.datastore.update('network.interfaces', entity['id'], entity)
+                    self.config.set('network.autoconfigure', False)
                     self.logger.info('Successfully configured interface {0}'.format(i.name))
                     return
 
             self.logger.warn('Failed to configure any network interface')
             return
 
-        for i in netif.list_interfaces():
+        for i in netif.list_interfaces().values():
             if i.type == netif.InterfaceType.LOOP:
                 continue
 
@@ -201,36 +208,42 @@ class ConfigurationService(RpcService):
         routes = rtable.routes
         static_routes = filter(lambda x: netif.RouteFlags.STATIC in x.flags, routes)
 
-        new_routes = set()
-        for r in self.client.call_sync('network.routes.query'):
-            network = ipaddress.ip_address(r['network'])
-            gateway = ipaddress.ip_address(r['gateway'])
-            new_routes.add(r)
+        #new_routes = set()
+        #for r in self.datastore.query('network.routes'):
+        #    network = ipaddress.ip_address(r['network'])
+        #    gateway = ipaddress.ip_address(r['gateway'])
+        #    new_routes.add(r)
 
-        for r in new_routes - static_routes:
-            rtable.add(r)
+        #for r in new_routes - static_routes:
+        #    rtable.add(r)
 
-        for r in static_routes - new_routes:
-            rtable.remove(r)
+        #for r in static_routes - new_routes:
+        #    rtable.remove(r)
 
     def configure_interface(self, name):
-        try:
-            iface = netif.get_interface(name)
-        except NameError:
-            raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
-
-        entity = self.client.call_sync('network.interfaces.query', [('name', '=', name)])
+        entity = self.datastore.get_one('network.interfaces', ('name', '=', name))
         if not entity:
             raise RpcException(errno.ENXIO, "Configuration for interface {0} not found".format(name))
 
-        if 'dhcp' in entity and entity['dhcp']:
+        if not entity['enabled']:
+            self.logger.info('Interface {0} is disabled'.format(name))
+            return
+
+        try:
+            iface = netif.get_interface(name)
+            if entity.get('cloned'):
+                netif.create_interface(entity['name'])
+        except NameError:
+            raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
+
+        if entity.get('dhcp'):
             self.logger.info('Trying to acquire DHCP lease on interface {0}...'.format(name))
             if not self.context.configure_dhcp(name):
                 self.logger.warn('Failed to configure interface {0} using DHCP'.format(name))
             return
 
         addresses = set()
-        for i in entity['addresses']:
+        for i in entity['aliases']:
             addr = netif.InterfaceAddress()
             addr.af = netif.AddressFamily(i['type'])
             addr.address = ipaddress.ip_address(i['address'])
@@ -265,7 +278,15 @@ class ConfigurationService(RpcService):
             'interface': name,
         })
 
-    def shutdown_interface(self, name):
+    def up_interface(self, name):
+        try:
+            iface = netif.get_interface(name)
+        except NameError:
+            raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
+
+        iface.up()
+
+    def down_interface(self, name):
         try:
             iface = netif.get_interface(name)
         except NameError:
@@ -276,9 +297,6 @@ class ConfigurationService(RpcService):
             iface.delete_address(addr)
 
         iface.down()
-        self.client.emit_event('network.interface.closed', {
-            'interface': name,
-        })
 
 
 class Main:
@@ -294,6 +312,36 @@ class Main:
         # XXX: start dhclient through launchd in the future
         ret = subprocess.call(['/sbin/dhclient', interface])
         return ret == 0
+
+    def interface_detached(self, name):
+        pass
+
+    def interface_attached(self, name):
+        pass
+
+    def scan_interfaces(self):
+        self.logger.info('Scanning available network interfaces...')
+        existing = []
+
+        # Add newly plugged NICs to DB
+        for i in netif.list_interfaces().values():
+            # We want only physical NICs
+            if i.cloned:
+                continue
+
+            existing.append(i.name)
+            if not self.datastore.exists('network.interfaces', ('id', '=', i.name)):
+                self.logger.info('Found new interface {0} ({1})'.format(i.name, i.type.name))
+                self.datastore.insert('network.interfaces', {
+                    'enabled': False,
+                    'id': i.name,
+                    'name': i.name,
+                    'type': i.type.name
+                })
+
+        # Remove unplugged NICs from DB
+        for i in self.datastore.query('network.interfaces', ('id', 'nin', existing)):
+            self.datastore.remove('network.interfaces', i['id'])
 
     def parse_config(self, filename):
         try:
@@ -321,10 +369,9 @@ class Main:
         self.client.connect('127.0.0.1')
         self.client.login_service('networkd')
         self.client.enable_server()
-        self.client.register_service('networkd.configuration', ConfigurationService(self))
 
     def init_routing_socket(self):
-        self.rtsock_thread = RoutingSocketEventSource(self.client)
+        self.rtsock_thread = RoutingSocketEventSource(self)
         self.rtsock_thread.start()
 
     def main(self):
@@ -336,7 +383,10 @@ class Main:
         self.parse_config(args.c)
         self.init_datastore()
         self.init_dispatcher()
+        self.scan_interfaces()
         self.init_routing_socket()
+        self.client.register_service('networkd.configuration', ConfigurationService(self))
+        self.logger.info('Started')
         self.client.wait_forever()
 
 if __name__ == '__main__':
