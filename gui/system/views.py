@@ -1876,3 +1876,8 @@ def certificate_info(request, id):
     return certificate_to_json(
         models.Certificate.objects.get(pk=int(id))
     )
+
+
+def support(request):
+    sw_name = get_sw_name().lower()
+    return render(request, 'system/support_%s.html' % sw_name)

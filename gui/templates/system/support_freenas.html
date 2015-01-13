@@ -1,0 +1,9 @@
+<p>{% trans "To file a bug on FreeNAS, please click the \"Ticket\" button below or visit" %} <a href="http://bugs.freenas.org" target="_blank">http://bugs.freenas.org</a>.</p>
+<p>{% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
+
+<div data-dojo-type="dijit/form/Button">
+  {% trans "Ticket" %}
+  <script type="dojo/method" data-dojo-event="onClick">
+  window.open('https://bugs.freenas.org/projects/freenas/issues/new');
+  </script>
+</div>
