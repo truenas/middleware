@@ -102,3 +102,12 @@ class CertificateView(TreeNode):
     type = 'opensystem'
     icon = u'CertificateIcon'
     order = 15
+
+
+class Support(TreeNode):
+
+    gname = 'Support'
+    name = _(u'Support')
+    icon = u"SupportIcon"
+    type = 'opensystem'
+    order = 20
