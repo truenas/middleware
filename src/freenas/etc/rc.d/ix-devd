@@ -149,6 +149,11 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	FASTTRACK=1
     fi
 
+    if [ -e /etc/skip_fasttrack ]; then
+	USER_OVERRIDE=0
+	FASTTRACK=0
+    fi
+
     # Start fenced.
     # If not forced, start a normal one, otherwise, mark as such.
     echo "Starting fenced." | logger
