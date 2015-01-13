@@ -15,15 +15,6 @@ etcd_flags="/etc"
 # turbo boost
 performance_cpu_freq="HIGH"
 
-% if config.get("network.autoconfiguration", True):
-% for iface in dispatcher.call_sync("system.device.get_devices", "network"):
-ifconfig_${iface["name"]}="DHCP"
-% endfor
-% else:
-% for name, iface in config.children_dict("network.interface").items():
-ifconfig_${name}=""
-% endfor
-% endif
 % for svc in ds.query("service_definitions"):
 % if config.get("service.{0}.enable".format(svc['name'])):
 ${svc['service-name']}_enable="YES"
