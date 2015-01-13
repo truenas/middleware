@@ -37,6 +37,7 @@ import datastore
 import imp
 import setproctitle
 import renderers
+from datastore.config import ConfigStore
 from dispatcher.client import Client
 from dispatcher.rpc import RpcService, RpcException
 
@@ -86,12 +87,19 @@ class FileGenerationService(RpcService):
         if name not in self.context.managed_files.keys():
             return
 
-        plugin = imp.load_source('plugin', self.context.managed_files[name])
+        try:
+            pname = os.path.basename(name)
+            plugin = imp.load_source(pname, self.context.managed_files[name])
+        except:
+            raise RuntimeError('Invalid plugin source file')
 
         if not hasattr(plugin, 'run'):
-            raise RpcException(errno.EINVAL, 'Invalid plugin source, no run method')
+            raise RuntimeError('Invalid plugin source, no run method')
 
-        plugin.run(self.context)
+        try:
+            plugin.run(self.context)
+        except Exception, err:
+            raise RuntimeError('Cannot run plugin: {0}'.format(str(err)))
 
     def generate_group(self, name):
         group = self.datastore.get_one('etcd.groups', ('name', '=', name))
@@ -121,6 +129,7 @@ class Main:
         self.root = None
         self.config = None
         self.datastore = None
+        self.configstore = None
         self.client = None
         self.plugin_dirs = []
         self.renderers = {}
@@ -132,6 +141,8 @@ class Main:
         except datastore.DatastoreException, err:
             self.logger.error('Cannot initialize datastore: %s', str(err))
             sys.exit(1)
+
+        self.configstore = ConfigStore(self.datastore)
 
     def init_dispatcher(self):
         self.client = Client()
