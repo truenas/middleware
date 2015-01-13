@@ -429,6 +429,7 @@ def _init(dispatcher):
 
         purge_disk_cache(path)
         disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
+        dispatcher.datastore.delete('disks', disk['id'])
         dispatcher.dispatch_event('disk.detached', {
             'name': path,
             'serial': disk['serial']
