@@ -231,6 +231,7 @@ if [ -f /usr/local/etc/registration ] ; then
 	cp /usr/local/etc/registration "$dir/registration.json"
 fi
 
+set +e
 ls /dev/ses* 2> /dev/null | while read -r ses; do
 	name=$(echo ${ses}|cut -d "/" -f 3)
 	/sbin/camcontrol smpphylist ${ses} > "$dir/smpphylist.${name}"
@@ -241,6 +242,7 @@ ls /dev/ses* 2> /dev/null | while read -r ses; do
 		fi
 	done
 done
+set -e
 
 tar -C $dir/.. -cHzf $dir/../ixdiagnose.tgz ixdiagnose
 $mydir/crashuploader $topdir/ixdiagnose.tgz
