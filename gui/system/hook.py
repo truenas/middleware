@@ -3,6 +3,7 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.hook import AppHook
+from freenasUI.middleware.notifier import notifier
 
 
 class SystemHook(AppHook):
@@ -26,3 +27,21 @@ class SystemHook(AppHook):
                 ),
             })
         return btns
+
+    def top_menu(self, request):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'BACKUP'
+        ):
+            return []
+        return [
+            {
+                'name': _('Wizard'),
+                'icon': 'images/ui/menu/wizard.png',
+                'onclick': 'editObject("%s", "%s", [])' % (
+                    escapejs(_('Wizard')),
+                    reverse('system_initialwizard'),
+                ),
+                'weight': 90,
+            },
+        ]
