@@ -38,7 +38,7 @@ import natural.size
 from threading import Lock
 from xml.etree import ElementTree
 from texttable import Texttable
-from jsonpointer import resolve_pointer
+from jsonpointer import resolve_pointer, JsonPointerException
 
 
 output_lock = Lock()
@@ -123,14 +123,14 @@ class JsonOutputFormatter(object):
 class AsciiOutputFormatter(object):
     @staticmethod
     def format_value(value, vt):
+        if vt == ValueType.BOOLEAN:
+            return _("yes") if value else _("no")
+
         if value is None:
             return _("none")
 
         if vt == ValueType.STRING:
             return value
-
-        if vt == ValueType.BOOLEAN:
-            return _("yes") if value else _("no")
 
         if vt == ValueType.NUMBER:
             return str(value)
@@ -207,7 +207,10 @@ def get_terminal_size(fd=1):
 
 def resolve_cell(row, spec):
     if type(spec) == str:
-        return resolve_pointer(row, spec)
+        try:
+            return resolve_pointer(row, spec)
+        except JsonPointerException:
+            return None
 
     if callable(spec):
         return spec(row)
@@ -216,6 +219,9 @@ def resolve_cell(row, spec):
 
 
 def read_value(value, tv=ValueType.STRING):
+    if tv == ValueType.STRING:
+        return str(value)
+
     if tv == ValueType.NUMBER:
         return int(value)
 

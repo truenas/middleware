@@ -28,7 +28,7 @@
 
 import collections
 from texttable import Texttable
-from jsonpointer import resolve_pointer, set_pointer
+from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
 from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii
 
 
@@ -132,7 +132,10 @@ class EntityNamespace(Namespace):
             if callable(self.get):
                 return self.get(obj)
 
-            return resolve_pointer(obj, self.get)
+            try:
+                return resolve_pointer(obj, self.get)
+            except JsonPointerException:
+                return None
 
         def do_set(self, obj, value):
             if callable(self.set):
@@ -194,10 +197,11 @@ class EntityNamespace(Namespace):
 
         def run(self, context, args, kwargs):
             cols = []
+            params = [(k, '~', v) for k, v in kwargs.items()]
             for col in filter(lambda x: x.list, self.parent.property_mappings):
                 cols.append(Column(col.descr, col.get, col.type))
 
-            output_table(self.parent.query(), cols)
+            output_table(self.parent.query(params), cols)
 
     @description("Shows single item")
     class ShowEntityCommand(Command):
@@ -317,7 +321,7 @@ class EntityNamespace(Namespace):
     def update_entity(self, name):
         pass
 
-    def query(self):
+    def query(self, params):
         pass
 
     def add_property(self, **kwargs):
@@ -341,6 +345,6 @@ class EntityNamespace(Namespace):
         if self.primary_key is None:
             return
 
-        for i in self.query():
+        for i in self.query([]):
             name = self.primary_key.do_get(i)
             yield self.SingleItemNamespace(name, self)

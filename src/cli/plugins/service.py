@@ -26,7 +26,6 @@
 #####################################################################
 
 
-from texttable import Texttable
 from namespace import Namespace, EntityNamespace, Command, description
 
 
@@ -74,8 +73,8 @@ class ServicesNamespace(EntityNamespace):
             'reload': ServiceManageCommand(name, 'reload')
         }
 
-    def query(self):
-        return self.context.connection.call_sync('service.query')
+    def query(self, params):
+        return self.context.connection.call_sync('service.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync('service.query', [('name', '=', name)]).pop()

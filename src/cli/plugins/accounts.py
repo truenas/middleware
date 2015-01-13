@@ -84,8 +84,8 @@ class UsersNamespace(EntityNamespace):
 
         self.primary_key = self.get_mapping('username')
 
-    def query(self):
-        return self.context.connection.call_sync('users.query')
+    def query(self, params):
+        return self.context.connection.call_sync('users.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
@@ -102,6 +102,10 @@ class UsersNamespace(EntityNamespace):
         uid = entity.pop('id')
         del entity['builtin']
         self.context.submit_task('users.update', uid, entity)
+
+    def delete(self, name):
+        entity = self.get_one(name)
+        self.context.submit_task('users.')
 
     def display_group(self, entity):
         group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
@@ -145,8 +149,8 @@ class GroupsNamespace(EntityNamespace):
 
         self.primary_key = self.get_mapping('name')
 
-    def query(self):
-        return self.context.connection.call_sync('groups.query')
+    def query(self, params):
+        return self.context.connection.call_sync('groups.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
