@@ -67,6 +67,7 @@ function MiddlewareClient() {
   function logAndSend ( packedAction, callback, requestID ) {
 
     if ( DEBUG ) { console.info( "Logging and sending request " + requestID ); }
+    if ( DEBUG ) { console.log({ requestID : packedAction }); }
 
     logPendingRequest( requestID, callback );
     socket.send( packedAction );
