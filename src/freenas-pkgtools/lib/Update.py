@@ -149,8 +149,7 @@ def MountClone(name, mountpoint = None):
         return None
 
     # If all that worked... we now need
-    # to get /boot/grub into the clone's mount
-    # point, as a nullfs mount.
+    # to set up /dev, /var/tmp, and /boot/grub.
     # Let's see if we need to do that
     if os.path.exists(grub_cfg) is True:
         if os.path.exists(mount_point + grub_cfg) is True:
@@ -159,14 +158,27 @@ def MountClone(name, mountpoint = None):
                 os.remove(mount_point + grub_cfg)
             except:
                 pass
-        # Okay, it needs to be ounted
-        cmd = "/sbin/mount"
-        args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
+        # Okay, it needs to be mounted
+        # To mount the grub fs, however, we need to unmount
+        # it in root!  This is particularly annoying.
+        cmd = "/sbin/umount"
+        arts = ["-f", grub_dir]
         rv = RunCommand(cmd, args)
         if rv is False:
             UnmountClone(name, None)
             return None
-
+        # Now let's mount devfs, tmpfs, and grub
+        args_array = [ ["-t", "devfs", "devfs", mount_point + "/dev"],
+                       ["-t", "tmpfs", "tmpfs", mount_point + "/var/tmp"],
+                       ["-t", "zfs", "freenas-boot/grub", mount_point + "/boot/grub" ]
+                       ]
+        cmd = "/sbin/mount"
+        for fs_args in args_array:
+            rv = RunCommand(cmd, fs_args)
+            if rv is False:
+                UnmountClone(name, None)
+                return None
+            
     return mount_point
 
 def ActivateClone(name):
@@ -178,13 +190,24 @@ def UnmountClone(name, mount_point = None):
     # Unmount the given clone.  After unmounting,
     # it removes the mount directory.
     # First thing we need to do is try to unmount
-    # the nullfs-mounted grub directory
+    # the grub directory, and then remount it in its
+    # proper place.  Then we can unmount /dev and /var/tmp
     # If this fails, we ignore it for now
     if mount_point is not None:
-        cmd = "umount"
+        cmd = "/sbin/umount"
         args = ["-f", mount_point + grub_dir]
         RunCommand(cmd, args)
-
+        cmd = "/sbin/mount"
+        args = ["/boot/grub"]
+        rv = RunCommand(cmd, args)
+        if rv is False:
+            log.error("UNABLE TO MOUNT /boot/grub; SYSTEM MAY NOT BOOT")
+            raise Exception("UNABLE TO REMOUNT /boot/grub; FIX MANUALLY OR SYSTEM AMY NOT BOOT")
+        cmd = "/sbin/umount"
+        for dir in ["/dev", "/var/tmp"]:
+            args = ["-f", mount_point + dir]
+            RunCommand(cmd, args)
+    
     # Now we ask beadm to unmount it.
     args = ["unmount", "-f", name]
     
