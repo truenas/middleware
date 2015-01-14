@@ -19,7 +19,7 @@ module.exports = {
     }
 
   , requestUsersList: function() {
-      MiddlewareClient.request( "accounts.query_users", null, function ( rawUsersList ) {
+      MiddlewareClient.request( "users.query", [], function ( rawUsersList ) {
         UsersActionCreators.receiveUsersList( rawUsersList );
       });
     }
