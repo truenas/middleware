@@ -986,6 +986,64 @@ require([
       }
     }
 
+    cifs_storage_task_toggle = function() {
+        var home = registry.byId("id_cifs_home");
+        var cifs_home = home.get("value");
+        var path = registry.byId("id_cifs_path");
+        var cifs_path = path.get("value");
+        var storage_task = registry.byId("id_cifs_storage_task");
+
+        if (cifs_home == "on" && !cifs_path) {
+            console.log("XXX: cifs_home is on and no cifs_path");
+
+            xhr.get('/storage/tasks/recursive/json/', {
+                sync: true
+            }).then(function(data) {
+                var tasks = JSON.parse(data); 
+
+                var options = [];
+                for (var i = 0;i < tasks.length;i++) {
+                    var option = {
+                        value: tasks[i].id,
+                        label: tasks[i].str,
+                        selected:false
+                    };
+
+                    options[i] = option;
+                }
+
+                storage_task.addOption(options);
+            });
+        } else {
+            storage_task.removeOption(storage_task.getOptions());
+            storage_task._setDisplay("");
+            storage_task.addOption([{ value: "", label: "-----" }]);
+
+            if (cifs_path) {
+                var url = '/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
+                xhr.get(url, {
+                    sync: true
+                }).then(function(data) {
+                    var tasks = JSON.parse(data); 
+
+                    var options = [];
+                    for (var i = 0;i < tasks.length;i++) {
+                        var option = {
+                            value: tasks[i].id,
+                            label: tasks[i].str,
+                            selected:false
+                        };
+
+                        options[i] = option;
+                    }
+
+                    storage_task.addOption(options);
+                });
+
+            }
+        }
+    }
+
     generic_certificate_autopopulate = function(url) {
         var certinfo = null;
         xhr.get(url, {

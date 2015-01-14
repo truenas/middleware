@@ -28,6 +28,7 @@ import logging
 import os
 import re
 
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -35,8 +36,10 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import services
 from freenasUI.sharing import models
+from freenasUI.storage.models import Task
 from freenasUI.storage.widgets import UnixPermissionField
 from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError
@@ -61,6 +64,43 @@ class CIFS_ShareForm(ModelForm):
         self.instance._original_cifs_default_permissions = \
             self.instance.cifs_default_permissions
         self.fields['cifs_name'].required = False
+        self.fields['cifs_home'].widget.attrs['onChange'] = (
+            "cifs_storage_task_toggle();"
+        )
+
+        if self.instance:
+            p = pipeopen("zfs list -H -o mountpoint,name")
+            zfsout = p.communicate()[0].split('\n')
+            if p.returncode != 0:
+                zfsout = []
+
+            tasks = []
+            if self.instance.cifs_path:
+                cifs_path = self.instance.cifs_path
+                for line in zfsout:
+                    try:
+                        zfs_mp, zfs_ds = line.split()
+                        if cifs_path == zfs_mp or cifs_path.startswith("/%s/" % zfs_mp):
+                            if cifs_path == zfs_mp:
+                                tasks = Task.objects.filter(task_filesystem=zfs_ds)
+                            else: 
+                                tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
+                            break
+
+                    except:
+                        pass
+
+            elif self.instance.cifs_home:
+                tasks = Task.objects.filter(Q(task_recursive=True))
+
+            if tasks:
+                choices = [('', '-----')]
+                for task in tasks:
+                    choices.append((task.id, task))
+                self.fields['cifs_storage_task'].choices = choices
+
+            else:
+                self.fields['cifs_storage_task'].choices = (('', '-----'),)
 
     class Meta:
         fields = '__all__'

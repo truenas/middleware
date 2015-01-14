@@ -57,6 +57,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_ro',
         'cifs_showhiddenfiles',
         'cifs_vfsobjects',
+        'cifs_storage_task',
     )
     fields = (
         'cifs_name',

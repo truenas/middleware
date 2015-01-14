@@ -754,27 +754,9 @@ def generate_smb4_shares(smb4_shares):
     if len(shares) == 0:
         return
 
-    p = pipeopen("zfs list -H -o mountpoint,name")
-    zfsout = p.communicate()[0].split('\n')
-    if p.returncode != 0:
-        zfsout = []
-
     for share in shares:
-        if not os.path.isdir(share.cifs_path.encode('utf8')) and not share.cifs_home:
+        if not share.cifs_home and not os.path.isdir(share.cifs_path.encode('utf8')):
             continue
-
-        task = False
-        for line in zfsout:
-            try:
-                zfs_mp, zfs_ds = line.split()
-                if share.cifs_path == zfs_mp or share.cifs_path.startswith("%s/" % zfs_mp):
-                    if share.cifs_path == zfs_mp:
-                        task = Task.objects.filter(task_filesystem = zfs_ds)[0]
-                    else:
-                        task = Task.objects.filter(Q(task_filesystem = zfs_ds) & Q(task_recursive=True))[0]
-                    break
-            except:
-                pass
 
         confset1(smb4_shares, "\n")
         if share.cifs_home:
@@ -812,6 +794,10 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "browseable = %s",
             "yes" if share.cifs_browsable else "no")
 
+        task = None
+        if share.cifs_storage_task:
+            task = share.cifs_storage_task
+
         vfs_objects = []
         if share.cifs_recyclebin:
             vfs_objects.append('recycle')
@@ -834,6 +820,7 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, "shadow:localtime = yes")
             confset1(smb4_shares, "shadow:format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
                 task.task_ret_count, task.task_ret_unit[0]))
+
         if vfs_objects:
             confset2(smb4_shares, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
 

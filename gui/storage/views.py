@@ -36,11 +36,13 @@ from time import sleep
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
@@ -1273,3 +1275,94 @@ def vmwareplugin_datastores(request):
         json.dumps(data),
         content_type='application/json',
     )
+
+def tasks_json(request, dataset=None):
+    tasks = []
+
+    p = pipeopen("zfs list -H -o mountpoint,name")
+    zfsout = p.communicate()[0].split('\n')
+    if p.returncode != 0:
+        zfsout = []
+
+    mp = '/mnt/' + dataset
+
+    task_list = []
+    if dataset: 
+        for line in zfsout:
+            if not line: 
+                continue
+
+            try:
+                zfs_mp, zfs_ds = line.split()
+                if mp == zfs_mp or mp.startswith("/%s/" % zfs_mp):
+                    if mp == zfs_mp:
+                        task_list = models.Task.objects.filter(
+                            task_filesystem=zfs_ds
+                        )
+                    else:
+                        task_list= Task.objects.filter(
+                            Q(task_filesystem=zfs_ds) &
+                            Q(task_recursive=True)
+                        )
+                    break 
+            except:
+                pass
+      
+    else:
+        task_list = models.Task.objects.order_by("task_filesystem").all()
+
+    fields = models.Task._meta.get_all_field_names()
+    for task in task_list:
+        t = {}
+        for f in fields:
+            try:
+                t[f] = str(getattr(task, f))
+            except: 
+                pass
+        t['str'] = str(task)
+        tasks.append(t)
+
+    return HttpResponse(
+        json.dumps(tasks),
+        content_type='application/json'
+    )
+
+def tasks_dataset_json(request, dataset):
+    return tasks_json(request, dataset)
+
+def tasks_all_json(request):
+    return tasks_json(request)
+
+def tasks_recursive_json(request, dataset=None):
+    tasks = []
+
+    if dataset: 
+        mp = "/mnt/" + dataset
+        task_list = models.Task.objects.order_by("task_filesystem").filter(
+            Q(task_filesystem=dataset) &
+            Q(task_recursive=True)
+        )
+      
+    else:
+        task_list = models.Task.objects.order_by("task_filesystem").filter(
+            task_recursive=True
+        )
+
+    fields = models.Task._meta.get_all_field_names()
+    for task in task_list:
+        t = {}
+        for f in fields:
+            try:
+                t[f] = str(getattr(task, f))
+            except: 
+                pass
+        t['str'] = str(task)
+        tasks.append(t)
+
+    return HttpResponse(
+        json.dumps(tasks),
+        content_type='application/json'
+    )
+
+def tasks_all_recursive_json(request):
+    return tasks_recursive_json(request)

@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
+from freenasUI.storage.models import Task
 
 
 class CIFS_Share(Model):
@@ -114,7 +115,13 @@ class CIFS_Share(Model):
             ('streams_xattr', 'streams_xattr'),
         ),
     )
-
+    cifs_storage_task = models.ForeignKey(
+        Task,
+        verbose_name=_("Periodic Snapshot Task"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
     cifs_auxsmbconf = models.TextField(
             max_length=120,
             verbose_name=_("Auxiliary Parameters"),
