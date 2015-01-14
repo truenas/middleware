@@ -4662,8 +4662,12 @@ class notifier:
                 continue
             size = geom.xpath("./provider/mediasize")[0].text
             serials[(serial, size)].append(name)
+            serials[(serial, size)].sort(key=lambda x: int(x[2:]))
 
-        for disks in serials.values():
+        disks_pairs = [disks for disks in serials.values()]
+        disks_pairs.sort(key=lambda x: int(x[0][2:]))
+
+        for disks in disks_pairs:
             if not len(disks) > 1:
                 continue
             name = self.multipath_next()
