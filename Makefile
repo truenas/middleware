@@ -31,6 +31,10 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export NANO_ARCH
 .endif
 
+.if defined(CHANGELOG)
+.export CHANGELOG
+.endif
+
 all:	check-root build
 
 .BEGIN:
