@@ -25,11 +25,46 @@ var TableViewer = React.createClass({
       return {
           tableColWidths : this.getInitialColWidths( this.props.tableCols )
         , tableColOrder  : this.props.tableCols
+        , sortTableBy    : null
+        , sortOrder      : "none"
       };
     }
 
   , componentDidMount: function() {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
+    }
+
+  , changeSortState: function( key, event ) {
+      var nextSortTableBy = key;
+      var nextSortOrder;
+
+      // When the next key matches the current selection, change the sort order
+      if ( this.state.sortTableBy === key ) {
+        switch ( this.state.sortOrder ) {
+          case "none":
+            nextSortOrder = "descending";
+            break;
+
+          case "descending":
+            nextSortOrder = "ascending";
+            break;
+
+          // If the user has clicked three times on the same header, clear the
+          // sort and "reset" the view
+          case "ascending":
+            nextSortTableBy = null;
+            nextSortOrder   = "none";
+            break;
+        }
+      } else {
+        nextSortOrder = "descending";
+      }
+
+      this.setState({
+          sortTableBy : nextSortTableBy
+        , sortOrder   : nextSortOrder
+      });
+
     }
 
   , getInitialColWidths: function( colArray ) {
@@ -56,16 +91,18 @@ var TableViewer = React.createClass({
     }
 
   , createHeader: function( key, index ) {
+      var thIsActive  = ( this.state.sortTableBy === key );
       var targetEntry = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
       return(
-        <th className = "fixed-table-header-th"
-            ref       = { "COL_" + key }
-            style     = {{ width: this.state.tableColWidths[ key ] }}
-            key       = { index } >
+        <th className     = "fixed-table-header-th"
+            ref           = { "COL_" + key }
+            style         = {{ width: this.state.tableColWidths[ key ] }}
+            key           = { index } >
           <span className="th-spacing">
             { targetEntry["name"] }
           </span>
-          <div className="th-content sortable-table-th">
+          <div className = { "th-content sortable-table-th" + ( thIsActive ? " " + this.state.sortOrder : "" ) }
+               onClick   = { this.changeSortState.bind( null, key ) } >
             { targetEntry["name"] }
           </div>
         </th>
@@ -85,6 +122,19 @@ var TableViewer = React.createClass({
 
   , render: function() {
 
+    var tableData;
+
+    if ( this.state.sortTableBy ) {
+      tableData = _.sortBy( this.props.filteredData["rawList"], this.state.sortTableBy );
+
+      if ( this.state.sortOrder === "ascending" ) {
+        tableData = tableData.reverse();
+      }
+
+    } else {
+      tableData = this.props.filteredData["rawList"];
+    }
+
     return(
       <div className = "viewer-table fixed-table-container">
         <div className = "fixed-table-container-inner">
@@ -100,7 +150,7 @@ var TableViewer = React.createClass({
             </thead>
 
             <tbody>
-              { this.props.filteredData["rawList"].map( this.createRows ) }
+              { tableData.map( this.createRows ) }
             </tbody>
 
           </TWBS.Table>

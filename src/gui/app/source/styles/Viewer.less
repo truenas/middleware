@@ -85,7 +85,6 @@
     padding     : 0;
     line-height : 0;
     border      : 0;
-    .overflow-ellipsis();
   }
 
   .th-spacing {
@@ -100,6 +99,8 @@
     top         : 0;
     background  : @gray-dark;
     line-height : @fixed-table-header-height;
+
+    .overflow-ellipsis();
   }
 
   // Sortable table prototype
@@ -121,6 +122,7 @@
     &.ascending {
       padding-left     : 2em;
       background-color : black;
+
       &:before {
         content  : "";
         width    : 0;
@@ -129,6 +131,7 @@
         top      : 50%;
         left     : 0.75em;
       }
+
     }
 
     &.descending:before {
@@ -136,11 +139,12 @@
       border-right : @table-sort-triangle-base solid transparent;
       border-top   : @table-sort-triangle-base solid;
     }
+
     &.ascending:before {
       border-left   : @table-sort-triangle-base solid transparent;
       border-right  : @table-sort-triangle-base solid transparent;
       border-bottom : @table-sort-triangle-base solid;
-      margin-bottom : ( -@table-sort-triangle-height );
+      margin-top    : ( -@table-sort-triangle-height );
     }
   }
 }
