@@ -47,7 +47,7 @@ viewerUtil.ItemIcon = React.createClass({
       , fontSize        : React.PropTypes.number
       , primaryString   : React.PropTypes.string
       , fallbackString  : React.PropTypes.string.isRequired
-      , seedNumber      : React.PropTypes.number.isRequired
+      , seedNumber      : React.PropTypes.number
     }
 
   , componentWillMount: function() {
@@ -64,7 +64,13 @@ viewerUtil.ItemIcon = React.createClass({
         return;
       } else {
         var initials = "";
-        var userRGB  = viewerUtil.getPastelColor( props.seedNumber );
+        var userRGB;
+
+        if ( typeof props.seedNumber === "number" ) {
+          userRGB = viewerUtil.getPastelColor( props.seedNumber );
+        } else {
+          userRGB = viewerUtil.getPastelColor( props.primaryString.length + props.fallbackString.length );
+        }
 
         if ( props.primaryString ) {
           initials = props.primaryString
