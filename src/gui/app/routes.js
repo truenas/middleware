@@ -61,7 +61,13 @@ module.exports = (
       <Route name="network" handler={ Network } />
       <Route name="storage" handler={ Storage } />
       <Route name="sharing" handler={ Sharing } />
-      <Route name="services" handler={ Services } />
+
+      <Route name="services" handler={ Services }>
+        <Route name    = "services-editor"
+               path    = "/services/:serviceID"
+               handler = { Editor } />
+      </Route>
+
       <Route name="system-tools" handler={ SystemTools } />
       <Route name="control-panel" handler={ ControlPanel } />
       <Route name="power" handler={ Power } />

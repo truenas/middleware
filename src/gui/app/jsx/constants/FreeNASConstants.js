@@ -11,6 +11,7 @@ module.exports = {
       , LOG_MIDDLEWARE_EVENT      : null
       , LOG_MIDDLEWARE_TASK_QUEUE : null
       , RECEIVE_RAW_USERS         : null
+      , RECEIVE_RAW_SERVICES      : null
     })
   , PayloadSources: keyMirror({
         MIDDLEWARE_ACTION    : null

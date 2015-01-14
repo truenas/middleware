@@ -1,0 +1,25 @@
+[{
+    "primaryKey"   : "name"
+  , "secondaryKey" : "state"
+  , "selectionKey" : "name"
+  , "dataKeys": [
+      {
+          "key"         : "name"
+        , "name"        : "Service"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "state"
+        , "name"        : "Status"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "pid"
+        , "name"        : "PID"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+  ]
+}]
