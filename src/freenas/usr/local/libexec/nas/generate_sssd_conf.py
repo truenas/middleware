@@ -619,7 +619,7 @@ def add_activedirectory(sc):
     try:
         shares = CIFS_Share.objects.all()
         for share in shares:  
-            if share.cifs_home:
+            if share.cifs_home and share.cifs_path:
                 if ad.use_default_domain:
                     homedir_path = "%s/%%u" % share.cifs_path
                 else:

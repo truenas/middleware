@@ -81,5 +81,7 @@ urlpatterns = patterns('freenasUI.storage.views',
     url(r'^multipath/status/$', 'multipath_status', name="storage_multipath_status"),
     url(r'^multipath/status/json/$', 'multipath_status_json', name="storage_multipath_status_json"),
     url(r'^vmwareplugin/datastores/$', 'vmwareplugin_datastores', name="storage_vmwareplugin_datastores"),
+    url(r'^tasks/json/(?P<dataset>.+)/$', 'tasks_dataset_json', name="tasks_dataset_json"),
+    url(r'^tasks/json/$', 'tasks_all_json', name="tasks_all_json"),
+    url(r'^tasks/recursive/json/$', 'tasks_recursive_json', name="tasks_recursive_json"),
     )
-
