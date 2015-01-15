@@ -921,6 +921,28 @@ class VolumeResourceMixin(NestedMixin):
 
         return bundle
 
+    def obj_delete(self, bundle, **kwargs):
+        """Custom delete method to allow detach, not destroy
+        """
+        if not hasattr(bundle.obj, 'delete'):
+            try:
+                bundle.obj = self.obj_get(bundle=bundle, **kwargs)
+            except ObjectDoesNotExist:
+                raise NotFound("A model instance matching the provided arguments could not be found.")
+
+        self.authorized_delete_detail(self.get_object_list(bundle.request), bundle)
+        _format = bundle.request.META.get('CONTENT_TYPE', 'application/json')
+        if not _format:
+            _format = 'application/json'
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body,
+            format=_format,
+        )
+        bundle.obj.delete(
+            destroy=deserialized.get('destroy', True),
+            cascade=deserialized.get('cascade', True),
+        )
+
 
 class ScrubResourceMixin(object):
 
