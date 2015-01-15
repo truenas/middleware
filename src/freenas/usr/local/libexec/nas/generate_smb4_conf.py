@@ -628,6 +628,9 @@ def generate_smb4_conf(smb4_conf, role):
     # standard stuff... should probably do this differently
     confset1(smb4_conf, "[global]", space=0)
 
+    if os.path.exists("/usr/local/etc/smbusers"):
+        confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
+
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
     if cifs.cifs_srv_bindip:
@@ -870,6 +873,23 @@ def generate_smb4_system_shares(smb4_shares):
 
         except:
             pass
+
+
+def generate_smbusers():
+    users = bsdUsers.objects.filter(
+        Q(bsdusr_microsoft_account=True) & (
+            ~Q(bsdusr_email=None) &
+            ~Q(bsdusr_email='')
+        )
+    )
+    if not users:  
+        return  
+
+    with open("/usr/local/etc/smbusers", "w") as f:
+        for u in users:
+            f.write("%s = %s\n" % (u.bsdusr_username, u.bsdusr_email))
+        f.close()
+        os.chmod("/usr/local/etc/smbusers", 0644)
 
 
 def provision_smb4():
@@ -1149,6 +1169,7 @@ def main():
 
     role = get_server_role()
 
+    generate_smbusers()
     generate_smb4_tdb(smb4_tdb)
     generate_smb4_conf(smb4_conf, role)
     generate_smb4_system_shares(smb4_shares)
