@@ -232,6 +232,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             'bsdusr_password_disabled',
             'bsdusr_locked',
             'bsdusr_sudo',
+            'bsdusr_microsoft_account',
             'bsdusr_sshpubkey',
             'bsdusr_to_group',
         )

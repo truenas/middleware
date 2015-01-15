@@ -155,6 +155,10 @@ class bsdUsers(Model):
         verbose_name=_("Permit Sudo"),
         default=False,
     )
+    bsdusr_microsoft_account = models.BooleanField(
+        verbose_name=_("Microsoft Account"),
+        default=False
+    )
 
     is_active = True
     is_staff = True
