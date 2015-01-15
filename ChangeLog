@@ -1,15 +1,1 @@
-7301	Low	Make boot pool scrub interval user-settable
-7356	Normal	Dynamic DNS service not updating multiple hosts? Possible syntax error.
-7420	Normal	One of my multiple 8GB Kingston DT 101 G2 doesn't work with FreeNAS9.3, fix linked
-7438	High	Dtrace is unhappy (grub portion of fix)
-7448	Normal	Let's try avoiding an extra reboot on updating
-7449	Normal	Creating NFS share - volume name with spaces causes problems
-7456	Low	Need whitespace in IP listing in Network Summary display
-7460	Normal	Notify user about a failed update
-7465	Normal	mps firmware warning
-7471	Low	Hint text is incomplete on Email screen
-7480	Normal	Traceback on OperationalError
-7487	Normal	Unable to savedebug
-7488	Normal	ix-diagnose should be more resilient in the face of possible execution errors
-7495	Normal	Updating incorrectly indicates it failed
-7511	Normal	multipath creation is not ordered by the device names
+7350	Normal	The Rsync feature doesn't work as it should do.
