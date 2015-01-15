@@ -473,7 +473,8 @@ class LDAPForm(ModelForm):
         'ldap_dns_timeout',
         'ldap_idmap_backend',
         'ldap_has_samba_schema',
-        'ldap_auxiliary_parameters'
+        'ldap_auxiliary_parameters',
+        'ldap_schema'
     ]
 
     class Meta:

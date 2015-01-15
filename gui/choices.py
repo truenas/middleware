@@ -920,3 +920,10 @@ LDAP_SASL_WRAPPING_CHOICES = (
     ('sign', 'sign'),
     ('seal', 'seal'),
 )
+
+LDAP_SCHEMA_CHOICES = (
+    ('rfc2307', 'rfc2307'),
+    ('rfc2307bis', 'rfc2307bis'),
+#    ('IPA', 'IPA'),
+#    ('AD', 'AD')
+)
