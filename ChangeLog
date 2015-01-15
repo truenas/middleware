@@ -1,1 +1,2 @@
 7350	Normal	The Rsync feature doesn't work as it should do.
+7513	High	Update OpenSSL to 1.01k (Multiple OpenSSL vulnerabilities)
