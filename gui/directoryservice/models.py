@@ -1120,6 +1120,13 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         help_text=_("These parameters are added to sssd.conf")
     )
+    ldap_schema = models.CharField(
+        verbose_name=("Schema"),
+        choices=choices.LDAP_SCHEMA_CHOICES,
+        max_length=120,
+        help_text=_("LDAP Schema type."),
+        default=choices.LDAP_SCHEMA_CHOICES[0][0]
+    )
     ldap_enable = models.BooleanField(
         verbose_name=_("Enable"),
         default=False

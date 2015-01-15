@@ -493,6 +493,7 @@ def add_ldap(sc):
         if not key in ldap_section:
             setattr(ldap_section, key, d[key])
 
+    ldap_section.ldap_schema = ldap.ldap_schema
     ldap_section.ldap_uri = "%s://%s" % (
         "ldaps" if ldap.ldap_ssl == 'on' else "ldap",
         ldap.ldap_hostname
