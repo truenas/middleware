@@ -87,6 +87,7 @@ class Client(object):
         self.error_callback = None
         self.rpc_callback = None
         self.receive_thread = None
+        self.token = None
         self.default_timeout = 10
 
     def __pack(self, namespace, name, args, id=None):
@@ -210,6 +211,7 @@ class Client(object):
         self.pending_calls[str(call.id)] = call
         self.__call(call, call_type='auth', custom_payload={'username': username, 'password': password})
         call.completed.wait(timeout)
+        self.token = call.result[0]
 
     def login_service(self, name, timeout=None):
         call = self.PendingCall(uuid.uuid4(), 'auth')
@@ -217,11 +219,12 @@ class Client(object):
         self.__call(call, call_type='auth_service', custom_payload={'name': name})
         call.completed.wait(timeout)
 
-    def login_task(self, name, timeout=None):
+    def login_token(self, token, timeout=None):
         call = self.PendingCall(uuid.uuid4(), 'auth')
         self.pending_calls[str(call.id)] = call
-        self.__call(call, call_type='auth_task', custom_payload={'name': name})
+        self.__call(call, call_type='auth_token', custom_payload={'token': token})
         call.completed.wait(timeout)
+        self.token = call.result[0]
 
     def disconnect(self):
         self.ws.close()

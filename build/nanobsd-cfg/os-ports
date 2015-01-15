@@ -175,7 +175,6 @@ add_port textproc/py-mako
 add_port www/py-ws4py
 add_port www/py-flup
 add_port www/node
-add_port databases/py-south
 add_port devel/py-asn1
 add_port devel/py-asn1-modules
 add_port security/openssl
@@ -210,30 +209,8 @@ add_port sysutils/jailme
 
 
 if [ "${REPORTING}" = 1 ]; then
-	add_port graphics/png
 	add_port devel/libstatgrab
 	add_port devel/libltdl
-	add_port print/freetype2
-	add_port x11/xproto
-	add_port x11-fonts/fontconfig
-	add_port x11-fonts/libfontenc
-	add_port x11-fonts/mkfontscale
-	add_port x11-fonts/mkfontdir
-	add_port x11-fonts/font-bh-ttf
-	add_port x11-fonts/font-misc-meltho
-	add_port x11-fonts/font-misc-ethiopic
-	add_port x11-fonts/bitstream-vera
-	add_port x11-fonts/font-util
-	add_port x11-fonts/encodings
-	add_port x11-fonts/dejavu
-	add_port x11-fonts/xorg-fonts-truetype
-	add_port x11/pixman
-	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
-	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
-	add_port devel/icu
-	add_port graphics/graphite2
-	add_port devel/glib20
-	add_port print/harfbuzz OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
 	add_port databases/rrdtool OPTIONS_FILE_UNSET+=PERL_MODULE \
 				OPTIONS_FILE_SET+=PYTHON_MODULE \
 				OPTIONS_FILE_SET+=JSON
