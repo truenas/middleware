@@ -130,6 +130,12 @@ Delete resource
       DELETE /api/v1.0/storage/volume/1/ HTTP/1.1
       Content-Type: application/json
 
+        {
+                "destroy": true,
+                "cascade": true,
+        }
+
+
    **Example response**:
 
    .. sourcecode:: http
@@ -138,6 +144,8 @@ Delete resource
       Vary: Accept
       Content-Type: application/json
 
+   :json boolean destroy: destroy the volume
+   :json boolean cascade: destroy the shares related to the volume
    :statuscode 204: no error
 
 
