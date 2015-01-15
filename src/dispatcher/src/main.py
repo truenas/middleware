@@ -142,6 +142,7 @@ class Dispatcher(object):
         self.configstore = ConfigStore(self.datastore)
         self.logger.info('Connected to datastore')
         self.require_collection('events', 'serial', 'log')
+        self.require_collection('sessions', 'serial', 'log')
         self.require_collection('tasks', 'serial', 'log')
 
         self.balancer = Balancer(self)
@@ -393,6 +394,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.server_pending_calls = {}
         self.client_pending_calls = {}
         self.user = None
+        self.session = None
+        self.token = None
         self.event_masks = set()
 
     def on_open(self):
@@ -454,7 +457,29 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
     def on_rpc_auth_token(self, id, data):
         token = data["token"]
+        token = self.dispatcher.token_store.lookup_token(token)
         client_addr, client_port = self.ws.handler.client_address
+
+        if not token:
+            self.emit_rpc_error(id, errno.EACCES, "Incorrect or expired token")
+            return
+
+        self.user = token.user
+        self.token = token
+
+        self.send_json({
+            "namespace": "rpc",
+            "name": "response",
+            "id": id,
+            "args": [self.token]
+        })
+
+        self.dispatcher.dispatch_event('server.client_logged', {
+            'address': client_addr,
+            'port': client_port,
+            'username': self.user.name,
+            'description': "Client {0} logged in".format(self.user.name)
+        })
 
     def on_rpc_auth(self, id, data):
         username = data["username"]
@@ -479,11 +504,16 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 return
 
         self.user = user
+        self.token = self.dispatcher.token_store.issue_token(Token(
+            user=user,
+            lifetime=self.dispatcher.configstore.get("server.token_lifetime")
+        ))
+
         self.send_json({
             "namespace": "rpc",
             "name": "response",
             "id": id,
-            "args": []
+            "args": [self.token]
         })
 
         self.dispatcher.dispatch_event('server.client_logged', {
@@ -554,6 +584,12 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         }
 
         greenlet.start()
+
+    def open_session(self):
+        pass
+
+    def close_session(self):
+        pass
 
     def broadcast_event(self, event, args):
         for i in self.server.connections:
@@ -684,6 +720,8 @@ class ShellConnection(WebSocketApplication, EventEmitter):
 
         wr = gevent.spawn(write_worker)
         rd = gevent.spawn(read_worker)
+        self.proc.wait()
+        self.ws.close()
         gevent.joinall([rd, wr])
 
     def on_open(self, *args, **kwargs):
@@ -692,7 +730,9 @@ class ShellConnection(WebSocketApplication, EventEmitter):
     def on_close(self, *args, **kwargs):
         self.inq.put(StopIteration)
         self.logger.info('Terminating shell PID %d', self.proc.pid)
-        self.proc.terminate()
+        if not self.proc.returncode:
+            self.proc.terminate()
+
         os.close(self.master)
 
     def on_message(self, message, *args, **kwargs):
@@ -715,7 +755,6 @@ class ShellConnection(WebSocketApplication, EventEmitter):
             self.ws.send(dumps({'status': 'ok'}))
             return
 
-        self.logger.debug('Sending string %s to shell', message)
         for i in message:
             if i == '\r':
                 i = '\n'
