@@ -1101,10 +1101,10 @@ def main_menu():
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset Root Password"), reset_root_pw ],
         [ _("Reset to factory defaults"), reset_factory_defaults ],
-        [ _("Create backup"), create_backup ],
-        [ _("Restore from a backup"), restore_from_backup ],
         [ _("Shell"), shell ],
         [ _("System Update (requires networking)"), system_update ],
+        [ _("Create backup"), create_backup ],
+        [ _("Restore from a backup"), restore_from_backup ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
               ]
