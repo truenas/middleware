@@ -32,7 +32,7 @@ fi
 set -x
 set -e
 mkdir -p ${SAVED_BUILD_ENV_DESTDIR}
-tar -C "$mydir/.." -cf - --exclude "*.iso" --exclude "Packages/*.tgz" --exclude "*GUI_Upgrade.txz" . | tar -C "${SAVED_BUILD_ENV_DESTDIR}" --no-same-permissions --no-same-owner -xf -
+tar -C "$mydir/.." -cf - --exclude "dev" --exclude "*.iso" --exclude "Packages/*.tgz" --exclude "*GUI_Upgrade.txz" . | tar -C "${SAVED_BUILD_ENV_DESTDIR}" --no-same-permissions --no-same-owner -xf -
 set +x
 echo "Build saved to '$SAVED_BUILD_ENV_DESTDIR'"
 exit 0
