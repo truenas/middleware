@@ -11,6 +11,8 @@ log = logging.getLogger('system.alertmods.zpool_capacity')
 
 class ZpoolCapAlert(BaseAlert):
 
+    interval = 5
+
     def run(self):
         alerts = []
         for vol in Volume.objects.filter(vol_fstype='ZFS'):

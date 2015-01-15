@@ -5,6 +5,8 @@ from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
 class SSLAlert(BaseAlert):
 
+    interval = 5
+
     def run(self):
         if os.path.exists('/tmp/alert_invalid_ssl_nginx'):
             msg='HTTP SSL certificate is not valid, failling back to HTTP'
