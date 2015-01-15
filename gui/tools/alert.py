@@ -25,24 +25,87 @@
 # SUCH DAMAGE.
 #
 
+from ctypes import cdll, byref, create_string_buffer
+import fcntl
 import os
+import signal
 import sys
+import time
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
+import daemon
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
+class PidFile(object):
 
-from freenasUI.freeadmin.utils import set_language
-from freenasUI.system import alert
+    def __init__(self, path):
+        self.path = path
+        self.pidfile = None
+
+    def __enter__(self):
+        self.pidfile = open(self.path, 'a+')
+        try:
+            fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            raise SystemExit('Already running according to ' + self.path)
+        self.pidfile.seek(0)
+        self.pidfile.truncate()
+        self.pidfile.write(str(os.getpid()))
+        self.pidfile.flush()
+        self.pidfile.seek(0)
+        return self.pidfile
+
+    def __exit__(self, *args, **kwargs):
+        try:
+            if os.path.exists(self.path):
+                os.unlink(self.path)
+            self.pidfile.close()
+        except IOError:
+            pass
+
+
+def set_proc_name(newname):
+    libc = cdll.LoadLibrary('libc.so.7')
+    buff = create_string_buffer(len(newname) + 1)
+    buff.value = newname
+    libc.setproctitle(byref(buff))
 
 
 if __name__ == '__main__':
-    set_language()
-    alert.alertPlugins.run()
+
+    pidfile = PidFile('/var/run/alertd.pid')
+
+    context = daemon.DaemonContext(
+        working_directory='/root',
+        umask=0o002,
+        pidfile=pidfile,
+        stdout=sys.stdout,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
+        detach_process=True,
+    )
+
+    with context:
+        set_proc_name('alertd')
+        sys.path.extend([
+            '/usr/local/www',
+            '/usr/local/www/freenasUI'
+        ])
+
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+        # Make sure to load all modules
+        from django.db.models.loading import cache
+        cache.get_apps()
+
+        from freenasUI.freeadmin.utils import set_language
+        from freenasUI.system import alert
+        set_language()
+
+        def handler(signum, frame):
+            alert.alertPlugins.run()
+
+        signal.signal(10, handler)
+
+        while True:
+            alert.alertPlugins.run()
+            time.sleep(60)
