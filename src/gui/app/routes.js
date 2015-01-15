@@ -5,6 +5,12 @@
 
 var React        = require("react");
 
+// Global React is required for Chrome DevTools on this version
+// FIXME: If FreeNAS 10 is using React 0.12 or later, remove this definition
+if ( typeof window !== "undefined" ) {
+  window.React = React;
+}
+
 // Routing
 var Router        = require("react-router");
 var Routes        = Router.Routes;
