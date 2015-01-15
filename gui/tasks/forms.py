@@ -200,8 +200,8 @@ class RsyncForm(ModelForm):
         rport = str(self.cleaned_data.get("rsync_remoteport"))
         rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
         proc = subprocess.Popen(
-                    """su -m %s -c "ssh -p %s -o 'BatchMode yes' -o 'ConnectTimeout=5' %s test -d %s" """
-                    % (ruser, rport, remote, rpath), shell=True)
+                   """su -m %s -c 'ssh -p %s -o "BatchMode yes" -o "ConnectTimeout=5" %s test -d \\""%s"\\"' """
+                   % (ruser, rport, remote, rpath), shell=True)
         proc.wait()
         return proc.returncode == 0
 

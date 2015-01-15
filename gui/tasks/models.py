@@ -482,7 +482,7 @@ class Rsync(Model):
         return ', '.join(labels)
 
     def commandline(self):
-        line = '/usr/bin/lockf -s -t 0 -k \'%s\' /usr/local/bin/rsync' % (
+        line = '/usr/bin/lockf -s -t 0 -k "%s" /usr/local/bin/rsync' % (
             self.rsync_path
         )
         if self.rsync_recursive:
@@ -513,32 +513,32 @@ class Rsync(Model):
 
         if self.rsync_mode == 'module':
             if self.rsync_direction == 'push':
-                line += ' \'%s\' %s::%s' % (
+                line += ' "%s" %s::%s' % (
                     self.rsync_path,
                     remote,
                     self.rsync_remotemodule,
                 )
             else:
-                line += ' %s::%s \'%s\'' % (
+                line += ' %s::%s "%s"' % (
                     remote,
                     self.rsync_remotemodule,
                     self.rsync_path,
                 )
         else:
             line += (
-                ' -e \'ssh -p %d -o BatchMode=yes '
-                '-o StrictHostKeyChecking=yes\''
+                ' -e "ssh -p %d -o BatchMode=yes '
+                '-o StrictHostKeyChecking=yes"'
             ) % (
                 self.rsync_remoteport
             )
             if self.rsync_direction == 'push':
-                line += ' \'%s\' %s:\'%s\'' % (
+                line += ' "%s" %s:\\""%s"\\"' % (
                     self.rsync_path,
                     remote,
                     self.rsync_remotepath,
                 )
             else:
-                line += ' %s:\'%s\' \'%s\'' % (
+                line += ' %s:\\""%s"\\" "%s"' % (
                     remote,
                     self.rsync_remotepath,
                     self.rsync_path,
@@ -549,7 +549,7 @@ class Rsync(Model):
 
     def run(self):
         subprocess.Popen(
-            'su -m %s -c "%s" 2>&1 | logger -t rsync' % (
+            'su -m %s -c \'%s\' 2>&1 | logger -t rsync' % (
                 self.rsync_user,
                 self.commandline(),
             ),
