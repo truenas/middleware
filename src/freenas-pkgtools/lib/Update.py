@@ -162,7 +162,7 @@ def MountClone(name, mountpoint = None):
         # To mount the grub fs, however, we need to unmount
         # it in root!  This is particularly annoying.
         cmd = "/sbin/umount"
-        arts = ["-f", grub_dir]
+        args = ["-f", grub_dir]
         rv = RunCommand(cmd, args)
         if rv is False:
             UnmountClone(name, None)
