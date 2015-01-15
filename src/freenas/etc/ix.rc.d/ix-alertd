@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-alertd
+# REQUIRE: FILESYSTEMS
+# BEFORE: django
+
+. /etc/rc.subr
+
+alertd()
+{
+    /usr/local/bin/python /usr/local/www/freenasUI/tools/alert.py
+}
+
+name="ix-alertd"
+start_cmd='alertd'
+stop_cmd=''
+
+load_rc_config $name
+run_rc_command "$1"
