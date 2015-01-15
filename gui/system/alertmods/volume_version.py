@@ -6,6 +6,8 @@ from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
 class VolumeVersionAlert(BaseAlert):
 
+    interval = 5
+
     def run(self):
         alerts = []
         for vol in Volume.objects.filter(vol_fstype='ZFS'):
