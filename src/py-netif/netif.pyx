@@ -382,6 +382,9 @@ class LinkAddress(object):
             'address': self.address
         }
 
+    def __hash__(self):
+        return hash((self.ifname, self.address))
+
     def __eq__(self, other):
         return \
             self.ifname == other.ifname and \
@@ -399,6 +402,12 @@ class InterfaceAddress(object):
         self.broadcast = None
         self.dest_address = None
         self.scope = None
+
+    def __str__(self):
+        return u'{0}/{1}'.format(self.address, self.netmask)
+
+    def __hash__(self):
+        return hash((self.af, self.address, self.netmask, self.broadcast, self.dest_address))
 
     def __eq__(self, other):
         return \
@@ -421,18 +430,20 @@ cdef class NetworkInterface(object):
         self.name = name
         self.addresses = []
 
-    cdef ioctl(self, uint32_t cmd, void* args):
+    cdef int ioctl(self, uint32_t cmd, void* args):
+        cdef int result
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        defs.ioctl(s.fileno(), cmd, args)
+        result = defs.ioctl(s.fileno(), cmd, args)
         s.close()
+        return result
 
-    cdef aliasreq(self, address, cmd):
+    cdef aliasreq(self, address, uint32_t cmd):
         cdef defs.sockaddr_in *sin
         cdef defs.sockaddr_in6 *sin6
         cdef defs.ifaliasreq req
         #cdef defs.in6_ifaliasreq req6
 
-        if address.af == AddressFamily.AF_INET:
+        if address.af == AddressFamily.INET:
             memset(&req, 0, cython.sizeof(req))
             strcpy(req.ifra_name, self.name)
 
@@ -440,22 +451,22 @@ cdef class NetworkInterface(object):
             sin = <defs.sockaddr_in*>&req.ifra_addr
             sin.sin_family = defs.AF_INET
             sin.sin_len = cython.sizeof(defs.sockaddr_in)
-            sin.sin_addr.s_addr = socket.ntohl(address.address.value)
+            sin.sin_addr.s_addr = socket.ntohl(int(address.address))
 
             # Netmask
             sin = <defs.sockaddr_in*>&req.ifra_mask
             sin.sin_family = defs.AF_INET
             sin.sin_len = cython.sizeof(defs.sockaddr_in)
-            sin.sin_addr.s_addr = socket.ntohl(address.netmask.value)
+            sin.sin_addr.s_addr = socket.ntohl(int(address.netmask))
 
             # Broadcast
             if address.broadcast:
                 sin = <defs.sockaddr_in*>&req.ifra_broadaddr
                 sin.sin_family = defs.AF_INET
                 sin.sin_len = cython.sizeof(defs.sockaddr_in)
-                sin.sin_addr.s_addr = socket.ntohl(address.broadcast.value)
+                sin.sin_addr.s_addr = socket.ntohl(int(address.broadcast))
 
-            if self.ioctl(defs.SIOCAIFADDR, <void*>&req) < 0:
+            if self.ioctl(cmd, <void*>&req) == -1:
                 raise OSError(errno, strerror(errno))
 
             self.addresses.append(address)
@@ -475,7 +486,8 @@ cdef class NetworkInterface(object):
         cdef defs.ifreq ifr
         memset(&ifr, 0, cython.sizeof(ifr))
         strcpy(ifr.ifr_name, self.name)
-        self.ioctl(defs.SIOCGIFFLAGS, <void*>&ifr)
+        if self.ioctl(defs.SIOCGIFFLAGS, <void*>&ifr) == -1:
+            raise OSError(errno, strerror(errno))
         return ifr.ifr_ifru.ifru_flags[0]
 
     property cloned:
@@ -496,7 +508,8 @@ cdef class NetworkInterface(object):
             memset(&ifr, 0, cython.sizeof(ifr))
             strcpy(ifr.ifr_name, self.name)
             ifr.ifr_ifru.ifru_flags[0] = self._get_flags() & ~defs.IFF_UP
-            self.ioctl(defs.SIOCGIFMTU, <void*>&ifr)
+            if self.ioctl(defs.SIOCGIFMTU, <void*>&ifr) == -1:
+                raise OSError(errno, strerror(errno))
             return ifr.ifr_ifru.ifru_mtu
 
         def __set__(self, mtu):
@@ -507,7 +520,9 @@ cdef class NetworkInterface(object):
             cdef defs.ifmediareq ifm
             memset(&ifm, 0, cython.sizeof(ifm))
             strcpy(ifm.ifm_name, self.name)
-            self.ioctl(defs.SIOCGIFMEDIA, <void*>&ifm)
+            if self.ioctl(defs.SIOCGIFMEDIA, <void*>&ifm) == -1:
+                if errno != 22: # Invalid argument
+                    raise OSError(errno, strerror(errno))
 
             if ifm.ifm_status & defs.IFM_AVALID:
                 if ifm.ifm_status & defs.IFM_ACTIVE:
@@ -535,14 +550,16 @@ cdef class NetworkInterface(object):
         memset(&ifr, 0, cython.sizeof(ifr))
         strcpy(ifr.ifr_name, self.name)
         ifr.ifr_ifru.ifru_flags[0] = self._get_flags() & ~defs.IFF_UP
-        self.ioctl(defs.SIOCSIFFLAGS, <void*>&ifr)
+        if self.ioctl(defs.SIOCSIFFLAGS, <void*>&ifr) == -1:
+            raise OSError(errno, strerror(errno))
 
     def up(self):
         cdef defs.ifreq ifr
         memset(&ifr, 0, cython.sizeof(ifr))
         strcpy(ifr.ifr_name, self.name)
         ifr.ifr_ifru.ifru_flags[0] = self._get_flags() | defs.IFF_UP
-        self.ioctl(defs.SIOCSIFFLAGS, <void*>&ifr)
+        if self.ioctl(defs.SIOCSIFFLAGS, <void*>&ifr) == -1:
+            raise OSError(errno, strerror(errno))
 
 
 class LaggInterface(NetworkInterface):
@@ -948,7 +965,7 @@ def list_interfaces(name=None):
                 sin = <defs.sockaddr_in*>ifa.ifa_broadaddr
                 addr.broadcast = ipaddress.ip_address(socket.ntohl(sin.sin_addr.s_addr))
 
-            if ifa.ifa_dstaddr != NULL:
+            elif ifa.ifa_dstaddr != NULL:
                 sin = <defs.sockaddr_in*>ifa.ifa_dstaddr
                 addr.dest_address = ipaddress.ip_address(socket.ntohl(sin.sin_addr.s_addr))
 
@@ -1004,7 +1021,7 @@ def create_interface(name):
     cdef defs.ifreq ifr
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     strcpy(ifr.ifr_name, name)
-    if defs.ioctl(s.fileno(), defs.SIOCIFCREATE, <void*>&ifr) < 0:
+    if defs.ioctl(s.fileno(), defs.SIOCIFCREATE, <void*>&ifr) == -1:
         raise OSError(errno, strerror(errno))
 
     s.close()
@@ -1015,7 +1032,7 @@ def destroy_interface(name):
     cdef defs.ifreq ifr
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     strcpy(ifr.ifr_name, name)
-    if defs.ioctl(s.fileno(), defs.SIOCIFDESTROY, <void*>&ifr) < 0:
+    if defs.ioctl(s.fileno(), defs.SIOCIFDESTROY, <void*>&ifr) == -1:
         raise OSError(errno, strerror(errno))
 
     s.close()
