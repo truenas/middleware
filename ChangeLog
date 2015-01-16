@@ -1,0 +1,6 @@
+#5035	Urgent	Unable to replace drive "no such device in pool" in 9.2.1.5
+#7523	Normal	freenas-debug should collect all the useful AD / LDAP information
+#7521	Normal	Update process gets EOPNOTSUPP in mounted /dev
+#7459	Normal	Uploading newer config to older installs causes migration issues
+#7393	Normal	Rsync 'run now' fails; 'Rsync Create' checkbox setting doesn't stick
+#7289	Normal	Cannot attach USB boot mirror
