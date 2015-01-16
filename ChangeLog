@@ -4,3 +4,4 @@
 #7459	Normal	Uploading newer config to older installs causes migration issues
 #7393	Normal	Rsync 'run now' fails; 'Rsync Create' checkbox setting doesn't stick
 #7289	Normal	Cannot attach USB boot mirror
+#7516	Normal	Kernel Panic in reboot sequence after update
