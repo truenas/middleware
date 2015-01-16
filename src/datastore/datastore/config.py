@@ -39,6 +39,9 @@ class ConfigStore(object):
     def create(datastore):
         datastore.collection_create('config', 'ltree', 'config')
 
+    def exists(self, key):
+        return self.__datastore.exists('config', ('id', '=', key))
+
     def get(self, key, default=None):
         ret = self.__datastore.get_one('config', ('id', '=', key))
         return ret['value'] if ret is not None else default
