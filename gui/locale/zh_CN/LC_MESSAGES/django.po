@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-01-03 09:35+0000\n"
+"PO-Revision-Date: 2015-01-09 09:32+0000\n"
 "Last-Translator: iarbor <iarbor@tom.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1420277713.0\n"
+"X-POOTLE-MTIME: 1420795923.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8273,12 +8273,10 @@ msgid "Disable password login"
 msgstr "禁用密码登录"
 
 #: account/models.py:264
-#, fuzzy
 msgid "Group Membership"
 msgstr "组成员身份"
 
 #: account/models.py:265
-#, fuzzy
 msgid "Group Memberships"
 msgstr "组成员身份"
 
@@ -9364,7 +9362,6 @@ msgstr ""
 "如果后端自动生成的RID超过了可用范围，对新域的映射请求（或者是已知域的新扩展）将被忽略，同时相应的映射将被取消。"
 
 #: directoryservice/models.py:197
-#, fuzzy
 msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
@@ -9415,7 +9412,6 @@ msgid "User DN"
 msgstr "用户 DN"
 
 #: directoryservice/models.py:271
-#, fuzzy
 msgid ""
 "Defines the user DN to be used for authentication. The secret for "
 "authenticating this user should be stored with net idmap secret (see net(8))"
@@ -9423,8 +9419,8 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
-"定义用于身份认证的用户DN。用于验证该用户的密钥应该与net idmap 密钥一同被存储(参见 net(8))。若缺少它, "
-"将使用来自LDAP数据配置的LDAP凭证，若同时没有LDAP凭证，将在最终回退为匿名绑定。"
+"定义用于身份认证的用户DN。用于验证该用户的密钥应该与net idmap 密钥一起存储(参见 net(8))。若缺少它, "
+"将使用来自LDAP数据配置的LDAP凭证，若也没有LDAP凭证，将在最终回退为匿名绑定。"
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
@@ -9485,9 +9481,8 @@ msgid "CN Realm"
 msgstr "CN Realm"
 
 #: directoryservice/models.py:363
-#, fuzzy
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
-msgstr "在 LDAP 中为组(若设置了user_cn 则也包括用户)附加 @realm 到 CN。"
+msgstr "在 LDAP 中为组(若设置了user_cn，则也包括用户)附加 @realm 到 CN。"
 
 #: directoryservice/models.py:369
 msgid "LDAP Domain"
@@ -9556,7 +9551,7 @@ msgid ""
 "This option can be used to configure an external program for performing id "
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
-msgstr ""
+msgstr "这个参数用于配置一个额外的程序，以此来代替tdb计数器执行id映射。这些映射将被存储在tdb2 idmap数据库中。"
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -9762,7 +9757,7 @@ msgstr "密码服务器"
 msgid ""
 "Points to the server where all the password changes are performed.  If there "
 "is no such entry, the kpasswd port on the admin_server host will be tried."
-msgstr ""
+msgstr "指向执行密码变更的服务器。如果服务器不存在，将尝试访问在管理服务器主机上的kpasswd端口。"
 
 #: directoryservice/models.py:581
 msgid "Principal"
