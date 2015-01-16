@@ -10,7 +10,7 @@
 
 : ${NANO_LABEL:=FreeNAS}
 : ${UPDATE_HOST:=beta-update.freenas.org}
-: ${UPDATE_USER:=jkh}
+: ${UPDATE_USER:=sef}
 : ${UPDATE_DB:="sqlite:${NANO_LABEL}-updates.db"}
 : ${UPDATE_DEST:=/tank/www/${NANO_LABEL}}
 : ${FREENAS_KEYFILE:=/dev/null}
