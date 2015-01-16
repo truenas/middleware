@@ -53,6 +53,7 @@ class ValueType(enum.Enum):
     BOOLEAN = 4
     SIZE = 5
     TIME = 6
+    ARRAY = 7
 
 
 class Column(object):
@@ -128,6 +129,9 @@ class AsciiOutputFormatter(object):
 
         if value is None:
             return _("none")
+
+        if vt == ValueType.ARRAY:
+            return '\n'.join(list(value))
 
         if vt == ValueType.STRING:
             return value

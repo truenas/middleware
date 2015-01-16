@@ -32,7 +32,7 @@ from output import Column, ValueType, output_value, output_table, format_value
 
 @description("Sets variable value")
 class SetenvCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         if len(args) < 2:
             raise CommandException('Wrong parameter count')
 
@@ -41,9 +41,15 @@ class SetenvCommand(Command):
     def complete(self, context, tokens):
         return [k for k, _ in context.variables.get_all()]
 
+
+@description("Evaluates Python code")
+class EvalCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        pass
+
 @description("Prints variable value")
 class PrintenvCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         if len(args) == 0:
             output_table(context.variables.get_all(), [
                 Column('Name', lambda (name, var): name),
@@ -58,5 +64,5 @@ class PrintenvCommand(Command):
 
 @description("Exits the CLI")
 class ExitCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         sys.exit(0)

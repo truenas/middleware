@@ -40,7 +40,7 @@ class VolumeCreateCommand(Command):
     def __init__(self, parent):
         self.parent = parent
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         name = args.pop(0)
         disks = args
 
@@ -56,7 +56,7 @@ class ShowTopologyCommand(Command):
         self.parent = parent
         self.name = name
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         def print_vdev(vdev):
             if vdev['type'] == 'disk':
                 return '{0} (disk)'.format(vdev['path'])
@@ -74,7 +74,7 @@ class ShowDisksCommand(Command):
         self.parent = parent
         self.name = name
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         volume = self.parent.get_one(self.name)
         result = []
 
@@ -98,7 +98,7 @@ class ShowDisksCommand(Command):
         self.parent = parent
         self.name = name
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         volume = self.parent.get_one(self.name)
         result = list(iterate_vdevs(volume['topology']))
         output_table(result, [
@@ -112,7 +112,7 @@ class ScrubCommand(Command):
     def __init__(self, name):
         self.name = name
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         context.submit_task('zfs.pool.scrub', self.name)
 
 
@@ -156,7 +156,7 @@ class DatasetsNamespace(EntityNamespace):
 @description("Volumes namespace")
 class VolumesNamespace(EntityNamespace):
     class ShowTopologyCommand(Command):
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             pass
 
     def __init__(self, name, context):
@@ -192,8 +192,8 @@ class VolumesNamespace(EntityNamespace):
             DatasetsNamespace(vol, vol, context)
         ]
 
-    def query(self):
-        return self.context.connection.call_sync('volumes.query')
+    def query(self, params):
+        return self.context.connection.call_sync('volumes.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync('volumes.query', [('name', '=', name)])[0]

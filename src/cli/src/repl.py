@@ -39,6 +39,7 @@ import platform
 import termios
 import config
 import json
+import time
 import gettext
 import getpass
 import traceback
@@ -63,6 +64,8 @@ t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
+PROGRESS_CHARS = ['-', '\\', '|', '/']
+OPERATORS = ['<=', '>=', '!=', '+=', '-=', '~=', '=', '<', '>']
 EVENT_MASKS = [
     'client.logged',
     'task.created',
@@ -190,7 +193,19 @@ class Context(object):
             self.plugins[path] = plugin
 
     def __try_reconnect(self):
-        pass
+        output_msg('Connection lost! Trying to reconnect...')
+        retries = 0
+        while True:
+            retries += 1
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            try:
+                self.connect()
+                time.sleep(1)
+                break
+            except:
+                pass
+
 
     def attach_namespace(self, path, ns):
         splitpath = path.split('/')
@@ -298,26 +313,37 @@ class MainLoop(object):
 
     def tokenize(self, line):
         args = []
+        opargs = []
         kwargs = {}
         tokens = shlex.split(line, posix=False)
 
         for t in tokens:
+            found = False
+
             if t[0] == '"' and t[-1] == '"':
                 t = t[1:-1]
                 args.append(t)
                 continue
 
-            if '=' in t:
-                key, eq, value = t.partition('=')
-                if value[0] == '"' and value[-1] == '"':
-                    value = value[1:-1]
+            for op in OPERATORS:
+                if op in t:
+                    key, eq, value = t.partition(op)
+                    if value[0] == '"' and value[-1] == '"':
+                        value = value[1:-1]
 
-                kwargs[key] = value
-                continue
+                    if op == '=':
+                        kwargs[key] = value
+                        found = True
+                        break
 
-            args.append(t)
+                    opargs.append((key, op, value))
+                    found = True
+                    break
 
-        return args, kwargs
+            if not found:
+                args.append(t)
+
+        return args, kwargs, opargs
 
     def repl(self):
         readline.parse_and_bind('tab: complete')
@@ -342,7 +368,7 @@ class MainLoop(object):
                 self.cd_up()
                 return
 
-        tokens, kwargs = self.tokenize(line)
+        tokens, kwargs, opargs = self.tokenize(line)
         oldpath = self.path[:]
 
         while tokens:
@@ -364,7 +390,7 @@ class MainLoop(object):
                 for name, cmd in self.cwd.commands().items():
                     if token == name:
                         output_lock.acquire()
-                        cmd.run(self.context, tokens, kwargs)
+                        cmd.run(self.context, tokens, kwargs, opargs)
                         cmdfound = True
                         output_lock.release()
                         break
