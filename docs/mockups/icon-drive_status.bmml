@@ -1,0 +1,160 @@
+<mockup version="1.0" skin="wireframe" fontFace="Balsamiq Sans" measuredW="718" measuredH="451" mockupW="219" mockupH="300" productName="Balsamiq Mockups for Google Drive">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::Icon" x="511" y="179" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>SaveIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::Paragraph" x="499" y="151" w="89" h="28" measuredW="200" measuredH="80" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Some%20name%20entered%20by%20user</text>
+      </controlProperties>
+    </control>
+    <control controlID="3" controlTypeID="com.balsamiq.mockups::Label" x="550" y="183" w="-1" h="-1" measuredW="24" measuredH="24" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>16</size>
+        <text>OK</text>
+      </controlProperties>
+    </control>
+    <control controlID="4" controlTypeID="com.balsamiq.mockups::Label" x="499" y="211" w="89" h="-1" measuredW="29" measuredH="22" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>14</size>
+        <text>SSD</text>
+      </controlProperties>
+    </control>
+    <control controlID="5" controlTypeID="com.balsamiq.mockups::Label" x="554" y="211" w="-1" h="-1" measuredW="34" measuredH="22" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>120G</text>
+      </controlProperties>
+    </control>
+    <control controlID="11" controlTypeID="com.balsamiq.mockups::Icon" x="641" y="179" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>DataBaseIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="12" controlTypeID="com.balsamiq.mockups::Paragraph" x="629" y="163" w="89" h="13" measuredW="200" measuredH="80" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Another%20name</text>
+      </controlProperties>
+    </control>
+    <control controlID="13" controlTypeID="com.balsamiq.mockups::Label" x="680" y="183" w="-1" h="-1" measuredW="33" measuredH="24" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>16</size>
+        <text>ERR</text>
+      </controlProperties>
+    </control>
+    <control controlID="14" controlTypeID="com.balsamiq.mockups::Label" x="629" y="211" w="89" h="-1" measuredW="29" measuredH="22" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>14</size>
+        <text>HDD</text>
+      </controlProperties>
+    </control>
+    <control controlID="15" controlTypeID="com.balsamiq.mockups::Label" x="700" y="211" w="-1" h="-1" measuredW="18" measuredH="22" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>3T</text>
+      </controlProperties>
+    </control>
+    <control controlID="16" controlTypeID="com.balsamiq.mockups::Canvas" x="629" y="160" w="89" h="70" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <color>15110456</color>
+      </controlProperties>
+    </control>
+    <control controlID="17" controlTypeID="com.balsamiq.mockups::Canvas" x="629" y="284" w="89" h="70" measuredW="100" measuredH="70" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <color>15110456</color>
+      </controlProperties>
+    </control>
+    <control controlID="18" controlTypeID="com.balsamiq.mockups::Icon" x="543" y="303" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="12" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>SaveIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="19" controlTypeID="com.balsamiq.mockups::Paragraph" x="499" y="275" w="89" h="28" measuredW="200" measuredH="80" zOrder="13" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Some%20name%20entered%20by%20user</text>
+      </controlProperties>
+    </control>
+    <control controlID="22" controlTypeID="com.balsamiq.mockups::Label" x="499" y="308" w="-1" h="-1" measuredW="34" measuredH="22" zOrder="14" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>120G</text>
+      </controlProperties>
+    </control>
+    <control controlID="23" controlTypeID="com.balsamiq.mockups::Icon" x="668" y="303" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="15" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>DataBaseIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="24" controlTypeID="com.balsamiq.mockups::Paragraph" x="629" y="287" w="89" h="13" measuredW="200" measuredH="80" zOrder="16" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Another%20name</text>
+      </controlProperties>
+    </control>
+    <control controlID="27" controlTypeID="com.balsamiq.mockups::Label" x="648" y="308" w="-1" h="-1" measuredW="18" measuredH="22" zOrder="17" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>3T</text>
+      </controlProperties>
+    </control>
+    <control controlID="28" controlTypeID="com.balsamiq.mockups::Canvas" x="629" y="381" w="89" h="70" measuredW="100" measuredH="70" zOrder="18" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <color>15110456</color>
+      </controlProperties>
+    </control>
+    <control controlID="29" controlTypeID="com.balsamiq.mockups::Icon" x="531" y="400" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="19" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>SaveIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="30" controlTypeID="com.balsamiq.mockups::Paragraph" x="499" y="372" w="89" h="28" measuredW="200" measuredH="80" zOrder="20" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Some%20name%20entered%20by%20user</text>
+      </controlProperties>
+    </control>
+    <control controlID="31" controlTypeID="com.balsamiq.mockups::Label" x="507" y="421" w="-1" h="-1" measuredW="34" measuredH="22" zOrder="21" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>120G</text>
+      </controlProperties>
+    </control>
+    <control controlID="32" controlTypeID="com.balsamiq.mockups::Icon" x="660" y="400" w="-1" h="-1" measuredW="32" measuredH="32" zOrder="22" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>DataBaseIcon%7Cmedium</icon>
+      </controlProperties>
+    </control>
+    <control controlID="33" controlTypeID="com.balsamiq.mockups::Paragraph" x="629" y="384" w="89" h="13" measuredW="200" measuredH="80" zOrder="23" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>center</align>
+        <size>12</size>
+        <text>Another%20name</text>
+      </controlProperties>
+    </control>
+    <control controlID="34" controlTypeID="com.balsamiq.mockups::Label" x="654" y="423" w="-1" h="-1" measuredW="18" measuredH="22" zOrder="24" locked="false" isInGroup="-1">
+      <controlProperties>
+        <align>right</align>
+        <size>14</size>
+        <text>3T</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
