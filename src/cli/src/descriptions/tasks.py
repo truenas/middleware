@@ -49,7 +49,10 @@ tasks = {
     'disk.format.gpt': (_("Format disk"), lambda c, a: _("Format disk {0}".format(a[0]))),
     'zfs.pool.create': (_("Create ZFS pool"), lambda c, a: _("Create ZFS pool {0}".format(a[0]))),
     'zfs.pool.destroy': (_("Destroy ZFS pool"), lambda c, a: _("Destroy ZFS pool {0}".format(a[0]))),
-    'zfs.mount': (_("Mount ZFS dataset"), lambda c, a: _("Mount ZFS dataset {0}".format(a[0])))
+    'zfs.mount': (_("Mount ZFS dataset"), lambda c, a: _("Mount ZFS dataset {0}".format(a[0]))),
+    'network.interface.configure': (_("Configure network interface"), lambda c, a: _("Configure network interface {0}".format(a[0]))),
+    'network.interface.up': (_("Enable network interface"), lambda c, a: _("Enable network interface {0}".format(a[0]))),
+    'network.interface.down': (_("Disable network interface"), lambda c, a: _("Disable network interface {0}".format(a[0])))
 }
 
 
