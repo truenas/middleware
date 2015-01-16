@@ -102,6 +102,7 @@ from freenasUI.common.pbi import (
     PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
 )
 from freenasUI.common.system import (
+    FREENAS_DATABASE,
     exclude_path,
     get_mounted_filesystems,
     umount,
@@ -3767,20 +3768,33 @@ class notifier:
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
-                cur.execute("""SELECT name FROM sqlite_master
-        WHERE type='table'
-        ORDER BY name;""")
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                new_num = cur.fetchone()[0]
+                cur.close()
             finally:
                 conn.close()
+            conn = sqlite3.connect(FREENAS_DATABASE)
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                num = cur.fetchone()[0]
+                cur.close()
+            finally:
+                conn.close()
+                if new_num > num:
+                    return False, _(
+                        "Failed to upload config, version newer than the "
+                        "current installed."
+                    )
         except:
             os.unlink(config_file_name)
-            return False
+            return False, _('The uploaded file is not valid.')
 
         shutil.move(config_file_name, '/data/uploaded.db')
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
 
-        return True
+        return True, None
 
     def zfs_get_options(self, name=None, recursive=False, props=None, zfstype=None):
         noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
