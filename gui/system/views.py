@@ -483,11 +483,11 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            if not notifier().config_upload(request.FILES['config']):
+            success, errmsg = notifier().config_upload(request.FILES['config'])
+            if not success:
                 form._errors['__all__'] = \
-                    form.error_class([
-                        _('The uploaded file is not valid.'),
-                    ])
+                    form.error_class([errmsg])
+                return JsonResp(request, form=form)
             else:
                 request.session['allow_reboot'] = True
                 return render(request, 'system/config_ok.html', variables)
