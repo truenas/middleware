@@ -93,6 +93,7 @@ generate_fstab()
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
 	generate_fstab_swap
+	mount -uw /
 	if savecore -C /dev/dumpdev > /dev/null; then
 		savecore ${savecore_flags} ${dumpdir} /dev/dumpdev
 		/usr/sbin/crashinfo -d ${dumpdir}
