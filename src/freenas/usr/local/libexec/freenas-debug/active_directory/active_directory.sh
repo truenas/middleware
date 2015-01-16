@@ -151,10 +151,31 @@ __EOF__
 	section_footer
 
 	#
+	#	Dump generated AD config file
+	#
+	section_header "${AD_CONFIG_FILE}"
+	sc "${AD_CONFIG_FILE}"
+	section_footer
+
+	#
+	#	Try to generate an AD config file
+	#
+	section_header "adtool get config_file"
+	adtool get config_file
+	section_footer
+
+	#
+	#	Dump Active Directory domain info
+	#
+	section_header "Active Directory Domain Info"
+	net ads info
+	section_footer
+
+	#
 	#	Dump Active Directory domain status
 	#
 	section_header "Active Directory Domain Status"
-	net ads info
+	net ads status
 	section_footer
 
 	#

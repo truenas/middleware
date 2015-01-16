@@ -77,7 +77,6 @@ ldap_func()
 		ldap_passwordsuffix,
 		ldap_machinesuffix,
 		ldap_sudosuffix,
-		ldap_use_default_domain,
 		ldap_ssl,
 		ldap_has_samba_schema
 
@@ -119,10 +118,23 @@ __EOF__
 	section_footer
 
 	#
+	#	Dump kerberos configuration
+	#
+	section_header "${PATH_KRB5_CONFIG}"
+	sc "${PATH_KRB5_CONFIG}" 2>/dev/null
+	section_footer
+
+	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"
 	sc "${SMB_CONF}"
+	section_footer
+	#
+	#	List kerberos tickets
+	#
+	section_header "Kerberos Tickets"
+	klist
 	section_footer
 
 	#
@@ -137,6 +149,20 @@ __EOF__
 	#
 	section_header "${SSSD_CONF}"
 	sc "${SSSD_CONF}" | grep -iv ldap_default_authtok
+	section_footer
+
+	#
+	#	Dump generated LDAP config file
+	#
+	section_header "${LDAP_CONFIG_FILE}"
+	sc "${LDAP_CONFIG_FILE}"
+	section_footer
+
+	#
+	#	Try to generate an LDAP config file
+	#
+	section_header "ldaptool get config_file"
+	${LDAP_TOOL} get config_file
 	section_footer
 
 	#
