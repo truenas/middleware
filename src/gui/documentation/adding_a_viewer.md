@@ -12,6 +12,7 @@ The parent controller-view is responsible for maintaining state, indicating subs
 
 ## Flux
 This guide will rely heavily on the [FreeNAS Flux Architecture](flux.md) documentation. It's worth having the full guide open alongside this one. This diagram, in particular, is going to dictate the steps we work through as we create the new Viewer instance.
+>*I think that [FreeNAS Flux Architecture](flux.md) should be read before reading this document.*
 
 ![A high level data flow diagram for FreeNAS 10's UI](images/architecture/flux/freenas_flux.png)
 
@@ -180,7 +181,7 @@ It's then required, like everything else:
     var formatData = require("../../data/middleware-keys/services-display.json")[0];
 
 ```
-
+>*To make this follow the workflow little bit better I will prefer if the data displaying part was following the previous paragraphs. Dynamic Routing and Filteres/Groups are important, but maybe too distracting in this moment. First I want to see the data somehow and afterwards worry abour routing and organizing them.*
 ## Dynamic Routing
 Because the FreeNAS 10 GUI uses client-side routing, the page is never refreshed or changed during a session. One of the interesting effects of this is the ability to use client-side routing - meaning that as the visible React components are changed or selected, the route in the browser bar changes to reflect that.
 
@@ -280,6 +281,7 @@ Here's what we're going to need in addition to `render`:
 In `getInitialState`, what we'd really like to do is get the Services data out of our Flux store and use them to initialize state. Only one problem: we don't have a Flux store yet!
 
 Instead of trying to solve that problem right away (and to keep things simple), we're going to walk through the diagram in order.
+>*I like this part. It is comforting for the reader. You have a plan. :-)*
 
 ![A high level data flow diagram for FreeNAS 10's UI](images/architecture/flux/freenas_flux.png)
 
@@ -289,6 +291,7 @@ Based on that, the next thing we need is a Middleware Utility Class.
 In this class, we just need a single public method connected to the Middleware Client with a callback to the ServicesActionCreators (which also don't exist yet).
 
 Looking at the middleware debugger, we can see that the right call is `service.query`. Later, we can expect this to be pluralized to match everything else.
+>*Maybe add more about activating the debug mode?*
 
 Our Middleware Utility Class looks something like this:
 
@@ -464,6 +467,7 @@ Oh, and don't forget your `module.exports`.
     module.exports = ServicesStore;
 
 ```
+>*It is a good reminder, but don't you unnecessarily break up the code?*
 
 ## Back to the Lifecycle
 Finally, we have some stuff to plumb into the React Lifecycle.
@@ -512,6 +516,7 @@ Now we can fill in the lifecycle methods.
 ```
 
 As you can probably tell, this initializes state with our utility function, which is important every time but the very first - since Stores are singletons and they're totally separate from the views/components, anything we've previously put in the store, either from another view, or from opening this view previously will still be in there, giving us a faster initialization without a flash of unstyled content (nice!).
+>*This is not important, but I was once told that phrases like "As you can probably tell" sounds condescending to the readers.*
 
 When the component mounts, it subscribes to the Services store, and when it unmounts, it unsubscribes.
 
@@ -569,3 +574,4 @@ This will cause the JavaScript console to contain very detailed messages about e
 ## Disallowing Viewer Modes
 
 ## Creating an Item Template
+>*Can you maybe add the names of used files/functions to the diagram? It will visually demonstrate, where in this tutorial we are relative to the more abstract diagram.*
