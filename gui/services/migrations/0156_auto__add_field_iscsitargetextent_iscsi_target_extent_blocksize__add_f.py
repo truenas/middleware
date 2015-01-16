@@ -19,11 +19,16 @@ class Migration(SchemaMigration):
                       keep_default=False)
 
         if not db.dry_run:
-            for target in orm['services.iSCSITarget'].objects.all():
-                for t2e in target.iscsitargettoextent_set.all():
-                    extent = t2e.iscsi_extent
-                    extent.iscsi_target_extent_blocksize = target.iscsi_target_logical_blocksize
-                    extent.save()
+            try:
+                for target in orm['services.iSCSITarget'].objects.all():
+                    for t2e in target.iscsitargettoextent_set.all():
+                        extent = t2e.iscsi_extent
+                        extent.iscsi_target_extent_blocksize = target.iscsi_target_logical_blocksize
+                        extent.save()
+            except:
+                # workaround database downgrade issue that some issues are
+                # experiencing, see #7459
+                pass
 
 
     def backwards(self, orm):
