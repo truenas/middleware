@@ -240,7 +240,15 @@ RPC call erroneous response:
 
 ### Universal query format
 
-TBD
+Interfaces providing access to collections of objects should implement method called `query`. It has standarized protocol.
+
+`query(filter=null, params=null)`
+
+* `filter` should be either `null` or array of 3-element arrays (3-element tuples in Python terminology).
+* `params` should be either `null` or object.
+
+Semantics of `filter` and `params` arguments is the same as in `datastore.query` method. See [datastore documentation](datastore.md) for details.
+
 
 ## Interface enumeration
 
@@ -298,43 +306,16 @@ Returns list in same format as in discovery.get_methods
 Interface for managing a task queue is called "tasks". It offers following
 methods:
 
-###task.submit
+### `task.submit(class_name, args)`
 
-args format:
 
-```
-["<task class name>", <args object>]
-```
+### `task.abort(task_id)`
 
-returns:
+### `task.status(task_id)`
 
-```
-[<task id>]
-```
+### `task.query(filter=null, params=null)`
 
-### task.abort
-
-args format:
-
-```
-[<task id>]
-```
-
-returns:
-
-```
-[<true or false whether abort was successful>]
-```
-
-### task.status
-
-TBD
-
-### task.query
-
-TBD
-
-### task.list_resources
+### `task.list_resources()`
 
 ## Interacting with external services (daemons)
 
@@ -347,5 +328,7 @@ External services may expose their interfaces and emit events through dispatcher
 ### plugin.wait\_for\_service
 
 ## Spawning shell on server
+
+### shell.execute
 
 ### shell.spawn
