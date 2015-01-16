@@ -111,13 +111,15 @@ class InitShutdownForm(ModelForm):
 
 class RsyncForm(ModelForm):
 
-    rsync_create = forms.BooleanField(
-        initial=False,
-        label=_("Rsync Create"),
+    rsync_validate_rpath = forms.BooleanField(
+        initial=True,
+        label=_("Validate Remote Path"),
         required=False,
         help_text=_(
-            "Check this if the remotepath specified does"
-            "<br>not exist, and you want to create it."
+            "This ensures Remote Path Validation."
+            " Uncheck this if the remote machine"
+            " is currently offline or beyond network reach."
+            " And/Or you do not want validation to be done."
         ),
     )
 
@@ -131,7 +133,7 @@ class RsyncForm(ModelForm):
             'rsync_mode',
             'rsync_remotemodule',
             'rsync_remotepath',
-            'rsync_create',
+            'rsync_validate_rpath',
             'rsync_direction',
             'rsync_desc',
             'rsync_minute',
@@ -269,12 +271,12 @@ class RsyncForm(ModelForm):
                 ])
                 cdata.pop('rsync_user', None)
         if 'rsync_user' in cdata and not (
-            self.check_rpath_exists() or self.cleaned_data.get("rsync_create")
+            not self.cleaned_data.get("rsync_validate_rpath") or self.check_rpath_exists()
         ):
             self._errors["rsync_remotepath"] = self.error_class([_(
                 "The Remote Path you specified does not exist or is not a "
                 "directory.<br>Either create one yourself on the remote "
-                "machine or check the<br>'rsync_create' field."
+                "machine or uncheck the<br>'rsync_validate_rpath' field."
                 "<br>**Note**: This could also happen if the remote path "
                 "entered<br> exceeded 255 characters and was truncated, please"
                 " restrict it to<br>255. Or it could also be that your SSH "
