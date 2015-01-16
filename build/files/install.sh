@@ -267,7 +267,7 @@ install_grub() {
 	    chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
 	done
 	# Adding a clone of the 'default' boot environment and calling it 'Initial-Install'
-	chroot ${_mnt} /usr/l/ocal/sbin/beadm create -e default Initial-Install
+	chroot ${_mnt} /usr/local/sbin/beadm create -e default Initial-Install
 	chroot ${_mnt} /usr/local/sbin/beadm activate default
 	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 	# And now move the backup files back in place
