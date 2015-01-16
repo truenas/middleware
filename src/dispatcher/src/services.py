@@ -26,6 +26,7 @@
 #####################################################################
 
 import errno
+import subprocess
 from gevent.event import Event
 from dispatcher.rpc import RpcService, RpcException, pass_sender
 from auth import ShellToken
@@ -186,6 +187,18 @@ class ShellService(RpcService):
 
     def get_shells(self):
         return self.dispatcher.configstore.get('system.shells')
+
+    @pass_sender
+    def execute(self, command, sender, input=None):
+        proc = subprocess.Popen(
+            ['/usr/bin/su', '-m', sender.user.name, '-c', command],
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            stdin=(subprocess.PIPE if input else None))
+
+        out, _ = proc.communicate(input)
+        proc.wait()
+        return [proc.returncode, out]
 
     @pass_sender
     def spawn(self, shell, sender):
