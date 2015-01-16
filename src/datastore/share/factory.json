@@ -467,9 +467,15 @@
             "system.hostname": "freenas.local",
             "system.motd": "FreeBSD ?.?.?  (UNKNOWN)\n\nFreeNAS (c) 2009-2014, The FreeNAS Development Team\nAll rights reserved.\nFreeNAS is released under the modified BSD license.\nFor more information, documentation, help or support, go here:\nhttp://freenas.org",
             "system.shells": ["/bin/sh", "/bin/csh", "/usr/local/bin/zsh", "/usr/local/bin/bash", "/usr/local/bin/cli"],
+			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
             "network.autoconfigure": true,
+            "network.gateway.ipv4": null,
+            "network.gateway.ipv6": null,
+            "network.dns.addresses": [],
+			"network.dns.search": [],
+            "network.http_proxy": null,
             "service.nginx.enable": true,
             "service.nginx.listen": ["0.0.0.0", "[::]"],
             "service.nginx.http.enable": true,
@@ -527,7 +533,13 @@
                     "group:services",
                     "file:local/nginx/nginx.conf"
                 ]
-            }
+            },
+			"11BB3D33-A56B-4B2A-AE2D-76B77E5A9895": {
+				"name": "hosts",
+				"dependencies": [
+					"file:hosts"
+				]
+			}
         }
     },
     {
@@ -559,6 +571,23 @@
                 "builtin": true,
                 "settings": [
                     "service.nginx.*"
+                ]
+            },
+            "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
+                "name": "nfs",
+                "service-name": "nfs",
+                "etcd-group": "nfs",
+                "rcng": {
+                    "rc-scripts": [
+                        "nfs_server",
+                        "rpc_lockd",
+                        "rpc_statd",
+                        "mountd",
+                        "nfsd"
+                    ]
+                },
+                "settings": [
+                    "service.nfs.*"
                 ]
             },
             "1B3133B1-F8F4-44C0-AFAE-4CEAD5C1F4EA": {
