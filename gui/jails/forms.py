@@ -1077,11 +1077,20 @@ class JailMountPointForm(ModelForm):
         else:
             self.fields['mounted'].widget = forms.widgets.HiddenInput()
 
+    def delete(self, events=None):
+        super(JailMountPointForm, self).delete(events)
+
+        p = os.popen(". /etc/rc.freenas; jail_update_fstab '%s';" % self.instance.jail)
+        p.close()
+
     def save(self, *args, **kwargs):
         obj = super(JailMountPointForm, self).save(*args, **kwargs)
         create = self.cleaned_data.get('create')
         if self._full and not os.path.exists(self._full) and create:
             os.makedirs(self._full)
+
+        p = os.popen(". /etc/rc.freenas; jail_update_fstab '%s';" % self.cleaned_data.get('jail'))
+        p.close()
 
         mounted = self.cleaned_data.get("mounted")
         if mounted == obj.mounted:
