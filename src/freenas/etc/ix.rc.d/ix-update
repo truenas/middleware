@@ -97,7 +97,20 @@ db_update()
 {
 	local precertman
 	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
-		# No need to update, exit script and continue boot
+		# No need to update check first-install stuff instead.
+		# Using the ix-update script to also do post-first-install stuff
+		# We should create a seperate ix-firstinstall script
+		# if we add more things later.
+		if [ -f $FIRST_INSTALL_SENTINEL ]; then
+			# Creating pristine boot environment from the "default"
+			/usr/local/sbin/beadm create -e default Initial-Install
+			# Make grub config
+			/usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+
+			# Done, delete sentinel file and exit
+			rm -rf $FIRST_INSTALL_SENTINEL
+		fi
+		# exit this script and continue with normal boot.
 		exit 0
 	fi
 

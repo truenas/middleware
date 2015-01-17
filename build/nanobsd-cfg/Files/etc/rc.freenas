@@ -44,6 +44,11 @@
 : ${NEED_UPDATE_SENTINEL="/data/need-update"}
 
 #
+#   Installer specific variables.
+#
+: ${FIRST_INSTALL_SENTINEL="/data/first-boot"}
+
+#
 #	OPENSSL settings
 #
 : ${OPENSSL:="/usr/bin/openssl"}
