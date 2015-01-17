@@ -16,8 +16,21 @@ var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
 
 function MiddlewareClient() {
 
-  // Change DEBUG to `true` to activate verbose console messages
-  var DEBUG = false;
+  // Change DEBUG modes to `true` to activate verbose console messages
+  var DEBUG = {
+      connection     : false
+    , authentication : false
+    , packing        : false
+    , logging        : false
+    , queues         : false
+    , subscriptions  : false
+    , messages       : false
+  };
+  var debugCSS = {
+      idColor      : "color: rgb(33, 114, 218);"
+    , argsColor    : "color: rgb(215, 110, 20); font-style: italic;"
+    , defaultStyle : ""
+  };
 
   var socket          = null;
   var requestTimeout  = 10000;
@@ -51,37 +64,57 @@ function MiddlewareClient() {
   //               If left blank, `generateUUID` will be called. This is a
   //               fallback, and will likely result in a "Spurious reply" error
   function pack ( namespace, name, args, id ) {
-    if ( typeof id !== "string" ) {
-      id = generateUUID();
+    if ( DEBUG.packing ) {
+      var validPack = true;
+
+      if ( typeof namespace !== "string" )             { validPack = false; console.warn( "BAD PACK: Provided namespace was not a string for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
+      if ( typeof name !== "string" )                  { validPack = false; console.warn( "BAD PACK: Provided name was not a string for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
+      if ( typeof args === ( "null" || "undefined" ) ) { validPack = false; console.warn( "BAD PACK: Provided args value was null or undefined for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
+      if ( typeof id !== "string" )                    { validPack = false; console.warn( "BAD PACK: UUID %c'" + id + "'%c for '" + namespace + "'" + ( args ? ":" + args : "" ) + " had to be generated because none was provided", debugCSS.idColor, debugCSS.defaultStyle ); }
+
+      if ( validPack ) {
+        console.info( "Packed request %c'" + id + "'%c successfully.", debugCSS.idColor, debugCSS.defaultStyle );
+      } else {
+        console.log( "Dump of bad pack:", {
+                        "namespace" : namespace
+                      , "name"      : name
+                      , "id"        : id
+                      , "args"      : args
+                    });
+      }
     }
 
     return JSON.stringify({
         "namespace" : namespace
-      , "id"        : id
       , "name"      : name
+      , "id"        : id
       , "args"      : args
     });
   }
 
-  // Sends a packed request to the middleware, while storing its
-  function logAndSend ( packedAction, callback, requestID ) {
+  // Based on the status of the WebSocket connection and the authentication
+  // state, either logs and sends an action, or enqueues it until it can be sent
+  function processNewRequest ( packedAction, callback, requestID ) {
 
-    if ( DEBUG ) { console.info( "Logging and sending request " + requestID ); }
-    if ( DEBUG ) { console.log({ requestID : packedAction }); }
+    if ( socket.readyState === 1 && MiddlewareStore.getAuthStatus() ) {
 
-    logPendingRequest( requestID, callback );
-    socket.send( packedAction );
-  }
+      if ( DEBUG.logging ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
 
-  function enqueueAction ( packedAction, callback, requestID ) {
+      logPendingRequest( requestID, callback );
+      socket.send( packedAction );
 
-    if ( DEBUG ) { console.info( "Enqueueing request " + requestID ); }
+    } else {
 
-    queuedActions.push({
-        action   : packedAction
-      , id       : requestID
-      , callback : callback
-    });
+      if ( DEBUG.queues ) { console.info( "Enqueueing request %c'" + requestID + "'", debugCSS.idColor ); }
+
+      queuedActions.push({
+          action   : packedAction
+        , id       : requestID
+        , callback : callback
+      });
+
+    }
+
   }
 
   // Many views' lifecycle will make a request before the connection is made,
@@ -90,17 +123,17 @@ function MiddlewareClient() {
   // object and `queuedLogin`, and then are dequeued by this function.
   function dequeueActions () {
 
-    if ( DEBUG && queuedActions.length ) { console.info( "Dequeueing actions" ); }
+    if ( DEBUG.queues && queuedActions.length ) { console.log( "Attempting to dequeue actions" ); }
 
     if ( MiddlewareStore.getAuthStatus() ) {
       while ( queuedActions.length ) {
         var item = queuedActions.shift();
 
-        if ( DEBUG ) { console.info( "Dequeueing " + item.id ); }
+        if ( DEBUG.queues ) { console.log( "Dequeueing %c'" + item.id + "'", debugCSS.idColor ); }
 
-        logAndSend( item.action, item.callback, item.id );
+        processNewRequest( item.action, item.callback, item.id );
       }
-    }
+    } else if ( DEBUG.queues && queuedActions.length ) { console.info( "Middleware not authenticated, cannot dequeue actions" ); }
   }
 
   // Records a middleware request that was sent to the server, stored in the
@@ -117,6 +150,8 @@ function MiddlewareClient() {
     };
 
     pendingRequests[ requestID ] = request;
+
+    if ( DEBUG.logging ) { console.log ( "Current pending requests:", pendingRequests ); }
   }
 
   // Resolve a middleware request by clearing its timeout, and optionally
@@ -125,10 +160,10 @@ function MiddlewareClient() {
   function resolvePendingRequest ( requestID, args, outcome ) {
     clearTimeout( pendingRequests[ requestID ].timeout );
 
-    if ( DEBUG && outcome === "success" ) { console.info( "SUCCESS: Resolving request " + requestID ); }
-    if ( DEBUG && outcome === "timeout" ) { console.warn( "TIMEOUT: Resolving request " + requestID ); }
+    if ( DEBUG.messages && outcome === "success" ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
+    if ( DEBUG.messages && outcome === "timeout" ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
 
-    if ( outcome === "success" && pendingRequests[ requestID ].callback ) {
+    if ( outcome === "success" && typeof pendingRequests[ requestID ].callback === "function" ) {
       pendingRequests[ requestID ].callback( args );
     }
 
@@ -146,18 +181,18 @@ function MiddlewareClient() {
     if ( window.WebSocket ) {
       if ( !socket || force ) {
 
-        if ( DEBUG ) { console.info( "Creating WebSocket instance" ); }
-        if ( DEBUG && force ) { console.warn( "Forcing creation of new WebSocket instance" ); }
+        if ( DEBUG.connection ) { console.info( "Creating WebSocket instance" ); }
+        if ( DEBUG.connection && force ) { console.warn( "Forcing creation of new WebSocket instance" ); }
 
         socket = new WebSocket( url );
         socket.onmessage = handleMessage;
         socket.onopen    = handleOpen;
         socket.onerror   = handleError;
         socket.onclose   = handleClose;
-      } else if ( DEBUG ) {
+      } else if ( DEBUG.connection ) {
         console.warn( "Attempted to create a new middleware connection while a connection already exists." );
       }
-    } else if ( DEBUG ) {
+    } else if ( DEBUG.connection ) {
       console.error( "This browser doesn't support WebSockets." );
       // TODO: Visual error for legacy browsers with links to download others
     }
@@ -184,12 +219,14 @@ function MiddlewareClient() {
 
     if ( socket.readyState === 1 ) {
 
-      if ( DEBUG ) { console.info( "Socket is ready: Sending login request." ); }
+      if ( DEBUG.authentication ) { console.info( "Socket is ready: Sending login request." ); }
 
-      logAndSend( packedAction, callback, requestID );
+      logPendingRequest( requestID, callback );
+      socket.send( packedAction );
+
     } else {
 
-      if ( DEBUG ) { console.info( "Socket is NOT ready: Deferring login request." ); }
+      if ( DEBUG.authentication ) { console.info( "Socket is NOT ready: Deferring login request." ); }
 
       queuedLogin = {
           action   : packedAction
@@ -221,26 +258,51 @@ function MiddlewareClient() {
     };
     var packedAction = pack( "rpc", "call", payload, requestID );
 
-    if ( socket.readyState === 1 && MiddlewareStore.getAuthStatus() ) {
-      logAndSend( packedAction, callback, requestID );
-    } else {
-      enqueueAction( packedAction, callback, requestID );
-    }
-
+    processNewRequest( packedAction, callback, requestID );
   };
 
-  this.subscribe = function ( namespace, masks ) {
+  // SUBSCRIPTION INTERFACES
+  // Generic interface for subscribing to Middleware namespaces. The Middleware
+  // Flux store records the number of React components which have required a
+  // subscription to a Middleware namespace. This allows the Middleware Client
+  // to make intelligent decisions about whether to query a namespace for fresh
+  // data, begin or end a subscription, or even garbage collect a Flux store which
+  // is no longer being used.
 
-    // TODO: Indicate event to action creator
+  this.subscribe = function ( masks, handlerCallback ) {
 
-    socket.send( pack( namespace, "subscribe", masks ) );
+    if ( DEBUG.subscriptions ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+
+    _.forEach( masks, function( mask ) {
+      if ( typeof MiddlewareStore.getNumberOfSubscriptions( mask ) === "number" ) {
+        if ( DEBUG.subscriptions ) { console.info( MiddlewareStore.getNumberOfSubscriptions( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG.subscriptions ) { console.log( "Increasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
+      } else {
+        if ( DEBUG.subscriptions ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG.subscriptions ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        var requestID = generateUUID();
+        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), handlerCallback, requestID );
+      }
+      MiddlewareActionCreators.increaseSubscriptionCount( mask );
+    });
   };
 
-  this.unsubscribe = function ( namespace, masks ) {
+  this.unsubscribe = function ( masks ) {
 
-    // TODO: Indicate event to action creator
+    if ( DEBUG.subscriptions ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
-    socket.send( pack( namespace, "unsubscribe", masks ) );
+    _.forEach( masks, function( mask ) {
+      if ( MiddlewareStore.getNumberOfSubscriptions( mask ) === 1 ) {
+        if ( DEBUG.subscriptions ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG.subscriptions ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
+        var requestID = generateUUID();
+        processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
+      } else {
+        if ( DEBUG.subscriptions ) { console.info( MiddlewareStore.getNumberOfSubscriptions( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG.subscriptions ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
+      }
+      MiddlewareActionCreators.decreaseSubscriptionCount( mask );
+    });
   };
 
 
@@ -250,13 +312,13 @@ function MiddlewareClient() {
   // Triggered by the WebSocket's onopen event.
   var handleOpen = function () {
     if ( MiddlewareStore.getAuthStatus() === false && queuedLogin ) {
-    // If the connection opens and we aren't authenticated, but we have a
-    // queued login, dispatch the login and reset its variable.
-      logAndSend(
-          queuedLogin.action
-        , queuedLogin.callback
-        , queuedLogin.id
-      );
+      // If the connection opens and we aren't authenticated, but we have a
+      // queued login, dispatch the login and reset its variable.
+      if ( DEBUG.queues ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
+      if ( DEBUG.queues ) { console.log({ requestID : queuedLogin.action }); }
+
+      logPendingRequest( queuedLogin.id, queuedLogin.callback );
+      socket.send( queuedLogin.action );
       queuedLogin = null;
     }
   };
@@ -267,7 +329,8 @@ function MiddlewareClient() {
     socket          = null;
     queuedLogin     = {};
     queuedActions   = [];
-    pendingRequests = {};
+
+    if ( DEBUG.connection ) { console.warn( "WebSocket connection closed" ); }
 
     // TODO: restart connection if it unexpectedly closed
 
@@ -278,6 +341,8 @@ function MiddlewareClient() {
   // message's namespace.
   var handleMessage = function ( message ) {
     var data = JSON.parse( message.data );
+
+    if ( DEBUG.messages ) { console.log( "Message from Middleware:", message ); }
 
     switch ( data.namespace ) {
 
@@ -300,16 +365,14 @@ function MiddlewareClient() {
 
       // There was an error with a request or with its execution on FreeNAS
       case "error":
-        console.error( "Middleware has indicated an error:" );
-        console.log( data.args );
+        if ( DEBUG.messages ) { console.error( "Middleware has indicated an error:", data.args ); }
         break;
 
       // A reply was sent from the middleware with no recognizable namespace
       // This shouldn't happen, and probably indicates a problem with the
       // middleware itself.
       default:
-        console.warn( "Spurious reply from Middleware:" );
-        console.log( message );
+        if ( DEBUG.messages ) { console.warn( "Spurious reply from Middleware:", message ); }
         // Do nothing
     }
   };
@@ -317,22 +380,17 @@ function MiddlewareClient() {
   // Triggered by the WebSocket's `onerror` event. Handles errors with the client
   // connection to the middleware.
   var handleError = function ( error ) {
-    if ( DEBUG ) {
-      console.error( "The WebSocket connection to the Middleware encountered an error:" );
-      console.log( error );
-    }
+    if ( DEBUG.connection ) { console.error( "The WebSocket connection to the Middleware encountered an error:", error ); }
   };
 
   // Called by a request function without a matching response. Automatically
   // triggers resolution of the request with a "timeout" status.
   var handleTimeout = function ( requestID ) {
 
-    if ( DEBUG ) { console.error( "Request " + requestID + " timed out without a response from the middleware" ); }
+    if ( DEBUG.messages ) { console.warn( "Request %c'" + requestID + "'%c timed out without a response from the middleware", debugCSS.idColor, debugCSS.defaultStyle ); }
 
     resolvePendingRequest( requestID, null, "timeout" );
   };
-
-// FLUX STORE HOOKS
 
   // On a successful login, dequeue any actions which may have been requested
   // either before the connection was made, or before the authentication was
