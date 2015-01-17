@@ -630,7 +630,7 @@ jail_stop()
 	return $?
 }
 
-jail_pre_start()
+jail_update_fstab()
 {
 	local jail="${1}"
 	local jc_path
@@ -679,6 +679,11 @@ jail_pre_start()
 		fi
 		echo "$(echo ${source} | sed 's/ /\\040/g') $(echo ${jail_path}/${destination} | sed 's/ /\\040/g') nullfs ${mntopts} 0 0" >> "${jail_metadir}/fstab"
 	done
+}
+
+jail_pre_start()
+{
+	jail_update_fstab "${1}"
 }
 
 jail_post_start()
@@ -797,7 +802,7 @@ jail_post_stop()
 	" | \
 	while read -r destination
 	do
-		umount "${jc_path}/${jail}/${destination}" >/dev/null 2>&1
+		umount -f "${jc_path}/${jail}/${destination}" >/dev/null 2>&1
 	done
 }
 
