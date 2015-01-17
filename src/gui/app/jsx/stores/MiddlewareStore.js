@@ -15,7 +15,7 @@ var FreeNASConstants  = require("../constants/FreeNASConstants");
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
-var _subscribed    = [];
+var _subscribed    = {};
 var _events        = {};
 var _authenticated = false;
 
@@ -38,6 +38,10 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
       return _authenticated;
     }
 
+  , getNumberOfSubscriptions: function( masks ) {
+      return _subscribed[ masks ];
+    }
+
 });
 
 MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
@@ -45,10 +49,38 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
 
   switch( action.type ) {
 
+    // Authentication
     case ActionTypes.UPDATE_AUTH_STATE:
       _authenticated = action.authState;
       MiddlewareStore.emitChange();
       break;
+
+
+    // Subscriptions
+    case ActionTypes.SUBSCRIBE_TO_MASK:
+      if ( typeof _subscribed[ action.mask ] === "number" ) {
+        _subscribed[ action.mask ]++;
+      } else {
+        _subscribed[ action.mask ] = 1;
+      }
+
+      MiddlewareStore.emitChange();
+      break;
+
+    case ActionTypes.UNSUBSCRIBE_FROM_MASK:
+      if ( typeof _subscribed[ action.mask ] === "number" ) {
+        if ( _subscribed[ action.mask ] === 1 ) {
+          delete _subscribed[ action.mask ];
+        } else {
+          _subscribed[ action.mask ]--;
+        }
+      } else {
+        console.warn( "Tried to unsubscribe from '" + action.mask + "', but Flux store shows no active subsctiptions.");
+      }
+
+      MiddlewareStore.emitChange();
+      break;
+
 
     case ActionTypes.LOG_MIDDLEWARE_EVENT:
 

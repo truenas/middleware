@@ -126,16 +126,15 @@ var Users = React.createClass({
     }
 
   , componentDidMount: function() {
-      UsersMiddleware.subscribe();
-      UsersMiddleware.requestUsersList();
-
       UsersStore.addChangeListener( this.handleUsersChange );
+      UsersMiddleware.requestUsersList();
+      UsersMiddleware.subscribe();
+
     }
 
   , componentWillUnmount: function() {
-      UsersMiddleware.unsubscribe();
-
       UsersStore.removeChangeListener( this.handleUsersChange );
+      UsersMiddleware.unsubscribe();
     }
 
   , handleUsersChange: function() {

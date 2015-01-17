@@ -17,6 +17,20 @@ module.exports = {
           type      : ActionTypes.UPDATE_AUTH_STATE
         , authState : authState
       });
-  }
+    }
+
+  , increaseSubscriptionCount: function ( mask ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type : ActionTypes.SUBSCRIBE_TO_MASK
+        , mask : mask
+      });
+    }
+
+  , decreaseSubscriptionCount: function ( mask ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type : ActionTypes.UNSUBSCRIBE_FROM_MASK
+        , mask : mask
+      });
+    }
 
 };

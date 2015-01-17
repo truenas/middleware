@@ -21,65 +21,71 @@ var LoginBox = React.createClass({
 
     getInitialState: function() {
       return {
-          userText : ""
-        , passText : ""
-      };
-    }
-
-  , getDefaultProps: function() {
-      return {
-        isHidden : false
+          userText      : ""
+        , passText      : ""
+        , authenticated : MiddlewareStore.getAuthStatus()
       };
     }
 
   , componentDidMount: function() {
-      if ( this.props.isHidden ) {
-        this.hideLoginBox();
-      }
+      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      this.updateBoxVisibility();
+    }
+
+  , componentWillUnmount: function () {
+      MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      if ( prevProps.isHidden !== this.props.isHidden ) {
-        if ( this.props.isHidden ) {
+      if ( prevState.authenticated !== this.state.authenticated ) {
+        this.updateBoxVisibility();
+      }
+    }
+
+  , updateBoxVisibility: function () {
+        if ( this.state.authenticated ) {
           this.hideLoginBox();
         } else {
           this.showLoginBox();
         }
-      }
-  }
+    }
 
   , showLoginBox: function () {
       Velocity( this.refs.login.getDOMNode()
                 , "fadeIn"
                 , { duration: "500" } );
-  }
+    }
 
   , hideLoginBox: function () {
       Velocity( this.refs.login.getDOMNode()
                 , "fadeOut"
                 , { duration: "500" } );
-  }
+    }
 
   , handleUserChange: function( event ) {
-    this.setState({ userText: event.target.value });
-  }
+      this.setState({ userText: event.target.value });
+    }
 
   , handlePassChange: function( event ) {
-    this.setState({ passText: event.target.value });
-  }
+      this.setState({ passText: event.target.value });
+    }
+
+  , handleMiddlewareChange: function() {
+      this.setState({ authenticated: MiddlewareStore.getAuthStatus() });
+    }
 
   , handleKeydown: function( event ) {
       if ( event.which === 13 && this.state.userText.length ) {
         this.handleLoginClick();
       }
-  }
+    }
 
   , handleLoginClick: function( event ) {
 
-    // TODO: Input validation for user/pass. What are the rules?
+      // TODO: Input validation for user/pass. What are the rules?
 
-    MiddlewareClient.login( this.state.userText, this.state.passText );
-  }
+      MiddlewareClient.login( this.state.userText, this.state.passText );
+    }
 
   , render: function () {
       return (
@@ -113,6 +119,7 @@ var LoginBox = React.createClass({
         </div>
       );
     }
+
 });
 
 module.exports = LoginBox;
