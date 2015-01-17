@@ -25,9 +25,14 @@
 #
 #####################################################################
 
+import os
+import tty
+import termios
 import sys
+import select
 from namespace import Command, CommandException, description
 from output import Column, ValueType, output_value, output_table, format_value
+from dispatcher.shell import ShellClient
 
 
 @description("Sets variable value")
@@ -46,6 +51,42 @@ class SetenvCommand(Command):
 class EvalCommand(Command):
     def run(self, context, args, kwargs, opargs):
         pass
+
+@description("Spawns shell")
+class ShellCommand(Command):
+    def __init__(self):
+        super(ShellCommand, self).__init__()
+        self.closed = False
+
+    def run(self, context, args, kwargs, opargs):
+        def read(data):
+            sys.stdout.write(data)
+            sys.stdout.flush()
+
+        def close():
+            self.closed = True
+
+        self.closed = False
+        name = args[0] if len(args) > 0 else '/bin/sh'
+        token = context.connection.call_sync('shell.spawn', name)
+        shell = ShellClient(context.hostname, token)
+        shell.open()
+        shell.on_data(read)
+        shell.on_close(close)
+
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        tty.setraw(fd)
+
+        while not self.closed:
+            r, w, x = select.select([fd], [], [], 0.1)
+            if fd in r:
+                ch = os.read(fd, 1)
+                shell.write(ch)
+
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+
 
 @description("Prints variable value")
 class PrintenvCommand(Command):
