@@ -266,8 +266,6 @@ install_grub() {
 	for _disk in ${_disks}; do
 	    chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' /dev/${_disk}
 	done
-	# Adding a clone of the 'default' boot environment and calling it 'Initial-Install'
-	chroot ${_mnt} /usr/l/ocal/sbin/beadm create -e default Initial-Install
 	chroot ${_mnt} /usr/local/sbin/beadm activate default
 	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 	# And now move the backup files back in place
@@ -585,6 +583,8 @@ menu_install()
 
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
+    # create a sentinel file for post-fresh-install boots
+    local readonly FIRST_INSTALL_SENTINEL="/data/first-boot"
     local readonly POOL="freenas-boot"
 
     _tmpfile="/tmp/answer"
@@ -898,6 +898,12 @@ menu_install()
     elif [ "${_do_upgrade}" -eq 0 -a -n "${_password}" ]; then
 	# Set the root password
 	chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+    else
+	# only do this if not upgrading, because we use this sentinel file for
+	# creating the "Initial-Install" Boot Environment and if we do not
+	# have this 'else' here then it will result in multiple BEs with that name
+	# or some other hilarity will ensue!
+	: > /tmp/data/${FIRST_INSTALL_SENTINEL}
     fi
     # Finally, before we unmount, start a srub.
     # zpool scrub freenas-boot || true
