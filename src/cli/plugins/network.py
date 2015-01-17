@@ -27,7 +27,7 @@
 
 
 import gettext
-from namespace import Namespace, EntityNamespace, Command, description
+from namespace import Namespace, EntityNamespace, ConfigNamespace, Command, description
 from output import ValueType
 
 t = gettext.translation('freenas-cli', fallback=True)
@@ -47,7 +47,10 @@ class InterfaceManageCommand(Command):
             return _("Shutdowns an interface")
 
     def run(self, context, args, kwargs):
-        pass
+        if self.up:
+            context.submit_task('network.interface.up', self.name)
+        else:
+             context.submit_task('network.interface.down', self.name)
 
 
 @description("Network interfaces configuration")
@@ -91,7 +94,8 @@ class InterfacesNamespace(EntityNamespace):
             name='ip_config',
             get=self.get_ip_config,
             set=None,
-            list=True
+            list=True,
+            type=ValueType.ARRAY
         )
 
         self.add_property(
@@ -111,15 +115,13 @@ class InterfacesNamespace(EntityNamespace):
         )
 
         self.primary_key = self.get_mapping('name')
-        self.allow_edit = False
-        self.allow_creation = False
         self.entity_commands = lambda name: {
             'up': InterfaceManageCommand(name, True),
             'down': InterfaceManageCommand(name, False),
         }
 
-        self.entity_namespaces = lambda entity: [
-            AliasesNamespace('aliases', self.context, entity)
+        self.entity_namespaces = lambda this: [
+            AliasesNamespace('aliases', self.context, this)
         ]
 
     def get_link_state(self, entity):
@@ -133,17 +135,14 @@ class InterfacesNamespace(EntityNamespace):
         return _("up") if 'UP' in entity['status']['flags'] else _("down")
 
     def get_ip_config(self, entity):
-        result = []
         for i in entity['status']['aliases']:
             if i['family'] not in ('INET', 'INET6'):
                 continue
 
-            result.append('{0}/{1}'.format(i['address'], i['netmask']))
+            yield '{0}/{1}'.format(i['address'], i['netmask'])
 
-        return '\n'.join(result)
-
-    def query(self):
-        return self.context.connection.call_sync('network.interfaces.query')
+    def query(self, params):
+        return self.context.connection.call_sync('network.interfaces.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync(
@@ -152,12 +151,27 @@ class InterfacesNamespace(EntityNamespace):
             {'single': True}
         )
 
+    def save(self, entity, new=False):
+        self.context.submit_task('network.interface.configure', entity['id'], entity)
+
+    def delete(self, name):
+        pass
+
 
 @description("Interface addresses")
 class AliasesNamespace(EntityNamespace):
-    def __init__(self, name, context, interface):
+    def __init__(self, name, context, parent):
         super(AliasesNamespace, self).__init__(name, context)
-        self.interface = interface
+        self.parent = parent
+        self.entity = self.parent.entity
+        self.allow_edit = False
+
+        self.add_property(
+            descr='Address family',
+            name='type',
+            get='/type',
+            list=True
+        )
 
         self.add_property(
             descr='IP address',
@@ -167,9 +181,9 @@ class AliasesNamespace(EntityNamespace):
         )
 
         self.add_property(
-            descr='Prefix length',
-            name='prefixlen',
-            get='/prefixlen',
+            descr='Netmask',
+            name='netmask',
+            get='/netmask',
             list=True
         )
 
@@ -180,9 +194,21 @@ class AliasesNamespace(EntityNamespace):
             list=True
         )
 
-    def query(self):
-        return self.interface.get('aliases', [])
+        self.primary_key = self.get_mapping('address')
 
+    def query(self, params):
+        return self.entity.get('aliases', [])
+
+    def save(self, entity, new):
+        if 'aliases' not in self.entity:
+            self.entity['aliases'] = []
+
+        self.entity['aliases'].append(entity)
+        self.parent.parent.save(self.entity)
+
+    def delete(self, address):
+        self.entity['aliases'] = filter(lambda a: a['address'] != address, self.entity['aliases'])
+        self.parent.parent.save(self.entity)
 
 @description("Static host names database")
 class HostsNamespace(EntityNamespace):
@@ -205,8 +231,8 @@ class HostsNamespace(EntityNamespace):
 
         self.primary_key = self.get_mapping('name')
 
-    def query(self):
-        return self.context.connection.call_sync('network.hosts.query')
+    def query(self, params):
+        return self.context.connection.call_sync('network.hosts.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync(
@@ -225,18 +251,72 @@ class HostsNamespace(EntityNamespace):
     def delete(self, name):
         self.context.submit_task('network.host.delete', name)
 
+
 @description("Global network configuration")
-class GlobalConfigNamespace(EntityNamespace.SingleItemNamespace):
+class GlobalConfigNamespace(ConfigNamespace):
     def __init__(self, name, context):
-        super(GlobalConfigNamespace, self).__init__(name, None)
+        super(GlobalConfigNamespace, self).__init__(name, context)
         self.context = context
+
+        self.add_property(
+            descr='IPv4 gateway',
+            name='ipv4_gateway',
+            get='/network.gateway.ipv4',
+            list=True
+        )
+
+        self.add_property(
+            descr='IPv6 gateway',
+            name='ipv6_gateway',
+            get='/network.gateway.ipv6',
+            list=True
+        )
+
+        self.add_property(
+            descr='DNS servers',
+            name='dns_servers',
+            get='/network.dns.addresses',
+            list=True,
+            type=ValueType.ARRAY
+        )
+
+        self.add_property(
+            descr='DNS search domains',
+            name='dns_search',
+            get='/network.dns.search',
+            list=True,
+            type=ValueType.ARRAY
+        )
 
 
 @description("Routing configuration")
-class RoutesNamespace(Namespace):
+class RoutesNamespace(EntityNamespace):
     def __init__(self, name, context):
-        super(RoutesNamespace, self).__init__(name)
+        super(RoutesNamespace, self).__init__(name, context)
         self.context = context
+
+        self.add_property(
+            descr='Destination',
+            name='destination',
+            get='/destination',
+            list=True
+        )
+
+        self.add_property(
+            descr='Network',
+            name='/network',
+            get=self.get_network,
+            list=True
+        )
+
+    def get_network(self, entity):
+        pass
+
+    def query(self, params):
+        pass
+
+    def save(self, entity, new=False):
+        pass
 
 
 @description("Network configuration")

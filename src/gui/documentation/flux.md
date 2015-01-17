@@ -28,6 +28,8 @@ This section is short, since the strict separation of concerns means that React 
 ### React View
 ![React View](images/architecture/flux/react_view.png)
 A React View can be any [React component](react.md), but is generally the primary view open in the webapp. While other persistent components (navigation, notifications, widgets etc) function in slightly different ways, they're broadly similar to a standard React View.
+>*What makes them different? I tought the Navigation for example is completly same React Component as any other. Is it because some of them don't need input from the Flux Store? And isn't that only true for now and in close future even the menu structure different for each user will be served from the Middleware through the Flux Store?*
+
 
 ![Example of a basic view](images/architecture/flux/screenshot_react_view.png)
 
@@ -43,6 +45,7 @@ The React View submits events, data, and requests to the Users Middlware Utility
 
 ## Submitting User Input
 The next step in the Flux Architecture is handling user input and sending it to the server. There is a deliberate pattern which will emerge, in which each "step" is ignorant of what came before it, and is only responsible for taking the data given to it and performing the appropriate next step.
+>*How does this corelate with the previous paragrph? Can you maybe give more detailed info on how the data will flow?*
 
 ### Middleware Utility Class
 ![Middleware Utility Class](images/architecture/flux/utility_class.png)
@@ -60,6 +63,7 @@ The Middleware Utility Class (MUC) is an abstaction provided by FreeNAS 10, and 
 
 #### Role
 The MUC pipes request data into a public method provided by the Middleware Client, and registers a callback that will be run when a matching response is receieved from the Middleware Server. The MUC does not modify input data, and does not manipulate response data.
+>*here will be server based validation done? Will even potentionally harmfull data go unmodified?*
 
 The ambiguation provided by this class is necessary for a few reasons:
 
@@ -76,6 +80,7 @@ In this way, the architecture ensures that no replies are regarded as spurious b
 
 #### Input
 The MUC recieves raw event data, objects, and other pre-packaged interactions from a React View. These might be as simple as a click event, or as complex as a dictionary object representing the changed properties for an array of hard disks. The MUC is deliberately ignorant of the Views which send it data.
+>*My previous question is probably explained here. Everything will go untouched to the Middleware Client which will probably do the validation.*
 
 #### Output
 The MUC registers a callback with one of the Middleware Client's public methods, ensuring that once the Middleware Client has recieved a response from the Middleware Server, the response data is passed into the callback. The callback is almost always a public method exposed by an ActionCreator class, which will handle the response data.
@@ -110,12 +115,13 @@ This part of the guide is only provided to give a more complete understanding of
 ### Middleware Server
 ![Middleware Server](images/architecture/flux/middleware_server.png)
 The Middleware Server is a WebSocket server running on the same hardware as the core FreeNAS 10 OS. It collects and disburses system data requested by a Middleware Client. It is capable of handling event queues and multiple (non-blocking) requests. It can connect to many clients at the same time, and correctly triage requests and responses to each, concurrently.
-
+>*Does it comunicate only with the Middleware Client? Isn't this the part where multiple machines will be able to talk to each other? And will this always run on the same HW where the core FN10 OS resides? Is __Remora__ retired?*
 ---
 
 ### FreeNAS 10 Base OS
 ![FreeNAS 10 Base OS](images/architecture/flux/freenas10_base.png)
 The core operating system. Out of scope for any UI work, and shown in the above diagram only to describe its exact relationship to the rest of the system.
+>*This feels like the end of the document. "Out of scope for any UI work" seems very definitive and might suggest to the readers that there is nothing directly concerning them further.*
 
 ## Handling Data From the Middleware
 After being sent a request, the Middleware Client will receive a response from the Middleware Server. This isn't necessarily a 1:1 relationship, as a subscription request will cause the Middleware Server to send a stream of "patch" responses to the Middleware Client. Fortunately, the ActionCreators and other Flux errata are ignorant of their data's sources, and only care about how to process it and where to send it.
@@ -271,5 +277,6 @@ Stores are **only ever modified by the Dispatcher**. They receieve every broadca
 
 #### Output
 Each React View will choose to subscribe to events emit by a specific Flux store, and additionally may request some or all of its data at various points in its lifecycle. When the Flux store updates, it will emit an event, causing the React View or Component to re-request the data (which may cause it to re-render to display the update).
+> *How the process of subscription works? I thought, that React Component is unaware of the source of data it is displaying and that it has to be the Flux store which is firehosing the component with data.*
 
 The Flux Store is ignorant of which views are subscribed to it, and persists as a singleton outside the lifecycle of any View or Component. In this way, it is always up to date, and can act as a single source of truth to multiple Components in parallel.

@@ -46,6 +46,25 @@ from dispatcher.rpc import RpcService, RpcException
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
+def convert_aliases(entity):
+    for i in entity['aliases']:
+        addr = netif.InterfaceAddress()
+        addr.af = getattr(netif.AddressFamily, i['type'])
+        addr.address = ipaddress.ip_address(i['address'])
+        addr.netmask = ipaddress.ip_address(i['netmask'])
+        addr.broadcast = ipaddress.ip_interface(u'{0}/{1}'.format(i['address'], i['netmask']))\
+            .network\
+            .broadcast_address
+
+        if 'broadcast' in i and i['broadcast'] is not None:
+            addr.broadcast = ipaddress.ip_address(i['broadcast'])
+
+        if 'dest-address' in i and i['dest-address'] is not None:
+            addr.dest_address = ipaddress.ip_address(i['dest-address'])
+
+        yield addr
+
+
 class RoutingSocketEventSource(threading.Thread):
     def __init__(self, context):
         super(RoutingSocketEventSource, self).__init__()
@@ -61,6 +80,12 @@ class RoutingSocketEventSource(threading.Thread):
             self.mtu_cache[i.name] = i.mtu
             self.flags_cache[i.name] = i.flags
             self.link_state_cache[i.name] = i.link_state
+
+    def alias_added(self, message):
+        pass
+
+    def alias_removed(self, message):
+        pass
 
     def run(self):
         rtsock = netif.RoutingSocket()
@@ -124,7 +149,49 @@ class RoutingSocketEventSource(threading.Thread):
                 self.build_cache()
 
             if type(message) is netif.InterfaceAddrMessage:
-                pass
+                entity = self.context.datastore.get_by_id('network.interfaces', message.interface)
+                if entity is None:
+                    continue
+
+                addr = netif.InterfaceAddress()
+                addr.af = netif.AddressFamily.INET
+                addr.address = message.address
+                addr.netmask = message.netmask
+                addr.broadcast = message.dest_address
+
+                aliases = set(convert_aliases(entity))
+
+                if message.type == netif.RoutingMessageType.NEWADDR:
+                    if addr in aliases:
+                        continue
+
+                    self.context.logger.warn('New alias added to interface {0} externally: {1}/{2}'.format(
+                        message.interface,
+                        message.address,
+                        message.netmask
+                    ))
+
+                    entity['aliases'].append({
+                        'type': addr.af.name,
+                        'address': str(message.address),
+                        'netmask': str(message.netmask),
+                        'broadcast': str(message.dest_address)
+                    })
+
+                    self.context.datastore.update('network.interfaces', entity['id'], entity)
+
+                if message.type == netif.RoutingMessageType.DELADDR:
+                    if addr not in aliases:
+                        continue
+
+                    self.context.logger.warn('Alias removed from interface {0} externally: {1}/{2}'.format(
+                        message.interface,
+                        message.address,
+                        message.netmask
+                    ))
+
+
+
 
             if type(message) is netif.RoutingMessage:
                 if message.type == netif.RoutingMessageType.ADD:
@@ -194,12 +261,9 @@ class ConfigurationService(RpcService):
             self.logger.warn('Failed to configure any network interface')
             return
 
-        for i in netif.list_interfaces().values():
-            if i.type == netif.InterfaceType.LOOP:
-                continue
-
-            self.logger.info('Configuring interface {0}...'.format(i.name))
-            self.configure_interface(i.name)
+        for i in self.datastore.query('network.interfaces'):
+            self.logger.info('Configuring interface {0}...'.format(i['id']))
+            self.configure_interface(i['id'])
 
         self.configure_routes()
 
@@ -231,10 +295,12 @@ class ConfigurationService(RpcService):
 
         try:
             iface = netif.get_interface(name)
+        except KeyError:
             if entity.get('cloned'):
                 netif.create_interface(entity['name'])
-        except NameError:
-            raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
+                iface = netif.get_interface(name)
+            else:
+                raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
 
         if entity.get('dhcp'):
             self.logger.info('Trying to acquire DHCP lease on interface {0}...'.format(name))
@@ -242,30 +308,18 @@ class ConfigurationService(RpcService):
                 self.logger.warn('Failed to configure interface {0} using DHCP'.format(name))
             return
 
-        addresses = set()
-        for i in entity['aliases']:
-            addr = netif.InterfaceAddress()
-            addr.af = netif.AddressFamily(i['type'])
-            addr.address = ipaddress.ip_address(i['address'])
-            addr.netmask = ipaddress.ip_address(i['netmask'])
-
-            if 'broadcast' in i and i['broadcast'] is not None:
-                addr.broadcast = ipaddress.ip_address(i['broadcast'])
-
-            if 'dest-address' in i and i['dest-address'] is not None:
-                addr.dest_address = ipaddress.ip_address(i['dest-address'])
-
-            addresses.add(addr)
-
-        # Add new or changed addresses
-        for i in addresses - iface.addresses:
-            self.logger.info('Adding new address to interface {0}: {1}'.format(name, i))
-            iface.add_address(i)
+        addresses = set(convert_aliases(entity))
+        existing_addresses = set(filter(lambda a: a.af != netif.AddressFamily.LINK, iface.addresses))
 
         # Remove orphaned addresses
-        for i in iface.addresses - addresses:
+        for i in existing_addresses - addresses:
             self.logger.info('Removing address from interface {0}: {1}'.format(name, i))
             iface.remove_address(i)
+
+        # Add new or changed addresses
+        for i in addresses - existing_addresses:
+            self.logger.info('Adding new address to interface {0}: {1}'.format(name, i))
+            iface.add_address(i)
 
         if 'mtu' in entity:
             iface.mtu = entity['mtu']

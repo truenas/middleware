@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from task import Provider
+from task import Provider, Task, VerifyException, TaskException
 from dispatcher.rpc import description, returns
 
 @description("Provides access to configuration store")
@@ -37,5 +37,15 @@ class ConfigProvider(Provider):
         return self.dispatcher.configstore.list_children(root)
 
 
+class UpdateConfigTask(Task):
+    def verify(self, settings):
+        return ['system']
+
+    def run(self, settings):
+        for k, v in settings.items():
+            self.configstore.set(k, v)
+
+
 def _init(dispatcher):
+    dispatcher.register_task_handler('config.update', UpdateConfigTask)
     dispatcher.register_provider('config', ConfigProvider)

@@ -29,7 +29,7 @@
 import collections
 from texttable import Texttable
 from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
-from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii
+from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii, read_value
 
 
 def description(descr):
@@ -71,8 +71,8 @@ class Namespace(object):
 
 
 class Command(object):
-    def run(self, context, args, kwargs):
-        pass
+    def run(self, context, args, kwargs, opargs):
+        raise NotImplementedError()
 
     def complete(self, context, tokens):
         return []
@@ -87,7 +87,7 @@ class IndexCommand(Command):
     def __init__(self, target):
         self.target = target
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         table = Texttable()
         table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
         table.add_rows([['Command', 'Description']], header=True)
@@ -107,115 +107,46 @@ class RootNamespace(Namespace):
     pass
 
 
-class EntityNamespace(Namespace):
-    def __init__(self, name, context):
-        super(EntityNamespace, self).__init__(name)
-        self.context = context
-        self.property_mappings = []
-        self.primary_key = None
-        self.entity_commands = None
-        self.allow_edit = True
-        self.allow_create = True
-        self.create_command = self.CreateEntityCommand
-        self.delete_command = self.DeleteEntityCommand
+class PropertyMapping(object):
+    def __init__(self, name, descr, get, set=None, list=False, type=ValueType.STRING):
+        self.name = name
+        self.descr = descr
+        self.get = get
+        self.set = set or get
+        self.list = list
+        self.type = type
 
-    class PropertyMapping(object):
-        def __init__(self, name, descr, get, set=None, list=False, type=ValueType.STRING):
-            self.name = name
-            self.descr = descr
-            self.get = get
-            self.set = set or get
-            self.list = list
-            self.type = type
+    def do_get(self, obj):
+        if callable(self.get):
+            return self.get(obj)
 
-        def do_get(self, obj):
-            if callable(self.get):
-                return self.get(obj)
+        try:
+            return resolve_pointer(obj, self.get)
+        except JsonPointerException:
+            return None
 
-            try:
-                return resolve_pointer(obj, self.get)
-            except JsonPointerException:
-                return None
+    def do_set(self, obj, value):
+        if callable(self.set):
+            self.set(obj, value)
+            return
 
-        def do_set(self, obj, value):
-            if callable(self.set):
-                self.set(obj, value)
-                return
+        set_pointer(obj, self.set, value)
 
-            set_pointer(obj, self.set, value)
 
-    class SingleItemNamespace(Namespace):
-        def __init__(self, name, parent):
-            super(EntityNamespace.SingleItemNamespace, self).__init__(name)
-            self.name = name
-            self.description = name
-            self.parent = parent
-            self.entity = None
-            self.modified = False
-            self.nslist = {}
-
-        def on_enter(self):
-            self.load_entity()
-
-        def on_leave(self):
-            if self.modified:
-                output_msg('Object was modified. Type either "save" or "discard" to leave')
-                return False
-
-            return True
-
-        def get_name(self):
-            return self.parent.primary_key.do_get(self.entity) if self.entity else self.name
-
-        def load_entity(self):
-            self.entity = self.parent.get_one(self.name)
-            self.modified = False
-
-        def commands(self):
-            base = {
-                '?': IndexCommand(self),
-                'get': self.parent.GetEntityCommand(self),
-                'show': self.parent.ShowEntityCommand(self),
-            }
-
-            if self.parent.allow_edit:
-                base.update({
-                    'set': self.parent.SetEntityCommand(self),
-                    'save': self.parent.SaveEntityCommand(self),
-                    'discard': self.parent.DiscardEntityCommand(self)
-                })
-
-            if self.parent.entity_commands is not None:
-                base.update(self.parent.entity_commands(self.name))
-
-            return base
-
-    @description("Lists items")
-    class ListCommand(Command):
-        def __init__(self, parent):
-            self.parent = parent
-
-        def run(self, context, args, kwargs):
-            cols = []
-            params = [(k, '~', v) for k, v in kwargs.items()]
-            for col in filter(lambda x: x.list, self.parent.property_mappings):
-                cols.append(Column(col.descr, col.get, col.type))
-
-            output_table(self.parent.query(params), cols)
-
+class ItemNamespace(Namespace):
     @description("Shows single item")
     class ShowEntityCommand(Command):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             if len(args) != 0:
                 pass
 
             values = collections.OrderedDict()
             entity = self.parent.entity
 
-            for mapping in self.parent.parent.property_mappings:
+            for mapping in self.parent.property_mappings:
                 if not mapping.get:
                     continue
 
@@ -228,29 +159,36 @@ class EntityNamespace(Namespace):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
-            if not self.parent.parent.has_property(args[0]):
+        def run(self, context, args, kwargs, opargs):
+            if not self.parent.has_property(args[0]):
                 output_msg('Property {0} not found'.format(args[0]))
                 return
 
             entity = self.parent.entity
-            output_msg(self.parent.parent.get_property(args[0], entity))
+            output_msg(self.parent.get_property(args[0], entity))
 
     @description("Sets single item property")
     class SetEntityCommand(Command):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             for k, v in kwargs.items():
-                if not self.parent.parent.has_property(k):
+                if not self.parent.has_property(k):
                     output_msg('Property {0} not found'.format(k))
                     return
 
             entity = self.parent.entity
 
             for k, v in kwargs.items():
-                prop = self.parent.parent.get_mapping(k)
+                prop = self.parent.get_mapping(k)
+                prop.do_set(entity, v)
+
+            for k, op, v in opargs:
+                if op not in ('+=', '-='):
+                    raise CommandException("Syntax error, invalid operator used")
+
+                prop = self.parent.get_mapping(k)
                 prop.do_set(entity, v)
 
             self.parent.modified = True
@@ -260,23 +198,158 @@ class EntityNamespace(Namespace):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
-            self.parent.parent.save(self.parent.entity)
+        def run(self, context, args, kwargs, opargs):
+            self.parent.save()
 
     @description("Discards modified item")
     class DiscardEntityCommand(Command):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             self.parent.load_entity()
+
+    def __init__(self, name):
+        super(ItemNamespace, self).__init__(name)
+        self.name = name
+        self.description = name
+        self.entity = None
+        self.allow_edit = True
+        self.modified = False
+        self.property_mappings = []
+        self.subcommands = {}
+        self.nslist = []
+
+    def on_enter(self):
+        self.load()
+
+    def on_leave(self):
+        if self.modified:
+            output_msg('Object was modified. Type either "save" or "discard" to leave')
+            return False
+
+        return True
+
+    def get_name(self):
+        return self.name
+
+    def load(self):
+        raise NotImplementedError()
+
+    def save(self):
+        raise NotImplementedError()
+
+    def has_property(self, prop):
+        return any(filter(lambda x: x.name == prop, self.property_mappings))
+
+    def get_mapping(self, prop):
+        return filter(lambda x: x.name == prop, self.property_mappings)[0]
+
+    def add_property(self, **kwargs):
+        self.property_mappings.append(PropertyMapping(**kwargs))
+
+    def get_property(self, prop, obj):
+        mapping = self.get_mapping(prop)
+        return mapping.do_get(obj)
+
+    def commands(self):
+        base = {
+            '?': IndexCommand(self),
+            'get': self.GetEntityCommand(self),
+            'show': self.ShowEntityCommand(self),
+        }
+
+        if self.allow_edit:
+            base.update({
+                'set': self.SetEntityCommand(self),
+                'save': self.SaveEntityCommand(self),
+                'discard': self.DiscardEntityCommand(self)
+            })
+
+        if self.commands is not None:
+            base.update(self.subcommands)
+
+        return base
+
+
+class ConfigNamespace(ItemNamespace):
+    def __init__(self, name, context):
+        super(ConfigNamespace, self).__init__(name)
+        self.context = context
+        self.property_mappings = []
+
+    def load(self):
+        self.entity = {}
+        for i in self.property_mappings:
+            self.entity[i.name] = self.context.connection.call_sync('config.get', i.get)
+
+    def save(self):
+        pass
+
+
+class EntityNamespace(Namespace):
+    class SingleItemNamespace(ItemNamespace):
+        def __init__(self, name, parent):
+            super(EntityNamespace.SingleItemNamespace, self).__init__(name)
+            self.parent = parent
+            self.property_mappings = parent.property_mappings
+
+            if parent.entity_commands:
+                self.subcommands = parent.entity_commands(name)
+            if parent.entity_namespaces:
+                self.nslist = parent.entity_namespaces(self)
+
+        def get_name(self):
+            return self.parent.primary_key.do_get(self.entity) if self.entity else self.name
+
+        def load(self):
+            self.entity = self.parent.get_one(self.name)
+
+        def save(self):
+            pass
+
+    def __init__(self, name, context):
+        super(EntityNamespace, self).__init__(name)
+        self.context = context
+        self.property_mappings = []
+        self.primary_key = None
+        self.entity_commands = None
+        self.entity_namespaces = None
+        self.allow_edit = True
+        self.allow_create = True
+        self.create_command = self.CreateEntityCommand
+        self.delete_command = self.DeleteEntityCommand
+
+    @description("Lists items")
+    class ListCommand(Command):
+        def __init__(self, parent):
+            self.parent = parent
+
+        def run(self, context, args, kwargs, opargs):
+            cols = []
+            params = []
+
+            for k, v in kwargs.items():
+                prop = self.parent.get_mapping(k)
+                v = read_value(v, prop.type)
+                params.append((k, '=', v))
+
+            for k, op, v in opargs:
+                prop = self.parent.get_mapping(k)
+                v = read_value(v, prop.type)
+                params.append((k, '~' if op == '~=' else op, v))
+
+            for col in filter(lambda x: x.list, self.parent.property_mappings):
+                cols.append(Column(col.descr, col.get, col.type))
+
+            output_table(self.parent.query(params), cols)
 
     @description("Creates new item")
     class CreateEntityCommand(Command):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             entity = {}
 
             if len(args) > 0:
@@ -302,7 +375,7 @@ class EntityNamespace(Namespace):
         def __init__(self, parent):
             self.parent = parent
 
-        def run(self, context, args, kwargs):
+        def run(self, context, args, kwargs, opargs):
             self.parent.delete(args[0])
 
     def has_property(self, prop):
@@ -315,17 +388,17 @@ class EntityNamespace(Namespace):
         mapping = self.get_mapping(prop)
         return mapping.do_get(obj)
 
-    def get_entity(self, name):
-        pass
+    def get_one(self, name):
+        raise NotImplementedError()
 
     def update_entity(self, name):
-        pass
+        raise NotImplementedError()
 
     def query(self, params):
-        pass
+        raise NotImplementedError()
 
     def add_property(self, **kwargs):
-        self.property_mappings.append(self.PropertyMapping(**kwargs))
+        self.property_mappings.append(PropertyMapping(**kwargs))
 
     def commands(self):
         base = {

@@ -10,9 +10,15 @@ Data is stored as JSON object in "schemaless" manner. "object" is a python dict(
 
 ### `get_datastore(driver_name, dsn)`
 
+Returns object implementing datastore interface (see below). Supported values of `driver_name` are `mongodb` and `postgresql`. `dsn` is driver-specific database server URI, eg. `mongodb://localhost`.
+
 ### `DatastoreException`
 
+Generic exception class used by datastore interface.
+
 ### `DuplicateKeyException`
+
+Exception raised when trying to insert or upsert object with key already present in collection.
 
 ## datastore interface
 
@@ -20,11 +26,11 @@ Data is stored as JSON object in "schemaless" manner. "object" is a python dict(
 
 Performs a query over collection of specified name. Optional positional arguments should be a 3-tuples consisting of: field name, operator, desired value. For example `("name", "=", "foo")` or `("id", ">", 4)`. All filter arguments are joined using AND logic. There are following keyword arguments currently supported:
 
-* `offset`
-* `limit`
-* `sort`
-* `dir`
-* `single`
+* `offset` - skips first `n` found objects
+* `limit` - limits query to `n` objects
+* `sort` - name of field used to sort results
+* `dir` - sort order, either `"asc"` or `"desc"`
+* `single` - returns single object instead of array. If multiple objects were matched in the query, returns first one (in random order if `sort` was not specified).
 
 Following operators are supported:
 
@@ -47,6 +53,8 @@ Same as `query` with keyword argument `single` set to `True`.
 Returns single object by its primary key or `None`.
 
 ### `datastore.insert(collection, obj, pkey=None)`
+
+Inserts object to database. Object should be python `dict`. If it has `id` key, it will be used as primary key. Primary key can be also supplied through optional `pkey` argument. If both `pkey` argument is `None` and there's no `id` property in object, primary key is automatically generated.
 
 ### `datastore.update(collection, pkey, obj, upsert=False)`
 
