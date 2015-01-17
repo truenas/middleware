@@ -111,7 +111,7 @@ class UserCreateTask(Task):
 
         self.dispatcher.dispatch_event('users.changed', {
             'operation': 'create',
-            'items': [user]
+            'ids': [uid]
         })
 
         return uid
@@ -186,7 +186,7 @@ class UserUpdateTask(Task):
 
         self.dispatcher.dispatch_event('users.changed', {
             'operation': 'update',
-            'items': [user]
+            'ids': [uid]
         })
 
 
@@ -240,7 +240,7 @@ class GroupCreateTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'create',
-            'items': [group]
+            'ids': [gid]
         })
 
         return gid
@@ -282,7 +282,7 @@ class GroupUpdateTask(Task):
 
         self.dispatcher.dispatch_event('groups.changed', {
             'operation': 'update',
-            'items': [group]
+            'ids': [gid]
         })
 
 
