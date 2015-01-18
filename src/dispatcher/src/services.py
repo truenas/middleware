@@ -202,8 +202,4 @@ class ShellService(RpcService):
 
     @pass_sender
     def spawn(self, shell, sender):
-        shells = self.dispatcher.configstore.get('system.shells')
-        if shell not in shells:
-            raise RpcException(errno.EPERM, "Cannot launch non-standard shell")
-
         return self.dispatcher.token_store.issue_token(ShellToken(user=sender.user, lifetime=60, shell=shell))

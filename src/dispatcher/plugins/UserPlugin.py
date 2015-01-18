@@ -99,6 +99,9 @@ class UserCreateTask(Task):
 
         try:
             user['builtin'] = False
+            user['unixhash'] = user.get('unixhash', '*')
+            user['full_name'] = user.get('full_name', 'User &')
+            user['shell'] = user.get('shell', '/bin/sh')
             self.datastore.insert('users', user, pkey=uid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
@@ -336,7 +339,7 @@ def _init(dispatcher):
             'id': {'type': 'number'},
             'builtin': {'type': 'boolean', 'readOnly': True},
             'username': {'type': 'string'},
-            'full_name': {'type': 'string', 'default': 'User &'},
+            'full_name': {'type': ['string', 'null']},
             'email': {'type': ['string', 'null']},
             'locked': {'type': 'boolean'},
             'sudo': {'type': 'boolean'},
@@ -344,7 +347,7 @@ def _init(dispatcher):
             'group': {'type': 'integer'},
             'shell': {'type': 'string'},
             'home': {'type': 'string'},
-            'unixhash': {'type': 'string', 'default': '*'},
+            'unixhash': {'type': ['string', 'null']},
             'smbhash': {'type': ['string', 'null']},
             'sshpubkey': {'type': ['string', 'null']}
         }

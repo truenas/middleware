@@ -49,7 +49,7 @@ from descriptions import events, tasks
 from namespace import Namespace, RootNamespace, Command
 from output import ValueType, ProgressBar, output_lock, output_msg, read_value
 from dispatcher.client import Client, ClientError
-from commands import ExitCommand, PrintenvCommand, SetenvCommand
+from commands import ExitCommand, PrintenvCommand, SetenvCommand, ShellCommand
 
 
 if platform.system() == 'Darwin':
@@ -272,7 +272,8 @@ class MainLoop(object):
     builtin_commands = {
         'exit': ExitCommand(),
         'setenv': SetenvCommand(),
-        'printenv': PrintenvCommand()
+        'printenv': PrintenvCommand(),
+        'shell': ShellCommand()
     }
 
     def __init__(self, context):
@@ -359,6 +360,10 @@ class MainLoop(object):
         if len(line) == 0:
             return
 
+        if line[0] == '!':
+            self.builtin_commands['shell'].run(self.context, [line[1:]], {}, {})
+            return
+
         if line[0] == '/':
             self.path = self.root_path[:]
             line = line[1:]
@@ -378,7 +383,7 @@ class MainLoop(object):
 
             try:
                 if token in self.builtin_commands.keys():
-                    self.builtin_commands[token].run(self.context, tokens, kwargs)
+                    self.builtin_commands[token].run(self.context, tokens, kwargs, opargs)
                     break
 
                 for ns in self.cwd.namespaces():
@@ -465,7 +470,6 @@ class MainLoop(object):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('hostname', metavar='HOSTNAME', nargs='?', default='127.0.0.1')
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE)

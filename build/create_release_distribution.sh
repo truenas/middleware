@@ -72,10 +72,10 @@ __EOF__
   for x in $archdirs; do
    #archbit=$(basename $x | cut -c 2-)
    arch=$(basename $x)
-   iso=$(find $x -type f -name \*.iso)
-   usb=$(find $x -type f -name \*.usb)
-   gui_upgrade=$(find $x -type f -name \*.GUI_Upgrade.txz)
-   img=$(find $x -type f -name \*.img)
+   iso=$x/${NANO_NAME}.iso
+   usb=$x/${NANO_NAME}.usb
+   gui_upgrade=$x/${NANO_NAME}.GUI_Upgrade.txz
+   img=$x/${NANO_NAME}.img
    
    cat<<-__EOF__>>${json_file}
         "${arch}": [
