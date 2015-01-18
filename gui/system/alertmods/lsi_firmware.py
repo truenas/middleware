@@ -27,7 +27,7 @@ class LSIFirmwareAlert(BaseAlert):
         for number, mibs in mps.items():
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
-            if firmware < driver:
+            if firmware != driver:
                 alerts.append(Alert(
                     Alert.WARN,
                     _(
