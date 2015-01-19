@@ -83,6 +83,7 @@ require([
             }
         });
         alertdlg.show();
+        loadalert();
     }
 
     ready(function(){
