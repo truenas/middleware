@@ -96,7 +96,9 @@ EOF
 db_update()
 {
 	local precertman
-	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
+	# We are running very early, make / read-write.
+        mount -uw /
+        if [ ! -f $NEED_UPDATE_SENTINEL ]; then
 		# No need to update check first-install stuff instead.
 		# Using the ix-update script to also do post-first-install stuff
 		# We should create a seperate ix-firstinstall script
@@ -114,8 +116,6 @@ db_update()
 		exit 0
 	fi
 
-	# We are running very early, make / read-write.
-	mount -uw /
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
 
