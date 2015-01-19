@@ -2241,7 +2241,7 @@ class CertificateAuthorityImportForm(ModelForm):
 
         cert_privatekey = self.cleaned_data.get('cert_privatekey')
         cert_passphrase = self.cleaned_data.get('cert_passphrase')
- 
+
         if cert_passphrase and cert_privatekey:
             privatekey = export_privatekey(
                 cert_privatekey,
@@ -2620,8 +2620,15 @@ class CertificateImportForm(ModelForm):
     )
     cert_passphrase = forms.CharField(
         label=_("Passphrase"),
-        required=False, 
-        help_text=_("Passphrase for encrypted private keys")
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
     )
 
     def clean_cert_passphrase(self):
@@ -2643,14 +2650,25 @@ class CertificateImportForm(ModelForm):
 
         return passphrase
 
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')
         certs = models.Certificate.objects.filter(cert_name=name)
         if certs:
-            raise forms.ValidationError(
+            raise forms.ValidationError(_(
                 "A certificate with this name already exists."
-            )
+            ))
         return name
 
     def save(self):
