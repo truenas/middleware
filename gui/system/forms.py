@@ -2192,9 +2192,9 @@ class CertificateAuthorityImportForm(ModelForm):
         name = cdata.get('cert_name')
         certs = models.CertificateAuthority.objects.filter(cert_name=name)
         if certs:
-            raise forms.ValidationError(
+            raise forms.ValidationError(_(
                 "A certificate with this name already exists."
-            )
+            ))
         return name
 
     def clean_cert_passphrase(self):
