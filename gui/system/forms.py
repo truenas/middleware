@@ -2171,8 +2171,15 @@ class CertificateAuthorityImportForm(ModelForm):
     )
     cert_passphrase = forms.CharField(
         label=_("Passphrase"),
-        required=False, 
-        help_text=_("Passphrase for encrypted private keys")
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
+    )
+    cert_passphrase2 = forms.CharField(
+        label=_("Confirm Passphrase"),
+        required=False,
+        help_text=_("Passphrase for encrypted private keys"),
+        widget=forms.PasswordInput(render_value=True),
     )
     cert_serial = forms.IntegerField(
         label=models.CertificateAuthority._meta.get_field('cert_serial').verbose_name,
@@ -2209,6 +2216,17 @@ class CertificateAuthorityImportForm(ModelForm):
 
         return passphrase
 
+    def clean_cert_passphrase2(self):
+        cdata = self.cleaned_data
+        passphrase = cdata.get('cert_passphrase')
+        passphrase2 = cdata.get('cert_passphrase2')
+
+        if passphrase and passphrase != passphrase2:
+            raise forms.ValidationError(_(
+                'Passphrase confirmation does not match.'
+            ))
+        return passphrase
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
 
@@ -2241,6 +2259,7 @@ class CertificateAuthorityImportForm(ModelForm):
             'cert_certificate',
             'cert_privatekey',
             'cert_passphrase',
+            'cert_passphrase2',
             'cert_serial'
         ]
         model = models.CertificateAuthority
