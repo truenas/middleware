@@ -2178,7 +2178,6 @@ class CertificateAuthorityImportForm(ModelForm):
     cert_passphrase2 = forms.CharField(
         label=_("Confirm Passphrase"),
         required=False,
-        help_text=_("Passphrase for encrypted private keys"),
         widget=forms.PasswordInput(render_value=True),
     )
     cert_serial = forms.IntegerField(
@@ -2627,7 +2626,6 @@ class CertificateImportForm(ModelForm):
     cert_passphrase2 = forms.CharField(
         label=_("Confirm Passphrase"),
         required=False,
-        help_text=_("Passphrase for encrypted private keys"),
         widget=forms.PasswordInput(render_value=True),
     )
 
