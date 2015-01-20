@@ -490,7 +490,7 @@ class FTPForm(ModelForm):
             self.instance._original_ftp_tls != self.instance.ftp_tls
             and
             not self.instance._original_ftp_tls
-        ) or (self.instance.ftp_tls and not self.instance.ftp_ssltls_certfile):
+        ) or (self.instance.ftp_tls and not self.instance.ftp_ssltls_certificate):
             notifier().start_ssl("proftpd")
 
 
