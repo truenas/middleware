@@ -4659,10 +4659,10 @@ class notifier:
 
         serials = defaultdict(list)
         active_active = []
-        RE_CD = re.compile('^cd[0-9]')
+        RE_DA = re.compile('^da[0-9]+$')
         for geom in doc.xpath("//class[name = 'DISK']/geom"):
             name = geom.xpath("./name")[0].text
-            if RE_CD.match(name) or name in reserved or name in mp_disks:
+            if (not RE_DA.match(name)) or name in reserved or name in mp_disks:
                 continue
             if self._multipath_is_active(name, geom):
                 active_active.append(name)
