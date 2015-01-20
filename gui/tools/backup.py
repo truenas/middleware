@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-# Copyright 2014 Jakub Klama <jceel@FreeBSD.org>
+# Copyright 2014-2015 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -263,7 +263,7 @@ class BackupWorker(threading.Thread):
                     opts = nf.zfs_get_options(dname)
                     vol['datasets'].append({
                         'name': dname,
-                        'mountpoint': opts['mountpoint'],
+                        'mountpoint': opts['mountpoint'][0],
                         'compression': opts['compression'][0]
                     })
 
@@ -565,7 +565,7 @@ class RestoreWorker(object):
         print('    Recreating datasets:')
         for dset in volume['datasets']:
             print('\t{}'.format(dset['name']))
-            self.notifier.create_zfs_dataset(dset['name'], _restart_collectd=False)
+            self.notifier.create_zfs_dataset(dset['name'], {'mountpoint': dset['mountpoint']}, _restart_collectd=False)
 
         # 4. Recreate zvols
         if len(volume['zvols']) > 0:
