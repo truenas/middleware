@@ -2,8 +2,10 @@
 
 "use strict";
 
-var React = require("react");
-var D3 = require("d3");
+var React   =   require("react");
+var D3      =   require("d3");
+
+var Widget  = 	require("../Widget");
 
 var DriveInfo = React.createClass({
   getInitialState: function() {
@@ -19,9 +21,9 @@ var DriveInfo = React.createClass({
 
   componentDidMount: function() {
 	this.setState({
-	  context:	this.getDOMNode().getContext('2d')
-      ,width:  	this.getDOMNode().width
-      ,height:	this.getDOMNode().height
+	  context:	  this.refs.canvas.getDOMNode().getContext('2d')
+      ,width:  	  this.refs.canvas.getDOMNode().width
+      ,height:	  this.refs.canvas.getDOMNode().height
       ,temp:	55
       ,sn:		this.props.sn
     });
@@ -103,7 +105,14 @@ var DriveInfo = React.createClass({
 
   	var version = D3.version;
     return (
-      <canvas width={150} height={150} />
+      <Widget
+    	   positionX  =  {this.props.positionX}
+    	   positionY  =  {this.props.positionY}
+    	   title      =  {this.props.title}
+    	   size       =  {this.props.size} >
+
+        <canvas ref="canvas" width={150} height={150} />
+      </Widget>
     );
   }
 });

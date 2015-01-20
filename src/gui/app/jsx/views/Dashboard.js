@@ -8,9 +8,13 @@
 "use strict";
 
 
-var React = require("react");
+var React 		        = 	require("react");
 
-var Widget   = require("../components/Widget");
+var Widget   	        = 	require("../components/Widget");
+var DummyWidgetContent 	= 	require("../components/Widgets/DummyWidgetContent");
+var DriveInfo 	        = 	require("../components/Widgets/DriveInfo");
+var DriveInfo2 	        = 	require("../components/Widgets/DriveInfo2");
+
 
 var Dashboard = React.createClass({
   componentDidMount: function() {
@@ -22,9 +26,9 @@ var Dashboard = React.createClass({
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widget-wrapper">
           <Widget positionX="15" positionY="150" title="Widget" size="large" content="/img/lg_widget.png" />
-          <Widget positionX="510" positionY="150" title="Widget" size="medium" content="/img/md_widget.png" />
-          <Widget positionX="510" positionY="480" title="Widget" size="small" content="driveInfo1" sn="WC-C4NFLDU8RP" />
-          <Widget positionX="675" positionY="480" title="Widget" size="small" content="driveInfo2" sn="WC-AWZ0927810" />
+          <DummyWidgetContent positionX="510" positionY="150" title="Widget" size="small" content="/img/md_widget.png" />
+          <DriveInfo positionX="510" positionY="480" title="Widget" size="small" sn="WC-C4NFLDU8RP" />
+          <DriveInfo2 positionX="675" positionY="480" title="Widget" size="small" sn="WC-AWZ0927810" />
           <Widget positionX="15" positionY="645" title="Widget" size="large" content="/img/lg_widget.png" />
           <Widget positionX="840" positionY="150" title="Widget" size="medium" content="/img/md_widget.png" />
           <Widget positionX="840" positionY="480" title="Widget" size="medium" content="/img/md_widget.png" />
