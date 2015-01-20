@@ -73,7 +73,7 @@ Browserify minimizes the number of requests that need to be made for resources, 
 #### Data Driven Documents
 | Homepage | Source Code | License Type | Author |
 |:--------:|:-----------:|:------------:|:------:|
-| [d3js.org](http://d3js.org/) | [GitHub](https://github.com/mbostock/d3) | Modified | BSD 2-Clause | [@mbostock](https://github.com/mbostock) |
+| [d3js.org](http://d3js.org/) | [GitHub](https://github.com/mbostock/d3) | Modified BSD 2-Clause | [@mbostock](https://github.com/mbostock) |
 
 D3.js is a JavaScript library for manipulating documents based on data. It is capable of providing rich visualization in the form of charts, graphs, maps, and more. In particular, it's used for FreeNAS 10's system overview, providing realtime graphs of CPU, network, disk, etc.
 
