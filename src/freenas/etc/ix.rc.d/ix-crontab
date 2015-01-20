@@ -71,14 +71,10 @@ generate_crontab()
 		echo "15	4	*	*	6	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1" >> /etc/crontab
 	fi
 
-	local train=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py get_train)
-	local uploc=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py get_update_location)
-	if [ $? -eq 0 -a -n "${train}" ]; then
-		local r1 r2
-		r1=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%60))
-		r2=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%4+1))
-		echo "${r1}	${r2}	*	*	*	root	/usr/local/bin/freenas-update -C ${uploc} -T ${train} check > /dev/null 2>&1" >> /etc/crontab
-	fi
+	local r1 r2
+	r1=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%60))
+	r2=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%4+1))
+	echo "${r1}	${r2}	*	*	*	root	/usr/local/www/freenasUI/tools/update_check.py > /dev/null 2>&1" >> /etc/crontab
 
 	# Ugly and dirty custom crontab scripts
 	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
