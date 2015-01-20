@@ -60,6 +60,9 @@ def main():
     except IndexError:
         updateobj = mUpdate.objects.create()
 
+    if updateobj.upd_autocheck is False:
+        return
+
     location = notifier().get_update_location()
 
     Update.DownloadUpdate(updateobj.get_train(), location)
