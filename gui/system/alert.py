@@ -3,6 +3,7 @@ import hashlib
 import imp
 import logging
 import os
+import socket
 import time
 
 from django.utils.translation import ugettext_lazy as _
@@ -140,8 +141,15 @@ class AlertPlugins:
                 msgs.append(unicode(alert).encode('utf8'))
         if len(msgs) == 0:
             return
-        send_mail(subject=_("Critical Alerts").encode('utf8'),
-                  text='\n'.join(msgs))
+
+        hostname = socket.gethostname()
+        send_mail(
+            subject='%s: %s' % (
+                hostname,
+                _("Critical Alerts").encode('utf8'),
+            ),
+            text='\n'.join(msgs)
+        )
 
     def run(self):
 
