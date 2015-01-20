@@ -38,6 +38,7 @@ cimport defs
 from libc.errno cimport *
 from libc.stdint cimport *
 from libc.string cimport strcpy, strerror, memset, memcpy
+from libc.stdlib cimport malloc, realloc, free
 
 
 CLONED_PREFIXES = ['lo', 'tun', 'tap', 'bridge', 'epair', 'carp', 'vlan']
@@ -578,19 +579,65 @@ class BridgeInterface(NetworkInterface):
         pass
 
 
-class VlanInterface(NetworkInterface):
+cdef class VlanInterface(NetworkInterface):
+    def __getstate__(self):
+        state = super(VlanInterface, self).__getstate__()
+        state.update({
+            'parent': self.parent,
+            'tag': self.tag
+        })
+
+        return state
+
     def configure(self, parent, tag):
-        pass
+        cdef defs.ifreq ifr
+        cdef defs.vlanreq vlr
+
+        memset(&vlr, 0, cython.sizeof(ifr))
+        strcpy(ifr.ifr_name, self.name)
+        strcpy(vlr.vlr_parent, parent)
+        vlr.vlr_tag = tag
+        ifr.ifr_ifru.ifru_data = <defs.caddr_t>&vlr
+
+        if self.ioctl(defs.SIOCSETVLAN, <void*>&ifr) == -1:
+            raise OSError(errno, strerror(errno))
+
+    def unconfigure(self):
+        cdef defs.ifreq ifr
+        cdef defs.vlanreq vlr
+
+        memset(&vlr, 0, cython.sizeof(ifr))
+        strcpy(ifr.ifr_name, self.name)
+        strcpy(vlr.vlr_parent, '\0')
+        vlr.vlr_tag = 0
+        ifr.ifr_ifru.ifru_data = <defs.caddr_t>&vlr
+
+        if self.ioctl(defs.SIOCSETVLAN, <void*>&ifr) == -1:
+            raise OSError(errno, strerror(errno))
+
+    property parent:
+        def __get__(self):
+            cdef defs.vlanreq vlr
+            memset(&vlr, 0, cython.sizeof(vlr))
+
+    property tag:
+        def __get__(self):
+            cdef defs.vlanreq vlr
+            memset(&vlr, 0, cython.sizeof(vlr))
 
 
 cdef class RoutingPacket(object):
     cdef readonly object data
     cdef char *buffer
+    cdef size_t bufsize
     cdef defs.rt_msghdr *rt_msg
 
-    def __init__(self, data):
-        self.data = data
-        self.buffer = <char*>data
+    def __init__(self, data=None):
+        if data:
+            self.data = data
+            self.bufsize = len(data)
+            self.buffer = <char*>data
+
         self.rt_msg = <defs.rt_msghdr*>self.buffer
 
     def __getstate__(self):
@@ -599,6 +646,11 @@ cdef class RoutingPacket(object):
             'version': self.version,
             'length': self.length
         }
+
+    cdef _grow(self, amount):
+        self.bufsize += sizeof(defs.sockaddr_in)
+        self.buffer = <char*>realloc(self.buffer, self.bufsize)
+        self.rt_msg = <defs.rt_msghdr*>self.buffer
 
     cdef _align_sa_len(self, int length):
         return 1 + (length - 1 | cython.sizeof(long) - 1)
@@ -659,9 +711,39 @@ cdef class RoutingPacket(object):
 
         return result
 
+    cdef _pack_sockaddrs(self, int start_offset, addrs):
+        cdef defs.sockaddr* sa
+        cdef defs.sockaddr_in* sin
+        cdef defs.sockaddr_in6* sin6
+        cdef int ptr
+        cdef int mask
+
+        mask = 0
+        ptr = start_offset
+
+        for rtax, i in addrs.items():
+            mask |= (1 << rtax)
+            print 'adding sockaddr for {0}, ptr = {1}'.format(rtax, ptr)
+            if i.version == 4:
+                self._grow(cython.sizeof(defs.sockaddr_in))
+                sin = <defs.sockaddr_in*>&self.buffer[ptr]
+                sin.sin_family = defs.AF_INET
+                sin.sin_len = cython.sizeof(defs.sockaddr_in)
+                sin.sin_addr.s_addr = socket.htonl(int(i))
+                ptr += sizeof(defs.sockaddr_in)
+
+            if i.version == 6:
+                pass
+
+        print 'end bufsize = {0}'.format(self.bufsize)
+        return mask
+
     property type:
         def __get__(self):
             return RoutingMessageType(self.rt_msg.rtm_type)
+
+        def __set__(self, value):
+            self.rt_msg.rtm_type = value
 
     property version:
         def __get__(self):
@@ -802,6 +884,11 @@ cdef class RoutingMessage(RoutingPacket):
     cdef int addrs_mask
 
     def __init__(self, packet=None):
+        if not packet:
+            self.bufsize = cython.sizeof(defs.rt_msghdr)
+            self.buffer = <char*>malloc(self.bufsize)
+            memset(self.buffer, 0, self.bufsize)
+
         super(RoutingMessage, self).__init__(packet)
         self.addrs_mask = self.rt_msg.rtm_addrs
         self.addrs = self._parse_sockaddrs(cython.sizeof(defs.rt_msghdr), self.addrs_mask)
@@ -825,6 +912,15 @@ cdef class RoutingMessage(RoutingPacket):
 
         return state
 
+    def as_buffer(self):
+        self.rt_msg.rtm_version = 5
+        self.rt_msg.rtm_addrs = self._pack_sockaddrs(cython.sizeof(defs.rt_msghdr), self.addrs)
+        print 'bufsize: {0}'.format(self.bufsize)
+        self.rt_msg.rtm_msglen = self.bufsize
+        print 'rtm_addrs: {0}'.format(self.rt_msg.rtm_addrs)
+        print 'rtm_msglen: {0}'.format(self.rt_msg.rtm_msglen)
+        return self.buffer[:self.bufsize]
+
     property errno:
         def __get__(self):
             return self.rt_msg.rtm_errno
@@ -836,7 +932,9 @@ cdef class RoutingMessage(RoutingPacket):
     property interface:
         def __get__(self):
             cdef char ifname[defs.IFNAMSIZ]
-            return defs.if_indextoname(self.rt_msg.rtm_index, ifname)
+            cdef char* result
+            result = defs.if_indextoname(self.rt_msg.rtm_index, ifname)
+            return result if result != NULL else None
 
     property network:
         def __get__(self):
@@ -845,12 +943,18 @@ cdef class RoutingMessage(RoutingPacket):
 
             return None
 
+        def __set__(self, value):
+            self.addrs[defs.RTAX_DST] = value
+
     property netmask:
         def __get__(self):
             if defs.RTAX_NETMASK in self.addrs:
                 return self.addrs[defs.RTAX_NETMASK]
 
             return None
+
+        def __set__(self, value):
+            self.addrs[defs.RTAX_NETMASK] = value
 
     property gateway:
         def __get__(self):
@@ -860,16 +964,17 @@ cdef class RoutingMessage(RoutingPacket):
             return None
 
         def __set__(self, value):
-            pass
+            self.addrs[defs.RTAX_GATEWAY] = value
 
 
 class RoutingTable(object):
     def __init__(self):
         pass
 
-    def __send_message(self, buf):
-        sock = socket.socket(socket.AF_ROUTE, socket.SOCK_RAW, 0)
-        os.write(sock.fileno(), buf)
+    def __send_message(self, msg):
+        sock = RoutingSocket()
+        sock.open()
+        sock.write_message(msg)
         sock.close()
 
     @property
@@ -889,11 +994,21 @@ class RoutingTable(object):
 
             yield msg
 
-    def add(self, af, network, gateway):
-        pass
+    def add(self, af, network, netmask, gateway):
+        msg = RoutingMessage()
+        msg.type = RoutingMessageType.ADD
+        msg.network = network
+        msg.netmask = netmask
+        msg.gateway = gateway
+        self.__send_message(msg)
 
-    def delete(self, af, network):
-        pass
+    def delete(self, af, network, netmask, gateway):
+        msg = RoutingMessage()
+        msg.type = RoutingMessageType.DELETE
+        msg.network = network
+        msg.netmask = netmask
+        msg.gateway = gateway
+        self.__send_message(msg)
 
 
 class RoutingSocket(object):
@@ -929,6 +1044,9 @@ class RoutingSocket(object):
 
         return RoutingMessage(packet)
 
+    def write_message(self, message):
+        os.write(self.socket.fileno(), message.as_buffer())
+
 
 def list_interfaces(name=None):
     cdef defs.ifaddrs* ifa
@@ -946,7 +1064,10 @@ def list_interfaces(name=None):
         name = ifa.ifa_name
 
         if name not in result:
-            result[name] = NetworkInterface(name)
+            if name.startswith('vlan'):
+                result[name] = VlanInterface(name)
+            else:
+                result[name] = NetworkInterface(name)
 
         nic = result[name]
         sa = ifa.ifa_addr
