@@ -80,8 +80,8 @@ var DriveInfo2 = React.createClass({
   paint: function() {
 	var width = this.state.width;
 	var height = this.state.height;
-	var x = width/2;
-	var y = height/2;
+	var x = parseInt(width/2);
+	var y = parseInt(height/2);
 	var context = this.state.context;
 	var temp = this.state.temp.toString()+this.state.tempUnits;
 	var sn = this.state.sn;
@@ -104,7 +104,7 @@ var DriveInfo2 = React.createClass({
 
   	context.clearRect(0, 0, width, height);
 
-    context.drawImage(hddImage, 11, 2);
+    context.drawImage(hddImage, 19, 6);
 
 
   	context.beginPath();
@@ -128,22 +128,22 @@ var DriveInfo2 = React.createClass({
     context.fillText(temp,width-30,30);
     context.fillText("OK",width-30,75);
     context.font = "13px Open Sans";
-    context.fillText("da2 - 6.0 TB",x,height-18);
+    context.fillText("da2 - 6.0 TB",x,height-28);
     context.font = "11px Open Sans";
     context.fillStyle = "DimGray";
-  	context.fillText("SN: "+ sn,x,height-4);
+  	context.fillText("SN: "+ sn,x,height-14);
 
   } else {
     if (ticks === 2 || ticks === 4)
     {
       if (this.state.temp < 60){
-        context.drawImage(ledGreenImage, 107, 109);
+        context.drawImage(ledGreenImage, 115, 113);
       } else {
-        context.drawImage(ledRedImage, 107, 109);
+        context.drawImage(ledRedImage, 115, 113);
       }
 
     } else {
-      context.drawImage(ledOffImage, 107, 109);
+      context.drawImage(ledOffImage, 115, 113);
     }
   }
 
@@ -159,7 +159,7 @@ var DriveInfo2 = React.createClass({
          title      =  {this.props.title}
          size       =  {this.props.size} >
 
-        <canvas ref="canvas" width={150} height={150} />
+        <canvas ref="canvas" width={165} height={165} />
       </Widget>
     );
   }

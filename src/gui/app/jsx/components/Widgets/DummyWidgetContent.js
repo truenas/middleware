@@ -8,7 +8,10 @@ var Widget  = 	require("../Widget");
 
 var DummyWidgetContent = React.createClass({
   render: function() {
-
+    var elementStyle = {
+      margin: "0px",
+      padding: "0px"
+    };
     return (
       <Widget
     	   positionX  =  {this.props.positionX}
@@ -16,7 +19,7 @@ var DummyWidgetContent = React.createClass({
     	   title      =  {this.props.title}
     	   size       =  {this.props.size} >
 
-        <h3>{"It works!"}</h3>
+        <h3 style={elementStyle}>{"It works!"}</h3>
       </Widget>
     );
   }

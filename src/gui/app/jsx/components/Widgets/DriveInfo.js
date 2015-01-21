@@ -3,7 +3,6 @@
 "use strict";
 
 var React   =   require("react");
-var D3      =   require("d3");
 
 var Widget  = 	require("../Widget");
 
@@ -48,8 +47,8 @@ var DriveInfo = React.createClass({
   paint: function() {
 	var width = this.state.width;
 	var height = this.state.height;
-	var x = width/2;
-	var y = height/2;
+	var x = parseInt(width/2);
+	var y = parseInt(height/2);
 	var context = this.state.context;
 	var temp = this.state.temp.toString()+this.state.tempUnits;
 	var sn = this.state.sn;
@@ -85,7 +84,7 @@ var DriveInfo = React.createClass({
    	context.textAlign = 'center';
 	context.textBaseline = 'middle';
 	context.fillText(temp,width-30,30);
-	context.fillText(sn,x,height-15);
+	context.fillText(sn,x,height-25);
 
 
     context.rotate(Math.PI / 1.33);
@@ -102,8 +101,6 @@ var DriveInfo = React.createClass({
   },
 
   render: function() {
-
-  	var version = D3.version;
     return (
       <Widget
     	   positionX  =  {this.props.positionX}
@@ -111,7 +108,7 @@ var DriveInfo = React.createClass({
     	   title      =  {this.props.title}
     	   size       =  {this.props.size} >
 
-        <canvas ref="canvas" width={150} height={150} />
+        <canvas ref="canvas" width={165} height={165} />
       </Widget>
     );
   }

@@ -20,7 +20,7 @@ var Widget = React.createClass({
         <header>
           <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
         </header>
-        <div className="widgetContent">
+        <div className="widget-content">
           { this.props.children }
         </div>
       </div>
