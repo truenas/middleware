@@ -11,6 +11,7 @@ var React = require("react");
 
 var Viewer   = require("../../components/Viewer");
 var UserView = require("./Users/UserView");
+var UserEdit = require("./Users/UserEdit");
 
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
@@ -149,6 +150,7 @@ var Users = React.createClass({
                 formatData  = { formatData }
                 itemData    = { itemData }
                 ItemView    = { UserView }
+                EditView    = { UserEdit }
                 Editor      = { this.props.activeRouteHandler }>
         </Viewer>
       );

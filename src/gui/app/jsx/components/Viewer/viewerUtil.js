@@ -7,6 +7,9 @@
 "use strict";
 
 var React = require("react");
+var TWBS  = require("react-bootstrap");
+
+var Icon  = require("../../components/Icon");
 
 var viewerUtil = exports;
 

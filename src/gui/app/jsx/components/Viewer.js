@@ -314,6 +314,7 @@ var Viewer = React.createClass({
                                 formatData   = { this.props.formatData }
                                 itemData     = { this.props.itemData }
                                 ItemView     = { this.props.ItemView }
+                                EditView     = { this.props.EditView }
                                 Editor       = { this.props.Editor } /> );
         case "icon":
           return( <IconViewer filteredData = { this.state.filteredData }
@@ -321,6 +322,7 @@ var Viewer = React.createClass({
                               searchString = { this.state.searchString }
                               formatData   = { this.props.formatData }
                               ItemView     = { this.props.ItemView }
+                              EditView     = { this.props.EditView }
                               Editor       = { this.props.Editor } /> );
         case "table":
           return( <TableViewer filteredData = { this.state.filteredData }
@@ -329,6 +331,7 @@ var Viewer = React.createClass({
                                formatData   = { this.props.formatData }
                                tableCols    = { this.state.tableCols }
                                ItemView     = { this.props.ItemView }
+                               EditView     = { this.props.EditView }
                                Editor       = { this.props.Editor } /> );
         case "heir":
           // TODO: Heirarchical Viewer

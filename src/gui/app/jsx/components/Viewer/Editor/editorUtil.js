@@ -7,71 +7,62 @@
 
 "use strict";
 
-var React = require("react");
+// var React = require("react");
 var TWBS  = require("react-bootstrap");
 
-var Icon  = require("../../../components/Icon");
+// var Icon  = require("../../../components/Icon");
 
 var editorUtil = exports;
 
-// Lazy helper for potentially unknown types returned from middleware
-editorUtil.identifyAndWrite = function( entry ) {
-  switch ( typeof entry ) {
-    case "string":
-    case "number":
-      return editorUtil.writeString( entry );
+editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeHandler ) {
+  var formElement;
 
-    case "boolean":
-      return editorUtil.writeBool( entry );
+  switch ( displayKeys["formElement"] ) {
+    case "input":
+      formElement = editorUtil.createInput( value, displayKeys, changeHandler );
+      break;
+
+    case "textarea":
+      formElement = editorUtil.createTextarea( value, displayKeys, changeHandler );
+      break;
+
+    case "checkbox":
+      formElement = editorUtil.createCheckbox( value, displayKeys, changeHandler );
+      break;
 
     default:
-      return false;
-  }
-};
-
-// Return a string if it's defined and non-zero length
-editorUtil.writeString = function( entry, falseValue ) {
-  if ( entry ) {
-    return entry;
-  } else {
-    return falseValue ? falseValue : "--";
-  }
-};
-
-// Return a check mark if true
-editorUtil.writeBool = function( entry ) {
-  if ( entry ) {
-    return (
-      <Icon className = "text-primary"
-            glyph     = "check" />
-    );
-  } else {
-    return "--";
-  }
-};
-
-// A simple data cell whose title is a string, and whose value is represented
-// based on its type (eg. check mark for boolean)
-editorUtil.DataCell = React.createClass({
-    propTypes: {
-        title: React.PropTypes.string.isRequired
-      , entry: React.PropTypes.oneOfType([
-            React.PropTypes.string
-          , React.PropTypes.bool
-          , React.PropTypes.number
-        ]).isRequired
-    }
-  , render: function() {
-      if ( typeof this.props.entry !== "undefined" ) {
-        return (
-          <TWBS.Col className="text-center"
-                    xs={6} sm={4}>
-            <h4 className="text-muted">{ this.props.title }</h4>
-            <h4>{ editorUtil.identifyAndWrite( this.props.entry ) }</h4>
-          </TWBS.Col>
-        );
+      if ( displayKeys["formElement"] ) {
+        console.warn( displayKeys["formElement"] + " for value '" + value + "' is of unrecognized type" );
       } else {
-        return null;
+        console.warn( value + " didn't have a defined formElement property" );
       }
-    }
-});
+      formElement = editorUtil.createInput( value, displayKeys, changeHandler );
+      break;
+  }
+
+  return formElement;
+
+};
+
+editorUtil.createInput = function ( value, displayKeys, changeHandler ) {
+
+  return(
+    <TWBS.Input type        = "text"
+           label            = { displayKeys["name"] }
+           value            = { value }
+           onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+           labelClassName   = "col-xs-4"
+           wrapperClassName = "col-xs-8" />
+  );
+};
+
+editorUtil.createTextarea = function ( value, displayKeys, changeHandler ) {
+  return(
+    <TWBS.Input type        = "textarea"
+           label            = { displayKeys["name"] }
+           value            = { value }
+           onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+           labelClassName   = "col-xs-4"
+           wrapperClassName = "col-xs-8" />
+  );
+};

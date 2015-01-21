@@ -9,6 +9,7 @@
           "key"         : "username"
         , "name"        : "Username"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : true
       }
@@ -16,6 +17,7 @@
           "key"         : "full_name"
         , "name"        : "Full Name"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : true
       }
@@ -23,6 +25,7 @@
           "key"         : "builtin"
         , "name"        : "Built-in User"
         , "type"        : "boolean"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : true
       }
@@ -30,6 +33,7 @@
           "key"         : "email"
         , "name"        : "Email Address"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -37,6 +41,7 @@
           "key"         : "group"
         , "name"        : "Group"
         , "type"        : "number"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : true
       }
@@ -44,6 +49,7 @@
           "key"         : "home"
         , "name"        : "Home Directory"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : false
       }
@@ -51,6 +57,7 @@
           "key"         : "locked"
         , "name"        : "Locked Account"
         , "type"        : "boolean"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -58,6 +65,7 @@
           "key"         : "password_disabled"
         , "name"        : "Password Disabled"
         , "type"        : "boolean"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : true
       }
@@ -65,6 +73,7 @@
           "key"         : "shell"
         , "name"        : "Shell"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -72,6 +81,7 @@
           "key"         : "smbhash"
         , "name"        : "SMB Hash"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : false
       }
@@ -79,6 +89,7 @@
           "key"         : "sshpubkey"
         , "name"        : "SSH Public Key"
         , "type"        : "string"
+        , "formElement" : "textarea"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -86,6 +97,7 @@
           "key"         : "sudo"
         , "name"        : "sudo Allowed"
         , "type"        : "boolean"
+        , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -93,6 +105,7 @@
           "key"         : "id"
         , "name"        : "User ID"
         , "type"        : "number"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : true
       }
@@ -100,6 +113,7 @@
           "key"         : "unixhash"
         , "name"        : "Unix Hash"
         , "type"        : "string"
+        , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : false
       }

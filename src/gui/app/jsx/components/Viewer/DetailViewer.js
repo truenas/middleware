@@ -106,7 +106,10 @@ var DetailNavSection = React.createClass({
 var DetailViewer = React.createClass({
 
     propTypes: {
-        itemData     : React.PropTypes.object.isRequired
+        Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , itemData     : React.PropTypes.object.isRequired
       , filteredData : React.PropTypes.object.isRequired
       , formatData   : React.PropTypes.object.isRequired
       , searchString : React.PropTypes.string
@@ -157,7 +160,8 @@ var DetailViewer = React.createClass({
           <this.props.Editor inputData  = { this.props.inputData }
                              itemData   = { this.props.itemData }
                              formatData = { this.props.formatData }
-                             ItemView   = { this.props.ItemView } />
+                             ItemView   = { this.props.ItemView }
+                             EditView   = { this.props.EditView } />
         </div>
       );
     }

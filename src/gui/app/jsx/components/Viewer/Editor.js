@@ -8,21 +8,27 @@ var React = require("react");
 var Editor = React.createClass({
 
    propTypes: {
-      itemData     : React.PropTypes.object.isRequired
-    , inputData    : React.PropTypes.array.isRequired
-    , formatData   : React.PropTypes.object.isRequired
+      itemData   : React.PropTypes.object.isRequired
+    , inputData  : React.PropTypes.array.isRequired
+    , formatData : React.PropTypes.object.isRequired
+    , ItemView   : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
+    , EditView   : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
   }
 
   , getInitialState: function() {
       return {
-        targetItem: this.changeTargetItem( this.props.params )
+          targetItem  : this.changeTargetItem( this.props.params )
+        , currentMode : "view"
       };
     }
 
   , componentWillReceiveProps: function( nextProps ) {
       // TODO: Optimize based on changing props. Might need a shouldComponentUpdate.
+      var nextTargetItem = this.changeTargetItem( nextProps.params );
+
       this.setState({
-        targetItem: this.changeTargetItem( nextProps.params )
+          targetItem  : nextTargetItem
+        , currentMode : ( nextTargetItem[ this.props.formatData["selectionKey"] ] !== this.state.targetItem[ this.props.formatData["selectionKey"] ] ? "view" : this.state.currentMode )
       });
     }
 
@@ -37,9 +43,30 @@ var Editor = React.createClass({
       );
     }
 
+  , handleViewChange: function ( nextMode, event ) {
+      this.setState({ currentMode: nextMode });
+    }
+
   , render: function() {
+      var displayComponent;
+
+      switch ( this.state.currentMode ) {
+
+        default:
+        case "view":
+          displayComponent = this.props.ItemView;
+          break;
+
+        case "edit":
+          displayComponent = this.props.EditView;
+          break;
+
+      }
+
       return (
-        <this.props.ItemView item={ this.state.targetItem } />
+        <displayComponent handleViewChange = { this.handleViewChange }
+                          item             = { this.state.targetItem }
+                          formatData       = { this.props.formatData } />
       );
     }
 
