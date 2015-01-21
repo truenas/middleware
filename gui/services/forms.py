@@ -377,13 +377,6 @@ class NFSForm(ModelForm):
         ):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
-    def done(self, *args, **kwargs):
-        if self.instance._original_nfs_srv_v4 != self.instance.nfs_srv_v4:
-            if self.instance.nfs_srv_v4:
-                 notifier().start("nfsv4")
-            else:
-                 notifier().stop("nfsv4")
-
 
 class FTPForm(ModelForm):
 
