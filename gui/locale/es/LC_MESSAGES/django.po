@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2014-09-17 14:20+0000\n"
-"Last-Translator: Boredoom <imboredoom@gmail.com>\n"
+"PO-Revision-Date: 2015-01-20 15:08+0000\n"
+"Last-Translator: ramagenoval <ramagenoval@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1410963656.0\n"
+"X-POOTLE-MTIME: 1421766506.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6922,7 +6922,6 @@ msgid "Locked"
 msgstr "Bloqueado"
 
 #: api/resources.py:986
-#, fuzzy
 msgid "on every %(days)s"
 msgstr "Cada %s dias"
 
@@ -6933,16 +6932,15 @@ msgstr "From %(principio)s through %(final)s, %(repite)s"
 #: jails/forms.py:182
 #: jails/forms.py:629
 msgid "No jail root configured."
-msgstr ""
+msgstr "Ninguna jaula configurada para root"
 
 #: jails/forms.py:516
 msgid "autostart"
 msgstr "Inicio Automático"
 
 #: jails/forms.py:906
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "La ruta no puede ser montada %s"
+msgstr "La ruta no puede ser montada %(source)s: %(error)s"
 
 #: jails/models.py:103
 #, fuzzy
@@ -6955,18 +6953,16 @@ msgid "IPv4 bridge netmask"
 msgstr "Máscara de Red IPv4"
 
 #: jails/models.py:128
-#, fuzzy
 msgid "IPv6 address"
 msgstr "Dirección IPv6"
 
 #: jails/models.py:173
 msgid "MAC"
-msgstr ""
+msgstr "MAC"
 
 #: jails/models.py:332
-#, fuzzy
 msgid "Jail Root"
-msgstr "Ruta del jail"
+msgstr "Jaula del root"
 
 #: jails/models.py:333
 msgid "Path where to store jail data"
@@ -6978,11 +6974,11 @@ msgstr ""
 
 #: jails/models.py:343
 msgid "IPv4 network start address for jails and plugins"
-msgstr ""
+msgstr "Dirección de inicio de red IPv4 para jaulas y plugins."
 
 #: jails/models.py:348
 msgid "IPv4 network end address for jails and plugins"
-msgstr ""
+msgstr "Dirección de fin de red IPv4 para jaulas y plugins."
 
 # Esto debería ser el prefijo, al no haber distinción de redes (todas las IPv6 son o de enlace o globales) no existe la máscara de red para declarar la visibilidad de una red.
 #: jails/models.py:352
@@ -7010,20 +7006,18 @@ msgstr ""
 
 #: jails/models.py:486
 msgid "Template must have 0 instances!"
-msgstr ""
+msgstr "La plantilla debe tener 0 instancias!"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr ""
+msgstr "No se ha configurado la Jaula raiz!"
 
 #: jails/models.py:513
 #: jails/models.py:514
-#, fuzzy
 msgid "Jail Templates"
-msgstr "Ruta del jail"
+msgstr "Plantilla de Jaula"
 
 #: jails/models.py:533
-#, fuzzy
 msgid "Read-Only"
 msgstr "Solo lectura"
 
@@ -7051,14 +7045,12 @@ msgid "Failed to create directory %(name)s: %(error)s"
 msgstr "No puedo recuperar %(url)s: %(error)s"
 
 #: jails/views.py:95
-#, fuzzy
 msgid "Jail successfully edited."
-msgstr "Jail importado satisfactoriamente."
+msgstr "Jaula editada satisfactoriamente."
 
 #: jails/views.py:135
-#, fuzzy
 msgid "Jail successfully started."
-msgstr "Jail importado satisfactoriamente."
+msgstr "Jaula iniciada satisfactoriamente."
 
 #: jails/views.py:399
 #, fuzzy
@@ -7067,7 +7059,7 @@ msgstr "El conjunto de datos ha sido edidato correctamente."
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "Sin Token RPC!"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -7085,18 +7077,15 @@ msgstr ""
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
 msgid "None requested"
-msgstr ""
+msgstr "Ninguna solicitud."
 
 #: network/forms.py:380
-#, fuzzy
 msgid "The IP \"%s\" is not valid"
 msgstr "La IP '%s' no es valida"
 
 #: network/forms.py:477
-#, fuzzy
 msgid "The name must be vlanX where X is a number. Example: vlan0"
-msgstr ""
-"Los nombres de interfaz deben ser vlanX donde X es un número. Ejemplo: vlan0."
+msgstr "El nombre debe ser vlanX donde X es un número. Ejemplo: vlan0."
 
 #: network/models.py:82
 #, fuzzy
@@ -7112,24 +7101,21 @@ msgid "Host name data base"
 msgstr ""
 
 #: network/models.py:415
-#, fuzzy
 msgid "LAGG Interface Group"
 msgstr "Grupo de Interfaz LAGG"
 
 #: network/models.py:441
-#, fuzzy
 msgid "Link Aggregation Member"
-msgstr "Agregar Enlaces"
+msgstr "Enlace para agregar Miembros."
 
 #: network/models.py:442
-#, fuzzy
 msgid "Link Aggregation Members"
-msgstr "Agregar Enlaces"
+msgstr "Enlace para agregar Miembros."
 
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: plugins/forms.py:84
 msgid ""
@@ -7159,9 +7145,8 @@ msgid "Plugin"
 msgstr "Plugins"
 
 #: plugins/models.py:217
-#, fuzzy
 msgid "URL for the plugins repository"
-msgstr "Ruta al directorio de los Plugins"
+msgstr "URL para el repositorio de Plugins"
 
 #: plugins/views.py:196
 #, fuzzy
@@ -7180,14 +7165,12 @@ msgstr "La ruta no es un directorio."
 
 #: services/forms.py:671
 #: services/forms.py:679
-#, fuzzy
 msgid "Spaces or number signs are not allowed."
-msgstr "Las comillas \"\" no están permitidas"
+msgstr "No se admiten espacios o caracteres numéricos."
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Confirmar la contraseña de Administrador"
+msgstr "Confirme la contraseña de la cuenta de dominio."
 
 #: services/forms.py:927
 #, fuzzy
@@ -7196,7 +7179,7 @@ msgstr "Secreto (Confirmar)"
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr ""
+msgstr "Serial no encontrado y glabel fallido para %(disk)s: %(error)s"
 
 #: services/forms.py:1659
 #, fuzzy
@@ -7227,25 +7210,32 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Este parámetro booleano controla el comportamiento de smbd(8) cuando se "
+"recibe una petición de protocolo \"abierto para la ejecución\" de un cliente "
+"Windows. En Samba 3.6 y anteriores, el derecho de ejecución en la ACL no se "
+"verificó, por lo que un cliente podría ejecutar un archivo, incluso si no "
+"hubiera derechos de ejecución en el mismo. En Samba 4.0, esto se ha "
+"solucionado por defecto, es decir, cuando este parámetro se establece en "
+"\"Falso\", \"abierto para la ejecución\" se encuentra denegado cuando los "
+"permisos de ejecución no están presentes. Si este parámetro se establece en "
+"\"True\", Samba no comprueba los permisos de ejecución en \"abierto para la "
+"ejecución\", restableciendo así el comportamiento de Samba 3.6"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Allow non-root mount"
-msgstr "Permitir login de root"
+msgstr "Permitir montaje No-Root "
 
 #: services/models.py:350
-#, fuzzy
 msgid "Bind IP Addresses"
-msgstr "Dirección IPv4"
+msgstr "Dirección IPv4 enalzada"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
 msgstr ""
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "Servidor NTP 1"
+msgstr "Servidor IP"
 
 #: services/models.py:997
 #, fuzzy
@@ -7259,7 +7249,7 @@ msgstr "Puerto remoto"
 
 #: services/models.py:1180
 msgid "Message which will be displayed to the user when they initially login."
-msgstr ""
+msgstr "Mensaje que sera mostrado al usuario cuando se loguee por primera vez."
 
 #: services/models.py:1211
 msgid ""
@@ -7282,15 +7272,15 @@ msgstr ""
 
 #: services/models.py:1300
 msgid "TLS common name required"
-msgstr ""
+msgstr "Se requiere nombre común TLS"
 
 #: services/models.py:1304
 msgid "TLS enable diagnostics"
-msgstr ""
+msgstr "Diagnósticos TLS disponibles."
 
 #: services/models.py:1320
 msgid "TLS no session reuse required"
-msgstr ""
+msgstr "No se requiere reutilizacion de la sesión TLS"
 
 #: services/models.py:1332
 #, fuzzy
@@ -7303,28 +7293,24 @@ msgstr ""
 
 #: services/models.py:1569
 #: services/models.py:1570
-#, fuzzy
 msgid "NT4 Domain"
-msgstr "Dominio"
+msgstr "Dominio NT4"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Contraseña de la cuenta de Administrador de dominio"
+msgstr "Nombre de la cuenta del domino unida como"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
-msgstr "Contraseña de la cuenta de Administrador de dominio"
+msgstr "Password de cuenta de dominio"
 
 #: services/models.py:1609
 msgid "Use keytab"
 msgstr ""
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Fichero keytab de Kerberos"
+msgstr "Archivo keytab de Kerberos"
 
 #: services/models.py:1629
 msgid "Set this if you want to allow Trusted Domains."
@@ -7344,13 +7330,12 @@ msgid "Kerberos Password Server"
 msgstr ""
 
 #: services/models.py:1710
-#, fuzzy
 msgid "NIS domain"
-msgstr "Dominio"
+msgstr "Dominio NIS"
 
 #: services/models.py:1722
 msgid "Cause ypbind to run in secure mode"
-msgstr ""
+msgstr "Hace que ypbind se ejecute en modo seguro."
 
 #: services/models.py:1735
 #: services/models.py:1736
@@ -7378,32 +7363,28 @@ msgid "Specify the physical location of the host"
 msgstr ""
 
 #: services/models.py:2009
-#, fuzzy
 msgid "Informational"
-msgstr "Informal"
+msgstr "Informativo"
 
 #: services/models.py:2010
-#, fuzzy
 msgid ""
 "Report as informational in the system log if the temperature is greater or "
 "equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Reporte si la temperatura es mayor o igual a N grados centígrados. 0 para "
-"desactivar"
+"Marcar como importante en el Log del sistema si la temperatura es mayor o "
+"igual que N grados Celsius. 0 para desactivar"
 
 #: services/models.py:2017
-#, fuzzy
 msgid ""
 "Report as critical in the system log and send an email if the temperature is "
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Reporte si la temperatura es mayor o igual a N grados centígrados. 0 para "
-"desactivar"
+"Marca como critico en el Log del sistema y envía un e-mail si la temperatura "
+"es mayor o igual a N grados Celsius. 0 para desactivar."
 
 #: services/models.py:2064
-#, fuzzy
 msgid "Domain Name in old format, eg EXAMPLE"
-msgstr "Nombre del grupo de trabajo (Ej: WORKGROUP)"
+msgstr "Nombre del Dominio en formato antiguo (Ej: EXAMPLE)"
 
 #: services/models.py:2075
 msgid "DNS Backend"
@@ -7435,28 +7416,31 @@ msgstr "Ruta"
 
 #: sharing/forms.py:136
 #: sharing/forms.py:141
-#, fuzzy
 msgid "The umask must be between 000 and 777."
-msgstr "Este valor debe estar comprendido entre 0 y 1000, ambos inclusive."
+msgstr "Este valor de umask debe estar comprendido entre 000 y 777."
 
 #: sharing/forms.py:253
 msgid "Paths for a NFS share must reside within the same filesystem"
 msgstr ""
+"Ruta para recursos compartidos NFS debe residir dentro del mismo sistema de "
+"archivo."
 
 #: sharing/forms.py:260
 msgid "You cannot share a mount point and subdirectories all at once"
 msgstr ""
+"No se puede compartir un punto y subdirectorios de montaje de una sola vez"
 
 #: sharing/forms.py:297
 msgid ""
 "The network %s is already being shared and cannot be used twice for the same "
 "filesystem"
 msgstr ""
+"La red %s ya se encuentra compartida y no puede ser usada dos veces por el "
+"mismo sistema de archivos."
 
 #: sharing/models.py:48
-#, fuzzy
 msgid "Apply Default Permissions"
-msgstr "Permisos de Archivo por defecto"
+msgstr "Aplicar permisos por defecto."
 
 #: sharing/models.py:87
 msgid ""
@@ -7871,12 +7855,10 @@ msgid "Debug3"
 msgstr "Depurar3"
 
 #: choices.py:688
-#, fuzzy
 msgid "Local 2"
 msgstr "Local 2"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
 msgstr "Local 5"
 
@@ -7908,9 +7890,8 @@ msgstr "Salida de pool no se pudo analizar, esta el pool importado?"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Instantánea no valida              "
+msgstr "Instantánea invalida"
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
@@ -7942,9 +7923,8 @@ msgid "Jail"
 msgstr "Jaula"
 
 #: jails/admin.py:186
-#, fuzzy
 msgid "Edit Jail"
-msgstr "Editar Portal"
+msgstr "Editar Jaula"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
@@ -7955,7 +7935,7 @@ msgstr "Actualizar plugin"
 #: jails/forms.py:260
 #: jails/utils.py:628
 msgid "Unable to find template!"
-msgstr ""
+msgstr "No se puede encontrar la plantilla!"
 
 #: jails/forms.py:517
 #: jails/models.py:192
@@ -7973,9 +7953,8 @@ msgid "Create destination directory if it does not exist"
 msgstr "Crear directorio destino si no existe"
 
 #: jails/models.py:74
-#, fuzzy
 msgid "Jail Name"
-msgstr "Nombre del Jail"
+msgstr "Nombre de jaula"
 
 #: jails/models.py:84
 #, fuzzy
@@ -7984,12 +7963,11 @@ msgstr "Dirección IPv4"
 
 #: jails/models.py:116
 msgid "IPv4 bridge aliases"
-msgstr ""
+msgstr "alias del puente IPv4 "
 
 #: jails/models.py:296
-#, fuzzy
 msgid "This jail is required by %d plugin(s)"
-msgstr "Este campo es requerido para registro anónimo"
+msgstr "Esta Jaula es requerida por el plugin %d "
 
 #: jails/models.py:337
 #, fuzzy
@@ -7997,9 +7975,8 @@ msgid "IPv4 Network"
 msgstr "Máscara de Red IPv4"
 
 #: jails/models.py:347
-#, fuzzy
 msgid "IPv4 Network End Address"
-msgstr "Dirección IPv4"
+msgstr "Dirección de fin de red IPv4."
 
 #: jails/models.py:357
 #, fuzzy
@@ -8008,40 +7985,36 @@ msgstr "Dirección IPv6"
 
 #: jails/models.py:377
 #: jails/models.py:378
-#, fuzzy
 msgid "Jails Configuration"
-msgstr "Configuración Global"
+msgstr "Configuracion de Jaulas"
 
 #: jails/models.py:428
-#, fuzzy
 msgid "Architecture"
-msgstr "Arquitectura del Plugin ( x86, x64)"
+msgstr "Arquitectura"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
 msgstr ""
 
 #: jails/views.py:156
-#, fuzzy
 msgid "Jail successfully stopped."
-msgstr "Jail importado satisfactoriamente."
+msgstr "Jaula detenida satisfactoriamente."
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Copia de Seguridad"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
 msgstr ""
 
 #: network/admin.py:44
-#, fuzzy
 msgid "IPv4 Addresses"
-msgstr "Dirección IPv4"
+msgstr "Direcciónes IPv4"
 
 #: network/forms.py:138
 msgid "Only one interface can be used for DHCP"
-msgstr ""
+msgstr "Solo que puede utilizar una interface para DHCP."
 
 #: network/forms.py:151
 msgid "Only one interface can have IPv6 autoconfiguration enabled"
@@ -8054,7 +8027,7 @@ msgstr ""
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
-msgstr ""
+msgstr "Ud. necesita un dominio, ej: hostname.domain"
 
 #: network/models.py:83
 msgid ""
@@ -8081,14 +8054,12 @@ msgstr ""
 
 #: plugins/admin.py:59
 #: plugins/admin.py:66
-#, fuzzy
 msgid "Install"
-msgstr "Instalado..."
+msgstr "Instalar"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
-msgstr "Plugin Instalado"
+msgstr "Instalar Plugin"
 
 #: plugins/models.py:102
 #, fuzzy
@@ -8096,29 +8067,25 @@ msgid "Plugin jail name"
 msgstr "Nombre del Plugin"
 
 #: plugins/models.py:180
-#, fuzzy
 msgid "Plugin Kernel Module"
-msgstr "Habilitar Plugin"
+msgstr "Plugin de modulo Kernel"
 
 #: plugins/models.py:215
 msgid "Repository URL"
-msgstr ""
+msgstr "URL Repositorio "
 
 #: plugins/plugin.py:119
-#, fuzzy
 msgid "Failed to download %(url)s: %(error)s"
-msgstr "No puedo recuperar %(url)s: %(error)s"
+msgstr "No se pudo descargar %(url)s: %(error)s"
 
 #: plugins/views.py:171
-#, fuzzy
 msgid "Plugin not installed"
-msgstr "No hay Plugins instalados"
+msgstr "Plugin No instalado"
 
 #: plugins/views.py:181
 #: plugins/views.py:242
-#, fuzzy
 msgid "Invalid plugin"
-msgstr "Prefijo inválido"
+msgstr "Plugin Invalido"
 
 #: plugins/views.py:192
 #: plugins/views.py:250
@@ -8139,14 +8106,12 @@ msgid "Kerberos keytab"
 msgstr "Fichero keytab de Kerberos"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Esta IP esta en uso."
+msgstr "Esta LUN ID ya esta en uso."
 
 #: services/forms.py:1561
-#, fuzzy
 msgid "This IP and port are already in use."
-msgstr "Esta IP esta en uso."
+msgstr "Esta IP y puerto ya se encuentran en uso."
 
 #: services/models.py:224
 #, fuzzy
@@ -8154,13 +8119,13 @@ msgid "Hostnames lookups"
 msgstr "Nombre de anfitrión (Hostname)"
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Permitir GIDs (Identificadores De Grupo) repetidas"
+msgstr "Permitir ejecutar siempre"
 
 #: services/models.py:334
+#, fuzzy
 msgid "Serve UDP NFS clients"
-msgstr ""
+msgstr "Servicio cliente UDP NSF"
 
 #: services/models.py:340
 msgid ""
@@ -8169,10 +8134,14 @@ msgid ""
 "vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
 "NFS requests from reserved ports only."
 msgstr ""
+"Permite peticiones no-root para ser servido. Esto sólo debe especificarse si "
+"hay clientes que lo requieran. Se borrará automáticamente la bandera "
+"vfs.nfsrv.nfs_privport sysctl, el cual controla si el núcleo aceptará "
+"peticiones NFS sólo de puertos reservados."
 
 #: services/models.py:359
 msgid "mountd(8) bind port"
-msgstr ""
+msgstr "puerto de unión mountd(8)"
 
 #: services/models.py:376
 msgid ""
@@ -8186,13 +8155,13 @@ msgid "Initiator side user name."
 msgstr "Secreto de Iniciador"
 
 #: services/models.py:925
-#, fuzzy
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a comma to separate multiple alias names."
 msgstr ""
-"Nombre o Alias del destino. Esta opción puede aparecer multiples veces, por "
-"cada dominio que tenga la misma IP. Usar el espacio (SPACE) como separador"
+"Alias de nombre de Host. Esta opción puede aparecer múltiples veces, por "
+"cada dominio que tenga la misma IP. Usar la coma como separador de múltiples "
+"Alias"
 
 #: services/models.py:952
 #, fuzzy
@@ -8206,7 +8175,7 @@ msgstr "Modificar Usuario"
 
 #: services/models.py:1177
 msgid "Display Login"
-msgstr ""
+msgstr "Mostrar Login"
 
 #: services/models.py:1196
 #, fuzzy
@@ -8217,22 +8186,20 @@ msgstr ""
 "Directorio (0777 por defecto)."
 
 #: services/models.py:1308
-#, fuzzy
 msgid "TLS export certificate data"
-msgstr "Certificado autofirmado"
+msgstr "Certificado de datos exportados TLS."
 
 #: services/models.py:1312
-#, fuzzy
 msgid "TLS no certificate request"
-msgstr "Certificado autofirmado"
+msgstr "No se solicita certificado TLS"
 
 #: services/models.py:1316
 msgid "TLS no empty fragments"
-msgstr ""
+msgstr "Sin fragmentos vacios TLS"
 
 #: services/models.py:1324
 msgid "TLS export standard vars"
-msgstr ""
+msgstr "Estándar de exportación de variables TLS."
 
 #: services/models.py:1336
 msgid "TLS IP address required"
@@ -8255,14 +8222,12 @@ msgid "Hostname of the domain controller to use."
 msgstr ""
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Nombre de dominio"
+msgstr "cuenta de Nombre de dominio"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Contraseña de la cuenta de Administrador de dominio"
+msgstr "Password de cuenta de dominio"
 
 #: services/models.py:1623
 #, fuzzy
@@ -8280,35 +8245,32 @@ msgstr "Tiempo de espera"
 
 #: services/models.py:1663
 msgid "Timeout for AD related commands."
-msgstr ""
+msgstr "Tiempo de espera agotado para comandos relacionados con AD"
 
 #: services/models.py:1667
-#, fuzzy
 msgid "DNS timeout"
-msgstr "Tiempo de espera"
+msgstr "Tiempo de espera DNS agotado "
 
 #: services/models.py:1668
 msgid "Timeout for AD DNS queries."
-msgstr ""
+msgstr "Tiempo de espera agotado para solicitudes AD DNS"
 
 #: services/models.py:1711
 #, fuzzy
 msgid "NIS domain name"
-msgstr "Nombre de dominio"
+msgstr "Nombre de dominio NIS"
 
 #: services/models.py:1716
-#, fuzzy
 msgid "NIS servers"
-msgstr "Servidores NTP"
+msgstr "Servidores NIS"
 
 #: services/models.py:1717
 msgid "Comma delimited list of NIS servers"
-msgstr ""
+msgstr "Lista de servidores NIS delimitadas por coma"
 
 #: services/models.py:1721
-#, fuzzy
 msgid "Secure mode"
-msgstr "Modo de Energía"
+msgstr "Modo seguro"
 
 #: services/models.py:1726
 msgid "Manycast"
@@ -8322,21 +8284,21 @@ msgstr ""
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2025
-#, fuzzy
 msgid "Destination email address. Separate email addresses by commas"
 msgstr ""
-"Dirección e-mail de destino, separar con punto y coma \";\" si son 2 o más."
+"Dirección e-mail de destino. Separar con punto y coma \";\" si son 2 o más "
+"direcciones."
 
 #: services/models.py:2058
 msgid "Realm"
-msgstr ""
+msgstr "Dominio"
 
 #: services/models.py:2059
 msgid "Realm Name, eg EXAMPLE.ORG"
-msgstr ""
+msgstr "Nombre de domino, Ej: EXAMPLE.ORG"
 
 #: services/models.py:2088
 msgid "Domain and Forest Level, eg 2003"
@@ -8344,26 +8306,27 @@ msgstr ""
 
 #: sharing/forms.py:320
 msgid "You need at least one path for the share"
-msgstr ""
+msgstr "Necesitas al menos una ruta para el recurso compartido."
 
 #: sharing/models.py:49
 msgid "Recursively set sane default windows permissions on share"
 msgstr ""
+"Aplicar recursivamente los mismos permisos por defecto de windows en los "
+"recursos compartidos"
 
 #: sharing/models.py:208
-#, fuzzy
 msgid "Default umask"
-msgstr "Por Defecto"
+msgstr "umask por defecto"
 
 #: sharing/models.py:231
-#, fuzzy
 msgid "Authorized networks"
-msgstr "Red Autorizada"
+msgstr "Redes Autorizadas"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid "Authorized IP addresses or hosts"
-msgstr "Red Autorizada o IP"
+msgstr ""
+"Este es el puerto donde WebDAV esta ejecutandose. <br>No use un puerto que "
+"ya se encuentra en uso por otro servicio (ej: 22 para SSH)."
 
 #: sharing/models.py:288
 msgid "The specified user's permissions are used by all clients"
@@ -8884,12 +8847,10 @@ msgid "Local 1"
 msgstr "Local 1"
 
 #: choices.py:689
-#, fuzzy
 msgid "Local 3"
 msgstr "Local 3"
 
 #: choices.py:690
-#, fuzzy
 msgid "Local 4"
 msgstr "Local 4"
 
@@ -8899,7 +8860,6 @@ msgid "Local 6"
 msgstr "Local 6"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
 msgstr "Local 7"
 
@@ -8938,18 +8898,16 @@ msgstr "Inicio Automático"
 
 #: jails/admin.py:189
 #: jails/nav.py:264
-#, fuzzy
 msgid "Add Storage"
-msgstr "Almacenamiento"
+msgstr "Añadir Almacenamiento"
 
 #: jails/admin.py:201
 msgid "Stop"
 msgstr ""
 
 #: jails/forms.py:486
-#, fuzzy
 msgid "Path does not exist!"
-msgstr "La ruta no existe."
+msgstr "La ruta no existe!"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -8957,16 +8915,15 @@ msgstr ""
 
 #: jails/forms.py:827
 msgid "This shouldn't happen, but the jail could not be found"
-msgstr ""
+msgstr "Esto no debería suceder, pero la jaula no pudo ser encontrada."
 
 #: jails/hook.py:13
 #: jails/models.py:324
 #: jails/models.py:325
 #: jails/nav.py:47
 #: templates/jails/index.html:17
-#, fuzzy
 msgid "Jails"
-msgstr "Jail IP"
+msgstr "jaulas"
 
 #: jails/models.py:91
 #, fuzzy
@@ -8979,12 +8936,10 @@ msgid "IPv4 aliases"
 msgstr "Alias"
 
 #: jails/models.py:122
-#, fuzzy
 msgid "IPv4 default gateway"
 msgstr "Puerta de Enlace IPv4 predeterminada"
 
 #: jails/models.py:135
-#, fuzzy
 msgid "IPv6 prefix length"
 msgstr "Longitud del prefijo IPv6"
 
@@ -9008,13 +8963,12 @@ msgid "IPv6 bridge aliases"
 msgstr ""
 
 #: jails/models.py:167
-#, fuzzy
 msgid "IPv6 default gateway"
 msgstr "Puerta de Enlace IPv6 predeterminada"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
-msgstr ""
+msgstr "Lista delimitada con coma de sysctl's"
 
 #: jails/models.py:342
 #, fuzzy
@@ -9031,12 +8985,11 @@ msgstr ""
 
 #: jails/models.py:422
 msgid "OS"
-msgstr ""
+msgstr "OS"
 
 #: jails/nav.py:70
-#, fuzzy
 msgid "Add Jails"
-msgstr "Añadir %s"
+msgstr "Agregar Jaulas"
 
 #: jails/nav.py:100
 #, fuzzy
@@ -9062,20 +9015,17 @@ msgid "Unable to determine IPv4 for plugin"
 msgstr "No puedo eliminar el Plugin."
 
 #: jails/views.py:115
-#, fuzzy
 msgid "Storage successfully added."
-msgstr "El Conjunto de datos (dataset) ha sido borrado correctamente."
+msgstr "Almacenamiento agregado satisfactoriamente."
 
 #: jails/views.py:177
-#, fuzzy
 msgid "Jail successfully deleted."
-msgstr "%s ha sido borrado correctamente."
+msgstr "Jaula eliminada satisfactoriamente."
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Acción"
+msgstr "Activo"
 
 #: middleware/notifier.py:3822
 #, fuzzy
@@ -9100,32 +9050,28 @@ msgid "Canceled"
 msgstr "Cancelar"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Estado"
+msgstr "Estado de Media."
 
 #: network/admin.py:49
-#, fuzzy
 msgid "IPv6 Addresses"
-msgstr "Dirección IPv6"
+msgstr "Direcciónes IPv6"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Cambiar"
+msgstr "Canal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
 msgstr ""
 
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "Editado satisfactoriamente"
+msgstr "IPMI Editado satisfactoriamente"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "IPMI fallido."
 
 #: plugins/models.py:103
 #, fuzzy
@@ -9133,9 +9079,8 @@ msgid "Jail where the plugin is installed"
 msgstr "No hay Plugins instalados"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Página no encontrada"
+msgstr "Jaula no encontrada"
 
 #: plugins/views.py:205
 #, fuzzy
@@ -9158,10 +9103,8 @@ msgid "Server maximum protocol"
 msgstr ""
 
 #: services/models.py:298
-#, fuzzy
 msgid "Enable/disable home directories for afp user."
-msgstr ""
-"Esto habilita\\ deshabilita directorios (home) para el usuario de samba."
+msgstr "Habilita/Deshabilita directorios Home para usuarios afp."
 
 #: services/models.py:351
 msgid ""
@@ -9170,6 +9113,10 @@ msgid ""
 "specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
 "and if IPv6 is enabled, ::1 to the list."
 msgstr ""
+"Especifique las direcciones IP específicas (separados por comas) que unen "
+"las solicitudes de TCP y UDP. Esta opción se puede especificar varias veces. "
+"Si no se especifica IP se unirá a INADDR_ANY. Se añadirá automáticamente "
+"127.0.0.1 y si IPv6 está habilitado, :: 1 a la lista."
 
 #: services/models.py:364
 msgid ""
@@ -9194,13 +9141,15 @@ msgstr ""
 
 #: services/models.py:874
 msgid "LUN ID"
-msgstr ""
+msgstr "LUN ID"
 
 #: services/models.py:916
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"La IP del cliente se detecta llamando 'url' desde este 'ip_server_name: "
+"port'. Por defecto para checkip.dyndns.org:80 /."
 
 #: services/models.py:1018
 #, fuzzy
@@ -9241,15 +9190,17 @@ msgid "SFTP Log Level"
 msgstr "Nivel de registro"
 
 #: services/models.py:1453
+#, fuzzy
 msgid ""
 "Specifies the facility code that is used when logging messages from sftp-"
 "server."
 msgstr ""
+"Especifica el código de instalación que se utiliza como mensajes de loggin "
+"de sftp-server."
 
 #: services/models.py:1619
-#, fuzzy
 msgid "Verbose logging"
-msgstr "Detallado"
+msgstr "Ingreso con registro detallado."
 
 #: services/models.py:1624
 msgid "Set this if your Active Directory has UNIX extensions."
@@ -9277,9 +9228,8 @@ msgstr ""
 
 #: services/models.py:2068
 #: services/models.py:2069
-#, fuzzy
 msgid "Server Role"
-msgstr "Nombre del Servidor"
+msgstr "Rol del servidor"
 
 #: services/models.py:2083
 #, fuzzy
@@ -9287,13 +9237,12 @@ msgid "DNS Forwarder IP Address"
 msgstr "Dirección IP de la controladora"
 
 #: sharing/forms.py:174
-#, fuzzy
 msgid "This is not a valid network: %s"
-msgstr "Esta no es una red válida"
+msgstr "Esta no es una Red Valida: %s"
 
 #: sharing/forms.py:288
 msgid "This option is only available once per mountpoint"
-msgstr ""
+msgstr "Esta opción sólo está disponible una vez por punto de montaje."
 
 #: sharing/models.py:94
 #, fuzzy
@@ -9315,17 +9264,19 @@ msgid "Check this to enable Time Machine backups on this share."
 msgstr ""
 
 #: sharing/models.py:232
-#, fuzzy
 msgid ""
 "Networks that are authorized to access the NFS share. Specify network "
 "numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
 msgstr ""
-"Red que esta autorizada a acceder a un compartido NFS o una lista de "
-"direcciones IP.  EJ: 192.168.1.1/24 o 192.168.1.1 192.168.1.2 192.168.1.3"
+"Redes que están autorizadas a acceder a un recurso compartido NFS. "
+"Especifique el numero de la forma: 1.2.3.4/xx donde xx es el numero de bits "
+"de la mascara de subred."
 
 #: sharing/models.py:239
 msgid "IP addresses or hostnames that are authorized to access the NFS share."
 msgstr ""
+"Direcciones IP o Nombre de Host que estan autorizados a acceder al recurso "
+"compartido NFS"
 
 #: sharing/models.py:246
 #, fuzzy
@@ -9654,7 +9605,7 @@ msgstr[1] ""
 
 #: templates/freeadmin/help.html:44
 msgid "Professional Support"
-msgstr ""
+msgstr "Soporte profesional"
 
 #: templates/jails/delete.html:3
 #: templates/jails/start.html:3
@@ -9762,7 +9713,7 @@ msgstr "Está seguro que desea editar esto?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
-msgstr ""
+msgstr "Este cambio provocara un evento failover. Desea continuar? "
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
@@ -9775,7 +9726,7 @@ msgstr "Nombre de dominio"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "Se interrumpirá la conectividad de la red. Desea continuar?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -9783,7 +9734,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "El Nombre de extensión debe ser único."
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -9798,12 +9749,10 @@ msgstr ""
 "se permiten debido a problemas con CIFS.                "
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "NT4 recarga Fallada"
+msgstr "NT4 falló la recarga"
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
 msgstr "Ha fallado el reinicio del servicio AD (ActiveDirectory)"
 
@@ -9821,9 +9770,8 @@ msgid "Enable"
 msgstr "Habilitado"
 
 #: directoryservice/models.py:295
-#, fuzzy
 msgid "Bind DN"
-msgstr "Union de raiz DN"
+msgstr "enlace DN"
 
 #: directoryservice/models.py:302
 #, fuzzy
@@ -9832,9 +9780,8 @@ msgstr "Contraseña antigua"
 
 #: services/forms.py:753
 #: services/forms.py:896
-#, fuzzy
 msgid "Certificate"
-msgstr "Certificado SSL"
+msgstr "Certificado"
 
 #: services/forms.py:864
 #, fuzzy
@@ -9927,7 +9874,7 @@ msgstr "Habilitar SSL/TLS"
 
 #: services/models.py:596
 msgid "Allow initiators to xcopy without authenticating to foreign targets."
-msgstr ""
+msgstr "Permitir iniciadores de XCOPY sin autenticarse a objetivos extranjeros."
 
 #: templates/directoryservice/activedirectory_edit.html:8
 #: templates/directoryservice/ldap_edit.html:8
@@ -9939,44 +9886,41 @@ msgstr "Permisos de Directorios"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
 msgstr "anuncio"
 
 #: choices.py:788
-#, fuzzy
 msgid "autorid"
-msgstr "Inicio Automático"
+msgstr "autoria"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "funcion"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Viernes"
+msgstr "librar"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10023,16 +9967,16 @@ msgstr ""
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
-msgstr ""
+msgstr "Rango de tamaño"
 
 #: directoryservice/models.py:184
 msgid ""
@@ -10043,12 +9987,20 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Define el numero de uids/gids disponibles por dominio. El valor mínimo "
+"requerido es 2000. SIDs con RIDs con valores mayores serán mapeados en "
+"rangos de extensión dependiendo de número de rangos disponibles. Si el Back-"
+"end corre fuera de los rango disponible, las solicitudes de asignación para "
+"nuevos dominios (o nuevos rangos de extensiones de dominios ya conocidos) se "
+"ignoran y el mapeo correspondiente se descarta."
 
 #: directoryservice/models.py:197
 msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Activa el módulo en modo de \"sólo lectura\". No se asignaran nuevos rangos "
+"ni se crearan nuevas asignaciones en el contenedor idmap."
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
@@ -10078,7 +10030,7 @@ msgstr ""
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Hash Idmap"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -10086,11 +10038,13 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
+"Define el sufijo base del directorio a utilizar para las entradas de mapeo "
+"SID/uid/gid. Si no se define, idmap_ldap se utilizará por defecto la opción "
+"\"sufijo ldap idmap\" de smb.conf."
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "ID de Usuario"
+msgstr "DN de Usuario"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -10100,15 +10054,20 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
+"Define el DN de usuario que se utilizará en la autenticación. El secreto "
+"para autenticar a este usuario debe ser almacenado con \"idmap secret (see "
+"neto(8))\". Si esta ausente, se utilizan las credenciales LDAP desde la "
+"configuración passdb LDAP, y si éstas también están ausentes, se creara un "
+"enlace anónimo como última alternativa."
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
-msgstr ""
+msgstr "especifique el servidor LDAP para usar las entradas SID/uid/gid."
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP Idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
@@ -10141,25 +10100,26 @@ msgstr ""
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
-msgstr ""
+msgstr "Group Bind Path"
 
 #: directoryservice/models.py:350
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
 msgstr ""
+"Especifique la ruta donde los grupo de objetos pueden ser encontrados en el "
+"servidor LDAP."
 
 #: directoryservice/models.py:355
-#, fuzzy
 msgid "User CN"
-msgstr "Usuario &"
+msgstr "CN de Usuario"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
-msgstr ""
+msgstr "Consulta atributo cn en lugar de uid para el nombre de usuario en LDAP."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
-msgstr ""
+msgstr "CN Realm"
 
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
@@ -10191,9 +10151,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "ID de Usuario"
+msgstr "DN de usuario LDAP"
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10201,16 +10160,21 @@ msgid ""
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"Define el DN de usuario que se usara para autenticar. El secreto para "
+"autenticar a este usuario debe ser almacenado con \"net idmap secret (see "
+"net(8)). Si esta ausente, se utilizara una ruta anónima."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
-msgstr ""
+msgstr "Dominio LDAP"
 
 #: directoryservice/models.py:405
 msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
 msgstr ""
+"Define el dominio a usar en usuario y grupo de nombres. Esto solo se "
+"requiere cuando se usa cn_realm junto con un servidor LDAP stand-alone."
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
@@ -10237,7 +10201,7 @@ msgstr ""
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
 msgid "TDB2 Idmap"
-msgstr ""
+msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
 #, fuzzy
@@ -10251,15 +10215,14 @@ msgstr "Contraseña de la cuenta de Administrador de dominio"
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Por Defecto"
+msgstr "Use el dominio predeterminado."
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
 #: directoryservice/models.py:867
 msgid "Idmap backend"
-msgstr ""
+msgstr "Idmap backend"
 
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
@@ -10273,9 +10236,8 @@ msgid "Initial Wizard"
 msgstr "Iniciador"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Nombre del Plugin"
+msgstr "Fallo la creación del grupo %s"
 
 #: system/forms.py:256
 #, fuzzy
@@ -10399,14 +10361,12 @@ msgid "This field is required to enable NFSv4."
 msgstr "Este campo es obligatorio."
 
 #: services/models.py:351
-#, fuzzy
 msgid "Enable NFSv4"
-msgstr "Habilitar FXP (FTP entre servidores remotos)"
+msgstr "Habilitar NFSv4"
 
 #: services/models.py:354
-#, fuzzy
 msgid "NFSv4 Root Path"
-msgstr "Ruta remota"
+msgstr "NFSv4 Ruta raiz"
 
 #: system/forms.py:1468
 #, fuzzy
@@ -10431,18 +10391,16 @@ msgid "A keytab is required."
 msgstr "Este campo es necesario"
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Fichero keytab de Kerberos"
+msgstr "Dominio Kerberos"
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "KDC for this realm."
-msgstr "Cuota para este conjunto de datos"
+msgstr "KDC para este dominio."
 
 #: directoryservice/models.py:557
 #, fuzzy
@@ -10465,25 +10423,27 @@ msgid ""
 "Points to the server where all the password changes are performed.  If there "
 "is no such entry, the kpasswd port on the admin_server host will be tried."
 msgstr ""
+"Puntos en el servidor donde se llevan a cabo todos los cambios de "
+"contraseña. Si no existe esa entrada, se intentara con el puerto kpasswd en "
+"el host admin_server."
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Principal"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Kerberos principal, eg: primary/instance@REALM"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
-msgstr ""
+msgstr "Keytab"
 
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
 #: services/models.py:1662
-#, fuzzy
 msgid "Kerberos Realm"
-msgstr "Fichero keytab de Kerberos"
+msgstr "Reino Kerberos"
 
 #: services/views.py:269
 #, fuzzy
@@ -10542,7 +10502,7 @@ msgstr "Autenticación Resumida"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10588,23 +10548,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10612,9 +10572,8 @@ msgid "NIS failed to reload."
 msgstr "NT4 recarga Fallada"
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Reiniciar"
+msgstr "Al reiniciar"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10627,9 +10586,8 @@ msgid "Now"
 msgstr "No"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Descripción"
+msgstr "Nombre Descriptivo."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -10639,7 +10597,7 @@ msgstr "Nombre del controlador de dominio"
 
 #: directoryservice/models.py:812
 msgid "FQDN of the global catalog server to use."
-msgstr ""
+msgstr "FQDN del servidor Global Catalog que desea utilizar."
 
 #: directoryservice/models.py:993
 #, fuzzy
@@ -10657,11 +10615,11 @@ msgstr ""
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Motor Idmap"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Esquema Samba"
 
 #: jails/forms.py:92
 #, fuzzy
@@ -10678,31 +10636,26 @@ msgid "Jail Template successfully created."
 msgstr "El conjunto de datos ha sido edidato correctamente."
 
 #: jails/views.py:512
-#, fuzzy
 msgid "Jail Template successfully edited."
-msgstr "El conjunto de datos ha sido edidato correctamente."
+msgstr "Plantilla de jaula editata correctamente."
 
 #: services/forms.py:1541
-#, fuzzy
 msgid "Confirm WebDAV Password"
-msgstr "Confirmar Contraseña"
+msgstr "Confirmar Contraseña WebDAV"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
-msgstr ""
+msgstr "Los puertos HTTP y HTTPS no pueden ser los mismos!"
 
 #: services/forms.py:1628
-#, fuzzy
 msgid "The WebDAV service failed to reload."
-msgstr "Ha fallado el reinicio del servicio AFP"
+msgstr "Ha fallado el reinicio del servicio WebDAV."
 
 #: services/models.py:325
-#, fuzzy
 msgid "Global auxiliary parameters"
-msgstr "Parámetros auxiliares"
+msgstr "Parámetros globales auxiliares"
 
 #: services/models.py:328
-#, fuzzy
 msgid "These parameters are added to [Global] section of afp.conf"
 msgstr "Estos parámetros son añadidos a la sección [Global] de smb.conf"
 
@@ -10951,7 +10904,7 @@ msgstr "Descripción"
 
 #: system/models.py:600
 msgid "Signing Request"
-msgstr ""
+msgstr "Solicitud de firma"
 
 #: system/models.py:601
 #, fuzzy
@@ -10960,7 +10913,7 @@ msgstr "Pegue aqui el contenido de su certificado publico y privado"
 
 #: system/models.py:606
 msgid "Key length"
-msgstr ""
+msgstr "Longitud de clave"
 
 #: system/views.py:163
 #: system/views.py:164
@@ -11222,7 +11175,7 @@ msgstr ""
 #: system/views.py:164
 #: system/views.py:165
 msgid "Clone"
-msgstr ""
+msgstr "Clon"
 
 #: directoryservice/models.py:804
 #, fuzzy
@@ -11230,21 +11183,24 @@ msgid "Site Name"
 msgstr "Nombre del Servidor"
 
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "Name of site to use."
-msgstr "Nombre del Plugin"
+msgstr "Nombre del sitio que desea utilizar."
 
 #: services/models.py:263
 msgid ""
 "This parameter controls whether or not Samba should obey PAM's account and "
 "session management directives"
 msgstr ""
+"Este parámetro controla si Samba debería obedecer a cuenta y de sesión "
+"directivas de gestión del PAM's"
 
 #: services/models.py:268
 msgid ""
 "IP address(es) to bind to. If none specified, all available interfaces that "
 "are up will be listened on."
 msgstr ""
+"Dirección(es) IP a unir. Si no se especifica, se escucharan todas las "
+"interfaces que se encuentren disponibles."
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
@@ -11290,7 +11246,6 @@ msgid "IPv4 DHCP"
 msgstr "DHCP"
 
 #: jails/models.py:383
-#, fuzzy
 msgid "IPv6 Autoconfigure"
 msgstr "Auto configurar IPv6"
 
@@ -11326,7 +11281,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -11405,9 +11360,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:744
-#, fuzzy
 msgid "The authentication method accepted by the target."
-msgstr "El método puede ser aceptado por la controladora."
+msgstr "El método de autenticación aceptado por el objetivo."
 
 #: system/forms.py:1905
 msgid "Current Train"
@@ -11473,13 +11427,12 @@ msgid "Check For Update"
 msgstr ""
 
 #: common/system.py:301
-#, fuzzy
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "Montaje fallido (%(retcode)s) -> %(output)s"
+msgstr "Desmontaje fallido (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr ""
+msgstr "El nombre de la Jaula no puede contener '.'"
 
 #: jails/forms.py:1070
 #, fuzzy
@@ -11492,22 +11445,21 @@ msgid "Unable to determine IPv6 for plugin"
 msgstr "No puedo eliminar el Plugin."
 
 #: services/forms.py:1006
-#, fuzzy
 msgid "The following addresses are not valid: %s"
-msgstr "Los siguientes discos aún tienen pruebas de este tipo: %s"
+msgstr "Las siguientes direcciones no son validas: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr ""
+msgstr "Este grupo de autenticacion no soporta CHAP MUTUAL"
 
 #: services/models.py:440
-#, fuzzy
 msgid "iSNS Servers"
-msgstr "Servidores NTP"
+msgstr "Servidores iSNS"
 
 #: services/models.py:444
+#, fuzzy
 msgid "Pool Available Size Threshold (%)"
-msgstr ""
+msgstr "Tamaño del Pool disponible del umbral (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
@@ -11518,6 +11470,8 @@ msgid ""
 "This is the port at which WebDAV will run on.<br>Do not use a port that is "
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Este es el puerto donde WebDAV esta ejecutandose. <br>No use un puerto que "
+"ya se encuentra en uso por otro servicio (ej: 22 para SSH)."
 
 #: services/models.py:1744
 msgid ""
@@ -11764,17 +11718,16 @@ msgid "Start the Verification process now?"
 msgstr ""
 
 #: directoryservice/models.py:1099
-#, fuzzy
 msgid "LDAP timeout"
-msgstr "Tiempo de espera"
+msgstr "Tiempo de espera LDAP agotado."
 
 #: directoryservice/models.py:1100
 msgid "Timeout for LDAP related commands."
-msgstr ""
+msgstr "Tiempo de espera agotado para comandos relacionados a LDAP."
 
 #: directoryservice/models.py:1105
 msgid "Timeout for LDAP DNS queries."
-msgstr ""
+msgstr "Tiempo de espera agotado para consultas LDAP DNS."
 
 #: directoryservice/models.py:1108
 #, fuzzy
@@ -11866,9 +11819,8 @@ msgstr "Hora del Sistema"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(semana)s semana"
+msgstr "%(semana)s semanas"
 
 #: system/views.py:419
 #, fuzzy
