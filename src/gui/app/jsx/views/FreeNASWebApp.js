@@ -27,7 +27,7 @@ var FreeNASWebApp = React.createClass({
         {/* TODO: Add Modal mount div */}
 
         {/* Modal window for FreeNAS login - hidden when authenticated */}
-        {/* <LoginBox /> */}
+        <LoginBox />
 
         {/* Header containing system status and information */}
         <NotificationBar />
