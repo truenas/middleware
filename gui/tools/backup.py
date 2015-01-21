@@ -79,7 +79,7 @@ DBFILE = '/data/freenas-v1.db'
 PIDFILE = '/var/run/backupd.pid'
 SOCKFILE = '/var/run/backupd.sock'
 VERSIONFILE = '/etc/version'
-BUFSIZE = 16384
+BUFSIZE = 1024 * 16
 
 def main_loop():
 
@@ -230,11 +230,12 @@ class BackupWorker(threading.Thread):
         volumes = dict()
         nf = notifier.notifier()
 
-        for v in Volume.objects.all():
+        for v in Volume.objects.filter(vol_encrypt=0):
             if v.vol_fstype == 'ZFS':
                 pool = nf.zpool_parse(v.vol_name)
                 vol = {
                     "guid": v.vol_guid,
+                    "encrypt": v.vol_encrypt,
                     "encryptkey": v.vol_encryptkey,
                     "fstype": v.vol_fstype,
                     "with-data": self.context.backup_data and v.vol_fstype == 'ZFS',
@@ -385,8 +386,12 @@ class BackupWorker(threading.Thread):
             sftp.chdir('volumes')
 
             # Backup actual data
-            for i in Volume.objects.filter(vol_fstype='ZFS'):
-                proc = subprocess.Popen(['zfs', 'send', '-R', i.vol_name + '@' + snapshot_timestamp], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            for i in Volume.objects.filter(vol_fstype='ZFS', vol_encrypt=0):
+                proc = subprocess.Popen(
+                    ['zfs', 'send', '-R', i.vol_name + '@' + snapshot_timestamp],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    bufsize=-1)
 
                 if self.context.compressed:
                     out = sftp.open('{}.zfs'.format(i.vol_name), 'wx')
@@ -463,12 +468,12 @@ class RestoreWorker(object):
                 if i['fstype'] == 'ZFS':
                     try:
                         if self.compressed:
-                            inp = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r')
+                            inp = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r', bufsize=-1)
                             source = gzip.GzipFile(fileobj=inp, mode='r')
                         else:
                             source = self.sftp.open(os.path.join('volumes', name + '.zfs'), 'r')
 
-                        sink = subprocess.Popen(['zfs', 'receive', '-F', name], stdin=subprocess.PIPE)
+                        sink = subprocess.Popen(['zfs', 'receive', '-F', name], stdin=subprocess.PIPE, bufsize=-1)
 
                         while True:
                             buffer = source.read(BUFSIZE)
@@ -523,16 +528,11 @@ class RestoreWorker(object):
             return False
 
         # 1. Check if we already imported that volume
-        if vol.status != 'UNKNOWN':
+        if vol.status not in ('UNKNOWN', 'LOCKED'):
             print '    Pool already imported and online'
             return True
 
-        # 2. Try to import pool
-        if self.notifier.zfs_import(vol.vol_name, vol.vol_guid):
-            print '    Imported existing volume'
-            return True
-
-        # 3. Try to recreate pool
+        # 2. Try to recreate pool
         grps = {}
         for catname in ('data', 'cache', 'spares', 'logs'):
             groups = volume['{}-vdevs'.format(catname)]
@@ -554,6 +554,7 @@ class RestoreWorker(object):
 
                     print('found {} [{} match]'.format(disk, match))
                     self.used_disks.append(disk)
+                    self.notifier.unlabel_disk(disk)
                     grp['disks'].append(disk)
 
                 grps[group['name']] = grp
@@ -852,10 +853,10 @@ def split_hostport(str):
 def open_ssh_connection(hostport, username, password, use_keys):
         try:
             session = transport.Transport(split_hostport(hostport))
-            session.start_client()
-            session.window_size = (3 * 1024 * 2014) # 3 MB
+            session.window_size = 1024 * 1024 * 1024
             session.packetizer.REKEY_BYTES = pow(2, 48)
             session.packetizer.REKEY_PACKETS = pow(2, 48)
+            session.start_client()
 
             if use_keys:
                 if try_key_auth(session, username):
@@ -889,6 +890,12 @@ def try_key_auth(session, username):
     return False
 
 def ask(context, backup=True):
+    if backup:
+        if len(Volume.objects.exclude(vol_encrypt=0)) > 0:
+            print('WARNING: Your system contains encrypted volumes.')
+            print('WARNING: Backup of encrypted volumes is not supported.')
+            print('WARNING: Encrypted volumes will be skipped.')
+
     while True:
         context.hostport = raw_input("Hostname or IP address: ")
         context.username = raw_input("Username: ")
