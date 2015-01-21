@@ -12,7 +12,8 @@ var FreeNASConstants  = require("../constants/FreeNASConstants");
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
-var _users = [];
+var _updatedOnServer = [];
+var _users           = [];
 
 var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -45,10 +46,19 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   switch( action.type ) {
 
     case ActionTypes.RECEIVE_RAW_USERS:
-      // FIXME: Probably want to do some additional processing here, perhaps
-      // add some metadata?
+
+      // When receiving new data, we can comfortably resolve anything that may
+      // have had an outstanding update indicated by the Middleware.
+      if ( _updatedOnServer.length > 0 ) {
+        _updatedOnServer = _.without( _updatedOnServer, _.pluck( action.rawUsers, "username" ) );
+      }
+
       _users = action.rawUsers;
       UsersStore.emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_CHANGED_USER_IDS:
+      _updatedOnServer.push( payload.changedIDs );
       break;
 
     default:

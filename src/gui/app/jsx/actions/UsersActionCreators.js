@@ -18,4 +18,11 @@ module.exports = {
       });
     }
 
+  , receiveChangedIDs: function( changedIDs ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type       : ActionTypes.RECEIVE_CHANGED_USER_IDS
+        , changedIDs : changedIDs
+      });
+    }
+
 };

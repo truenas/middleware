@@ -43,11 +43,11 @@ var LoginBox = React.createClass({
     }
 
   , updateBoxVisibility: function () {
-        if ( this.state.authenticated ) {
-          this.hideLoginBox();
-        } else {
-          this.showLoginBox();
-        }
+      if ( this.state.authenticated ) {
+        this.hideLoginBox();
+      } else {
+        this.showLoginBox();
+      }
     }
 
   , showLoginBox: function () {

@@ -11,11 +11,13 @@ var UsersActionCreators = require("../actions/UsersActionCreators");
 module.exports = {
 
     subscribe: function() {
-      console.log("Middleware subscribed to Users channel");
+      MiddlewareClient.subscribe( ["users.changed"], function ( changedIDs ) {
+        UsersActionCreators.receiveChangedIDs( changedIDs );
+      });
     }
 
   , unsubscribe: function() {
-      console.log("Middleware unsubscribed to Users channel");
+      MiddlewareClient.unsubscribe( ["users.changed"] );
     }
 
   , requestUsersList: function() {
