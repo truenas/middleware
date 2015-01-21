@@ -53,7 +53,7 @@ var UserEdit = React.createClass({
     }
 
   , render: function() {
-      console.log( this.state.modifiedValues );
+
       var builtInUserAlert = null;
 
       if ( this.props.item["builtin"] ) {
@@ -75,6 +75,7 @@ var UserEdit = React.createClass({
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
+                         disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
 
