@@ -1,2 +1,4 @@
 {% extends "freeadmin/generic_form.html" %}
+<h3>{% trans "Warning!" %}</h3>
+<p>{% trans "Backup of encrypted volumes is not supported. If your system have any, they will be skipped during the backup." %}</p>
 {% block oklabel %}Do backup{% endblock %}
