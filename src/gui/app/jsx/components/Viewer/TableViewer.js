@@ -113,7 +113,7 @@ var TableViewer = React.createClass({
       return(
         <tr key={ index } >
           { this.props.tableCols.map( function( key, index ) {
-              return ( <td key={ index }>{ editorUtil.identifyAndWrite( item[ key ] ) }</td> );
+              return ( <td key={ index }>{ viewerUtil.identifyAndWrite( item[ key ] ) }</td> );
             })
           }
         </tr>

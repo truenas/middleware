@@ -55,8 +55,8 @@ var UserView = React.createClass({
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["username"] }</h3>
-            <h4 className="text-muted">{ editorUtil.writeString( this.props.item["full_name"], "\u200B" ) }</h4>
-            <h4 className="text-muted">{ editorUtil.writeString( this.props.item["email"], "\u200B" ) }</h4>
+              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["full_name"], "\u200B" ) }</h4>
+              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["email"], "\u200B" ) }</h4>
             <hr />
           </TWBS.Col>
         </TWBS.Row>
@@ -66,17 +66,17 @@ var UserView = React.createClass({
 
         {/* Primary user data overview */}
         <TWBS.Row>
-          <editorUtil.DataCell title = { "User ID" }
+            <viewerUtil.DataCell title = { "User ID" }
                                entry = { this.props.item["id"] } />
-          <editorUtil.DataCell title = { "Primary Group" }
+            <viewerUtil.DataCell title = { "Primary Group" }
                                entry = { this.props.item["group"] } />
-          <editorUtil.DataCell title = { "Shell" }
+            <viewerUtil.DataCell title = { "Shell" }
                                entry = { this.props.item["shell"] } />
-          <editorUtil.DataCell title = { "Locked Account" }
+            <viewerUtil.DataCell title = { "Locked Account" }
                                entry = { this.props.item["locked"] } />
-          <editorUtil.DataCell title = { "Sudo Access" }
+            <viewerUtil.DataCell title = { "Sudo Access" }
                                entry = { this.props.item["sudo"] } />
-          <editorUtil.DataCell title = { "Password Disabled" }
+            <viewerUtil.DataCell title = { "Password Disabled" }
                                entry = { this.props.item["password_disabled"] } />
         </TWBS.Row>
 

@@ -24,7 +24,7 @@ var ServiceView = React.createClass({
     var pid = null;
 
     if ( typeof this.props.item["pid"] === "number" ) {
-      pid = <h4 className="text-muted">{ editorUtil.writeString( "PID: " + this.props.item["pid"], "\u200B" ) }</h4>;
+      pid = <h4 className="text-muted">{ viewerUtil.writeString( "PID: " + this.props.item["pid"], "\u200B" ) }</h4>;
     }
 
     return (
@@ -39,7 +39,7 @@ var ServiceView = React.createClass({
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["name"] }</h3>
-            <h4 className="text-muted">{ editorUtil.writeString( this.props.item["state"], "\u200B" ) }</h4>
+            <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["state"], "\u200B" ) }</h4>
             { pid }
             <hr />
           </TWBS.Col>
