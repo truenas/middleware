@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-01-20 15:08+0000\n"
+"PO-Revision-Date: 2015-01-21 11:35+0000\n"
 "Last-Translator: ramagenoval <ramagenoval@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1421766506.0\n"
+"X-POOTLE-MTIME: 1421840155.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6966,11 +6966,11 @@ msgstr "Jaula del root"
 
 #: jails/models.py:333
 msgid "Path where to store jail data"
-msgstr ""
+msgstr "Ruta donde se almacenaran datos de la Jaula."
 
 #: jails/models.py:338
 msgid "IPv4 network range for jails and plugins"
-msgstr ""
+msgstr "Rango de red IPv4 para Jaulas y plugins"
 
 #: jails/models.py:343
 msgid "IPv4 network start address for jails and plugins"
@@ -6993,16 +6993,15 @@ msgstr "Dirección IPv6"
 
 #: jails/models.py:363
 msgid "IPv6 network end address for jails and plugins"
-msgstr ""
+msgstr "Rango de red IPv6 para Jaulas y plugins"
 
 #: jails/models.py:366
-#, fuzzy
 msgid "Collection URL"
-msgstr "Conexiones"
+msgstr "Colección URL"
 
 #: jails/models.py:368
 msgid "URL for the jails index"
-msgstr ""
+msgstr "URL para el indice de las jaulas"
 
 #: jails/models.py:486
 msgid "Template must have 0 instances!"
@@ -7028,7 +7027,7 @@ msgstr "Tipo de sistema de archivos"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr ""
+msgstr "Añadir plantilla de jaula"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -7072,7 +7071,7 @@ msgstr ""
 #: middleware/zfs.py:623
 #: middleware/zfs.py:691
 msgid "In Progress"
-msgstr ""
+msgstr "En Progreso"
 
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
@@ -7098,7 +7097,7 @@ msgstr ""
 
 #: network/models.py:102
 msgid "Host name data base"
-msgstr ""
+msgstr "Base de datos de nombres de Host"
 
 #: network/models.py:415
 msgid "LAGG Interface Group"
@@ -7121,23 +7120,19 @@ msgstr "IPMI"
 msgid ""
 "Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
 "/package-management/' onclick='window.open(this.href);return false;'>"
-msgstr ""
+msgstr "Click aquí para descubrir que son los PBI,s!"
 
 #: plugins/forms.py:100
-#, fuzzy
 msgid "Plugin Jail"
-msgstr "Plugins Jail PBI"
+msgstr "Jaula del complemento"
 
 #: plugins/forms.py:101
-#, fuzzy
 msgid "The plugin jail that the PBI is to be installed in."
-msgstr ""
-"La ruta del jail de los plugins no puede ser la misma o residir dentro de la "
-"ruta de los plugin"
+msgstr "La jaula del complemento donde los PBI esta instalado."
 
 #: plugins/forms.py:210
 msgid "Unable to set repository: %s"
-msgstr ""
+msgstr "Imposible establecer el repositorio: %s"
 
 #: plugins/models.py:112
 #, fuzzy
@@ -7159,9 +7154,8 @@ msgid "This path does not exist."
 msgstr "La ruta %s no existe"
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
-msgstr "La ruta no es un directorio."
+msgstr "Esta ruta no es un directorio."
 
 #: services/forms.py:671
 #: services/forms.py:679
@@ -7182,9 +7176,8 @@ msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
 msgstr "Serial no encontrado y glabel fallido para %(disk)s: %(error)s"
 
 #: services/forms.py:1659
-#, fuzzy
 msgid "A target with that name already exists."
-msgstr "Un grupo con ese nombre ya existe."
+msgstr "Ya existe un objetivo con este nombre."
 
 #: services/models.py:233
 msgid "Server minimum protocol"
@@ -7928,9 +7921,8 @@ msgstr "Editar Jaula"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Actualizar plugin"
+msgstr "Subir Plugin"
 
 #: jails/forms.py:260
 #: jails/utils.py:628
@@ -7957,7 +7949,6 @@ msgid "Jail Name"
 msgstr "Nombre de jaula"
 
 #: jails/models.py:84
-#, fuzzy
 msgid "IPv4 address"
 msgstr "Dirección IPv4"
 
@@ -7970,9 +7961,8 @@ msgid "This jail is required by %d plugin(s)"
 msgstr "Esta Jaula es requerida por el plugin %d "
 
 #: jails/models.py:337
-#, fuzzy
 msgid "IPv4 Network"
-msgstr "Máscara de Red IPv4"
+msgstr "Red IPv4"
 
 #: jails/models.py:347
 msgid "IPv4 Network End Address"
@@ -8018,12 +8008,12 @@ msgstr "Solo que puede utilizar una interface para DHCP."
 
 #: network/forms.py:151
 msgid "Only one interface can have IPv6 autoconfiguration enabled"
-msgstr ""
+msgstr "Solo una interface puede tener habilitada la autoconfiguracion IPv6"
 
 #: network/forms.py:189
 #: network/forms.py:698
 msgid "The network %s is already in use by another NIC."
-msgstr ""
+msgstr "La red %s ya se encuentra en uso por otra NIC."
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
@@ -8051,6 +8041,8 @@ msgid ""
 "This field is appended to /etc/hosts which contains information regarding "
 "known hosts on the network. hosts(5)"
 msgstr ""
+"Este campo se añade a /etc/hosts que contiene informacion sobre los Hosts "
+"conocidos en la Red. hosts(5)"
 
 #: plugins/admin.py:59
 #: plugins/admin.py:66
@@ -8114,9 +8106,8 @@ msgid "This IP and port are already in use."
 msgstr "Esta IP y puerto ya se encuentran en uso."
 
 #: services/models.py:224
-#, fuzzy
 msgid "Hostnames lookups"
-msgstr "Nombre de anfitrión (Hostname)"
+msgstr "Búsquedas de Hostnames."
 
 #: services/models.py:246
 msgid "Allow execute always"
@@ -8855,7 +8846,6 @@ msgid "Local 4"
 msgstr "Local 4"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
 msgstr "Local 6"
 
@@ -8903,7 +8893,7 @@ msgstr "Añadir Almacenamiento"
 
 #: jails/admin.py:201
 msgid "Stop"
-msgstr ""
+msgstr "Detener"
 
 #: jails/forms.py:486
 msgid "Path does not exist!"
@@ -8926,14 +8916,12 @@ msgid "Jails"
 msgstr "jaulas"
 
 #: jails/models.py:91
-#, fuzzy
 msgid "IPv4 netmask"
 msgstr "Máscara de Red IPv4"
 
 #: jails/models.py:97
-#, fuzzy
 msgid "IPv4 aliases"
-msgstr "Alias"
+msgstr "Alias IPv4"
 
 #: jails/models.py:122
 msgid "IPv4 default gateway"
@@ -8954,13 +8942,12 @@ msgid "IPv6 bridge address"
 msgstr "Dirección IPv6"
 
 #: jails/models.py:154
-#, fuzzy
 msgid "IPv6 bridge prefix length"
-msgstr "Longitud del prefijo IPv6"
+msgstr "Longitud del prefijo puente IPv6"
 
 #: jails/models.py:160
 msgid "IPv6 bridge aliases"
-msgstr ""
+msgstr "Alias del puente IPv6"
 
 #: jails/models.py:167
 msgid "IPv6 default gateway"
@@ -8992,27 +8979,23 @@ msgid "Add Jails"
 msgstr "Agregar Jaulas"
 
 #: jails/nav.py:100
-#, fuzzy
 msgid "View Jails"
-msgstr "Ver %s"
+msgstr "Ver jaulas"
 
 #: jails/nav.py:114
-#, fuzzy
 msgid "View Jail Templates"
-msgstr "Ver todas las extensiones"
+msgstr "Ver plantillas de jaula"
 
 #: jails/nav.py:129
 #: plugins/models.py:225
 #: templates/jails/index.html:40
 #: templates/plugins/index.html:20
-#, fuzzy
 msgid "Configuration"
-msgstr "Configuración Global"
+msgstr "Configuración"
 
 #: jails/utils.py:573
-#, fuzzy
 msgid "Unable to determine IPv4 for plugin"
-msgstr "No puedo eliminar el Plugin."
+msgstr "No se puede determinar IPv4 para plugin"
 
 #: jails/views.py:115
 msgid "Storage successfully added."
@@ -9041,13 +9024,12 @@ msgstr "Maestro Local"
 #: middleware/zfs.py:648
 #: middleware/zfs.py:711
 msgid "Completed"
-msgstr ""
+msgstr "Completado"
 
 #: middleware/zfs.py:663
 #: middleware/zfs.py:722
-#, fuzzy
 msgid "Canceled"
-msgstr "Cancelar"
+msgstr "Cancelado"
 
 #: network/admin.py:39
 msgid "Media Status"
@@ -9089,7 +9071,7 @@ msgstr "Nombre del Plugin"
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Usar syslog"
 
 #: services/models.py:226
 msgid ""
@@ -9720,9 +9702,8 @@ msgid "Network connectivity will be interrupted"
 msgstr ""
 
 #: services/models.py:117
-#, fuzzy
 msgid "Domain logons"
-msgstr "Nombre de dominio"
+msgstr "Inicios de sesión de dominio."
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
@@ -9757,15 +9738,13 @@ msgid "Active Directory failed to reload."
 msgstr "Ha fallado el reinicio del servicio AD (ActiveDirectory)"
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Ha fallado el reinicio del servicio AFP"
+msgstr "Fallo el reinicio de LDAP"
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
 msgstr "Habilitado"
 
@@ -9932,7 +9911,7 @@ msgstr "tdb2"
 #: directoryservice/models.py:444
 #: directoryservice/models.py:464
 msgid "Range Low"
-msgstr ""
+msgstr "Rango bajo"
 
 #: directoryservice/models.py:138
 #: directoryservice/models.py:178
@@ -9944,12 +9923,11 @@ msgstr ""
 #: directoryservice/models.py:448
 #: directoryservice/models.py:468
 msgid "Range High"
-msgstr ""
+msgstr "Rango Alto"
 
 #: directoryservice/models.py:142
-#, fuzzy
 msgid "Schema Mode"
-msgstr "Modo de acceso"
+msgstr "Modo de esquema"
 
 #: directoryservice/models.py:145
 msgid ""
@@ -9960,10 +9938,16 @@ msgid ""
 ". Please note that primary group membership is currently always calculated "
 "via the \"primaryGroupID\" LDAP attribute."
 msgstr ""
+"Define el esquema que idmap_ad debe utilizar al consultar Active Directory "
+"con respecto a información de usuarios y grupos. Este puede ser cualquiera "
+"esquema RFC2307 incluido en Windows 2003 R2 o el esquema de Servicio para "
+"Unix (SFU). Para SFU 3.0 o 3.5 por favor elija \"sfu\", para SFU 2.0 elija "
+"\"sfu20\".Tenga en cuenta que la pertenencia al grupo principal en la "
+"actualidad se calcula siempre a través del atributo LDAP \"PrimaryGroupID\"."
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
@@ -10004,16 +9988,16 @@ msgstr ""
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
-msgstr ""
+msgstr "Ignorar Builtin"
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
-msgstr ""
+msgstr "Ignorar cualquier solicitud de mapeo para dominios BUILTIN"
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
 msgid "AutoRID Idmap"
-msgstr ""
+msgstr "AutoRID Idmap"
 
 #: directoryservice/models.py:229
 #, fuzzy
@@ -10091,12 +10075,14 @@ msgstr ""
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr ""
+msgstr "Vincular Ruta de usuario"
 
 #: directoryservice/models.py:343
 msgid ""
 "Specifies the bind path where user objects can be found in the LDAP server."
 msgstr ""
+"Especificar la ruta de enlace donde los objetos de usuario pueden ser "
+"encontrados en el servidor LDAP"
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
@@ -10124,11 +10110,11 @@ msgstr "CN Realm"
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"Anexar @realm a cn de grupos (y Usuarios si user_cn esta seteado) en LDAP"
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Dominio"
+msgstr "Dominio LDAP"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -10138,11 +10124,16 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
+"Cuando se utiliza el servidor LDAP en un servidor de Active Directory, este "
+"permite especificar el dominio donde se acede al servidor Active Directory. "
+"Esto permite el uso de relaciones de confianza, manteniendo todas los "
+"registros RFC 2307 en un mismo lugar. Este parametro es opcional, el valor "
+"predeterminado es para acceder al servidor de AD en el dominio actual para "
+"consultar LDAPrecords. "
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "URL LDAP"
 
 #: directoryservice/models.py:385
 msgid ""
@@ -10197,6 +10188,9 @@ msgid ""
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
 msgstr ""
+"Esta opción se puede utilizar para configurar un programa externo para "
+"llevar a cabo asignaciones de ID en lugar de utilizar el contador tdb. Las "
+"asignaciones serán almacenadas la base de datos int tdb 2 idmap"
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -10204,9 +10198,8 @@ msgid "TDB2 Idmap"
 msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Domain administrator account name"
-msgstr "Contraseña de la cuenta de Administrador de dominio"
+msgstr "Nombre de cuenta del administrador de dominio"
 
 #: directoryservice/models.py:554
 #, fuzzy
@@ -10381,14 +10374,12 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Fichero keytab de Kerberos"
+msgstr "keytab de Kerberos"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Este campo es necesario"
+msgstr ""
 
 #: directoryservice/models.py:549
 msgid "Kerberos realm."
@@ -10403,15 +10394,16 @@ msgid "KDC for this realm."
 msgstr "KDC para este dominio."
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Usuario Administrador"
+msgstr "Admin Server"
 
 #: directoryservice/models.py:560
 msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
+"Especifique el servidor administrador de este reino, donde se realizan todas "
+"las modificaciones a la base de datos."
 
 #: directoryservice/models.py:565
 #, fuzzy
@@ -10506,29 +10498,27 @@ msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Importar un Certificado de Autoridad existente"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Crear un Certificado de Autoridad interno"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Crear un Certificado de Autoridad intermedio"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Importar un Certificado existente"
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Certificado SSL"
+msgstr "Crear un certificado interno"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "Certificado autofirmado"
+msgstr "Crear un certificado de solicitud de firma"
 
 #: choices.py:823
 msgid "512"
@@ -10567,9 +10557,8 @@ msgid "SHA512"
 msgstr "SHA512"
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "NT4 recarga Fallada"
+msgstr "Fallo el reinicio de NIS"
 
 #: api/resources.py:2488
 msgid "On Reboot"
@@ -10578,12 +10567,11 @@ msgstr "Al reiniciar"
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
 msgid "ADEX Idmap"
-msgstr ""
+msgstr "ADEX Idmap"
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "No"
+msgstr "Ahora"
 
 #: directoryservice/models.py:637
 msgid "Descriptive Name."
@@ -10591,9 +10579,8 @@ msgstr "Nombre Descriptivo."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "FQDN of the domain controller to use."
-msgstr "Nombre del controlador de dominio"
+msgstr "FQDN del controlador de dominio a usar."
 
 #: directoryservice/models.py:812
 msgid "FQDN of the global catalog server to use."
@@ -10622,18 +10609,16 @@ msgid "Samba Schema"
 msgstr "Esquema Samba"
 
 #: jails/forms.py:92
-#, fuzzy
 msgid "Template"
-msgstr "Ruta del jail"
+msgstr "Plantilla"
 
 #: jails/utils.py:706
 msgid "You need to create a ZFS volume to proceed!"
-msgstr ""
+msgstr "Ud necesita crear un volumen ZFS para proceder!"
 
 #: jails/views.py:492
-#, fuzzy
 msgid "Jail Template successfully created."
-msgstr "El conjunto de datos ha sido edidato correctamente."
+msgstr "Plantilla de jaula creada satisfactoriamente."
 
 #: jails/views.py:512
 msgid "Jail Template successfully edited."
@@ -11178,9 +11163,8 @@ msgid "Clone"
 msgstr "Clon"
 
 #: directoryservice/models.py:804
-#, fuzzy
 msgid "Site Name"
-msgstr "Nombre del Servidor"
+msgstr "Nombre del Sitio"
 
 #: directoryservice/models.py:806
 msgid "Name of site to use."
@@ -11239,11 +11223,13 @@ msgid ""
 "This parameter is designed to control how Winbind retrieves Name Service "
 "Information to construct a user's home directory and login"
 msgstr ""
+"Este parámetro está diseñado para controlar cómo Winbind recupera Nombre de "
+"Información de servicio para construir el directorio home del usuario y de "
+"inicio de sesión"
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "DHCP IPv4"
 
 #: jails/models.py:383
 msgid "IPv6 Autoconfigure"
@@ -11341,7 +11327,7 @@ msgstr ""
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
-msgstr ""
+msgstr "Envoltorio SASL"
 
 #: directoryservice/models.py:860
 msgid ""
@@ -11435,14 +11421,12 @@ msgid "Jail name cannot have '.'"
 msgstr "El nombre de la Jaula no puede contener '.'"
 
 #: jails/forms.py:1070
-#, fuzzy
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "La ruta no puede ser montada %s"
+msgstr "La ruta no puede ser desmontada %(source)s: %(error)s"
 
 #: jails/utils.py:609
-#, fuzzy
 msgid "Unable to determine IPv6 for plugin"
-msgstr "No puedo eliminar el Plugin."
+msgstr "No se puede terminar IPv6 para complementos"
 
 #: services/forms.py:1006
 msgid "The following addresses are not valid: %s"
