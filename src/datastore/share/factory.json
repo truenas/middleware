@@ -467,6 +467,7 @@
             "system.hostname": "freenas.local",
             "system.motd": "FreeBSD ?.?.?  (UNKNOWN)\n\nFreeNAS (c) 2009-2014, The FreeNAS Development Team\nAll rights reserved.\nFreeNAS is released under the modified BSD license.\nFor more information, documentation, help or support, go here:\nhttp://freenas.org",
             "system.shells": ["/bin/sh", "/bin/csh", "/usr/local/bin/zsh", "/usr/local/bin/bash", "/usr/local/bin/cli"],
+			"system.boot_pool_name": "freenas-boot",
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
@@ -490,7 +491,9 @@
             "service.sshd.allow_password_auth": true,
             "service.sshd.allow_pubkey_auth": true,
             "service.ftp.enable": true,
-            "service.ftp.port": 21
+            "service.ftp.port": 21,
+			"service.snmp.enable": true,
+			"service.collectd.enable": true
         }
     },
     {
@@ -538,6 +541,13 @@
 				"name": "hosts",
 				"dependencies": [
 					"file:hosts"
+				]
+			},
+			"52B83614-F3DD-47EC-A41B-39D297FE2ED8": {
+				"name": "collectd",
+				"dependencies": [
+					"group:services",
+					"file:local/collectd.conf"
 				]
 			}
         }
@@ -616,7 +626,14 @@
                 "settings": [
                     "service.snmp.*"
                 ]
-            }
+            },
+			"7498B5D8-457F-442B-BF48-ED29D8DB5FC5": {
+				"name": "collectd",
+				"service-name": "collectd",
+				"etcd-group": "collectd",
+				"pidfile": "/var/run/collectd.pid",
+				"builtin": true
+			}
         }
     }
 
