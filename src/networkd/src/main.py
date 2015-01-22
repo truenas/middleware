@@ -47,7 +47,7 @@ DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 
 
 def convert_aliases(entity):
-    for i in entity['aliases']:
+    for i in entity.get('aliases', []):
         addr = netif.InterfaceAddress()
         addr.af = getattr(netif.AddressFamily, i['type'])
         addr.address = ipaddress.ip_address(i['address'])
@@ -63,6 +63,55 @@ def convert_aliases(entity):
             addr.dest_address = ipaddress.ip_address(i['dest-address'])
 
         yield addr
+
+
+def convert_route(entity):
+    if not entity:
+        return None
+
+    if entity['network'] == 'default':
+        entity['network'] = '0.0.0.0'
+        entity['netmask'] = '0.0.0.0'
+
+    return netif.Route(
+        entity['network'],
+        entity['netmask'],
+        entity.get('gateway'),
+        entity.get('interface')
+    )
+
+
+def describe_route(route):
+    return '{0}/{1} via {2}'.format(route.network, route.netmask, route.gateway)
+
+
+def filter_routes(routes):
+    """
+    Filter out routes for loopback addresses and local subnets
+    :param routes: routes list
+    :return: filtered routes list
+    """
+
+    aliases = [i.addresses for i in netif.list_interfaces().values()]
+    aliases = reduce(lambda x, y: x+y, aliases)
+    aliases = filter(lambda a: a.af == netif.AddressFamily.INET, aliases)
+    aliases = [ipaddress.ip_interface(u'{0}/{1}'.format(a.address, a.netmask)) for a in aliases]
+
+    for i in routes:
+        if type(i.gateway) is str:
+            continue
+
+        if i.af != netif.AddressFamily.INET:
+            continue
+
+        found = True
+        for a in aliases:
+            if i.network in a.network:
+                found = False
+                break
+
+        if found:
+            yield i
 
 
 class RoutingSocketEventSource(threading.Thread):
@@ -190,12 +239,22 @@ class RoutingSocketEventSource(threading.Thread):
                         message.netmask
                     ))
 
-
-
+                self.context.connection.emit_event('network.interface.changed', {
+                    'operation': 'update',
+                    'ids': [entity['id']]
+                })
 
             if type(message) is netif.RoutingMessage:
+                if message.errno != 0:
+                    continue
+
                 if message.type == netif.RoutingMessageType.ADD:
+                    self.context.logger.info('Route to {0} added'.format(describe_route(message.route)))
                     self.client.emit_event('network.route.added', message.__getstate__())
+
+                if message.type == netif.RoutingMessageType.DELETE:
+                    self.context.logger.info('Route to {0} deleted'.format(describe_route(message.route)))
+                    self.client.emit_event('network.route.deleted', message.__getstate__())
 
         rtsock.close()
 
@@ -270,19 +329,60 @@ class ConfigurationService(RpcService):
     def configure_routes(self):
         rtable = netif.RoutingTable()
         routes = rtable.routes
-        static_routes = filter(lambda x: netif.RouteFlags.STATIC in x.flags, routes)
+        static_routes = filter_routes(filter(lambda r: netif.RouteFlags.STATIC in r.flags, routes))
+        new_routes = self.datastore.query('network.routes', ('network', '!=', 'default'))
+        default_route_ipv4 = convert_route(self.datastore.get_one('network.routes', ('network', '=', 'default-ipv4')))
 
-        #new_routes = set()
-        #for r in self.datastore.query('network.routes'):
-        #    network = ipaddress.ip_address(r['network'])
-        #    gateway = ipaddress.ip_address(r['gateway'])
-        #    new_routes.add(r)
+        # Default route was deleted
+        if not default_route_ipv4 and rtable.default_route_ipv4:
+            self.logger.info('Removing default route')
+            try:
+                rtable.delete(rtable.default_route_ipv4)
+            except OSError, e:
+                self.logger.error('Cannot remove default route: {0}'.format(str(e)))
 
-        #for r in new_routes - static_routes:
-        #    rtable.add(r)
+        # Default route was added
+        elif not rtable.default_route_ipv4 and default_route_ipv4:
+            self.logger.info('Adding default route via {0}'.format(default_route_ipv4.gateway))
+            try:
+                rtable.add(default_route_ipv4)
+            except OSError, e:
+                self.logger.error('Cannot add default route: {0}'.format(str(e)))
 
-        #for r in static_routes - new_routes:
-        #    rtable.remove(r)
+        # Default route was changed
+        elif rtable.default_route_ipv4 != default_route_ipv4:
+            self.logger.info('Changing default route from {0} to {1}'.format(
+                rtable.default_route.gateway,
+                default_route_ipv4.gateway))
+
+            try:
+                rtable.change(default_route_ipv4)
+            except OSError, e:
+                self.logger.error('Cannot add default route: {0}'.format(str(e)))
+
+
+        # Same thing for IPv6
+        default_route_ipv6 = convert_route(self.datastore.get_one('network.routes', ('network', '=', 'default-ipv5')))
+
+
+        # Now the static routes...
+        old_routes = set(static_routes)
+        new_routes = set([convert_route(e) for e in new_routes])
+
+        for i in old_routes - new_routes:
+            self.logger.info('Removing static route to {0}/{1} via {2}'.format(i.network, i.netmask, i.gateway))
+            self.logger.info(i.__getstate__())
+            try:
+                rtable.delete(i)
+            except OSError, e:
+                self.logger.error('Cannot remove static route to {0}/{1}: {2}'.format(i.network, i.netmask, str(e)))
+
+        for i in new_routes - old_routes:
+            self.logger.info('Adding static route to {0}/{1} via {2}'.format(i.network, i.netmask, i.gateway))
+            try:
+                rtable.add(i)
+            except OSError, e:
+                self.logger.error('Cannot add static route to {0}/{1}: {2}'.format(i.network, i.netmask, str(e)))
 
     def configure_interface(self, name):
         entity = self.datastore.get_one('network.interfaces', ('name', '=', name))
@@ -301,6 +401,9 @@ class ConfigurationService(RpcService):
                 iface = netif.get_interface(name)
             else:
                 raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
+
+        # If it's VLAN, configure parent and tag
+
 
         if entity.get('dhcp'):
             self.logger.info('Trying to acquire DHCP lease on interface {0}...'.format(name))
@@ -363,15 +466,19 @@ class Main:
         self.logger = logging.getLogger('networkd')
 
     def configure_dhcp(self, interface):
+        # Check if dhclient is running
+        if os.path.exists(os.path.join('/var/run', 'dhclient.{0}.pid'.format(interface))):
+            return True
+
         # XXX: start dhclient through launchd in the future
         ret = subprocess.call(['/sbin/dhclient', interface])
         return ret == 0
 
     def interface_detached(self, name):
-        pass
+        self.logger.warn('Interface {0} detached from the system'.format(name))
 
     def interface_attached(self, name):
-        pass
+        self.logger.warn('Interface {0} attached to the system'.format(name))
 
     def scan_interfaces(self):
         self.logger.info('Scanning available network interfaces...')
