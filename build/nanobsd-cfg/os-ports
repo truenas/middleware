@@ -170,7 +170,8 @@ add_port devel/py-natural
 add_port devel/py-enum34
 add_port net/py-ipaddress
 add_port math/py-networkx
-add_port net/py-netifaces
+add_port math/py-pandas
+add_port sysutils/py-psutil
 add_port textproc/py-mako
 add_port www/py-ws4py
 add_port www/py-flup
@@ -218,7 +219,8 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
 				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
 				   OPTIONS_FILE_SET+=RRDTOOL \
-				   OPTIONS_FILE_SET+=STATGRAB
+				   OPTIONS_FILE_SET+=STATGRAB \
+				   OPTIONS_FILE_SET+=MONGODB
 fi
 
 #FIXME: gobject now requires cairo as build dependency
