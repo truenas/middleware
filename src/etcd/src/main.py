@@ -200,7 +200,10 @@ class Main:
             raise OSError("Can't find renderer")
 
         renderer = self.renderers[ext]
-        return renderer.render_template(template_path)
+        try:
+            return renderer.render_template(template_path)
+        except Exception, e:
+            self.logger.warn('Cannot generate file {0}: {1}'.format(file_path, str(e)))
 
     def emit_event(self, name, params):
         self.client.emit_event(name, params)
