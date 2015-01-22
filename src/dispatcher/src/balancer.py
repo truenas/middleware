@@ -57,6 +57,7 @@ class Task(object):
         self.clazz = None
         self.args = None
         self.user = None
+        self.session_id = None
         self.error = None
         self.state = TaskState.CREATED
         self.progress = None
@@ -73,6 +74,7 @@ class Task(object):
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "resources": self.resources,
+            "session": self.session_id,
             "name": self.name,
             "args": self.args,
             "state": self.state,
@@ -186,7 +188,7 @@ class Balancer(object):
         val = validator.DefaultDraft4Validator(schema, resolver=self.dispatcher.rpc.get_schema_resolver(schema))
         return list(val.iter_errors(args))
 
-    def submit(self, name, args):
+    def submit(self, name, args, sender):
         if name not in self.dispatcher.tasks:
             self.logger.warning("Cannot submit task: unknown task type %s", name)
             raise RpcException(errno.EINVAL, "Unknown task type {0}".format(name))
@@ -198,6 +200,8 @@ class Balancer(object):
             raise RpcException(errno.EINVAL, "Schema verification failed", extra=errors)
 
         task = Task(self.dispatcher, name)
+        task.user = sender.user.name
+        task.session_id = sender.session_id
         task.created_at = time.time()
         task.clazz = self.dispatcher.tasks[name]
         task.args = copy.deepcopy(args)
