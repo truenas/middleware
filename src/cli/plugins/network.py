@@ -34,6 +34,11 @@ t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
+class InterfaceCreateCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        pass
+
+
 class InterfaceManageCommand(Command):
     def __init__(self, name, up):
         self.name = name
@@ -46,7 +51,7 @@ class InterfaceManageCommand(Command):
         else:
             return _("Shutdowns an interface")
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         if self.up:
             context.submit_task('network.interface.up', self.name)
         else:
@@ -163,7 +168,6 @@ class AliasesNamespace(EntityNamespace):
     def __init__(self, name, context, parent):
         super(AliasesNamespace, self).__init__(name, context)
         self.parent = parent
-        self.entity = self.parent.entity
         self.allow_edit = False
 
         self.add_property(
@@ -197,17 +201,17 @@ class AliasesNamespace(EntityNamespace):
         self.primary_key = self.get_mapping('address')
 
     def query(self, params):
-        return self.entity.get('aliases', [])
+        return self.parent.entity.get('aliases', [])
 
     def save(self, entity, new):
         if 'aliases' not in self.entity:
-            self.entity['aliases'] = []
+            self.parent.entity['aliases'] = []
 
-        self.entity['aliases'].append(entity)
+        self.parent.entity['aliases'].append(entity)
         self.parent.parent.save(self.entity)
 
     def delete(self, address):
-        self.entity['aliases'] = filter(lambda a: a['address'] != address, self.entity['aliases'])
+        self.parent.entity['aliases'] = filter(lambda a: a['address'] != address, self.entity['aliases'])
         self.parent.parent.save(self.entity)
 
 @description("Static host names database")

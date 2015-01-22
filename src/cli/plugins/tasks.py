@@ -61,7 +61,7 @@ class ListCommand(Command):
 
 @description("Submits new task")
 class SubmitCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         name = args.pop(0)
         context.submit_task(name, *args)
 
