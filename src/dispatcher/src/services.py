@@ -133,6 +133,15 @@ class PluginService(RpcService):
 
         del self.services[name]
 
+    @pass_sender
+    def register_event_type(self, service, event, sender):
+        wrapper = self.RemoteServiceWrapper(sender, service)
+        self.__dispatcher.register_event_type(event, wrapper)
+
+    @pass_sender
+    def unregister_event_type(self, event):
+        self.__dispatcher.unregister_event_type(event)
+
     def wait_for_service(self, name, timeout=None):
         if name in self.services.keys():
             return
@@ -149,8 +158,9 @@ class TaskService(RpcService):
         self.__balancer = context.dispatcher.balancer
         pass
 
-    def submit(self, name, args):
-        tid = self.__balancer.submit(name, args)
+    @pass_sender
+    def submit(self, name, args, sender):
+        tid = self.__balancer.submit(name, args, sender)
         return tid
 
     def status(self, id):

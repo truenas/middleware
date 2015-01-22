@@ -106,11 +106,33 @@ class Plugin(object):
         self.state = self.UNLOADED
 
 
+class EventType(object):
+    def __init__(self, name, source):
+        self.name = name
+        self.source = source
+        self.refcount = 0
+        self.logger = logging.getLogger('EventType:{0}'.format(name))
+
+    def incref(self):
+        if self.refcount == 0 and self.source:
+            self.source.enable(self.name)
+            self.logger.debug('Enabling event source')
+
+        self.refcount += 1
+
+    def decref(self):
+        self.refcount -= 1
+
+        if self.refcount == 0 and self.source:
+            self.source.disable(self.name)
+            self.logger.debug('Disabling event source')
+
+
 class Dispatcher(object):
     def __init__(self):
         self.started_at = None
         self.plugin_dirs = []
-        self.event_types = []
+        self.event_types = {}
         self.event_sources = {}
         self.event_handlers = {}
         self.plugins = {}
@@ -144,6 +166,7 @@ class Dispatcher(object):
         self.require_collection('events', 'serial', 'log')
         self.require_collection('sessions', 'serial', 'log')
         self.require_collection('tasks', 'serial', 'log')
+        self.require_collection('logs', 'uuid', 'log')
 
         self.balancer = Balancer(self)
         self.auth = PasswordAuthenticator(self)
@@ -308,6 +331,12 @@ class Dispatcher(object):
             greenlet = gevent.spawn(source.run)
             self.threads.append(greenlet)
 
+    def register_event_type(self, name, source=None):
+        self.event_types[name] = EventType(name, source)
+
+    def unregister_event_type(self, name):
+        del self.event_types[name]
+
     def register_task_handler(self, name, clazz):
         self.logger.debug("New task handler: %s", name)
         self.tasks[name] = clazz
@@ -394,7 +423,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.server_pending_calls = {}
         self.client_pending_calls = {}
         self.user = None
-        self.session = None
+        self.session_id = None
         self.token = None
         self.event_masks = set()
 
@@ -407,6 +436,15 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
     def on_close(self, reason):
         self.server.connections.remove(self)
+
+        if self.user:
+            self.close_session()
+
+        for mask in self.event_masks:
+            for ev, name in self.dispatcher.event_types.items():
+                if fnmatch.fnmatch(ev, mask):
+                    ev.decref()
+
         self.dispatcher.dispatch_event('server.client_disconnected', {
             'address': self.ws.handler.client_address,
             'description': "Client {0} disconnected".format(self.ws.handler.client_address)
@@ -416,16 +454,33 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if not type(message) is str:
             return
 
-        message = loads(message)
-
-        if "namespace" not in message:
+        try:
+            message = loads(message)
+        except ValueError:
+            self.emit_rpc_error(None, errno.EINVAL, 'Request is not valid JSON')
             return
 
-        getattr(self, "on_{}_{}".format(message["namespace"], message["name"]))(message["id"], message["args"])
+        if 'namespace' not in message:
+            self.emit_rpc_error(None, errno.EINVAL, 'Invalid request')
+            return
+
+        try:
+            method = getattr(self, "on_{}_{}".format(message["namespace"], message["name"]))
+        except AttributeError:
+            self.emit_rpc_error(None, errno.EINVAL, 'Invalid request')
+            return
+
+        method(message["id"], message["args"])
 
     def on_events_subscribe(self, id, event_masks):
         if self.user is None:
             return
+
+        # Increment reference count for any newly subscribed event
+        for mask in set.difference(set(event_masks), self.event_masks):
+            for name, ev in self.dispatcher.event_types.items():
+                if fnmatch.fnmatch(name, mask):
+                    ev.incref()
 
         self.event_masks = set.union(self.event_masks, event_masks)
 
@@ -433,22 +488,29 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if self.user is None:
             return
 
+        # Decrement reference count for any unsubscribed, previously subscribed event
+        for mask in set.union(set(event_masks), self.event_masks):
+            for ev, name in self.dispatcher.event_types.items():
+                if fnmatch.fnmatch(ev, mask):
+                    ev.decref()
+
         self.event_masks = set.difference(self.event_masks, event_masks)
 
     def on_events_event(self, id, data):
-        self.dispatcher.dispatch_event(data["name"], data["args"])
+        self.dispatcher.dispatch_event(data['name'], data['args'])
 
     def on_rpc_auth_service(self, id, data):
-        service_name = data["name"]
+        service_name = data['name']
 
         self.send_json({
-            "namespace": "rpc",
-            "name": "response",
-            "id": id,
-            "args": []
+            'namespace': 'rpc',
+            'name': 'response',
+            'id': id,
+            'args': []
         })
 
         self.user = self.dispatcher.auth.get_service(service_name)
+        self.open_session()
         self.dispatcher.dispatch_event('server.service_logged', {
             'address': self.ws.handler.client_address,
             'name': service_name,
@@ -456,7 +518,8 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         })
 
     def on_rpc_auth_token(self, id, data):
-        token = data["token"]
+        token = data['token']
+        resource = data.get('resource', None)
         token = self.dispatcher.token_store.lookup_token(token)
         client_addr, client_port = self.ws.handler.client_address
 
@@ -468,12 +531,13 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.token = token
 
         self.send_json({
-            "namespace": "rpc",
-            "name": "response",
-            "id": id,
-            "args": [self.token]
+            'namespace': 'rpc',
+            'name': 'response',
+            'id': id,
+            'args': [self.token]
         })
 
+        self.open_session()
         self.dispatcher.dispatch_event('server.client_logged', {
             'address': client_addr,
             'port': client_port,
@@ -482,8 +546,9 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         })
 
     def on_rpc_auth(self, id, data):
-        username = data["username"]
-        password = data["password"]
+        username = data['username']
+        password = data['password']
+        resource = data.get('resource', None)
         client_addr, client_port = self.ws.handler.client_address
 
         user = self.dispatcher.auth.get_user(username)
@@ -516,6 +581,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             "args": [self.token]
         })
 
+        self.open_session()
         self.dispatcher.dispatch_event('server.client_logged', {
             'address': client_addr,
             'port': client_port,
@@ -586,10 +652,15 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         greenlet.start()
 
     def open_session(self):
-        pass
+        self.session_id = self.dispatcher.datastore.insert('sessions', {
+            'started-at': time.time(),
+            'user': self.user.name
+        })
 
     def close_session(self):
-        pass
+        session = self.dispatcher.datastore.get_by_id('sessions', self.session_id)
+        session['ended-at'] = time.time()
+        self.dispatcher.datastore.update('sessions', self.session_id, session)
 
     def broadcast_event(self, event, args):
         for i in self.server.connections:
