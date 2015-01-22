@@ -49,6 +49,7 @@
 /usr/local/lib/dispatcher/plugins/VolumePlugin.py
 /usr/local/lib/dispatcher/plugins/DiskPlugin.py
 /usr/local/lib/dispatcher/plugins/NetworkPlugin.py
+/usr/local/lib/dispatcher/plugins/EntitySubscriberPlugin.py
 /usr/local/etc/rc.d/dispatcher
 /usr/local/sbin/dispatcherd
 /usr/local/sbin/dispatcherctl
