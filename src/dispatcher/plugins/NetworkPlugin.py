@@ -35,16 +35,10 @@ from task import Provider, Task, TaskException, VerifyException, query
 @description("Provides access to global network configuration settings")
 class NetworkProvider(Provider):
     def get_my_ips(self):
-        pass
-
-    def get_hostname(self):
-        return self.configstore.get('system.hostname')
-
-    def get_default_route(self):
-        pass
-
-    def get_dns_addresses(self):
-        pass
+        ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
+        for i in ifaces:
+            if i['type'] == 'LOOP':
+                continue
 
 
 class InterfaceProvider(Provider):
@@ -80,6 +74,27 @@ class HostsProvider(Provider):
         return self.datastore.query('network.hosts', *(filter or []), **(params or {}))
 
 
+@description("Updates global network configuration settings")
+@accepts({
+    'type': 'objects',
+    'properties': {
+        'ipv4_gateway': {'type': 'string'},
+        'ipv6_gateway': {'type': 'string'},
+        'dns_servers': {'type': 'array'},
+        'dns_search': {'type': 'array'}
+    }
+})
+class NetworkConfigureTask(Task):
+    def verify(self, settings):
+        pass
+
+    def run(self, settings):
+        try:
+            self.dispatcher.call_sync('networkd.configuration.configure_network')
+        except RpcException:
+            raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+
+
 @accepts(
     {'type': 'string'},
     {'type': 'string'},
@@ -108,11 +123,22 @@ class ConfigureInterfaceTask(Task):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
             raise VerifyException(errno.ENOENT, 'Interface {0} does not exist'.format(name))
 
+        return ['system']
+
     def run(self, name, updated_fields):
+        entity = self.datastore.get_by_id('network.interfaces', name)
+        entity.update(updated_fields)
+        self.datastore.update('network.interfaces', name, entity)
+
         try:
             self.dispatcher.call_sync('networkd.configuration.configure_interface', name)
-        except RpcException, e:
+        except RpcException:
             raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+
+        self.dispatcher.dispatch_event('network.interface.changed', {
+            'operation': 'update',
+            'ids': [name]
+        })
 
 
 class InterfaceUpTask(Task):
@@ -120,11 +146,18 @@ class InterfaceUpTask(Task):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
             raise VerifyException(errno.ENOENT, 'Interface {0} does not exist'.format(name))
 
+        return ['system']
+
     def run(self, name):
         try:
             self.dispatcher.call_sync('networkd.configuration.up_interface', name)
         except RpcException:
             raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+
+        self.dispatcher.dispatch_event('network.interface.changed', {
+            'operation': 'update',
+            'ids': [name]
+        })
 
 
 class InterfaceDownTask(Task):
@@ -132,11 +165,18 @@ class InterfaceDownTask(Task):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
             raise VerifyException(errno.ENOENT, 'Interface {0} does not exist'.format(name))
 
+        return ['system']
+
     def run(self, name):
         try:
             self.dispatcher.call_sync('networkd.configuration.down_interface', name)
         except RpcException:
             raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+
+        self.dispatcher.dispatch_event('network.interface.changed', {
+            'operation': 'update',
+            'ids': [name]
+        })
 
 
 @description("Adds host entry to the database")
@@ -157,6 +197,10 @@ class AddHostTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
+        self.dispatcher.dispatch_event('network.host.changed', {
+            'operation': 'create',
+            'ids': [name]
+        })
 
 @description("Updates host entry in the database")
 class UpdateHostTask(Task):
@@ -176,6 +220,10 @@ class UpdateHostTask(Task):
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
+        self.dispatcher.dispatch_event('network.host.changed', {
+            'operation': 'update',
+            'ids': [name]
+        })
 
 @description("Deletes host entry from the database")
 class DeleteHostTask(Task):
@@ -192,8 +240,13 @@ class DeleteHostTask(Task):
             self.dispatcher.call_sync('etcd.generation.generate_group', 'hosts')
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
-    
-    
+
+        self.dispatcher.dispatch_event('network.host.changed', {
+            'operation': 'delete',
+            'ids': [name]
+        })
+
+
 class AddRouteTask(Task):
     def verify(self, address, names):
         if self.datastore.exists('network.routes', ('address', '=', address)):
@@ -202,11 +255,15 @@ class AddRouteTask(Task):
         return ['system']
 
     def run(self, address, names):
-        self.datastore.insert('network.routes', {
+        id = self.datastore.insert('network.routes', {
             'address': address,
             'names': names
         })
 
+        self.dispatcher.dispatch_event('network.route.changed', {
+            'operation': 'create',
+            'ids': [id]
+        })
 
 class UpdateRouteTask(Task):
     def verify(self, address, new_names):
@@ -220,6 +277,11 @@ class UpdateRouteTask(Task):
         route['names'] = new_names
         self.datastore.update('network.routes', route['id'], route)
 
+        self.dispatcher.dispatch_event('network.route.changed', {
+            'operation': 'update',
+            'ids': [route['id']]
+        })
+
 
 class DeleteRouteTask(Task):
     def verify(self, address):
@@ -229,7 +291,10 @@ class DeleteRouteTask(Task):
         return ['system']
 
     def run(self, address):
-        pass
+        self.dispatcher.dispatch_event('network.route.changed', {
+            'operation': 'update',
+            'ids': [None]
+        })
 
 
 def _depends():
@@ -300,17 +365,17 @@ def _init(dispatcher):
     dispatcher.register_provider('network.routes', RouteProvider)
     dispatcher.register_provider('network.hosts', HostsProvider)
 
+    dispatcher.register_task_handler('network.configure', NetworkConfigureTask)
     dispatcher.register_task_handler('network.host.add', AddHostTask)
     dispatcher.register_task_handler('network.host.update', UpdateHostTask)
     dispatcher.register_task_handler('network.host.delete', DeleteHostTask)
-
     dispatcher.register_task_handler('network.route.add', AddRouteTask)
     dispatcher.register_task_handler('network.route.update', UpdateRouteTask)
     dispatcher.register_task_handler('network.route.delete', DeleteRouteTask)
     dispatcher.register_task_handler('network.interface.up', InterfaceUpTask)
     dispatcher.register_task_handler('network.interface.down', InterfaceDownTask)
-    dispatcher.register_task_handler('network.interface.configure', InterfaceDownTask)
-    dispatcher.register_task_handler('network.interface.create', InterfaceDownTask)
-    dispatcher.register_task_handler('network.interface.delete', InterfaceDownTask)
+    dispatcher.register_task_handler('network.interface.configure', ConfigureInterfaceTask)
+    dispatcher.register_task_handler('network.interface.create', CreateInterfaceTask)
+    dispatcher.register_task_handler('network.interface.delete', DeleteInterfaceTask)
 
 
