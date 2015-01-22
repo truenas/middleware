@@ -379,3 +379,7 @@ def _init(dispatcher):
     dispatcher.register_task_handler('groups.create', GroupCreateTask)
     dispatcher.register_task_handler('groups.update', GroupUpdateTask)
     dispatcher.register_task_handler('groups.delete', GroupDeleteTask)
+
+    # Register event types
+    dispatcher.register_event_type('users.changed')
+    dispatcher.register_event_type('groups.changed')

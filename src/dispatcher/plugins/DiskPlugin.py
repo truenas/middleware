@@ -417,9 +417,9 @@ def _init(dispatcher):
 
         # Push higher tier event
         disk = diskinfo_cache.get(path)
-        dispatcher.dispatch_event('disk.attached', {
-            'name': path,
-            'identifier': disk['identifier']
+        dispatcher.dispatch_event('disks.changed', {
+            'operation': 'created',
+            'ids': [disk['id']]
         })
 
     def on_device_detached(args):
@@ -430,9 +430,9 @@ def _init(dispatcher):
         purge_disk_cache(path)
         disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
         dispatcher.datastore.delete('disks', disk['id'])
-        dispatcher.dispatch_event('disk.detached', {
-            'name': path,
-            'serial': disk['serial']
+        dispatcher.dispatch_event('disks.changed', {
+            'operation': 'delete',
+            'ids': [disk['id']]
         })
 
     def on_device_mediachange(args):
@@ -445,9 +445,9 @@ def _init(dispatcher):
         if not disk:
             return
 
-        dispatcher.dispatch_event('disk.updated', {
-            'name': args['path'],
-            'identifier': disk['identifier']
+        dispatcher.dispatch_event('disks.changed', {
+            'operation': 'update',
+            'ids': [disk['id']]
         })
 
     dispatcher.register_schema_definition('disk', {
@@ -480,6 +480,8 @@ def _init(dispatcher):
     dispatcher.register_task_handler('disk.format.gpt', DiskGPTFormatTask)
     dispatcher.register_task_handler('disk.configure', DiskConfigureTask)
     dispatcher.register_task_handler('disk.delete', DiskDeleteTask)
+
+    dispatcher.register_event_type('disks.changed')
 
     for i in dispatcher.rpc.call_sync('system.device.get_devices', 'disk'):
         on_device_attached({'path': i['path']})

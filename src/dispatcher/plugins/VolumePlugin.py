@@ -137,8 +137,7 @@ class VolumeCreateTask(ProgressTask):
         self.set_progress(80)
 
         pool = self.dispatcher.call_sync('zfs.pool.query', [('name', '=', name)]).pop()
-
-        self.datastore.insert('volumes', {
+        id = self.datastore.insert('volumes', {
             'id': str(pool['guid']),
             'name': name,
             'type': type,
@@ -146,11 +145,9 @@ class VolumeCreateTask(ProgressTask):
         })
 
         self.set_progress(90)
-        self.dispatcher.dispatch_event('volume.created', {
-            'name': name,
-            'id': str(pool['guid']),
-            'type': type,
-            'mountpoint': os.path.join(mountpoint)
+        self.dispatcher.dispatch_event('volumes.changed', {
+            'operation': 'create',
+            'ids': [id]
         })
 
 
@@ -206,9 +203,14 @@ class VolumeDestroyTask(Task):
         self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
         self.datastore.delete('volumes', vol['id'])
 
+        self.dispatcher.dispatch_event('volumes.changed', {
+            'operation': 'delete',
+            'ids': [vol['id']]
+        })
+
 
 class VolumeUpdateTask(Task):
-    def verify(self, name, ):
+    def verify(self, name, updated_params):
         pass
 
 
@@ -277,3 +279,4 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.import', VolumeImportTask)
     dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
 
+    dispatcher.register_event_type('volumes.changed')
