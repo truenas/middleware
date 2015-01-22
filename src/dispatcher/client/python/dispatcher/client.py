@@ -26,15 +26,15 @@
 #####################################################################
 
 import json
+import enum
 import uuid
 import errno
 from jsonenc import dumps, loads
-from threading import Event, Thread
 from dispatcher import rpc
 from ws4py.client.threadedclient import WebSocketClient
 
 
-class ClientError(object):
+class ClientError(enum.Enum):
     INVALID_JSON_RESPONSE = 1
     CONNECTION_TIMEOUT = 2
     CONNECTION_CLOSED = 3
@@ -42,6 +42,34 @@ class ClientError(object):
     RPC_CALL_ERROR = 5
     SPURIOUS_RPC_RESPONSE = 6
     OTHER = 7
+
+
+class ClientType(enum.Enum):
+    THREADED = 1
+    GEVENT = 2
+
+
+thread_type = ClientType.THREADED
+
+
+def spawn_thread(*args, **kwargs):
+    if thread_type == ClientType.THREADED:
+        from threading import Thread
+        return Thread(*args, **kwargs)
+
+    if thread_type == ClientType.GEVENT:
+        from gevent.greenlet import Greenlet
+        return Greenlet(*args, **kwargs)
+
+
+def get_event():
+    if thread_type == ClientType.THREADED:
+        from threading import Event
+        return Event()
+
+    if thread_type == ClientType.GEVENT:
+        from gevent.event import Event
+        return Event()
 
 
 class Client(object):
@@ -75,14 +103,15 @@ class Client(object):
             self.args = args
             self.result = None
             self.error = None
-            self.completed = Event()
+            self.completed = get_event()
             self.callback = None
 
-    def __init__(self):
+    def __init__(self, thread_type=ClientType.THREADED):
         self.pending_calls = {}
         self.rpc = None
         self.ws = None
-        self.opened = Event()
+        self.thread_type = thread_type
+        self.opened = get_event()
         self.event_callback = None
         self.error_callback = None
         self.rpc_callback = None
@@ -149,7 +178,7 @@ class Client(object):
 
         if msg['namespace'] == 'events' and msg['name'] == 'event':
             args = msg['args']
-            t = Thread(target=self.event_callback, args=(args['name'], args['args']))
+            t = spawn_thread(target=self.event_callback, args=(args['name'], args['args']))
             t.start()
             return
 
@@ -176,7 +205,7 @@ class Client(object):
                     else:
                         self.__send_response(msg['id'], result)
 
-                t = Thread(target=run_async, args=(msg, args))
+                t = spawn_thread(target=run_async, args=(msg, args))
                 t.start()
                 return
 
