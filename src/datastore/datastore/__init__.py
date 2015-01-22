@@ -30,6 +30,7 @@ import os
 
 DRIVERS_LOCATION = '/usr/local/lib/datastore/drivers'
 
+
 class DatastoreException(Exception):
     pass
 
@@ -38,7 +39,7 @@ class DuplicateKeyException(DatastoreException):
     pass
 
 
-def get_datastore(type, dsn):
+def get_datastore(type, dsn, database='freenas'):
     mod = imp.load_source(type, os.path.join(DRIVERS_LOCATION, type, type + '.py'))
     if mod is None:
         raise DatastoreException('Datastore driver not found')
@@ -48,5 +49,5 @@ def get_datastore(type, dsn):
         raise DatastoreException('Datastore driver not found')
 
     instance = cls()
-    instance.connect(dsn)
+    instance.connect(dsn, database)
     return instance

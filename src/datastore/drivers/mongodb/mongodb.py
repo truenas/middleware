@@ -39,6 +39,7 @@ class MongodbDatastore(object):
             '<': '$lt',
             '>=': '$gte',
             '<=': '$lte',
+            '!=': '$ne',
             'in': '$in',
             'nin': 'nin',
             '~': '$regex'
@@ -54,9 +55,6 @@ class MongodbDatastore(object):
                 result[name] = value
                 continue
 
-            if op == '!=':
-                result[name] = {'$not': value}
-
             if name not in result.keys():
                 result[name] = {}
 
@@ -65,17 +63,22 @@ class MongodbDatastore(object):
 
         return result
 
-    def connect(self, dsn):
+    def connect(self, dsn, database='freenas'):
         self.conn = MongoClient(dsn)
-        self.db = self.conn.freenas
+        self.db = self.conn[database]
 
-    def collection_create(self, name, pkey_type='uuid', attributes={}):
+    def collection_create(self, name, pkey_type='uuid', attributes=None):
+        attributes = attributes or {}
+        ttl_index = attributes.get('ttl-index')
         self.db['collections'].insert({
             '_id': name,
             'pkey-type': pkey_type,
             'last-id': 0,
             'attributes': attributes
         })
+
+        if ttl_index:
+            self.db[name].ensure_index(ttl_index, expireAfterSeconds=0)
 
     def collection_exists(self, name):
         return self.db['collections'].find_one({"_id": name}) is not None
@@ -131,6 +134,12 @@ class MongodbDatastore(object):
             result.append(i)
 
         return result
+
+    def listen(self, collection, *args, **kwargs):
+        cur = self.db[collection].find(self._build_query(args), tailable=True, await_data=True)
+        for i in cur:
+            i['id'] = i.pop('_id')
+            yield i
 
     def get_one(self, collection, *args, **kwargs):
         obj = self.db[collection].find_one(self._build_query(args))
