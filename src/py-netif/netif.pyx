@@ -648,12 +648,12 @@ cdef class RoutingPacket(object):
         }
 
     cdef _grow(self, amount):
-        self.bufsize += sizeof(defs.sockaddr_in)
+        self.bufsize += amount
         self.buffer = <char*>realloc(self.buffer, self.bufsize)
         self.rt_msg = <defs.rt_msghdr*>self.buffer
 
     cdef _align_sa_len(self, int length):
-        return 1 + (length - 1 | cython.sizeof(long) - 1)
+        return 1 + ((length - 1) | (cython.sizeof(long) - 1))
 
     cdef _parse_sockaddr_dl(self, defs.sockaddr_dl* sdl):
         cdef char ifname[defs.IFNAMSIZ]
@@ -712,7 +712,7 @@ cdef class RoutingPacket(object):
         return result
 
     cdef _pack_sockaddrs(self, int start_offset, addrs):
-        cdef defs.sockaddr* sa
+        cdef defs.sockaddr_dl* sdl
         cdef defs.sockaddr_in* sin
         cdef defs.sockaddr_in6* sin6
         cdef int ptr
@@ -722,20 +722,43 @@ cdef class RoutingPacket(object):
         ptr = start_offset
 
         for rtax, i in addrs.items():
+            if not i:
+                continue
+
             mask |= (1 << rtax)
-            print 'adding sockaddr for {0}, ptr = {1}'.format(rtax, ptr)
-            if i.version == 4:
-                self._grow(cython.sizeof(defs.sockaddr_in))
+
+            if type(i) is LinkAddress:
+                sa_size = self._align_sa_len(sizeof(defs.sockaddr_dl))
+                print 'sa_size={0}'.format(sa_size)
+                self._grow(sa_size)
+                sdl = <defs.sockaddr_dl*>&self.buffer[ptr]
+                memset(sdl, 0, sa_size)
+                sdl.sdl_family = defs.AF_LINK
+                sdl.sdl_len = cython.sizeof(defs.sockaddr_dl)
+                sdl.sdl_index = defs.if_nametoindex(i.ifname)
+                ptr += sa_size
+
+            elif i.version == 4:
+                sa_size = self._align_sa_len(sizeof(defs.sockaddr_in))
+                print 'sa_size={0}'.format(sa_size)
+                self._grow(sa_size)
                 sin = <defs.sockaddr_in*>&self.buffer[ptr]
+                memset(sin, 0, sa_size)
                 sin.sin_family = defs.AF_INET
                 sin.sin_len = cython.sizeof(defs.sockaddr_in)
                 sin.sin_addr.s_addr = socket.htonl(int(i))
-                ptr += sizeof(defs.sockaddr_in)
+                ptr += sa_size
 
-            if i.version == 6:
-                pass
+            elif i.version == 6:
+                sa_size = self._align_sa_len(sizeof(defs.sockaddr_in6))
+                print 'sa_size={0}'.format(sa_size)
+                self._grow(sa_size)
+                sin6 = <defs.sockaddr_in6*>&self.buffer[ptr]
+                memset(sin6, 0, sa_size)
+                sin6.sin6_family = defs.AF_INET6
+                sin6.sin6_len = cython.sizeof(defs.sockaddr_in6)
+                ptr += sa_size
 
-        print 'end bufsize = {0}'.format(self.bufsize)
         return mask
 
     property type:
@@ -903,7 +926,7 @@ cdef class RoutingMessage(RoutingPacket):
             'errno': self.errno,
             'flags': [x.name for x in self.flags],
             'interface': self.interface,
-            'network': self.network,
+            'network': str(self.network),
             'gateway': gateway
         })
 
@@ -929,12 +952,18 @@ cdef class RoutingMessage(RoutingPacket):
         def __get__(self):
             return bitmask_to_set(self.rt_msg.rtm_flags, RouteFlags)
 
+        def __set__(self, value):
+            self.rt_msg.rtm_flags = set_to_bitmask(value)
+
     property interface:
         def __get__(self):
             cdef char ifname[defs.IFNAMSIZ]
             cdef char* result
             result = defs.if_indextoname(self.rt_msg.rtm_index, ifname)
             return result if result != NULL else None
+
+        def __set__(self, value):
+            self.rt_msg.rtm_index = defs.if_nametoindex(value)
 
     property network:
         def __get__(self):
@@ -958,7 +987,7 @@ cdef class RoutingMessage(RoutingPacket):
 
     property gateway:
         def __get__(self):
-            if self.addrs_mask & defs.RTA_GATEWAY:
+            if defs.RTAX_GATEWAY in self.addrs:
                 return self.addrs[defs.RTAX_GATEWAY]
 
             return None
@@ -966,16 +995,113 @@ cdef class RoutingMessage(RoutingPacket):
         def __set__(self, value):
             self.addrs[defs.RTAX_GATEWAY] = value
 
+    property route:
+        def __get__(self):
+            result = Route(
+                self.network,
+                self.netmask,
+                self.gateway,
+                self.interface
+            )
+
+            result.flags = self.flags
+            return result
+
+        def __set__(self, route):
+            self.network = route.network
+            self.netmask = route.netmask
+            self.gateway = route.gateway
+            self.interface = route.interface
+            self.flags = route.flags & {RouteFlags.STATIC, RouteFlags.GATEWAY, RouteFlags.HOST}
+
+
+class Route(object):
+    def __init__(self, network, netmask, gateway=None, interface=None):
+        self.network = ipaddress.ip_address(network)
+        self.netmask = None
+        self.gateway = None
+        self.interface = None
+        self.flags = set()
+
+        if netmask:
+            self.netmask = ipaddress.ip_address(netmask)
+
+        if gateway:
+            if type(gateway) is LinkAddress:
+                self.gateway = gateway.ifname
+            else:
+                self.gateway = ipaddress.ip_address(gateway)
+
+        if interface:
+            self.interface = interface
+
+    @property
+    def af(self):
+        if not self.network:
+            return None
+
+        if self.network.version == 4:
+            return AddressFamily.INET
+
+        if self.network.version == 6:
+            return AddressFamily.INET6
+
+        return None
+
+    def __getstate__(self):
+        return {
+            'network': str(self.network),
+            'netmask': str(self.netmask) if self.netmask else None,
+            'gateway': str(self.gateway) if self.gateway else None,
+            'interface': self.interface or None,
+            'flags': [x.name for x in self.flags]
+        }
+
+    def __eq__(self, other):
+        return self.network == other.network and \
+            self.netmask == other.netmask and \
+            self.gateway == other.gateway
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((
+            self.network,
+            self.netmask,
+            self.gateway
+        ))
+
 
 class RoutingTable(object):
     def __init__(self):
         pass
 
     def __send_message(self, msg):
+        if msg.type == RoutingMessageType.DELETE:
+            msg.gateway = None
+
         sock = RoutingSocket()
         sock.open()
         sock.write_message(msg)
         sock.close()
+
+    def __send_route(self, type, route):
+        msg = RoutingMessage()
+        msg.type = type
+        msg.route = route
+        print msg.__getstate__()
+        self.__send_message(msg)
+
+    @property
+    def default_route_ipv4(self):
+        f = filter(lambda r: int(r.network) == 0 and r.af == AddressFamily.INET, self.routes)
+        return f[0] if len(f) > 0 else None
+
+    @property
+    def default_route_ipv6(self):
+        f = filter(lambda r: int(r.network) == 0 and r.af == AddressFamily.INET6, self.routes)
+        return f[0] if len(f) > 0 else None
 
     @property
     def routes(self):
@@ -991,24 +1117,16 @@ class RoutingTable(object):
             rt_msg = <defs.rt_msghdr*>&buf[ptr]
             msg = RoutingMessage(data[ptr:ptr+rt_msg.rtm_msglen])
             ptr += rt_msg.rtm_msglen
+            yield msg.route
 
-            yield msg
+    def add(self, route):
+        self.__send_route(RoutingMessageType.ADD, route)
 
-    def add(self, af, network, netmask, gateway):
-        msg = RoutingMessage()
-        msg.type = RoutingMessageType.ADD
-        msg.network = network
-        msg.netmask = netmask
-        msg.gateway = gateway
-        self.__send_message(msg)
+    def delete(self, route):
+        self.__send_route(RoutingMessageType.DELETE, route)
 
-    def delete(self, af, network, netmask, gateway):
-        msg = RoutingMessage()
-        msg.type = RoutingMessageType.DELETE
-        msg.network = network
-        msg.netmask = netmask
-        msg.gateway = gateway
-        self.__send_message(msg)
+    def change(self, route):
+        self.__send_route(RoutingMessageType.CHANGE, route)
 
 
 class RoutingSocket(object):
@@ -1045,7 +1163,9 @@ class RoutingSocket(object):
         return RoutingMessage(packet)
 
     def write_message(self, message):
-        os.write(self.socket.fileno(), message.as_buffer())
+        buf = message.as_buffer()
+        print repr(buf)
+        os.write(self.socket.fileno(), buf)
 
 
 def list_interfaces(name=None):
@@ -1130,6 +1250,14 @@ def bitmask_to_set(n, enumeration):
             pass
 
         n ^= b
+
+    return result
+
+
+def set_to_bitmask(value):
+    result = 0
+    for i in value:
+        result |= int(i)
 
     return result
 
