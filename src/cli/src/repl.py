@@ -222,6 +222,7 @@ class Context(object):
 
     def connection_error(self, event):
         if event == ClientError.CONNECTION_CLOSED:
+            time.sleep(1)
             self.__try_reconnect()
             return
 
