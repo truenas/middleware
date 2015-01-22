@@ -111,6 +111,7 @@ class PasswordAuthenticator(object):
 class Token(object):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
+        self.session_id = kwargs.pop('session_id', None)
         self.lifetime = kwargs.pop('lifetime')
 
 
