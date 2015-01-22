@@ -28,6 +28,7 @@
 from task import Provider, Task, VerifyException, TaskException
 from dispatcher.rpc import description, returns
 
+
 @description("Provides access to configuration store")
 class ConfigProvider(Provider):
     def get(self, key):
@@ -37,13 +38,19 @@ class ConfigProvider(Provider):
         return self.dispatcher.configstore.list_children(root)
 
 
+@description("Updates configuration settings")
 class UpdateConfigTask(Task):
     def verify(self, settings):
         return ['system']
 
     def run(self, settings):
-        for k, v in settings.items():
-            self.configstore.set(k, v)
+        for i in settings:
+            self.configstore.set(i['key'], i['value'])
+
+        self.dispatcher.dispatch_event('config.changed', {
+            'operation': 'update',
+            'ids': [settings.keys()]
+        })
 
 
 def _init(dispatcher):
