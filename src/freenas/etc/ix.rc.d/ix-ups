@@ -26,9 +26,14 @@ generate_ups()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
+            if [ "$(echo "${ups_driver}"|cut -d"$" -f 1)" = "mge-shut or oldmge-shut" ]; then
+                driver="mge-shut"
+            else
+                driver=$(echo "${ups_driver}"|cut -d"$" -f 1|tr -s " " "\n")
+            fi
 	    cat <<EOF
 [${ups_identifier}]
-    driver = $(echo "${ups_driver}"|cut -d"$" -f 1|tr -s " " "\n")
+    driver = ${driver}
     port = ${ups_port}
     desc = "${ups_description}"
 EOF
