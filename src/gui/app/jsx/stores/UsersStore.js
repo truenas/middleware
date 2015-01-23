@@ -14,10 +14,11 @@ var UsersMiddleware = require("../middleware/UsersMiddleware");
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = "users.changed";
+var PRIMARY_KEY  = "id";
 
 var _updatedOnServer    = [];
 var _localUpdatePending = {};
-var _users              = [];
+var _users              = {};
 
 var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -43,7 +44,7 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getAllUsers: function() {
-      return _users;
+      return _.values( _users );
     }
 
 });
@@ -55,18 +56,24 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.RECEIVE_RAW_USERS:
 
+      var updatedUserIDs = _.pluck( action.rawUsers, PRIMARY_KEY );
+
       // When receiving new data, we can comfortably resolve anything that may
       // have had an outstanding update indicated by the Middleware.
       if ( _updatedOnServer.length > 0 ) {
-        _updatedOnServer = _.difference( _updatedOnServer, _.pluck( action.rawUsers, "id" ) );
+        _updatedOnServer = _.difference( _updatedOnServer, updatedUserIDs );
       }
 
-      _users = action.rawUsers;
+      // When sent new users from the middleware, completely replace the previous
+      // value based on its id
+      action.rawUsers.map( function ( user ) {
+        _users[ user[ PRIMARY_KEY ] ] = user;
+      });
+
       UsersStore.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      console.log( action.eventData );
       if ( action.eventData.args["name"] === UPDATE_MASK ) {
         var updateData = action.eventData.args["args"];
 
@@ -74,8 +81,7 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           // FIXME: This is a workaround for the current implementation of task
           // subscriptions and submission resolutions.
-          UsersMiddleware.requestUsersList();
-          // UsersMiddleware.requestUsersList( _updatedOnServer );
+          UsersMiddleware.requestUsersList( _updatedOnServer );
         } else {
           // TODO: Can this be anything else?
         }

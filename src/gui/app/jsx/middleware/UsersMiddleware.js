@@ -19,7 +19,7 @@ module.exports = {
     }
 
   , requestUsersList: function( ids ) {
-      MiddlewareClient.request( "users.query", ( ids ? [ "id", "in", ids ] : [] ), function ( rawUsersList ) {
+      MiddlewareClient.request( "users.query", ( ids ? [[[ "id", "in", ids ]]] : [] ), function ( rawUsersList ) {
         UsersActionCreators.receiveUsersList( rawUsersList );
       });
     }
