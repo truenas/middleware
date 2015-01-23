@@ -49,7 +49,7 @@ def pocompile(src, dest):
         if not translated:
             continue
 
-        if 'python-format' not in entry.flags:
+        if '%' not in entry.msgid:
             continue
 
         # Make sure the format is the same in the translated str
