@@ -4,6 +4,9 @@
 * Uptime (#)
 * Proceses (#, line)
 * System Load (line)
+** Combine CPU load % line with system load lines(1min, 5min, 15min)
+** double click on line or legend show detail, eg. cpu load details of each category (idle, system,...)
+** Seperated or dedicated graphs will be detailed in Reports screen with all posibilites of filtering, sorting, etc
 * System temperature (bar, line)
 * RAM (line, pie)
 * Swap (line, pie)
