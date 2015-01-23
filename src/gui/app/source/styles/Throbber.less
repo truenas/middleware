@@ -1,0 +1,107 @@
+// Colors
+@throbber-lite-side: #d4d4db;
+@throbber-dark-side: #545a6a;
+
+// Throbbers family
+
+.throbber {
+  text-align: center; // Always center throbber position in block
+
+  &:after {
+    content       : '';
+    display       : inline-block;
+    position      : relative;
+    height        : 20px;
+    width         : 20px;
+    border-radius : 50%;
+    border-top    : 1px solid @throbber-dark-side;
+    border-bottom : 1px solid @throbber-lite-side;
+    border-left   : 1px solid @throbber-dark-side;
+    border-right  : 1px solid @throbber-lite-side;
+    opacity       : 0.5;
+    .animation( throbber-rotate .6s linear infinite );
+  }
+
+  .throbber-slow {
+    &:after {
+      .animation( throbber-rotate 1.2s linear infinite );
+    }
+  }
+
+  &.throbber-primary {
+    &:after {
+      border-top    : 1px solid @brand-primary;
+      border-left   : 1px solid @brand-primary;
+    }
+  }
+
+  &.throbber-info {
+    &:after {
+      border-top    : 1px solid @brand-info;
+      border-left   : 1px solid @brand-info;
+    }
+  }
+
+  &.throbber-warning {
+    &:after {
+      border-top    : 1px solid @brand-warning;
+      border-left   : 1px solid @brand-warning;
+    }
+  }
+
+  &.throbber-danger {
+    &:after {
+      border-top    : 1px solid @brand-danger;
+      border-left   : 1px solid @brand-danger;
+    }
+  }
+
+  &.throbber-success {
+    &:after {
+      border-top    : 1px solid @brand-success;
+      border-left   : 1px solid @brand-success;
+    }
+  }
+
+  &.throbber-large {
+    &:after {
+      height : 40px;
+      width  : 40px;
+    }
+  }
+
+  &.throbber-medium {
+    &:after {
+      height : 30px;
+      width  : 30px;
+    }
+  }
+
+  &.throbber-small {
+    &:after {
+      height : 10px;
+      width  : 10px;
+    }
+  }
+}
+
+// Throbber Animation
+@keyframes throbber-rotate {
+  0%   { .transform( rotateZ(-360deg) ); }
+  100% { .transform( rotateZ(0deg) ); }
+}
+
+@-webkit-keyframes throbber-rotate {
+  0%   { .transform( rotateZ(-360deg) ); }
+  100% { .transform( rotateZ(0deg) ); }
+}
+
+@-moz-keyframes throbber-rotate {
+  0%   { .transform( rotateZ(-360deg) ); }
+  100% { .transform( rotateZ(0deg) ); }
+}
+
+@-o-keyframes throbber-rotate {
+  0%   { .transform( rotateZ(-360deg) ); }
+  100% { .transform( rotateZ(0deg) ); }
+}
