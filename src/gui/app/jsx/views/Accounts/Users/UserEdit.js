@@ -13,6 +13,8 @@ var TWBS       = require("react-bootstrap");
 // var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil = require("../../../components/Viewer/Editor/editorUtil");
 
+var UsersMiddleware = require("../../../middleware/UsersMiddleware");
+
 var UserEdit = React.createClass({
 
     propTypes: {
@@ -52,6 +54,10 @@ var UserEdit = React.createClass({
       });
     }
 
+  , submitUserUpdate: function() {
+      UsersMiddleware.updateUser( this.props.item["id"], this.state.modifiedValues );
+    }
+
   , render: function() {
 
       var builtInUserAlert = null;
@@ -76,6 +82,7 @@ var UserEdit = React.createClass({
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
+                         onClick   = { this.submitUserUpdate }
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
 

@@ -6,6 +6,7 @@
 var keyMirror = require("keymirror");
 
 module.exports = {
+
     ActionTypes: keyMirror({
         UPDATE_AUTH_STATE : null
 
@@ -13,19 +14,23 @@ module.exports = {
       , SUBSCRIBE_TO_MASK     : null
       , UNSUBSCRIBE_FROM_MASK : null
 
-      , LOG_MIDDLEWARE_EVENT      : null
+      // Events
+      , MIDDLEWARE_EVENT          : null
       , LOG_MIDDLEWARE_TASK_QUEUE : null
 
       // Users
       , RECEIVE_RAW_USERS        : null
-      , RECEIVE_CHANGED_USER_IDS : null
+      , RECEIVE_USER_UPDATE_TASK : null
+      , RESOLVE_USER_UPDATE_TASK : null
 
       // Services
       , RECEIVE_RAW_SERVICES : null
     })
+
   , PayloadSources: keyMirror({
         MIDDLEWARE_ACTION    : null
       , MIDDLEWARE_LIFECYCLE : null
       , CLIENT_ACTION        : null
     })
+
 };

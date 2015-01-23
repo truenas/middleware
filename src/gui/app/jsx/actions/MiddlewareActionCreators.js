@@ -33,4 +33,11 @@ module.exports = {
       });
     }
 
+  , receiveEventData: function ( eventData ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type      : ActionTypes.MIDDLEWARE_EVENT
+        , eventData : eventData
+      });
+    }
+
 };

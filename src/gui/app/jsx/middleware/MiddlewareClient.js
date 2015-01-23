@@ -336,6 +336,7 @@ function MiddlewareClient() {
 
   };
 
+  // MESSAGES
   // Triggered by the WebSocket's onmessage event. Parses the JSON from the
   // middleware's response, and then performs followup tasks depending on the
   // message's namespace.
@@ -348,9 +349,8 @@ function MiddlewareClient() {
 
       // A FreeNAS event has occurred
       case "events":
-
-        // TODO: Send event to action creator
-
+        if ( DEBUG.messages ) { console.log( "Message contained event data" ); }
+        MiddlewareActionCreators.receiveEventData( data );
         break;
 
       // An RPC call is returning a response
@@ -377,12 +377,14 @@ function MiddlewareClient() {
     }
   };
 
+  // CONNECTION ERRORS
   // Triggered by the WebSocket's `onerror` event. Handles errors with the client
   // connection to the middleware.
   var handleError = function ( error ) {
     if ( DEBUG.connection ) { console.error( "The WebSocket connection to the Middleware encountered an error:", error ); }
   };
 
+  // REQUEST TIMEOUTS
   // Called by a request function without a matching response. Automatically
   // triggers resolution of the request with a "timeout" status.
   var handleTimeout = function ( requestID ) {

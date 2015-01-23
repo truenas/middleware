@@ -9,11 +9,15 @@ var EventEmitter = require("events").EventEmitter;
 var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
 var FreeNASConstants  = require("../constants/FreeNASConstants");
 
+var UsersMiddleware = require("../middleware/UsersMiddleware");
+
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
+var UPDATE_MASK  = "users.changed";
 
-var _updatedOnServer = [];
-var _users           = [];
+var _updatedOnServer    = [];
+var _localUpdatePending = {};
+var _users              = [];
 
 var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -27,6 +31,10 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
   , removeChangeListener: function( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
+    }
+
+  , getUpdateMask: function() {
+      return UPDATE_MASK;
     }
 
   , getUser: function( key ) {
@@ -50,16 +58,42 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       // When receiving new data, we can comfortably resolve anything that may
       // have had an outstanding update indicated by the Middleware.
       if ( _updatedOnServer.length > 0 ) {
-        _updatedOnServer = _.without( _updatedOnServer, _.pluck( action.rawUsers, "username" ) );
+        _updatedOnServer = _.difference( _updatedOnServer, _.pluck( action.rawUsers, "id" ) );
       }
 
       _users = action.rawUsers;
       UsersStore.emitChange();
       break;
 
-    case ActionTypes.RECEIVE_CHANGED_USER_IDS:
-      _updatedOnServer.push( payload.changedIDs );
+    case ActionTypes.MIDDLEWARE_EVENT:
+      console.log( action.eventData );
+      if ( action.eventData.args["name"] === UPDATE_MASK ) {
+        var updateData = action.eventData.args["args"];
+
+        if ( updateData["operation"] === "update" ) {
+          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+          // FIXME: This is a workaround for the current implementation of task
+          // subscriptions and submission resolutions.
+          UsersMiddleware.requestUsersList();
+          // UsersMiddleware.requestUsersList( _updatedOnServer );
+        } else {
+          // TODO: Can this be anything else?
+        }
+      }
       break;
+
+    case ActionTypes.RECEIVE_USER_UPDATE_TASK:
+      _localUpdatePending[ action.taskID ] = action.userID;
+      UsersStore.emitChange();
+      console.log( action );
+      console.log( _localUpdatePending );
+      break;
+
+    case ActionTypes.RESOLVE_USER_UPDATE_TASK:
+      delete _localUpdatePending[ action.taskID ];
+      UsersStore.emitChange();
+      break;
+
 
     default:
       // No action

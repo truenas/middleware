@@ -82,7 +82,7 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
       break;
 
 
-    case ActionTypes.LOG_MIDDLEWARE_EVENT:
+    case ActionTypes.MIDDLEWARE_EVENT:
 
       // TODO: handle events
 
