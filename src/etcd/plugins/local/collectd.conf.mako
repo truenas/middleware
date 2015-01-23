@@ -17,7 +17,7 @@ LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
 LoadPlugin zfs_arc
-LoadPlugin write_mongodb
+LoadPlugin python
 LoadPlugin unixsock
 
 <Plugin "syslog">
@@ -54,17 +54,17 @@ LoadPlugin unixsock
 <Plugin "df">
 </Plugin>
 
-<Plugin "write_mongodb">
-  <Node "default">
-    Host "localhost"
-    Port "27017"
-    Timeout 2000
-    StoreRates true
-  </Node>
-</Plugin>
-
 <Plugin unixsock>
     SocketFile "/var/run/collectd.sock"
     SocketGroup "collectd"
     SocketPerms "0770"
+</Plugin>
+
+<Plugin "python">
+    ModulePath "/usr/local/lib/statd/plugins/collectd"
+    Import "write-statd"
+
+    <Module "write-statd">
+        Host "127.0.0.1"
+    </Module>
 </Plugin>
