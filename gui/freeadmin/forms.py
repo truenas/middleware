@@ -278,11 +278,15 @@ class SelectMultipleWidget(forms.widgets.SelectMultiple):
                     selected.append(choice)
                     break
 
-        select_available = forms.widgets.SelectMultiple().render(
+        select_available = forms.widgets.SelectMultiple(
+            attrs={'size': 6}
+        ).render(
             'selecAt_from', value, {'id': 'select_from'}, unselected
         )
         select_available = ''.join(select_available.split('</select>')[:-1])
-        select_selected = forms.widgets.SelectMultiple().render(
+        select_selected = forms.widgets.SelectMultiple(
+            attrs={'size': 6}
+        ).render(
             name, value, attrs, selected
         )
         select_selected = ''.join(select_selected.split('</select>')[:-1])
