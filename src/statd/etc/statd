@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: statd
+# REQUIRE: datastore dispatcher collectd
+
+. /etc/rc.subr
+
+name="statd"
+pidfile="/var/run/statd.pid"
+command="/usr/sbin/daemon"
+start_precmd="prestart"
+
+prestart()
+{
+    rc_flags="-P ${pidfile} -f -r /usr/local/sbin/statd ${rc_flags}"
+}
+
+load_rc_config $name
+run_rc_command $*
