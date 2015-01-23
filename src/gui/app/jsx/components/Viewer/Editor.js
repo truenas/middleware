@@ -17,14 +17,14 @@ var Editor = React.createClass({
 
   , getInitialState: function() {
       return {
-          targetItem  : this.changeTargetItem( this.props.params )
+          targetItem  : this.changeTargetItem( this.props.inputData, this.props.params )
         , currentMode : "view"
       };
     }
 
   , componentWillReceiveProps: function( nextProps ) {
       // TODO: Optimize based on changing props. Might need a shouldComponentUpdate.
-      var nextTargetItem = this.changeTargetItem( nextProps.params );
+      var nextTargetItem = this.changeTargetItem( nextProps.inputData, nextProps.params );
 
       this.setState({
           targetItem  : nextTargetItem
@@ -32,8 +32,8 @@ var Editor = React.createClass({
       });
     }
 
-  , changeTargetItem: function( params ) {
-      return _.find( this.props.inputData, function( item ) {
+  , changeTargetItem: function( inputData, params ) {
+      return _.find( inputData, function( item ) {
           // Returns the first object from the input array whose selectionKey matches
           // the current route's dynamic portion. For instance, /accounts/users/root
           // with bsdusr_usrname as the selectionKey would match the first object
