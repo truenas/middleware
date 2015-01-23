@@ -10,23 +10,26 @@ var Link   = Router.Link;
 
 var viewerUtil = require("./viewerUtil");
 
-var disclosureThreshold = 1;
-
 var DetailNavSection = React.createClass({
 
     propTypes: {
-        entries      : React.PropTypes.array.isRequired
-      , sectionName  : React.PropTypes.string.isRequired
-      , searchString : React.PropTypes.string
+        entries             : React.PropTypes.array.isRequired
+      , sectionName         : React.PropTypes.string.isRequired
+      , searchString        : React.PropTypes.string
+      , disclosureThreshold : React.PropTypes.number
     }
 
-  , isUnderThreshold: function() {
-    return this.props.entries.length <= disclosureThreshold;
-  }
+  , getDefaultProps: function() {
+      return { disclosureThreshold: 1 };
+    }
 
   , getInitialState: function () {
       return { disclosure: this.props.defaultDisclosureState || "open" };
     }
+
+  , isUnderThreshold: function() {
+    return this.props.entries.length <= this.props.disclosureThreshold;
+  }
 
   , createItem: function ( rawItem, index ) {
       var searchString = this.props.searchString;
@@ -112,6 +115,7 @@ var DetailViewer = React.createClass({
       , itemData     : React.PropTypes.object.isRequired
       , filteredData : React.PropTypes.object.isRequired
       , formatData   : React.PropTypes.object.isRequired
+      , displayData  : React.PropTypes.object.isRequired
       , searchString : React.PropTypes.string
     }
 
@@ -124,14 +128,23 @@ var DetailViewer = React.createClass({
 
       if ( fd["grouped"] ) {
         groupedNavItems = fd.groups.map( function ( group, index ) {
+          var disclosureState;
+
+          if ( this.props.displayData.defaultCollapsed ) {
+            disclosureState = this.props.displayData.defaultCollapsed.indexOf( group.key ) > -1 ? "closed" : "open";
+          } else {
+            disclosureState = "open";
+          }
+
           if ( group.entries.length ) {
             return (
-              <DetailNavSection itemData     = { this.props.itemData }
-                                formatData   = { this.props.formatData }
-                                searchString = { this.props.searchString }
-                                sectionName  = { group.name }
-                                entries      = { group.entries }
-                                activeKey    = { this.props.selectedKey } />
+              <DetailNavSection itemData               = { this.props.itemData }
+                                formatData             = { this.props.formatData }
+                                searchString           = { this.props.searchString }
+                                sectionName            = { group.name }
+                                defaultDisclosureState = { disclosureState }
+                                entries                = { group.entries }
+                                activeKey              = { this.props.selectedKey } />
             );
           } else {
             return null;
@@ -141,12 +154,13 @@ var DetailViewer = React.createClass({
 
       if ( fd["remaining"].entries.length ) {
         remainingNavItems = (
-          <DetailNavSection itemData     = { this.props.itemData }
-                            formatData   = { this.props.formatData }
-                            searchString = { this.props.searchString }
-                            sectionName  = { fd["remaining"].name }
-                            entries      = { fd["remaining"].entries }
-                            activeKey    = { this.props.selectedKey } />
+          <DetailNavSection itemData               = { this.props.itemData }
+                            formatData             = { this.props.formatData }
+                            searchString           = { this.props.searchString }
+                            sectionName            = { fd["remaining"].name }
+                            defaultDisclosureState = "closed"
+                            entries                = { fd["remaining"].entries }
+                            activeKey              = { this.props.selectedKey } />
         );
       }
 

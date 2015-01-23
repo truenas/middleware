@@ -139,6 +139,7 @@ var Viewer = React.createClass({
 
             filteredData.groups.push({
                 name    : groupData.name
+              , key     : group
               , entries : newEntries
             });
           }.bind(this)
@@ -312,6 +313,7 @@ var Viewer = React.createClass({
                                 searchString = { this.state.searchString }
                                 inputData    = { this.props.inputData }
                                 formatData   = { this.props.formatData }
+                                displayData  = { this.props.displayData }
                                 itemData     = { this.props.itemData }
                                 ItemView     = { this.props.ItemView }
                                 EditView     = { this.props.EditView }
@@ -321,6 +323,7 @@ var Viewer = React.createClass({
                               inputData    = { this.props.inputData }
                               searchString = { this.state.searchString }
                               formatData   = { this.props.formatData }
+                              displayData  = { this.props.displayData }
                               ItemView     = { this.props.ItemView }
                               EditView     = { this.props.EditView }
                               Editor       = { this.props.Editor } /> );
@@ -329,6 +332,7 @@ var Viewer = React.createClass({
                                inputData    = { this.props.inputData }
                                searchString = { this.state.searchString }
                                formatData   = { this.props.formatData }
+                               displayData  = { this.props.displayData }
                                tableCols    = { this.state.tableCols }
                                ItemView     = { this.props.ItemView }
                                EditView     = { this.props.EditView }
@@ -340,38 +344,7 @@ var Viewer = React.createClass({
     }
 
   , render: function() {
-      var viewDropdown   = null;
-      var allowedFilters = this.props.displayData.allowedFilters;
-      // var allowedGroups  = this.props.displayData.allowedGroups;
       var viewerModeNav  = null;
-
-      // Create View Menu
-      if ( allowedFilters ) {
-      // if ( allowedFilters || allowedGroups ) {
-        var menuSections = [];
-
-        // Don't show grouping toggle for hidden groups
-        // var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
-
-        if ( allowedFilters ) {
-          this.createDropdownSection( menuSections, null, allowedFilters.map( this.createFilterMenuOption ) );
-        }
-
-        // if ( visibleGroups ) {
-        //   this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
-        // }
-
-
-        viewDropdown = (
-          <TWBS.DropdownButton title="View">
-            { menuSections }
-          </TWBS.DropdownButton>
-        );
-      } else {
-        viewDropdown = (
-          <TWBS.DropdownButton title="View" disabled />
-        );
-      }
 
       // Create navigation mode icons
       if ( this.props.allowedModes.length > 1 ) {
@@ -392,11 +365,6 @@ var Viewer = React.createClass({
                         groupClassName = "navbar-form navbar-left"
                         onChange       = { this.handleSearchChange }
                         addonBefore    = { <Icon glyph ="search" /> } />
-            {/* Dropdown buttons (2) */}
-            <TWBS.Nav className="navbar-left">
-              {/* View Menu */}
-              { viewDropdown }
-            </TWBS.Nav>
 
             {/* Select view mode (3) */}
             { viewerModeNav }

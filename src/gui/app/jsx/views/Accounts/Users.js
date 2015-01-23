@@ -105,12 +105,13 @@ var displaySettings = {
           , testProp : { "builtin": true }
         }
     }
-  , remainingName  : "other user accounts"
-  , ungroupedName  : "all user accounts"
-  , allowedFilters : [ "builtIn" ]
-  , defaultFilters : [ "builtIn" ]
-  , allowedGroups  : [ "current", "userCreated", "builtIn" ]
-  , defaultGroups  : [ "current", "userCreated", "builtIn" ]
+  , remainingName    : "other user accounts"
+  , ungroupedName    : "all user accounts"
+  , allowedFilters   : [ ]
+  , defaultFilters   : [ ]
+  , allowedGroups    : [ "current", "userCreated", "builtIn" ]
+  , defaultGroups    : [ "current", "userCreated", "builtIn" ]
+  , defaultCollapsed : [ "builtIn" ]
 };
 
 function getUsersFromStore() {
