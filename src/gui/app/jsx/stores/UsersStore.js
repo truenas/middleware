@@ -85,8 +85,6 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
     case ActionTypes.RECEIVE_USER_UPDATE_TASK:
       _localUpdatePending[ action.taskID ] = action.userID;
       UsersStore.emitChange();
-      console.log( action );
-      console.log( _localUpdatePending );
       break;
 
     case ActionTypes.RESOLVE_USER_UPDATE_TASK:
