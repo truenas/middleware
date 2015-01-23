@@ -61,8 +61,8 @@ var ProcessesPie = React.createClass({
     arcs.append("svg:text").attr("fill", "#FFFFFF").attr("transform", function(d){
           d.innerRadius = 0;
           d.outerRadius = r;
-          console.log(d);
-          console.log(arc);
+          //console.log(d);
+          //console.log(arc);
         return "translate(" + arc.centroid(d) + ")";}).attr("text-anchor", "middle").text( function(d, i) {
         return data[i].label;}
         );
