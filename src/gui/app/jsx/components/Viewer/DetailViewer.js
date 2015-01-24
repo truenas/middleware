@@ -139,7 +139,8 @@ var DetailViewer = React.createClass({
 
           if ( group.entries.length ) {
             return (
-              <DetailNavSection viewData          = { this.props.viewData }
+              <DetailNavSection key               = { index }
+                                viewData          = { this.props.viewData }
                                 searchString      = { this.props.searchString }
                                 activeKey         = { this.props.selectedKey }
                                 sectionName       = { group.name }
