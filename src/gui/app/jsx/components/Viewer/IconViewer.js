@@ -23,14 +23,14 @@ var IconViewer = React.createClass({
       return (
         <div key       = { rawItem.id }
              className = "viewer-icon-item" >
-          <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.formatData["secondaryKey"] ] }
-                               fallbackString = { rawItem[ this.props.formatData["primaryKey"] ] }
-                               iconImage      = { rawItem[ this.props.formatData["imageKey"] ] }
-                               seedNumber     = { rawItem[ this.props.formatData["uniqueKey"] ] }
+          <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
+                               fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
+                               iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
+                               seedNumber     = { rawItem[ this.props.viewData.format["uniqueKey"] ] }
                                fontSize       = { 1 } />
           <div className="viewer-icon-item-text">
-            <h6 className="viewer-icon-item-primary">{ rawItem[ this.props.formatData["primaryKey"] ] }</h6>
-            <small className="viewer-icon-item-secondary text-muted">{ rawItem[ this.props.formatData["secondaryKey"] ] }</small>
+            <h6 className="viewer-icon-item-primary">{ rawItem[ this.props.viewData.format["primaryKey"] ] }</h6>
+            <small className="viewer-icon-item-secondary text-muted">{ rawItem[ this.props.viewData.format["secondaryKey"] ] }</small>
           </div>
         </div>
       );

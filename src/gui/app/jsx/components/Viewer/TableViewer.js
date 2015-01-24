@@ -6,7 +6,7 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
-var editorUtil = require("./Editor/editorUtil");
+var viewerUtil = require("./viewerUtil");
 
 // Table Viewer
 var TableViewer = React.createClass({
@@ -93,7 +93,7 @@ var TableViewer = React.createClass({
 
   , createHeader: function( key, index ) {
       var thIsActive  = ( this.state.sortTableBy === key );
-      var targetEntry = _.where( this.props.formatData.dataKeys, { "key" : key })[0];
+      var targetEntry = _.where( this.props.viewData.format["dataKeys"], { "key" : key })[0];
       return(
         <th className     = "fixed-table-header-th"
             ref           = { "COL_" + key }
