@@ -1,17 +1,8 @@
-#6994	Normal	Make poolnames using reserved words work
-#7101	Normal	Jail storage not mounted after reboot
-#7141	Normal	FTP WebUI with TLS cert
-#7340	Normal	Microsoft Account user mapping
-#7355	Normal	Possible syntax error in inadyn-mt.conf (dynamic DNS)
-#7380	Normal	Shadow copies are not properly set up for home directories
-#7436	Normal	Need to create a default boot environment that is a "pristine install" but not boot into it
-#7441	Normal	High CPU utilization every minute due to alert.py
-#7542	Normal	Password Visible When Importing TLS Certificate and Private Key
-#7547	Normal	crash dumps are broken
-#7566	Low	Web GUI status "light" does not change back to green from yellow or red
-#7572	Normal	Notify user of available updates for 9.3
-#7586	Normal	Hostname (or any form of id) missing in e-mail notification
-#7588	Normal	Disabling NFSv4 messes up NFS service
-#7589	Low	Jail advanced configuration has an editable "Status" field
-#7590	Normal	freenasUI middleware throws exception during GEOM config parsing if unassigned three-character device names are in the system
-#7611	Normal	Add backup/restore feature for disaster recovery
+7371	High	Data corruption probably caused by VAAI
+7600	High	CTL errors when moving data between FC LUNs residing on different FreeNAS boxes
+7642	High	Multiple vulnerabilities for Django
+7401	Normal	host uuid is not unique.
+7522	Normal	ups.conf incorrectly set
+7577	Normal	AFP Settings Error
+7626	Normal	Error 500 when trying to display periodic snapshots
+7637	Low	Web gui scroll list when adding groups to users
