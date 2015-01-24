@@ -16,35 +16,36 @@ var UserEdit = require("./Users/UserEdit");
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
 
-var formatData = require("../../../data/middleware-keys/accounts-display.json")[0];
-var itemData = {
-    "route" : "users-editor"
-  , "param" : "userID"
-};
-
-var displaySettings = {
-    filterCriteria: {
-        current: {
-            name     : "current user account"
-          // TODO: Fix dummy data
-          , testProp : { "username": "jakub" }
-        }
-      , userCreated: {
-            name     : "local user accounts"
-          , testProp : { "builtin": false }
-        }
-      , builtIn: {
-            name     : "built-in system accounts"
-          , testProp : { "builtin": true }
-        }
-    }
-  , remainingName    : "other user accounts"
-  , ungroupedName    : "all user accounts"
-  , allowedFilters   : [ ]
-  , defaultFilters   : [ ]
-  , allowedGroups    : [ "current", "userCreated", "builtIn" ]
-  , defaultGroups    : [ "current", "userCreated", "builtIn" ]
-  , defaultCollapsed : [ "builtIn" ]
+var viewData = {
+    format  : require("../../../data/middleware-keys/accounts-display.json")[0]
+  , routing : {
+      "route" : "users-editor"
+    , "param" : "userID"
+  }
+  , display : {
+      filterCriteria: {
+          current: {
+              name     : "current user account"
+            // TODO: Fix dummy data
+            , testProp : { "username": "jakub" }
+          }
+        , userCreated: {
+              name     : "local user accounts"
+            , testProp : { "builtin": false }
+          }
+        , builtIn: {
+              name     : "built-in system accounts"
+            , testProp : { "builtin": true }
+          }
+      }
+    , remainingName    : "other user accounts"
+    , ungroupedName    : "all user accounts"
+    , allowedFilters   : [ ]
+    , defaultFilters   : [ ]
+    , allowedGroups    : [ "current", "userCreated", "builtIn" ]
+    , defaultGroups    : [ "current", "userCreated", "builtIn" ]
+    , defaultCollapsed : [ "builtIn" ]
+  }
 };
 
 
@@ -78,17 +79,12 @@ var Users = React.createClass({
     }
 
   , render: function() {
-      return (
-        <Viewer header      = { "Users" }
-                inputData   = { this.state.usersList }
-                displayData = { displaySettings }
-                formatData  = { formatData }
-                itemData    = { itemData }
-                ItemView    = { UserView }
-                EditView    = { UserEdit }
-                Editor      = { this.props.activeRouteHandler }>
-        </Viewer>
-      );
+      return <Viewer header    = { "Users" }
+                     inputData = { this.state.usersList }
+                     viewData  = { viewData }
+                     Editor    = { this.props.activeRouteHandler }
+                     ItemView  = { UserView }
+                     EditView  = { UserEdit } />;
     }
 
 });

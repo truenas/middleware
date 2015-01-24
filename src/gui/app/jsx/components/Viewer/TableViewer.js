@@ -12,13 +12,13 @@ var editorUtil = require("./Editor/editorUtil");
 var TableViewer = React.createClass({
 
     propTypes: {
-        Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+        viewData     : React.PropTypes.object.isRequired
+      , inputData    : React.PropTypes.object.isRequired
+      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , filteredData : React.PropTypes.object.isRequired
-      , formatData   : React.PropTypes.object.isRequired
-      , inputData    : React.PropTypes.array
       , searchString : React.PropTypes.string
+      , filteredData : React.PropTypes.object.isRequired
       , tableCols    : React.PropTypes.array.isRequired
     }
 

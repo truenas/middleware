@@ -15,29 +15,30 @@ var ServiceView = require("./Services/ServiceView");
 var ServicesMiddleware = require("../middleware/ServicesMiddleware");
 var ServicesStore      = require("../stores/ServicesStore");
 
-var formatData = require("../../data/middleware-keys/services-display.json")[0];
-var itemData = {
-    "route" : "services-editor"
-  , "param" : "serviceID"
-};
-
-var displaySettings = {
-    filterCriteria: {
-        running: {
-            name     : "active services"
-          , testProp : { "state": "running" }
-        }
-      , stopped: {
-            name     : "stopped services"
-          , testProp : { "state": "stopped" }
-        }
-    }
-  , remainingName  : "other services"
-  , ungroupedName  : "all services"
-  , allowedFilters : [ ]
-  , defaultFilters : [ ]
-  , allowedGroups  : [ "running", "stopped" ]
-  , defaultGroups  : [ "running", "stopped" ]
+var viewData = {
+    format  : require("../../data/middleware-keys/services-display.json")[0]
+  , routing : {
+      "route" : "services-editor"
+    , "param" : "serviceID"
+  }
+  , display: {
+      filterCriteria: {
+          running: {
+              name     : "active services"
+            , testProp : { "state": "running" }
+          }
+        , stopped: {
+              name     : "stopped services"
+            , testProp : { "state": "stopped" }
+          }
+      }
+    , remainingName  : "other services"
+    , ungroupedName  : "all services"
+    , allowedFilters : [ ]
+    , defaultFilters : [ ]
+    , allowedGroups  : [ "running", "stopped" ]
+    , defaultGroups  : [ "running", "stopped" ]
+  }
 };
 
 function getServicesFromStore() {
@@ -72,12 +73,9 @@ var Services = React.createClass({
         <h2>Services</h2>
         <Viewer header      = { "Services" }
                 inputData   = { this.state.servicesList }
-                displayData = { displaySettings }
-                formatData  = { formatData }
-                itemData    = { itemData }
-                ItemView    = { ServiceView }
-                Editor      = { this.props.activeRouteHandler }>
-        </Viewer>
+                viewData    = { viewData }
+                Editor      = { this.props.activeRouteHandler }
+                ItemView    = { ServiceView } />
       </main>
     );
   }

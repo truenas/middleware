@@ -16,13 +16,11 @@ var TableViewer  = require("./Viewer/TableViewer");
 var Viewer = React.createClass({
 
     propTypes: {
-      defaultMode  : React.PropTypes.string
-    , allowedModes : React.PropTypes.array
-    , itemData     : React.PropTypes.object.isRequired
-    , inputData    : React.PropTypes.array.isRequired
-    , formatData   : React.PropTypes.object.isRequired
-    , displayData  : React.PropTypes.object
-  }
+        defaultMode  : React.PropTypes.string
+      , allowedModes : React.PropTypes.array
+      , viewData     : React.PropTypes.object.isRequired
+      , displayData  : React.PropTypes.object
+    }
 
 
   // REACT LIFECYCLE
@@ -52,7 +50,7 @@ var Viewer = React.createClass({
       // names out of the translation key.
       var defaultTableCols = [];
 
-      _.filter( this.props.formatData.dataKeys, function( item, key, collection ) {
+      _.filter( this.props.viewData.format.dataKeys, function( item, key, collection ) {
         if ( item["defaultCol"] ) {
           defaultTableCols.push( item["key"] );
         }
@@ -61,8 +59,8 @@ var Viewer = React.createClass({
       return {
           currentMode    : this.changeViewerMode( initialMode )
         , tableCols      : defaultTableCols
-        , enabledGroups  : this.props.displayData.defaultGroups.length ? this.props.displayData.defaultGroups : null
-        , enabledFilters : this.props.displayData.defaultFilters.length ? this.props.displayData.defaultFilters : null
+        , enabledGroups  : this.props.viewData.display.defaultGroups.length ? this.props.viewData.display.defaultGroups : null
+        , enabledFilters : this.props.viewData.display.defaultFilters.length ? this.props.viewData.display.defaultFilters : null
         , filteredData   : {
               grouped   : false
             , groups    : []
@@ -109,7 +107,7 @@ var Viewer = React.createClass({
       if ( displayParams.enabledFilters ) {
         displayParams.enabledFilters.map(
           function ( filter ) {
-            _.remove( inputDataArray, this.props.displayData.filterCriteria[ filter ].testProp );
+            _.remove( inputDataArray, this.props.viewData.display.filterCriteria[ filter ].testProp );
           }.bind(this)
         );
       }
@@ -119,7 +117,7 @@ var Viewer = React.createClass({
       // searchString in either their primary or secondary keys
       inputDataArray = _.filter( inputDataArray, function ( item ) {
         // TODO: Are keys always strings? May want to rethink this
-        var searchableString = item[ this.props.formatData.primaryKey ] + item[ this.props.formatData.secondaryKey ];
+        var searchableString = item[ this.props.viewData.format.primaryKey ] + item[ this.props.viewData.format.secondaryKey ];
 
         return ( searchableString.indexOf( displayParams.searchString ) !== -1 );
 
@@ -134,7 +132,7 @@ var Viewer = React.createClass({
       if ( displayParams.enabledGroups.length ) {
         displayParams.enabledGroups.map(
           function ( group ) {
-            var groupData  = this.props.displayData.filterCriteria[ group ];
+            var groupData  = this.props.viewData.display.filterCriteria[ group ];
             var newEntries = _.remove( inputDataArray, groupData.testProp );
 
             filteredData.groups.push({
@@ -153,7 +151,7 @@ var Viewer = React.createClass({
 
       // All remaining items are put in the "remaining" property
       filteredData["remaining"] = {
-          name    : filteredData["grouped"] ? this.props.displayData["remainingName"] : this.props.displayData["ungroupedName"]
+          name    : filteredData["grouped"] ? this.props.viewData.display["remainingName"] : this.props.viewData.display["ungroupedName"]
         , entries : inputDataArray
       };
 
@@ -171,7 +169,7 @@ var Viewer = React.createClass({
 
   , handleEnabledGroupsToggle: function ( targetGroup ) {
       var tempEnabledArray = _.clone( this.state.enabledGroups );
-      var tempDisplayArray = this.props.displayData.allowedGroups;
+      var tempDisplayArray = this.props.viewData.display.allowedGroups;
       var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
 
       if ( enabledIndex !== -1 ) {
@@ -229,7 +227,7 @@ var Viewer = React.createClass({
           // the current route's dynamic portion. For instance, /accounts/users/root
           // with bsdusr_usrname as the selectionKey would match the first object
           // in inputData whose username === "root"
-          return params[ this.props.itemData["param"] ] === item[ this.props.formatData["selectionKey"] ];
+          return params[ this.props.viewData.routing["param"] ] === item[ this.props.viewData.format["selectionKey"] ];
         }.bind(this)
       );
     }
@@ -265,7 +263,7 @@ var Viewer = React.createClass({
       return (
         <TWBS.MenuItem key        = { index }
                        onClick    = { this.handleEnabledGroupsToggle.bind( null, group ) }>
-          { toggleText + this.props.displayData.filterCriteria[ group ].name }
+          { toggleText + this.props.viewData.display.filterCriteria[ group ].name }
         </TWBS.MenuItem>
       );
     }
@@ -282,7 +280,7 @@ var Viewer = React.createClass({
       return (
         <TWBS.MenuItem key        = { index }
                        onClick    = { this.handleEnabledFiltersToggle.bind( null, filter ) }>
-          { toggleText + this.props.displayData.filterCriteria[ filter ].name }
+          { toggleText + this.props.viewData.display.filterCriteria[ filter ].name }
         </TWBS.MenuItem>
       );
     }
@@ -306,41 +304,35 @@ var Viewer = React.createClass({
     }
 
   , createViewerContent: function () {
+      var viewerContent = null;
+
       switch ( this.state.currentMode ) {
         default:
         case "detail":
-          return( <DetailViewer filteredData = { this.state.filteredData }
-                                searchString = { this.state.searchString }
-                                inputData    = { this.props.inputData }
-                                formatData   = { this.props.formatData }
-                                displayData  = { this.props.displayData }
-                                itemData     = { this.props.itemData }
-                                ItemView     = { this.props.ItemView }
-                                EditView     = { this.props.EditView }
-                                Editor       = { this.props.Editor } /> );
+          viewerContent = DetailViewer;
+          break;
+
         case "icon":
-          return( <IconViewer filteredData = { this.state.filteredData }
-                              inputData    = { this.props.inputData }
-                              searchString = { this.state.searchString }
-                              formatData   = { this.props.formatData }
-                              displayData  = { this.props.displayData }
-                              ItemView     = { this.props.ItemView }
-                              EditView     = { this.props.EditView }
-                              Editor       = { this.props.Editor } /> );
+          viewerContent = IconViewer;
+          break;
+
         case "table":
-          return( <TableViewer filteredData = { this.state.filteredData }
-                               inputData    = { this.props.inputData }
-                               searchString = { this.state.searchString }
-                               formatData   = { this.props.formatData }
-                               displayData  = { this.props.displayData }
-                               tableCols    = { this.state.tableCols }
-                               ItemView     = { this.props.ItemView }
-                               EditView     = { this.props.EditView }
-                               Editor       = { this.props.Editor } /> );
+          viewerContent = TableViewer;
+          break;
+
         case "heir":
           // TODO: Heirarchical Viewer
           break;
       }
+
+      return <viewerContent viewData     = { this.props.viewData }
+                            inputData    = { this.props.inputData }
+                            Editor       = { this.props.Editor }
+                            ItemView     = { this.props.ItemView }
+                            EditView     = { this.props.EditView }
+                            tableCols    = { this.state.tableCols }
+                            searchString = { this.state.searchString }
+                            filteredData = { this.state.filteredData } />;
     }
 
   , render: function() {

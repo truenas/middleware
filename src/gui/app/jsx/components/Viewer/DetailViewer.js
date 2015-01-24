@@ -13,10 +13,14 @@ var viewerUtil = require("./viewerUtil");
 var DetailNavSection = React.createClass({
 
     propTypes: {
-        entries             : React.PropTypes.array.isRequired
-      , sectionName         : React.PropTypes.string.isRequired
+        viewData            : React.PropTypes.object.isRequired
+      , inputData           : React.PropTypes.object.isRequired
       , searchString        : React.PropTypes.string
+      , activeKey           : React.PropTypes.string
+      , sectionName         : React.PropTypes.string.isRequired
+      , initialDisclosure   : React.PropTypes.string
       , disclosureThreshold : React.PropTypes.number
+      , entries             : React.PropTypes.array.isRequired
     }
 
   , getDefaultProps: function() {
@@ -24,7 +28,7 @@ var DetailNavSection = React.createClass({
     }
 
   , getInitialState: function () {
-      return { disclosure: this.props.defaultDisclosureState || "open" };
+      return { disclosure: this.props.initialDisclosure || "open" };
     }
 
   , isUnderThreshold: function() {
@@ -35,10 +39,10 @@ var DetailNavSection = React.createClass({
       var searchString = this.props.searchString;
       var params = {};
 
-      params[ this.props.itemData.param ] = rawItem[ this.props.formatData["selectionKey"] ];
+      params[ this.props.viewData.routing["param"] ] = rawItem[ this.props.viewData.format["selectionKey"] ];
 
-      var primaryText   = rawItem[ this.props.formatData["primaryKey"] ];
-      var secondaryText = rawItem[ this.props.formatData["secondaryKey"] ];
+      var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ];
+      var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ];
 
       if ( searchString.length ) {
 
@@ -60,12 +64,12 @@ var DetailNavSection = React.createClass({
         <li role      = "presentation"
             key       = { index }
             className = "disclosure-target" >
-          <Link to     = { this.props.itemData.route }
+          <Link to     = { this.props.viewData.routing.route }
                 params = { params } >
-            <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.formatData["secondaryKey"] ] }
-                                 fallbackString = { rawItem[ this.props.formatData["primaryKey"] ] }
-                                 iconImage      = { rawItem[ this.props.formatData["imageKey"] ] }
-                                 seedNumber     = { rawItem[ this.props.formatData["uniqueKey"] ] }
+            <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
+                                 fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
+                                 iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
+                                 seedNumber     = { rawItem[ this.props.viewData.format["uniqueKey"] ] }
                                  fontSize       = { 1 } />
             <div className="viewer-detail-nav-item-text">
               <strong className="primary-text">{ primaryText }</strong>
@@ -109,14 +113,12 @@ var DetailNavSection = React.createClass({
 var DetailViewer = React.createClass({
 
     propTypes: {
-        Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+        viewData     : React.PropTypes.object.isRequired
+      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , itemData     : React.PropTypes.object.isRequired
-      , filteredData : React.PropTypes.object.isRequired
-      , formatData   : React.PropTypes.object.isRequired
-      , displayData  : React.PropTypes.object.isRequired
       , searchString : React.PropTypes.string
+      , filteredData : React.PropTypes.object.isRequired
     }
 
   // Sidebar navigation for collection
@@ -130,21 +132,20 @@ var DetailViewer = React.createClass({
         groupedNavItems = fd.groups.map( function ( group, index ) {
           var disclosureState;
 
-          if ( this.props.displayData.defaultCollapsed ) {
-            disclosureState = this.props.displayData.defaultCollapsed.indexOf( group.key ) > -1 ? "closed" : "open";
+          if ( this.props.viewData.display.defaultCollapsed ) {
+            disclosureState = this.props.viewData.display.defaultCollapsed.indexOf( group.key ) > -1 ? "closed" : "open";
           } else {
             disclosureState = "open";
           }
 
           if ( group.entries.length ) {
             return (
-              <DetailNavSection itemData               = { this.props.itemData }
-                                formatData             = { this.props.formatData }
-                                searchString           = { this.props.searchString }
-                                sectionName            = { group.name }
-                                defaultDisclosureState = { disclosureState }
-                                entries                = { group.entries }
-                                activeKey              = { this.props.selectedKey } />
+              <DetailNavSection viewData          = { this.props.viewData }
+                                searchString      = { this.props.searchString }
+                                activeKey         = { this.props.selectedKey }
+                                sectionName       = { group.name }
+                                initialDisclosure = { disclosureState }
+                                entries           = { group.entries } />
             );
           } else {
             return null;
@@ -154,13 +155,12 @@ var DetailViewer = React.createClass({
 
       if ( fd["remaining"].entries.length ) {
         remainingNavItems = (
-          <DetailNavSection itemData               = { this.props.itemData }
-                            formatData             = { this.props.formatData }
-                            searchString           = { this.props.searchString }
-                            sectionName            = { fd["remaining"].name }
-                            defaultDisclosureState = "closed"
-                            entries                = { fd["remaining"].entries }
-                            activeKey              = { this.props.selectedKey } />
+          <DetailNavSection viewData          = { this.props.viewData }
+                            searchString      = { this.props.searchString }
+                            activeKey         = { this.props.selectedKey }
+                            sectionName       = { fd["remaining"].name }
+                            initialDisclosure = "closed"
+                            entries           = { fd["remaining"].entries } />
         );
       }
 
@@ -171,11 +171,10 @@ var DetailViewer = React.createClass({
             { remainingNavItems }
           </div>
 
-          <this.props.Editor inputData  = { this.props.inputData }
-                             itemData   = { this.props.itemData }
-                             formatData = { this.props.formatData }
-                             ItemView   = { this.props.ItemView }
-                             EditView   = { this.props.EditView } />
+          <this.props.Editor viewData  = { this.props.viewData }
+                             inputData = { this.props.inputData }
+                             ItemView  = { this.props.ItemView }
+                             EditView  = { this.props.EditView } />
         </div>
       );
     }

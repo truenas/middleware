@@ -7,13 +7,13 @@ var React = require("react");
 
 var Editor = React.createClass({
 
-   propTypes: {
-      itemData   : React.PropTypes.object.isRequired
-    , inputData  : React.PropTypes.array.isRequired
-    , formatData : React.PropTypes.object.isRequired
-    , ItemView   : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
-    , EditView   : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
-  }
+    propTypes: {
+        viewData  : React.PropTypes.object.isRequired
+      , inputData : React.PropTypes.any.isRequired
+      , ItemView  : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
+      , EditView  : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
+      , params    : React.PropTypes.any // Provided as part of router's activeRouteHandler
+    }
 
   , getInitialState: function() {
       return {
@@ -28,7 +28,7 @@ var Editor = React.createClass({
 
       this.setState({
           targetItem  : nextTargetItem
-        , currentMode : ( nextTargetItem[ this.props.formatData["selectionKey"] ] !== this.state.targetItem[ this.props.formatData["selectionKey"] ] ? "view" : this.state.currentMode )
+        , currentMode : ( nextTargetItem[ this.props.viewData.format["selectionKey"] ] !== this.state.targetItem[ this.props.viewData.format["selectionKey"] ] ? "view" : this.state.currentMode )
       });
     }
 
@@ -38,7 +38,9 @@ var Editor = React.createClass({
           // the current route's dynamic portion. For instance, /accounts/users/root
           // with bsdusr_usrname as the selectionKey would match the first object
           // in inputData whose username === "root"
-          return params[ this.props.itemData["param"] ] === item[ this.props.formatData["selectionKey"] ];
+
+          return params[ this.props.viewData.routing["param"] ] === item[ this.props.viewData.format["selectionKey"] ];
+
         }.bind(this)
       );
     }
@@ -66,7 +68,7 @@ var Editor = React.createClass({
       return (
         <displayComponent handleViewChange = { this.handleViewChange }
                           item             = { this.state.targetItem }
-                          formatData       = { this.props.formatData } />
+                          formatData       = { this.props.viewData.format } />
       );
     }
 

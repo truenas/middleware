@@ -95,8 +95,13 @@ var UserEdit = React.createClass({
           { builtInUserAlert }
 
           <form className="form-horizontal">
-            { this.props.formatData["dataKeys"].map( function( displayKeys, index ) {
-                return editorUtil.identifyAndCreateFormElement( this.state.mixedValues[ displayKeys["key"] ], displayKeys, this.handleValueChange );
+              {
+                this.props.formatData["dataKeys"].map( function( displayKeys, index ) {
+                  return editorUtil.identifyAndCreateFormElement(
+                           this.state.mixedValues[ displayKeys["key"] ],
+                           displayKeys,
+                           this.handleValueChange
+                         );
               }.bind( this ) )
             }
           </form>
