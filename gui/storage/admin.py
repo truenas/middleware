@@ -629,7 +629,7 @@ class TaskFAdmin(BaseFreeAdmin):
 
         columns.insert(5, {
             'name': 'vmwaresync',
-            'label': _('VMWare Sync'),
+            'label': _('VMware Sync'),
             'sortable': False,
         })
 

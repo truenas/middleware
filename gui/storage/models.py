@@ -1116,7 +1116,7 @@ class VMWarePlugin(Model):
         verbose_name=_('Username'),
         max_length=200,
         help_text=_(
-            'Username on the above VMWare host with enough privileges to '
+            'Username on the above VMware host with enough privileges to '
             'snapshot virtual machines.'
         ),
     )
@@ -1132,14 +1132,14 @@ class VMWarePlugin(Model):
         verbose_name=_('Datastore'),
         max_length=200,
         help_text=_(
-            'The datastore on the VMWare side that the filesystem corresponds '
+            'The datastore on the VMware side that the filesystem corresponds '
             'to.'
         ),
     )
 
     class Meta:
-        verbose_name = _('VMWare-Snapshot')
-        verbose_name_plural = _('VMWare-Snapshots')
+        verbose_name = _('VMware-Snapshot')
+        verbose_name_plural = _('VMware-Snapshots')
 
     def __unicode__(self):
         return self.hostname
