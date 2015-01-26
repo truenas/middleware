@@ -278,10 +278,12 @@ def install_available(request, oid):
 
         try:
             jail = new_default_plugin_jail(plugin.unixname)
+        except IOError:
+            raise MiddlewareError(e.message)
         except MiddlewareError, e:
             raise e
         except Exception as e:
-            raise MiddlewareError(e)
+            raise MiddlewareError(unicode(e))
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
