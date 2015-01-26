@@ -1,1 +1,4 @@
 /bin/sh /usr/local/sbin/save_rrds.sh
+if [ -f /etc/killpower ]; then
+	/usr/local/sbin/upsdrvctl shutdown
+fi
