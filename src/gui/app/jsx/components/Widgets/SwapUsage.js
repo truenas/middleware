@@ -35,6 +35,8 @@ var SwapUsage = React.createClass({
   drawChart: function() {
       var chart = nv.models.bulletChart();
 
+      chart.margin({top:25, right:20, bottom:0, left:50}) ;
+
       d3.select(this.state.element)
         .datum(this.exampleData())
         .transition().duration(300)
@@ -45,6 +47,11 @@ var SwapUsage = React.createClass({
   },
 
   render: function() {
+    var divStyle = {
+      width: "100%",
+      height: "100%",
+      paddingTop: "25px"
+    };
     return (
       <Widget
         positionX  =  {this.props.positionX}
@@ -52,7 +59,7 @@ var SwapUsage = React.createClass({
         title      =  {this.props.title}
         size       =  {this.props.size} >
 
-        <div ref="pieDiv"><svg ref="svg" width={345} height={165}></svg></div>
+        <svg ref="svg" style={divStyle}></svg>
 
       </Widget>
 
