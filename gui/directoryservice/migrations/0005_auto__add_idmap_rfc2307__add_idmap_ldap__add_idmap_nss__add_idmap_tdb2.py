@@ -65,7 +65,7 @@ class Migration(SchemaMigration):
         # Adding model 'idmap_rid'
         db.create_table(u'directoryservice_idmap_rid', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('idmap_rid_range_low', self.gf('django.db.models.fields.IntegerField')(default=10000)),
+            ('idmap_rid_range_low', self.gf('django.db.models.fields.IntegerField')(default=20000)),
             ('idmap_rid_range_high', self.gf('django.db.models.fields.IntegerField')(default=90000000)),
         ))
         db.send_create_signal(u'directoryservice', ['idmap_rid'])
