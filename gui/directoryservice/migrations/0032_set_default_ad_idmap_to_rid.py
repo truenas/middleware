@@ -22,6 +22,7 @@ class Migration(DataMigration):
             # DS_TYPE_ACTIVEDIRECTORY
             idmap.idmap_ds_type = 1
             idmap.idmap_ds_id = ad.id 
+            idmap.idmap_rid_range_low = 20000
 
             idmap.save() 
 

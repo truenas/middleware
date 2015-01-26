@@ -517,7 +517,7 @@ class idmap_rfc2307(idmap_base):
 class idmap_rid(idmap_base):
     idmap_rid_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
-        default=10000
+        default=20000
     )
     idmap_rid_range_high = models.IntegerField(
         verbose_name=_("Range High"),
