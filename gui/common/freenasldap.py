@@ -1076,7 +1076,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         return dcs
 
     @staticmethod
-    def get_domain_controllers(domain, site=None):
+    def get_domain_controllers(domain, site=None, ssl=FREENAS_LDAP_NOSSL):
         dcs = []
         if not domain:
             return dcs
@@ -1086,6 +1086,10 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = "_ldap._tcp.%s._sites.dc._msdcs.%s" % (site, domain)
 
         dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        if ssl == FREENAS_LDAP_USESSL:
+            for dc in dcs:
+                dc.port = 636  
+
         return dcs
 
     @staticmethod
@@ -1100,7 +1104,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         return pdcs
 
     @staticmethod
-    def get_global_catalog_servers(domain, site=None):
+    def get_global_catalog_servers(domain, site=None, ssl=FREENAS_LDAP_NOSSL):
         gcs = []
         if not domain:
             return gcs
@@ -1110,6 +1114,10 @@ class FreeNAS_ActiveDirectory_Base(object):
             host = "_gc._tcp.%s._sites.%s" % (site, domain)
 
         gcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
+        if ssl == FREENAS_LDAP_USESSL:
+            for gc in gcs:
+                gc.port = 3269
+
         return gcs
 
     @staticmethod
@@ -1168,7 +1176,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         ret = None
         best_host = None 
 
-        dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site)
+        dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site, ssl)
         if not dcs:
             raise FreeNAS_ActiveDirectory_Exception(
                 "Unable to find domain controllers for %s" % domain)
@@ -1184,7 +1192,10 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             except Exception as e:
                 for error in e:
-                    errors.append(error['desc'])
+                    if isinstance(e, dict):
+                        errors.append(error['desc'])
+                    else:
+                        errors.append(error)
                 ret = False
 
         return ret
@@ -1502,7 +1513,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.dcname:
             (self.dchost, self.dcport) = self.__name_to_host(self.dcname, 389)
         if not self.dchost:
-            dcs = self.get_domain_controllers(self.domainname, site=self.site)
+            dcs = self.get_domain_controllers(self.domainname, site=self.site, ssl=self.ssl)
             if not dcs:
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find domain controllers for %s" % self.domainname)
@@ -1515,7 +1526,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         if not self.gchost:
             root = self.get_root_domain()
             if root:
-                gcs = self.get_global_catalog_servers(root, site=self.site)
+                gcs = self.get_global_catalog_servers(root, site=self.site, ssl=self.ssl)
                 if not gcs: 
                     raise FreeNAS_ActiveDirectory_Exception(
                         "Unable to find global catalog servers for %s" % root)
@@ -1554,6 +1565,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.dchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
             host=self.dchost, port=self.dcport,
+            ssl=self.ssl, certfile=self.certfile,
             flags=(self.flags & ~FLAGS_SASL_GSSAPI))
         self.dchandle.open()
 
@@ -1562,6 +1574,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
             host=self.gchost, port=self.gcport,
+            ssl=self.ssl, certfile=self.certfile,
             flags=(self.flags & ~FLAGS_SASL_GSSAPI))
         self.gchandle.open()
 
@@ -1649,7 +1662,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         return None
 
     def connected(self):
-        return self.validate_credentials(self.domainname, site=self.site,
+        return self.validate_credentials(self.domainname,
+            site=self.site, ssl=self.ssl, certfile=self.certfile,
             binddn=self.binddn, bindpw=self.bindpw)
 
     def reload(self, **kwargs):
@@ -2291,7 +2305,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             n = d['nETBIOSName']
             self.__users[n] = []
 
-            dcs = self.get_domain_controllers(d['dnsRoot'])
+            dcs = self.get_domain_controllers(d['dnsRoot'], ssl=self.ssl)
             if not dcs: 
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find domain controllers for %s" % d['dnsRoot'])
@@ -2591,7 +2605,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             n = d['nETBIOSName']
             self.__groups[n] = []
 
-            dcs = self.get_domain_controllers(d['dnsRoot'])
+            dcs = self.get_domain_controllers(d['dnsRoot'], ssl=self.ssl)
             if not dcs: 
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find domain controllers for %s" % d['dnsRoot'])
