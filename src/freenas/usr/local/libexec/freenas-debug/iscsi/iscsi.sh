@@ -32,7 +32,15 @@ iscsi_help() { echo "Dump iSCSI Configuration"; }
 iscsi_directory() { echo "iSCSI"; }
 iscsi_func()
 {
-	section_header "/usr/local/etc/istgt/istgt.conf"
-	sc "/usr/local/etc/istgt/istgt.conf"
+	section_header "/etc/ctl.conf"
+	sc "/etc/ctl.conf"
+	section_footer
+
+	section_header "ctladm devlist -v"
+	ctladm devlist -v
+	section_footer
+
+	section_header "ctladm islist"
+	ctladm islist
 	section_footer
 }
