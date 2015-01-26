@@ -60,4 +60,5 @@ def _init(dispatcher):
             session['active'] = False
             dispatcher.datastore.update('session', session['id'], session)
 
+    dispatcher.register_provider('sessions', SessionProvider)
     dispatcher.register_event_handler('system.pam.event', pam_event)

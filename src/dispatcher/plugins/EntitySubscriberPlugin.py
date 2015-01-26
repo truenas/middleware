@@ -43,7 +43,14 @@ class EntitySubscriberEventSource(EventSource):
 
         self.logger.debug('Collection provided by service {0} changed'.format(service))
 
-        gevent.spawn(self.fetch, service, operation, ids)
+        if operation == 'delete':
+            self.dispatcher.dispatch_event('entity-subscriber.{0}.changed'.format(service), {
+                'service': service,
+                'operation': operation,
+                'ids': ids
+            })
+        else:
+            gevent.spawn(self.fetch, service, operation, ids)
 
     def fetch(self, service, operation, ids):
         try:

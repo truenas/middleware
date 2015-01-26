@@ -27,6 +27,7 @@
 
 import uuid
 import errno
+import psutil
 from task import Provider, Task, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, description, accepts, returns
 from balancer import TaskState
@@ -38,9 +39,26 @@ class UserProvider(Provider):
     @description("Lists users present in the system")
     @query('definitions/user')
     def query(self, filter=None, params=None):
-        filter = filter or []
-        params = params or {}
-        return self.datastore.query('users', *filter, **params)
+        result = []
+        for user in self.datastore.query('users', *(filter or []), **(params or {})):
+            sessions = self.dispatcher.call_sync('sessions.query', [
+                ('username', '=', user['username']),
+                ('active', '=', True)
+            ])
+
+            # Remove password hash fields, they're useless in a query
+            user.pop('unixhash', None)
+            user.pop('smbhash', None)
+
+            # Add information about active sessions
+            user.update({
+                'logged-in': len(sessions) > 0,
+                'sessions': sessions
+            })
+
+            result.append(user)
+
+        return result
 
     def get_profile_picture(self, uid):
         pass
@@ -51,9 +69,7 @@ class GroupProvider(Provider):
     @description("Lists groups present in the system")
     @query('definitions/group')
     def query(self, filter=None, params=None):
-        filter = filter or []
-        params = params or {}
-        return list(self.datastore.query('groups', *filter, **params))
+        return list(self.datastore.query('groups', *(filter or []), **(params or {})))
 
 
 @description("Create an user in the system")
@@ -62,7 +78,7 @@ class GroupProvider(Provider):
     'allOf': [
         {'$ref': 'definitions/user'},
         {'required': ['username', 'group', 'shell', 'home']},
-        {'not': {'required': ['builtin']}}
+        {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
     ]
 })
 class UserCreateTask(Task):
@@ -160,7 +176,10 @@ class UserDeleteTask(Task):
     'type': 'integer'
 }, {
     'title': 'user',
-    '$ref': 'definitions/user'
+    'allOf': [
+        {'$ref': 'definitions/user'},
+        {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
+    ]
 })
 class UserUpdateTask(Task):
     def __init__(self, dispatcher):
@@ -349,7 +368,12 @@ def _init(dispatcher):
             'home': {'type': 'string'},
             'unixhash': {'type': ['string', 'null']},
             'smbhash': {'type': ['string', 'null']},
-            'sshpubkey': {'type': ['string', 'null']}
+            'sshpubkey': {'type': ['string', 'null']},
+            'logged-in': {'type': 'boolean', 'readOnly': True},
+            'sessions': {
+                'type': 'array',
+                'items': {'$ref': 'definitions/user-session'}
+            }
         }
     })
 

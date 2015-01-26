@@ -27,7 +27,7 @@
 
 import os
 import re
-import netifaces
+import netif
 from resources import Resource
 from event import EventSource
 from task import Provider
@@ -107,7 +107,7 @@ class DeviceInfoPlugin(Provider):
 
     def _get_class_network(self):
         result = []
-        for i in netifaces.interfaces():
+        for i in netif.list_interfaces().keys():
             if i.startswith('lo'):
                 continue
 
