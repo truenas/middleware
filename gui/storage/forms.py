@@ -1798,7 +1798,7 @@ class ManualSnapshotForm(Form):
         if models.VMWarePlugin.objects.filter(filesystem=self._fs).exists():
             self.fields['vmwaresync'] = forms.BooleanField(
                 required=False,
-                label=_('VMWare Sync'),
+                label=_('VMware Sync'),
                 initial=True,
             )
 

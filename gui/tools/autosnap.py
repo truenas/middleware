@@ -253,7 +253,7 @@ if len(mp_to_task_map) > 0:
             try:
                 server.connect(obj.hostname, obj.username, obj.get_password())
             except:
-                log.warn("VMWare login failed to %s", obj.hostname)
+                log.warn("VMware login failed to %s", obj.hostname)
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
@@ -279,7 +279,7 @@ if len(mp_to_task_map) > 0:
                     pickle.dump(fails, f)
 
             send_mail(
-                subject="VMWare Snapshot failed! (%s)" % snapname,
+                subject="VMware Snapshot failed! (%s)" % snapname,
                 text="""
 Hello,
     The following VM failed to snapshot %s:
