@@ -185,6 +185,8 @@ activedirectory_start()
 	then
 		AD_init
 
+		/usr/local/libexec/nas/generate_ldap_conf.py
+
 		AD_log "activedirectory_start: trying to join domain"
 		if ! AD_join_domain
 		then
