@@ -952,6 +952,26 @@ AD_has_unix_extensions()
 	return 1
 }
 
+AD_ssl_enabled()
+{
+	local ad_ssl="$(AD_get ad_ssl)"
+	if [ "${ad_ssl}" = "on" ]
+	then
+		return 0
+	fi
+	return 1
+}
+
+AD_tls_enabled()
+{
+	local ad_ssl="$(AD_get ad_ssl)"
+	if [ "${ad_ssl}" = "start_tls" ]
+	then
+		return 0
+	fi
+	return 1
+}
+
 AD_log()
 {
 	local args="$*"
@@ -983,7 +1003,7 @@ AD_load_values()
 
 AD_generate_config()
 {
-	if [ ! -f "${AD_CONFIG_FILE}" ]
+	if [ ! -s "${AD_CONFIG_FILE}" ]
 	then
 		${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
 		/bin/chmod 600 "${AD_CONFIG_FILE}"

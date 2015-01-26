@@ -14,7 +14,7 @@
 
 kerberos_get_principal()
 {
-	/usr/bin/klist|egrep '^ +Principal'|awk '{ print $2 }'
+	/usr/bin/klist 2>/dev/null|egrep '^ +Principal'|awk '{ print $2 }'
 }
 
 kerbers_principal_check()

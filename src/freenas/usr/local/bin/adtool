@@ -84,6 +84,8 @@ class ADToolShell(cmd.Cmd):
             [ "keytab_name", "Kerberos keytab name" ],
             [ "keytab_principal", "Kerberos keytab principal" ],
             [ "keytab_file", "Kerberos keytab file" ],
+            [ "ssl", "SSL/TLS value" ],
+            [ "certificate", "SSL/TLS Certificate path" ],
             [ "rootDSE", "Root of domain" ],
             [ "config", "Configuration DN" ],
             [ "partitions", "Directory partitions" ],
@@ -183,6 +185,7 @@ Available options:
             "ad_keytab_file",
             "ad_timeout",
             "ad_dns_timeout",
+            "ad_certfile",
             "ad_ssl",
             "ad_unix_extensions"
         ]
@@ -249,7 +252,21 @@ Available options:
         if val != None:
             ad.ad_dns_timeout = val 
             ad.save()
-    
+
+    def get_ssl(self, args):
+        print >> sys.stdout, self.adc.ssl
+
+    def set_ssl(self, args):
+        for arg in args:
+            self.adc.ssl = arg
+
+    def get_certificate(self, args):
+        print >> sys.stdout, self.adc.certfile
+
+    def set_certificate(self, args):
+        for arg in args:
+            self.adc.certfile = arg
+
     def get_bindname(self, args):
         print >> sys.stdout, self.adc.bindname
 

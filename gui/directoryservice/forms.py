@@ -261,7 +261,7 @@ class ActiveDirectoryForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['ad_ssl', 'ad_certificate', 'ad_idmap_backend_type']
+        exclude = ['ad_idmap_backend_type']
         model = models.ActiveDirectory
         widgets = {
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -317,6 +317,10 @@ class ActiveDirectoryForm(ModelForm):
         ad_dcname = self.cleaned_data.get('ad_dcname')
         ad_dcport = 389 
 
+        ad_ssl = self.cleaned_data.get('ad_ssl')
+        if ad_ssl == 'on':
+            ad_dcport = 636
+
         if not ad_dcname:
             return None
 
@@ -345,6 +349,10 @@ class ActiveDirectoryForm(ModelForm):
         ad_gcname = self.cleaned_data.get('ad_gcname')
         ad_gcport = 3268
 
+        ad_ssl = self.cleaned_data.get('ad_ssl')
+        if ad_ssl == 'on':
+            ad_gcport = 3269
+
         if not ad_gcname:
             return None
 
@@ -371,6 +379,13 @@ class ActiveDirectoryForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
+        site = cdata.get("ad_site")
+        ssl = cdata.get("ad_ssl")
+        certificate = cdata["ad_certificate"]
+
+        if certificate: 
+            certificate = certificate.get_certificate_path()
+
         if not cdata.get("ad_bindpw"):
             cdata['ad_bindpw'] = self.instance.ad_bindpw
 
@@ -383,18 +398,17 @@ class ActiveDirectoryForm(ModelForm):
 
             try:
                 ret = FreeNAS_ActiveDirectory.validate_credentials(
-                    domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    domain, site=site, ssl=ssl, certfile=certificate,
+                    binddn=binddn, bindpw=bindpw, errors=errors
                 )
                 if ret is False:
                     raise forms.ValidationError("%s." % errors[0])
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
 
-        ssl = cdata.get("ad_ssl")
         if ssl in ("off", None):
             return cdata
 
-        certificate = cdata["ad_certificate"]
         if not certificate:
             raise forms.ValidationError(
                 "SSL/TLS specified without certificate")
