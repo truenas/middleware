@@ -1,4 +1,5 @@
 /usr/local/lib/statd/src/main.py
+/usr/local/lib/statd/src/ringbuffer.py
 /usr/local/lib/statd/plugins/collectd/write-statd.py
 /usr/local/etc/rc.d/statd
 /usr/local/sbin/statd

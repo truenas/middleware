@@ -26,9 +26,9 @@
 #####################################################################
 
 
+import time
 import collectd
-import threading
-from dispatcher.client import Client
+from dispatcher.client import Client, ClientError
 
 
 class Context(object):
@@ -45,7 +45,27 @@ class Context(object):
             if child.key == 'Host':
                 self.hostname = child.values[0]
 
+    def connection_error(self, event):
+        if event == ClientError.CONNECTION_CLOSED:
+            time.sleep(1)
+            self.try_reconnect()
+            return
+
+    def try_reconnect(self):
+        retries = 0
+        while True:
+            retries += 1
+            time.sleep(1)
+            try:
+                self.start()
+                break
+            except:
+                pass
+
     def write(self, v):
+        if not self.client.connected:
+            return
+
         value_name = [v.plugin]
 
         if v.plugin_instance:
