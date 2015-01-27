@@ -149,6 +149,7 @@ class RsyncForm(ModelForm):
             'rsync_quiet',
             'rsync_preserveperm',
             'rsync_preserveattr',
+            'rsync_delayupdates',
             'rsync_extra',
             'rsync_enabled'
         ]

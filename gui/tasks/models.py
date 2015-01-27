@@ -410,6 +410,11 @@ class Rsync(Model):
         ),
         default=False,
     )
+    rsync_delayupdates = models.BooleanField(
+        verbose_name=_("Delay Updates"),
+        help_text=_("Put all updated files into place at the end"),
+        default=True,
+    )
     rsync_extra = models.TextField(
         verbose_name=_("Extra options"),
         help_text=_("Extra options to rsync command line (usually empty)"),
@@ -499,7 +504,9 @@ class Rsync(Model):
             line += ' -X'
         if self.rsync_delete:
             line += ' --delete-delay'
-        line += ' --delay-updates %s' % self.rsync_extra
+        if rsync_delayupdates:
+            line += ' --delay-updates'
+        line += ' %s' % self.rsync_extra
 
         # Do not use username if one is specified in host field
         # See #5096 for more details
