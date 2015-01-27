@@ -19,6 +19,7 @@ LoadPlugin syslog
 LoadPlugin zfs_arc
 LoadPlugin python
 LoadPlugin unixsock
+LoadPlugin write_graphite
 
 <Plugin "syslog">
     LogLevel err
@@ -60,11 +61,11 @@ LoadPlugin unixsock
     SocketPerms "0770"
 </Plugin>
 
-<Plugin "python">
-    ModulePath "/usr/local/lib/statd/plugins/collectd"
-    Import "write-statd"
-
-    <Module "write-statd">
-        Host "127.0.0.1"
-    </Module>
+<Plugin "write_graphite">
+    <Node "freenas">
+        Host "localhost"
+        Port "2003"
+        StoreRates true
+        AlwaysAppendDS true
+   </Node>
 </Plugin>

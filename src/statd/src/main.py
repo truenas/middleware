@@ -38,7 +38,9 @@ import numpy as np
 import tables
 import pandas as pd
 from datetime import datetime, timedelta
-from gevent import monkey
+import gevent
+import gevent.monkey
+from gevent.server import StreamServer
 from dispatcher.client import Client, ClientType, thread_type
 from dispatcher.rpc import RpcService, RpcException
 from datastore import DatastoreException, get_datastore
@@ -47,7 +49,7 @@ from ringbuffer import MemoryRingBuffer, PersistentRingBuffer
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 DEFAULT_DBFILE = '/var/db/system/statd/stats.hdf'
-monkey.patch_all()
+gevent.monkey.patch_all()
 thread_type = ClientType.GEVENT
 
 
@@ -65,6 +67,9 @@ def to_timedelta(time_val):
 
     elif time_val.endswith('d'):
         return timedelta(days=num)
+
+    elif time_val.endswith('y'):
+        return timedelta(days=(365 * num))
 
 
 def round_timestamp(timestamp, frequency):
@@ -128,7 +133,9 @@ class DataSource(object):
         self.logger = logging.getLogger('DataSource:{0}'.format(self.name))
         self.bucket_buffers = self.create_buckets()
         self.primary_buffer = self.bucket_buffers[0]
+        self.primary_interval = self.config.buckets[0].interval
         self.last_value = 0
+
         self.logger.debug('Created')
 
     def create_buckets(self):
@@ -145,7 +152,12 @@ class DataSource(object):
 
     def submit(self, timestamp, value):
         timestamp = round_timestamp(timestamp, self.config.primary_interval.total_seconds())
-        self.primary_buffer.push((timestamp, value))
+        self.primary_buffer.push(timestamp, value)
+
+        for b in self.config.buckets:
+            if timestamp % b.interval.total_seconds() == 0:
+                self.persist(timestamp, self.bucket_buffers[b.index], b)
+
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
             'change': self.last_value - value
@@ -153,39 +165,52 @@ class DataSource(object):
 
         self.last_value = value
 
-    def persist(self, buffer, bucket):
-        pass
+    def persist(self, timestamp, buffer, bucket):
+        data = self.bucket_buffers[0].data
+        df = pd.TimeSeries(index=data['timestamp'], data=data['value'])
+        df = df[bucket.covered_start:bucket.covered_end]
+        buffer.push(timestamp, df.mean())
+
 
     def query(self, start, end, frequency):
         self.logger.debug('Query: start={0}, end={1}, frequency={2}'.format(start, end, frequency))
         buckets = list(self.config.get_covered_buckets(start, end))
-        index = pd.date_range(start, end, freq=frequency)
-        df = pd.DataFrame(index=index)
+        index = pd.date_range(start, end, freq='10S')
+        df = pd.TimeSeries(index=index)
 
         for b in buckets:
-            df.update(self.bucket_buffers[b.index].data)
+            df.update(self.bucket_buffers[b.index].df)
 
-        #df.resample(frequency, how='mean')
+        df = df.resample(frequency, how='mean')
         return {
             'buckets': [b.index for b in buckets],
-            'data': df.to_dict()
+            'raw': [x.data for x in self.bucket_buffers]#,
+            #'data': [str(df[i]) for i in range(0, len(df) - 1)]
         }
 
 
-class InputService(RpcService):
+class InputServer(object):
     def __init__(self, context):
-        super(InputService, self).__init__()
+        super(InputServer, self).__init__()
         self.context = context
+        self.server = StreamServer(('127.0.0.1', 2003), handle=self.handle)
 
-    def pause(self):
-        pass
+    def start(self):
+        gevent.spawn(self.server.serve_forever())
 
-    def resume(self):
-        pass
+    def handle(self, socket, address):
+        fd = socket.makefile()
+        while True:
+            line = fd.readline()
+            if not line:
+                break
 
-    def submit(self, name, timestamp, value):
-        ds = self.context.get_data_source(name)
-        ds.submit(timestamp, value)
+            name, value, timestamp = line.split()
+            ds = self.context.get_data_source(name)
+            ds.submit(int(timestamp), float(value))
+
+        socket.shutdown(socket.SHUT_WR)
+        socket.close()
 
 
 class OutputService(RpcService):
@@ -212,12 +237,13 @@ class OutputService(RpcService):
 
 class DataPoint(tables.IsDescription):
     timestamp = tables.Time32Col()
-    value = tables.Int64Col()
+    value = tables.FloatCol()
 
 
 class Main(object):
     def __init__(self):
         self.client = None
+        self.server = None
         self.datastore = None
         self.hdf = None
         self.hdf_group = None
@@ -245,6 +271,12 @@ class Main(object):
             sys.exit(1)
 
     def init_database(self):
+        if not os.path.isdir('/var/db/system/statd'):
+            try:
+                os.makedirs('/var/db/system/statd')
+            except OSError:
+                pass
+
         self.hdf = tables.open_file(DEFAULT_DBFILE, mode='a')
         if not hasattr(self.hdf.root, 'stats'):
             self.hdf.create_group('/', 'stats')
@@ -274,19 +306,21 @@ class Main(object):
         self.client.login_service('statd')
         self.client.enable_server()
 
+
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Middleware config file')
         args = parser.parse_args()
         logging.basicConfig(level=logging.DEBUG)
         setproctitle.setproctitle('statd')
+        self.server = InputServer(self)
         self.parse_config(args.c)
         self.init_datastore()
         self.init_database()
         self.init_dispatcher()
         self.client.enable_server()
-        self.client.register_service('statd.input', InputService(self))
         self.client.register_service('statd.output', OutputService(self))
+        self.server.start()
         self.logger.info('Started')
         self.client.wait_forever()
 
