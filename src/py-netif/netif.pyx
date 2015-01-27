@@ -1119,6 +1119,15 @@ class RoutingTable(object):
             ptr += rt_msg.rtm_msglen
             yield msg.route
 
+    @property
+    def default_route(self):
+        f = filter(lambda r: r.network == ipaddress.ip_address(u'0.0.0.0'), self.routes)
+        return f[0] if f else None
+
+    @property
+    def static_routes(self):
+        return filter(lambda r: RouteFlags.STATIC in r.flags and r.network != ipaddress.ip_address(u'0.0.0.0'), self.routes)
+
     def add(self, route):
         self.__send_route(RoutingMessageType.ADD, route)
 
