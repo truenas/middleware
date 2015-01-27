@@ -27,6 +27,7 @@
 #####################################################################
 
 
+import os
 import sys
 import argparse
 import logging
@@ -82,7 +83,8 @@ def convert_route(entity):
 
 
 def describe_route(route):
-    return '{0}/{1} via {2}'.format(route.network, route.netmask, route.gateway)
+    bits = bin(route.netmask).count('1') if route.netmask else 0
+    return '{0}/{1} via {2}'.format(route.network, bits, route.gateway)
 
 
 def filter_routes(routes):
