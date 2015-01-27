@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2014-05-08 12:41+0000\n"
-"Last-Translator: SviddElg <espbre@gmail.com>\n"
+"PO-Revision-Date: 2015-01-26 14:44+0000\n"
+"Last-Translator: TD73 <translate@dyrstad.no>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1399552865.0\n"
+"X-POOTLE-MTIME: 1422283470.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -382,7 +382,7 @@ msgstr "Hver eneste dag"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Alle utvalgte ukedager"
+msgstr "Alle valgte ukedager"
 
 #: choices.py:504
 msgid "Read-only"
@@ -390,7 +390,7 @@ msgstr "Kun lese"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Kun skrive"
+msgstr "Skrivebeskyttet"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -423,15 +423,15 @@ msgstr "%(uke)r uke"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Aldri - Sjekk enheten uansett hvilken strømmodus den er i"
+msgstr "Aldri - Sjekk enheten uansett hvilken strømmodus"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sov - Sjekk enheten uansett om den er i SOVE modus"
+msgstr "Sov - Sjekk enheten hvis den ikke er i SOVE modus"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Av - Sjekk enheten uansett om den er i SOVE eller AV modus"
+msgstr "Klar - Sjekk enheten uansett om den er i SOVE eller KLAR modus"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -534,7 +534,7 @@ msgstr "Lås bruker"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr "Opprett en ny primer gruppe for bruker"
+msgstr "Opprett en ny primær gruppe for bruker"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -581,7 +581,7 @@ msgstr "En bruker kan ikke tilhøre mere enn 64 tilleggs grupper"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Hjemmemappen er ikke skrivvar, la dette stå tomt"
+msgstr "Hjemmemappen er ikke skrivbar, la dette stå tomt"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
@@ -610,7 +610,7 @@ msgstr "En gruppe med det navnet finnes allerede"
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr "Brukermedlemmer"
+msgstr "Medlemmer"
 
 #: account/forms.py:852
 msgid "New password"
@@ -827,7 +827,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr "                  Feil                "
+msgstr "Feil"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -1209,7 +1209,7 @@ msgstr ""
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Stien kan ikke overstige 88 tegn"
 
 #: plugins/forms.py:336
 #, python-format
@@ -2849,7 +2849,7 @@ msgstr "Passord til domeneadministratorkontoen."
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr "                  Active Directory                "
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -5010,7 +5010,7 @@ msgstr "Fjern"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr "Modifiser gruppe"
+msgstr "Endre gruppe"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
@@ -5028,7 +5028,7 @@ msgstr "Slett gruppe"
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr "Modifiser bruker"
+msgstr "Endre bruker"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -5037,7 +5037,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr "Fjern bruker"
+msgstr "Slett bruker"
 
 #~ msgid "Delete User"
 #~ msgstr "Slett bruker"
@@ -6747,42 +6747,39 @@ msgstr "                  Kryptert, med adgangsfrase                "
 
 #: choices.py:560
 msgid "Verify"
-msgstr ""
-"                                    Bekreft                                "
+msgstr "Verifiser"
 
 #: choices.py:600
 msgid "9600"
-msgstr ""
-"                                    9600                                "
+msgstr "9600"
 
 #: choices.py:601
 msgid "19200"
-msgstr "                  19200                "
+msgstr "19200"
 
 #: choices.py:602
 msgid "38400"
-msgstr "                  38400                "
+msgstr "38400"
 
 #: choices.py:603
 msgid "57600"
-msgstr ""
-"                                    57600                                "
+msgstr "57600"
 
 #: choices.py:604
 msgid "115200"
-msgstr "                  115200                "
+msgstr "115200"
 
 #: choices.py:659
 msgid "Fatal"
-msgstr "                  Kritisk                "
+msgstr "Kritisk"
 
 #: choices.py:662
 msgid "Verbose"
-msgstr "                  Utførlig                "
+msgstr "Utførlig"
 
 #: choices.py:686
 msgid "NT4"
-msgstr "                                    NT4                                "
+msgstr "NT4"
 
 #: choices.py:701
 msgid "auth+data"
@@ -6795,9 +6792,7 @@ msgstr "                  auth+!data                "
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
-msgstr ""
-"                                    Hjemmemappen kan ikke inneholde "
-"kolon                                "
+msgstr "Hjemmemappen kan ikke inneholde kolon"
 
 #: account/models.py:242
 msgid "Group Memberships"
@@ -7066,7 +7061,7 @@ msgstr "Kunne ikke motta %(url): %(error)"
 
 #: jails/models.py:173
 msgid "MAC"
-msgstr ""
+msgstr "MAC"
 
 #: jails/models.py:332
 msgid "Jail Root"
@@ -8059,7 +8054,7 @@ msgstr ""
 
 #: jails/admin.py:271
 msgid "Instances"
-msgstr ""
+msgstr "Instanser"
 
 #: jails/hook.py:13
 #: jails/models.py:324
@@ -9768,6 +9763,8 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Passord som inneholder spørsmålstegn (?) er ikke støttet grunnet problemer "
+"med CIFS"
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10512,7 +10509,7 @@ msgstr ""
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Importer eksisterende Sertifiseringsinstans"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
@@ -10520,7 +10517,7 @@ msgstr ""
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Opprett en mellom Sertifiseringsinstans"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
