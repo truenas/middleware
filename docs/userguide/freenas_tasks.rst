@@ -349,8 +349,6 @@ To create the public/private key pair for the rsync user account, open Shell_on 
 following example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is
 meant to be used for an automated task.::
 
- mount -o rw /
-
  ssh-keygen -t rsa
  Generating public/private rsa key pair.
  Enter file in which to save the key (/root/.ssh/id_rsa):
