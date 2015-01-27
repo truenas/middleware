@@ -278,7 +278,7 @@ If the system will not join the active directory domain, try running the followi
 traceback, create a bug report at `bugs.freenas.org <http://bugs.freenas.org>`_ that includes the commands in the order which they were run and the exact
 wording of the error message or traceback.
 
-Start with these commands, where the :command:`echo` command should return a value of *0* and the :command:`klist` command should show a Kerberos ticket:
+Start with these commands, where the :command:`echo` commands should return a value of *0* and the :command:`klist` command should show a Kerberos ticket:
 ::
  sqlite3 /data/freenas-v1.db "update directoryservice_activedirectory set ad_enable=1;"
  echo $?
@@ -286,6 +286,7 @@ Start with these commands, where the :command:`echo` command should return a val
  service ix-nsswitch start
  service ix-kinit start
  service ix-kinit status
+ echo $?
  klist
 
 Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode"::
