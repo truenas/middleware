@@ -72,6 +72,11 @@ To burn the :file:`.iso` file to CD, use a CD burning utility.
 The command which is used to burn the :file:`.iso` file to a compact flash card or USB thumbdrive depends upon the operating system. This section demonstrates
 utilities for several operating systems.
 
+.. note:: if you will be burning the installation file to a USB stick, you will need **two** USB slots, each with an inserted USB device, where one USB stick
+          contains the installer and the other USB stick is selected to install into. When performing the installation, be sure to select the correct USB
+          device to install to. In other words, you can **not** install FreeNAS® into the same USB stick that you boot the installer from. After
+          installation, remove the USB stick containing the installer, and if necessary, configure the BIOS to boot from the remaining USB stick.
+
 Once you have written the :file:`.iso` file to the installation media, make sure the boot order in the BIOS is set to boot from that device and boot the
 system to start the installation.
 

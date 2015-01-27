@@ -404,6 +404,11 @@ Compact or USB Flash
 The FreeNAS® operating system is installed to at least one device that is separate from the storage disks. The device can be a USB stick, compact flash,
 or SSD. Technically, it can also be installed onto a hard drive, but this is discouraged as that drive will then become unavailable for data storage.
 
+.. note:: if you will be burning the installation file to a USB stick, you will need **two** USB slots, each with an inserted USB device, where one USB stick
+          contains the installer and the other USB stick is selected to install into. When performing the installation, be sure to select the correct USB
+          device to install to. In other words, you can **not** install FreeNAS® into the same USB stick that you boot the installer from. After
+          installation, remove the USB stick containing the installer, and if necessary, configure the BIOS to boot from the remaining USB stick.
+
 When determining the type and size of device to install the operating system to, keep the following points in mind:
 
 - the *bare* minimum size is 4GB. This provides room for the operating system and two boot environments. Since each update creates a boot environment, the
