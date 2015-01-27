@@ -1084,8 +1084,7 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 |                 |                            | if the temperature is higher than specified degrees in Celsius                                              |
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
-| Email to report | string                     | email address of person to receive S.M.A.R.T. alert; separate multiple email recipients with a comma and no |
-|                 |                            | space                                                                                                       |
+| Email to report | string                     | email address of person or alias to receive S.M.A.R.T. alerts                                               |
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
