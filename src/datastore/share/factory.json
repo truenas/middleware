@@ -635,6 +635,49 @@
 				"builtin": true
 			}
         }
-    }
+    },
+	{
+		"metadata": {
+			"name": "statd.schemas",
+			"pkey-type": "native",
+			"attributes": {
+				"type": "persistent"
+			}
+		},
+		"data": {
+			"default": {
+				"buckets": [
+					{
+						"interval": "10s",
+						"retention": "8h"
+					},
+					{
+						"interval": "60s",
+						"retention": "1d",
+						"consolidation": "avg"
+					},
+					{
+						"interval": "5m",
+						"retention": "2y",
+						"consolidation": "avg"
+					}
+				]
+			}
+		}
+	},
+	{
+		"metadata": {
+			"name": "statd.sources",
+			"pkey-type": "native",
+			"attributes": {
+				"type": "config"
+			}
+		},
+		"data": {
+			"default": {
+				"schema": "default"
+			}
+		}
+	}
 
 ]
