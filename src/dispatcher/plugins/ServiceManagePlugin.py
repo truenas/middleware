@@ -47,6 +47,7 @@ class ServiceInfoProvider(Provider):
         'items': {
             'type': 'object',
             'properties': {
+                'id': {'type': 'string'},
                 'name': {'type': 'string'},
                 'pid': {'type': 'integer'},
                 'state': {
@@ -158,6 +159,11 @@ class UpdateServiceConfigTask(Task):
                 raise TaskException(errno.EINVAL, 'Invalid setting {0}'.format(k))
 
             self.configstore.set(k, v)
+
+        self.dispatcher.dispatch_event('service.changed', {
+            'operation': 'update',
+            'ids': [service_def['id']]
+        })
 
         self.chain('service.manage', service, 'reload')
 
