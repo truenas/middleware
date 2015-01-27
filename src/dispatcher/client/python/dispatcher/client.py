@@ -82,6 +82,7 @@ class Client(object):
             self.parent.opened.set()
 
         def closed(self, code, reason=None):
+            self.parent.opened.clear()
             if self.parent.error_callback is not None:
                 self.parent.error_callback(ClientError.CONNECTION_CLOSED)
 
@@ -314,3 +315,7 @@ class Client(object):
 
     def wait_forever(self):
         self.ws.run_forever()
+
+    @property
+    def connected(self):
+        return self.opened.is_set()
