@@ -320,7 +320,8 @@ Mode" button or configure the system to always display these settings by checkin
 | **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
-| Path                | browse button  | browse to the volume/dataset/directory to share; click "Add extra path" to select multiple paths                   |
+| Path                | browse button  | browse to the volume/dataset/directory to share (cannot contain a space); click "Add extra path" to select         |
+|                     |                | multiple paths                                                                                                     |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
