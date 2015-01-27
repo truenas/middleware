@@ -30,7 +30,7 @@ from task import Provider
 
 
 class SessionProvider(Provider):
-    def query(self, filter, params):
+    def query(self, filter=None, params=None):
         return self.datastore.query('sessions', *(filter or []), **(params or {}))
 
 
