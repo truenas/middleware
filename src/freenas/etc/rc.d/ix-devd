@@ -9,7 +9,7 @@
 
 # Copyright (C) iXsystems 2010
 # This file is a part of TrueNAS
-# and may be copied and/or distributed
+# and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
 . /etc/rc.subr
@@ -56,14 +56,12 @@ if [ \${SUBSYSTEM} = "carp1" -o \${SUBSYSTEM} = "carp2" ]; then
 	exit
 fi
 
-if [ \${EVENT} = "LINK_UP" ]; then
-	FLAGFILE=\`mktemp ${FAILOVER_RES_TMPL}\`
-	lockf -k ${FAILOVER_MTX} sh -c "[ ! -e ${FAILOVER_STATE}\${EVENT} ] && touch ${FAILOVER_STATE}\${EVENT} || rm \${FLAGFILE}"
-	if [ ! -e \${FLAGFILE} ]; then
-		exit
-	else
-		rm \${FLAGFILE}
-	fi
+FLAGFILE=\`mktemp ${FAILOVER_RES_TMPL}\`
+lockf -k ${FAILOVER_MTX} sh -c "[ ! -e ${FAILOVER_STATE}\${EVENT} ] && touch ${FAILOVER_STATE}\${EVENT} || rm \${FLAGFILE}"
+if [ ! -e \${FLAGFILE} ]; then
+	exit
+else
+	rm \${FLAGFILE}
 fi
 
 touch -t \`date -v -1M +%Y%m%d%H%M.%S\` /tmp/heartbeat_barrier
@@ -78,7 +76,11 @@ fi
 IPS=\`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select int_ipv4address from network_interfaces where int_interface like 'carp%'"\`
 
 # Do we have a force seal?
-HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
+if [ -f /tmp/force_seal ]; then
+	HAVE_FORCESEAL=\`find /tmp/force_seal -mnewer /tmp/heartbeat_barrier | wc -l\`
+else
+	HAVE_FORCESEAL=0
+fi
 
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
@@ -119,7 +121,11 @@ if [ \${EVENT} = "LINK_UP" ]; then
     touch ${ELECTING_FILE}
 
     # Was the other peer UP in the last minute?
-    WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
+    if [ -f /tmp/heartbeat_state ]; then
+        WASCONNECTED=\`find /tmp/heartbeat_state -mnewer /tmp/heartbeat_barrier | wc -l\`
+    else
+        WASCONNECTED=0
+    fi
     FASTTRACK=0
 
     # If the other peer was up, test if it's down and we can go with fast route
@@ -308,9 +314,12 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/watchdogd stop
     watchdog -t 4
     for volumename in ${volumenames}; do
-	echo "Exporting \${volumename}!" | logger
-	zpool export -f \${volumename} || (zpool status \${volumename} && sleep 5)
-	echo "Exported \${volumename}!" | logger
+        zpool list \${volumename} >/dev/null 2&>1
+        if [ \$? -eq 0 ]; then
+	    echo "Exporting \${volumename}!" | logger
+	    zpool export -f \${volumename} || (zpool status \${volumename} && sleep 5)
+	    echo "Exported \${volumename}!" | logger
+        fi
     done
     watchdog -t 0
     rm -f ${FAILOVER_ASSUMED_MASTER}
