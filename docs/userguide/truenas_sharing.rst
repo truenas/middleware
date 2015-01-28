@@ -6,6 +6,11 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
+Beginning with version 9.3, TrueNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
+type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
+recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
+the default permissions from the client operating system to meet the requirements of the network.
+
 .. note:: shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
    that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the
    stored data, and whether or not these users should authenticate before accessing the data. This information can help you determine which type of share(s)
@@ -26,18 +31,17 @@ The following types of shares and services are available:
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
-  containing only Windows systems. However, it is a poor choice if the CPU on the TrueNAS® system is limited; if your CPU is maxed out, you need to upgrade
-  the CPU or consider another type of share.
+  containing only Windows systems.
 
 * :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
   as VMware.
 
-If you are looking for a solution that allows fast access from any operating system, consider configuring the FTP service instead of a share and use a
+If you are looking for a solution that allows fast access from any operating system, consider configuring the :ref:`FTP` service instead of a share and use a
 cross-platform FTP and file manager client application such as
 `Filezilla <http://filezilla-project.org/>`_. Secure FTP can be configured if the data needs to be encrypted.
 
 If data security is a concern and your network's users are familiar with SSH command line utilities or
-`WinSCP <http://winscp.net/>`_, consider configuring the SSH service instead of a share. It will be slower than unencrypted FTP due to the overhead of
+`WinSCP <http://winscp.net/>`_, consider configuring the :ref:`SSH` service instead of a share. It will be slower than unencrypted FTP due to the overhead of
 encryption, but the data passing through the network will be encrypted.
 
 .. note:: while the GUI will let you do it, it is a bad idea to share the same volume or dataset using multiple types of access methods. Different types of
@@ -48,8 +52,9 @@ encryption, but the data passing through the network will be encrypted.
    will access that volume, and configure that volume for that one type of share or service. If you need to support multiple types of shares, divide the
    volume into datasets and use one dataset per share.
 
-This section will demonstrate how to create AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
-:ref:`Services Configuration`.
+This section will demonstrate how to fine-tune the configuration of AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
+:ref:`Services Configuration`. The values showing for these options will vary, depending upon the information given when the share was
+created.
 
 .. index:: AFP, Apple Filing Protocol
 .. _Apple (AFP) Shares:
@@ -59,30 +64,26 @@ Apple (AFP) Shares
 
 TrueNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
-AFP server to share data with Apple systems. Configuring AFP shares is a multi-step process that requires you to create or import users and groups, set
-volume/dataset permissions, create the AFP share(s), configure the AFP service, then enable the AFP service in :menuselection:`Services --> Control Services`.
+AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the
+:ref:`Initial Configuration Wizard`. It then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup
+to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring
-Time Machine to backup to a dataset on the TrueNAS® system, and for connecting to the share from a Mac OS X client.
-
-If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a.
+To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
+the configuration options shown in Figure 10.1a.
 
 **Figure 10.1a: Creating an AFP Share**
 
 |afp2.png|
 
 .. |afp2.png| image:: images/afp2.png
-    :width: 5.3in
-    :height: 2.4in
+    :width: 3.7in
+    :height: 4.5in
 
-Table 10.1a summarizes the available options when creating an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
+Table 10.1a summarizes the available options when fine-tuning an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`. Refer to
 `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
 for a more detailed explanation of the available options.
-
-Once you press the "OK" button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
-:menuselection:`Services --> Control Services` will open and indicate whether or not the AFP service successfully started.
 
 **Table 10.1a: AFP Share Configuration Options**
 
@@ -152,10 +153,10 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
-.. _Connecting as Guest:
+.. _Creating AFP Guest Shares:
 
-Connecting as Guest
-~~~~~~~~~~~~~~~~~~~
+Creating AFP Guest Shares
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 AFP supports guest logins, meaning that all of your Mac OS X users can access the AFP share without requiring their user accounts to first be created on or
 imported into the the TrueNAS® system.
@@ -165,50 +166,42 @@ imported into the the TrueNAS® system.
    The only way to allow both guest and authenticated users to write to a guest share is to set the permissions on the guest share to 777 or to add the
    authenticated users to a guest group and set the permissions to 77x.
 
-In this configuration example, the AFP share has been configured for guest access as follows:
+To create an AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following fields in
+this screen:
 
-#.  A ZFS volume named :file:`/mnt/data` has its permissions set to the built-in *nobody* user account and
-    *nobody* group.
+* **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+  is named *afp_guest*.
 
-#.  An AFP share has been created with the following attributes:
+* Click the button for "Mac OS X (AFP)".
 
-*   "Name": *freenas* (this is the name that will appear to Mac OS X clients)
+* Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+  the name that you typed into "Share name".
 
-*   "Path": :file:`/mnt/data`
+**Figure 10.1b: Creating a Guest AFP Share**
 
-*   "Allow List": set to *nobody*
+|afp6.png|
 
-*   "Read-write Access": set to *nobody*
+.. |afp6.png| image:: images/afp6.png
+    :width: 3.5in
+    :height: 3.4in
 
-#.  :menuselection:`Services --> AFP` has been configured as follows:
+Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
+correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
+:menuselection:`Sharing --> Apple (AFP)`.
 
-*   "Guest Access": checkbox is checked
-
-*   *nobody* is selected in the "Guest account" drop-down menu
-
-Once the AFP service has been started in :menuselection:`Services --> Control Services`, Mac OS X users can connect to the AFP share by clicking
-:menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1b, the user has input *afp://* followed by the IP address of the TrueNAS®
-system.
+Mac OS X users can connect to the guest AFP share by clicking :menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1c, the user has
+input *afp://* followed by the IP address of the TrueNAS® system.
 
 Click the "Connect" button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left
-frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 10.1c, :file:`/mnt/data` has one folder named images.
-The user can now copy files to and from the share.
+frame and the contents of any data that has been saved in the share will be displayed in the right frame.
 
-**Figure 10.1b: Connect to Server Dialogue**
+**Figure 10.1c: Connect to Server Dialogue**
 
 |afp3.png|
 
 .. |afp3.png| image:: images/afp3.png
     :width: 6.9252in
     :height: 3.4327in
-
-**Figure 10.1c: Viewing the Contents of the Share From a Mac System**
-
-|afp4.png|
-
-.. |afp4.png| image:: images/afp4.png
-    :width: 6.9272in
-    :height: 3.6102in
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -218,45 +211,79 @@ To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 Using Time Machine
 ~~~~~~~~~~~~~~~~~~
 
-Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured
-to backup to an AFP share on a TrueNAS® system. To configure the AFP share on the TrueNAS® system:
+Mac OS X includes the Time Machine application which can be used to schedule automatic backups.  In this configuration example, a Time Machine user will be
+configured to backup to an AFP share on a TrueNAS® system. It is recommended to create a separate Time Machine share for each user that will be using Time
+Machine to backup their Mac OS X system to TrueNAS®.
 
-#.  A ZFS dataset named :file:`/mnt/data/backup_user1` with a "Quota" of *60G* and a "Share type" of
-    *Mac* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+To use the Wizard to create a Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
 
-#.  A user account was created as follows:
+* **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+  is named *backup_user1*.
 
-*   "Username": *user1*
+* Click the button for "Mac OS X (AFP)" and check the box for "Time Machine".
 
-*   "Home Directory": :file:`/mnt/data/backup_user1`
+* Click the "Ownership" button. If the user already exists on the TrueNAS® system, click the drop-down "User" menu to select their user account.  If the user
+  does not yet exist on the TrueNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
+  of a group that already exists on the TrueNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
+  used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
+  example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
+  *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
+  opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
 
-*   the "Full Name", "E-mail", and "Password" fields were set where the "Username" and "Password" match the values for the user on the Mac OS X system
+* Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+  the name that you typed into "Share name".
 
-#.  An AFP share with a "Name" of *backup_user1* has been created with the following attributes:
+If you wish to configure multiple Time Machine users, repeat for each user, giving each user their own "Share name" and "Ownership". When finished, click the
+"Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that contains the
+correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as entries to
+:menuselection:`Sharing --> Apple (AFP)`.
 
-*   "Path": :file:`/mnt/data/backup_user1`
+**Figure 10.1d: Creating a Time Machine Share**
 
-*   "Allow List": set to *user1*
+|afp7.png|
 
-*   "Read-write Access": set to *user1*
+.. |afp7.png| image:: images/afp7.png
+    :width: 3.5in
+    :height: 3.4in
 
-*   "Time Machine": checkbox is checked
+**Figure 10.1e: Creating a Time Machine User**
 
-#.  :menuselection:`Services --> AFP` has been configured as follows:
+|afp8.png|
 
-*   "Guest Access": checkbox is unchecked
+.. |afp8.png| image:: images/afp8.png
+    :width: 4.3in
+    :height: 2.8in
 
-#.  The AFP service has been started in :menuselection:`Services --> Control Services`.
+At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
+TrueNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
+incremental backup for the next 24 hours, and then one backup each day, each week and each month.
+**Since the oldest backups are deleted when a Time Machine share becomes full, make sure that the quota size you set is sufficient to hold the desired number of backups.**
+Note that a default installation of Mac OS X is ~21 GB in size.
 
-To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1d.
+To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in Figure 10.1f, the Time
+Machine share name is *backup_user1*. Click the "Edit Options" button for the share, then "Advanced Mode". Input a value in the "Quota for this dataset"
+field then click "Edit Dataset" to save the change. In this example, the Time Machine share is restricted to 200GB.
+
+**Figure 10.1f: Setting a Quota**
+
+|afp9.png|
+
+.. |afp9.png| image:: images/afp9.png
+    :width: 7.1in
+    :height: 4.6in
+
+To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the TrueNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
 entry representing the TrueNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the user account's password--in
-this example, the password for the *user1* account.
+this example, the password that was set for the *user1* account.
 
-Time Machine will create a full backup after waiting two minutes. It will then create a one hour incremental backup for the next 24 hours, and then one backup
-each day, each week and each month.
-**Since the oldest backups are deleted when the ZFS dataset becomes full, make sure that the quota size you set is sufficient to hold the backups.** Note that
-a default installation of Mac OS X is ~21 GB in size.
+**Figure 10.1g: Configuring Time Machine on Mac OS X Lion**
+
+|afp5.png|
+
+.. |afp5.png| image:: images/afp5.png
+    :width: 6.9252in
+    :height: 4.6055in
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the TrueNAS®
 system, you will need to create a sparsebundle image using
@@ -266,17 +293,6 @@ If you receive the message "Time Machine completed a verification of your backup
 you do not want to perform another complete backup or lose past backups, follow the instructions in this
 `post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_. Note that this can occur after performing a
 scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
-
-**Figure 10.1d: Configuring Time Machine on Mac OS X Lion**
-
-|afp5.png|
-
-.. |afp5.png| image:: images/afp5.png
-    :width: 6.9252in
-    :height: 4.6055in
-
-.. index:: NFS, Network File System
-.. _Unix (NFS) Shares:
 
 Unix (NFS) Shares
 -----------------
