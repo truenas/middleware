@@ -98,12 +98,14 @@ def directoryservice_kerberosrealm(request, id):
 
 def directoryservice_kerberoskeytab(request, id=None):
     kt = None
+    mf = forms.KerberosKeytabCreateForm
+
     if id != None:
         kt = models.KerberosKeytab.objects.get(pk=id)
+        mf = forms.KerberosKeytabEditForm
 
     if request.method == "POST":
-        form = forms.KerberosKeytabForm(request.POST,
-            request.FILES, instance=kt)
+        form = mf(request.POST, request.FILES, instance=kt)
         if form.is_valid():
             form.save()
             return JsonResp(
@@ -114,7 +116,7 @@ def directoryservice_kerberoskeytab(request, id=None):
             return JsonResp(request, form=form)
 
     else:
-        form = forms.KerberosKeytabForm(instance=kt)
+        form = mf(instance=kt)
 
     return render(request, 'directoryservice/kerberos_keytab.html', {
         'form': form,
