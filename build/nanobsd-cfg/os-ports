@@ -302,8 +302,11 @@ add_port dns/samba-nsupdate
 add_port security/gnutls \
        OPTIONS_FILE_UNSET+=TPM
 add_port_debug net/samba41 \
+       WITH_DEBUG=yes \
+       CRAZY=yes \ 
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \
+       OPTIONS_FILE_SET+=AD_DC \
        OPTIONS_FILE_SET+=AIO_SUPPORT \
        OPTIONS_FILE_UNSET+=AVAHI \
        OPTIONS_FILE_UNSET+=CUPS \
@@ -311,7 +314,7 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_UNSET+=DEVELOPER \
        OPTIONS_FILE_SET+=DNSUPDATE \
        OPTIONS_FILE_SET+=EXP_MODULES \
-       OPTIONS_FILE_SET+=FAM_SUPPORT \
+       OPTIONS_FILE_SET+=FAM \
        OPTIONS_FILE_SET+=LDAP \
        OPTIONS_FILE_SET+=MANPAGES \
        OPTIONS_FILE_SET+=MDNSRESPONDER \
@@ -323,9 +326,8 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=UTMP \
        OPTIONS_FILE_SET+=WINBIND \
        OPTIONS_FILE_SET+=NSUPDATE \
-       OPTIONS_FILE_UNSET+=BIND98 \
        OPTIONS_FILE_UNSET+=BIND99 \
-       WITH_DEBUG=yes
+       OPTIONS_FILE_UNSET+=BIND910
 
 add_port sysutils/lsof
 add_port sysutils/grub2-pcbsd
