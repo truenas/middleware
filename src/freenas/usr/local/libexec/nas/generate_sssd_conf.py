@@ -592,22 +592,17 @@ def add_activedirectory(sc):
 
     ad_defaults = [
         { 'enumerate': 'true' },
-        { 'id_provider': 'ldap'},
-        { 'auth_provider': 'ldap' },
-        { 'ldap_schema': 'rfc2307bis' },
-        { 'ldap_user_object_class': 'person' },
-        { 'ldap_user_name': 'msSFU30Name' },
-        { 'ldap_user_uid_number': 'uidNumber' },
-        { 'ldap_user_gid_number': 'gidNumber' },
-        { 'ldap_user_home_directory': 'unixHomeDirectory' },
-        { 'ldap_user_shell': 'loginShell' },
-        { 'ldap_user_principal': 'userPrincipalName' },
-        { 'ldap_group_object_class': 'group' },
-        { 'ldap_group_name': 'msSFU30Name' },
-        { 'ldap_group_gid_number': 'gidNumber' },
-        { 'ldap_force_upper_case_realm': 'true' },
+        { 'id_provider': 'ad'},
+        { 'auth_provider': 'ad' },
+        { 'access_provider': 'ad' },
+        { 'chpass_provider': 'ad' },
         { 'use_fully_qualified_names': 'true' }
     ]
+
+    __, hostname, __ = os.uname()[0:3]
+
+    ad_section.ad_hostname = hostname
+    ad_section.ad_domain = ad.domainname
 
     for d in ad_defaults:
         key = d.keys()[0]  
@@ -630,12 +625,6 @@ def add_activedirectory(sc):
         
     except Exception as e:
         pass
-
-    #
-    # XXX re-work this to use ad object
-    #
-    ad_section.ldap_uri = "ldap://%s" % ad.dchost
-    ad_section.ldap_search_base = ad.basedn
 
     if ad.keytab_name and ad.kerberos_realm:
         ad_section.auth_provider = 'krb5'
