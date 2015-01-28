@@ -7,5 +7,5 @@ install:
 	install -d ${PREFIX}/lib/statd
 	install -d ${PREFIX}/lib/statd/src
 	install -d ${PREFIX}/lib/statd/plugins
-	cp -a plugins/ ${PREFIX}/lib/statd/plugins/
+	#cp -a plugins/ ${PREFIX}/lib/statd/plugins/
 	cp -a src/ ${PREFIX}/lib/statd/src/
