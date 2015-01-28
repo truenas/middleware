@@ -250,7 +250,7 @@ module.exports = function( grunt ) {
           break;
 
         case "npm -v":
-          if ( response.search("2.1.") !== -1 ) {
+          if ( response.search("2.") !== -1 ) {
             sshObj.commands.unshift( "msg:" + chalk.green( "npm looks current" ) );
           } else {
             sshObj.commands.unshift(
