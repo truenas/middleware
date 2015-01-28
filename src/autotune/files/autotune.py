@@ -111,6 +111,7 @@ HW_PHYSMEM = sysctl_int('hw.physmem')
 
 DEF_KNOBS = {
     'loader': {
+        'vm.kmem_size',
         'vfs.zfs.arc_max',
     },
     'sysctl': {
@@ -181,6 +182,10 @@ def guess_net_inet_tcp_sendbuf_max():
     See guess_kern_ipc_maxsockbuf().
     """
     return 2 * MB
+
+
+def guess_vm_kmem_size():
+    return int(1.25 * sysctl_int('hw.physmem'))
 
 
 def guess_vfs_zfs_arc_max():
