@@ -305,38 +305,41 @@ scrub as Time Machine may mistakenly believe that the sparsebundle backup is cor
 Unix (NFS) Shares
 -----------------
 
-FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the :command:`mount`
-command to mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of
-additional software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS
-client application.
+FreeNAS® supports sharing over the Network File System (NFS). Clients use the :command:`mount` command to mount the share. Once mounted, the NFS share
+appears as just another directory on the client system. Some Linux distros require the installation of additional software in order to mount an NFS share. On
+Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client application.
 
 .. note:: for performance reasons, iSCSI is preferred to NFS shares when FreeNAS is installed on ESXi. If you are considering creating NFS shares on ESXi,
    read through the performance analysis at
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
-Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in :menuselection:`Services --> NFS`, then start NFS in
-:menuselection:`Services --> Control Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are
-allowed to access the NFS share.
+To create an NFS share using the Wizard, click the "Next" button twice to display the screen shown in Figure 10.2a. Input a "Share name" that makes sense to
+you, but which does not contain a space. Click the button for "Generic Unix (NFS)", then click "Add" so that the share's name appears in the "Name" frame.
+When finished, click the "Next" button twice, then the "Confirm" button to create the share. Creating an NFS share using the wizard will automatically create
+a new dataset for the share, start the services required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
+Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
+the permissions of the mounted share.
 
-This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating
-systems, and provides some troubleshooting tips.
+**Figure 10.2a: NFS Share Settings**
 
-To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. 
+|nfs6.png|
 
-**Figure 10.2a: Creating an NFS Share**
+.. |nfs6.png| image:: images/nfs6.png
+    :width: 3.5in
+    :height: 3.4in
+
+To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
+Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
+
+**Figure 10.2b: NFS Share Settings**
 
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 5.5in
-    :height: 3.1in
+    :width: 3.7in
+    :height: 4.5in
 
-Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
-:menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
-
-Table 10.2a summarizes the options in this screen. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
-Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
+Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
 **Table 10.2a: NFS Share Options**
 
@@ -344,8 +347,7 @@ Mode" button or configure the system to always display these settings by checkin
 | **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
-| Path                | browse button  | browse to the volume/dataset/directory to share (cannot contain a space); click "Add extra path" to select         |
-|                     |                | multiple paths                                                                                                     |
+| Path                | browse button  | the path that clients will use when mounting the share; click "Add extra path" to select multiple paths            |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
@@ -443,8 +445,8 @@ Note that this requires the creation of two shares as it can not be accomplished
 Example Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-By default the "Mapall" options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
-associated with their user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
+By default the "Mapall" options show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions associated with their
+user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
 
 A better scenario is to do the following:
 
@@ -534,7 +536,7 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 * `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
 
-Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2b, the user has connected to the
+Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2c, the user has connected to the
 example :file:`/mnt/data` share of the FreeNAS® system at
 *192.168.2.2*.
 
@@ -542,7 +544,7 @@ example :file:`/mnt/data` share of the FreeNAS® system at
    `try this utility <http://www.citi.umich.edu/projects/nfsv4/windows/readme.html>`_
    instead.
 
-**Figure 10.2b: Using the Nekodrive NFSClient from Windows 7 Home Edition**
+**Figure 10.2c: Using the Nekodrive NFSClient from Windows 7 Home Edition**
 
 |nfs5.jpg|
 
@@ -556,14 +558,14 @@ From Mac OS X
 ^^^^^^^^^^^^^
 
 To mount the NFS volume from a Mac OS X client, click on :menuselection:`Go --> Connect to Server`. In the "Server Address" field, input *nfs://* followed by
-the IP address of the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 10.2c continues with our example of
+the IP address of the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 10.2d continues with our example of
 *192.168.2.2:/mnt/data*.
 
 Once connected, Finder will automatically open. The IP address of the FreeNAS® system will be displayed in the SHARED section in the left frame and the
-contents of the share will be displayed in the right frame. In the example shown in Figure 10.2d, :file:`/mnt/data` has one folder named :file:`images`. The
+contents of the share will be displayed in the right frame. In the example shown in Figure 10.2e, :file:`/mnt/data` has one folder named :file:`images`. The
 user can now copy files to and from the share.
 
-**Figure 10.2c: Mounting the NFS Share from Mac OS X**
+**Figure 10.2d: Mounting the NFS Share from Mac OS X**
 
 |nfs3.png|
 
@@ -571,7 +573,7 @@ user can now copy files to and from the share.
     :width: 6.9252in
     :height: 3.5618in
 
-**Figure 10.2d: Viewing the NFS Share in Finder**
+**Figure 10.2e: Viewing the NFS Share in Finder**
 
 |nfs4.png|
 
