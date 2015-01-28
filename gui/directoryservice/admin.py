@@ -93,8 +93,8 @@ class KerberosRealmFAdmin(BaseFreeAdmin):
 
 
 class KerberosKeytabFAdmin(BaseFreeAdmin):
-    create_modelform = "KerberosKeytabForm"
-    edit_modelform = "KerberosKeytabForm"
+    create_modelform = "KerberosKeytabCreateForm"
+    edit_modelform = "KerberosKeytabEditForm"
     icon_object = u"KerberosKeytabIcon"
     icon_model = u"KerberosKeytabIcon"
     icon_add = u"KerberosKeytabIcon"

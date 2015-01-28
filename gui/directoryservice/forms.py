@@ -623,7 +623,7 @@ class KerberosRealmForm(ModelForm):
         notifier().start("ix-kerberos")
 
 
-class KerberosKeytabForm(ModelForm):
+class KerberosKeytabCreateForm(ModelForm):
     keytab_file = FileField(
         label=_("Kerberos Keytab"),
         required=False 
@@ -662,5 +662,25 @@ class KerberosKeytabForm(ModelForm):
         return encoded
 
     def save(self):
-        super(KerberosKeytabForm, self).save()
+        super(KerberosKeytabCreateForm, self).save()
         notifier().start("ix-kerberos")
+
+
+class KerberosKeytabEditForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        exclude = ['keytab_file']
+        model = models.KerberosKeytab
+
+    def __init__(self, *args, **kwargs):
+        super(KerberosKeytabEditForm, self).__init__(*args, **kwargs)
+
+        self.fields['keytab_name'].widget.attrs['readonly'] = True
+        self.fields['keytab_name'].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        )
+        self.fields['keytab_principal'].widget.attrs['readonly'] = True
+        self.fields['keytab_principal'].widget.attrs['class'] = (
+            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
+        )
