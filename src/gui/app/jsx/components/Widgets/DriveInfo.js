@@ -53,11 +53,11 @@ var DriveInfo = React.createClass({
 	var temp = this.state.temp.toString()+this.state.tempUnits;
 	var sn = this.state.sn;
 
-	var greenGradient=context.createLinearGradient(0,x,0,0);
+	var greenGradient=context.createLinearGradient(115,0,155,0);
 	greenGradient.addColorStop(0, 'ForestGreen');
 	greenGradient.addColorStop(1, 'YellowGreen');
 
-	var redGradient=context.createLinearGradient(0,x,0,0);
+	var redGradient=context.createLinearGradient(115,0,155,0);
 	redGradient.addColorStop(0, 'FireBrick');
 	redGradient.addColorStop(1, 'Tomato');
 

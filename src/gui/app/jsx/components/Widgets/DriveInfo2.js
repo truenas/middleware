@@ -15,6 +15,8 @@ var DriveInfo2 = React.createClass({
       ,temp:		  ""
       ,tempUnits:	"°C"
       ,sn:			  ""
+      ,size:      ""
+      ,name:      ""
       ,hdd:       null
       ,ledOff:    null
       ,ledGreen:  null
@@ -25,7 +27,11 @@ var DriveInfo2 = React.createClass({
 
   componentDidMount: function() {
 	  var hddVar = new Image();
+    if (this.props.diskData.type === "ssd") {
+      hddVar.src = '/img/ssd.png';
+    } else {
     hddVar.src = '/img/hdd.png';
+    }
 
     var ledOffVar = new Image();
     ledOffVar.src = '/img/led-off.png';
@@ -42,7 +48,9 @@ var DriveInfo2 = React.createClass({
     ,width:  	  this.refs.canvas.getDOMNode().width
     ,height:	  this.refs.canvas.getDOMNode().height
     ,temp:	    46
-    ,sn:		    this.props.sn
+    ,sn:		    this.props.diskData.sn
+    ,size:      this.props.diskData.size
+    ,name:      this.props.diskData.name
     ,hdd:       hddVar
     ,ledOff:    ledOffVar
     ,ledGreen:  ledGreenVar
@@ -85,6 +93,8 @@ var DriveInfo2 = React.createClass({
 	var context = this.state.context;
 	var temp = this.state.temp.toString()+this.state.tempUnits;
 	var sn = this.state.sn;
+  var name = this.state.name;
+  var size = this.state.size;
   var hddImage = this.state.hdd;
   var ledOffImage = this.state.ledOff;
   var ledGreenImage = this.state.ledGreen;
@@ -93,11 +103,15 @@ var DriveInfo2 = React.createClass({
 
   if (ticks === 0) {
 
-  	var greenGradient=context.createLinearGradient(width-50,0,width-10,0);
+  	var greenGradient=context.createLinearGradient(115,0,155,0);
   	greenGradient.addColorStop(0, 'ForestGreen');
   	greenGradient.addColorStop(1, 'YellowGreen');
 
-  	var redGradient=context.createLinearGradient(0,10,0,50);
+    var yellowGradient=context.createLinearGradient(115,0,155,0);
+    yellowGradient.addColorStop(0, '#F09609');
+    yellowGradient.addColorStop(1, '#EBC232');
+
+  	var redGradient=context.createLinearGradient(115,0,155,0);
   	redGradient.addColorStop(0, 'FireBrick');
   	redGradient.addColorStop(1, 'Tomato');
 
@@ -109,11 +123,13 @@ var DriveInfo2 = React.createClass({
 
   	context.beginPath();
   	context.arc(width-30, 30, 20, 0, 2 * Math.PI, false);
-  	if (this.state.temp < 60){
+  	if (this.state.temp < 50){
   		context.fillStyle = greenGradient;
+  	} else if (this.state.temp >= 50 && this.state.temp < 60) {
+  		context.fillStyle = yellowGradient;
   	} else {
-  		context.fillStyle = redGradient;
-  	}
+      context.fillStyle = redGradient;
+    }
   	context.fill();
 
     context.beginPath();
@@ -128,7 +144,7 @@ var DriveInfo2 = React.createClass({
     context.fillText(temp,width-30,30);
     context.fillText("OK",width-30,75);
     context.font = "13px Open Sans";
-    context.fillText("da2 - 6.0 TB",x,height-28);
+    context.fillText(name + " - " + size,x,height-28);
     context.font = "11px Open Sans";
     context.fillStyle = "DimGray";
   	context.fillText("SN: "+ sn,x,height-14);
