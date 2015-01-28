@@ -79,11 +79,10 @@ the configuration options shown in Figure 10.1a.
     :width: 3.7in
     :height: 4.5in
 
-Table 10.1a summarizes the available options when fine-tuning an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
-click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`. Refer to
-`Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
-for a more detailed explanation of the available options.
+.. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
+          share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
+          advanced option unless you fully understand the function of that option. Refer to
+          `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_ for a more detailed explanation of the available options.
 
 **Table 10.1a: AFP Share Configuration Options**
 
@@ -169,13 +168,13 @@ imported into the the TrueNAS® system.
 To create an AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following fields in
 this screen:
 
-* **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
-  is named *afp_guest*.
+#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+   is named *afp_guest*.
 
-* Click the button for "Mac OS X (AFP)".
+#. Click the button for "Mac OS X (AFP)".
 
-* Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-  the name that you typed into "Share name".
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
 **Figure 10.1b: Creating a Guest AFP Share**
 
@@ -206,37 +205,38 @@ frame and the contents of any data that has been saved in the share will be disp
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
 .. index:: Time Machine
-.. _Using Time Machine:
+.. _Creating Authenticated and Time Machine Shares:
 
-Using Time Machine
-~~~~~~~~~~~~~~~~~~
+Creating Authenticated and Time Machine Shares
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mac OS X includes the Time Machine application which can be used to schedule automatic backups.  In this configuration example, a Time Machine user will be
 configured to backup to an AFP share on a TrueNAS® system. It is recommended to create a separate Time Machine share for each user that will be using Time
-Machine to backup their Mac OS X system to TrueNAS®.
+Machine to backup their Mac OS X system to TrueNAS®. The process for creating an authenticated share for a user is the same as creating a Time Machine share
+for that user.
 
-To use the Wizard to create a Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
+To use the Wizard to create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
 
-* **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
-  is named *backup_user1*.
+#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+   is named *backup_user1*.
 
-* Click the button for "Mac OS X (AFP)" and check the box for "Time Machine".
+#. Click the button for "Mac OS X (AFP)" and check the box for "Time Machine". If the user will not be using Time Machine, leave the box unchecked.
 
-* Click the "Ownership" button. If the user already exists on the TrueNAS® system, click the drop-down "User" menu to select their user account.  If the user
-  does not yet exist on the TrueNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
-  of a group that already exists on the TrueNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
-  used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
-  example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
-  *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
-  opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
+#. Click the "Ownership" button. If the user already exists on the TrueNAS® system, click the drop-down "User" menu to select their user account.  If the user
+   does not yet exist on the TrueNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
+   of a group that already exists on the TrueNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
+   used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
+   example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
+   *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
+   opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
 
-* Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-  the name that you typed into "Share name".
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-If you wish to configure multiple Time Machine users, repeat for each user, giving each user their own "Share name" and "Ownership". When finished, click the
-"Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that contains the
-correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as entries to
-:menuselection:`Sharing --> Apple (AFP)`.
+If you wish to configure multiple authenticated or Time Machine shares, repeat for each user, giving each user their own "Share name" and "Ownership". When
+finished, click the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that
+contains the correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as
+entries to :menuselection:`Sharing --> Apple (AFP)`.
 
 **Figure 10.1d: Creating a Time Machine Share**
 
@@ -246,7 +246,7 @@ correct ownership and start the AFP service for you, so that the share(s) are im
     :width: 3.5in
     :height: 3.4in
 
-**Figure 10.1e: Creating a Time Machine User**
+**Figure 10.1e: Creating an Authenticated User**
 
 |afp8.png|
 
