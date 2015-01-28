@@ -601,6 +601,7 @@ def add_activedirectory(sc):
 
     __, hostname, __ = os.uname()[0:3]
 
+    ad_section.ldap_id_mapping = False
     ad_section.ad_hostname = hostname
     ad_section.ad_domain = ad.domainname
 
