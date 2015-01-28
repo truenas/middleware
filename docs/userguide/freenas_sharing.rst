@@ -166,13 +166,17 @@ imported into the the FreeNAS® system.
    The only way to allow both guest and authenticated users to write to a guest share is to set the permissions on the guest share to 777 or to add the
    authenticated users to a guest group and set the permissions to 77x.
 
-To create an AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following fields in
-this screen:
+Before creating a guest share, go to :menuselection:`Services --> AFP` and make sure that the "Guest Access" box is checked.
+
+Then, to create the AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following
+fields in this screen:
 
 #. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *afp_guest*.
 
 #. Click the button for "Mac OS X (AFP)".
+
+#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
 
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
    the name that you typed into "Share name".
