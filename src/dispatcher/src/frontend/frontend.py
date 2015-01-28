@@ -10,14 +10,22 @@ Bootstrap(app)
 def events():
     return render_template('events.html')
 
+
 @app.route('/rpc')
 def rpc():
     return render_template('rpc.html')
+
 
 @app.route('/tasks')
 def tasks():
     return render_template('tasks.html')
 
+
 @app.route('/term')
 def term():
     return render_template('term.html')
+
+
+@app.route('/stats')
+def stats():
+    return render_template('stats.html')

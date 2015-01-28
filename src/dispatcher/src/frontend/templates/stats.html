@@ -1,0 +1,117 @@
+{% extends "bootstrap/base.html" %}
+{% import "nav.html" as nav %}
+{% block title %}Stats{% endblock %}
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.css"/>
+{% endblock %}
+{% block scripts %}
+    {{super()}}
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script src="/static/emitter.js"></script>
+    <script src="/static/middleware.js"></script>
+
+    <script type="text/javascript">
+        var sock = new Middleware();
+        sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
+
+        function render_chart(data)
+        {
+            var chart = c3.generate({
+                bindto: "#chart",
+                data: {
+                    x: "x",
+                    rows: [["x", "value"]].concat(data)
+                },
+                axis: {
+                    x: {
+                        type: "timeseries",
+                        tick: {
+                            format: function(x) {
+                                return moment.unix(x).format('MMM Do, HH:mm:ss');
+                            }
+                        }
+                    }
+                }
+            })
+        }
+
+        function load_chart(name)
+        {
+            $("#title").text(name);
+            sock.call("statd.output.query", [name, {
+                start: moment().subtract($("#timespan").val(), "minutes").subtract(1, "hours").format("YYYY-MM-DDTHH:mm:ss"),
+                end: moment().subtract(1, "hours").format("YYYY-MM-DDTHH:mm:ss"),
+                frequency: $("#frequency").val()
+            }], function (response) {
+                render_chart(response.data);
+            });
+        }
+
+        $(document).ready(function (){
+            sock.on("error", function(err) {
+                alert("Error: " + err.message);
+            });
+
+            sock.on("connected", function() {
+                var username = prompt("Username:");
+                var password = prompt("Password:");
+                sock.login(username, password);
+            });
+
+            sock.on("login", function() {
+                sock.call("statd.output.get_data_sources", [], function(response) {
+                    $.each(response, function(idx, i) {
+                        var li = $("<li/>")
+                            .appendTo($("#sources"));
+                        var a = $("<a/>")
+                            .addClass("source-entry")
+                            .attr("role", "menuitem")
+                            .attr("href", "#")
+                            .text(i)
+                            .appendTo(li);
+                    });
+                });
+            });
+
+            $("#sources").on("click", "a.source-entry", function() {
+                load_chart(this.text)
+            });
+
+            $("#call").click(function() {
+                load_chart($("#title").text())
+            })
+
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    {{ nav.nav() }}
+    <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+        Data source
+        <span class="caret"></span>
+      </button>
+      <ul id="sources" class="dropdown-menu" role="menu">
+      </ul>
+    </div>
+    <hr/>
+    <form style="width: 20%;">
+        <div class="form-group">
+            <label for="method">Starting point (in minutes from now):</label>
+            <input type="text" name="method" id="timespan" class="form-control" value="15"/>
+        </div>
+        <div class="form-group">
+            <label for="method">Frequency:</label>
+            <input type="text" name="method" id="frequency" class="form-control" value="10S"/>
+        </div>
+        <button type="button" id="call" class="btn btn-default">Load</button>
+    </form>
+    <h1 id="title">Select data source</h1>
+    <div id="chart">
+    </div>
+{% endblock %}

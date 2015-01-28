@@ -32,6 +32,7 @@
 /usr/local/lib/dispatcher/src/frontend/templates/events.html
 /usr/local/lib/dispatcher/src/frontend/templates/rpc.html
 /usr/local/lib/dispatcher/src/frontend/templates/term.html
+/usr/local/lib/dispatcher/src/frontend/templates/stats.html
 /usr/local/lib/dispatcher/src/frontend/static/middleware.js
 /usr/local/lib/dispatcher/src/frontend/static/emitter.js
 /usr/local/lib/dispatcher/src/frontend/static/term.js
