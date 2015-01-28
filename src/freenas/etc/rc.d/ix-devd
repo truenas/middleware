@@ -311,7 +311,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo \${IPS} | xargs -n 1 -J % echo block drop in quick proto udp from any to % >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
-    /etc/rc.d/watchdogd stop
+    /etc/rc.d/watchdogd quietstop
     watchdog -t 4
     for volumename in ${volumenames}; do
         zpool list \${volumename} >/dev/null 2&>1
@@ -324,7 +324,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     watchdog -t 0
     rm -f ${FAILOVER_ASSUMED_MASTER}
 
-    /etc/rc.d/watchdogd start
+    /etc/rc.d/watchdogd quietstart
     /usr/sbin/service ix-syslogd quietstart
     /usr/sbin/service syslogd quietrestart
     /usr/sbin/service ix-crontab quietstart
