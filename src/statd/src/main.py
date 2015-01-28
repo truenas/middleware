@@ -34,6 +34,8 @@ import json
 import logging
 import setproctitle
 import numpy
+import dateutil.parser
+import dateutil.tz
 import tables
 import signal
 import pandas as pd
@@ -77,7 +79,7 @@ def round_timestamp(timestamp, frequency):
 
 
 def parse_datetime(s):
-    return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+    return dateutil.parser.parse(s)
 
 
 class DataSourceBucket(object):
@@ -89,11 +91,11 @@ class DataSourceBucket(object):
 
     @property
     def covered_start(self):
-        return datetime.now() - self.retention
+        return datetime.now(dateutil.tz.tzlocal()) - self.retention
 
     @property
     def covered_end(self):
-        return datetime.now()
+        return datetime.now(dateutil.tz.tzlocal())
 
     @property
     def intervals_count(self):

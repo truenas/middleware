@@ -17,11 +17,12 @@
 
     <script type="text/javascript">
         var sock = new Middleware();
+        var chart;
         sock.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
         function render_chart(data)
         {
-            var chart = c3.generate({
+            chart = c3.generate({
                 bindto: "#chart",
                 data: {
                     x: "x",
@@ -40,12 +41,21 @@
             })
         }
 
+        function update_chart(event)
+        {
+            chart.flow({
+                rows: [["x", "value"], [event.timestamp, event.value]]
+            })
+        }
+
         function load_chart(name)
         {
             $("#title").text(name);
+            sock.unsubscribe(["*'"]);
+            sock.subscribe(["statd." + name + ".pulse"]);
             sock.call("statd.output.query", [name, {
-                start: moment().subtract($("#timespan").val(), "minutes").subtract(1, "hours").format("YYYY-MM-DDTHH:mm:ss"),
-                end: moment().subtract(1, "hours").format("YYYY-MM-DDTHH:mm:ss"),
+                start: moment().subtract($("#timespan").val(), "minutes").format(),
+                end: moment().format(),
                 frequency: $("#frequency").val()
             }], function (response) {
                 render_chart(response.data);
@@ -64,6 +74,10 @@
             });
 
             sock.on("login", function() {
+                sock.on("event", function(data) {
+                    update_chart(data.args);
+                });
+
                 sock.call("statd.output.get_data_sources", [], function(response) {
                     $.each(response, function(idx, i) {
                         var li = $("<li/>")
@@ -77,6 +91,7 @@
                     });
                 });
             });
+
 
             $("#sources").on("click", "a.source-entry", function() {
                 load_chart(this.text)
