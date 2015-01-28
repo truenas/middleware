@@ -523,6 +523,8 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                     if not 'port' in kwargs:
                         kwargs['port'] = port
                     kwargs[newkey] = ldap.__dict__[key]
+                    if ldap.__dict__['ldap_ssl'] == FREENAS_LDAP_USESSL:
+                        kwargs['port'] = 636
 
                 elif newkey in ('anonbind', 'use_default_domain',
                     'has_samba_schema'):
