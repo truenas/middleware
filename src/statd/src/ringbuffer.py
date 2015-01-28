@@ -26,12 +26,15 @@
 #####################################################################
 
 
+import time
 import numpy as np
+import pandas as pd
 
 
 class MemoryRingBuffer(object):
     def __init__(self, size):
         self.store = np.zeros(size, dtype='M8[s],f8')
+        self.store.dtype.names = ('timestamp', 'value')
         self.size = size
         self.head = 0
         self.tail = 0
@@ -60,10 +63,14 @@ class MemoryRingBuffer(object):
             return self.store[self.head:self.tail]
 
         if self.head > self.tail:
-            return self.store[self.head:] + self.store[:self.tail]
+            return np.concatenate(self.store[self.head:], self.store[:self.tail])
 
-    def push(self, value):
-        self.store[self.tail] = value
+    @property
+    def df(self):
+        return pd.DataFrame(index=self.data['timestamp'], data=self.data['value'])
+
+    def push(self, timestamp, value):
+        self.store[self.tail] = (timestamp, value)
         self.tail = (self.tail + 1) % self.size
         if self.head == self.tail:
             self.head = (self.head + 1) % self.size
@@ -108,12 +115,16 @@ class PersistentRingBuffer(object):
         if self.table.attrs.head > self.table.attrs.tail:
             return self.table[self.table.attrs.head:] + self.table[:self.table.attrs.tail]
 
+    @property
+    def df(self):
+        return pd.DataFrame(index=pd.to_datetime(self.data['timestamp'], unit='s'), data=self.data['value'])
+
     def fill_initial(self):
         self.table.truncate(self.size)
         self.table.flush()
 
-    def push(self, value):
-        self.table[self.table.attrs.tail] = value
+    def push(self, timestamp, value):
+        self.table[self.table.attrs.tail] = (timestamp, value)
         self.table.attrs.tail = (self.table.attrs.tail + 1) % self.size
         if self.table.attrs.head == self.table.attrs.tail:
             self.table.attrs.head = (self.table.attrs.head + 1) % self.size

@@ -32,10 +32,10 @@ import sys
 import argparse
 import json
 import logging
-import time
 import setproctitle
-import numpy as np
+import numpy
 import tables
+import signal
 import pandas as pd
 from datetime import datetime, timedelta
 import gevent
@@ -171,21 +171,22 @@ class DataSource(object):
         df = df[bucket.covered_start:bucket.covered_end]
         buffer.push(timestamp, df.mean())
 
-
     def query(self, start, end, frequency):
         self.logger.debug('Query: start={0}, end={1}, frequency={2}'.format(start, end, frequency))
         buckets = list(self.config.get_covered_buckets(start, end))
         index = pd.date_range(start, end, freq='10S')
-        df = pd.TimeSeries(index=index)
+        df = pd.DataFrame(index=index)
 
         for b in buckets:
-            df.update(self.bucket_buffers[b.index].df)
+            df = pd.concat((df, self.bucket_buffers[b.index].df))
 
-        df = df.resample(frequency, how='mean')
+        df = df.drop_duplicates().sort()[0]
+        df = df[start:end]
+        df = df.resample(frequency, how='mean').interpolate()
         return {
-            'buckets': [b.index for b in buckets],
-            'raw': [x.data for x in self.bucket_buffers]#,
-            #'data': [str(df[i]) for i in range(0, len(df) - 1)]
+            'data': [
+                [df.index[i].value // 10 ** 9, str(df[i])] for i in range(len(df))
+            ]
         }
 
 
@@ -225,7 +226,7 @@ class OutputService(RpcService):
         pass
 
     def get_data_sources(self):
-        pass
+        return self.context.data_sources.keys()
 
     def query(self, data_source, params):
         start = parse_datetime(params.pop('start'))
@@ -306,6 +307,9 @@ class Main(object):
         self.client.login_service('statd')
         self.client.enable_server()
 
+    def die(self):
+        self.client.disconnect()
+        sys.exit(0)
 
     def main(self):
         parser = argparse.ArgumentParser()
@@ -313,6 +317,12 @@ class Main(object):
         args = parser.parse_args()
         logging.basicConfig(level=logging.DEBUG)
         setproctitle.setproctitle('statd')
+
+        # Signal handlers
+        gevent.signal(signal.SIGQUIT, self.die)
+        gevent.signal(signal.SIGQUIT, self.die)
+        gevent.signal(signal.SIGINT, self.die)
+
         self.server = InputServer(self)
         self.parse_config(args.c)
         self.init_datastore()
