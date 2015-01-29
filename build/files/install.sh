@@ -334,6 +334,19 @@ partition_disk() {
 	return 0
 }
 
+make_swap()
+{
+       local _swapparts
+
+       if [ $# -eq 1 ]; then
+          echo "/dev/${0}p3.eli	    	none			swap		sw		0	0" > /tmp/data/data/fstab.swap
+       else
+          _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+          gmirror label -b prefer swap ${_swapparts}
+          echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
+       fi
+}
+
 disk_is_freenas()
 {
     local _disk="$1"
@@ -834,7 +847,7 @@ menu_install()
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
-            echo "/dev/${_disk}p3.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
+       make_swap ${_realdisks}
     fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
