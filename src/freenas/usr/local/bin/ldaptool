@@ -173,7 +173,7 @@ Available options:
             if val == False:
                 val = 0
 
-            print >> sys.stdout, "%s=%s" % (
+            print >> sys.stdout, "%s=\"%s\"" % (
                 k, val if val != None else ''
             )
 
