@@ -37,6 +37,16 @@ class CARP(Model):
         blank=True,
         null=True,
     )
+    carp_critical = models.BooleanField(
+        default=False,
+        verbose_name=_("Critical for Failover"),
+    )
+    carp_group = models.IntegerField(
+        verbose_name=_('Group'),
+        choices=[(i, i) for i in range(1, 33)],
+        null=True,
+        blank=True,
+    )
 
     def __unicode__(self):
         try:
