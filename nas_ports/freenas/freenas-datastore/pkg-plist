@@ -3,6 +3,7 @@
 /usr/local/lib/datastore/drivers/postgres/init.sql
 /usr/local/lib/datastore/drivers/mongodb/control
 /usr/local/lib/datastore/drivers/mongodb/mongodb.py
+/usr/local/lib/datastore/drivers/mongodb/mongod.conf
 /usr/local/share/datastore/factory.json
 /usr/local/lib/python2.7/site-packages/datastore/__init__.py
 /usr/local/lib/python2.7/site-packages/datastore/__init__.pyc
@@ -14,3 +15,4 @@
 /usr/local/sbin/dsdump
 /usr/local/sbin/dsrestore
 /usr/local/sbin/dspasswd
+/usr/local/sbin/dsmigrate
