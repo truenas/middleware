@@ -805,6 +805,8 @@ following fields in this screen:
 
 #. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
 
+#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
+
 #. Click the button for "Windows (CIFS)" and check the box for "Allow Guest".
 
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
@@ -820,6 +822,10 @@ following fields in this screen:
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
+
+Users can now access the share from any CIFS client and should not be prompted for their username or password. For example, to access the share from a Windows
+system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "insecure_cifs". The
+user should be able to copy data to and from the unauthenticated CIFS share.
 
 .. _Share Configuration:
 
@@ -872,17 +878,6 @@ The process for configuring a share is as follows:
     change to a blue "ON", indicating that the service has been enabled.
 
 #.  Test the share.
-
-To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
-share named :file:`backups`. An example is seen in Figure 10.4b:
-
-**Figure 10.4b: Accessing the CIFS Share from a Windows Computer**
-
-|cifs3.png|
-
-.. |cifs3.png| image:: images/cifs3.png
-    :width: 6.9252in
-    :height: 5.5602in
 
 If you click on :file:`backups`, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy
 data to and from the CIFS share.
