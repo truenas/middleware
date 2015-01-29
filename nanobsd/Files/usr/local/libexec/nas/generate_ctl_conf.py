@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/local/bin/python2
 from collections import defaultdict
 
 import os
@@ -16,40 +16,59 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 
-def auth_group_config(cf_contents, auth_tag, auth_list, initiator=None):
+def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None, initiator=None):
     cf_contents.append("auth-group ag%s {\n" % auth_tag)
     # It is an error to mix CHAP and Mutual CHAP in the same auth group
     # But not in istgt, so we need to catch this and do something.
     # For now just skip over doing something that would cause ctld to bomb
-    auth_type = None
+    rv = False
+    if auth_list is None:
+        auth_list = []
     for auth in auth_list:
         if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
+            rv = True
             auth_type = "Mutual"
-            cf_contents.append("\tchap-mutual %s %s %s %s\n" % (
+            cf_contents.append("\tchap-mutual %s \"%s\" %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
                 auth.iscsi_target_auth_peeruser,
                 auth.iscsi_target_auth_peersecret,
             ))
         elif auth_type != "Mutual":
+            rv = True
             auth_type = "CHAP"
-            cf_contents.append("\tchap %s %s\n" % (
+            cf_contents.append("\tchap %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
             ))
 
     if initiator:
         if initiator.iscsi_target_initiator_initiators:
-            for name in initiator.iscsi_target_initiator_initiators.strip('\n').split('\n'):
+            sep = "\n"
+            if "," in initiator.iscsi_target_initiator_initiators:
+                sep = ","
+            elif " " in initiator.iscsi_target_initiator_initiators:
+                sep = " "
+            for name in initiator.iscsi_target_initiator_initiators.strip('\n').split(sep):
                 if name == 'ALL':
                     continue
-                cf_contents.append("\tinitiator-name %s\n" % name)
+                rv = True
+                cf_contents.append("""\tinitiator-name "%s"\n""" % name.lstrip())
         if initiator.iscsi_target_initiator_auth_network:
-            for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split('\n'):
+            sep = "\n"
+            if "," in initiator.iscsi_target_initiator_auth_network:
+                sep = ","
+            elif " " in initiator.iscsi_target_initiator_auth_network:
+                sep = " "
+            for name in initiator.iscsi_target_initiator_auth_network.strip('\n').split(sep):
                 if name == 'ALL':
                     continue
-                cf_contents.append("\tinitiator-portal %s\n" % name)
+                rv = True
+                cf_contents.append("""\tinitiator-portal "%s"\n""" % name.lstrip())
+        if rv and not auth_list and auth_type == 'None':
+            cf_contents.append("\tauth-type \"none\"\n")
     cf_contents.append("}\n\n")
+    return rv
 
 
 def main():
@@ -74,30 +93,14 @@ def main():
     for auth in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
         auths[auth.iscsi_target_auth_tag].append(auth)
 
-    auth_ini_created = []
     for auth_tag, auth_list in auths.items():
         auth_group_config(cf_contents, auth_tag, auth_list)
-        # We need a new auth group for targets that do define iscsi_target_initiatorgroup
-        # because initiator cannot me mixed with auth-group
-        for target in iSCSITarget.objects.filter(
-            iscsi_target_authgroup=auth_tag
-        ).exclude(iscsi_target_initiatorgroup=None):
-            auth_ini = "%s_%s" % (auth_tag, target.iscsi_target_initiatorgroup.id)
-            if auth_ini in auth_ini_created:
-                continue
-            auth_ini_created.append(auth_ini)
-            auth_group_config(
-                cf_contents,
-                auth_ini,
-                auth_list,
-                initiator=target.iscsi_target_initiatorgroup,
-            )
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
         cf_contents.append("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
         disc_authmethod = gconf.iscsi_discoveryauthmethod
-        if disc_authmethod == "None" or (disc_authmethod == "Auto" and gconf.iscsi_discoveryauthgroup is None):
+        if disc_authmethod == "None" or ((disc_authmethod == "Auto" or disc_authmethod == "auto") and gconf.iscsi_discoveryauthgroup is None):
             cf_contents.append("\tdiscovery-auth-group no-authentication\n")
         else:
             cf_contents.append("\tdiscovery-auth-group ag%s\n" %
@@ -115,19 +118,22 @@ def main():
     # Generate the target section
     target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
-        cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
+        if target.iscsi_target_authgroup:
+            auth_list = iSCSITargetAuthCredential.objects.filter(iscsi_target_auth_tag=target.iscsi_target_authgroup)
+        else:
+            auth_list = []
+        agname = '4tg_%d' % target.id
+        has_auth = auth_group_config(cf_contents, auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
+        if target.iscsi_target_name.startswith("iqn."):
+            cf_contents.append("target %s {\n" % target.iscsi_target_name)
+        else:
+            cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
             cf_contents.append("\talias %s\n" % target.iscsi_target_name)
-        if target.iscsi_target_authtype == "None" or target.iscsi_target_authtype == "Auto":
+        if not has_auth:
             cf_contents.append("\tauth-group no-authentication\n")
         else:
-            if target.iscsi_target_initiatorgroup:
-                cf_contents.append("\tauth-group ag%s_%s\n" % (
-                    target.iscsi_target_authgroup,
-                    target.iscsi_target_initiatorgroup.id,
-                ))
-            else:
-                cf_contents.append("\tauth-group ag%s\n" % target.iscsi_target_authgroup)
+            cf_contents.append("\tauth-group ag%s\n" % agname)
         cf_contents.append("\tportal-group pg%d\n" % (
             target.iscsi_target_portalgroup.iscsi_target_portal_tag,
         ))
@@ -170,8 +176,11 @@ def main():
                 if unmap:
                     cf_contents.append("\t\t\toption unmap on\n")
                 cf_contents.append("\t\t\tpath %s\n" % path)
-                cf_contents.append("\t\t\tblocksize %s\n" % target.iscsi_target_logical_blocksize)
-                cf_contents.append("\t\t\tserial %s\n" % target.iscsi_target_serial)
+                cf_contents.append("\t\t\tblocksize 512\n")
+                if t2e.iscsi_lunid is None:
+                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(cur_lunid-1)))
+                else:
+                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(t2e.iscsi_lunid)))
                 padded_serial = target.iscsi_target_serial
                 if t2e.iscsi_lunid is None:
                     padded_serial += str(cur_lunid-1)
@@ -190,6 +199,7 @@ def main():
                 cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
                 if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
                     cf_contents.append('\t\t\toption insecure_tpc on\n')
+
                 cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
