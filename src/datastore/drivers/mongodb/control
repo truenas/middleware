@@ -14,7 +14,7 @@ case ${cmd} in
         ;;
 
     start)
-        ${mongod} --fork --logpath ${dbdir}/mongod.log --quiet --dbpath ${dbdir}
+        ${mongod} --config ${driverdir}/mongod.conf --fork --logpath ${dbdir}/mongod.log --quiet --dbpath ${dbdir}
         ;;
 
     stop)

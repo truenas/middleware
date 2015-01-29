@@ -29,6 +29,60 @@ import re
 from datastore import DatastoreException
 
 
+class ConfigNode(object):
+    def __init__(self, path, root):
+        self.path = path
+        self.root = root
+
+    @property
+    def value(self):
+        return self.root.get(self.path)
+
+    @value.setter
+    def value(self, v):
+        self.root.set(self.path, v)
+
+    @property
+    def has_children(self):
+        return len(self.children) > 0
+
+    @property
+    def children(self):
+        result = set()
+        for i in self.root.list_children(self.path):
+            matched = i['id'][len(self.path) + 1:]
+            child = matched.partition('.')[0]
+            if child:
+                result.add(child)
+
+        return result
+
+    def __getstate__(self):
+        if not self.has_children:
+            return self.value
+
+        return {k: self[k].__getstate__() for k in self.children}
+
+    def __getitem__(self, item):
+        return ConfigNode(self.path + '.' + item, self.root)
+
+    def __setitem__(self, key, value):
+        ConfigNode(self.path + '.' + key, self.root).value = value
+
+    def __contains__(self, item):
+        return item in self.children
+
+    def __len__(self):
+        return len(self.children)
+
+    def update(self, obj):
+        if not self.has_children:
+            self.value = obj
+        else:
+            for k, v in obj.items():
+                self[k].update(v)
+
+
 class ConfigStore(object):
     def __init__(self, datastore):
         self.__datastore = datastore

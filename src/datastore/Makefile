@@ -8,6 +8,7 @@ install:
 	install tools/dsutil ${PREFIX}/sbin/
 	install tools/dsdump ${PREFIX}/sbin/
 	install tools/dsrestore ${PREFIX}/sbin/
+	install tools/dsmigrate ${PREFIX}/sbin/
 	install tools/dspasswd ${PREFIX}/sbin/
 	install etc/datastore ${PREFIX}/etc/rc.d/
 	install share/factory.json ${PREFIX}/share/datastore/
