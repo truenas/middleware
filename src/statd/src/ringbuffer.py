@@ -67,6 +67,9 @@ class MemoryRingBuffer(object):
 
     @property
     def df(self):
+        if self.empty:
+            return None
+
         return pd.DataFrame(index=self.data['timestamp'], data=self.data['value'])
 
     def push(self, timestamp, value):
@@ -107,7 +110,7 @@ class PersistentRingBuffer(object):
     @property
     def data(self):
         if self.empty:
-            return []
+            return None
 
         if self.table.attrs.tail > self.table.attrs.head:
             return self.table[self.table.attrs.head:self.table.attrs.tail]
@@ -117,6 +120,9 @@ class PersistentRingBuffer(object):
 
     @property
     def df(self):
+        if self.empty:
+            return None
+
         return pd.DataFrame(index=pd.to_datetime(self.data['timestamp'], unit='s'), data=self.data['value'])
 
     def fill_initial(self):

@@ -180,7 +180,9 @@ class DataSource(object):
         df = pd.DataFrame(index=index)
 
         for b in buckets:
-            df = pd.concat((df, self.bucket_buffers[b.index].df))
+            new = self.bucket_buffers[b.index].df
+            if new:
+                df = pd.concat((df, new))
 
         df = df.drop_duplicates().sort()[0]
         df = df[start:end]
