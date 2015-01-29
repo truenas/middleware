@@ -1,18 +1,7 @@
-Release Notes for FreeNAS 9.2.1.9-RELEASE
+Release Notes for TrueNAS 9.2.1.10-RELEASE
 
-o Fix a bug preventing Directory Server mode from working.
+o Fix a bug in CTL which could cause possible corruption on retries.
 
-o Fix a memory leak in ZFS that is triggered by having
-  a compressed dataset and an L2ARC device.
+o Fix sync-to-peer script to avoid clobbering some key values on passive node.
 
-o Preserve the Samba SID across reboots and upgrades.
-
-o Fix two problems in the config file generator for CTL:
-  1) Unbreak device extents when using physical devices
-     or multipath devices.
-  2) Unbreak the case when target auth or discover auth
-     is set to Auto.
-
-o Fix a priviledge escalation.
-
-o Save debug now includes the output of zpool history.
+o Add a vm.kmem_size tunable in the autotune
