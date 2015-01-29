@@ -764,6 +764,12 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 .. note:: hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in
    :menuselection:`Services --> CIFS`.
 
+.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
+         share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
+         this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
+         can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
+         password control.
+
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
 the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
 
@@ -827,81 +833,81 @@ Users can now access the share from any CIFS client and should not be prompted f
 system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "insecure_cifs". The
 user should be able to copy data to and from the unauthenticated CIFS share.
 
-.. _Share Configuration:
+.. _Configuring Authenticated Access Without a Domain Controller:
 
-Share Configuration
-~~~~~~~~~~~~~~~~~~~
+Configuring Authenticated Access Without a Domain Controller
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The process for configuring a share is as follows:
+Most configuration scenarios require each user to have their own user account and to authenticate before accessing the share. This allows the administrator to
+control access to data, provide appropriate permissions to that data, and to determine who accesses and modifies stored data. A Windows domain controller is
+not needed for authenticated CIFS shares, which means that additional licensing costs are not required. However, since there is no domain controller to
+provide authentication for the network, each user account needs to be created on the TrueNAS® system. This type of configuration scenario is often used in
+small networks as it does not scale well if many users accounts are needed.
 
-#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User` with the following
-    attributes:
+Before configuring this scenario, determine which users will need authenticated access. While not required for the configuration, it eases troubleshooting if
+the username and password that will be created on the TrueNAS® system matches that information on the client system. Next, determine if each user should have
+their own share to store their own data or if several users will be using the same share. The simpler configuration is to make one share per user as it does
+not require the creation of groups, adding the correct users to the groups, and ensuring that group permissions are set correctly.
 
-    * "Username" and "Password": matches the username and password on the client system
+To use the Wizard to create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
 
-    * "Home Directory": browse to the volume to be shared
+#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
 
-    * Repeat this process to create a user account for every user that will need access to the CIFS share
+#. Click the button for "Windows (CIFS)".
 
-#.  If you are not using Active Directory or LDAP, create a group in :menuselection:`Account --> Groups --> Add Group`. Once the group is created, click its
-    "Members" button and add the user accounts that you created in step 1.
+#. Click the "Ownership" button. To create the user account on the TrueNASÂ® system, type their name into the "User" field and check the "Create User"
+   checkbox. This will prompt you to type in and confirm the user's password. **If the user will not be sharing this share with other users**, type their name
+   into the "Group" field and click the box "Create Group". **If, however, the share will be used by several users**, instead type in a group name and check
+   the "Create Group" box. In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
+   used by *user1*. When finished, click "Return" to return to the screen shown in Figure 10.1d.
 
-#.  Give the group permission to the volume in :menuselection:`Storage --> View Volumes`. When setting the permissions:
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-    * set "Owner(user)" to *nobody*
+If you wish to configure multiple authenticated shares, repeat for each user, giving each user their own "Share name" and "Ownership". When finished, click
+the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that contains the
+correct ownership and start the CIFS service for you, so that the share(s) are immediately available. The new share(s) will also be added as entries to
+:menuselection:`Sharing --> Windows (CIFS)`.
 
-    * set the "Owner(group)" to the one you created in Step 2
-
-    * "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
-
-    
-#.  Create a CIFS share in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
-
-    * "Name": input the name of the share
-
-    * "Path": browse to the volume to be shared
-
-    * keep the "Browsable to Network Clients" box checked
-
-    .. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of
-       every share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
-       this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
-       can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
-       password control.
-
-#.  Configure the CIFS service in :menuselection:`Services --> CIFS` as follows:
-
-    * "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
-      Windows workgroup name is *WORKGROUP*
-
-#.  Start the CIFS service in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it will
-    change to a blue "ON", indicating that the service has been enabled.
-
-#.  Test the share.
-
-If you click on :file:`backups`, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy
-data to and from the CIFS share.
+You should now be able to test an authenticated share from any CIFS client. For example, to test an authenticated share from a Windows system, open Explorer
+and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "cifs_user1". If you click on
+"cifs_user1", a Windows Security pop-up screen should prompt for that user's username and password. Input the values that were configured for that share, in
+this case it is for the user *user1*. Once authenticated, that user can copy data to and from the CIFS share.
 
 To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network
-drive..." as seen in Figure 10.4c:
+drive...". Choose a drive letter from the drop-down menu and click the "Finish" button.
 
-**Figure 10.4c: Mapping the Share as a Network Drive**
+Note that Windows systems cache a user's credentials which can cause issues when testing or accessing multiple authenticated shares as only one authentication
+is allowed at a time. If you are having problems authenticating to a share and are sure that you are inputting the correct username and password, type
+**cmd** in the "Search programs and files" box and use the following command to see if you are already authenticated to a share. In this example, the user has
+already authenticated to the *cifs_user1* share::
 
-|cifs4.png|
+ net use
+ New connections will be remembered.
+ 
+ Status		Local	Remote			Network
+ ------------------------------------------------------------------------
+ OK                     \\FREENAS\cifs_user1	Microsoft Windows Network
+ The command completed successfully.
 
-.. |cifs4.png| image:: images/cifs4.png
-    :width: 6.9252in
-    :height: 5.5272in
+To clear the cache::
 
-Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.4d:
+ net use * /DELETE
+ You have these remote connections:
+		\\FREENAS\cifs_user1
+ Continuing will cancel the connections.
+ 
+ Do you want to continue this operation? <Y/N> [N]: y
+ 
+You will get an additional warning if the share is currently open in Explorer::
 
-**Figure 10.4d: Selecting the Network Drive Letter**
+ There are open files and/or incomplete directory searches pending on the connection 
+ to \\FREENAS|cifs_user1.
+ 
+ Is it OK to continue disconnecting and force them closed? <Y/N> [N]: y
+ The command completed successfully.
 
-|cifs5.jpg|
-
-.. |cifs5.jpg| image:: images/cifs5.jpg
-    :width: 6.9252in
-    :height: 5.5016in
+The next time you access a share using Explorer, you should be prompted to authenticate.
 
 .. index:: Shadow Copies
 .. _Configuring Shadow Copies:
