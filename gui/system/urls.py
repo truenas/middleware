@@ -129,5 +129,4 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^certificate/export/privatekey/(?P<id>\d+)$', 'certificate_export_privatekey', name="certificate_export_privatekey"),
     url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', 'certificate_export_certificate_and_privatekey', name="certificate_export_certificate_and_privatekey"),
     url(r'^certificate/info/(?P<id>\d+)/$', 'certificate_info', name="certificate_info"),
-    url(r'^support/', 'support', name='system_support'),
 )

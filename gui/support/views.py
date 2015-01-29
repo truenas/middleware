@@ -38,12 +38,14 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms
 from freenasUI.system.models import Email
 
 log = logging.getLogger("support.views")
+
 
 def send_support_request(support_info):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
@@ -135,31 +137,5 @@ def email_is_configured():
 
 
 def index(request):
-
-    if request.method == "POST":
-        form = forms.SupportForm(request.POST)
-        if form.is_valid():
-            error = None
-            support_info = {
-                'support_email': request.POST['support_email'],
-                'support_subject': request.POST['support_subject'],
-                'support_description': request.POST['support_description']
-            }
-
-            try:  
-                send_support_request(support_info)
-                events = ["refreshSupport()"]
-
-            except Exception as e:
-                return JsonResp(request, error=True, message=e)
-
-            return JsonResp(request, message=_("Support request successfully sent"),
-                events=events)
-
-    else:
-        form = forms.SupportForm()
-
-    return render(request, "support/index.html", {
-        'form': form,
-        'email_configured': email_is_configured()
-    })
+    sw_name = get_sw_name().lower()
+    return render(request, 'support/home_%s.html' % sw_name)

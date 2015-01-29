@@ -32,6 +32,7 @@ from freenasUI.support import models
 
 log = logging.getLogger("support.forms")
 
+
 class SupportForm(ModelForm):
     class Meta:
         model = models.Support
