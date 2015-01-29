@@ -35,6 +35,12 @@ from freenasUI.freeadmin.models import Model
 log = logging.getLogger("support.models")
 
 class Support(Model):
+    support_email = models.CharField(
+        max_length=120,
+        verbose_name=_("From Email"),
+        help_text=_("The email address that the system will use to create this ticket"),
+        default='',
+        )
     support_subject = models.CharField(
         max_length=50,
         verbose_name=_("Subject"),
