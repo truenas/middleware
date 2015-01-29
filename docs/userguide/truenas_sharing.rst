@@ -158,7 +158,7 @@ Creating AFP Guest Shares
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 AFP supports guest logins, meaning that all of your Mac OS X users can access the AFP share without requiring their user accounts to first be created on or
-imported into the the TrueNAS® system.
+imported into the TrueNAS® system.
 
 .. note:: if you create a guest share as well a share that requires authentication, AFP will only map users who login as guest to the guest share. This means
    that if a user logs in to the share that requires authentication, the permissions on the guest share may prevent that user from writing to the guest share.
@@ -671,18 +671,17 @@ to access the share. These settings are described in :ref:`WebDAV`.
 Windows (CIFS) Shares
 ---------------------
 
-TrueNAS® uses
-`Samba <http://samba.org/>`_
-to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems and most Linux and BSD systems pre-install
-the Samba client which provides support for CIFS. If your distro did not, install the Samba client using your distro's software repository.
+TrueNAS® uses `Samba <http://samba.org/>`_ to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems
+and most Linux and BSD systems pre-install the Samba client in order to provide support for CIFS. If your distro did not, install the Samba client using your
+distro's software repository.
 
-Configuring CIFS shares is a multi-step process that requires you to set permissions, create CIFS share(s), configure the CIFS service in
-:menuselection:`Services --> CIFS`, then enable the CIFS service in :menuselection:`Services --> Control Services`. If your Windows network has a Windows
-server running Active Directory, you will also need to configure the Active Directory service in
-:menuselection:`Directory Services --> Active Directory`. Depending upon your authentication requirements, you may need to create or import users and groups.
+The CIFS protocol supports many different types of configuration scenarios, ranging from the very simple to quite complex. The complexity of your scenario
+depends upon the types and versions of the client operating systems that will connect to the share, whether or not the network has a Windows server, and
+whether or not Active Directory is running in the Windows network. Depending upon your authentication requirements, you may need to create or import users and groups.
 
-This section will demonstrate some common configuration scenarios. If you would like to use Shadow Copies, see :ref:`Configuring Shadow Copies`. If you are
-having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
+This chapter starts by summarizing the available configuration options. It will then demonstrate some common configuration scenarios as well as offer some
+troubleshooting tips. It is recommended to first read through this entire chapter before creating any CIFS shares so that you have a good idea of the best
+configuration scenario to meet your network's needs.
 
 Figure 10.4a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
@@ -694,14 +693,9 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
     :width: 3.9in
     :height: 2.4in
 
-Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
-"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
-
-`smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
-provides more details for each configurable option. Once you press the "OK" button when creating the CIFS share, a pop-up menu will ask "Would you like to
-enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
-started.
+Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
+scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
+function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ provides more details for each configurable option.
 
 **Table 10.4a: Options for a CIFS Share**
 
@@ -771,8 +765,7 @@ started.
    :menuselection:`Services --> CIFS`.
 
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-this line and some examples can be found
-`here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_.
+the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
 
 **Table 10.4b: Available VFS Modules**
 
@@ -796,6 +789,37 @@ this line and some examples can be found
 |               |                                                                                                                                            |
 +---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
+.. _Configuring Unauthenticated Access:
+
+Configuring Unauthenticated Access
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CIFS supports guest logins, meaning that users can access the CIFS share without needing to provide a username or password. This type of share is convenient
+as it is easy to configure, easy to access, and does not require any users to be configured on the FreeNAS® system. This type of configuration is also the
+least secure as anyone on the network can access the contents of the share. Additionally, since all access is as the guest user, even if the user inputs a
+username or password, there is no way to differentiate which users accessed or modified the data on the share. This type of configuration is best suited for
+small networks where quick and easy access to the share is more important than the security of the data on the share.
+
+To configure an unauthenticated CIFS share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.4b. Complete the
+following fields in this screen:
+
+#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
+
+#. Click the button for "Windows (CIFS)" and check the box for "Allow Guest".
+
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
+
+**Figure 10.4b: Creating an Unauthenticated CIFS Share**
+
+|cifs7.png|
+
+.. |cifs7.png| image:: images/cifs7.png
+    :width: 3.5in
+    :height: 3.4in
+
+Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
+service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
 
 .. _Share Configuration:
 
