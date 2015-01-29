@@ -755,7 +755,7 @@ require([
         var jail_ipv6_autoconf = ipv6_autoconf.get("value");
 
         if (jail_ipv4_dhcp == "on") {
-            ipv4.set("value", ipv4.get("value") ? ipv4.get("value") : "DHCP");
+            ipv4.set("value", "DHCP");
             vnet.set("checked", true);
 
             ipv4.set("readOnly", true);
@@ -813,7 +813,7 @@ require([
         var jail_ipv6_autoconf = ipv6_autoconf.get("value");
 
         if (jail_ipv6_autoconf == "on") {
-            ipv6.set("value", ipv6.get("value") ? ipv6.get("value") : "AUTOCONF");
+            ipv6.set("value", "AUTOCONF");
             vnet.set("checked", true);
 
             ipv6.set("readOnly", true);
