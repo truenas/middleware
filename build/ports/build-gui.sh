@@ -71,7 +71,7 @@ apply_npm_quirks
 # Do the deployment
 ${NPM} install grunt grunt-cli bower
 ${NPM} install
-${BOWER} install --allow-root
+${BOWER} install --allow-root --config.interactive=false
 ${GRUNT} deploy --force --dir=${NANO_GUI_DEST}
 
 # Remove g++ symlinks
