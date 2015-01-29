@@ -3,6 +3,7 @@
 import cmd
 import getopt
 import os
+import re
 import string
 import sys
 
@@ -172,8 +173,10 @@ Available options:
                 val = 1
             if val == False:
                 val = 0
+            if re.match('\S+\s+', str(val)):
+                val = "\"%s\"" % val
 
-            print >> sys.stdout, "%s=\"%s\"" % (
+            print >> sys.stdout, "%s=%s" % (
                 k, val if val != None else ''
             )
 
