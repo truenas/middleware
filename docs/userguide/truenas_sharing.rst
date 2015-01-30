@@ -1459,6 +1459,14 @@ Target/Extents
 The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
 shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
 
+**Figure 10.5i: Associating a Target With an Extent**
+
+|target2.png|
+
+.. |target2.png| image:: images/target2.png
+    :width: 2.5in
+    :height: 1.8in
+
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
 **Table 10.5g: Target/Extents Configuration Settings**
