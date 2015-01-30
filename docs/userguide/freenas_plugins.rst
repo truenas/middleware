@@ -209,6 +209,10 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `SickBeard <http://sickbeard.com/>`_
 
+* `SickRage <https://github.com/SiCKRAGETV/SickRage>`_
+
+* `Sonarr <https://sonarr.tv/>`_
+
 * `Subsonic <http://subsonic.org/>`_
 
 * `Syncthing <http://syncthing.net/>`_
