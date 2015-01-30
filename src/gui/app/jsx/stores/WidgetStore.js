@@ -39,7 +39,7 @@ WidgetStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
   switch( action.type ) {
 
-    case ActionTypes.RECEIVE_RAW_SERVICES:
+    case ActionTypes.RECEIVE_RAW_WIDGET_DATA:
       _widgetData = action.rawWidgetData;
       WidgetStore.emitChange();
       break;
