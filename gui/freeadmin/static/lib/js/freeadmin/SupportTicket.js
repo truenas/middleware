@@ -96,6 +96,7 @@ define([
         this._form.startup();
 
         this.dapUsernameLabel.innerHTML = gettext('Username');
+        this.dapRegisterLabel.innerHTML = gettext('If you do not have an account, please') + ' <a href="https://bugs.freenas.org/account/register" target="_blank">' + gettext('register') + '</a>.';
 
         username = new TextBox({
           name: "username"
@@ -157,6 +158,8 @@ define([
             name: "layout-INITIAL_FORMS",
             value: 0
         }).placeAt(this._form.domNode);
+
+        this.AddAttachment();
 
         this.inherited(arguments);
 
