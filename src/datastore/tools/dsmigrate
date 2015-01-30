@@ -80,7 +80,7 @@ def migrate_collection(dump):
 
     for key, row in data.items():
         pkey = int(key) if integer else key
-        ds.insert(name, row, pkey=pkey, upsert=upsert)
+        ds.update(name, pkey, row, upsert=upsert)
 
 
 def main():
