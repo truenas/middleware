@@ -155,7 +155,6 @@ def ticket(request):
             'success': success,
             'message': msg,
         })
-        log.debug("hmm -- %r", request.FILES)
         if not request.is_ajax():
             response.content = (
                 '<html><body><textarea>%s</textarea></boby></html>' % (
