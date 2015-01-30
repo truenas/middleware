@@ -314,7 +314,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     /etc/rc.d/watchdogd quietstop
     watchdog -t 4
     for volumename in ${volumenames}; do
-        zpool list \${volumename} >/dev/null 2&>1
+        zpool list \${volumename} >/dev/null 2>&1
         if [ \$? -eq 0 ]; then
 	    echo "Exporting \${volumename}!" | logger
 	    zpool export -f \${volumename} || (zpool status \${volumename} && sleep 5)
