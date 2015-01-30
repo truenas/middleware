@@ -98,6 +98,12 @@ define([
         this.dapUsernameLabel.innerHTML = gettext('Username');
         this.dapRegisterLabel.innerHTML = gettext('If you do not have an account, please') + ' <a href="https://bugs.freenas.org/account/register" target="_blank">' + gettext('register') + '</a>.';
 
+        new TextBox({
+          name: "csrfmiddlewaretoken",
+          value: CSRFToken,
+          type: "hidden"
+        }, this.dapCSRF);
+
         username = new TextBox({
           name: "username"
         }, this.dapUsername);
