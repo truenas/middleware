@@ -31,8 +31,8 @@ import sys
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
-from django.template import Context
-from django.template.loader import get_template
+from django.template import Context, RequestContext
+from django.template.loader import get_template, render_to_string
 
 from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
@@ -74,9 +74,10 @@ class JsonResp(HttpResponse):
         data = dict()
 
         if self.type == 'page':
-            pass
-            #ctx = RequestContext(request, kwargs.pop('ctx', {}))
-            #content = render_to_string(self.template, ctx)
+            ctx = RequestContext(request, kwargs.pop('ctx', {}))
+            content = render_to_string(self.template, ctx)
+            kwargs['content'] = content
+            return super(JsonResp, self).__init__(*args, **kwargs)
         elif self.type == 'form':
             data.update({
                 'type': 'form',
