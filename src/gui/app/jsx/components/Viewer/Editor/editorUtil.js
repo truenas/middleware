@@ -7,10 +7,10 @@
 
 "use strict";
 
-// var React = require("react");
+var React = require("react");
 var TWBS  = require("react-bootstrap");
 
-// var Icon  = require("../../../components/Icon");
+var Throbber = require("../../common/Throbber");
 
 var editorUtil = exports;
 
@@ -66,3 +66,85 @@ editorUtil.createTextarea = function ( value, displayKeys, changeHandler ) {
            wrapperClassName = "col-xs-8" />
   );
 };
+
+editorUtil.updateOverlay = React.createClass({
+
+    propTypes: {
+        updateString  : React.PropTypes.string
+      , throbberStyle : React.PropTypes.string
+      , animDuration  : React.PropTypes.number
+      , animDelay     : React.PropTypes.number
+    }
+
+  , getDefaultProps: function() {
+      return {
+          animDuration : 250
+        , animDelay    : 500
+      };
+    }
+
+  , getInitialState: function() {
+      return { animating: false };
+    }
+
+  , componentDidUpdate: function( prevProps, prevState ) {
+      // Using !! performs boolean type coercion
+      var oldBool = !!prevProps.updateString;
+      var newBool = !!this.props.updateString;
+
+      // Functions as logical XOR to detect disparity between length states
+      if ( oldBool !== newBool ) {
+        this.updateOverlayVisibility( newBool );
+      }
+    }
+
+  , updateOverlayVisibility: function( newBool ) {
+      // If the new property had length, and the old one didn't (determined by
+      // XOR), we know that we're going from nothing to soemthing, so we fadein.
+      // The same holds true in the opposite case, causing a fadeout.
+      if ( newBool ) {
+        Velocity( this.refs["update-overlay"].getDOMNode()
+                , "fadeIn"
+                , {
+                      duration : this.props.animDuration
+                    , display  : "flex"
+                  }
+                );
+      } else {
+        Velocity( this.refs["update-overlay"].getDOMNode()
+                , "fadeOut"
+                , { duration: this.props.animDuration + this.props.animDelay }
+                );
+      }
+
+      this.setState({ animating: true });
+
+      this.animTimeout = setTimeout( function() {
+          this.setState({ animating: false });
+        }.bind(this)
+        , this.props.animDuration + this.props.animDelay + 50
+      );
+    }
+
+
+  , render: function() {
+      var overlay = null;
+
+      // Using !! performs boolean type coercion
+      if ( !!this.props.updateString || this.state.animating ) {
+        overlay = (
+          <div className = "overlay overlay-light editor-update-overlay"
+               ref       = "update-overlay"
+               style     = {{ opacity: 0 }} >
+            <div>
+              <h3>{ this.props.updateString || "Entry updated" }</h3>
+              <Throbber bsStyle={ this.props.throbberStyle || "primary" } />
+            </div>
+          </div>
+        );
+      }
+
+      return overlay;
+    }
+
+});

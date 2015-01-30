@@ -82,42 +82,23 @@ var UserEdit = React.createClass({
 
   , render: function() {
 
-      var processingOverlay = null;
+      var processingText    = null;
       var builtInUserAlert  = null;
       var editButtons       = null;
 
-      if ( this.state.pendingUpdateOnServer || this.state.pendingTaskCompletion ) {
-        var processingText = null;
-
-        if ( this.state.pendingUpdateOnServer ) {
-          processingText = <h3>{"Saving changes to " + this.state.mixedValues[ this.props.formatData["primaryKey"] ] }</h3>;
-        }
-
-        if ( this.state.pendingTaskCompletion ) {
-          processingText = <h3>{ "Syncing " + this.state.mixedValues[ this.props.formatData["primaryKey"] ] }</h3>;
-        }
-
-        processingOverlay = (
-          <div className = "overlay overlay-light editor-update-overlay"
-               ref       = "saving-overlay">
-            <div>
-              { processingText }
-              <Throbber bsStyle="primary" />
-            </div>
-          </div>
-        );
+      // PROCESSING OVERLAY
+      if ( this.state.pendingUpdateOnServer ) {
+        processingText = "Saving changes to " + this.state.mixedValues[ this.props.formatData["primaryKey"] ];
+      } else if ( this.state.pendingTaskCompletion ) {
+        processingText =  "Syncing " + this.state.mixedValues[ this.props.formatData["primaryKey"] ];
       }
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
-          <TWBS.Row>
-            <TWBS.Col xs={12}>
-              <TWBS.Alert bsStyle   = "warning"
-                          className = "text-center">
-                <b>{"You should only edit a system user account if you know exactly what you're doing."}</b>
-              </TWBS.Alert>
-            </TWBS.Col>
-          </TWBS.Row>
+          <TWBS.Alert bsStyle   = "warning"
+                      className = "text-center">
+            <b>{"You should only edit a system user account if you know exactly what you're doing."}</b>
+          </TWBS.Alert>
         );
       }
 
@@ -136,7 +117,7 @@ var UserEdit = React.createClass({
         <div className="viewer-item-info">
 
           {/* Overlay to block interaction while tasks or updates are processing */}
-          { processingOverlay }
+          <editorUtil.updateOverlay updateString={ processingText } />
 
           <TWBS.Grid fluid>
             {/* Save and Cancel Buttons - Top */}
