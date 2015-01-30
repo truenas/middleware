@@ -19,10 +19,23 @@ var TWBS = require("react-bootstrap");
 
 var LoginBox = React.createClass({
 
-    getInitialState: function() {
+    propTypes: {
+        animDuration : React.PropTypes.number
+      , animDelay    : React.PropTypes.number
+    }
+
+  , getDefaultProps: function() {
+      return {
+          animDuration : 500
+        , animDelay    : 0
+      };
+    }
+
+  , getInitialState: function() {
       return {
           userText      : ""
         , passText      : ""
+        , boxIsVisible  : false
         , authenticated : MiddlewareStore.getAuthStatus()
       };
     }
@@ -51,15 +64,26 @@ var LoginBox = React.createClass({
     }
 
   , showLoginBox: function () {
+      this.setState({ boxIsVisible: true });
       Velocity( this.refs.login.getDOMNode()
-                , "fadeIn"
-                , { duration: "500" } );
+              , "fadeIn"
+              , { duration: this.props.animDuration } );
     }
 
   , hideLoginBox: function () {
       Velocity( this.refs.login.getDOMNode()
-                , "fadeOut"
-                , { duration: "500" } );
+              , "fadeOut"
+              , {
+                    duration : this.props.animDuration
+                  , delay    : this.props.animDelay
+                }
+              );
+
+      this.animTimeout = setTimeout( function() {
+          this.setState({ boxIsVisible: false });
+        }.bind(this)
+        , this.props.animDuration + this.props.animDelay + 250
+      );
     }
 
   , handleUserChange: function( event ) {
@@ -90,7 +114,7 @@ var LoginBox = React.createClass({
   , render: function () {
       var loginWindow = null;
 
-      if ( this.state.authenticated === false ) {
+      if ( this.state.boxIsVisible ) {
         loginWindow = (
           <div className="overlay-dark" ref="login" style={{ opacity: 0 }}>
             <div className="overlay-window">
