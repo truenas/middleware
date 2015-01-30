@@ -12,7 +12,6 @@
     "velocity": "~1.1.0",
     "fontawesome": "~4.2.0",
     "lessfonts-open-sans": "~1.0.2",
-    "d3": "~3.5.3",
     "nvd3": "~1.1.15-beta"
   },
   "private": true
