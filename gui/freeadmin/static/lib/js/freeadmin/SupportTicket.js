@@ -92,7 +92,10 @@ define([
           gettext = function(s) { return s; }
         }
 
-        this._form = new Form({}, this.dapForm);
+        this._form = new Form({
+          enctype: "multipart/form-data",
+          method: "post"
+        }, this.dapForm);
         this._form.startup();
 
         this.dapUsernameLabel.innerHTML = gettext('Username');
