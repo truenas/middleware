@@ -603,8 +603,8 @@ This will create a keytab with sufficient privileges to grant tickets.
 
 Once the keytab is generated, use :menuselection:`Directory Service --> Kerberos Keytabs --> Add kerberos keytab` to add it to the FreeNAS® system. 
 
-Then, to instruct the Active Directory service to use the keytab, check the "Use keytab" box and select the installed keytab using the drop-down "Kerberos
-keytab" menu in :menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and
-"userpass" in the keytab matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
+Then, to instruct the Active Directory service to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in
+:menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and "userpass" in the keytab
+matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
 
 To instruct LDAP to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in :menuselection:`Directory Service --> LDAP`.
