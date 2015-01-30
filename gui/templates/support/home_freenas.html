@@ -4,6 +4,6 @@
 <div data-dojo-type="dijit/form/Button">
   {% trans "Ticket" %}
   <script type="dojo/method" data-dojo-event="onClick">
-  window.open('https://bugs.freenas.org/projects/freenas/issues/new');
+    editObject('{% trans "Ticket"|escapejs %}', '{% url "support_ticket" %}', [this, ]);
   </script>
 </div>
