@@ -25,8 +25,10 @@
 #
 #####################################################################
 
-from django.conf.urls import include, patterns, url
+from django.conf.urls import patterns, url
 
-urlpatterns = patterns('freenasUI.support.views',
+urlpatterns = patterns(
+    'freenasUI.support.views',
     url(r'^index/$', 'index', name="support_home"),
-    )
+    url(r'^ticket/$', 'ticket', name="support_ticket"),
+)

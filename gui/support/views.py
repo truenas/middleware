@@ -139,3 +139,7 @@ def email_is_configured():
 def index(request):
     sw_name = get_sw_name().lower()
     return render(request, 'support/home_%s.html' % sw_name)
+
+
+def ticket(request):
+    return render(request, 'support/ticket.html')
