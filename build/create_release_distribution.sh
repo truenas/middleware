@@ -30,21 +30,35 @@ __EOF__
 create_json()
 {
   local dpath=${1}
-  local buildtype=$(echo ${VERSION} | sed -n -e 's/^.*-//p') # Is it RELEASE or nightly milestones
+  local milestone=""
+  local freenas_version=$(echo ${VERSION} | cut -d'-' -f1)
+  local buildtype=$(echo ${VERSION} | sed -n -e 's/^.*-//p')
+  # Catch 9.3's CURRENT' buildtypes and fix them to nightlies
+  if [ $buildtype = "CURRENT" ]; then
+    buildtype="Nightlies"
+  fi
+  # Unify FreeNAS-10 stuff in this script
+  if [ $freenas_version = "10.1" ]; then
+    freenas_version=10
+    milestone=$buildtype
+    buildtype=Nightlies
+  fi
   local arch # The architecture (x64 or x86)
   #local Archbit # The above sans the "x"
   local ftype # This describes the type (iso, usb, GUI_Upgrade.txz or img)
   local hash # The Hash of the file
   local filename # The full name of the file we are dealing with
   local json_file="$dpath/CHECKSUMS.json" #This is the location of the resulting JSON file
-  
-  if [ $buildtype = "RELEASE" ];
-  then
-      local url="http://download.freenas.org/$(echo ${VERSION} | sed 's/ *-.*//')/RELEASE/"
+
+  if [ $buildtype = "RELEASE" -o $buildtype = "BETA" ]; then
+    url="http://download.freenas.org/$(echo ${VERSION} | sed 's/ *-.*//')/${buildtype}/"
+  elif [ -z $milestone ]; then
+    url="http://download.freenas.org/nightlies/FreeNAS-${freenas_version}-${buildtype}"\
+"/${BUILD_TIMESTAMP}/"
   else
-      local url="http://download.freenas.org/nightlies/$(echo ${VERSION} | sed 's/ *-.*//')"\
-"/$(echo ${VERSION} | sed -n -e 's/^.*-//p')/${BUILD_TIMESTAMP}/"
-  fi  
+    url="http://download.freenas.org/nightlies/FreeNAS-${freenas_version}-${buildtype}"\
+"/${milestone}/${BUILD_TIMESTAMP}/"
+  fi
   cat<<-__EOF__>>${json_file}
 {
     "name": "${NANO_LABEL}",
