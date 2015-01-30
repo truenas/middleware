@@ -4,6 +4,7 @@
             "last-id": 78,
             "pkey-type": "integer",
             "name": "users",
+			"migration": "merge-preserve",
             "attributes": {
                 "type": "config"
             }
@@ -330,7 +331,8 @@
         "metadata": {
             "last-id": null, 
             "pkey-type": "integer", 
-            "name": "groups", 
+            "name": "groups",
+			"migration": "merge-preserve",
             "attributes": {
                 "type": "config"
             }
@@ -459,6 +461,7 @@
             "last-id": null,
             "pkey-type": "ltree",
             "name": "config",
+			"migration": "merge-preserve",
             "attributes": {
                 "type": "config"
             }
@@ -501,6 +504,7 @@
             "last-id": null,
             "pkey-type": "uuid",
             "name": "etcd.groups",
+			"migration": "replace",
             "attributes": {
                 "type": "persistent"
             }
@@ -557,6 +561,7 @@
             "last-id": null,
             "pkey-type": "uuid",
             "name": "service_definitions",
+			"migration": "replace",
             "attributes": {
                 "type": "persistent"
             }
@@ -640,6 +645,7 @@
 		"metadata": {
 			"name": "statd.schemas",
 			"pkey-type": "native",
+			"migration": "replace",
 			"attributes": {
 				"type": "persistent"
 			}
@@ -669,8 +675,9 @@
 		"metadata": {
 			"name": "statd.sources",
 			"pkey-type": "native",
+			"migration": "replace",
 			"attributes": {
-				"type": "config"
+				"type": "persistent"
 			}
 		},
 		"data": {
