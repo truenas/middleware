@@ -85,7 +85,7 @@ define([
       postCreate: function() {
 
         var me = this, _form;
-        var username, password, type, category, subject, desc, submit, cancel;
+        var submit, cancel;
         var attachment_add;
 
         if(!gettext) {
@@ -107,30 +107,30 @@ define([
           type: "hidden"
         }, this.dapCSRF);
 
-        username = new TextBox({
+        this._username = new TextBox({
           name: "username"
         }, this.dapUsername);
 
-        password = new TextBox({
+        this._password = new TextBox({
           name: "password",
           type: "password"
         }, this.dapPassword);
 
-        type = new Select({
+        this._type = new Select({
           name: "type",
           options: TYPE_OPTIONS
         }, this.dapType);
 
-        category = new Select({
+        this._category = new Select({
           name: "category",
           options: CATEGORY_OPTIONS
         }, this.dapCategory);
 
-        subject = new TextBox({
+        this._subject = new TextBox({
           name: "subject"
         }, this.dapSubject);
 
-        desc = new Textarea({
+        this._desc = new Textarea({
           name: "desc",
           style: "width: 300px;"
         }, this.dapDesc);
@@ -195,7 +195,38 @@ define([
         this.dapAttachments.appendChild(widget.domNode);
 
       },
+      validate: function() {
+        var map = {
+          1: this._username,
+          2: this._password,
+          3: this._subject,
+          4: this._desc
+        };
+
+        for(var i in map) {
+          var field = map[i];
+          var value = field.get('value');
+          if(value == '') {
+            var tooltip = new TooltipDialog({
+              content: gettext('This field is required.'),
+              onMouseLeave: function() {
+                popup.close(tooltip);
+                tooltip.destroyRecursive();
+              }
+            });
+            popup.open({
+              popup: tooltip,
+              around: field.domNode,
+              orient: ["above", "after", "below-alt"]
+            });
+            field.focus();
+            return false;
+          }
+        }
+        return true;
+      },
       submit: function() {
+        if(!this.validate()) return false;
         doSubmit({
           url: this.url,
           form: this._form,
