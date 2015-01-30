@@ -21,8 +21,8 @@ main()
 		pkg_names="${pkg_names} /tmp/`basename $p`"
 	done
 
-	scp ${pkg_paths} ${host}:/tmp
-	ssh -t ${host} pkg add -f ${pkg_names}
+	scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${pkg_paths} ${host}:/tmp
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t ${host} pkg add -f ${pkg_names}
 	
 	return $?
 }

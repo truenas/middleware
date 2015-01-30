@@ -100,7 +100,7 @@ sync:
 		--exclude '.idea' . ${host}:${dir}/
 
 remote: sync
-	ssh -t ${host} sudo make -C ${dir} ${target}
+	ssh -o StrictHostKeyChecking=no -t ${host} sudo make -C ${dir} ${target}
 
 reinstall-package:
 	build/reinstall_package.sh ${host} ${p}
