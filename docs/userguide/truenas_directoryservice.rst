@@ -90,12 +90,6 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use keytab               | checkbox      | only available in "Advanced Mode"; if selected, browse to the keytab with "Kerberos keytab"                                                |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | browse button | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -127,7 +121,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                              |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
+| Kerberos keytab          | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
+|                          | menu          |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -139,9 +136,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Windbind NSS Info        | drop-down     | only available in "Advanced Mode" and defines the schema to use when querying AD for user/group info; *rfc2307* uses the RFC2307 schema    |
-|                          |               | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
+|                          | menu          | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
 |                          |               | *sfu* is for Services For Unix 2.0                                                                                                         |
-|                          | menu          |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | SASL wrapping            | drop-down     | only available in "Advanced Mode" and defines how LDAP traffic is transmitted; choices are *plain* (plain text),                           |
@@ -207,8 +203,8 @@ automatically once a day as a cron job.
    realm,
    `verify <http://support.microsoft.com/kb/909264>`_
    that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
-   *$* exists in the domain administrator's password, kinit will report a "Password Incorrect" error and ldap_bind will report an "Invalid credentials
-   (49)" error.
+   *$* exists in the domain administrator's password, :command:`kinit` will report a "Password Incorrect" error and :command:`ldap_bind` will report an
+   "Invalid credentials (49)" error.
 
 Once you have configured the Active Directory service, it may take a few minutes for the Active Directory information to be populated to the TrueNAS® system.
 Once populated, the AD users and groups will be available in the drop-down menus of the "Permissions" screen of a volume/dataset. For performance reasons,
@@ -399,7 +395,12 @@ If you are new to LDAP terminology, skim through the
 |                         |                | SSL connections are used                                                                                       |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
+| LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| DNS timeout             | integer        | increase this value (in seconds) if DNS queries timeout                                                        |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+| Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
 |                         | and Edit       | UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the "Edit" link to configure |
 |                         |                | that backend's editable options                                                                                |
 |                         |                |                                                                                                                |

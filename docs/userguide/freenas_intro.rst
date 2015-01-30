@@ -264,13 +264,13 @@ The following fields have been added or deleted:
   :menuselection:`Storage --> Replication Tasks --> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
   can significantly reduce the time needed for the initial replication.
 
-* The "Workgroup Name" field is deprecated and has been removed from :menuselection:`Directory Service --> Active Directory`. The "Enable" and "Site Name"
-  fields and the "Idmap backend", "Windbind NSS Info", and "SASL wrapping" drop-down menus have been added to
+* The "Workgroup Name" field and "Use keytab" checkbox are deprecated and have been removed from :menuselection:`Directory Service --> Active Directory`. The
+  "Enable" and "Site Name" fields and the "Idmap backend", "Windbind NSS Info", and "SASL wrapping" drop-down menus have been added to
   :menuselection:`Directory Service --> Active Directory`. The "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos
   Realm" drop-down menu.
 
-* The "Encryption Mode" field has been removed from :menuselection:`Directory Service --> LDAP`. The "Enable" and "Samba Schema" checkboxes, "SUDO Suffix"
-  field, and the "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
+* The "Encryption Mode" field has been removed from :menuselection:`Directory Service --> LDAP`. The "Enable" and "Samba Schema" checkboxes, "SUDO Suffix",
+  "LDAP timeout", and "DNS timeout" fields, and the "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
 
 * The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
 
