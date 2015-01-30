@@ -325,30 +325,6 @@ The following fields have been added or deleted:
 
 * The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
 
-.. _What's New Since 9.3-RELEASE:
-
-What's New Since 9.3-RELEASE
-----------------------------
-
-Beginning with version 9.3, FreeNAS® uses a "rolling release" model instead of point releases. The new :ref:`Update` mechanism makes it easy to keep
-up-to-date with the latest security fixes, bug fixes, and new features. Some updates affect the user interface so this section lists any functional changes
-that have occurred since 9.3-RELEASE.
-
-.. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
-   system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
-
-* The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
-  :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
-
-* The "Available Size Threshold" field has been renamed to "Available Space Threshold" in
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
-
-* The "Logical Block Size" field and "Disable Physical Block Size Reporting" checkbox have been added to
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
-
-* A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
-  connected initiators.
-
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
