@@ -10,6 +10,7 @@
 #7684	Bug	Normal	Teach freenas-debug about CTL
 #7693	Bug	Normal	System-installed OpenLDAP client is linked against an old version of OpenSSL
 #7707	Bug	Low	Merge latest FreeBSD security advisory fixes
+#7720	Feature	Normal	Update samba to 4.1.16
 #7721	Bug	Normal	Editing a keytab causes traceback
 #7751	Bug	Normal	Getting "(sqlite3), uid 0: exited on signal 11 (core dumped)" all over my messages file after NT4 Directory Services activated
 #7754	Bug	Normal	iX CA file is expired
