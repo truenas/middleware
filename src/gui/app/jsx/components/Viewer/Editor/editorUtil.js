@@ -79,7 +79,7 @@ editorUtil.updateOverlay = React.createClass({
   , getDefaultProps: function() {
       return {
           animDuration : 250
-        , animDelay    : 500
+        , animDelay    : 600
       };
     }
 
@@ -113,7 +113,10 @@ editorUtil.updateOverlay = React.createClass({
       } else {
         Velocity( this.refs["update-overlay"].getDOMNode()
                 , "fadeOut"
-                , { duration: this.props.animDuration + this.props.animDelay }
+                , {
+                      duration : this.props.animDuration
+                    , delay    : this.props.animDelay
+                  }
                 );
       }
 
@@ -122,7 +125,7 @@ editorUtil.updateOverlay = React.createClass({
       this.animTimeout = setTimeout( function() {
           this.setState({ animating: false });
         }.bind(this)
-        , this.props.animDuration + this.props.animDelay + 50
+        , this.props.animDuration + this.props.animDelay + 250
       );
     }
 
