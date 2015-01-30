@@ -656,9 +656,6 @@ This screen also shows which software branch, or train, the system is currently 
 * **FreeNAS-10-Nightlies:** this train should
   **not be used in production**. It represents the experimental branch for the future 10 version and is meant only for bleeding edge testers and developers.
 
-* **FreeNAS-9.3-BETA:** this was the train for the BETA version of 9.3. Now that 9.3 has been released, any users still on this train should switch to
-  either the "FreeNAS-9.3-Nightlies" or the "FreeNAS-9.3-STABLE" train.
-
 * **FreeNAS-9.3-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
   run this train in production.
 
