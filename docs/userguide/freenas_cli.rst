@@ -21,7 +21,7 @@ The following utilities are specific to RAID controllers:
 
 * :ref:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
 
-* :ref:`MegaCli`:_used to configure and manage LSI MegaRAID SAS family of RAID controllers
+* :ref:`MegaCli`: used to configure and manage LSI MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
