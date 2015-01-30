@@ -207,7 +207,7 @@ add_port archivers/lzo2
 add_port archivers/pigz
 add_port archivers/plzip
 add_port security/easy-rsa
-add_port security/openvpn
+add_port security/openvpn WITHOUT_CHECK=y
 add_port converters/libiconv
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
