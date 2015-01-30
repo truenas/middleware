@@ -38,10 +38,10 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.system import get_sw_name
+from freenasUI.common.system import get_sw_name, get_sw_login_version
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.network.models import GlobalConfiguration
-from freenasUI.support import forms
+from freenasUI.support import forms, utils
 from freenasUI.system.models import Email
 
 log = logging.getLogger("support.views")
@@ -142,4 +142,17 @@ def index(request):
 
 
 def ticket(request):
+    if request.method == 'POST':
+        success, msg = utils.new_ticket({
+            'user': request.POST.get('username'),
+            'password': request.POST.get('password'),
+            'type': request.POST.get('type'),
+            'title': request.POST.get('subject'),
+            'body': request.POST.get('desc'),
+            'version': get_sw_login_version(),
+        })
+        return render(request, 'support/ticket_response.html', {
+            'success': success,
+            'message': msg,
+        })
     return render(request, 'support/ticket.html')

@@ -80,6 +80,7 @@ define([
     ];
 
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
+      url: "",
       templateString: template,
       postCreate: function() {
 
@@ -183,7 +184,11 @@ define([
 
       },
       submit: function() {
-
+        doSubmit({
+          url: this.url,
+          form: this._form,
+          //progressbar: this.url_progress
+        });
       }
     });
     return SupportTicket;
