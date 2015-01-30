@@ -319,7 +319,7 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
                     self.__ducache[d][uid] = u
 
                 sAMAccountName = u['sAMAccountName']
-                usernames.append(sAMAccountName)
+                self.__usernames.append(sAMAccountName)
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 

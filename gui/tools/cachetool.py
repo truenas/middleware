@@ -677,8 +677,8 @@ def _cache_count_NT4(**kwargs):
         print "w:  %s" % workgroup
         print "u:  %ld" % _cachelen(FreeNAS_UserCache(dir=workgroup))
         print "g:  %ld" % _cachelen(FreeNAS_GroupCache(dir=workgroup))
-        print "du: %ld" % _cachelen(FreeNAS_NT4_UserCache(dir=workgroup))
-        print "dg: %ld" % _cachelen(FreeNAS_NT4_GroupCache(dir=workgroup))
+        print "du: %ld" % _cachelen(FreeNAS_Directory_UserCache(dir=workgroup))
+        print "dg: %ld" % _cachelen(FreeNAS_Directory_GroupCache(dir=workgroup))
         print "\n"
 
 def _cache_count_default(**kwargs):
