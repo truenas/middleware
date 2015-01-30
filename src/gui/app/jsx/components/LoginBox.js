@@ -88,36 +88,42 @@ var LoginBox = React.createClass({
     }
 
   , render: function () {
-      return (
-        <div className="overlay-dark" ref="login">
-          <div className="overlay-window">
+      var loginWindow = null;
 
-            <h3>{"Welcome to FreeNAS 10"}</h3>
-            <hr />
+      if ( this.state.authenticated === false ) {
+        loginWindow = (
+          <div className="overlay-dark" ref="login" style={{ opacity: 0 }}>
+            <div className="overlay-window">
 
-            <div className="form-group">
-              <input className   = "form-control"
-                     type        = "text"
-                     value       = { this.state.userText }
-                     onChange    = { this.handleUserChange }
-                     onKeyDown   = { this.handleKeydown }
-                     placeholder = "Username" />
+              <h3>{"Welcome to FreeNAS 10"}</h3>
+              <hr />
+
+              <div className="form-group">
+                <input className   = "form-control"
+                       type        = "text"
+                       value       = { this.state.userText }
+                       onChange    = { this.handleUserChange }
+                       onKeyDown   = { this.handleKeydown }
+                       placeholder = "Username" />
+              </div>
+              <div className="form-group">
+                <input className   = "form-control"
+                       type        = "password"
+                       value       = { this.state.passText }
+                       onChange    = { this.handlePassChange }
+                       onKeyDown   = { this.handleKeydown }
+                       placeholder = "Password" />
+              </div>
+
+              <TWBS.Button block bsStyle="info"
+                           disabled = { this.state.userText.length ? false : true }
+                           onClick  = { this.handleLoginClick }>{"Sign In"}</TWBS.Button>
             </div>
-            <div className="form-group">
-              <input className   = "form-control"
-                     type        = "password"
-                     value       = { this.state.passText }
-                     onChange    = { this.handlePassChange }
-                     onKeyDown   = { this.handleKeydown }
-                     placeholder = "Password" />
-            </div>
-
-            <TWBS.Button block bsStyle="info"
-                         disabled = { this.state.userText.length ? false : true }
-                         onClick  = { this.handleLoginClick }>{"Sign In"}</TWBS.Button>
           </div>
-        </div>
-      );
+        );
+      }
+
+      return loginWindow;
     }
 
 });
