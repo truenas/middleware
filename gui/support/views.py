@@ -151,8 +151,15 @@ def ticket(request):
             'body': request.POST.get('desc'),
             'version': get_sw_login_version(),
         })
-        return render(request, 'support/ticket_response.html', {
+        response = render(request, 'support/ticket_response.html', {
             'success': success,
             'message': msg,
         })
+        if not request.is_ajax():
+            response.content = (
+                '<html><body><textarea>%s</textarea></boby></html>' % (
+                    response.content,
+                )
+            )
+        return response
     return render(request, 'support/ticket.html')
