@@ -63,7 +63,7 @@ class MemoryRingBuffer(object):
             return self.store[self.head:self.tail]
 
         if self.head > self.tail:
-            return np.concatenate(self.store[self.head:], self.store[:self.tail])
+            return np.concatenate((self.store[self.head:], self.store[:self.tail]))
 
     @property
     def df(self):
@@ -116,7 +116,7 @@ class PersistentRingBuffer(object):
             return self.table[self.table.attrs.head:self.table.attrs.tail]
 
         if self.table.attrs.head > self.table.attrs.tail:
-            return self.table[self.table.attrs.head:] + self.table[:self.table.attrs.tail]
+            return np.concatenate((self.table[self.table.attrs.head:], self.table[:self.table.attrs.tail]))
 
     @property
     def df(self):
