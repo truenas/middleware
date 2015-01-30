@@ -1,8 +1,15 @@
-7371	High	Data corruption probably caused by VAAI
-7600	High	CTL errors when moving data between FC LUNs residing on different FreeNAS boxes
-7642	High	Multiple vulnerabilities for Django
-7401	Normal	host uuid is not unique.
-7522	Normal	ups.conf incorrectly set
-7577	Normal	AFP Settings Error
-7626	Normal	Error 500 when trying to display periodic snapshots
-7637	Low	Web gui scroll list when adding groups to users
+#7387	Bug	Normal	AD Authentication with AFP does not work
+#7421	Bug	Low	Active Directory, LDAP signing, sasl wrapping, and problems upgrading from 9.2.1.9 to 9.3
+#7505	Bug	Normal	Fibre Channel data overflow occurs under load
+#7572	Feature	Normal	Notify user of available updates for 9.3
+#7635	Bug	Normal	AD connections not sealed
+#7649	Bug	Normal	kmem space exhasustion workaround
+#7653	Bug	Normal	'exceptions.IOError' object has no attribute 'encode'
+#7657	Bug	Normal	9.3 rsync regression: --inplace cannot be used with --delay-updates
+#7666	Bug	Low	Spelling mistake in Web interface - VMware vs VMWare.
+#7684	Bug	Normal	Teach freenas-debug about CTL
+#7693	Bug	Normal	System-installed OpenLDAP client is linked against an old version of OpenSSL
+#7707	Bug	Low	Merge latest FreeBSD security advisory fixes
+#7721	Bug	Normal	Editing a keytab causes traceback
+#7751	Bug	Normal	Getting "(sqlite3), uid 0: exited on signal 11 (core dumped)" all over my messages file after NT4 Directory Services activated
+#7754	Bug	Normal	iX CA file is expired
