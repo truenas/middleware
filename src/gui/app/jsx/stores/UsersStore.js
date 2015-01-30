@@ -107,6 +107,14 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
+  , getPendingUpdateIDs: function() {
+      return _updatedOnServer;
+    }
+
+  , isUserUpdatePending: function( id ) {
+      return _updatedOnServer.indexOf( id ) > -1;
+    }
+
   , getUser: function( id ) {
       return _users[ id ];
     }
@@ -156,6 +164,8 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         } else {
           // TODO: Can this be anything else?
         }
+
+        UsersStore.emitChange();
       }
       break;
 

@@ -230,12 +230,6 @@
     padding : 0;
     margin  : 0;
   }
-
-  .viewer-item-info {
-    .flex(10);
-    overflow-y : auto;
-    overflow-x : hidden;
-  }
 }
 
 
@@ -310,5 +304,36 @@
     font-size      : 3em;
     text-align     : center;
     font-weight    : 100;
+  }
+}
+
+// EDITOR
+
+
+.viewer-item-info {
+  .flex-display(flex);
+  .flex(10);
+  .align-content(flex-start);
+  position : relative;
+
+  .container-fluid {
+    .flex(1);
+    overflow-y : auto;
+    overflow-x : hidden;
+  }
+}
+
+.editor-update-overlay {
+  .flex-display( flex );
+  .justify-content( center );
+  .align-items( center );
+
+  .throbber {
+    margin: 25px 0 75px;
+
+    &:after {
+      height : 50px;
+      width  : 50px;
+    }
   }
 }

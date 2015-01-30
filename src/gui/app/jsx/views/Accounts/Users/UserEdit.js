@@ -10,10 +10,11 @@ var _          = require("lodash");
 var React      = require("react");
 var TWBS       = require("react-bootstrap");
 
-// var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil = require("../../../components/Viewer/Editor/editorUtil");
+var Throbber   = require("../../../components/common/Throbber");
 
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
+var UsersStore      = require("../../../stores/UsersStore");
 
 var UserEdit = React.createClass({
 
@@ -21,11 +22,32 @@ var UserEdit = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getUpdateStatus: function() {
       return {
-          modifiedValues : {}
-        , mixedValues    : this.props.item
+          pendingTaskCompletion : false
+        , pendingUpdateOnServer : UsersStore.isUserUpdatePending( this.props.item["id"] )
       };
+    }
+
+  , getInitialState: function() {
+      return _.assign({
+            modifiedValues        : {}
+          , mixedValues           : this.props.item
+        }
+        , this.getUpdateStatus()
+      );
+    }
+
+  , componentDidMount: function() {
+      UsersStore.addChangeListener( this.handleUsersChange );
+    }
+
+  , componentWillUnmount: function() {
+      UsersStore.removeChangeListener( this.handleUsersChange );
+    }
+
+  , handleUsersChange: function() {
+      this.setState( this.getUpdateStatus() );
     }
 
   , handleValueChange: function( key, event ) {
@@ -60,7 +82,31 @@ var UserEdit = React.createClass({
 
   , render: function() {
 
-      var builtInUserAlert = null;
+      var processingOverlay = null;
+      var builtInUserAlert  = null;
+      var editButtons       = null;
+
+      if ( this.state.pendingUpdateOnServer || this.state.pendingTaskCompletion ) {
+        var processingText = null;
+
+        if ( this.state.pendingUpdateOnServer ) {
+          processingText = <h3>{"Saving changes to " + this.state.mixedValues[ this.props.formatData["primaryKey"] ] }</h3>;
+        }
+
+        if ( this.state.pendingTaskCompletion ) {
+          processingText = <h3>{ "Syncing " + this.state.mixedValues[ this.props.formatData["primaryKey"] ] }</h3>;
+        }
+
+        processingOverlay = (
+          <div className = "overlay overlay-light editor-update-overlay"
+               ref       = "saving-overlay">
+            <div>
+              { processingText }
+              <Throbber bsStyle="primary" />
+            </div>
+          </div>
+        );
+      }
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
@@ -75,7 +121,7 @@ var UserEdit = React.createClass({
         );
       }
 
-      var editButtons =
+      editButtons =
         <TWBS.ButtonToolbar>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
@@ -87,14 +133,19 @@ var UserEdit = React.createClass({
         </TWBS.ButtonToolbar>;
 
       return (
-        <TWBS.Grid fluid className="viewer-item-info">
-          {/* Save and Cancel Buttons - Top */}
-          { editButtons }
+        <div className="viewer-item-info">
 
-          {/* Shows a warning if the user account is built in */}
-          { builtInUserAlert }
+          {/* Overlay to block interaction while tasks or updates are processing */}
+          { processingOverlay }
 
-          <form className="form-horizontal">
+          <TWBS.Grid fluid>
+            {/* Save and Cancel Buttons - Top */}
+            { editButtons }
+
+            {/* Shows a warning if the user account is built in */}
+            { builtInUserAlert }
+
+            <form className="form-horizontal">
               {
                 this.props.formatData["dataKeys"].map( function( displayKeys, index ) {
                   return editorUtil.identifyAndCreateFormElement(
@@ -102,14 +153,14 @@ var UserEdit = React.createClass({
                            displayKeys,
                            this.handleValueChange
                          );
-              }.bind( this ) )
-            }
-          </form>
+                }.bind( this ) )
+              }
+            </form>
 
-          {/* Save and Cancel Buttons - Bottom */}
-          { editButtons }
-
-        </TWBS.Grid>
+            {/* Save and Cancel Buttons - Bottom */}
+            { editButtons }
+          </TWBS.Grid>
+        </div>
       );
     }
 

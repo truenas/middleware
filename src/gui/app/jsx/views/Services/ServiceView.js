@@ -28,7 +28,8 @@ var ServiceView = React.createClass({
     }
 
     return (
-      <TWBS.Grid fluid className="viewer-item-info">
+      <div className="viewer-item-info">
+        <TWBS.Grid fluid>
 
         {/* General information */}
         <TWBS.Row>
@@ -45,7 +46,8 @@ var ServiceView = React.createClass({
           </TWBS.Col>
         </TWBS.Row>
 
-      </TWBS.Grid>
+        </TWBS.Grid>
+      </div>
     );
   }
 

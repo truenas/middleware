@@ -49,9 +49,9 @@ var viewData = {
 };
 
 
-function getUsersFromStore() {
+function getUsersStoreData() {
   return {
-    usersList: UsersStore.getAllUsers()
+      usersList  : UsersStore.getAllUsers()
   };
 }
 
@@ -59,14 +59,13 @@ function getUsersFromStore() {
 var Users = React.createClass({
 
     getInitialState: function() {
-      return getUsersFromStore();
+      return getUsersStoreData();
     }
 
   , componentDidMount: function() {
       UsersStore.addChangeListener( this.handleUsersChange );
       UsersMiddleware.requestUsersList();
       UsersMiddleware.subscribe();
-
     }
 
   , componentWillUnmount: function() {
@@ -75,7 +74,7 @@ var Users = React.createClass({
     }
 
   , handleUsersChange: function() {
-      this.setState( getUsersFromStore() );
+      this.setState( getUsersStoreData() );
     }
 
   , render: function() {
