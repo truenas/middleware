@@ -6,7 +6,38 @@ var React   =   require("react");
 
 var Widget  = 	require("../Widget");
 
+var WidgetMiddleware = require("../../middleware/WidgetMiddleware");
+var WidgetStore      = require("../../stores/WidgetStore");
+
+function getWidgetDataFromStore() {
+ return {
+ widgetData: WidgetStore.getWidgetData()
+  };
+ }
+
 var DummyWidgetContent = React.createClass({
+  getInitialState: function() {
+    return getWidgetDataFromStore();
+  }
+
+ , componentDidMount: function() {
+    this.requestWidgetData();
+
+    WidgetStore.addChangeListener( this.handleServicesChange );
+ }
+
+  , componentWillUnmount: function() {
+     WidgetStore.removeChangeListener( this.handleServicesChange );
+  }
+
+ , handleServicesChange: function() {
+    this.setState( getWidgetDataFromStore() );
+ },
+
+  requestWidgetData: function() {
+    WidgetMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", "2015-01-30T13:04:44Z",  "2015-01-30T14:06:44Z", "10S");
+  },
+
   render: function() {
     var elementStyle = {
       margin: "0px",

@@ -25,6 +25,9 @@ module.exports = {
 
       // Services
       , RECEIVE_RAW_SERVICES : null
+
+      //Widget Data
+      , RECEIVE_RAW_WIDGET_DATA : null
     })
 
   , PayloadSources: keyMirror({
