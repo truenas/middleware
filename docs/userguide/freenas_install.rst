@@ -483,12 +483,12 @@ In the screen shown in Figure 2.5e, use the drop-down menu to select which "Trai
 
 .. |update1.png| image:: images/update1.png
     :width: 6.2in
-    :height: 3.2in
+    :height: 3.4in
 
-In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release),
-*FreeNAS-9.3-Nightlies* which represents the latest nightly build of the upcoming 9.3 release, and
-*FreeNAS-9.3-BETA* which includes all new features, drivers, and bug fixes since 9.3-BETA was released. The administrator has selected to track the
-*FreeNAS-9.3-Nightlies*. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
+In this example, this system has the option to track *FreeNAS-9.3-Nightlies*, (the latest nightly build of 9.3 which may contain untested fixes),
+*FreeNAS-9.3-STABLE* (all new and tested features, drivers, and bug fixes since 9.3 was released), and
+*FreeNAS-10-Nightlies* (the latest, pre-alpha build of the upcoming 10 version). The administrator has selected to track the recommended
+*FreeNAS-9.3-STABLE* train. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
 
 To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
 button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
