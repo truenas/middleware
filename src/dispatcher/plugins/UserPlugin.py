@@ -25,12 +25,10 @@
 #
 #####################################################################
 
-import uuid
+import os
 import errno
-import psutil
 from task import Provider, Task, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, description, accepts, returns
-from balancer import TaskState
 from datastore import DuplicateKeyException, DatastoreException
 
 
@@ -118,6 +116,7 @@ class UserCreateTask(Task):
             user['unixhash'] = user.get('unixhash', '*')
             user['full_name'] = user.get('full_name', 'User &')
             user['shell'] = user.get('shell', '/bin/sh')
+            user['home'] = user.get('home', os.path.join('/home', user['username']))
             self.datastore.insert('users', user, pkey=uid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
