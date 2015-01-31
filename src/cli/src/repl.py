@@ -100,7 +100,8 @@ class VariableStore(object):
             'prompt': self.Variable('{host}:{path}>', ValueType.STRING),
             'timeout': self.Variable(10, ValueType.NUMBER),
             'tasks-blocking': self.Variable(False, ValueType.BOOLEAN),
-            'show-events': self.Variable(True, ValueType.BOOLEAN)
+            'show-events': self.Variable(True, ValueType.BOOLEAN),
+            'debug': self.Variable(False, ValueType.BOOLEAN)
         }
 
     def load(self, filename):
@@ -354,7 +355,12 @@ class MainLoop(object):
         self.greet()
 
         while True:
-            line = raw_input(self.__get_prompt()).strip()
+            try:
+                line = raw_input(self.__get_prompt()).strip()
+            except EOFError:
+                print
+                return
+
             self.process(line)
 
     def process(self, line):
@@ -396,7 +402,14 @@ class MainLoop(object):
                 for name, cmd in self.cwd.commands().items():
                     if token == name:
                         output_lock.acquire()
-                        cmd.run(self.context, tokens, kwargs, opargs)
+                        try:
+                            cmd.run(self.context, tokens, kwargs, opargs)
+                        except Exception, e:
+                            output_msg('Command {0} failed: {1}'.format(name, str(e)))
+                            if self.context.variables.get('debug'):
+                                traceback.print_exc()
+
+
                         cmdfound = True
                         output_lock.release()
                         break

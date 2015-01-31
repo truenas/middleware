@@ -131,7 +131,11 @@ class AsciiOutputFormatter(object):
             return _("none")
 
         if vt == ValueType.ARRAY:
-            return '\n'.join(list(value))
+            value = list(value)
+            if len(value) == 0:
+                return _("empty")
+
+            return '\n'.join(value)
 
         if vt == ValueType.STRING:
             return value
@@ -165,7 +169,7 @@ class AsciiOutputFormatter(object):
         table = Texttable(max_width=get_terminal_size()[1])
         table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
         table.header([key_label, value_label])
-        table.add_rows([[row[0], row[1]] for row in data.items()], False)
+        table.add_rows([[row[0], AsciiOutputFormatter.format_value(row[1], value_vt)] for row in data.items()], False)
         print table.draw()
 
     @staticmethod
@@ -254,6 +258,12 @@ def read_value(value, tv=ValueType.STRING):
                 value *= 1024 * 1024 * 1024 * 1024
 
         return long(value)
+
+    if tv == ValueType.ARRAY:
+        if type(value) is list:
+            return value
+
+        return value.split(',')
 
     raise ValueError('Invalid value')
 

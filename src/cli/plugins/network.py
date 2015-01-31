@@ -26,6 +26,7 @@
 #####################################################################
 
 
+import copy
 import gettext
 from namespace import Namespace, EntityNamespace, ConfigNamespace, Command, description
 from output import ValueType
@@ -156,8 +157,8 @@ class InterfacesNamespace(EntityNamespace):
             {'single': True}
         )
 
-    def save(self, entity, new=False):
-        self.context.submit_task('network.interface.configure', entity['id'], entity)
+    def save(self, entity, diff, new=False):
+        self.context.submit_task('network.interface.configure', entity['id'], diff)
 
     def delete(self, name):
         pass
@@ -204,11 +205,11 @@ class AliasesNamespace(EntityNamespace):
         return self.parent.entity.get('aliases', [])
 
     def save(self, entity, new):
-        if 'aliases' not in self.entity:
+        if 'aliases' not in self.parent.entity:
             self.parent.entity['aliases'] = []
 
         self.parent.entity['aliases'].append(entity)
-        self.parent.parent.save(self.entity)
+        self.parent.parent.save(self.parent.entity)
 
     def delete(self, address):
         self.parent.entity['aliases'] = filter(lambda a: a['address'] != address, self.entity['aliases'])
@@ -265,21 +266,21 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='IPv4 gateway',
             name='ipv4_gateway',
-            get='/network.gateway.ipv4',
+            get='/gateway/ipv4',
             list=True
         )
 
         self.add_property(
             descr='IPv6 gateway',
             name='ipv6_gateway',
-            get='/network.gateway.ipv6',
+            get='/gateway/ipv6',
             list=True
         )
 
         self.add_property(
             descr='DNS servers',
             name='dns_servers',
-            get='/network.dns.addresses',
+            get='/dns/addresses',
             list=True,
             type=ValueType.ARRAY
         )
@@ -287,10 +288,18 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='DNS search domains',
             name='dns_search',
-            get='/network.dns.search',
+            get='/dns/search',
             list=True,
             type=ValueType.ARRAY
         )
+
+    def load(self):
+        self.entity = self.context.connection.call_sync('network.config.get_global_config')
+        self.orig_entity = copy.deepcopy(self.entity)
+
+    def save(self):
+        print self.get_diff()
+        return self.context.submit_task('network.configure', self.get_diff())
 
 
 @description("Routing configuration")

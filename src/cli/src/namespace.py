@@ -26,10 +26,11 @@
 #####################################################################
 
 
+import copy
 import collections
 from texttable import Texttable
 from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
-from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii, read_value
+from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii, read_value, format_value
 
 
 def description(descr):
@@ -126,6 +127,7 @@ class PropertyMapping(object):
             return None
 
     def do_set(self, obj, value):
+        value = read_value(value, self.type)
         if callable(self.set):
             self.set(obj, value)
             return
@@ -141,7 +143,8 @@ class ItemNamespace(Namespace):
 
         def run(self, context, args, kwargs, opargs):
             if len(args) != 0:
-                pass
+                output_msg('Wrong arguments count')
+                return
 
             values = collections.OrderedDict()
             entity = self.parent.entity
@@ -150,7 +153,7 @@ class ItemNamespace(Namespace):
                 if not mapping.get:
                     continue
 
-                values[mapping.descr if output_is_ascii() else mapping.name] = mapping.do_get(entity)
+                values[mapping.descr if output_is_ascii() else mapping.name] = format_value(mapping.do_get(entity), mapping.type)
 
             output_dict(values)
 
@@ -160,12 +163,19 @@ class ItemNamespace(Namespace):
             self.parent = parent
 
         def run(self, context, args, kwargs, opargs):
+            if len(args) < 1:
+                output_msg('Wrong arguments count')
+                return
+
             if not self.parent.has_property(args[0]):
                 output_msg('Property {0} not found'.format(args[0]))
                 return
 
             entity = self.parent.entity
             output_msg(self.parent.get_property(args[0], entity))
+
+        def complete(self, context, tokens):
+            return [x.name for x in self.parent.property_mappings]
 
     @description("Sets single item property")
     class SetEntityCommand(Command):
@@ -189,9 +199,20 @@ class ItemNamespace(Namespace):
                     raise CommandException("Syntax error, invalid operator used")
 
                 prop = self.parent.get_mapping(k)
-                prop.do_set(entity, v)
+                val = prop.do_get(entity)
+
+                if op == '+=':
+                    val.append(v)
+
+                if op == '-=':
+                    val.remove(v)
+
+                prop.do_set(entity, val)
 
             self.parent.modified = True
+
+        def complete(self, context, tokens):
+            return [x.name + '=' for x in self.parent.property_mappings]
 
     @description("Saves item")
     class SaveEntityCommand(Command):
@@ -214,6 +235,7 @@ class ItemNamespace(Namespace):
         self.name = name
         self.description = name
         self.entity = None
+        self.orig_entity = None
         self.allow_edit = True
         self.modified = False
         self.property_mappings = []
@@ -232,6 +254,18 @@ class ItemNamespace(Namespace):
 
     def get_name(self):
         return self.name
+
+    def get_changed_keys(self):
+        for i in self.entity.keys():
+            if i not in self.orig_entity.keys():
+                yield i
+                continue
+
+            if self.entity[i] != self.orig_entity[i]:
+                yield i
+
+    def get_diff(self):
+        return {k: self.entity[k] for k in self.get_changed_keys()}
 
     def load(self):
         raise NotImplementedError()
@@ -278,14 +312,6 @@ class ConfigNamespace(ItemNamespace):
         self.context = context
         self.property_mappings = []
 
-    def load(self):
-        self.entity = {}
-        for i in self.property_mappings:
-            self.entity[i.name] = self.context.connection.call_sync('config.get', i.get)
-
-    def save(self):
-        pass
-
 
 class EntityNamespace(Namespace):
     class SingleItemNamespace(ItemNamespace):
@@ -296,6 +322,7 @@ class EntityNamespace(Namespace):
 
             if parent.entity_commands:
                 self.subcommands = parent.entity_commands(name)
+
             if parent.entity_namespaces:
                 self.nslist = parent.entity_namespaces(self)
 
@@ -304,9 +331,11 @@ class EntityNamespace(Namespace):
 
         def load(self):
             self.entity = self.parent.get_one(self.name)
+            self.orig_entity = copy.copy(self.entity)
 
         def save(self):
-            pass
+            self.parent.save(self.entity, self.get_diff())
+            self.modified = False
 
     def __init__(self, name, context):
         super(EntityNamespace, self).__init__(name)
@@ -365,7 +394,7 @@ class EntityNamespace(Namespace):
                 prop = self.parent.get_mapping(k)
                 prop.do_set(entity, v)
 
-            self.parent.save(entity, new=True)
+            self.parent.save(entity, entity, new=True)
 
         def complete(self, context, tokens):
             return [x.name + '=' for x in self.parent.property_mappings]

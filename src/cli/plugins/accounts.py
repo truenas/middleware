@@ -26,6 +26,7 @@
 #####################################################################
 
 
+import os
 import crypt
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
 from output import ValueType
@@ -91,21 +92,18 @@ class UsersNamespace(EntityNamespace):
         return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
 
     def set_unixhash(self, obj, value):
-        pass
+        obj['unixhash'] = crypt.crypt(value, '$6${0}$'.format(os.urandom(16).encode('hex')))
 
-    def save(self, entity, new=False):
+    def save(self, entity, diff, new=False):
         if new:
             self.context.submit_task('users.create', entity)
             return
 
-        entity = entity.copy()
-        uid = entity.pop('id')
-        del entity['builtin']
-        self.context.submit_task('users.update', uid, entity)
+        self.context.submit_task('users.update', entity['id'], diff)
 
     def delete(self, name):
         entity = self.get_one(name)
-        self.context.submit_task('users.')
+        self.context.submit_task('users.delete', entity['id'])
 
     def display_group(self, entity):
         group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
@@ -155,15 +153,12 @@ class GroupsNamespace(EntityNamespace):
     def get_one(self, name):
         return self.context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
 
-    def save(self, entity, new=False):
+    def save(self, entity, diff, new=False):
         if new:
             self.context.submit_task('groups.create', entity)
             return
 
-        entity = entity.copy()
-        gid = entity.pop('id')
-        del entity['builtin']
-        self.context.submit_task('groups.update', gid, entity)
+        self.context.submit_task('groups.update', entity['id'], diff)
 
 @description("Service namespace")
 class AccountNamespace(Namespace):
