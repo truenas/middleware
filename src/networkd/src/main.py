@@ -50,17 +50,17 @@ DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 def convert_aliases(entity):
     for i in entity.get('aliases', []):
         addr = netif.InterfaceAddress()
-        addr.af = getattr(netif.AddressFamily, i['type'])
+        addr.af = getattr(netif.AddressFamily, i.get('type', 'INET'))
         addr.address = ipaddress.ip_address(i['address'])
         addr.netmask = ipaddress.ip_address(i['netmask'])
         addr.broadcast = ipaddress.ip_interface(u'{0}/{1}'.format(i['address'], i['netmask']))\
             .network\
             .broadcast_address
 
-        if 'broadcast' in i and i['broadcast'] is not None:
+        if i.get('broadcast'):
             addr.broadcast = ipaddress.ip_address(i['broadcast'])
 
-        if 'dest-address' in i and i['dest-address'] is not None:
+        if i.get('dest-address'):
             addr.dest_address = ipaddress.ip_address(i['dest-address'])
 
         yield addr
@@ -171,11 +171,13 @@ class RoutingSocketEventSource(threading.Thread):
 
                 if self.link_state_cache[ifname] != message.link_state:
                     if message.link_state == netif.InterfaceLinkState.LINK_STATE_DOWN:
+                        self.context.logger.warn('Link down on interface {0}'.format(ifname))
                         self.client.emit_event('network.interface.link_down', {
                             'interface': ifname,
                         })
 
                     if message.link_state == netif.InterfaceLinkState.LINK_STATE_UP:
+                        self.context.logger.warn('Link up on interface {0}'.format(ifname))
                         self.client.emit_event('network.interface.link_up', {
                             'interface': ifname,
                         })
@@ -213,7 +215,7 @@ class RoutingSocketEventSource(threading.Thread):
                 aliases = set(convert_aliases(entity))
 
                 # Ignore aliases added by dhclient
-                if not entity.get('dhcp'):
+                if not entity.get('dhcp') or self.context.config.get('network.autoconfigure'):
                     if message.type == netif.RoutingMessageType.NEWADDR:
                         if addr in aliases:
                             continue
@@ -246,7 +248,7 @@ class RoutingSocketEventSource(threading.Thread):
                             message.netmask
                         ))
 
-                self.context.connection.emit_event('network.interface.changed', {
+                self.client.emit_event('network.interface.changed', {
                     'operation': 'update',
                     'ids': [entity['id']]
                 })
