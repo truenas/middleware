@@ -29,11 +29,15 @@ import errno
 import os
 import stat
 from dispatcher.rpc import RpcException, description, accepts, returns
+from datastore.config import ConfigNode
 from task import Provider, Task, TaskException, VerifyException, query
 
 
 @description("Provides access to global network configuration settings")
 class NetworkProvider(Provider):
+    def get_global_config(self):
+        return ConfigNode('network', self.configstore)
+
     def get_my_ips(self):
         ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
         for i in ifaces:
@@ -76,19 +80,32 @@ class HostsProvider(Provider):
 
 @description("Updates global network configuration settings")
 @accepts({
-    'type': 'objects',
+    'type': 'object',
     'properties': {
-        'ipv4_gateway': {'type': 'string'},
-        'ipv6_gateway': {'type': 'string'},
-        'dns_servers': {'type': 'array'},
-        'dns_search': {'type': 'array'}
+        'gateway': {
+            'type': 'object',
+            'properties': {
+                'ipv4': {'type': 'string'},
+                'ipv6': {'type': 'string'}
+            }
+        },
+        'dns': {
+            'type': 'object',
+            'properties': {
+                'servers': {'type': 'array'},
+                'search': {'type': 'array'}
+            }
+        }
     }
 })
 class NetworkConfigureTask(Task):
     def verify(self, settings):
-        pass
+        return ['system']
 
     def run(self, settings):
+        node = ConfigNode('network', self.dispatcher.configstore)
+        node.update(settings)
+
         try:
             self.dispatcher.call_sync('networkd.configuration.configure_network')
         except RpcException:
@@ -361,6 +378,7 @@ def _init(dispatcher):
     dispatcher.require_collection('network.routes')
     dispatcher.require_collection('network.hosts')
 
+    dispatcher.register_provider('network.config', NetworkProvider)
     dispatcher.register_provider('network.interfaces', InterfaceProvider)
     dispatcher.register_provider('network.routes', RouteProvider)
     dispatcher.register_provider('network.hosts', HostsProvider)
