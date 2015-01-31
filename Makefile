@@ -94,6 +94,7 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+	@if [ "${NANO_LABEL}" = "FreeNAS" ]; then echo "Building FreeNAS documentation"; (cd docs/userguide && make html && mv _build/html ../../objs/${STAGEDIR}/doc); fi
 
 release-push: release
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/

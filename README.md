@@ -20,6 +20,8 @@ To build the system (experts only):
   * emulators/virtualbox-ose
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
+  * py27-sphinx
+  * py27-sphinxcontrib-httpdomain-1.2.1
   (and all the dependencies that these ports/pkgs install, of course)
 
 ## Building the System Quickstart Flow:
