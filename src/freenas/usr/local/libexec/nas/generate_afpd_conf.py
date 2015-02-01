@@ -52,6 +52,8 @@ def main():
     if afp.afp_srv_homedir_enable:
         cf_contents.append("[Homes]\n")
         cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
+        if afp.afp_srv_homename:
+            cf_contents.append('\thome name = "%s"\n' % afp.afp_srv_homename)
         cf_contents.append("\n")
 
     for share in AFP_Share.objects.all():

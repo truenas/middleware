@@ -314,6 +314,12 @@ class AFP(Model):
             verbose_name=_("Home directories"),
             blank=True,
             )
+    afp_srv_homename = models.CharField(
+            verbose_name=_("Home share name"),
+            blank=True,
+            help_text=_("When set overrides the default Home Share Name."),
+            max_length=50,
+            )
     afp_srv_dbpath = PathField(
         verbose_name=_('Database Path'),
         blank=True,
@@ -444,7 +450,6 @@ class iSCSITargetGlobalConfiguration(Model):
         verbose_name=_('Pool Available Space Threshold (%)'),
         blank=True,
         null=True,
-        default=10,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
     )
 
