@@ -1058,8 +1058,8 @@ class iSCSITargetExtentForm(ModelForm):
 
     iscsi_target_extent_type = forms.ChoiceField(
         choices=(
-            ('File', _('File')),
             ('Disk', _('Device')),
+            ('File', _('File')),
         ),
         label=_("Extent Type"),
     )
