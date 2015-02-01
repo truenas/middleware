@@ -263,43 +263,46 @@ def configure_interface():
 
     need_restart = False
     while True:
-        _input = raw_input(_("Configure interface for DHCP? (y/n) "))
-        if _input.lower().startswith("y"):
-            int_name_prompt = prompt(_("Interface name"), iface.int_name)
-            int_name = raw_input(int_name_prompt)
-            if not int_name and iface.int_name:
-                int_name = iface.int_name
-            iface.int_interface = nic
-            iface.int_dhcp = True
-            iface.int_ipv4address =  ''
-            iface.int_v4netmaskbit = '' 
-            iface.int_v6netmaskbit = ''
-            iface.int_ipv6address = ''
-            iface.int_ipv6auto = False
-            print _("Saving interface configuration:"),
-            try:
-                iface.save()
-            except Exception, err:
-                print _("Failed %s") % str(err)
-                return False
-            print _("Ok")
-            need_restart = "DHCP"
-            gc = GlobalConfiguration.objects.all()
-            gc = gc[0]
-            gc.gc_ipv4gateway = ''
+        if not Interfaces.objects.filter(int_dhcp=True):
+            _input = raw_input(_("Configure interface for DHCP? (y/n) "))
+            if _input.lower().startswith("y"):
+                int_name_prompt = prompt(_("Interface name"), iface.int_name)
+                int_name = raw_input(int_name_prompt)
+                if not int_name and iface.int_name:
+                    int_name = iface.int_name
+                iface.int_interface = nic
+                iface.int_dhcp = True
+                iface.int_ipv4address =  ''
+                iface.int_v4netmaskbit = '' 
+                iface.int_v6netmaskbit = ''
+                iface.int_ipv6address = ''
+                iface.int_ipv6auto = False
+                print _("Saving interface configuration:"),
+                try:
+                    iface.save()
+                except Exception, err:
+                    print _("Failed %s") % str(err)
+                    return False
+                print _("Ok")
+                need_restart = "DHCP"
+                gc = GlobalConfiguration.objects.all()
+                gc = gc[0]
+                gc.gc_ipv4gateway = ''
 
-            print _("Removing IPv4 default gateway:"),
-            try:
-                gc.save()
-            except:
-                print _("Failed")
-                return False
-            print _("Ok")
-            break
-        elif _input.lower().startswith('n'):
-            break
+                print _("Removing IPv4 default gateway:"),
+                try:
+                    gc.save()
+                except:
+                    print _("Failed")
+                    return False
+                print _("Ok")
+                break
+            elif _input.lower().startswith('n'):
+                break
+            else:
+                continue
         else:
-            continue
+            break
 
     while True and need_restart != "DHCP":
         yes = raw_input(_("Configure IPv4? (y/n) "))
