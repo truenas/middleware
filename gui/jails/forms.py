@@ -26,6 +26,7 @@
 #####################################################################
 import os
 import platform
+import re
 import logging
 
 from django.utils.translation import ugettext_lazy as _
@@ -998,6 +999,12 @@ class JailMountPointForm(ModelForm):
     def clean_destination(self):
         dest = self.cleaned_data.get("destination")
         dest = os.path.abspath(dest.strip().replace("..", ""))
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', dest):
+            raise forms.ValidationError(_(
+                "Destination must begin with an "
+                "alphanumeric character and may only contain "
+                "\"-\", \"_\", \":\", \" \" and \".\"."))
+
 
         if not self.jail:
             jail = self.cleaned_data.get("jail")
