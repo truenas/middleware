@@ -134,6 +134,19 @@ class PropertyMapping(object):
 
         set_pointer(obj, self.set, value)
 
+    def do_append(self, obj, value):
+        if self.type != ValueType.ARRAY:
+            raise ValueError('Property is not an array')
+
+        value = read_value(value, self.type)
+        self.set(obj, self.get(obj).append(value))
+
+    def do_remove(self, obj, value):
+        if self.type != ValueType.ARRAY:
+            raise ValueError('Property is not an array')
+
+        value = read_value(value, self.type)
+
 
 class ItemNamespace(Namespace):
     @description("Shows single item")
@@ -199,15 +212,12 @@ class ItemNamespace(Namespace):
                     raise CommandException("Syntax error, invalid operator used")
 
                 prop = self.parent.get_mapping(k)
-                val = prop.do_get(entity)
 
                 if op == '+=':
-                    val.append(v)
+                    prop.do_append(entity, v)
 
                 if op == '-=':
-                    val.remove(v)
-
-                prop.do_set(entity, val)
+                    prop.do_remove(entity, v)
 
             self.parent.modified = True
 
@@ -221,6 +231,7 @@ class ItemNamespace(Namespace):
 
         def run(self, context, args, kwargs, opargs):
             self.parent.save()
+            self.parent.modified = False
 
     @description("Discards modified item")
     class DiscardEntityCommand(Command):
@@ -228,7 +239,8 @@ class ItemNamespace(Namespace):
             self.parent = parent
 
         def run(self, context, args, kwargs, opargs):
-            self.parent.load_entity()
+            self.parent.load()
+            self.parent.modified = False
 
     def __init__(self, name):
         super(ItemNamespace, self).__init__(name)
@@ -331,7 +343,7 @@ class EntityNamespace(Namespace):
 
         def load(self):
             self.entity = self.parent.get_one(self.name)
-            self.orig_entity = copy.copy(self.entity)
+            self.orig_entity = copy.deepcopy(self.entity)
 
         def save(self):
             self.parent.save(self.entity, self.get_diff())
