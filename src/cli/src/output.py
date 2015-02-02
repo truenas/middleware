@@ -53,7 +53,7 @@ class ValueType(enum.Enum):
     BOOLEAN = 4
     SIZE = 5
     TIME = 6
-    ARRAY = 7
+    SET = 7
 
 
 class Column(object):
@@ -130,7 +130,7 @@ class AsciiOutputFormatter(object):
         if value is None:
             return _("none")
 
-        if vt == ValueType.ARRAY:
+        if vt == ValueType.SET:
             value = list(value)
             if len(value) == 0:
                 return _("empty")
@@ -259,7 +259,7 @@ def read_value(value, tv=ValueType.STRING):
 
         return long(value)
 
-    if tv == ValueType.ARRAY:
+    if tv == ValueType.SET:
         if type(value) is list:
             return value
 
