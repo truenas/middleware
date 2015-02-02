@@ -3,15 +3,16 @@
 "use strict";
 
 var React   =   require("react");
+var moment  =   require("moment");
 
 var Widget  = 	require("../Widget");
 
-var WidgetMiddleware = require("../../middleware/WidgetMiddleware");
-var WidgetStore      = require("../../stores/WidgetStore");
+var StatdMiddleware = require("../../middleware/StatdMiddleware");
+var StatdStore      = require("../../stores/StatdStore");
 
 function getWidgetDataFromStore() {
  return {
- widgetData: WidgetStore.getWidgetData()
+ widgetData: StatdStore.getWidgetData()
   };
  }
 
@@ -23,11 +24,12 @@ var DummyWidgetContent = React.createClass({
  , componentDidMount: function() {
     this.requestWidgetData();
 
-    WidgetStore.addChangeListener( this.handleServicesChange );
+    StatdStore.addChangeListener( this.handleServicesChange );
+    console.log(this.state.widgetData);
  }
 
   , componentWillUnmount: function() {
-     WidgetStore.removeChangeListener( this.handleServicesChange );
+     StatdStore.removeChangeListener( this.handleServicesChange );
   }
 
  , handleServicesChange: function() {
@@ -35,10 +37,17 @@ var DummyWidgetContent = React.createClass({
  },
 
   requestWidgetData: function() {
-    WidgetMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", "2015-01-30T13:04:44Z",  "2015-01-30T14:06:44Z", "10S");
+    var stop = moment();
+    var start = moment().subtract(15, "m");
+
+    console.log(start.format());
+    console.log(stop.format());
+    console.log(moment().subtract(15, 'm').format());
+    StatdMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", start.format(),  stop.format(), "10S");
   },
 
   render: function() {
+    console.log(this.state.widgetData);
     var elementStyle = {
       margin: "0px",
       padding: "0px"
@@ -51,6 +60,7 @@ var DummyWidgetContent = React.createClass({
     	   size       =  {this.props.size} >
 
         <h3 style={elementStyle}>{"It works!"}</h3>
+        <span>{this.state.widgetData}</span>
       </Widget>
     );
   }

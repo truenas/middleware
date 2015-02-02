@@ -14,7 +14,7 @@ var CHANGE_EVENT = "change";
 
 var _widgetData = [];
 
-var WidgetStore = _.assign( {}, EventEmitter.prototype, {
+var StatdStore = _.assign( {}, EventEmitter.prototype, {
 
     emitChange: function() {
       this.emit( CHANGE_EVENT );
@@ -34,14 +34,14 @@ var WidgetStore = _.assign( {}, EventEmitter.prototype, {
 
 });
 
-WidgetStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+StatdStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   var action = payload.action;
 
   switch( action.type ) {
 
     case ActionTypes.RECEIVE_RAW_WIDGET_DATA:
       _widgetData = action.rawWidgetData;
-      WidgetStore.emitChange();
+      StatdStore.emitChange();
       break;
 
     default:
@@ -49,4 +49,4 @@ WidgetStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   }
 });
 
-module.exports = WidgetStore;
+module.exports = StatdStore;

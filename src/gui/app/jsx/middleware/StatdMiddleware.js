@@ -5,13 +5,13 @@
 
 var MiddlewareClient = require("../middleware/MiddlewareClient");
 
-var WidgetActionCreators = require("../actions/WidgetActionCreators");
+var StatdActionCreators = require("../actions/StatdActionCreators");
 
 module.exports = {
 
   requestWidgetData: function(dataSourceName, startIsoTimestamp, endIsoTimestamp, frequency) {
       MiddlewareClient.request( "statd.output.query",  [dataSourceName, {"start": startIsoTimestamp, "end": endIsoTimestamp, "frequency": frequency}], function ( rawWidgetData ) {
-        WidgetActionCreators.receiveWidgetData( rawWidgetData );
+        StatdActionCreators.receiveWidgetData( rawWidgetData );
       });
   }
 
