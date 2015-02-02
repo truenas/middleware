@@ -504,7 +504,7 @@ class Rsync(Model):
             line += ' -X'
         if self.rsync_delete:
             line += ' --delete-delay'
-        if rsync_delayupdates:
+        if self.rsync_delayupdates:
             line += ' --delay-updates'
         line += ' %s' % self.rsync_extra
 
