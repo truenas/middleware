@@ -23,7 +23,7 @@ define([
   "dijit/form/Form",
   "dijit/form/Select",
   "dijit/form/TextBox",
-  "dijit/form/Textarea",
+  "dijit/form/SimpleTextarea",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dijit/popup",
@@ -57,7 +57,7 @@ define([
   Form,
   Select,
   TextBox,
-  Textarea,
+  SimpleTextarea,
   TabContainer,
   ContentPane,
   popup,
@@ -130,9 +130,9 @@ define([
           name: "subject"
         }, this.dapSubject);
 
-        this._desc = new Textarea({
+        this._desc = new SimpleTextarea({
           name: "desc",
-          style: "width: 300px;"
+          style: "width: 450px; height:160px;"
         }, this.dapDesc);
 
         submit = new Button({
@@ -158,15 +158,6 @@ define([
         on(attachment_add, 'click', function() {
           me.AddAttachment();
         });
-
-        this._total_vdevs = new _Widget({
-            name: "layout-TOTAL_FORMS",
-            value: 0
-        }).placeAt(this._form.domNode);
-        this._initial_vdevs = new _Widget({
-            name: "layout-INITIAL_FORMS",
-            value: 0
-        }).placeAt(this._form.domNode);
 
         this.AddAttachment();
 
