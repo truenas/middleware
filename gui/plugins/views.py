@@ -278,8 +278,8 @@ def install_available(request, oid):
 
         try:
             jail = new_default_plugin_jail(plugin.unixname)
-        except IOError:
-            raise MiddlewareError(e.message)
+        except IOError, e:
+            raise MiddlewareError(unicode(e))
         except MiddlewareError, e:
             raise e
         except Exception as e:
