@@ -480,6 +480,8 @@
             "network.dns.addresses": [],
 			"network.dns.search": [],
             "network.http_proxy": null,
+			"network.dhcp.assign_gateway": true,
+			"network.dhcp.assign_dns": true,
             "service.nginx.enable": true,
             "service.nginx.listen": ["0.0.0.0", "[::]"],
             "service.nginx.http.enable": true,
@@ -516,6 +518,7 @@
                     "file:passwd",
                     "file:group",
                     "file:master.passwd",
+					"file:motd",
                     "plugin:pubkeys",
                     "plugin:pwd_database"
                 ]
@@ -542,8 +545,9 @@
                 ]
             },
 			"11BB3D33-A56B-4B2A-AE2D-76B77E5A9895": {
-				"name": "hosts",
+				"name": "network",
 				"dependencies": [
+					"file:resolv.conf",
 					"file:hosts"
 				]
 			},
