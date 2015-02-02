@@ -64,10 +64,24 @@ class InterfacesNamespace(EntityNamespace):
     def __init__(self, name, context):
         super(InterfacesNamespace, self).__init__(name, context)
 
+        self.link_states = {
+            'LINK_STATE_UP': _("up"),
+            'LINK_STATE_DOWN': _("down"),
+            'LINK_STATE_UNKNOWN': _("unknown")
+        }
+
         self.add_property(
-            descr='Interface name',
+            descr='Name',
             name='name',
-            get='/name',
+            get='/id',
+            set=None,
+            list=True
+        )
+
+        self.add_property(
+            descr='Type',
+            name='type',
+            get='/type',
             set=None,
             list=True
         )
@@ -101,7 +115,7 @@ class InterfacesNamespace(EntityNamespace):
             get=self.get_ip_config,
             set=None,
             list=True,
-            type=ValueType.ARRAY
+            type=ValueType.SET
         )
 
         self.add_property(
@@ -131,11 +145,7 @@ class InterfacesNamespace(EntityNamespace):
         ]
 
     def get_link_state(self, entity):
-        return {
-            'LINK_STATE_UP': _("up"),
-            'LINK_STATE_DOWN': _("down"),
-            'LINK_STATE_UNKNOWN': _("unknown")
-        }[entity['status']['link-state']]
+        return self.link_states[entity['status']['link-state']]
 
     def get_iface_state(self, entity):
         return _("up") if 'UP' in entity['status']['flags'] else _("down")
@@ -158,6 +168,10 @@ class InterfacesNamespace(EntityNamespace):
         )
 
     def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('network.interface.create', entity['id'], entity['type'])
+            return
+
         self.context.submit_task('network.interface.configure', entity['id'], diff)
 
     def delete(self, name):
@@ -201,19 +215,25 @@ class AliasesNamespace(EntityNamespace):
 
         self.primary_key = self.get_mapping('address')
 
+    def get_one(self, name):
+        f = filter(lambda a: a['address'] == name, self.parent.entity['aliases'])
+        return f[0] if f else None
+
     def query(self, params):
         return self.parent.entity.get('aliases', [])
 
-    def save(self, entity, new):
+    def save(self, entity, diff, new=False):
         if 'aliases' not in self.parent.entity:
             self.parent.entity['aliases'] = []
 
         self.parent.entity['aliases'].append(entity)
-        self.parent.parent.save(self.parent.entity)
+        self.parent.parent.save(self.parent.entity, self.parent.get_diff())
+        self.parent.load()
 
     def delete(self, address):
-        self.parent.entity['aliases'] = filter(lambda a: a['address'] != address, self.entity['aliases'])
-        self.parent.parent.save(self.entity)
+        self.parent.entity['aliases'] = filter(lambda a: a['address'] != address, self.parent.entity['aliases'])
+        self.parent.parent.save(self.parent.entity, self.parent.get_diff())
+        self.parent.load()
 
 @description("Static host names database")
 class HostsNamespace(EntityNamespace):
@@ -282,7 +302,7 @@ class GlobalConfigNamespace(ConfigNamespace):
             name='dns_servers',
             get='/dns/addresses',
             list=True,
-            type=ValueType.ARRAY
+            type=ValueType.SET
         )
 
         self.add_property(
@@ -290,7 +310,23 @@ class GlobalConfigNamespace(ConfigNamespace):
             name='dns_search',
             get='/dns/search',
             list=True,
-            type=ValueType.ARRAY
+            type=ValueType.SET
+        )
+
+        self.add_property(
+            descr='DHCP will assign default gateway',
+            name='dhcp_gateway',
+            get='/dhcp/assign_gateway',
+            list=True,
+            type=ValueType.BOOLEAN
+        )
+
+        self.add_property(
+            descr='DHCP will assign DNS servers addresses',
+            name='dhcp_dns',
+            get='/dhcp/assign_dns',
+            list=True,
+            type=ValueType.BOOLEAN
         )
 
     def load(self):
@@ -298,7 +334,6 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.orig_entity = copy.deepcopy(self.entity)
 
     def save(self):
-        print self.get_diff()
         return self.context.submit_task('network.configure', self.get_diff())
 
 
@@ -309,6 +344,20 @@ class RoutesNamespace(EntityNamespace):
         self.context = context
 
         self.add_property(
+            descr='Name',
+            name='name',
+            get='/id',
+            list=True
+        )
+
+        self.add_property(
+            descr='Address family',
+            name='type',
+            get='/type',
+            list=True
+        )
+
+        self.add_property(
             descr='Destination',
             name='destination',
             get='/destination',
@@ -317,19 +366,30 @@ class RoutesNamespace(EntityNamespace):
 
         self.add_property(
             descr='Network',
-            name='/network',
-            get=self.get_network,
+            name='network',
+            get='/network',
             list=True
         )
 
-    def get_network(self, entity):
-        pass
-
     def query(self, params):
-        pass
+        return self.context.connection.call_sync('network.routes.query', params)
 
-    def save(self, entity, new=False):
-        pass
+    def get_one(self, name):
+        return self.context.connection.call_sync(
+            'network.routes.query',
+            [('id', '=', name)],
+            {'single': True}
+        )
+
+    def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('network.routes.add', entity)
+            return
+
+        self.context.submit_task('network.routes.update', entity['id'], diff)
+
+    def delete(self, name):
+        self.context.submit_task('network.routes.delete', name)
 
 
 @description("Network configuration")
