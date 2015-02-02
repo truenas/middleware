@@ -325,6 +325,20 @@ The following fields have been added or deleted:
 
 * The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
 
+.. _What's New Since 9.3-RELEASE:
+
+What's New Since 9.3-RELEASE
+----------------------------
+
+Beginning with version 9.3, FreeNAS® uses a "rolling release" model instead of point releases. The new :ref:`Update` mechanism makes it easy to keep
+up-to-date with the latest security fixes, bug fixes, and new features. Some updates affect the user interface so this section lists any functional changes
+that have occurred since 9.3-RELEASE.
+
+.. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
+   system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
+
+* The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
