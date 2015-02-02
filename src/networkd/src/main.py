@@ -74,12 +74,32 @@ def convert_route(entity):
         entity['network'] = '0.0.0.0'
         entity['netmask'] = '0.0.0.0'
 
-    return netif.Route(
+    r = netif.Route(
         entity['network'],
         entity['netmask'],
         entity.get('gateway'),
         entity.get('interface')
     )
+
+    r.flags.add(netif.RouteFlags.STATIC)
+
+    if not r.netmask:
+        r.flags.add(netif.RouteFlags.HOST)
+
+    if r.gateway:
+        r.flags.add(netif.RouteFlags.GATEWAY)
+
+    return r
+
+
+def default_route(gateway):
+    if not gateway:
+        return None
+
+    r = netif.Route(u'0.0.0.0', u'0.0.0.0', gateway)
+    r.flags.add(netif.RouteFlags.STATIC)
+    r.flags.add(netif.RouteFlags.GATEWAY)
+    return r
 
 
 def describe_route(route):
@@ -114,6 +134,10 @@ def filter_routes(routes):
 
         if found:
             yield i
+
+
+def get_addresses(entity):
+    return [ipaddress.ip_address(i['address']) for i in entity.get('aliases')]
 
 
 class RoutingSocketEventSource(threading.Thread):
@@ -212,12 +236,12 @@ class RoutingSocketEventSource(threading.Thread):
                 addr.netmask = message.netmask
                 addr.broadcast = message.dest_address
 
-                aliases = set(convert_aliases(entity))
+                addresses = get_addresses(entity)
 
                 # Ignore aliases added by dhclient
                 if not entity.get('dhcp') or self.context.config.get('network.autoconfigure'):
                     if message.type == netif.RoutingMessageType.NEWADDR:
-                        if addr in aliases:
+                        if addr.address in addresses:
                             continue
 
                         self.context.logger.warn('New alias added to interface {0} externally: {1}/{2}'.format(
@@ -239,7 +263,7 @@ class RoutingSocketEventSource(threading.Thread):
                         self.context.datastore.update('network.interfaces', entity['id'], entity)
 
                     if message.type == netif.RoutingMessageType.DELADDR:
-                        if addr not in aliases:
+                        if addr.address not in addresses:
                             continue
 
                         self.context.logger.warn('Alias removed from interface {0} externally: {1}/{2}'.format(
@@ -338,9 +362,9 @@ class ConfigurationService(RpcService):
     def configure_routes(self):
         rtable = netif.RoutingTable()
         static_routes = filter_routes(rtable.static_routes)
-        default_route_ipv4 = convert_route(self.datastore.get_one('network.routes', ('network', '=', 'default-ipv4')))
+        default_route_ipv4 = default_route(self.config.get('network.gateway.ipv4'))
 
-        if not self.context.using_dhcp():
+        if not self.context.using_dhcp_for_gateway():
             # Default route was deleted
             if not default_route_ipv4 and rtable.default_route_ipv4:
                 self.logger.info('Removing default route')
@@ -368,18 +392,15 @@ class ConfigurationService(RpcService):
                 except OSError, e:
                     self.logger.error('Cannot add default route: {0}'.format(str(e)))
 
+        else:
+            self.logger.info('Not configuring default route as using DHCP')
 
         # Same thing for IPv6
-        default_route_ipv6 = convert_route(self.datastore.get_one('network.routes', ('network', '=', 'default-ipv6')))
-
+        default_route_ipv6 = default_route(self.config.get('network.gateway.ipv6'))
 
         # Now the static routes...
         old_routes = set(static_routes)
-        new_routes = set([convert_route(e) for e in self.datastore.query(
-            'network.routes',
-            ('network', '!=', 'default-ipv4'),
-            ('network', '!=', 'default-ipv6')
-        )])
+        new_routes = set([convert_route(e) for e in self.datastore.query('network.routes')])
 
         for i in old_routes - new_routes:
             self.logger.info('Removing static route to {0}'.format(describe_route(i)))
@@ -414,7 +435,16 @@ class ConfigurationService(RpcService):
                 raise RpcException(errno.ENOENT, "Interface {0} not found".format(name))
 
         # If it's VLAN, configure parent and tag
+        if entity.get('type') == 'VLAN':
+            parent = entity.get('parent')
+            tag = entity.get('tag')
 
+            if parent and tag:
+                try:
+                    tag = int(tag)
+                    iface.configure(parent, tag)
+                except Exception, e:
+                    self.logger.warn('Failed to configure VLAN interface {0}: {1}'.format(name), str(e))
 
         if entity.get('dhcp'):
             self.logger.info('Trying to acquire DHCP lease on interface {0}...'.format(name))
@@ -492,10 +522,10 @@ class Main:
     def interface_attached(self, name):
         self.logger.warn('Interface {0} attached to the system'.format(name))
 
-    def using_dhcp(self):
+    def using_dhcp_for_gateway(self):
         for i in self.datastore.query('network.interfaces'):
-            if i.get('dhcp'):
-                return True
+            if i.get('dhcp') and self.config.get('network.dhcp.assign_gateway'):
+                    return True
 
         return False
 

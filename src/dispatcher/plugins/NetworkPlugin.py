@@ -26,11 +26,14 @@
 #####################################################################
 
 import errno
-import os
-import stat
+import ipaddress
 from dispatcher.rpc import RpcException, description, accepts, returns
 from datastore.config import ConfigNode
 from task import Provider, Task, TaskException, VerifyException, query
+
+
+def calculate_broadcast(address, netmask):
+    return ipaddress.ip_interface(u'{0}/{1}'.format(address, netmask)).network.broadcast_address
 
 
 @description("Provides access to global network configuration settings")
@@ -85,8 +88,8 @@ class HostsProvider(Provider):
         'gateway': {
             'type': 'object',
             'properties': {
-                'ipv4': {'type': 'string'},
-                'ipv6': {'type': 'string'}
+                'ipv4': {'type': ['string', 'null']},
+                'ipv6': {'type': ['string', 'null']}
             }
         },
         'dns': {
@@ -94,6 +97,13 @@ class HostsProvider(Provider):
             'properties': {
                 'servers': {'type': 'array'},
                 'search': {'type': 'array'}
+            }
+        },
+        'dhcp': {
+            'type': 'object',
+            'properties': {
+                'assign_gateway': {'type': 'boolean'},
+                'assign_dns': {'type': 'boolean'}
             }
         }
     }
@@ -108,8 +118,9 @@ class NetworkConfigureTask(Task):
 
         try:
             self.dispatcher.call_sync('networkd.configuration.configure_network')
-        except RpcException:
-            raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'network')
+        except RpcException, e:
+            raise TaskException(errno.ENXIO, 'Cannot reconfigure interface: {0}'.format(str(e)))
 
 
 @accepts(
@@ -118,12 +129,22 @@ class NetworkConfigureTask(Task):
     {'type': 'object'}
 )
 class CreateInterfaceTask(Task):
-    def verify(self, name, type, configuration):
+    def verify(self, name, type):
         if self.datastore.exists('network.interfaces', ('name', '=', name)):
             raise VerifyException(errno.EEXIST, 'Interface {0} exists'.format(name))
 
-    def run(self, name, type, configuration):
-        pass
+        return ['system']
+
+    def run(self, name, type):
+        self.datastore.insert('network.interfaces', {
+            'id': name,
+            'type': type
+        })
+
+        try:
+            self.dispatcher.call_sync('networkd.configuration.configure_network')
+        except RpcException, e:
+            raise TaskException(errno.ENXIO, 'Cannot reconfigure network: {0}'.format(str(e)))
 
 
 class DeleteInterfaceTask(Task):
@@ -143,6 +164,29 @@ class ConfigureInterfaceTask(Task):
         return ['system']
 
     def run(self, name, updated_fields):
+        if updated_fields.get('dhcp'):
+            # Check for DHCP inconsistencies
+            # 1. Check whether DHCP is enabled on other interfaces
+            # 2. Check whether DHCP configures default route and/or DNS server addresses
+            dhcp_used = self.datastore.exists('network.interfaces', ('dhcp', '=', True), ('id' '!=', name))
+            dhcp_global = self.dispatcher.configstore.get('network.dhcp.assign_gateway') or \
+                self.dispatcher.configstore.get('network.dhcp.assign_dns')
+
+            if dhcp_used and dhcp_global:
+                raise TaskException(errno.ENXIO, 'DHCP is already configured on another interface')
+
+        if updated_fields.get('aliases'):
+            # Check for aliases inconsistencies
+            ips = [x['address'] for x in updated_fields['aliases']]
+            if any(ips.count(x) > 1 for x in ips):
+                raise TaskException(errno.ENXIO, 'Duplicated IP alias')
+
+            # Add missing broadcast addresses and address family
+            for i in updated_fields['aliases']:
+                i['type'] = i.get('type', 'INET')
+                if not i.get('broadcast'):
+                    i['broadcast'] = str(calculate_broadcast(i['address'], i['netmask']))
+
         entity = self.datastore.get_by_id('network.interfaces', name)
         entity.update(updated_fields)
         self.datastore.update('network.interfaces', name, entity)
@@ -210,7 +254,7 @@ class AddHostTask(Task):
         })
 
         try:
-            self.dispatcher.call_sync('etcd.generation.generate_group', 'hosts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'network')
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
@@ -233,7 +277,7 @@ class UpdateHostTask(Task):
         self.datastore.update('network.hosts', host['id'], host)
 
         try:
-            self.dispatcher.call_sync('etcd.generation.generate_group', 'hosts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'network')
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
@@ -254,7 +298,7 @@ class DeleteHostTask(Task):
         self.datastore.delete('network.hosts', name)
 
         try:
-            self.dispatcher.call_sync('etcd.generation.generate_group', 'hosts')
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'network')
         except RpcException, e:
             raise TaskException(errno.ENXIO, 'Cannot regenerate groups file, etcd service is offline')
 
@@ -265,34 +309,31 @@ class DeleteHostTask(Task):
 
 
 class AddRouteTask(Task):
-    def verify(self, address, names):
-        if self.datastore.exists('network.routes', ('address', '=', address)):
-            raise VerifyException(errno.EEXIST, 'Route {0} exists'.format(address))
+    def verify(self, route):
+        if self.datastore.exists('network.routes', ('id', '=', route['id'])):
+            raise VerifyException(errno.EEXIST, 'Route {0} exists'.format(route['id']))
 
         return ['system']
 
-    def run(self, address, names):
-        id = self.datastore.insert('network.routes', {
-            'address': address,
-            'names': names
-        })
-
+    def run(self, route):
+        id = self.datastore.insert('network.routes', route)
         self.dispatcher.dispatch_event('network.route.changed', {
             'operation': 'create',
             'ids': [id]
         })
 
+
 class UpdateRouteTask(Task):
-    def verify(self, address, new_names):
-        if not self.datastore.exists('network.routes', ('address', '=', address)):
-            raise VerifyException(errno.ENOENT, 'Route {0} does not exists'.format(address))
+    def verify(self, name, route):
+        if not self.datastore.exists('network.routes', ('id', '=', name)):
+            raise VerifyException(errno.ENOENT, 'Route {0} does not exists'.format(name))
 
         return ['system']
 
-    def run(self, address, new_names):
-        route = self.datastore.get_one('network.routes', ('name', '=', address))
-        route['names'] = new_names
-        self.datastore.update('network.routes', route['id'], route)
+    def run(self, name, updated_fields):
+        route = self.datastore.get_one('network.routes', ('id', '=', name))
+        route.update(updated_fields)
+        self.datastore.update('network.routes', name, updated_fields)
 
         self.dispatcher.dispatch_event('network.route.changed', {
             'operation': 'update',
@@ -301,13 +342,13 @@ class UpdateRouteTask(Task):
 
 
 class DeleteRouteTask(Task):
-    def verify(self, address):
-        if not self.datastore.exists('network.routes', ('address', '=', address)):
-            raise VerifyException(errno.ENOENT, 'route {0} does not exists'.format(address))
+    def verify(self, name):
+        if not self.datastore.exists('network.routes', ('id', '=', name)):
+            raise VerifyException(errno.ENOENT, 'route {0} does not exists'.format(name))
 
         return ['system']
 
-    def run(self, address):
+    def run(self, name):
         self.dispatcher.dispatch_event('network.route.changed', {
             'operation': 'update',
             'ids': [None]
@@ -360,6 +401,7 @@ def _init(dispatcher):
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
+            'type': {'type': 'string', 'enum': ['INET', 'INET6']},
             'network': {'type': 'string'},
             'netmask': {'type': 'integer'},
             'gateway': {'type': 'string'}

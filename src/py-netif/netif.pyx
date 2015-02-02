@@ -1011,8 +1011,9 @@ cdef class RoutingMessage(RoutingPacket):
             self.network = route.network
             self.netmask = route.netmask
             self.gateway = route.gateway
-            self.interface = route.interface
             self.flags = route.flags & {RouteFlags.STATIC, RouteFlags.GATEWAY, RouteFlags.HOST}
+            if route.interface:
+                self.interface = route.interface
 
 
 class Route(object):
