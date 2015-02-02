@@ -18,7 +18,7 @@ var SwapUsage = React.createClass({
     this.setState({
       element:    this.refs.svg.getDOMNode()
     });
-    console.log(this.state.element);
+    //console.log(this.state.element);
     this.drawChart();
   },
 
@@ -42,7 +42,7 @@ var SwapUsage = React.createClass({
         .transition().duration(300)
         .call(chart);
 
-    console.log(chart);
+    //console.log(chart);
 
   },
 

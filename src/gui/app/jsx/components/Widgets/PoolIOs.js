@@ -18,7 +18,7 @@ var PoolIOs = React.createClass({
     this.setState({
       element:    this.refs.svg.getDOMNode()
     });
-    console.log(this.state.element);
+    //console.log(this.state.element);
     this.drawChart();
   },
 
