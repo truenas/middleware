@@ -17,7 +17,6 @@ To build the system (experts only):
   * sysutils/cdrtools
   * archivers/pxz
   * lang/python (2.7 or later, with THREADS support)
-  * emulators/virtualbox-ose
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
   * py27-sphinx
