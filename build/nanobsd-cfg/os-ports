@@ -97,7 +97,6 @@ if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
 	add_port lang/gcc47 OPTIONS_FILE_UNSET+=BOOTSTRAP OPTIONS_FILE_UNSET+=JAVA 
 fi
 
-add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 add_port devel/libpthread-stubs
 add_port devel/cdialog
 add_port dns/inadyn-mt
