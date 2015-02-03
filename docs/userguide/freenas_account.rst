@@ -220,7 +220,10 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                                                 |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |   
+| Microsoft Account          | checkbox        | check this box if the user will be connecting from a Windows 8, 8.1, 10, or higher system                                                             |
+|                            |                 |                                                                                                                                                       |
++----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |
 |                            |                 | (**do not paste the private key!**)                                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+

@@ -203,16 +203,18 @@ system to go back to that system state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed. If you used the initial configuration wizard, a second boot
-environment called *Wizard-date* is also created indicating the date and time the wizard was run.
+As seen in Figure 5.3a, two boot environments are created when FreeNAS® is installed. The system will boot into the *default* boot environment and users can
+make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
+a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
+created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1a.png|
+|be1b.png|
 
-.. |be1a.png| image:: images/be1a.png
+.. |be1b.png| image:: images/be1b.png
     :width: 6.2in
-    :height: 4.6in
+    :height: 4.5in
 
 Each boot environment entry contains the following information:
 
@@ -719,11 +721,11 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Figure 5.9b: Importing a CA**
 
-|ca2.png|
+|ca2a.png|
 
-.. |ca2.png| image:: images/ca2.png
-    :width: 3.7in
-    :height: 2.8in
+.. |ca2a.png| image:: images/ca2a.png
+    :width: 4.1in
+    :height: 3.1in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -740,7 +742,8 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 | Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                    |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm      |
+|                      |                      | Passphrase" field                                                                                 |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | Serial               | string               | mandatory; input the serial number for the certificate                                            |
@@ -844,11 +847,11 @@ summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a Certificate**
 
-|cert2.png|
+|cert2a.png|
 
-.. |cert2.png| image:: images/cert2.png
-    :width: 3.7in
-    :height: 2.5in
+.. |cert2a.png| image:: images/cert2a.png
+    :width: 4.2in
+    :height: 2.8in
 
 **Table 5.10a: Certificate Import Options**
 
@@ -865,7 +868,8 @@ summarized in Table 5.10a.
 | Private Key          | string               | mandatory; paste the private key associated with the certificate                                |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                  |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm    |
+|                      |                      | Passphrase" field                                                                               |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 

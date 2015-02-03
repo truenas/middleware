@@ -337,9 +337,20 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
+* An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
+  make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
+  to a pristine, non-configured version of the installation.
+
+* The "Microsoft Account" checkbox has been added to :menuselection:`Account --> Users --> Add User`.
+
 * The ability to set the boot pool scrub interval has been added to :menuselection:`System --> Boot`.
 
+* A "Backup" button has been added to :menuselection:`System --> Advanced` and to the FreeNAS® console setup menu shown in Figure 3a.
+
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
+
+* The "Confirm Passphrase" field has been added to :menuselection:`System --> CAs --> Import CA`
+  and :menuselection:`System --> Certificates --> Import Certificate`.
 
 * The "Rsync Create" checkbox has been renamed to "Validate Remote Path" in :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
 
@@ -355,6 +366,8 @@ that have occurred since 9.3-RELEASE.
 
 * A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
   connected initiators.
+
+* An alert will be generated when a new update becomes available.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
