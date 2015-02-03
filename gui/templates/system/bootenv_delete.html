@@ -1,8 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-
-{% block form %}
-<tr><td colspan="2">{% blocktrans with name=name %}Are you sure you want to delete {{ name }}?{% endblocktrans %}</td></tr>
-{{ form }}
-{% endblock %}
-
-{% block cancellabel %}{% trans "No" %}{% endblock %}

@@ -1,9 +1,0 @@
-{% extends "system/wizard.html" %}
-{% block onSubmit %}
-doSubmit({
-  form: this,
-  event: e,
-  url: '{{ request.path }}',
-  progressbar: true
-});
-{% endblock %}

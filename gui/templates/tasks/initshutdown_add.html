@@ -1,9 +1,0 @@
-{% extends "freeadmin/generic_model_add.html" %}
-{% block post_form %}
-{{ block.super }}
-<script type="dojo/method">
-addToStack(function() {
-    initshutdownModeToggle();
-});
-</script>
-{% endblock %}
