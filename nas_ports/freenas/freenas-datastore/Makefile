@@ -45,5 +45,6 @@ checksum fetch:
 
 do-install:
 	${MAKE} -C ${WRKSRC} install PREFIX=${STAGEDIR}${PREFIX} PYTHON=${PYTHON_CMD}
+	mkdir -p ${STAGEDIR}/data/freenas.db
 
 .include <bsd.port.mk>

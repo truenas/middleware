@@ -9,25 +9,11 @@ pre-install()
 
 post-install()
 {
-	if [ ! -d /data ]; then
-		rm -fr /data
-		mkdir -p /data
-	fi
-
-	mount -t devfs devfs /dev
-	service datastore init
-	service datastore start
-	dsrestore -c /usr/local/etc/middleware.conf -f ${FACTORY_DB}
-	service datastore stop
-	sleep 5
-	umount -f /dev
 }
 
 backupwarning()
 {
 }
-
-
 
 
 case $2 in

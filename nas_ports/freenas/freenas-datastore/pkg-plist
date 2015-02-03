@@ -16,3 +16,4 @@
 /usr/local/sbin/dsrestore
 /usr/local/sbin/dspasswd
 /usr/local/sbin/dsmigrate
+@dir /data/freenas.db
