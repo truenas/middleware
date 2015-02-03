@@ -181,7 +181,7 @@ class DataSource(object):
 
         for b in buckets:
             new = self.bucket_buffers[b.index].df
-            if new:
+            if new is not None:
                 df = pd.concat((df, new))
 
         df = df.drop_duplicates().sort()[0]
