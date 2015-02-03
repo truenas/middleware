@@ -532,6 +532,9 @@ You can always:
 
 #.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
 
+.. note:: you cannot restore a saved configuration which is newer than the installed version. For example, if you reboot into an older version of the
+          operating system, you cannot restore a configuration that was created in a later version.
+
 .. index:: Upgrade ZFS Pool
 .. _Upgrading a ZFS Pool:
 

@@ -171,9 +171,9 @@ can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
 
-|rsync1.png|
+|rsync1a.png|
 
-.. |rsync1.png| image:: images/rsync1.png
+.. |rsync1a.png| image:: images/rsync1a.png
     :width: 11.1in
     :height: 4.4in
 
@@ -214,7 +214,7 @@ can be configured when creating an rsync task.
 |                                  |                             | host to sync with (e.g. */mnt/volume*); note that maximum path length is 255 characters   |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Rsync Create                     | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
+| Validate Remote Path             | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |

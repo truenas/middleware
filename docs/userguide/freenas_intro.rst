@@ -341,6 +341,8 @@ that have occurred since 9.3-RELEASE.
 
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
 
+* The "Rsync Create" checkbox has been renamed to "Validate Remote Path" in :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
+
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
 
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in

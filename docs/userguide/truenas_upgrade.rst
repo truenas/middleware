@@ -130,6 +130,9 @@ If the upgrade completely fails, don't panic. The data is still on your disks an
 
 #.  Restore the configuration in `System --> Settings --> Upload Config`.
 
+.. note:: you cannot restore a saved configuration which is newer than the installed version. For example, if you reboot into an older version of the
+          operating system, you cannot restore a configuration that was created in a later version.
+
 Upgrading a ZFS Pool
 ^^^^^^^^^^^^^^^^^^^^
 
