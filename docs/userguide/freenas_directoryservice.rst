@@ -410,6 +410,10 @@ If you are new to LDAP terminology, skim through the
 | Auxiliary Parameters    | string         | additional options for `sssd.conf(5) <https://jhrozek.fedorapeople.org/sssd/1.11.6/man/sssd.conf.5.html>`_     |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Schema                  | drop-down menu | if "Samba Schema" is checked, select the schema to use; choices are *rfc2307* and                              |
+|                         |                | *rfc2307bis*                                                                                                   |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
