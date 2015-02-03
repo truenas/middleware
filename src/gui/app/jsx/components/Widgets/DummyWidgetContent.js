@@ -24,25 +24,27 @@ var DummyWidgetContent = React.createClass({
  , componentDidMount: function() {
     this.requestWidgetData();
 
-    StatdStore.addChangeListener( this.handleServicesChange );
+    StatdStore.addChangeListener( this.handleStatdChange );
+    StatdMiddleware.subscribe();
     console.log(this.state.widgetData);
  }
 
   , componentWillUnmount: function() {
-     StatdStore.removeChangeListener( this.handleServicesChange );
+     StatdStore.removeChangeListener( this.handleStatdChange );
+     StatdMiddleware.unsubscribe();
   }
 
- , handleServicesChange: function() {
+ , handleStatdChange: function() {
     this.setState( getWidgetDataFromStore() );
- },
+    console.log(this.state.widgetData);
+ }
 
-  requestWidgetData: function() {
+ , requestWidgetData: function() {
     var stop = moment();
     var start = moment().subtract(15, "m");
 
     console.log(start.format());
     console.log(stop.format());
-    console.log(moment().subtract(15, 'm').format());
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", start.format(),  stop.format(), "10S");
   },
 
