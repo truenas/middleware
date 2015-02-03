@@ -96,6 +96,8 @@ prompt for the passphrase or recovery key. You can also select which services to
 If Something Goes Wrong
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
+
 If the TrueNAS® system does not become available after the upgrade, use IPMI or the physical console of the system to find out what went wrong. From the
 console menu you can determine if it received an IP address and use option "1) Configure Network Interfaces" if it did not.
 

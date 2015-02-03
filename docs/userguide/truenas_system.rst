@@ -206,9 +206,9 @@ environment called *Wizard-date* is also created indicating the date and time th
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1.png|
+|be1b.png|
 
-.. |be1.png| image:: images/be1.png
+.. |be1b.png| image:: images/be1b.png
     :width: 6.3in
     :height: 4.2in
 
@@ -240,8 +240,9 @@ The buttons above the boot entries can be used to:
 * **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
   underscores, and dashes are allowed.
 
-* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. The date and results of
-  the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
+* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. To change the default
+  interval, input a different number in the "Automatic scrub interval (in days)" field.The date and results of the last scrub are listed in this screen. The
+  condition of the boot device should be listed as *HEALTHY*.
 
 * **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
 
@@ -415,11 +416,11 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4.png|
+|system4a.png|
 
-.. |system4.png| image:: images/system4.png
-    :width: 6.2in
-    :height: 3.8in
+.. |system4a.png| image:: images/system4a.png
+    :width: 6.3in
+    :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
 
