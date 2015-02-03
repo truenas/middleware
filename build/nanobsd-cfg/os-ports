@@ -83,19 +83,12 @@ add_port archivers/pigz
 add_port archivers/plzip
 add_port security/easy-rsa
 add_port security/openvpn WITHOUT_CHECK=yes
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-	add_port converters/libiconv
-fi
 add_port converters/iconv OPTIONS_FILE_UNSET+=CCSUTIL
 add_port devel/gettext
 add_port comms/lrzsz
 add_port devel/pkgconf
 add_port devel/m4
 add_port sysutils/screen
-
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-	add_port lang/gcc47 OPTIONS_FILE_UNSET+=BOOTSTRAP OPTIONS_FILE_UNSET+=JAVA 
-fi
 
 add_port devel/libpthread-stubs
 add_port devel/cdialog
@@ -140,9 +133,6 @@ add_port shells/zsh
 add_port shells/scponly OPTIONS_FILE_SET+=GFTP OPTIONS_FILE_SET+=RSYNC OPTIONS_FILE_SET+=SCP OPTIONS_FILE_SET+=WINSCP
 add_port sysutils/e2fsprogs
 add_port sysutils/fusefs-libs
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-	add_port sysutils/fusefs-kmod OPTIONS_FILE_UNSET+=DOCS
-fi
 add_port devel/libublio
 add_port sysutils/fusefs-ntfs
 add_port sysutils/smartmontools
@@ -186,7 +176,6 @@ add_port security/py-openssl
 add_port security/py-htpasswd
 add_port www/apache24 WITH_OPENSSL_PORT=yes 
 add_port www/mod_mpm_itk
-add_port devel/py-tabulate
 add_port sysutils/syslog-ng
 add_port www/nginx WITH_OPENSSL_PORT=yes \
 		OPTIONS_FILE_SET+=HTTP_SSL \
