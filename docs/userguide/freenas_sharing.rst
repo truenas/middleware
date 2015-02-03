@@ -1077,7 +1077,7 @@ framework that enables certain storage tasks, such as large data moves, to be of
   errors.
 
 * **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS, this threshold can be configured both at the pool
-  level (see Table 10.5a) and the device extent level (see Table 10.5f).
+  level (see Table 10.5a) and the extent level (see Table 10.5f).
 
 * **LUN reporting:** the LUN reports that it is thin provisioned.
 
@@ -1149,7 +1149,7 @@ Target Global Configuration
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 | Pool Available Space Threshold  | integer                      | input the pool percentage; when the pool's specified capacity is reached, the system will |
-|                                 |                              | issue an alert                                                                            |
+|                                 |                              | issue an alert if device extents are used                                                 |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
@@ -1417,11 +1417,11 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent1.png|
+|extent2.png|
 
-.. |extent1.png| image:: images/extent1.png
+.. |extent2.png| image:: images/extent2.png
     :width: 4.5in
-    :height: 3.8in
+    :height: 4.4in
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1459,8 +1459,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | Reporting          |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Available Size     | string         | only appears if a zvol is selected as the "Device"; when the specified capacity is reached, the system will issue an |
-| Threshold          |                | alert                                                                                                                |
+| Available Space    | string         | when the specified capacity is reached, the system will issue an alert                                               |
+| Threshold          |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
