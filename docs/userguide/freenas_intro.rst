@@ -337,6 +337,9 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
+* The "Logical Block Size" field, "Disable Physical Block Size Reporting" checkbox, and "Available Size Threshold" field have been added to
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
+
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
 .. index:: Hardware Recommendations

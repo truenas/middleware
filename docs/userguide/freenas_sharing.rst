@@ -1417,11 +1417,11 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent.png|
+|extent1.png|
 
-.. |extent.png| image:: images/extent.png
-    :width: 3.9in
-    :height: 3.2in
+.. |extent1.png| image:: images/extent1.png
+    :width: 4.5in
+    :height: 3.8in
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1448,6 +1448,19 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
 |                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
 |                    |                | create                                                                                                               |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
+|                    |                | the default if the initiator requires a different block size                                                         |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K, check this box                                 |
+| Block Size         |                |                                                                                                                      |
+| Reporting          |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Available Size     | string         | only appears if a zvol is selected as the "Device"; when the specified capacity is reached, the system will issue an |
+| Threshold          |                | alert                                                                                                                |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
