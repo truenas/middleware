@@ -815,6 +815,9 @@ iSCSI
 
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
+.. note:: a warning message will occur if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
+          the connected initiators.
+
 .. index:: LLDP, Link Layer Discovery Protocol
 .. _LLDP:
 
