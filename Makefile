@@ -11,6 +11,7 @@ BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+IX_STABLE_DIR="/freenas/Dev/releng/${NANO_LABEL}/9.3/STABLE/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -104,6 +105,7 @@ release-push: release
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
+		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $4}'`
 	fi
 	${MAKE} save-build-env
 	echo "Tell Matt to push his OCD button" | mail -s "Update ${BUILD_TIMESTAMP} now on download.freenas.org" web@ixsystems.com
