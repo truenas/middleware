@@ -31,6 +31,7 @@ import collections
 from texttable import Texttable
 from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
 from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii, read_value, format_value
+import subprocess
 
 
 def description(descr):
@@ -55,7 +56,10 @@ class Namespace(object):
     def commands(self):
         return {
             '?': IndexCommand(self),
-            'help': IndexCommand(self)
+            'help': IndexCommand(self),
+            'update': UpdateCommand(),
+            'reboot': RebootCommand(),
+            'shutdown': ShutdownCommand()
         }
 
     def namespaces(self):
@@ -103,6 +107,30 @@ class IndexCommand(Command):
 
         print table.draw()
 
+@description("Updates FreeNAS to the latest (Reboot & Networking Required!)")
+class UpdateCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        print "Updating the System..."
+        try:
+            subprocess.check_call(["/usr/local/bin/freenas-update",
+                                   "update"])
+        except:
+            print "Nothing to Update/ Update Failed!"
+            return
+        print "Update Successful, Rebooting Now..."
+        subprocess.call(["/sbin/reboot"])
+
+@description("Reboots your machine")
+class RebootCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        print "Rebooting the System..."
+        subprocess.call(["/sbin/reboot"])
+
+@description("Shuts the machine down")
+class ShutdownCommand(Command):
+    def run(sefl, context, args, kwargs, opargs):
+        print "Shutting the System Down..."
+        subprocess.call(["/sbin/shutdown", "-p", "now"])
 
 class RootNamespace(Namespace):
     pass
