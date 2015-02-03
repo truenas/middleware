@@ -373,11 +373,11 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 
 **Figure 11.4a: Domain Controller Settings**
 
-|directory1.png|
+|directory1a.png|
 
-.. |directory1.png| image:: images/directory1.png
-    :width: 3.9in
-    :height: 3.7in
+.. |directory1a.png| image:: images/directory1a.png
+    :width: 3.7in
+    :height: 3.3in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -393,14 +393,6 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Server Role            | drop-down menu | at this time, the only supported role is as the domain controller for a new domain                                                                                                        |
-|                        |                |                                                                                                                                                                                           |
-+------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DNS Backend            | drop-down menu | choices are *SAMBA_INTERNAL*,                                                                                                                                                             |
-|                        |                | *BIND9_FLATFILE*,                                                                                                                                                                         |
-|                        |                | *BIND9_DLZ*, or                                                                                                                                                                           |
-|                        |                | *NONE*; refer to                                                                                                                                                                          |
-|                        |                | `Which DNS backend should I choose? <https://wiki.samba.org/index.php/DNS>`_                                                                                                              |
-|                        |                | for details                                                                                                                                                                               |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | DNS Forwarder          | string         | IP address of DNS forwarder; required for recursive queries when *SAMBA_INTERNAL* is selected                                                                                             |
