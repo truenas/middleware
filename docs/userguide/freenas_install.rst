@@ -505,11 +505,13 @@ will automatically be rebooted immediately after the update is applied.
 If Something Goes Wrong
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If an upgrade or update fails, or you wish to return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS®
-console. Reboot the system and watch for the boot menu. In the example shown in Figure 2.5f, the first boot menu entry, *FreeNAS (default)*, refers to the
-initial installation, before the update was applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after
-the update was applied. This second entry is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless
-another entry is manually selected. Both entries include a date and timestamp, indicating when that boot environment was created.
+If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
+
+To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
+boot menu. In the example shown in Figure 2.5f, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
+applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
+is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
+entries include a date and timestamp, indicating when that boot environment was created.
 
 **Figure 2.5f: Boot Menu**
 

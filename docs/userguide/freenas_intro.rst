@@ -337,6 +337,10 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
+* The ability to set the boot pool scrub interval has been added to :menuselection:`System --> Boot`.
+
+* The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
+
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
 

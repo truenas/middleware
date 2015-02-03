@@ -204,16 +204,15 @@ system to go back to that system state.
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
 As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed. If you used the initial configuration wizard, a second boot
-environment called *Wizard-date* is also created indicating the date and time the wizard was run. In this example, an update was applied from the
-*FreeNAS-9.3-Nightlies* train.
+environment called *Wizard-date* is also created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1.png|
+|be1a.png|
 
-.. |be1.png| image:: images/be1.png
-    :width: 6.3in
-    :height: 4.2in
+.. |be1a.png| image:: images/be1a.png
+    :width: 6.2in
+    :height: 4.6in
 
 Each boot environment entry contains the following information:
 
@@ -243,8 +242,9 @@ The buttons above the boot entries can be used to:
 * **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
   underscores, and dashes are allowed.
 
-* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. The date and results of
-  the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
+* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. To change the default
+  interval, input a different number in the "Automatic scrub interval (in days)" field. The date and results of the last scrub are also listed in this screen.
+  The condition of the boot device should be listed as *HEALTHY*.
 
 * **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
 
@@ -425,11 +425,11 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4.png|
+|system4a.png|
 
-.. |system4.png| image:: images/system4.png
-    :width: 6.2in
-    :height: 3.8in
+.. |system4a.png| image:: images/system4a.png
+    :width: 6.3in
+    :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
 
