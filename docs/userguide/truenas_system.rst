@@ -200,17 +200,18 @@ system to go back to that system state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in Figure 5.3a, a *default* boot environment is created when TrueNAS® is installed. If you used the initial configuration wizard, a second boot
-environment called *Wizard-date* is also created indicating the date and time the wizard was run. In this example, an update was applied from the
-*FreeNAS-9.3-Nightlies* train.
+As seen in Figure 5.3a, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment and users can
+make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
+a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
+created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
 |be1b.png|
 
 .. |be1b.png| image:: images/be1b.png
-    :width: 6.3in
-    :height: 4.2in
+    :width: 6.2in
+    :height: 4.5in
 
 Each boot environment entry contains the following information:
 
@@ -377,8 +378,57 @@ This tab also contains the following buttons:
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
+**Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
+button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
+that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
+backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
+
+**Figure 5.4b: Backup Configuration Screen**
+
+|backup.png|
+
+.. |backup.png| image:: images/backup.png
+    :width: 3.24in
+    :height: 2.95in
+
+**Table 5.4b: Backup Configuration Settings**
+
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Setting                                 | Value          | Description                                                                                    |
+|                                         |                |                                                                                                |
++=========================================+================+================================================================================================+
+| Hostname or IP address                  | string         | input the IP address of the remote system, or the hostname if DNS is properly configured       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| User name                               | string         | the user account must exist on the remote system and have permissions to write to the "Remote  |
+|                                         |                | directory"                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Password                                | string         | the password associated with the user account                                                  |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Remote directory                        | string         | the full path to the directory to save the backup to                                           |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Backup data                             | checkbox       | by default, the backup is very quick as only the configuration database and the ZFS pool and   |
+|                                         |                | database layout are saved; check this box to also save the data (which may take some time,     |
+|                                         |                | depending upon the size of the pool and speed of the network)                                  |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Compress backup                         | checkbox       | if checked, gzip will be used to compress the backup which reduces the transmission size when  |
+|                                         |                | "Backup data" is checked                                                                       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Use key authentication                  | checkbox       | if checked, the public key of the *root* user must be stored in                                |
+|                                         |                | :file:`~root/.ssh/authorized_keys` on the remote system and that key should **not** be         |
+|                                         |                | protected by a passphrase; see :ref:`Rsync over SSH Mode` for instructions on how to generate  |
+|                                         |                | a key pair                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+
 
 .. index:: Autotune
 .. _Autotune:
@@ -753,11 +803,11 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> CA
 
 **Figure 5.10a: Initial CA Screen**
 
-|ca1.png|
+|ca2a.png|
 
-.. |ca1.png| image:: images/ca1.png
-    :width: 6.2in
-    :height: 1.9in
+.. |ca2a.png| image:: images/ca2a.png
+    :width: 4.1in
+    :height: 3.1in
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.10b. The configurable options are summarized in Table 5.10a.
@@ -785,7 +835,8 @@ Figure 5.10b. The configurable options are summarized in Table 5.10a.
 | Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                    |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm      |
+|                      |                      | Passphrase" field                                                                                 |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | Serial               | string               | mandatory; input the serial number for the certificate                                            |
@@ -878,11 +929,11 @@ Figure 5.11a shows the initial screen if you click :menuselection:`System --> Ce
 
 **Figure 5.11a: Initial Certificates Screen**
 
-|cert1.png|
+|cert2a.png|
 
-.. |cert1.png| image:: images/cert1.png
-    :width: 6.5in
-    :height: 1.8in
+.. |cert2a.png| image:: images/cert2a.png
+    :width: 4.2in
+    :height: 2.8in
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.11b. The configurable options are
 summarized in Table 5.11a.
@@ -910,7 +961,8 @@ summarized in Table 5.11a.
 | Private Key          | string               | mandatory; paste the private key associated with the certificate                                |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                  |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm    |
+|                      |                      | Passphrase" field                                                                               |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 

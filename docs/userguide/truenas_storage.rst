@@ -15,7 +15,7 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Snapshots`: used to manage local snapshots.
 
-* :ref:`VMware Snapshots`: are used to coordinate ZFS snapshots with a VWware datastore.
+* :ref:`VMware-Snapshot`: is used to coordinate ZFS snapshots with a VWware datastore.
 
 * :ref:`HAReplication`:
 
@@ -48,9 +48,9 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 
 **Figure 8.1a: Creating a ZFS Pool Using Volume Manager**
 
-|zfs1.png|
+|tn_zfs1.png|
 
-.. |zfs1.png| image:: images/tn_zfs1.png
+.. |tn_zfs1.png| image:: images/tn_zfs1.png
     :width: 8.3in
     :height: 4.12in
 
@@ -539,11 +539,11 @@ be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
-|import.png|
+|import1.png|
 
-.. |import.png| image:: images/import.png
-    :width: 4.98in
-    :height: 4.4in
+.. |import1.png| image:: images/import1.png
+    :width: 4.99in
+    :height: 4.2in
 
 Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
 When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
@@ -777,9 +777,9 @@ If you check the "Encryption" box during the creation of a pool, five additional
 
 **Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
 
-|encrypt.png|
+|encrypt1.png|
 
-.. |encrypt.png| image:: images/encrypt.png
+.. |encrypt1.png| image:: images/encrypt1.png
     :width: 4.8in
     :height: 4.5in
 
@@ -1159,9 +1159,9 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-|periodic1.png|
+|periodic1a.png|
 
-.. |periodic1.png| image:: images/periodic1.png
+.. |periodic1a.png| image:: images/periodic1a.png
     :width: 8.3in
     :height: 4.5in
 
@@ -1204,16 +1204,8 @@ that there is no way to exclude certain datasets from being included in a recurs
 
 Once you click the "OK" button, a snapshot will be taken and this task will be repeated according to your settings.
 
-After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks", as seen in the example in Figure 8.2b.
-Click an entry to access its "Edit" and "Delete" buttons.
-
-**Figure 8.2b: View Periodic Snapshot Tasks**
-
-|periodic2.png|
-
-.. |periodic2.png| image:: images/periodic2.png
-    :width: 4.9in
-    :height: 4.5in
+After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks". Click an entry to access its "Edit"
+and "Delete" buttons.
 
 .. index:: Replication
 .. _Replication Tasks:
@@ -1457,9 +1449,9 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
-|scrub.png|
+|scrub1.png|
 
-.. |scrub.png| image:: images/scrub.png
+.. |scrub1.png| image:: images/scrub1.png
     :width: 8.8in
     :height: 4.4in
 
@@ -1524,9 +1516,9 @@ The "Snapshots" tab can be used to review the listing of available snapshots. An
 
 **Figure 8.5a: Viewing Available Snapshots**
 
-|periodic3.png|
+|periodic3a.png|
 
-.. |periodic3.png| image:: images/periodic3.png
+.. |periodic3a.png| image:: images/periodic3a.png
     :width: 11.1in
     :height: 4.5in
 
@@ -1591,12 +1583,12 @@ applied" text will change to "Clear filter". If you click "Clear filter", a pop-
 available snapshots will be listed.
 
 .. index:: VMware Snapshot
-.. _VMware Snapshots:
+.. _VMware-Snapshot:
 
-VMware Snapshots
-----------------
+VMware-Snapshot
+---------------
 
-:menuselection:`Storage --> VMware Snapshots` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once a "VMware Snapshot" is created,
+:menuselection:`Storage --> VMware-Snapshot` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once this type of snapshot is created,
 TrueNAS® will automatically snapshot any running VMware virtual machines before taking a scheduled or manual ZFS snapshot of the dataset or zvol backing that
 VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
 resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
@@ -1605,9 +1597,9 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 
 **Figure 8.6a: Adding a VMware Snapshot**
 
-|vmware1.png|
+|vmware1a.png|
 
-.. |vmware1.png| image:: images/vmware1.png
+.. |vmware1a.png| image:: images/vmware1a.png
     :width: 3.2in
     :height: 2.5in
 

@@ -90,6 +90,15 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Encryption Mode          | drop-down     | only available in "Advanced Mode"; choices are *Off*,                                                                                      |
+|                          | menu          | *SSL*, or                                                                                                                                  |
+|                          |               | *TLS*                                                                                                                                      |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Certificate              | browse button | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if                                         |
+|                          |               | SSL connections are used                                                                                                                   |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
