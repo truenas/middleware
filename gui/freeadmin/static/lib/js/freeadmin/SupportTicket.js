@@ -85,6 +85,7 @@ define([
 
         this.dapUsernameLabel.innerHTML = gettext('Username');
         this.dapRegisterLabel.innerHTML = gettext('If you do not have an account, please') + ' <a href="https://bugs.freenas.org/account/register" target="_blank">' + gettext('register') + '</a>.';
+        this.dapDebugLabel.innerHTML = gettext('Attach Debug Info');
 
         new TextBox({
           name: "csrfmiddlewaretoken",
@@ -125,6 +126,11 @@ define([
           style: "width: 450px; height:160px;",
           value: initial.desc
         }, this.dapDesc);
+
+        this._debug = new CheckBox({
+          name: "debug",
+          checked: initial.debug
+        }, this.dapDebug);
 
         submit = new Button({
           label: gettext("Submit")
