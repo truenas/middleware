@@ -144,7 +144,7 @@ editorUtil.updateOverlay = React.createClass({
                ref       = "update-overlay"
                style     = {{ opacity: 0 }} >
             <div>
-              <h3>{ this.props.updateString || "Entry updated" }</h3>
+              <h3>{ this.props.updateString || "Done." }</h3>
               <Throbber bsStyle={ this.props.throbberStyle || "primary" } />
             </div>
           </div>
