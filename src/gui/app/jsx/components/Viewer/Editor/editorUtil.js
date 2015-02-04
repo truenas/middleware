@@ -134,7 +134,7 @@ editorUtil.updateOverlay = React.createClass({
       var overlay = null;
 
       // Using !! performs boolean type coercion
-      if ( !!this.props.updateString || this.state.animating ) {
+      if ( this.props.updateString.length || this.state.animating ) {
         overlay = (
           <div className = "overlay overlay-light editor-update-overlay"
                ref       = "update-overlay"
