@@ -26,7 +26,7 @@ def new_ticket(data):
         log.debug('Support Ticket failed (%d): %s', r.status_code, r.text)
         return False, _('Ticket creation failed, try again later.')
 
-    if data['error'] is True:
+    if data['error'] == "true":
         return False, data['message']
 
     return True, data['message']

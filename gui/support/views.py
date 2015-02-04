@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 
 from django.shortcuts import render
@@ -52,6 +53,7 @@ def ticket(request):
         if not success:
             response = render(request, 'support/ticket.html', {
                 'error_message': msg,
+                'initial': json.dumps(request.POST.dict()),
             })
         else:
             response = render(request, 'support/ticket_response.html', {

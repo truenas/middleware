@@ -52,14 +52,20 @@ define([
     ];
 
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
-      url: "",
       errorMessage: "",
+      initial: "",
+      url: "",
       templateString: template,
       postCreate: function() {
 
         var me = this, _form;
         var submit, cancel;
         var attachment_add;
+        var initial = {};
+
+        if(this.initial != '') {
+          initial = json.parse(this.initial);
+        }
 
         if(!gettext) {
           gettext = function(s) { return s; }
@@ -87,31 +93,37 @@ define([
         }, this.dapCSRF);
 
         this._username = new TextBox({
-          name: "username"
+          name: "username",
+          value: initial.username
         }, this.dapUsername);
 
         this._password = new TextBox({
           name: "password",
-          type: "password"
+          type: "password",
+          value: initial.password
         }, this.dapPassword);
 
         this._type = new Select({
           name: "type",
           options: TYPE_OPTIONS
         }, this.dapType);
+        if(initial.type) this._type.set('value', initial.type);
 
         this._category = new Select({
           name: "category",
           options: CATEGORY_OPTIONS
         }, this.dapCategory);
+        if(initial.category) this._category.set('value', initial.category);
 
         this._subject = new TextBox({
-          name: "subject"
+          name: "subject",
+          value: initial.subject
         }, this.dapSubject);
 
         this._desc = new SimpleTextarea({
           name: "desc",
-          style: "width: 450px; height:160px;"
+          style: "width: 450px; height:160px;",
+          value: initial.desc
         }, this.dapDesc);
 
         submit = new Button({
