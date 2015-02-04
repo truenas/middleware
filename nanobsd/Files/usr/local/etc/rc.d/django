@@ -52,8 +52,7 @@ path=${django_path}
 host=${django_host}
 port=${django_port}
 start_cmd="start_command"
-stop_cmd="stop_command"
-
+procname="/usr/local/bin/python"
 
 start_command()
 {
@@ -67,12 +66,6 @@ start_command()
 	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
 	sleep 1
 	chown www:www ${logs}
-}
-
-stop_command()
-{
-	kill `cat ${pidfile}`
-	rm -f ${pidfile}
 }
 
 run_rc_command "$1"
