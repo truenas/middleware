@@ -272,7 +272,9 @@ class RsyncForm(ModelForm):
                 ])
                 cdata.pop('rsync_user', None)
         if 'rsync_user' in cdata and not (
-            not self.cleaned_data.get("rsync_validate_rpath") or self.check_rpath_exists()
+            self.cleaned_data.get("rsync_mode") == 'module' or
+            not self.cleaned_data.get("rsync_validate_rpath") or
+            self.check_rpath_exists()
         ):
             self._errors["rsync_remotepath"] = self.error_class([_(
                 "The Remote Path you specified does not exist or is not a "
