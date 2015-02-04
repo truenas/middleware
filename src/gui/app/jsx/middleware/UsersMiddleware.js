@@ -12,10 +12,12 @@ module.exports = {
 
     subscribe: function() {
       MiddlewareClient.subscribe( ["users.changed"] );
+      MiddlewareClient.subscribe( ["task.*"] );
     }
 
   , unsubscribe: function() {
       MiddlewareClient.unsubscribe( ["users.changed"] );
+      MiddlewareClient.unsubscribe( ["task.*"] );
     }
 
   , requestUsersList: function( ids ) {

@@ -283,11 +283,10 @@ var UserItem = React.createClass({
       var processingText   = "";
 
       // PROCESSING OVERLAY
-      if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
-
-        processingText = "Syncing changes to user '" + this.state.targetUser[ this.props.viewData["primaryKey"] ] + "'";
-      // } else if ({/* TODO: Listen for unresolved tasks*/} ) {
-      //   processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData["primaryKey"] ] + "'";
+      if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
+        processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
+      } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
+        processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
       }
 
       // DISPLAY COMPONENT

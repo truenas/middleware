@@ -111,6 +111,10 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       return _updatedOnServer;
     }
 
+  , isLocalTaskPending: function( id ) {
+      return _.values( _localUpdatePending ).indexOf( id ) > -1;
+    }
+
   , isUserUpdatePending: function( id ) {
       return _updatedOnServer.indexOf( id ) > -1;
     }
@@ -159,8 +163,10 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      if ( action.eventData.args["name"] === UPDATE_MASK ) {
-        var updateData = action.eventData.args["args"];
+      var args = action.eventData.args;
+
+      if ( args["name"] === UPDATE_MASK ) {
+        var updateData = args["args"];
 
         if ( updateData["operation"] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
@@ -172,7 +178,12 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         }
 
         UsersStore.emitChange();
+
+      // TODO: Make this more generic, triage it earlier, create ActionTypes for it
+      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" ) {
+        delete _localUpdatePending[ args.args["id"] ];
       }
+
       break;
 
     case ActionTypes.RECEIVE_USER_UPDATE_TASK:
