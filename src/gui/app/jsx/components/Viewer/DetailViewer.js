@@ -126,6 +126,7 @@ var DetailViewer = React.createClass({
       var fd = this.props.filteredData;
       var groupedNavItems   = null;
       var remainingNavItems = null;
+      var editorContent     = null;
 
       if ( fd["grouped"] ) {
         groupedNavItems = fd.groups.map( function ( group, index ) {
@@ -164,6 +165,22 @@ var DetailViewer = React.createClass({
         );
       }
 
+      if ( this.props.Editor() === null ) {
+        editorContent = (
+          <div className="viewer-item-info">
+            <h3 className="viewer-item-no-selection">{"No active selection"}</h3>
+          </div>
+        );
+      } else {
+        editorContent = (
+          <this.props.Editor viewData  = { this.props.viewData }
+                             inputData = { this.props.inputData }
+                             activeKey = { this.props.selectedKey }
+                             ItemView  = { this.props.ItemView }
+                             EditView  = { this.props.EditView } />
+        );
+      }
+
       return (
         <div className = "viewer-detail">
           <div className = "viewer-detail-nav well">
@@ -171,10 +188,8 @@ var DetailViewer = React.createClass({
             { remainingNavItems }
           </div>
 
-          <this.props.Editor viewData  = { this.props.viewData }
-                             inputData = { this.props.inputData }
-                             ItemView  = { this.props.ItemView }
-                             EditView  = { this.props.EditView } />
+          { editorContent }
+
         </div>
       );
     }
