@@ -49,10 +49,15 @@ def ticket(request):
             'body': request.POST.get('desc'),
             'version': get_sw_login_version(),
         })
-        response = render(request, 'support/ticket_response.html', {
-            'success': success,
-            'message': msg,
-        })
+        if not success:
+            response = render(request, 'support/ticket.html', {
+                'error_message': msg,
+            })
+        else:
+            response = render(request, 'support/ticket_response.html', {
+                'success': success,
+                'message': msg,
+            })
         if not request.is_ajax():
             response.content = (
                 '<html><body><textarea>%s</textarea></boby></html>' % (

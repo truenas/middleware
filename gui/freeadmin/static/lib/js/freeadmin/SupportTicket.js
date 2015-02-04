@@ -1,5 +1,6 @@
 define([
   "dojo/_base/declare",
+  "dojo/dom-style",
   "dojo/json",
   "dojo/mouse",
   "dojo/on",
@@ -19,6 +20,7 @@ define([
   "dojo/text!freeadmin/templates/supportticket_attachment.html"
   ], function(
   declare,
+  domStyle,
   json,
   mouse,
   on,
@@ -51,6 +53,7 @@ define([
 
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
       url: "",
+      errorMessage: "",
       templateString: template,
       postCreate: function() {
 
@@ -67,6 +70,12 @@ define([
           method: "post"
         }, this.dapForm);
         this._form.startup();
+
+        if(this.errorMessage != '') {
+          this.dapErrorMessage.innerHTML = this.errorMessage;
+        } else {
+          domStyle.set(this.dapErrorMessageRow, "display", "none");
+        }
 
         this.dapUsernameLabel.innerHTML = gettext('Username');
         this.dapRegisterLabel.innerHTML = gettext('If you do not have an account, please') + ' <a href="https://bugs.freenas.org/account/register" target="_blank">' + gettext('register') + '</a>.';
