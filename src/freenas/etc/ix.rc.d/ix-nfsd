@@ -51,7 +51,11 @@ generate_exports()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 ]; then
-		echo "V4: /" > /etc/exports
+		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" -eq 1 ]; then
+			echo "V4: / -sec=krb5:krb5i:krb5p" > /etc/exports
+		else
+			echo "V4: / -sec=sys:krb5:krb5i:krb5p" > /etc/exports
+		fi
 		v4=1
 	fi
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \

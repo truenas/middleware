@@ -18,7 +18,6 @@ generate_hostname()
 	"SELECT $sf FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 		cp /conf/base/etc/hosts /etc/hosts
-		echo -e "127.0.0.1\t${gc_hostname} ${gc_hostname}.${gc_domain}" >> /etc/hosts
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hosts FROM network_globalconfiguration WHERE id = ${id}" >> /etc/hosts
 	done
 
