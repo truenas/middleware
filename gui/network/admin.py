@@ -114,6 +114,21 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
         }}
         return actions
 
+    def get_confirm_message(self, action, **kwargs):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            return _(
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
+            )
+        else:
+            return _(
+                'Network connectivity will be interrupted. '
+                'Do you want to proceed?'
+            )
+
 
 class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 

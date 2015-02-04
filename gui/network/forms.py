@@ -584,6 +584,7 @@ class LAGGInterfaceForm(ModelForm):
                 lagg_member_entry.save()
                 order = order + 1
         self.instance = lagg_interfacegroup
+        notifier().start("network")
         return lagg_interfacegroup
 
 

@@ -591,7 +591,13 @@ def create_lagg_interface():
 
         order += 1
 
-    print _("The system must be rebooted for these changes to take effect.")
+    print _("Restarting network:"),
+    try:
+        notifier().start("network")
+    except:
+        print _("Failed")
+        return False
+    print _("ok")
     return True
 
 
@@ -638,6 +644,13 @@ def delete_lagg_interface():
         print _("Failed")
         return False
     print _("Ok")
+    print _("Restarting network:"),
+    try:
+        notifier().start("network")
+    except:
+        print _("Failed")
+        return False
+    print _("ok")
 
 
     return True
