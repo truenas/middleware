@@ -1,16 +1,10 @@
-#7387	Bug	Normal	AD Authentication with AFP does not work
-#7421	Bug	Low	Active Directory, LDAP signing, sasl wrapping, and problems upgrading from 9.2.1.9 to 9.3
-#7505	Bug	Normal	Fibre Channel data overflow occurs under load
-#7572	Feature	Normal	Notify user of available updates for 9.3
-#7635	Bug	Normal	AD connections not sealed
-#7649	Bug	Normal	kmem space exhasustion workaround
+#7556	Bug	Normal	cannot update plugin if jails mounted storage path contains apostrophe
+#7594	Bug	Normal	Cannot Create or Edit RSync Task
+#7609	Bug	Normal	IPv6 connectivity unstable for static ipv6-only (configuration fails to set auto_linklocal)
 #7653	Bug	Normal	'exceptions.IOError' object has no attribute 'encode'
-#7657	Bug	Normal	9.3 rsync regression: --inplace cannot be used with --delay-updates
-#7666	Bug	Low	Spelling mistake in Web interface - VMware vs VMWare.
-#7684	Bug	Normal	Teach freenas-debug about CTL
-#7693	Bug	Normal	System-installed OpenLDAP client is linked against an old version of OpenSSL
-#7707	Bug	Low	Merge latest FreeBSD security advisory fixes
-#7720	Feature	Normal	Update samba to 4.1.16
-#7721	Bug	Normal	Editing a keytab causes traceback
-#7751	Bug	Normal	Getting "(sqlite3), uid 0: exited on signal 11 (core dumped)" all over my messages file after NT4 Directory Services activated
-#7754	Bug	Normal	iX CA file is expired
+#7728	Bug	Normal	ctld segfaults after adding a large number of targets
+#7734	Bug	Normal	9.3 dhcp
+#7773	Bug	Normal	WARNING: The "acl check permissions" option is deprecated error
+#7781	Bug	Normal	Default iscsi extent should be device
+#7783	Bug	Normal	global name 'rsync_delayupdates' is not defined
+#7788	Bug	Normal	STATUS=daemon 'smbd' finished starting up and ready to serve connections - repeated message
