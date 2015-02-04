@@ -373,6 +373,10 @@ class NFS(Model):
         default=False,
         verbose_name=_("Enable NFSv4"),
     )
+    nfs_srv_v4_krb = models.BooleanField(
+        default=False,
+        verbose_name=_("Require Kerberos for NFSv4")
+    )
     nfs_srv_bindip = models.CharField(
         blank=True,
         max_length=250,
