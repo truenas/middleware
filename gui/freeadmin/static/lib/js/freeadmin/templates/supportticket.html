@@ -2,7 +2,7 @@
 <form data-dojo-attach-point="dapForm" enctype="multipart/form-data" method="post">
   <input type="hidden" data-dojo-attach-point="dapAll" />
   <input type="hidden" name="csrfmiddlewaretoken" data-dojo-attach-point="dapCSRF" />
-  <table>
+  <table class="form">
     <tr data-dojo-attach-point="dapErrorMessageRow">
       <td colspan="2" data-dojo-attach-point="dapErrorMessage" style="color: red;">
       </td>
@@ -36,6 +36,12 @@
       </td>
     </tr>
     <tr>
+      <th data-dojo-attach-point="dapDebugLabel">Attach Debug Info</th>
+      <td>
+        <input data-dojo-attach-point="dapDebug" type="check" />
+      </td>
+    </tr>
+    <tr>
       <th data-dojo-attach-point="dapSubjectLabel">Subject</th>
       <td>
         <input data-dojo-attach-point="dapSubject" type="text" />
@@ -51,12 +57,6 @@
     </tr>
     <tr>
       <th colspan="2" data-dojo-attach-point="dapAttachmentsLabel">Attachments</th>
-    </tr>
-    <tr>
-      <th data-dojo-attach-point="dapDebugLabel">Attach Debug Info</th>
-      <td>
-        <input data-dojo-attach-point="dapDebug" type="check" />
-      </td>
     </tr>
     <tr>
       <td colspan="2">
