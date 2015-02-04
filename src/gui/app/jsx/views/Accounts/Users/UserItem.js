@@ -109,9 +109,35 @@ var UserEdit = React.createClass({
 
   , getInitialState: function() {
       return {
-            modifiedValues        : {}
-          , mixedValues           : this.props.item
-        };
+          modifiedValues : {}
+        , mixedValues    : this.props.item
+      };
+    }
+
+  , componentWillReceiveProps: function( nextProps ) {
+      var newModified = {};
+      var oldModified = _.cloneDeep( this.state.modifiedValues );
+
+      // Any remote changes will cause the current property to be shown as
+      // having been "modified", signalling to the user that saving it will
+      // have the effect of changing that value
+      _.forEach( nextProps.item, function( value, key ) {
+        if ( this.props.item[ key ] !== value ) {
+          newModified[ key ] = this.props.item[ key ];
+        }
+      }.bind(this) );
+
+      // Any remote changes which are the same as locally modified changes should
+      // cause the local modifications to be ignored.
+      _.forEach( oldModified, function( value, key ) {
+        if ( this.props.item[ key ] === value ) {
+          delete oldModified[ key ];
+        }
+      }.bind(this) );
+
+      this.setState({
+          modifiedValues : _.assign( oldModified, newModified )
+      });
     }
 
   , handleValueChange: function( key, event ) {
@@ -181,9 +207,16 @@ var UserEdit = React.createClass({
             {
               this.props["dataKeys"].map( function( displayKeys, index ) {
                 return editorUtil.identifyAndCreateFormElement(
-                         this.state.mixedValues[ displayKeys["key"] ],
-                         displayKeys,
-                         this.handleValueChange
+                          // value
+                          this.state.mixedValues[ displayKeys["key"] ]
+                          // displayKeys
+                        , displayKeys
+                          // changeHandler
+                        , this.handleValueChange
+                          // key
+                        , index
+                          // wasModified
+                        , _.has( this.state.modifiedValues, displayKeys["key"] )
                        );
               }.bind( this ) )
             }
@@ -215,7 +248,12 @@ var UserItem = React.createClass({
 
   , componentDidUpdate: function(prevProps, prevState) {
       if ( this.props.params[ this.props.viewData.routing["param"] ] !== prevProps.params[ this.props.viewData.routing["param"] ] ) {
-        this.updateUserInState();
+        // For the param to be different, either the client has selected another user,
+        // or the server has updated the selectionKey.
+        this.setState({
+            targetUser  : this.getUserFromStore()
+          , currentMode : "view"
+        });
       }
     }
 

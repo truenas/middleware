@@ -14,20 +14,20 @@ var Throbber = require("../../common/Throbber");
 
 var editorUtil = exports;
 
-editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeHandler ) {
+editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeHandler, key, wasModified ) {
   var formElement;
 
   switch ( displayKeys["formElement"] ) {
     case "input":
-      formElement = editorUtil.createInput( value, displayKeys, changeHandler );
+      formElement = editorUtil.createInput( value, displayKeys, changeHandler, key, wasModified );
       break;
 
     case "textarea":
-      formElement = editorUtil.createTextarea( value, displayKeys, changeHandler );
+      formElement = editorUtil.createTextarea( value, displayKeys, changeHandler, key, wasModified );
       break;
 
     case "checkbox":
-      formElement = editorUtil.createCheckbox( value, displayKeys, changeHandler );
+      formElement = editorUtil.createCheckbox( value, displayKeys, changeHandler, key, wasModified );
       break;
 
     default:
@@ -36,7 +36,7 @@ editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeH
       } else {
         console.warn( value + " didn't have a defined formElement property" );
       }
-      formElement = editorUtil.createInput( value, displayKeys, changeHandler );
+      formElement = editorUtil.createInput( value, displayKeys, changeHandler, key, wasModified );
       break;
   }
 
@@ -44,24 +44,28 @@ editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeH
 
 };
 
-editorUtil.createInput = function ( value, displayKeys, changeHandler ) {
+editorUtil.createInput = function ( value, displayKeys, changeHandler, key, wasModified ) {
 
   return(
     <TWBS.Input type        = "text"
            label            = { displayKeys["name"] }
            value            = { value }
            onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+           key              = { key }
+           groupClassName   = { wasModified ? "editor-was-modified" : "" }
            labelClassName   = "col-xs-4"
            wrapperClassName = "col-xs-8" />
   );
 };
 
-editorUtil.createTextarea = function ( value, displayKeys, changeHandler ) {
+editorUtil.createTextarea = function ( value, displayKeys, changeHandler, key, wasModified ) {
   return(
     <TWBS.Input type        = "textarea"
            label            = { displayKeys["name"] }
            value            = { value }
            onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+           key              = { key }
+           groupClassName   = { wasModified ? "editor-was-modified" : "" }
            labelClassName   = "col-xs-4"
            wrapperClassName = "col-xs-8" />
   );
