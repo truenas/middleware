@@ -1,0 +1,37 @@
+[{
+    "primaryKey"   : "name"
+  , "secondaryKey" : "link-address"
+  , "selectionKey" : "name"
+  , "dataKeys": [
+      {
+          "key"         : "name"
+        , "name"        : "Interface"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "link-state"
+        , "name"        : "Link State"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "link-address"
+        , "name"        : "MAC Address"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "flags"
+        , "name"        : "Interface Flags"
+        , "type"        : "array"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "aliases"
+        , "name"        : "Aliases"
+        , "type"        : "array"
+        , "defaultCol"  : false
+      }
+  ]
+}]
