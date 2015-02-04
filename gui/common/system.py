@@ -417,6 +417,18 @@ def activedirectory_has_unix_extensions():
 
     return ad_unix_extensions
 
+def activedirectory_has_keytab():
+    from freenasUI.directoryservice.models import ActiveDirectory
+
+    ad_has_keytab = False
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+        ad_kerberos_keytab = ad.ad_kerberos_keytab
+
+    except:
+        ad_has_keytab = False
+
+    return ad_has_keytab
 
 def activedirectory_objects():
     from freenasUI.directoryservice.models import ActiveDirectory
