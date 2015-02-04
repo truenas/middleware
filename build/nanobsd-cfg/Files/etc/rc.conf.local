@@ -141,9 +141,9 @@ _interface_config()
                         echo rtsold_enable=\"YES\"
 		else
 			if [ -n "${ipv6addr}" ]; then
-				echo ifconfig_${interface}_ipv6=\"${ipv6addr}/${ipv6netmask}\"
+				echo ifconfig_${interface}_ipv6=\"inet6 ${ipv6addr}/${ipv6netmask} auto_linklocal\"
                         elif [ ${has_ipv6} -gt 0 ]; then
-                                echo ifconfig_${interface}_ipv6=\"inet6\"
+                                echo ifconfig_${interface}_ipv6=\"inet6 auto_linklocal\"
                         fi
 		fi
 		if [ -n "${lagg_id}" ]; then
