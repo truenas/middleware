@@ -66,6 +66,11 @@ var paths = [
   }
 ];
 var menuTiming = 600;
+var debugUrl = "";
+
+if ( typeof window !== "undefined" ) {
+    debugUrl = window.location.protocol + "//" + document.domain + ":8180/rpc";
+}
 
 var PrimaryNavigation = React.createClass({
 
@@ -161,6 +166,16 @@ var PrimaryNavigation = React.createClass({
           </div>
 
           { paths.map( createNavItem ) }
+
+          <li role      = "presentation"
+              className = "nav-item">
+              <a href = { debugUrl }>
+                  <Icon glyph      = ""
+                      badgeContent = ""
+                      badgeStyle   = { null } />
+                  <span className = "nav-item-label" >Debug</span>
+              </a>
+          </li>
 
         </TWBS.Nav>
       );
