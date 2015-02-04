@@ -17,6 +17,7 @@ def new_ticket(data):
             headers={'Content-Type': 'application/json'},
             timeout=10,
         )
+        data = r.json()
     except requests.ConnectionError, e:
         return False, _('Connection failed: %s') % e
     except requests.Timeout, e:
@@ -25,7 +26,10 @@ def new_ticket(data):
         log.debug('Support Ticket failed (%d): %s', r.status_code, r.text)
         return False, _('Ticket creation failed, try again later.')
 
-    return True, r.text
+    if data['error'] is True:
+        return False, data['message']
+
+    return True, data['message']
 
 
 if __name__ == '__main__':
