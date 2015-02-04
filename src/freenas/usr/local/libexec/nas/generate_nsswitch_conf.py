@@ -47,7 +47,7 @@ def main():
     if verb == 'start':
         if activedirectory_enabled() and \
             activedirectory_has_unix_extensions() and  \
-            activedirectory_has_keytab:
+            activedirectory_has_keytab():
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
         elif activedirectory_enabled() or \

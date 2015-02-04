@@ -957,6 +957,20 @@ AD_has_unix_extensions()
 	return 1
 }
 
+AD_has_keytab()
+{
+	local ad_keytab_name="$(AD_get ad_keytab_name)"
+	local ad_keytab_principal="$(AD_get ad_keytab_principal)"
+	local ad_keytab_file="$(AD_get ad_keytab_file)"
+
+	if [ -n "${ad_keytab_name}" -a -n "${ad_keytab_principal}" \
+		-a -s "${ad_keytab_file}" ]
+	then
+		return 0
+	fi
+	return 1
+}
+
 AD_ssl_enabled()
 {
 	local ad_ssl="$(AD_get ad_ssl)"

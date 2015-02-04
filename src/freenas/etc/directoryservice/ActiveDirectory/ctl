@@ -106,7 +106,7 @@ adctl_start()
 		return 1
 	fi
 
-	if AD_has_unix_extensions
+	if AD_has_unix_extensions && AD_has_keytab
 	then
 		adctl_cmd ${service} ix-sssd start
 		if sssd_running
