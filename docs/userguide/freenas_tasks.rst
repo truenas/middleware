@@ -166,7 +166,7 @@ operation.
 
 .. note:: if there is a firewall between the two systems or if the other system has a built-in firewall, make sure that TCP port 873 is allowed.
 
-Figure 6.3a shows the screen that appears when you click :menuselection:`System --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options that
+Figure 6.3a shows the screen that appears when you click :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options that
 can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
@@ -299,7 +299,7 @@ This configuration example will configure rsync module mode between the two foll
 * *192.168.2.6* has an existing volume named :file:`/mnt/remote`. It will be the rsync server, meaning that it will receive the contents of
   :file:`/mnt/local/images`. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as *PULL.*
 
-On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task`. In this example:
+On *PUSH*, an rsync task is defined in :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. In this example:
 
 * the "Path" points to :file:`/usr/local/images`, the directory to be copied
 
@@ -458,7 +458,7 @@ S.M.A.R.T. Tests
 reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE, and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
 
-Figure 6.4a shows the configuration screen that appears when you click :menuselection:`System --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
+Figure 6.4a shows the configuration screen that appears when you click :menuselection:`Tasks --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
 you create will be listed under "View S.M.A.R.T. Tests". After creating your tests, check the configuration in :menuselection:`Services --> S.M.A.R.T.`, then
 click the slider to "ON" for the S.M.A.R.T. service in :menuselection:`Services --> Control Services`. The S.M.A.R.T. service will not start if you have not
 created any volumes.
