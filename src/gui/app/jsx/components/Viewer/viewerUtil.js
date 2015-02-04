@@ -42,6 +42,16 @@ viewerUtil.getPastelColor = function( seed ) {
   ];
 };
 
+viewerUtil.markSearch = function ( searchArray, searchString ) {
+  return searchArray.map( function( subString, index ) {
+    if ( index === ( searchArray.length - 1 ) ) {
+      return <span>{ subString }</span>;
+    } else {
+      return <span>{ subString }<mark>{ searchString }</mark></span>;
+    }
+  });
+};
+
 viewerUtil.ItemIcon = React.createClass({
 
     propTypes: {

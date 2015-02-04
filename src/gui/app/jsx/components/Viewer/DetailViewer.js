@@ -44,19 +44,8 @@ var DetailNavSection = React.createClass({
       var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ];
 
       if ( searchString.length ) {
-
-        var markSearch = function ( searchArray ) {
-          return searchArray.map( function( subString, index ) {
-            if ( index === ( searchArray.length - 1 ) ) {
-              return <span>{ subString }</span>;
-            } else {
-              return <span>{ subString }<mark>{ searchString }</mark></span>;
-            }
-          });
-        };
-
-        primaryText   = markSearch( primaryText.split( searchString ) );
-        secondaryText = markSearch( secondaryText.split( searchString ) );
+        primaryText   = viewerUtil.markSearch( primaryText.split( searchString ), searchString );
+        secondaryText = viewerUtil.markSearch( secondaryText.split( searchString ), searchString );
       }
 
       return (
