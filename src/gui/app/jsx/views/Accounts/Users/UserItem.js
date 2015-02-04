@@ -213,6 +213,12 @@ var UserItem = React.createClass({
       };
     }
 
+  , componentDidUpdate: function(prevProps, prevState) {
+      if ( this.props.params[ this.props.viewData.routing["param"] ] !== prevProps.params[ this.props.viewData.routing["param"] ] ) {
+        this.updateUserInState();
+      }
+    }
+
   , componentDidMount: function() {
       UsersStore.addChangeListener( this.updateUserInState );
     }
