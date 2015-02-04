@@ -35,10 +35,14 @@
   width      : 450px;
   height     : 260px;
   padding    : 10px 45px;
-  border     : 1px solid #F5F5F5;
-  box-shadow : 2px 2px 8px 0 rgba(0, 0, 0, 0.035);
+  .overlay-modal();
   .absolute-center();
-  #gradient.directional( white, #FAFAFA, 135deg );
+}
+
+.overlay-modal {
+    border     : 1px solid #F5F5F5;
+    box-shadow : 2px 2px 8px 0 rgba(0, 0, 0, 0.035);
+    #gradient.directional( white, #FAFAFA, 135deg );
 }
 
 

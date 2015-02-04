@@ -231,6 +231,7 @@
 // Icon Viewer
 .viewer-icon {
   .flex(1);
+  position   : relative;
   width      : 100%;
   overflow-y : auto;
 
@@ -254,19 +255,36 @@
 
   .viewer-icon-item {
     .flex(0 1 100px);
-    text-align: center;
-    margin: 10px;
+    text-align    : center;
+    padding       : 10px;
+    border-radius : 2px;
 
     .user-icon {
       height : 50px;
       width  : 50px;
     }
+
+
+    &.active {
+      background-color: @brand-info;
+
+        .viewer-icon-item-primary
+      , .viewer-icon-item-secondary {
+        color           : white;
+        text-decoration : none;
+      }
+    }
+    &:hover {
+      background-color: #f1f1f1;
+    }
+    &:hover,
+    &:active {
+      text-decoration: none;
+    }
   }
+
   .viewer-icon-item-primary {
     font-weight: bold
-  }
-  .viewer-icon-item-secondary {
-
   }
 }
 
@@ -274,6 +292,7 @@
 // Table Viewer
 .viewer-table {
   .flex(1);
+  position   : relative;
   width      : 100%;
   overflow-y : auto;
 }
@@ -325,6 +344,23 @@
 
 .editor-was-modified {
   background: lighten( @brand-info, 33% );
+}
+
+.editor-edit-overlay {
+  .flex-display(flex);
+  .justify-content(center);
+  padding: 25px 0;
+
+  .viewer-item-info {
+    .flex(0 1 800px);
+    .overlay-modal();
+    background : white;
+    height     : 100%;
+
+    & > .container-fluid {
+      padding: 25px;
+    }
+  }
 }
 
 .editor-update-overlay {
