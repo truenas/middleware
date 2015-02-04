@@ -423,9 +423,11 @@ def activedirectory_has_keytab():
     ad_has_keytab = False
     try:
         ad = ActiveDirectory.objects.all()[0]
-        ad_kerberos_keytab = ad.ad_kerberos_keytab
+        if ad.ad_kerberos_keytab:
+            ad_has_keytab = True
 
-    except:
+    except Exception as e:
+        print "XXX: e = ", e
         ad_has_keytab = False
 
     return ad_has_keytab
