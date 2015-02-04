@@ -574,6 +574,7 @@ def add_ldap(sc):
 def add_activedirectory(sc):
     activedirectory = ActiveDirectory.objects.all()[0]
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+    use_ad_provider = False
 
     ad_cookie = ad.netbiosname
     ad_domain = 'domain/%s' % ad_cookie
@@ -592,20 +593,45 @@ def add_activedirectory(sc):
 
     ad_defaults = [
         { 'enumerate': 'true' },
-        { 'id_provider': 'ad'},
-        { 'auth_provider': 'ad' },
-        { 'access_provider': 'ad' },
-        { 'chpass_provider': 'ad' },
+        { 'id_provider': 'ldap'},
+        { 'auth_provider': 'ldap' },
+        { 'access_provider': 'ldap' },
+        { 'chpass_provider': 'ldap' },
+        { 'ldap_schema': 'rfc2307bis' },
+        { 'ldap_user_object_class': 'person' },
+        { 'ldap_user_name': 'msSFU30Name' },
+        { 'ldap_user_uid_number': 'uidNumber' },
+        { 'ldap_user_gid_number': 'gidNumber' },
+        { 'ldap_user_home_directory': 'unixHomeDirectory' },
+        { 'ldap_user_shell': 'loginShell' },
+        { 'ldap_user_principal': 'userPrincipalName' },
+        { 'ldap_group_object_class': 'group' },
+        { 'ldap_group_name': 'msSFU30Name' },
+        { 'ldap_group_gid_number': 'gidNumber' },
+        { 'ldap_force_upper_case_realm': 'true' },
         { 'use_fully_qualified_names': 'true' }
     ]
 
     __, hostname, __ = os.uname()[0:3]
 
-    ad_section.ldap_id_mapping = False
-    ad_section.ad_hostname = hostname
-    ad_section.ad_domain = ad.domainname
+    if ad.keytab_name and ad.kerberos_realm and os.path.exists(ad.keytab_file):
+        use_ad_provider = True
+
+    if use_ad_provider:
+        for d in ad_defaults:
+            key = d.keys()[0]  
+            if key.startswith("ldap_") and key in d:
+                del d[key]
+            elif key.endswith("_provider"):
+                d[key] = 'ad'
+
+        ad_section.ad_hostname = hostname
+        ad_section.ad_domain = ad.domainname
+        ad_section.ldap_id_mapping = False
 
     for d in ad_defaults:
+        if not d: 
+            continue
         key = d.keys()[0]  
         if not key in ad_section:
             setattr(ad_section, key, d[key])
@@ -627,16 +653,21 @@ def add_activedirectory(sc):
     except Exception as e:
         pass
 
-    if ad.keytab_name and ad.kerberos_realm:
-        ad_section.auth_provider = 'krb5'
-        ad_section.chpass_provider = 'krb5'
-        ad_section.ldap_sasl_mech = 'GSSAPI'
-        ad_section.ldap_sasl_authid = ad.keytab_principal
-        ad_section.krb5_server = ad.krb_kdc
-        ad_section.krb5_realm = ad.krb_realm
-        ad_section.krb5_canonicalize = 'false'
+    if use_ad_provider:
+        pass
+
+#        ad_section.auth_provider = 'krb5'
+#        ad_section.chpass_provider = 'krb5'
+#        ad_section.ldap_sasl_mech = 'GSSAPI'
+#        ad_section.ldap_sasl_authid = ad.keytab_principal
+#        ad_section.krb5_server = ad.krb_kdc
+#        ad_section.krb5_realm = ad.krb_realm
+#        ad_section.krb5_canonicalize = 'false'
 
     else:
+        ad_section.ldap_uri = "ldap://%s" % ad.dchost
+        ad_section.ldap_search_base = ad.basedn
+
         ad_section.ldap_default_bind_dn = ad.binddn
         ad_section.ldap_default_authtok_type = 'password'
         ad_section.ldap_default_authtok = ad.bindpw
