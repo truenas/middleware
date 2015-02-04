@@ -386,8 +386,56 @@ This tab also contains the following buttons:
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
+**Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
+button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
+that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
+backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
 **Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
 warning is provided and the tests should be run at a time that will least impact users.
+
+**Figure 5.4b: Backup Configuration Screen**
+
+|backup.png|
+
+.. |backup.png| image:: images/backup.png
+    :width: 3.24in
+    :height: 2.95in
+
+**Table 5.4b: Backup Configuration Settings**
+
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Setting                                 | Value          | Description                                                                                    |
+|                                         |                |                                                                                                |
++=========================================+================+================================================================================================+
+| Hostname or IP address                  | string         | input the IP address of the remote system, or the hostname if DNS is properly configured       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| User name                               | string         | the user account must exist on the remote system and have permissions to write to the "Remote  |
+|                                         |                | directory"                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Password                                | string         | the password associated with the user account                                                  |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Remote directory                        | string         | the full path to the directory to save the backup to                                           |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Backup data                             | checkbox       | by default, the backup is very quick as only the configuration database and the ZFS pool and   |
+|                                         |                | database layout are saved; check this box to also save the data (which may take some time,     |
+|                                         |                | depending upon the size of the pool and speed of the network)                                  |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Compress backup                         | checkbox       | if checked, gzip will be used to compress the backup which reduces the transmission size when  |
+|                                         |                | "Backup data" is checked                                                                       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Use key authentication                  | checkbox       | if checked, the public key of the *root* user must be stored in                                |
+|                                         |                | :file:`~root/.ssh/authorized_keys` on the remote system and that key should **not** be         |
+|                                         |                | protected by a passphrase; see :ref:`Rsync over SSH Mode` for instructions on how to generate  |
+|                                         |                | a key pair                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
 
 .. index:: Autotune
 .. _Autotune:

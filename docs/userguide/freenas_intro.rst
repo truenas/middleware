@@ -341,11 +341,13 @@ that have occurred since 9.3-RELEASE.
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
 
+* The "Create backup" and "Restore from a backup" options have been added to the FreeNAS® console setup menu shown in Figure 3a.
+
 * The "Microsoft Account" checkbox has been added to :menuselection:`Account --> Users --> Add User`.
 
 * The ability to set the boot pool scrub interval has been added to :menuselection:`System --> Boot`.
 
-* A "Backup" button has been added to :menuselection:`System --> Advanced` and to the FreeNAS® console setup menu shown in Figure 3a.
+* A "Backup" button has been added to :menuselection:`System --> Advanced`.
 
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
 
