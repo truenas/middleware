@@ -80,7 +80,7 @@ clean-package:
 .endif
 
 clean-ui-package:
-	${MAKE} clean-package p=freenas-ui
+	${MAKE} clean-package p=freenas-10gui
 	rm -rf objs/os-base/*/gui-dest
 
 distclean: clean
