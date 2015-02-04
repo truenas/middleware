@@ -7,7 +7,7 @@
 #
 
 #-
-# Copyright (c) 2010, 2011 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010, 2011, 2014 iXsystems, Inc., All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -52,9 +52,7 @@ path=${django_path}
 host=${django_host}
 port=${django_port}
 start_cmd="start_command"
-stop_cmd="stop_command"
-restart_cmd="restart_command"
-
+procname="/usr/local/bin/python"
 
 start_command()
 {
@@ -82,18 +80,6 @@ start_command()
 	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
 	sleep 1
 	chown www:www ${logs}
-}
-
-stop_command()
-{
-	kill `cat ${pidfile}`
-	rm -f ${pidfile}
-}
-
-restart_command()
-{
-	stop_command
-	start_command
 }
 
 run_rc_command "$1"
