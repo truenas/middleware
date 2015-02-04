@@ -6,12 +6,9 @@
 
 "use strict";
 
-var _     = require("lodash");
 var React = require("react");
 
-var Viewer   = require("../../components/Viewer");
-var UserView = require("./Users/UserView");
-var UserEdit = require("./Users/UserEdit");
+var Viewer = require("../../components/Viewer");
 
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
@@ -81,9 +78,7 @@ var Users = React.createClass({
       return <Viewer header    = { "Users" }
                      inputData = { this.state.usersList }
                      viewData  = { viewData }
-                     Editor    = { this.props.activeRouteHandler }
-                     ItemView  = { UserView }
-                     EditView  = { UserEdit } />;
+                     Editor    = { this.props.activeRouteHandler } />;
     }
 
 });

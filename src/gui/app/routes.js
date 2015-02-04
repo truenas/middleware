@@ -22,9 +22,13 @@ var NotFoundRoute = Router.NotFoundRoute;
 // STATIC ROUTES
 var Root = require("./jsx/views/FreeNASWebApp");
   var Dashboard    = require("./jsx/views/Dashboard");
+
   var Accounts     = require("./jsx/views/Accounts");
-    var Users  = require("./jsx/views/Accounts/Users");
-    var Groups = require("./jsx/views/Accounts/Groups");
+    var Users      = require("./jsx/views/Accounts/Users");
+      var UserItem = require("./jsx/views/Accounts/Users/UserItem");
+
+    var Groups     = require("./jsx/views/Accounts/Groups");
+
   var Tasks        = require("./jsx/views/Tasks");
   var Network      = require("./jsx/views/Network");
   var Storage      = require("./jsx/views/Storage");
@@ -52,7 +56,7 @@ module.exports = (
                handler = { Users } >
           <Route name    = "users-editor"
                  path    = "/accounts/users/:userID"
-                 handler = { Editor } />
+                 handler = { UserItem } />
         </Route>
         <Route name    = "groups"
                path    = "/accounts/groups"

@@ -115,6 +115,12 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       return _updatedOnServer.indexOf( id ) > -1;
     }
 
+  , findUserByKeyValue: function ( key, value ) {
+      return _.find( _users, function ( user ) {
+        return user[ key ] === value;
+      });
+    }
+
   , getUser: function( id ) {
       return _users[ id ];
     }
