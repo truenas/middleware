@@ -6,12 +6,18 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
+var Router     = require("react-router");
+var Link       = Router.Link;
+var Navigation = Router.Navigation;
+
 var viewerUtil = require("./viewerUtil");
 
 // Table Viewer
 var TableViewer = React.createClass({
 
-    propTypes: {
+    mixins: [Navigation]
+
+  , propTypes: {
         viewData     : React.PropTypes.object.isRequired
       , inputData    : React.PropTypes.array.isRequired
       , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
@@ -33,6 +39,20 @@ var TableViewer = React.createClass({
 
   , componentDidMount: function() {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
+    }
+
+  , handleClickOut: function( event, componentID ) {
+      if ( event.dispatchMarker === componentID ) {
+        this.goBack();
+      }
+    }
+
+  , handleRowClick: function( selectionKey, event, componentID ) {
+      var params = {};
+
+      params[ this.props.viewData.routing["param"] ] = selectionKey;
+
+      this.transitionTo( this.props.viewData.routing["route"], params );
     }
 
   , changeSortState: function( key, event ) {
@@ -112,7 +132,7 @@ var TableViewer = React.createClass({
 
   , createRows: function( item, index ) {
       return(
-        <tr key={ index } >
+        <tr key={ index } onClick= { this.handleRowClick.bind( null, item[ this.props.viewData.format["selectionKey"] ] ) }>
           { this.props.tableCols.map( function( key, index ) {
               return ( <td key={ index }>{ viewerUtil.identifyAndWrite( item[ key ] ) }</td> );
             })
@@ -123,7 +143,21 @@ var TableViewer = React.createClass({
 
   , render: function() {
 
-    var tableData;
+    var tableData     = null;
+    var editorContent = null;
+
+    if ( this.props.Editor() !== null ) {
+      editorContent = (
+        <div className = "overlay-light editor-edit-overlay"
+             onClick   = { this.handleClickOut } >
+          <this.props.Editor viewData  = { this.props.viewData }
+                             inputData = { this.props.inputData }
+                             activeKey = { this.props.selectedKey }
+                             ItemView  = { this.props.ItemView }
+                             EditView  = { this.props.EditView } />
+        </div>
+      );
+    }
 
     if ( this.state.sortTableBy ) {
       tableData = _.sortBy( this.props.filteredData["rawList"], this.state.sortTableBy );
@@ -138,6 +172,7 @@ var TableViewer = React.createClass({
 
     return(
       <div className = "viewer-table fixed-table-container">
+        { editorContent }
         <div className = "fixed-table-container-inner">
 
           <TWBS.Table striped bordered condensed hover
