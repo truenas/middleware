@@ -13,7 +13,7 @@ var TableViewer = React.createClass({
 
     propTypes: {
         viewData     : React.PropTypes.object.isRequired
-      , inputData    : React.PropTypes.object.isRequired
+      , inputData    : React.PropTypes.array.isRequired
       , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing

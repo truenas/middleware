@@ -18,6 +18,7 @@ var Viewer = React.createClass({
     propTypes: {
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
+      , inputData    : React.PropTypes.array.isRequired
       , viewData     : React.PropTypes.object.isRequired
       , displayData  : React.PropTypes.object
     }
