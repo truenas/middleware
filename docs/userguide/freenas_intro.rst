@@ -153,7 +153,7 @@ issued since FreeBSD 9.3 RELEASE.
 
 * The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
 
-* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMware Snapshots`.
+* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMware-Snapshot`.
 
 * The :command:`afpusers` command has been added. Similar to
   `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
@@ -337,6 +337,8 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
+* Samba was updated to `4.1.16 <https://www.samba.org/samba/history/samba-4.1.16.html>`_ which fixes several security vulnerabilities.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
@@ -354,7 +356,10 @@ that have occurred since 9.3-RELEASE.
 * The "Confirm Passphrase" field has been added to :menuselection:`System --> CAs --> Import CA`
   and :menuselection:`System --> Certificates --> Import Certificate`.
 
-* The "Rsync Create" checkbox has been renamed to "Validate Remote Path" in :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
+* The "Rsync Create" checkbox has been renamed to "Validate Remote Path" and the "Delay Updates" checkbox has been added to
+  :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
+
+* The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
 
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
 
