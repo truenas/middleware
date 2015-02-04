@@ -13,6 +13,8 @@ var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _widgetData = [];
+var _dataUpdate = [];
+
 
 var StatdStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -32,6 +34,10 @@ var StatdStore = _.assign( {}, EventEmitter.prototype, {
       return _widgetData;
     }
 
+  , getWidgetDataUpdate: function() {
+      return _dataUpdate;
+    }
+
 });
 
 StatdStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
@@ -44,7 +50,11 @@ StatdStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       StatdStore.emitChange();
       break;
     case ActionTypes.MIDDLEWARE_EVENT:
-      _widgetData = action.rawWidgetData;
+      var updateData = action.eventData.args;
+
+      //console.log( action );
+      //console.log( updateData );
+      _dataUpdate =  updateData.args;
       StatdStore.emitChange();
       break;
 
