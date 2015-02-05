@@ -557,6 +557,12 @@
 					"group:services",
 					"file:local/collectd.conf"
 				]
+			},
+			"D6144740-E879-4031-B343-84205D6A5DD4": {
+				"name": "nfs",
+				"dependencies": [
+					"file:exports"
+				]
 			}
         }
     },

@@ -51,6 +51,7 @@
 /usr/local/lib/dispatcher/plugins/NetworkPlugin.py
 /usr/local/lib/dispatcher/plugins/EntitySubscriberPlugin.py
 /usr/local/lib/dispatcher/plugins/SessionPlugin.py
+/usr/local/lib/dispatcher/plugins/ShareNFSPlugin.py
 /usr/local/libexec/dispatcher/notify-pam
 /usr/local/etc/rc.d/dispatcher
 /usr/local/sbin/dispatcherd
