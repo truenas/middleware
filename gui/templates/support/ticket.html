@@ -1,1 +1,1 @@
-<div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{{ request.path }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}"></div>
+<div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{{ request.path }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, progressUrl: '{% url "support_ticket_progress" %}'"></div>

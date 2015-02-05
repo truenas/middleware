@@ -27,12 +27,14 @@
 import json
 import logging
 
+from django.http import HttpResponse
 from django.shortcuts import render
 
 from freenasUI.common.system import get_sw_name, get_sw_login_version
 from freenasUI.support import utils
 
 log = logging.getLogger("support.views")
+TICKET_PROGRESS = '/tmp/.ticketprogress'
 
 
 def index(request):
@@ -42,6 +44,20 @@ def index(request):
 
 def ticket(request):
     if request.method == 'POST':
+
+        step = 1
+
+        if request.POST.get('debug' == 'on':
+            with open(TICKET_PROGRESS, 'w') as f:
+                f.write(json.dumps({'indeterminate': True, 'step': step}))
+            step += 1
+
+            #TODO: generate debug
+
+        with open(TICKET_PROGRESS, 'w') as f:
+            f.write(json.dumps({'indeterminate': True, 'step': step}))
+        step += 1
+
         success, msg = utils.new_ticket({
             'user': request.POST.get('username'),
             'password': request.POST.get('password'),
@@ -68,3 +84,12 @@ def ticket(request):
             )
         return response
     return render(request, 'support/ticket.html')
+
+
+def ticket_progress(request):
+    with open(TICKET_PROGRESS, 'r') as f:
+        try:
+            data = json.loads(f.read())
+        except:
+            data = {'indeterminate': True}
+    return HttpResponse(json.dumps(data), content_type='application/json')
