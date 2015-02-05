@@ -339,8 +339,6 @@ Requires a switch which supports IEEE 802.3ad static link aggregation.
 
 **None:** this protocol disables any traffic without disabling the lagg interface itself.
 
-.. note:: the TrueNAS® system must be rebooted after configuring the lagg device and TCP access will be lost during reboot.
-
 **Do not** configure the interfaces used in the lagg device before creating the lagg device.
 
 
@@ -389,10 +387,10 @@ Select the desired "Protocol Type", highlight the interface(s) to associate with
 
 Once the lagg device has been created, click its entry to enable its "Edit", "Delete", and "Edit Members" buttons.
 
-After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
-so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
-After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get
-access into the GUI through the new lagg interface.
+After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be temporarily lost at this
+point, as the network is restarted. You may also have to change your switch settings to communicate through the new lagg interface, and, if the IP address was
+set manually, you may have to manually enter a default gateway from the console setup menu option in order to get access into the GUI through the new lagg
+interface.
 
 If you click the "Edit" button for a lagg, you can set the configuration options described in Table 7.5a.
 

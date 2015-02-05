@@ -359,6 +359,8 @@ that have occurred since 9.3-RELEASE.
 * The "Rsync Create" checkbox has been renamed to "Validate Remote Path" and the "Delay Updates" checkbox has been added to
   :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
 
+* A reboot is no longer required when creating :ref:`Link Aggregations`.
+
 * The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
 
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
