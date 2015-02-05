@@ -29,6 +29,7 @@
 import time
 from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
 from output import output_msg, output_table, output_tree
+from utils import first_or_default
 
 
 class VolumeCreateNamespace(Namespace):
@@ -116,9 +117,12 @@ class ScrubCommand(Command):
         context.submit_task('zfs.pool.scrub', self.name)
 
 
+@description("Datasets")
 class DatasetsNamespace(EntityNamespace):
-    def __init__(self, volume, path, context):
-        super(DatasetsNamespace, self).__init__(path, context)
+    def __init__(self, name, context, parent):
+        super(DatasetsNamespace, self).__init__(name, context)
+        self.parent = parent
+        self.path = name
         self.add_property(
             descr='Name',
             name='name',
@@ -127,30 +131,86 @@ class DatasetsNamespace(EntityNamespace):
 
         self.add_property(
             descr='Used',
-            name='status',
-            get='/status',
+            name='used',
+            get='/properties/used/value',
             set=None,
             list=True)
 
         self.add_property(
             descr='Available',
-            name='mountpoint',
-            get='/mountpoint',
+            name='available',
+            get='/properties/avail/value',
+            set=None,
             list=True)
 
         self.add_property(
-            descr='Compression',
+            descr='Mountpoint',
             name='mountpoint',
-            get='/mountpoint',
-            list=True)
-
-        self.add_property(
-            descr='Compression ratio',
-            name='mountpoint',
-            get='/mountpoint',
+            get='/properties/mountpoint/value',
+            set=None,
             list=True)
 
         self.primary_key = self.get_mapping('name')
+        self.entity_namespaces = lambda this: [
+            PropertiesNamespace('properties', context, this)
+        ]
+
+    def query(self, params):
+        self.parent.load()
+        return self.parent.entity['datasets']
+
+    def get_one(self, name):
+        self.parent.load()
+        return first_or_default(lambda d: d['name'] == name, self.parent.entity['datasets'])
+
+    def delete(self, name):
+        self.context.submit_task('volume.dataset.delete', self.parent.entity['name'], name)
+
+    def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], entity['name'])
+            return
+
+
+@description("Properties")
+class PropertiesNamespace(EntityNamespace):
+    def __init__(self, name, context, parent):
+        super(PropertiesNamespace, self).__init__(name, context)
+        self.parent = parent
+
+        self.add_property(
+            descr='Property name',
+            name='name',
+            get='/name',
+            list=True)
+
+        self.add_property(
+            descr='Value',
+            name='value',
+            get='/value',
+            set=None,
+            list=True)
+
+        self.add_property(
+            descr='Source',
+            name='source',
+            get='/source',
+            set=None,
+            list=True)
+
+    def query(self, params):
+        return self.parent.entity['properties']
+
+    def get_one(self, name):
+        return first_or_default(lambda d: d['name'] == name, self.parent.entity['properties'])
+
+    def delete(self, name):
+        self.context.submit_task('volume.dataset.delete', self.parent.entity['name'], name)
+
+    def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], entity['name'])
+            return
 
 
 @description("Volumes namespace")
@@ -188,15 +248,20 @@ class VolumesNamespace(EntityNamespace):
             'scrub': ScrubCommand(vol)
         }
 
-        self.entity_namespaces = lambda vol: [
-            DatasetsNamespace(vol, vol, context)
+        self.entity_namespaces = lambda this: [
+            DatasetsNamespace('datasets', self.context, this),
+            PropertiesNamespace('properties', self.context, this)
         ]
 
     def query(self, params):
         return self.context.connection.call_sync('volumes.query', params)
 
     def get_one(self, name):
-        return self.context.connection.call_sync('volumes.query', [('name', '=', name)])[0]
+        return self.context.connection.call_sync(
+            'volumes.query',
+            [('name', '=', name)],
+            {'single': 'true'}
+        )
 
     def delete(self, name):
         self.context.submit_task('volume.destroy', name)
