@@ -1,10 +1,8 @@
+Regression fix update:
+
 #7556	Bug	Normal	cannot update plugin if jails mounted storage path contains apostrophe
-#7594	Bug	Normal	Cannot Create or Edit RSync Task
-#7609	Bug	Normal	IPv6 connectivity unstable for static ipv6-only (configuration fails to set auto_linklocal)
-#7653	Bug	Normal	'exceptions.IOError' object has no attribute 'encode'
-#7728	Bug	Normal	ctld segfaults after adding a large number of targets
-#7734	Bug	Normal	9.3 dhcp
 #7773	Bug	Normal	WARNING: The "acl check permissions" option is deprecated error
-#7781	Bug	Normal	Default iscsi extent should be device
-#7783	Bug	Normal	global name 'rsync_delayupdates' is not defined
-#7788	Bug	Normal	STATUS=daemon 'smbd' finished starting up and ready to serve connections - repeated message
+#7779	Bug	Normal	Regression: SSSD fails to start when configured for Active Directory
+#7824	Bug	High	System dataset RRDs not used after reboot on 9.3-STABLE-2015020404031
+#7834	Bug	Normal	django rc.d script does not properly stop django
+
