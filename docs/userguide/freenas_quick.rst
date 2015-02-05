@@ -80,7 +80,7 @@ seen in Example 3a. In this example, the FreeNAS® system has one network interf
 **Example 3a: Manually Setting an IP Address from the Console Menu**
 ::
 
- Enter an option from 1-11: 1
+ Enter an option from 1-14: 1
  1) em0
  Select an interface (q to quit): 1
  Delete existing config? (y/n) n
