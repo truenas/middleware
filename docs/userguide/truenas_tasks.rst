@@ -273,7 +273,8 @@ can be configured when creating an rsync task.
 | Delay Updates                    | checkbox                    | when checked, the temporary file from each updated file is saved to a holding directory   |
 |                                  |                             | until the end of the transfer, when all transferred files are renamed into place          |
 |                                  |                             |                                                                                           |
-+----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+| Extra options                    | string                      | `rsync(1) <http://rsync.samba.org/ftp/rsync/rsync.html>`_                                 |
++----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
+| Extra options                    | string                      | `rsync(1) <http://rsync.samba.org/ftp/rsync/rsync.html>`_                                 |
 |                                  |                             | options not covered by the GUI; note that if the "*" character is used, it must be        |
 |                                  |                             | escaped between single quotes (e.g. '\*.txt')                                             |
 |                                  |                             |                                                                                           |
