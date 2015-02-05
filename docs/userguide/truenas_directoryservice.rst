@@ -397,11 +397,13 @@ If you are new to LDAP terminology, skim through the
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Encryption Mode         | drop-down menu | only available in "Advanced Mode"; choices are *Off*,                                                          |
 |                         |                | *SSL*, or                                                                                                      |
-|                         |                | *TLS*                                                                                                          |
+|                         |                | *TLS*; note that either                                                                                        |
+|                         |                | *SSL* or                                                                                                       |
+|                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if             |
-|                         |                | SSL connections are used                                                                                       |
+|                         |                | SSL or TLS connections are used (required if authentication is used)                                           |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
@@ -409,7 +411,8 @@ If you are new to LDAP terminology, skim through the
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | DNS timeout             | integer        | increase this value (in seconds) if DNS queries timeout                                                        |
 |                         |                |                                                                                                                |
-+-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+| Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
 |                         | and Edit       | UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the "Edit" link to configure |
 |                         |                | that backend's editable options                                                                                |
 |                         |                |                                                                                                                |
