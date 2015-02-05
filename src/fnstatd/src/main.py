@@ -29,6 +29,7 @@
 
 import os
 import sys
+import time
 import argparse
 import json
 import logging
@@ -315,12 +316,21 @@ class Main(object):
         self.client.disconnect()
         sys.exit(0)
 
+    def try_reconnect(self):
+        while True:
+            try:
+                time.sleep(1)
+                self.init_dispatcher()
+                break
+            except:
+                pass
+
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Middleware config file')
         args = parser.parse_args()
         logging.basicConfig(level=logging.DEBUG)
-        setproctitle.setproctitle('statd')
+        setproctitle.setproctitle('fnstatd')
 
         # Signal handlers
         gevent.signal(signal.SIGQUIT, self.die)

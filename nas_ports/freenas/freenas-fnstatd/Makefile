@@ -3,7 +3,7 @@
 # $Id$
 #
 
-PORTNAME=       freenas-statd
+PORTNAME=       freenas-fnstatd
 PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
 PORTREVISION=	${REVISION}
 
@@ -20,7 +20,7 @@ EXTRACT_ONLY=
 NO_BUILD= 	yes
 MAKE_JOBS_UNSAFE= yes
 ALL_TARGET=	obj all
-WRKSRC=		/usr/nas_source2/statd
+WRKSRC=		/usr/nas_source2/fnstatd
 
 USES=		python
 
