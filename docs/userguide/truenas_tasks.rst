@@ -407,7 +407,7 @@ breaks.
 |rsync2.png|
 
 .. |rsync2.png| image:: images/rsync2.png
-    :width: 7.9in
+    :width: 6.2in
     :height: 4.5in
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
@@ -415,7 +415,7 @@ While on *PULL*, verify that the SSH service is running in :menuselection:`Servi
 Next, copy the host key of *PULL* using Shell on
 *PUSH*. The following command copies the RSA host key of the
 *PULL* server used in our previous example. Be sure to include the double bracket
-*>>* to prevent overwriting any existing entries in the :file:`known_hosts` file.::
+*>>* to prevent overwriting any existing entries in the :file:`known_hosts` file::
 
  ssh-keyscan -t rsa 192.168.2.6 >> /root/.ssh/known_hosts
 
