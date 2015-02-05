@@ -1,8 +1,3 @@
-Regression fix update:
-
-#7556	Bug	Normal	cannot update plugin if jails mounted storage path contains apostrophe
-#7773	Bug	Normal	WARNING: The "acl check permissions" option is deprecated error
-#7779	Bug	Normal	Regression: SSSD fails to start when configured for Active Directory
-#7824	Bug	High	System dataset RRDs not used after reboot on 9.3-STABLE-2015020404031
-#7834	Bug	Normal	django rc.d script does not properly stop django
-
+#7847	Bug	Normal	Backup screen does not show validation errors
+#7835	Bug	Normal	paramiko.transport (backup.py) reports incompatible ssh peer.
+#7829	Bug	Normal	Password viewable in Backup screen
