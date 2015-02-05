@@ -2967,7 +2967,15 @@ class BackupForm(Form):
 
     backup_password = forms.CharField(
         label=_("Password"),
-        required=False)
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
+
+    backup_password2 = forms.CharField(
+        label=_("Confirm Password"),
+        required=False,
+        widget=forms.widgets.PasswordInput(),
+    )
 
     backup_directory = forms.CharField(
         label=_("Remote directory"),
@@ -2985,3 +2993,11 @@ class BackupForm(Form):
         label=_("Use key authentication"),
         required=False)
 
+    def clean_backup_password2(self):
+        pwd = self.cleaned_data.get('backup_password')
+        pwd2 = self.cleaned_data.get('backup_password2')
+        if pwd and pwd != pwd2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return pwd2
