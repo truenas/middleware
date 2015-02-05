@@ -485,6 +485,9 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
+If you are using freedns.afraid.org, see
+`this forum post <https://forums.freenas.org/index.php?threads/dynamic-dns-and-freeedns-afraid-org.24455/#post-151746>`_ for an example working configuration.
+
 .. index:: FTP, File Transfer Protocol
 .. _FTP:
 
