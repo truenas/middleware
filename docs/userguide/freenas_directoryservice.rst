@@ -269,10 +269,10 @@ If the cache becomes out of sync due to an AD server being taken off and back on
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
 
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the "name" field. Make sure that it is
-under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
-"NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
-Controller" field of :menuselection:`Directory Service --> Active Directory`.
+If the Windows server version is lower than 2008 R2, try creating a "Computer" entry on the Windows server's OU. When creating this entry, enter the FreeNAS®
+hostname in the "name" field. Make sure that it is under 15 characters and that it is the same name as the one set in the "Hostname" field in
+:menuselection:`Network --> Global Configuration` and the "NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the
+hostname of the domain controller is set in the "Domain Controller" field of :menuselection:`Directory Service --> Active Directory`.
 
 .. _If the System Will not Join the Domain:
 
