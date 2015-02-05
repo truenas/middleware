@@ -584,8 +584,8 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 6.2in
-    :height: 2.9in
+    :width: 2.5in
+    :height: 2.4in
 
 Table 5.7a summarizes the options when adding a tunable.
 

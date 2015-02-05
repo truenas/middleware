@@ -46,9 +46,9 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|system1.png|
+|tn_system1.png|
 
-.. |system1.png| image:: images/system1.png
+.. |tn_system1.png| image:: images/tn_system1.png
     :width: 6.9in
     :height: 3.5in
 
@@ -61,11 +61,11 @@ General
 
 **Figure 5.2a: General Screen**
 
-|system2.png|
+|tn_system2.png|
 
-.. |system2.png| image:: images/system2.png
-    :width: 6.2in
-    :height: 4.4in
+.. |tn_system2.png| image:: images/tn_system2.png
+    :width: 6.8in
+    :height: 4.5in
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -209,10 +209,10 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1b.png|
+|tn_be.png|
 
-.. |be1b.png| image:: images/be1b.png
-    :width: 6.2in
+.. |tn_be.png| image:: images/tn_be.png
+    :width: 6.8in
     :height: 4.5in
 
 Each boot environment entry contains the following information:
@@ -247,18 +247,18 @@ The buttons above the boot entries can be used to:
   interval, input a different number in the "Automatic scrub interval (in days)" field.The date and results of the last scrub are listed in this screen. The
   condition of the boot device should be listed as *HEALTHY*.
 
-* **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
+* **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, both devices in the boot mirror are *ONLINE*.
 
 **Figure 5.3b: Viewing the Status of the Boot Device**
 
-|be2.png|
+|tn_be2.png|
 
-.. |be2.png| image:: images/be2.png
-    :width: 3.2in
-    :height: 4.4in
+.. |tn_be2.png| image:: images/tn_be2.png
+    :width: 4.4in
+    :height: 3.4in
 
-If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
-Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
+If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
+device, and click "Replace Disk" to rebuild the boot mirror.
 
 Figure 5.3c shows a sample boot menu containing entries for the default, wizard generated, and a manually created boot environment named *prepatch*.
 
@@ -269,41 +269,6 @@ Figure 5.3c shows a sample boot menu containing entries for the default, wizard 
 .. |be3.png| image:: images/be3.png
     :width: 5.4in
     :height: 4.0in
-
-.. index:: Mirroring the Boot Device
-.. _Mirroring the Boot Device:
-
-Mirroring the Boot Device
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
-can still boot from the remaining device in the mirror.
-
-In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
-example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
-*stripe*. To create a mirrored boot device, click either the entry called
-*freenas-boot* or
-*stripe*, then click the "Attach" button. If another device is available, it will appear in the "Member disk" drop-down menu. Select the desired device, then
-click "Attach Disk".
-
-**Figure 5.3d: Mirroring a Boot Device**
-
-|mirror1.png|
-
-.. |mirror1.png| image:: images/mirror1.png
-    :width: 3.6in
-    :height: 4.5in
-
-Once the mirror is created, the "Status" screen will indicate that it is now a *mirror* and the number of devices in the mirror will be shown, as seen in the
-example in Figure 5.3e.
-
-**Figure 5.3e: Viewing the Status of a Mirrored Boot Device**
-
-|mirror2.png|
-
-.. |mirror2.png| image:: images/mirror2.png
-    :width: 3.8in
-    :height: 1.9in
 
 .. _Advanced:
 
@@ -468,10 +433,10 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4a.png|
+|tn_system4.png|
 
-.. |system4a.png| image:: images/system4a.png
-    :width: 6.3in
+.. |tn_system4.png| image:: images/tn_system4.png
+    :width: 6.8in
     :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
@@ -524,9 +489,9 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.6a: System Dataset Screen**
 
-|system5.png|
+|tn_system5.png|
 
-.. |system5.png| image:: images/system5.png
+.. |tn_system5.png| image:: images/tn_system5.png
     :width: 6.3in
     :height: 1.8in
 
@@ -565,7 +530,7 @@ This section provides an overview of the failover screen that is available in th
 assist you in the configuration and testing of a failover that is suited to your specific environment.
 **Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
 
-The options available in System -> Failovers -> Add Failover are shown in Figure 5.7a and described in Table 5.7a.
+The options available in :menuselection:`System --> Failovers --> View Failovers --> Add Failover` are shown in Figure 5.7a and described in Table 5.7a.
 
 **Figure 5.7a: Creating a Failover**
 
@@ -639,8 +604,8 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 6.2in
-    :height: 2.9in
+    :width: 2.5in
+    :height: 2.4in
 
 Table 5.8a summarizes the options when adding a tunable.
 
@@ -747,9 +712,9 @@ Figure 5.9a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.9a: Update Options**
 
-|update1.png|
+|tn_update1.png|
 
-.. |update1.png| image:: images/update1.png
+.. |tn_update1.png| image:: images/tn_update1.png
     :width: 6.25in
     :height: 3.38in
 
@@ -805,22 +770,22 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> CA
 
 **Figure 5.10a: Initial CA Screen**
 
-|ca2a.png|
+|tn_ca1.png|
 
-.. |ca2a.png| image:: images/ca2a.png
-    :width: 4.1in
-    :height: 3.1in
+.. |tn_ca1.png| image:: images/tn_ca1.png
+    :width: 6.98in
+    :height: 2.1in
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.10b. The configurable options are summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a CA**
 
-|ca2.png|
+|ca2a.png|
 
-.. |ca2.png| image:: images/ca2.png
-    :width: 3.7in
-    :height: 2.8in
+.. |ca2a.png| image:: images/ca2a.png
+    :width: 4.1in
+    :height: 3.1in
 
 **Table 5.10a: Importing a CA Options**
 
