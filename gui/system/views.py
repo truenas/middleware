@@ -1039,9 +1039,6 @@ def reload_httpd(request):
 
 def debug(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-    p1 = pipeopen("zfs list -H -o name")
-    zfs = p1.communicate()[0]
-    zfs = zfs.split()
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
     if notifier().system_dataset_path() is not None:
