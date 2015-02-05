@@ -32,6 +32,7 @@ from django.shortcuts import render
 
 from freenasUI.common.system import get_sw_name, get_sw_login_version
 from freenasUI.support import utils
+from freenasUI.system.utils import debug_get_settings, debug_run
 
 log = logging.getLogger("support.views")
 TICKET_PROGRESS = '/tmp/.ticketprogress'
@@ -47,12 +48,13 @@ def ticket(request):
 
         step = 1
 
-        if request.POST.get('debug' == 'on':
+        if request.POST.get('debug') == 'on':
             with open(TICKET_PROGRESS, 'w') as f:
                 f.write(json.dumps({'indeterminate': True, 'step': step}))
             step += 1
 
-            #TODO: generate debug
+            mntpt, direc, dump = debug_get_settings()
+            debug_run(direc)
 
         with open(TICKET_PROGRESS, 'w') as f:
             f.write(json.dumps({'indeterminate': True, 'step': step}))
