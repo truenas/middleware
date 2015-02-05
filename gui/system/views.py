@@ -1111,6 +1111,8 @@ def backup(request):
                     return JsonResp(request, error=True, message='Could not communicate with backup daemon')
 
                 return render(request, 'system/backup_progress.html')
+            else:
+                return JsonResp(request, form=backup_form)
 
         backup_form = forms.BackupForm()
         return render(request, 'system/backup.html', {
