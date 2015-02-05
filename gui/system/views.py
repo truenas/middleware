@@ -83,6 +83,8 @@ from freenasUI.system.utils import (
     CheckUpdateHandler,
     UpdateHandler,
     VerifyHandler,
+    debug_get_settings,
+    debug_run,
     get_changelog,
     parse_changelog,
 )
@@ -1037,24 +1039,11 @@ def reload_httpd(request):
 
 def debug(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-    direc = "/var/tmp/ixdiagnose"
-    mntpt = '/var/tmp'
-    if notifier().system_dataset_path() is not None:
-        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
-        mntpt = notifier().system_dataset_path()
-    dump = os.path.join(direc, 'ixdiagnose.tgz')
+    mntpt, direc, dump = debug_get_settings()
 
     with mntlock(mntpt=mntpt):
 
-        # Be extra safe in case we have left over from previous run
-        if os.path.exists(direc):
-            opts = ["/bin/rm", "-r", "-f", direc]
-            p1 = pipeopen(' '.join(opts), allowfork=True)
-            p1.wait()
-
-        opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
-        p1 = pipeopen(' '.join(opts), allowfork=True)
-        p1.communicate()
+        debug_run(direc)
 
         wrapper = FileWrapper(file(dump))
         response = StreamingHttpResponse(
