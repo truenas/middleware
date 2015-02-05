@@ -851,10 +851,5 @@ jail_post_delete()
 
 system_dataset_enabled()
 {
-	if [ -e "${FREENAS_SYSTEMDATASET}" -a "$(ls -A ${FREENAS_SYSTEMDATASET} >/dev/null 2>&1)" ]
-	then
-		return 0
-	else
-		return 1
-	fi
+	test -n "$(find "${FREENAS_SYSTEMDATASET}" -prune -type d ! -empty 2>/dev/null)"
 }
