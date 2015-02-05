@@ -137,7 +137,7 @@ def filter_routes(routes):
 
 
 def get_addresses(entity):
-    return [ipaddress.ip_address(i['address']) for i in entity.get('aliases')]
+    return [ipaddress.ip_address(i['address']) for i in entity.get('aliases', [])]
 
 
 class RoutingSocketEventSource(threading.Thread):
