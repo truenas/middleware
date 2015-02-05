@@ -36,6 +36,8 @@ from lockfile import LockFile
 
 from freenasOS import Configuration
 from freenasUI.common import humanize_size
+from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('system.utils')
 
@@ -317,3 +319,26 @@ def parse_changelog(changelog, start = '', end = ''):
             break    
 
     return changelog if changelog else None
+
+
+def debug_get_settings():
+    direc = "/var/tmp/ixdiagnose"
+    mntpt = '/var/tmp'
+    if notifier().system_dataset_path() is not None:
+        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
+        mntpt = notifier().system_dataset_path()
+    dump = os.path.join(direc, 'ixdiagnose.tgz')
+
+    return (mntpt, direc, dump)
+
+
+def debug_run(direc):
+    # Be extra safe in case we have left over from previous run
+    if os.path.exists(direc):
+        opts = ["/bin/rm", "-r", "-f", direc]
+        p1 = pipeopen(' '.join(opts), allowfork=True)
+        p1.wait()
+
+    opts = ["/usr/local/bin/ixdiagnose", "-d", direc, "-s", "-F"]
+    p1 = pipeopen(' '.join(opts), allowfork=True)
+    p1.communicate()
