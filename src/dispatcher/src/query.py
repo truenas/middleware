@@ -48,6 +48,7 @@ def resolve_property(obj, path):
 
 
 def filter_query(iterable, *rules, **params):
+    single = params.pop('single', False)
     result = []
     operators_table = {
         '=': lambda x, y: x == y,
@@ -74,6 +75,9 @@ def filter_query(iterable, *rules, **params):
             fail = True
 
         if not fail:
+            if single:
+                return i
+
             result.append(i)
 
     return result

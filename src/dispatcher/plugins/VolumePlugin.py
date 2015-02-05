@@ -33,6 +33,15 @@ from lib import zfs
 from dispatcher.rpc import RpcException, description, accepts, returns
 
 
+def flatten_datasets(root):
+    for ds in root['children']:
+        for c in flatten_datasets(ds):
+            yield c
+
+    del root['children']
+    yield root
+
+
 @description("Provides access to volumes information")
 class VolumeProvider(Provider):
     @query('definitions/volume')
@@ -46,7 +55,8 @@ class VolumeProvider(Provider):
 
             vol['topology'] = topology
             vol['status'] = config['status']
-            vol['datasets'] = config['root_dataset']
+            vol['properties'] = config['properties']
+            vol['datasets'] = list(flatten_datasets(config['root_dataset']))
             result.append(vol)
 
         return result
@@ -72,7 +82,7 @@ class VolumeProvider(Provider):
         return list(disks)
 
     def get_config(self, volume):
-        return self.dispatcher.call_sync('zfs.pool.query', [('name', '=', volume)], {'single': True})[0]
+        return self.dispatcher.call_sync('zfs.pool.query', [('name', '=', volume)], {'single': True})
 
     def get_capabilities(self, type):
         if type == 'zfs':
@@ -176,16 +186,16 @@ class VolumeAutoCreateTask(VolumeCreateTask):
             for i in xrange(0, len(disks), 3):
                 vdevs.append({
                     'type': 'raidz',
-                    'children': [{'type': 'disk', 'path': i} for i in disks[i:i+3]]
+                    'children': [{'type': 'disk', 'path': os.path.join('/dev', i)} for i in disks[i:i+3]]
                 })
         elif len(disks) % 2 == 0:
             for i in xrange(0, len(disks), 2):
                 vdevs.append({
                     'type': 'mirror',
-                    'children': [{'type': 'disk', 'path': i} for i in disks[i:i+2]]
+                    'children': [{'type': 'disk', 'path': os.path.join('/dev', i)} for i in disks[i:i+2]]
                 })
         else:
-            vdevs = [{'type': 'disk', 'path': i} for i in disks]
+            vdevs = [{'type': 'disk', 'path': os.path.join('/dev', i)} for i in disks]
 
         self.join_subtasks(self.run_subtask('volume.create', name, type, {'data': vdevs}, params))
 
@@ -233,6 +243,28 @@ class DatasetCreateTask(Task):
         self.join_subtasks(self.run_subtask('zfs.create_dataset', pool_name, path, params))
 
 
+class DatasetDeleteTask(Task):
+    def verify(self, pool_name, path):
+        if not self.datastore.exists('volumes', ('name', '=', pool_name)):
+            raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(pool_name))
+
+        return ['zpool:{0}'.format(pool_name)]
+
+    def run(self, pool_name, path):
+        self.join_subtasks(self.run_subtask('zfs.destroy', pool_name, path, params))
+
+
+class DatasetConfigureTask(Task):
+    def verify(self, pool_name, path, updated_params):
+        if not self.datastore.exists('volumes', ('name', '=', pool_name)):
+            raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(pool_name))
+
+        return ['zpool:{0}'.format(pool_name)]
+
+    def run(self, pool_name, path, updated_params):
+        self.join_subtasks(self.run_subtask('zfs.destroy', pool_name, path, params))
+
+
 def iterate_vdevs(topology):
     for name, grp in topology.items():
         for vdev in grp:
@@ -254,10 +286,9 @@ def _init(dispatcher):
         guid = args['guid']
         dispatcher.datastore.delete('volumes', guid)
 
-        dispatcher.dispatch_event('volume.destroyed', {
-            'name': args['pool'],
-            'id': guid,
-            'type': 'zfs'
+        dispatcher.dispatch_event('volumes.changed', {
+            'operation': 'delete',
+            'ids': [guid]
         })
 
     dispatcher.register_schema_definition('volume', {
@@ -278,5 +309,7 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.destroy', VolumeDestroyTask)
     dispatcher.register_task_handler('volume.import', VolumeImportTask)
     dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
+    dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
+    dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
 
     dispatcher.register_event_type('volumes.changed')
