@@ -21,6 +21,9 @@ The Storage section of the graphical interface allows you to configure the follo
 
 These configurations are described in more detail in this section.
 
+.. note:: if the TrueNAS® system has been configured as the passive node in a failover configuration, the screens shown in this chapter will be replaced by a
+          message indicating that this node is passive. All of the options discussed in this chapter can only be configured on the active node.
+
 .. index:: Volumes
 .. _Volumes:
 
