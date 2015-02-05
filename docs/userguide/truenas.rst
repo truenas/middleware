@@ -18,7 +18,7 @@
    Upgrading TrueNAS® <truenas_upgrade>
    Using the FreeNAS® API <truenas_api>
 
-.. |cover.jpg| image:: images/cover.jpg
+.. |tn_cover.jpg| image:: images/tn_cover.jpg
     :width: 8.5in
     :height: 11.0in
 

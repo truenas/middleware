@@ -1,6 +1,6 @@
 :orphan:
 
-|cover.jpg|
+|tn_cover.jpg|
 
 .. centered:: Published XX, 2015
 
@@ -11,7 +11,7 @@
 .. centered:: Cover art by Jenny Rosenberg
 
 
-.. |cover.jpg| image:: images/cover.jpg
+.. |tn_cover.jpg| image:: images/tn_cover.jpg
     :width: 8.5in
     :height: 11.0in
 
