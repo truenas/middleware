@@ -14,6 +14,7 @@
    Sharing <truenas_sharing>
    Services <truenas_services>
    Reporting <truenas_reporting>
+   Wizard <truenas_wizard>
    Additional Options <truenas_options>
    Upgrading TrueNAS® <truenas_upgrade>
    Using the FreeNAS® API <truenas_api>

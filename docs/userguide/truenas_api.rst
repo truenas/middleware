@@ -11,9 +11,9 @@ API which can be used as an alternate mechanism for remotely controlling a TrueN
 reStructuredText is an easy-to-read, lightweight markup language that provides an HTTP implementation of functions, known as resources, which are available
 beneath a specified base URL. Each resource is manipulated using the HTTP methods defined in :rfc:`2616`, such as GET, PUT, POST, or DELETE.
 
-As seen in Figure 15.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
+As seen in Figure 16.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
 
-**Figure 15.1a: FreeNAS® API Documentation**
+**Figure 16.1a: FreeNAS® API Documentation**
 
 |api.png|
 
@@ -85,11 +85,11 @@ to *http*.
 
 **Lines 8-16:** sets the values for the user being created. The `"Users" resource <http://api.freenas.org/resources/account.html#users>`_ describes this
 resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a FreeBSD user, the
-values that you input must be valid for a FreeBSD user account. Table 15.1a summarizes the valid values. Since this resource is using JSON, the possible
+values that you input must be valid for a FreeBSD user account. Table 16.1a summarizes the valid values. Since this resource is using JSON, the possible
 boolean values are *True*
 or *False*.
 
-**Table 15.1a: Valid JSON Parameters for Users Create Resource**
+**Table 16.1a: Valid JSON Parameters for Users Create Resource**
 
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 | **JSON Parameter**       | **Type** | **Description**                                                                                                      |

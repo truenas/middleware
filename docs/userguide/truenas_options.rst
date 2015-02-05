@@ -13,9 +13,9 @@ Display System Processes
 ------------------------
 
 If you click Display System Processes, a screen will open showing the output of
-`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 13.1a.
+`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 14.1a.
 
-**Figure 13.1a: System Processes Running on TrueNAS®**
+**Figure 14.1a: System Processes Running on TrueNAS®**
 
 |process.png|
 
@@ -34,9 +34,9 @@ Shell
 -----
 
 The TrueNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user. The link to Shell is the
-fourth entry from the bottom of the menu tree. In Figure 13.2a, the link has been clicked and Shell is open.
+fourth entry from the bottom of the menu tree. In Figure 14.2a, the link has been clicked and Shell is open.
 
-**Figure 13.2a: Web Shell**
+**Figure 14.2a: Web Shell**
 
 |shell.png|
 
@@ -82,10 +82,10 @@ you are logged out and will provide a hyperlink which you can click on to log ba
 Reboot
 ------
 
-If you click "Reboot", you will receive the warning message shown in Figure 13.4a and your browser color will change to red to indicate that you have selected
+If you click "Reboot", you will receive the warning message shown in Figure 14.3a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 13.4a: Reboot Warning Message**
+**Figure 14.3a: Reboot Warning Message**
 
 |reboot.png|
 
@@ -110,10 +110,10 @@ from resuming normal operation.
 Shutdown
 --------
 
-If you click "Shutdown", you will receive the warning message shown in Figure 13.5a and your browser color will change to red to indicate that you have
+If you click "Shutdown", you will receive the warning message shown in Figure 14.4a and your browser color will change to red to indicate that you have
 selected an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 13.5a: Shutdown Warning Message**
+**Figure 14.4a: Shutdown Warning Message**
 
 |shutdown.png|
 
@@ -151,9 +151,9 @@ Creating a Support Ticket
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As an iXsystems customer, you have access to the resources available at
-`https://support.ixsystems.com <https://support.ixsystems.com/>`_, shown in Figure 13.6a.
+`https://support.ixsystems.com <https://support.ixsystems.com/>`_, shown in Figure 14.5a.
 
-**Figure 13.6a: iXsystems Support Website**
+**Figure 14.5a: iXsystems Support Website**
 
 |support.png|
 
@@ -191,10 +191,10 @@ Alert
 -----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 13.7a. one of the disks in a ZFS pool is offline which has
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.6a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
-**Figure 13.7a: Example Alert Message**
+**Figure 14.6a: Example Alert Message**
 
 |alert.png|
 
