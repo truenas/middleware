@@ -31,4 +31,5 @@ urlpatterns = patterns(
     'freenasUI.support.views',
     url(r'^index/$', 'index', name="support_home"),
     url(r'^ticket/$', 'ticket', name="support_ticket"),
+    url(r'^ticket/progress/$', 'ticket_progress', name="support_ticket_progress"),
 )

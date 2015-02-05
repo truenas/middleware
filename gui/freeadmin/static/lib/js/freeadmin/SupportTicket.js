@@ -54,6 +54,7 @@ define([
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
       errorMessage: "",
       initial: "",
+      progressUrl: "",
       url: "",
       templateString: template,
       postCreate: function() {
@@ -214,11 +215,41 @@ define([
         return true;
       },
       submit: function() {
+
+        var steps = [];
+        var fileUpload = false;
+
+        query("input[type=file]", this._form.domNode).forEach(function(item, idx) {
+          if(item.value) fileUpload = true;
+        });
+
+        if(this._debug.get('value') == 'on') {
+          steps.push({
+            label: gettext("Generating debug info")
+          });
+        }
+
+        if(fileUpload) {
+          steps.push({
+            label: gettext("Uploading attachments")
+          });
+        }
+
+        steps.push({
+          label: gettext("Submitting ticket")
+        });
+
+        var progressbar = {
+          poolUrl: this.progressUrl,
+          steps: steps,
+          fileUpload: fileUpload
+        };
+
         if(!this.validate()) return false;
         doSubmit({
           url: this.url,
           form: this._form,
-          //progressbar: this.url_progress
+          progressbar: progressbar
         });
       }
     });
