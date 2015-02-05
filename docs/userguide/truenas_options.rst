@@ -82,10 +82,10 @@ you are logged out and will provide a hyperlink which you can click on to log ba
 Reboot
 ------
 
-If you click "Reboot", you will receive the warning message shown in Figure 14.3a and your browser color will change to red to indicate that you have selected
+If you click "Reboot", you will receive the warning message shown in Figure 14.4a and your browser color will change to red to indicate that you have selected
 an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 14.3a: Reboot Warning Message**
+**Figure 14.4a: Reboot Warning Message**
 
 |reboot.png|
 
@@ -110,10 +110,10 @@ from resuming normal operation.
 Shutdown
 --------
 
-If you click "Shutdown", you will receive the warning message shown in Figure 14.4a and your browser color will change to red to indicate that you have
+If you click "Shutdown", you will receive the warning message shown in Figure 14.5a and your browser color will change to red to indicate that you have
 selected an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 14.4a: Shutdown Warning Message**
+**Figure 14.5a: Shutdown Warning Message**
 
 |shutdown.png|
 
@@ -143,46 +143,6 @@ The Help button in the upper right corner provides a pop-up menu containing hype
 
 *   the email address of the support team
 
-.. index:: Support
-
-.. _Creating a Support Ticket:
-
-Creating a Support Ticket
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As an iXsystems customer, you have access to the resources available at
-`https://support.ixsystems.com <https://support.ixsystems.com/>`_, shown in Figure 14.5a.
-
-**Figure 14.5a: iXsystems Support Website**
-
-|support.png|
-
-.. |support.png| image:: images/support.png
-    :width: 6.9252in
-    :height: 3.7492in
-
-The support website provides some knowledge base articles. If the support issue is not addressed by the TrueNAS® Administrator Guide or a knowledge base
-article, click the "Submit a Ticket" hyperlink, then click TrueNAS® so that your ticket can be routed to a TrueNAS® support representative.
-
-In the "Submit a Ticket" screen, select "TrueNAS" then click the "Next" button.
-
-You will then be prompted to fill in your "Contact Information", "System Details", and a description of the issue. Use a "Subject" line that summarizes the
-support issue.
-
-The "Message Details" should contain a summary of how to recreate the problem, as well as any applicable error messages or screenshots. Use the "Upload Files"
-button to attach a log file or screenshot. If the issue is related to a configuration, upload the file that is created by going to `System -> Advanced -> Save
-Debug`.
-
-When finished, input the captcha information and click the "Submit" button. A message will indicate that the ticket has been submitted and has been issued a
-Ticket ID. An email confirmation will also be sent, indicating the Ticket ID and providing a hyperlink to check the status of or to reply to the ticket.
-
-A login account is not required to submit a ticket. However, a login is required in order to view your submitted tickets. If you do not have a login account,
-click "Register" to create one. The registration process will ask for your name, email address, a password, and to verify a captcha image. A registration
-email will be sent to the provided email address; you will not be able to login until you follow the link in the email to validate your account.
-
-To view the status of your tickets, click the "View Tickets" tab while logged in. In addition to the status, you can view any comments by support staff as
-well as click a ticket's Post Reply button in order to respond to a comment or to provide additional requested information.
-
 .. index:: Alert
 
 .. _Alert:
@@ -191,10 +151,10 @@ Alert
 -----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.6a. one of the disks in a ZFS pool is offline which has
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.7a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
-**Figure 14.6a: Example Alert Message**
+**Figure 14.7a: Example Alert Message**
 
 |alert.png|
 

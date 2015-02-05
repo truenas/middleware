@@ -27,6 +27,8 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
 
+* :ref:`Support`: used to create a support ticket.
+
 Each of these is described in more detail in this section.
 
 .. _Information:
@@ -1049,3 +1051,8 @@ If you click an entry, it will activate the following configuration buttons:
 
 * **Delete:** used to delete a certificate or certificate signing request.
 
+.. index:: Support
+.. _Support:
+
+Support
+-------
