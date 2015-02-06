@@ -64,20 +64,19 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
 * Chapter 2: ZFS Primer: many of the features in the TrueNAS® Storage Appliance rely on the ZFS file system. An overview is provided to familiarize the
   administrator with the terminology and features provided by ZFS.
 
-* Chapter 3: Accessing TrueNAS®: this chapter introduces the console, shows how to access the graphical administrative interface, and introduces the
-  initial configuration wizard.
+* Chapter 3: Accessing TrueNAS®: this chapter introduces the console, shows how to access the graphical administrative interface.
 
-* Chapters 4-13: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order
-  reflects the order that the configuration options appear within the administrative interface's tree structure. Chapter 5 describes how to create users and
-  groups. Chapter 6 describes the tasks that can be accomplished using the System Configuration section of the administrative interface. Chapter 7
-  demonstrates the various network configuration options. Chapter 8 deals with storage: how to manage storage volumes, snapshots, and replication. Chapter 9
-  provides examples for creating AFP, CIFS, and NFS shares. Chapter 10 describes how to configure and start/stop the built-in services. Chapter 11 provides an
-  overview of the Reporting mechanism. Chapter 12 covers the remaining configuration options that appear below the interface's tree structure or which appear
-  as icons in the upper right portion of the interface.
+* Chapters 4-14: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order
+  reflects the order that the configuration options appear within the administrative interface's tree structure. Chapter 4 describes how to create users and
+  groups. Chapter 5 describes the tasks that can be accomplished using the System Configuration section of the administrative interface. Chapter 6 describes
+  how to schedule regular administrative tasks. Chapter 7 demonstrates the various network configuration options. Chapter 8 deals with managing storage.
+  Chapter 9 describes integration with various directory services. Chapter 10 provides examples for creating AFP, CIFS, NFS, WebDAV, and iSCSI shares. Chapter
+  11 describes how to configure, start, and stop the built-in services. Chapter 12 provides an overview of the Reporting mechanism. Chapter 13 introduces the
+  configuration wizard, and chapter 14 covers the remaining configuration options.
 
-* Chapter 14: Upgrading TrueNAS®: this chapter demonstrates how to upgrade the TrueNAS® operating system to a newer version.
+* Chapter 15: Upgrading TrueNAS®: this chapter demonstrates how to upgrade the TrueNAS® operating system to a newer version.
 
-* Chapter 15: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
+* Chapter 16: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
 
 **Typographic Conventions**
 

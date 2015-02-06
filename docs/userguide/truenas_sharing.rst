@@ -6,10 +6,10 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-Beginning with version 9.3, TrueNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
-type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
-recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
-the default permissions from the client operating system to meet the requirements of the network.
+Beginning with version 9.3, TrueNAS® provides a :ref:`Wizard` for creating shares. The Wizard will automatically create the correct type of dataset and
+permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is recommended to use the
+Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune the default permissions
+from the client operating system to meet the requirements of the network.
 
 .. note:: shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
    that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the
@@ -64,9 +64,9 @@ Apple (AFP) Shares
 
 TrueNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
-AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the
-:ref:`Initial Configuration Wizard`. It then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup
-to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
+AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the :ref:`Wizard`. It
+then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup to a dataset on the FreeNAS® system,
+and for connecting to the share from a Mac OS X client.
 
 To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
 the configuration options shown in Figure 10.1a.

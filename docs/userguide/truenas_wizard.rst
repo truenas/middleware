@@ -1,3 +1,5 @@
+.. _Wizard:
+
 Wizard
 ------
 
@@ -6,7 +8,7 @@ network. This section describes the configuration steps which are available from
 
 Figure 13a shows the first wizard configuration screen.
 
-**Figure 13a: Initial Configuration Wizard**
+**Figure 13a: Configuration Wizard**
 
 |wizard.png|
 
@@ -31,9 +33,9 @@ Figure 13b shows the configuration screen that appears when unformatted disks ar
     :width: 4.7in
     :height: 2.4in
 
-.. note:: the initial configuration wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the
-   instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard and it will recognize that the volume has
-   been imported and will not prompt to reformat the disks.
+.. note:: the wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the instructions in
+          :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard and it will recognize that the volume has been
+          imported and will not prompt to reformat the disks.
 
 Input a name for the ZFS pool that conforms to these
 `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
