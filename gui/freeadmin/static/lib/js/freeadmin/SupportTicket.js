@@ -48,7 +48,21 @@ define([
       {label: "AFP", value: "AFP"},
       {label: "API", value: "API"},
       {label: "Alerts", value: "Alerts"},
-      {label: "CIFS", value: "CIFS"}
+      {label: "CIFS", value: "CIFS"},
+      {label: "Certs", value: "Certs"},
+      {label: "Directory Services", value: "Directory Services"},
+      {label: "Documentation", value: "Documentation"},
+      {label: "Drivers", value: "Drivers"},
+      {label: "Filesystems", value: "Filesystems"},
+      {label: "GUI", value: "GUI"},
+      {label: "Installation/Upgrades", value: "Installation/Upgrades"},
+      {label: "iSCSI", value: "iSCSI"},
+      {label: "Jails", value: "Jails"},
+      {label: "NFS", value: "NFS"},
+      {label: "Networking", value: "Networking"},
+      {label: "Plugins", value: "Plugins"},
+      {label: "Reporting", value: "Reporting"},
+      {label: "Security", value: "Security"}
     ];
 
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
@@ -238,7 +252,6 @@ define([
         steps.push({
           label: gettext("Submitting ticket")
         });
-
 
         if(fileUpload || this._debug.get('value') == 'on') {
           steps.push({
