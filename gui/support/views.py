@@ -26,7 +26,9 @@
 #####################################################################
 import json
 import logging
+import os
 
+from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -48,6 +50,7 @@ def ticket(request):
 
         step = 1
 
+        files = []
         if request.POST.get('debug') == 'on':
             with open(TICKET_PROGRESS, 'w') as f:
                 f.write(json.dumps({'indeterminate': True, 'step': step}))
@@ -55,12 +58,13 @@ def ticket(request):
 
             mntpt, direc, dump = debug_get_settings()
             debug_run(direc)
+            files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
 
         with open(TICKET_PROGRESS, 'w') as f:
             f.write(json.dumps({'indeterminate': True, 'step': step}))
         step += 1
 
-        success, msg = utils.new_ticket({
+        success, msg, tid = utils.new_ticket({
             'user': request.POST.get('username'),
             'password': request.POST.get('password'),
             'type': request.POST.get('type'),
@@ -68,12 +72,26 @@ def ticket(request):
             'body': request.POST.get('desc'),
             'version': get_sw_login_version(),
         })
+
+        with open(TICKET_PROGRESS, 'w') as f:
+            f.write(json.dumps({'indeterminate': True, 'step': step}))
+        step += 1
+
         if not success:
             response = render(request, 'support/ticket.html', {
                 'error_message': msg,
                 'initial': json.dumps(request.POST.dict()),
             })
         else:
+
+            files.extend(request.FILES.getlist('attachment'))
+            for f in files:
+                success, attachmsg = utils.ticket_attach({
+                    'user': request.POST.get('username'),
+                    'password': request.POST.get('password'),
+                    'ticketnum': tid,
+                }, f)
+
             response = render(request, 'support/ticket_response.html', {
                 'success': success,
                 'message': msg,
