@@ -106,13 +106,14 @@ system. You should be prompted to input the password for the *root* user, as see
 |tn_login.png|
 
 .. |tn_login.png| image:: images/tn_login.png
-    :width: 5.2in
-    :height: 3.8in
+    :width: 5.6in
+    :height: 2.6in
 
-Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3c. You can then change the
-default *root* password to a more secure value by going to `Account --> Users --> View Users`. Highlight the entry for
-*root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new password
-to use on subsequent logins.
+Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3c.
+
+.. note:: you can change the default *root* password to a more secure value by going to `Account --> Users --> View Users`. Highlight the entry for
+          *root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new
+          password to use on subsequent logins.
 
 **Figure 3c: TrueNAS® Graphical Configuration Menu**
 
