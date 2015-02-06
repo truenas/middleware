@@ -35,3 +35,11 @@ def parse_query_args(args, kwargs):
         params['limit'] = int(kwargs['limit'])
 
     return filters, params
+
+
+def first_or_default(f, iterable, default=None):
+    i = filter(f, iterable)
+    if i:
+        return i[0]
+
+    return default
