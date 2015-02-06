@@ -784,6 +784,13 @@ class notifier:
         self._system("/usr/sbin/service ix-syslogd quietstart")
         self._system("/etc/local/rc.d/syslog-ng start")
 
+    def _stop_syslogd(self):
+        self._system("/etc/local/rc.d/syslog-ng stop")
+
+    def _reload_syslogd(self):
+        self._system("/usr/sbin/service ix-syslogd quietstart")
+        self._system("/etc/local/rc.d/syslog-ng reload")
+
     def _reload_tftp(self):
         self._system("/usr/sbin/service ix-inetd quietstart")
         self._system("/usr/sbin/service inetd forcestop")
@@ -5436,7 +5443,7 @@ class notifier:
             self.stop('collectd')
 
         for src, dest in rsyncs:
-            rv = self._system_nolog('/usr/local/bin/rsync -az "%s" "%s"' % (
+            rv = self._system_nolog('/usr/local/bin/rsync -az "%s/" "%s"' % (
                 src,
                 dest,
             ))
