@@ -223,21 +223,28 @@ define([
           if(item.value) fileUpload = true;
         });
 
+        if(fileUpload) {
+          steps.push({
+            label: gettext("Uploading attachments to host")
+          });
+        }
+
         if(this._debug.get('value') == 'on') {
           steps.push({
             label: gettext("Generating debug info")
           });
         }
 
-        if(fileUpload || this._debug.get('value') == 'on') {
-          steps.push({
-            label: gettext("Uploading attachments")
-          });
-        }
-
         steps.push({
           label: gettext("Submitting ticket")
         });
+
+
+        if(fileUpload || this._debug.get('value') == 'on') {
+          steps.push({
+            label: gettext("Uploading attachments from host to the ticket")
+          });
+        }
 
         var progressbar = {
           poolUrl: this.progressUrl,
