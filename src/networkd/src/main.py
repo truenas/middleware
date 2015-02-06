@@ -524,7 +524,7 @@ class Main:
 
     def using_dhcp_for_gateway(self):
         for i in self.datastore.query('network.interfaces'):
-            if i.get('dhcp') and self.config.get('network.dhcp.assign_gateway'):
+            if i.get('dhcp') and self.configstore.get('network.dhcp.assign_gateway'):
                     return True
 
         return False
