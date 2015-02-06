@@ -54,8 +54,8 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 |tn_zfs1.png|
 
 .. |tn_zfs1.png| image:: images/tn_zfs1.png
-    :width: 8.3in
-    :height: 4.12in
+    :width: 8.1in
+    :height: 4.5in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -360,8 +360,8 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 |tn_dataset.png|
 
 .. |tn_dataset.png| image:: images/tn_dataset.png
-    :width: 5.2in
-    :height: 3.2in
+    :width: 8.1in
+    :height: 5.2in
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -695,8 +695,8 @@ space is "Used", how much disk space is "Available", the type of "Compression", 
 |tn_volume1.png|
 
 .. |tn_volume1.png| image:: images/tn_volume1.png
-    :width: 6.2in
-    :height: 3.2in
+    :width: 9.7in
+    :height: 3.5in
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
@@ -715,8 +715,8 @@ disk, writes data to the disk indicating that the export was done, and removes a
 |tn_detach.png|
 
 .. |tn_detach.png| image:: images/tn_detach.png
-    :width: 8.4in
-    :height: 3.6in
+    :width: 8.9in
+    :height: 3.5in
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
@@ -735,8 +735,8 @@ running the latest versions of feature flags.
 |tn_volume2.png|
 
 .. |tn_volume2.png| image:: images/tn_volume2.png
-    :width: 4.2in
-    :height: 3.1in
+    :width: 9.8in
+    :height: 3.5in
 
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
 configurable options.
@@ -854,8 +854,7 @@ capable of active/read.
 Replacing a Failed Drive
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you are using any form of redundant RAID, you should replace a failed drive as soon as possible to repair the degraded state of the RAID. Depending upon
-the capability of your hardware, you may or may not need to reboot in order to replace the failed drive. AHCI capable hardware does not require a reboot.
+You should replace a failed drive as soon as possible to repair the degraded state of the RAID.
 
 .. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
 
