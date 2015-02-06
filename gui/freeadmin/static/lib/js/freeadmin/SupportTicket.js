@@ -229,7 +229,7 @@ define([
           });
         }
 
-        if(fileUpload) {
+        if(fileUpload || this._debug.get('value') == 'on') {
           steps.push({
             label: gettext("Uploading attachments")
           });
