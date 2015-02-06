@@ -557,7 +557,7 @@ Beginning with FreeNAS® 9.3, a default Kerberos realm is created for the local 
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
 shown in Figure 9.5a.
 
-**Figure 9.5a: Viewing Kerberos Realms**
+**Figure 9.5a: Adding a Kerberos Realm**
 
 |realm1.png|
 
