@@ -28,27 +28,13 @@
 import os
 import errno
 from gevent import Timeout
-from watchdog import events
 from task import Task, TaskStatus, Provider, TaskException
 from dispatcher.rpc import RpcException, description, accepts, returns
-from balancer import TaskState
-from event import EventSource
-from lib.system import system, SubprocessException
+from resources import Resource
 
 
 @description("Provides info about configured NFS shares")
 class NFSSharesProvider(Provider):
-    def initialize(self, context):
-        self.datastore = context.dispatcher.datastore
-
-    @description("Lists configured NFS shares")
-    @returns({
-        'type': 'array',
-        'items': {'$ref': 'definitions/nfs-share'}
-    })
-    def query(self, filter=None, params=None):
-        return self.datastore.query('shares.nfs', *(filter or []), **(params or {}))
-
     def get_connected_users(self, share):
         pass
 
@@ -66,9 +52,9 @@ class CreateNFSShareTask(Task):
         return ['service:nfs']
 
     def run(self, share):
-        self.datastore.insert('shares.nfs', share)
+        self.datastore.insert('shares', share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.join_subtasks(self.run_subtask('service.manage', 'nfs', 'reload'))
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'create',
             'ids': [share['id']]
@@ -91,9 +77,9 @@ class UpdateNFSShareTask(Task):
         return ['service:nfs']
 
     def run(self, name, updated_fields):
-        self.datastore.update('shares.nfs', name, updated_fields)
+        self.datastore.update('shares', name, updated_fields)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.join_subtasks(self.run_subtask('service.manage', 'nfs', 'reload'))
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'update',
             'ids': [name]
@@ -114,40 +100,51 @@ class DeleteNFSShareTask(Task):
         return ['service:nfs']
 
     def run(self, name):
-        self.datastore.delete('shares.nfs', name)
+        self.datastore.delete('shares', name)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.join_subtasks(self.run_subtask('service.manage', 'nfs', 'reload'))
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'delete',
             'ids': [name]
         })
 
 
+def _metadata():
+    return {
+        'type': 'sharing',
+        'method': 'nfs'
+    }
+
+
 def _init(dispatcher):
-    dispatcher.register_schema_definition('nfs-share', {
-        'type': 'object',
-        'properties': {
-            'id': {'type': 'string'},
-            'comment': {'type': 'string'},
-            'alldirs': {'type': 'boolean'},
-            'read-only': {'type': 'boolean'},
-            'maproot-user': {'type': 'string'},
-            'maproot-group': {'type': 'string'},
-            'mapall-user': {'type': 'string'},
-            'mapall-group': {'type': 'string'},
-            'hosts': {
-                'type': 'array',
-                'items': {'type': 'string'}
-            },
-            'paths': {
-                'type': 'array',
-                'items': {'type': 'string'}
-            }
-        }
-    })
+#    dispatcher.register_schema_definition('nfs-share', {
+#        'type': 'object',
+#        'properties': {
+#            'id': {'type': 'string'},
+#            'comment': {'type': 'string'},
+#            'alldirs': {'type': 'boolean'},
+#            'read-only': {'type': 'boolean'},
+#            'maproot-user': {'type': 'string'},
+#            'maproot-group': {'type': 'string'},
+#            'mapall-user': {'type': 'string'},
+#            'mapall-group': {'type': 'string'},
+#            'hosts': {
+#                'type': 'array',
+#                'items': {'type': 'string'}
+#            },
+#            'paths': {
+#                'type': 'array',
+#                'items': {'type': 'string'}
+#            }
+#        }
+#    })
 
     dispatcher.register_task_handler("share.nfs.create", CreateNFSShareTask)
     dispatcher.register_task_handler("share.nfs.update", UpdateNFSShareTask)
     dispatcher.register_task_handler("share.nfs.delete", DeleteNFSShareTask)
-    dispatcher.register_provider("share.nfs", NFSSharesProvider)
-    dispatcher.register_resource('service:nfs', ['system'])
+    dispatcher.register_provider("shares.nfs", NFSSharesProvider)
+    dispatcher.register_resource(Resource('service:nfs'), ['system'])
+
+    # Start NFS server if there are any configured shares
+    if dispatcher.datastore.exist('shares', [('type', '=', 'nfs')]):
+        dispatcher.call_sync('service.start', 'nfsd')
