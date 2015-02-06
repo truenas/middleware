@@ -396,11 +396,11 @@ warning is provided and the tests should be run at a time that will least impact
 
 **Figure 5.4b: Backup Configuration Screen**
 
-|backup.png|
+|backup1.png|
 
-.. |backup.png| image:: images/backup.png
+.. |backup1.png| image:: images/backup1.png
     :width: 3.24in
-    :height: 2.95in
+    :height: 3.3in
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -415,7 +415,7 @@ warning is provided and the tests should be run at a time that will least impact
 |                                         |                | directory"                                                                                     |
 |                                         |                |                                                                                                |
 +-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
-| Password                                | string         | the password associated with the user account                                                  |
+| Password                                | string         | input and confirm the password associated with the user account                                |
 |                                         |                |                                                                                                |
 +-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
 | Remote directory                        | string         | the full path to the directory to save the backup to                                           |
