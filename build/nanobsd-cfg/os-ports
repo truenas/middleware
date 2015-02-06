@@ -30,6 +30,7 @@
 
 if is_truenas ; then
 	add_port truenas/zfsd
+	add_port truenas/py-keyserverlib
 fi
 
 add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
