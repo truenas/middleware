@@ -48,7 +48,7 @@ def index(request):
 def ticket(request):
     if request.method == 'POST':
 
-        step = 1
+        step = 2 if request.FILES.getlist('attachment') else 1
 
         files = []
         if request.POST.get('debug') == 'on':
