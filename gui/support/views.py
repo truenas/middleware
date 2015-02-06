@@ -33,6 +33,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from freenasUI.common.system import get_sw_name, get_sw_login_version
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.support import utils
 from freenasUI.system.utils import debug_get_settings, debug_run
 
@@ -42,7 +43,12 @@ TICKET_PROGRESS = '/tmp/.ticketprogress'
 
 def index(request):
     sw_name = get_sw_name().lower()
-    return render(request, 'support/home_%s.html' % sw_name)
+
+    context = {}
+    for c in appPool.hook_view_context('support.index', request):
+        context.update(c)
+
+    return render(request, 'support/home_%s.html' % sw_name, context)
 
 
 def ticket(request):
