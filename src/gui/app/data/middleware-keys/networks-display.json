@@ -1,11 +1,18 @@
 [{
     "primaryKey"   : "name"
-  , "secondaryKey" : "link-address"
+  , "secondaryKey" : "ip"
   , "selectionKey" : "name"
+  , "uniqueKey"    : "link-address"
   , "dataKeys": [
       {
           "key"         : "name"
         , "name"        : "Interface"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "ip"
+        , "name"        : "IP Address"
         , "type"        : "string"
         , "defaultCol"  : true
       }
@@ -28,10 +35,28 @@
         , "defaultCol"  : false
       }
     , {
-          "key"         : "aliases"
-        , "name"        : "Aliases"
-        , "type"        : "array"
+          "key"         : "netmask"
+        , "name"        : "Netmask"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "enabled"
+        , "name"        : "Enabled"
+        , "type"        : "boolean"
         , "defaultCol"  : false
+      }
+    , {
+          "key"         : "dhcp"
+        , "name"        : "DHCP Enabled"
+        , "type"        : "boolean"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "type"
+        , "name"        : "Interface Type"
+        , "type"        : "string"
+        , "defaultCol"    : false
       }
   ]
 }]
