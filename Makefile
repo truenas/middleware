@@ -7,7 +7,8 @@ VERSION?=9.3-CURRENT
 TRAIN?=${NANO_LABEL}-9.3-Nightlies
 FREENAS_KEYFILE?=/dev/null
 COMPANY?="iXsystems"
-BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
+_TIMESTAMP!=date -u '+%Y%m%d%H%M'
+BUILD_TIMESTAMP="${_TIMESTAMP}"
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
