@@ -5,14 +5,25 @@
 
 var MiddlewareClient = require("../middleware/MiddlewareClient");
 
-var NetworksActionCreators = require("../actions/NetworksActionCreators")
+var NetworksActionCreators = require("../actions/NetworksActionCreators");
 
 module.exports = {
 
-  requestNetworksList: function() {
-      MiddlewareClient.request( "networkd.configuration.query_interfaces", [], function ( rawNetworksList ) {
+    subscribe: function() {
+      MiddlewareClient.subscribe( ["networks.changed"] );
+      MiddlewareClient.subscribe( ["task.*"] );
+    }
+
+  , unsubscribe: function() {
+      MiddlewareClient.unsubscribe( ["networks.changed"] );
+      MiddlewareClient.unsubscribe( ["task.*"] );
+    }
+
+
+  , requestNetworksList: function() {
+      MiddlewareClient.request( "network.interfaces.query", [], function ( rawNetworksList ) {
         NetworksActionCreators.receiveNetworksList( rawNetworksList );
       });
-  }
+    }
 
 };

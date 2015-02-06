@@ -7,11 +7,9 @@
 
 "use strict";
 
-
 var React  = require("react");
 
 var Viewer      = require("../components/Viewer");
-//var NetworksView = require("../views/Networks/NetworksView");
 
 var NetworksMiddleware = require("../middleware/NetworksMiddleware");
 var NetworksStore      = require("../stores/NetworksStore");
@@ -20,9 +18,9 @@ var viewData = {
     format  : require("../../data/middleware-keys/networks-display.json")[0]
   , routing : {
       "route" : "networks-editor"
-    , "param" : "networkID"
+    , "param" : "networksID"
   }
-  , display: {
+  , display : {
       filterCriteria: {
           connected: {
               name     : "connected interfaces"
@@ -37,12 +35,13 @@ var viewData = {
             , testprop : { "link-state": "LINK_STATE_UNKNOWN" }
           }
       }
-    , remainingName  : "other interfaces"
-    , ungroupedName  : "all interfaces"
-    , allowedFilters : [ ]
-    , defaultFilters : [ "unknown" ]
-    , allowedGroups  : [ "connected", "disconnected" ]
-    , defaultGroups  : [ "connected", "disconnected" ]
+    , remainingName    : "other interfaces"
+    , ungroupedName    : "all interfaces"
+    , allowedFilters   : [ ]
+    , defaultFilters   : [ ]
+    , allowedGroups    : [ "connected", "disconnected", "unknown" ]
+    , defaultGroups    : [ "connected", "disconnected", "unknown" ]
+    , defaultCollapsed : [ "unknown" ]
   }
 };
 
@@ -61,10 +60,12 @@ var Networks = React.createClass({
   , componentDidMount: function() {
     NetworksStore.addChangeListener( this.handleNetworksChange );
     NetworksMiddleware.requestNetworksList();
+    NetworksMiddleware.subscribe();
   }
 
   , componentWillUnmount: function() {
     NetworksStore.removeChangeListener( this.handleNetworksChange );
+    NetworksMiddleware.unsubscribe();
   }
 
   , handleNetworksChange: function() {
@@ -72,16 +73,12 @@ var Networks = React.createClass({
   }
 
   , render: function() {
-    return (
-      <main>
-        <h2>Networks</h2>
-        <Viewer header      = { "Networks" }
+      return <Viewer header      = { "Networks" }
                 inputData   = { this.state.networksList }
                 viewData    = { viewData }
-                Editor      = { this.props.activeRouteHandler } />
-      </main>
-    );
-  }
+                Editor      = { this.props.activeRouteHandler } />;
+    }
+
 });
 
 module.exports = Networks;

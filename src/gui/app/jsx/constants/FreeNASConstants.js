@@ -30,7 +30,9 @@ module.exports = {
       , RECEIVE_RAW_WIDGET_DATA : null
 
       //Networks
-      , RECEIVE_RAW_NETWORKS : null
+      , RECEIVE_RAW_NETWORKS        : null
+      , RECEIVE_NETWORK_UPDATE_TASK : null
+      , RESOLVE_NETWORK_UPDATE_TASK : null
     })
 
   , PayloadSources: keyMirror({
