@@ -55,6 +55,11 @@ class AppPool(object):
             _method=list.append
         )
 
+    def hook_view_context(self, name, request):
+        return self._get_array(
+            'hook_view_context', name, request,
+        )
+
     def hook_app_tabs(self, name, request):
         return self._get_array('hook_app_tabs', name, request)
 
