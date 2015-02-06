@@ -1090,11 +1090,11 @@ Target Global Configuration
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
-|global1.png|
+|global.png|
 
-.. |global1.png| image:: images/global.png
-    :width: 6.0in
-    :height: 3.1in
+.. |global.png| image:: images/global.png
+    :width: 5.7in
+    :height: 3.14in
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1321,7 +1321,7 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 
 .. |target1.png| image:: images/target1.png
     :width: 3.7in
-    :height: 3.4in
+    :height: 3.0in
 
 **Table 10.5e: Target Settings**
 
@@ -1352,10 +1352,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Authentication Group number | drop-down menu | *None* or integer representing number of existing authorized access                                         |
-|                             |                |                                                                                                             |
-+-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Logical Block Size          | drop-down menu | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
-|                             |                | filesystems on an operating system limited by block count                                                   |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 

@@ -367,8 +367,11 @@ that have occurred since 9.3-RELEASE.
 
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
+  
+* The "Logical Block Size" field has been moved from :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`
 
-* The "Logical Block Size" field, "Disable Physical Block Size Reporting" checkbox, and "Available Space Threshold" field have been added to
+* The "Disable Physical Block Size Reporting" checkbox and "Available Space Threshold" field have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
