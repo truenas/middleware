@@ -1,6 +1,6 @@
 .. toctree::
    :numbered:
-   :hidden:
+   :maxdepth: 4
 
    Introduction <truenas_introduction>
    ZFS Primer <truenas_zfsprimer>
