@@ -47,6 +47,7 @@ class VolumeProvider(Provider):
     @query('definitions/volume')
     def query(self, filter=None, params=None):
         result = []
+        single = params.pop('single', False) if params else False
         for vol in self.datastore.query('volumes', *(filter or []), **(params or {})):
             config = self.get_config(vol['name'])
             topology = config['groups']
@@ -57,12 +58,21 @@ class VolumeProvider(Provider):
             vol['status'] = config['status']
             vol['properties'] = config['properties']
             vol['datasets'] = list(flatten_datasets(config['root_dataset']))
+
+            if single:
+                return vol
+
             result.append(vol)
 
         return result
 
     def resolve_path(self, path):
-        pass
+        volname, _, rest = path.partition(':')
+        volume = self.query([('name', '=', volname)], {'single': True})
+        if not volume:
+            raise RpcException(errno.ENOENT, 'Volume {0} not found'.format(volname))
+
+        return os.path.join(volume['mountpoint'], rest)
 
     def get_volume_disks(self, name):
         result = []
