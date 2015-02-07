@@ -66,8 +66,8 @@ class DisksNamespace(EntityNamespace):
             'erase': EraseDiskCommand(self, n)
         }
 
-    def query(self):
-        return self.context.connection.call_sync('disk.query')
+    def query(self, params):
+        return self.context.connection.call_sync('disk.query', params)
 
     def get_one(self, name):
         return self.context.connection.call_sync('disk.query', [('path', '=', os.path.join('/dev', name))])[0]

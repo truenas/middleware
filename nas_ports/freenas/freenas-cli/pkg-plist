@@ -14,5 +14,6 @@
 /usr/local/lib/freenascli/plugins/system.py
 /usr/local/lib/freenascli/plugins/tasks.py
 /usr/local/lib/freenascli/plugins/volumes.py
+/usr/local/lib/freenascli/plugins/shares.py
 /usr/local/bin/cli
 /usr/local/bin/logincli

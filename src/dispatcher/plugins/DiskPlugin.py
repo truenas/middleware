@@ -376,6 +376,7 @@ def generate_disk_cache(dispatcher, path):
         'description': provider.find("config/descr").text,
         'identifier': identifier,
         'serial': serial,
+        'id': identifier,
         'schema': gpart.find("config/scheme").text if gpart else None,
         'controller': camcontrol_cache.get(name),
         'partitions': partitions,

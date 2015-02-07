@@ -30,7 +30,7 @@ import errno
 from gevent import Timeout
 from watchdog import events
 from task import Task, TaskStatus, Provider, TaskException
-from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns, private
 from balancer import TaskState
 from event import EventSource
 from lib.system import system, SubprocessException
@@ -110,6 +110,31 @@ class ServiceInfoProvider(Provider):
             result.update(self.dispatcher.configstore.list_children(i))
 
         return result
+
+    @private
+    def ensure_started(self, service):
+        # XXX launchd!
+        try:
+            system("/usr/sbin/service", service, "onestart")
+        except SubprocessException, e:
+            pass
+
+    @private
+    def ensure_stopped(self, service):
+        # XXX launchd!
+        try:
+            system("/usr/sbin/service", service, "onestop")
+        except SubprocessException, e:
+            pass
+
+    @private
+    def reload(self, service):
+        # XXX launchd!
+        try:
+            system("/usr/sbin/service", service, "onereload")
+        except SubprocessException, e:
+            pass
+
 
 @description("Provides functionality to start, stop, restart or reload service")
 @accepts({

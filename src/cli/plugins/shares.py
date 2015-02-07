@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -26,20 +25,57 @@
 #
 #####################################################################
 
-
-def parse_query_args(args, kwargs):
-    filters = []
-    params = {}
-
-    if 'limit' in kwargs:
-        params['limit'] = int(kwargs['limit'])
-
-    return filters, params
+from namespace import Namespace, EntityNamespace, Command, description
 
 
-def first_or_default(f, iterable, default=None):
-    i = filter(f, iterable)
-    if i:
-        return i[0]
+@description("System namespace")
+class SharesNamespace(EntityNamespace):
+    def __init__(self, name, context):
+        super(SharesNamespace, self).__init__(name, context)
 
-    return default
+        self.add_property(
+            descr='Share name',
+            name='name',
+            get='/id',
+            list=True
+        )
+
+        self.add_property(
+            descr='Share type',
+            name='type',
+            get='/type',
+            set=None,
+            list=True
+        )
+
+        self.add_property(
+            descr='Target',
+            name='target',
+            get='/target',
+            set=None,
+            list=True
+        )
+
+        self.primary_key = self.get_mapping('name')
+
+    def query(self, params):
+        return self.context.connection.call_sync('shares.query', params)
+
+    def get_one(self, name):
+        return self.context.connection.call_sync(
+            'shares.query',
+            [('id', '=', name)],
+            {'single': True}
+        )
+
+    def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('share.create', entity)
+            return
+
+    def delete(self, name):
+        pass
+
+
+def _init(context):
+    context.attach_namespace('/', SharesNamespace('shares', context))

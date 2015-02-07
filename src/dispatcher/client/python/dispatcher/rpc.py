@@ -258,3 +258,8 @@ def require_roles(*roles):
 def pass_sender(fn):
     fn.pass_sender = True
     return fn
+
+
+def private(fn):
+    fn.private = True
+    return fn

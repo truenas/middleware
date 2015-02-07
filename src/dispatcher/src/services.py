@@ -43,6 +43,9 @@ class ManagementService(RpcService):
             'connected-clients': len(self.dispatcher.ws_server.connections)
         }
 
+    def ping(self):
+        return 'pong'
+
     def reload_plugins(self):
         self.dispatcher.reload_plugins()
 

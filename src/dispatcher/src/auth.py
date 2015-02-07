@@ -125,7 +125,6 @@ class TokenStore(object):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
         self.tokens = {}
-        self.timers = []
 
     def generate_id(self):
         return ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(32)])
@@ -135,9 +134,15 @@ class TokenStore(object):
         self.tokens[token_id] = token
 
         if token.lifetime:
-            self.timers.append(gevent.spawn_later(token.lifetime, self.revoke_token, token_id))
+            token.timer = gevent.spawn_later(token.lifetime, self.revoke_token, token_id)
 
         return token_id
+
+    def keepalive_token(self, token_id):
+        token = self.tokens[token_id]
+        if token.lifetime:
+            gevent.kill(token.timer)
+            token.timer = gevent.spawn_later(token.lifetime, self.revoke_token, token_id)
 
     def lookup_token(self, token_id):
         return self.tokens[token_id]

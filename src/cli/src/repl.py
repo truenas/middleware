@@ -45,6 +45,7 @@ import getpass
 import traceback
 import Queue
 import signal
+import threading
 from descriptions import events, tasks
 from namespace import Namespace, RootNamespace, Command
 from output import ValueType, ProgressBar, output_lock, output_msg, read_value
@@ -137,16 +138,23 @@ class Context(object):
         self.event_masks = ['*']
         self.event_divert = False
         self.event_queue = Queue.Queue()
+        self.keepalive_timer = None
         config.instance = self
 
     def start(self):
         self.discover_plugins()
         self.connect()
+        self.keepalive_timer = threading.Timer(60.0, self.keepalive)
+        self.keepalive_timer.start()
 
     def connect(self):
         self.connection.on_event(self.print_event)
         self.connection.on_error(self.connection_error)
         self.connection.connect(self.hostname)
+
+    def keepalive(self):
+        if self.connection.opened:
+            self.connection.call_sync('management.ping')
 
     def read_config_file(self, file):
         try:
@@ -201,12 +209,13 @@ class Context(object):
             sys.stdout.write('.')
             sys.stdout.flush()
             try:
-                self.connect()
                 time.sleep(1)
+                self.connect()
+                self.connection.login_token(self.connection.token)
+                self.connection.subscribe_events(*EVENT_MASKS)
                 break
             except:
                 pass
-
 
     def attach_namespace(self, path, ns):
         splitpath = path.split('/')

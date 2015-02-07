@@ -68,9 +68,9 @@ class DeviceInfoPlugin(Provider):
     })
     @returns({
         'oneOf': [
-            {'$ref': '#/definitions/disk_device'},
-            {'$ref': '#/definitions/network_device'},
-            {'$ref': '#/definitions/cpu_device'}
+            {'$ref': 'definitions/disk_device'},
+            {'$ref': 'definitions/network_device'},
+            {'$ref': 'definitions/cpu_device'}
         ]
     })
     def get_devices(self, dev_class):

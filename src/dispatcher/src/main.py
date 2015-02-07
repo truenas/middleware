@@ -441,7 +441,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             self.close_session()
 
         for mask in self.event_masks:
-            for ev, name in self.dispatcher.event_types.items():
+            for name, ev in self.dispatcher.event_types.items():
                 if fnmatch.fnmatch(ev, mask):
                     ev.decref()
 
@@ -476,6 +476,10 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if self.user is None:
             return
 
+        # Keep session alive
+        if self.token:
+            self.dispatcher.token_store.keepalive_token(self.token)
+
         # Increment reference count for any newly subscribed event
         for mask in set.difference(set(event_masks), self.event_masks):
             for name, ev in self.dispatcher.event_types.items():
@@ -488,15 +492,26 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if self.user is None:
             return
 
+        # Keep session alive
+        if self.token:
+            self.dispatcher.token_store.keepalive_token(self.token)
+
         # Decrement reference count for any unsubscribed, previously subscribed event
         for mask in set.union(set(event_masks), self.event_masks):
-            for ev, name in self.dispatcher.event_types.items():
+            for name, ev in self.dispatcher.event_types.items():
                 if fnmatch.fnmatch(ev, mask):
                     ev.decref()
 
         self.event_masks = set.difference(self.event_masks, event_masks)
 
     def on_events_event(self, id, data):
+        if self.user is None:
+            return
+
+        # Keep session alive
+        if self.token:
+            self.dispatcher.token_store.keepalive_token(self.token)
+
         self.dispatcher.dispatch_event(data['name'], data['args'])
 
     def on_rpc_auth_service(self, id, data):
@@ -638,6 +653,10 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         if self.user is None:
             self.emit_rpc_error(id, errno.EACCES, 'Not logged in')
             return
+
+        # Keep session alive
+        if self.token:
+            self.dispatcher.token_store.keepalive_token(self.token)
 
         method = data["method"]
         args = data["args"]

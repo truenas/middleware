@@ -38,7 +38,7 @@ class ServiceManageCommand(Command):
     def description(self):
         return '{0}s service'.format(self.action.title())
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         context.submit_task('service.manage', self.name, self.action)
 
 

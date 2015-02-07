@@ -181,6 +181,21 @@ class AsciiOutputFormatter(object):
         print table.draw()
 
     @staticmethod
+    def output_object(items):
+        table = Texttable(max_width=get_terminal_size()[1])
+        table.set_deco(Texttable.BORDER | Texttable.VLINES)
+        for i in items:
+            if len(i) == 3:
+                name, _, value = i
+                table.add_row([name, AsciiOutputFormatter.format_value(value, ValueType.STRING)])
+
+            if len(i) == 4:
+                name, _, value, vt = i
+                table.add_row([name, AsciiOutputFormatter.format_value(value, vt)])
+
+        print table.draw()
+
+    @staticmethod
     def output_tree(tree, children, label, label_vt=ValueType.STRING):
         def branch(obj, indent):
             for idx, i in enumerate(obj):
@@ -291,6 +306,12 @@ def output_dict(data, key_label=_("Key"), value_label=_("Value"), fmt=None):
 def output_table(data, columns, fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
     globals()['{0}OutputFormatter'.format(fmt.title())].output_table(data, columns)
+
+
+def output_object(*items, **kwargs):
+    fmt = kwargs.pop('fmt', None)
+    fmt = fmt or config.instance.variables.get('output-format')
+    globals()['{0}OutputFormatter'.format(fmt.title())].output_object(items)
 
 
 def output_tree(tree, children, label, fmt=None):

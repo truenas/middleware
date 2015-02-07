@@ -204,6 +204,7 @@ class Main:
             return renderer.render_template(template_path)
         except Exception, e:
             self.logger.warn('Cannot generate file {0}: {1}'.format(file_path, str(e)))
+            return "# FILE GENERATION FAILED: {0}\n".format(str(e))
 
     def emit_event(self, name, params):
         self.client.emit_event(name, params)
