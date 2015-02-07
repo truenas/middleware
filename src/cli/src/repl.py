@@ -144,7 +144,7 @@ class Context(object):
     def start(self):
         self.discover_plugins()
         self.connect()
-        self.keepalive_timer = threading.Timer(60.0, self.keepalive_timer)
+        self.keepalive_timer = threading.Timer(60.0, self.keepalive)
         self.keepalive_timer.start()
 
     def connect(self):
