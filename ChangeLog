@@ -1,3 +1,4 @@
+#7718	Feature	Normal	Add custom "home name" for netatalk
 #7601	Bug	Normal	Reporting History Data is lost when system data set is moved to a different pool
 #7582	Bug	Normal	Created in Web GUI lagg interface does not show in shell or CLI
 #6998	Bug	Normal	Enabling DHCP for existing jails created before upgrade to 9.3 does not work.
