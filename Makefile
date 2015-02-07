@@ -109,7 +109,7 @@ release-push: release
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
-		sh build/create_redmine_version.py -k 2a66eadf8d6114b8c34840c2981a9f1fe7e55f7e -v "${STAGEDIR}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP}"
+		if [ -f /root/redmine-api-key ]; then sh build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${STAGEDIR}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP}"; fi \
 	fi
 	${MAKE} save-build-env
 	echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com
