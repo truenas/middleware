@@ -2,7 +2,8 @@
     "primaryKey"   : "name"
   , "secondaryKey" : "ip"
   , "selectionKey" : "name"
-  , "uniqueKey"    : "link-address"
+  , "fontIconKey"  : "font_icon"
+  , "uniqueKey"    : "link_address"
   , "dataKeys": [
       {
           "key"         : "name"
@@ -56,7 +57,13 @@
           "key"         : "type"
         , "name"        : "Interface Type"
         , "type"        : "string"
-        , "defaultCol"    : false
+        , "defaultCol"  : false
       }
+    , {
+          "key"         : "font_icon"
+        , "name"        : "Font Icon Class"
+        , "type"        : "string"
+        , "defaultCol"  : null
+     }
   ]
 }]
