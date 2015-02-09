@@ -112,6 +112,20 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
             // Nothing to do here.
           }
         }
+
+        // Map the interface type and/or status to and appropirate icon.
+        switch (tempNetwork[ "type"]) {
+          // Ethernet gets the FontAwesome "exchange" icon for now.
+          // TODO: Other conditions, such as different icons for connected and
+          // disconnected interfaces of different types.
+          case "Ethernet":
+          tempNetwork[ "icon" ] = "exchange";
+          break;
+          default:
+          tempNetwork[ "icon" ] = null;
+          break;
+        }
+
         return tempNetwork;
       };
 
