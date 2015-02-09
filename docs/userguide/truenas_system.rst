@@ -653,10 +653,12 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
  kern.metadelay=3
  kern.dirdelay=4
  kern.filedelay=5
- kern.coredump=1
- kern.sugid_coredump=1
- net.inet.tcp.delayed_ack=0
- vfs.timestamp_precision=3
+ kern.coredump=0
+ net.inet.carp.preempt=1
+ debug.ddb.textdump.pending=1
+ vfs.nfsd.tcpcachetimeo=300
+ vfs.nfsd.tcphighwater=150000
+ vfs.zfs.vdev.larger_ashift_minimal=0
 
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
@@ -664,24 +666,31 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
 The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
- loader_logo="freenas"
- loader_menu_title="Welcome to FreeNAS"
- loader_brand="freenas-brand"
+ loader_logo="truenas-logo"
+ loader_menu_title="Welcome to TrueNAS"
+ loader_brand="truenas-brand"
  loader_version=" "
+ kern.cam.boot_delay=10000
+ geom_mirror_load="YES"
+ geom_stripe_load="YES"
+ geom_raid_load="YES"
+ geom_raid3_load="YES"
+ geom_raid5_load="YES"
+ geom_gate_load="YES"
+ geom_multipath_load="YES"
+ hwpmc_load="YES"
  debug.debugger_on_panic=1
  debug.ddb.textdump.pending=1
  hw.hptrr.attach_generic=0
  kern.ipc.nmbclusters="262144"
- vfs.mountroot.timeout="30"
- ispfw_load="YES"
- hint.isp.0.role=2
- hint.isp.1.role=2
- hint.isp.2.role=2
- hint.isp.3.role=2
+ kern.hwpmc.nbuffers="4096"
+ kern.hwpmc.nsamples="4096"
+ hw.memtest.tests="0"
  module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
+ kern.msgbufsize="524288"
+ vfs.zfs.trim.enabled="0"
  vfs.zfs.vol.mode=2
- hw.usb.no_shutdown_wait=1
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
