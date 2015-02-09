@@ -177,22 +177,17 @@ class DataSource(object):
     def query(self, start, end, frequency):
         self.logger.debug('Query: start={0}, end={1}, frequency={2}'.format(start, end, frequency))
         buckets = list(self.config.get_covered_buckets(start, end))
-        index = pd.date_range(start, end, freq='10S')
-        df = pd.DataFrame(index=index)
+        df = pd.DataFrame()
 
         for b in buckets:
             new = self.bucket_buffers[b.index].df
             if new is not None:
                 df = pd.concat((df, new))
 
-        df = df.drop_duplicates().sort()[0]
+        df = df.sort()[0]
         df = df[start:end]
         df = df.resample(frequency, how='mean').interpolate()
-        return {
-            'data': [
-                [df.index[i].value // 10 ** 9, str(df[i])] for i in range(len(df))
-            ]
-        }
+        return df
 
 
 class InputServer(object):
@@ -237,8 +232,27 @@ class OutputService(RpcService):
         start = parse_datetime(params.pop('start'))
         end = parse_datetime(params.pop('end'))
         frequency = params.pop('frequency')
-        ds = self.context.data_sources[data_source]
-        return ds.query(start, end, frequency)
+
+        if type(data_source) is unicode:
+            ds = self.context.data_sources[data_source]
+            df = ds.query(start, end, frequency)
+            return {
+                'data': [
+                    [df.index[i].value // 10 ** 9, str(df[i])] for i in range(len(df))
+                ]
+            }
+
+        if type(data_source) is list:
+            final = pd.DataFrame()
+            for ds_name in data_source:
+                ds = self.context.data_sources[ds_name]
+                final[ds_name] = ds.query(start, end, frequency)
+
+            return {
+                'data': [
+                    [final.index[i].value // 10 ** 9] + [str(final[col][i]) for col in data_source] for i in range(len(final))
+                ]
+            }
 
 
 class DataPoint(tables.IsDescription):
