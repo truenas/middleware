@@ -5675,7 +5675,7 @@ class notifier:
         return len(connections)
 
     def call_backupd(self, args):
-        ntries = 5
+        ntries = 15
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         # Try for a while in case daemon is just starting
