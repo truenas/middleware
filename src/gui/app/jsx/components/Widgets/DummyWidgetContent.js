@@ -10,15 +10,15 @@ var Widget  = 	require("../Widget");
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
-function getWidgetDataFromStore() {
- return StatdStore.getWidgetData();
+function getWidgetDataFromStore( name ) {
+ return StatdStore.getWidgetData( name );
  }
 
 var DummyWidgetContent = React.createClass({
   getInitialState: function() {
     return {
-       element:    ""
-      ,widgetData: getWidgetDataFromStore()
+       element      :   ""
+      ,initialData  :   false
     };
   }
 
@@ -26,7 +26,8 @@ var DummyWidgetContent = React.createClass({
     this.requestWidgetData();
 
     StatdStore.addChangeListener( this.handleStatdChange );
-    StatdMiddleware.subscribe();
+    StatdMiddleware.subscribe( "localhost.memory.memory-wired.value" );
+    StatdMiddleware.subscribe( "localhost.memory.memory-cache.value" );
 
     this.setState({
       element:    this.refs.svg.getDOMNode()
@@ -38,28 +39,55 @@ var DummyWidgetContent = React.createClass({
      StatdMiddleware.unsubscribe();
   }
 
- , handleStatdChange: function() {
-    if (this.state.widgetData.length < 1)
-    {
-      this.setState({ widgetData: getWidgetDataFromStore() });
-      console.log("1!");
-    } else {
-      console.log("2!");
-      var ud = StatdStore.getWidgetDataUpdate();
-      var updateArray = [ud["timestamp"], ud["value"]];
-      if (updateArray[0] !== undefined && updateArray[1] !== undefined)
-      {
-        var updatedData = this.state.widgetData;
-        updatedData["data"].push(updateArray);
-        updatedData["data"].shift();
+  , updateData : function (target, updateArray) {
+
+        var updatedData = this.state[target];
+        updatedData.push(updateArray);
+        if (updatedData.length > 100)
+        {
+          updatedData.shift();
+        }
 
         this.setState({
-          widgetData: updatedData
+          target: updatedData
           });
+
+  }
+
+ , handleStatdChange: function() {
+    if ( this.state.initialData === false )
+    {
+      this.setState({  wiredData    :   getWidgetDataFromStore( "localhost.memory.memory-wired.value" )
+                      ,cacheData    :   getWidgetDataFromStore( "localhost.memory.memory-cache.value" )
+                    });
+      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined)
+      {
+        this.setState({  initialData  : true
+                      });
+        this.drawChart();
       }
+      console.log("1!");
     }
-    this.drawChart();
-    //console.log(ud);
+    else {
+      console.log("2!");
+      var ud = StatdStore.getWidgetDataUpdate();
+      var updateArray = [ud.args["timestamp"], ud.args["value"]];
+      switch( ud.name )
+      {
+        case "statd.localhost.memory.memory-wired.value.pulse":
+          this.updateData("wiredData", updateArray);
+        break;
+        case "statd.localhost.memory.memory-cache.value.pulse":
+          this.updateData("cacheData", updateArray);
+        break;
+
+        default:
+          // Do nothing
+          console.log("This should not happened!");
+      }
+      this.drawChart();
+    }
+
  }
 
  , requestWidgetData: function() {
@@ -69,6 +97,7 @@ var DummyWidgetContent = React.createClass({
     //console.log(start.format());
     //console.log(stop.format());
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", start.format(),  stop.format(), "10S");
+    StatdMiddleware.requestWidgetData( "localhost.memory.memory-cache.value", start.format(),  stop.format(), "10S");
   }
 
   , drawChart: function() {
@@ -77,8 +106,8 @@ var DummyWidgetContent = React.createClass({
     chart = nv.models.lineChart()
     .options({
       margin: {left: 100, right: 30, bottom: 50},
-      x: function(d) { if(d[0] === "nan") { return 0; } else { return d[0]; } },
-      y: function(d) { if(d[1] === "nan") { return 0; } else { return d[1]; } },
+      x: function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } },
+      y: function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } },
       showXAxis: true,
       showYAxis: true,
       transitionDuration: 250
@@ -94,7 +123,7 @@ var DummyWidgetContent = React.createClass({
     .tickFormat(d3.format(',.2f'));
 
   d3.select(this.state.element)
-    .datum(this.sinAndCos())
+    .datum(this.chartData())
     .call(chart);
 
   //TODO: Figure out a good way to do this automatically
@@ -105,13 +134,19 @@ var DummyWidgetContent = React.createClass({
 
   }
 
-  , sinAndCos: function() {
+  , chartData: function() {
     return [
       {
-        area: true,
-        values: this.state.widgetData["data"],
-        key: "Total Traffic",
+        area: false,
+        values: this.state.wiredData,
+        key: "Wired Memory",
         color: "#ff7f0e"
+      }
+     ,{
+        area: false,
+        values: this.state.cacheData,
+        key: "Cached Memory",
+        color: "#8ac007"
       }
     ];
   }
