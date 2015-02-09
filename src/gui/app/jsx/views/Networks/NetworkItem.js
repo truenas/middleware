@@ -50,7 +50,7 @@ var NetworksView = React.createClass({
             <TWBS.Col xs={9}>
               <h3>{ this.props.item["name"] }</h3>
               <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["ip"], "\u200B" ) }</h4>
-              <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["type"] === "ETHER" ? "Ethernet" : "Unknown" ) }</h4>
+              <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["type"] ) }</h4>
               <hr />
             </TWBS.Col>
           </TWBS.Row>

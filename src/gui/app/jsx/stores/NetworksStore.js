@@ -94,6 +94,9 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? currentNetwork[ "enabled" ] : null;
         tempNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? currentNetwork[ "dhcp" ] : false;
 
+        //Figure out interface type. Only knows about Ethernet right now.
+        tempNetwork[ "type"]          = currentNetwork[ "type" ] == "ETHER" ? "Ethernet" : "Unknown";
+
         // Determine Internet Protcol version
         if (!status[ "aliases" ][1]) {
           tempNetwork[ "ip_version" ] = "IP";
