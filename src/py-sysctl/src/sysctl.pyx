@@ -314,6 +314,7 @@ def sysctlbyname(name, old=True, new=None):
             ret = c_sysctl.sysctl(mibp, _size, NULL, &oldlen, NULL, 0) 
             if ret == -1:
                 raise OSError(errno, os.strerror(errno))
+            oldlen += BUFSIZ * 4
             oldp = malloc(oldlen)
             if not oldp:
                 raise MemoryError()
