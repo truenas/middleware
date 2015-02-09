@@ -236,6 +236,21 @@ cdef class ZFS(object):
 
         return ZFSPool(self, <uintptr_t>handle)
 
+    def find_import(self):
+        cdef const char* paths = "/dev"
+        cdef nvpair.nvlist_t* result
+
+        result = libzfs.zpool_find_import(self._root, 1, &paths)
+        if result is NULL:
+            return
+
+        nv = nvpair.NVList(nvlist=<uintptr_t>result)
+        for name, config in nv.items():
+            yield (name, config['guid'])
+
+    def import_pool(self, guid):
+        pass
+
     def get_dataset(self, name):
         cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
         cdef libzfs.zpool_handle_t *pool = libzfs.zfs_get_pool_handle(handle)
