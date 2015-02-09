@@ -85,6 +85,7 @@ def ticket(request):
 
         if not success:
             response = render(request, 'support/ticket.html', {
+                'sw_name': get_sw_name().lower(),
                 'error_message': msg,
                 'initial': json.dumps(request.POST.dict()),
             })
@@ -109,7 +110,9 @@ def ticket(request):
                 )
             )
         return response
-    return render(request, 'support/ticket.html')
+    return render(request, 'support/ticket.html', {
+        'sw_name': get_sw_name().lower(),
+    })
 
 
 def ticket_progress(request):
