@@ -18,13 +18,13 @@
         , "defaultCol"  : true
       }
     , {
-          "key"         : "link-state"
+          "key"         : "link_state"
         , "name"        : "Link State"
         , "type"        : "string"
         , "defaultCol"  : true
       }
     , {
-          "key"         : "link-address"
+          "key"         : "link_address"
         , "name"        : "MAC Address"
         , "type"        : "string"
         , "defaultCol"  : true

@@ -24,15 +24,15 @@ var viewData = {
       filterCriteria: {
           connected: {
               name     : "connected interfaces"
-            , testProp : { "link-state": "LINK_STATE_UP" }
+            , testProp : { "link_state": "LINK_STATE_UP" }
           }
        , disconnected: {
               name     : "disconnected interfaces"
-           , testprop : { "link-state": "LINK_STATE_DOWN" }
+           , testprop : { "link_state": "LINK_STATE_DOWN" }
          }
         , unknown: {
               name     : "invalid or unknown interfaces"
-            , testprop : { "link-state": "LINK_STATE_UNKNOWN" }
+            , testprop : { "link_state": "LINK_STATE_UNKNOWN" }
           }
       }
     , remainingName    : "other interfaces"

@@ -87,8 +87,8 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         // Initialize desired fields with existing ones.
         tempNetwork[ "name" ]         = currentNetwork[ "name" ] ? currentNetwork[ "name" ] : null;
         tempNetwork[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
-        tempNetwork[ "link-state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
-        tempNetwork[ "link-address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
+        tempNetwork[ "link_state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
+        tempNetwork[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
         tempNetwork[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
         tempNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
         tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? currentNetwork[ "enabled" ] : null;
