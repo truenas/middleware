@@ -258,6 +258,8 @@ cdef class ZFS(object):
             <nvpair.nvlist_t*>cfsopts) != 0:
             raise ZFSException(self.errno, self.errstr)
 
+        return self.get(name)
+
     def destroy(self, name):
         cdef libzfs.zpool_handle_t *handle = libzfs.zpool_open(self._root, name)
         if handle == NULL:
@@ -681,11 +683,22 @@ cdef class ZFSDataset(object):
         datasets = <object>arg
         datasets.append(<uintptr_t>handle)
 
+    @staticmethod
+    cdef int __iterate_snapshots(libzfs.zfs_handle_t* handle, void *arg):
+        snapshots = <object>arg
+        snapshots.append(<uintptr_t>handle)
+
     property children:
         def __get__(self):
             datasets = []
             libzfs.zfs_iter_children(self._handle, self.__iterate_children, <void*>datasets)
             return [ZFSDataset(self.root, self.pool, h) for h in datasets]
+
+    property snapshots:
+        def __get__(self):
+            snapshots = []
+            libzfs.zfs_iter_children(self._handle, self.__iterate_snapshots, <void*>snapshots)
+            return [ZFSSnapshot(self.root, self.pool, h) for h in snapshots]
 
     property properties:
         def __get__(self):
@@ -709,10 +722,5 @@ cdef class ZFSDataset(object):
             raise ZFSException(self.root.errno, self.root.errstr)
 
 
-cdef class ZFSSnapshot(object):
-    cdef readonly ZFS root
-    cdef readonly ZFSPool pool
-    cdef readonly object name
-
-    def __init__(self, ZFS root, ZFSPool pool):
-        pass
+cdef class ZFSSnapshot(ZFSDataset):
+    pass
