@@ -246,7 +246,7 @@ if len(mp_to_task_map) > 0:
         from pysphere import VIServer
         server = VIServer()
         qs = VMWarePlugin.objects.filter(filesystem=fs)
-        vmsnapname = str(uuid.uuid4())
+        vmsnapname = str(uuid.uuid4()) + " " + str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         snapvmfails = []
         for obj in qs:
