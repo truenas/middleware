@@ -65,11 +65,33 @@ define([
       {label: "Security", value: "Security"}
     ];
 
+    var TN_CATEGORY_OPTIONS = [
+      {label: "Bug", value: "Bug"},
+      {label: "Hardware", value: "Hardware"},
+      {label: "Installation/Setup", value: "Installation/Setup"},
+      {label: "Performance", value: "Performance"}
+    ];
+
+    var TN_ENV_OPTIONS = [
+      {label: "Production", value: "Production"},
+      {label: "Staging", value: "Staging"},
+      {label: "Test", value: "Test"},
+      {label: "Prototyping", value: "Prototyping"},
+      {label: "Initial Deployment/Setup", value: "Initial Deployment/Setup"}
+    ];
+
+    var TN_CRIT_OPTIONS = [
+      {label: "Inquiry", value: "Inquiry"},
+      {label: "Loss of Functionality", value: "Loss of Functionality"},
+      {label: "Total Down", value: "Total Down"}
+    ];
+
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
       errorMessage: "",
       initial: "",
       progressUrl: "",
       url: "",
+      softwareName: "",
       templateString: template,
       postCreate: function() {
 
@@ -108,26 +130,49 @@ define([
           type: "hidden"
         }, this.dapCSRF);
 
-        this._username = new TextBox({
-          name: "username",
-          value: initial.username
-        }, this.dapUsername);
+        if(this.softwareName == 'truenas') {
+          domStyle.set(this.dapRegisterRow, "display", "none");
+          domStyle.set(this.dapUsernameRow, "display", "none");
+          domStyle.set(this.dapPasswordRow, "display", "none");
+          domStyle.set(this.dapTypeRow, "display", "none");
 
-        this._password = new TextBox({
-          name: "password",
-          type: "password",
-          value: initial.password
-        }, this.dapPassword);
+          this._env = new Select({
+            name: "environment",
+            options: TN_ENV_OPTIONS
+          }, this.dapEnv);
+          if(initial.environment) this._env.set('value', initial.environment);
 
-        this._type = new Select({
-          name: "type",
-          options: TYPE_OPTIONS
-        }, this.dapType);
-        if(initial.type) this._type.set('value', initial.type);
+          this._crit = new Select({
+            name: "criticality",
+            options: TN_CRIT_OPTIONS
+          }, this.dapCrit);
+          if(initial.criticality) this._crit.set('value', initial.criticality);
+
+        } else {
+          domStyle.set(this.dapEnvRow, "display", "none");
+          domStyle.set(this.dapCritRow, "display", "none");
+          this._username = new TextBox({
+            name: "username",
+            value: initial.username
+          }, this.dapUsername);
+
+          this._password = new TextBox({
+            name: "password",
+            type: "password",
+            value: initial.password
+          }, this.dapPassword);
+
+          this._type = new Select({
+            name: "type",
+            options: TYPE_OPTIONS
+          }, this.dapType);
+          if(initial.type) this._type.set('value', initial.type);
+
+        }
 
         this._category = new Select({
           name: "category",
-          options: CATEGORY_OPTIONS
+          options: (this.softwareName == 'truenas') ? TN_CATEGORY_OPTIONS : CATEGORY_OPTIONS
         }, this.dapCategory);
         if(initial.category) this._category.set('value', initial.category);
 
@@ -199,12 +244,20 @@ define([
 
       },
       validate: function() {
-        var map = {
-          1: this._username,
-          2: this._password,
-          3: this._subject,
-          4: this._desc
-        };
+        var map;
+        if(this.softwareName == 'truenas') {
+          map = {
+            1: this._subject,
+            2: this._desc
+          };
+        } else {
+          map = {
+            1: this._username,
+            2: this._password,
+            3: this._subject,
+            4: this._desc
+          };
+        }
 
         for(var i in map) {
           var field = map[i];
