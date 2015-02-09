@@ -64,40 +64,50 @@ viewerUtil.ItemIcon = React.createClass({
     }
 
   , componentWillMount: function() {
-      this.setFallbackIcon( this.props );
+      this.setIcon( this.props );
   }
 
   , componentWillReceiveProps: function( nextProps ) {
-      this.setFallbackIcon( nextProps );
+      this.setIcon( this.props );
   }
 
-  , setFallbackIcon: function( props ) {
-      // If there's a profile picture we can use, don't bother with setup
-      if ( props.iconImage ) {
-        return;
-      } else {
-        var initials = "";
-        var userRGB;
-
-        if ( typeof props.seedNumber === "number" ) {
-          userRGB = viewerUtil.getPastelColor( props.seedNumber );
-        } else {
-          userRGB = viewerUtil.getPastelColor( props.primaryString.length + props.fallbackString.length );
-        }
-
-        if ( props.primaryString ) {
-          initials = props.primaryString
-                       .split(" ")
-                       .map( function( word ) { return word[0]; } );
-        } else {
-          initials = props.fallbackString;
-        }
-
-        this.setState({
-            userColor : "rgb(" + userRGB.join(",") + ")"
-          , initials  : ( initials[0] + ( initials.length > 1 ? initials[ initials.length - 1 ] : "" ) ).toUpperCase()
-        });
+  , setIcon: function( props ) {
+      // If there's a profile picture already, don't bother with an icon.
+      if ( !props.iconImage ) {
+        this.setInitialsIcon( this.props );
       }
+    }
+
+  , setInitialsIcon: function( props ) {
+      var initials = "";
+
+      if ( props.primaryString ) {
+        initials = props.primaryString
+                     .split(" ")
+                     .map( function( word ) { return word[0]; } );
+      } else {
+        initials = props.fallbackString;
+      }
+
+      this.setState({
+        initials  : ( initials[0] + ( initials.length > 1 ? initials[ initials.length - 1 ] : "" ) ).toUpperCase()
+      });
+
+      this.setIconColor( this.props );
+    }
+
+  , setIconColor: function ( props ) {
+      var userRGB;
+
+      if ( typeof props.seedNumber === "number" ) {
+        userRGB = viewerUtil.getPastelColor( props.seedNumber );
+      } else {
+        userRGB = viewerUtil.getPastelColor( props.primaryString.length + props.fallbackString.length );
+      }
+
+      this.setState({
+        userColor : "rgb(" + userRGB.join(",") + ")"
+      });
     }
 
   , render: function() {
