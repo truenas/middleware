@@ -18,6 +18,12 @@
         , "defaultCol"  : true
       }
     , {
+          "key"         : "ip_version"
+        , "name"        : "IP Version"
+        , "type"        : "string"
+        , "defaultCol"  : false
+     }
+    , {
           "key"         : "link_state"
         , "name"        : "Link State"
         , "type"        : "string"

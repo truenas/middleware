@@ -93,6 +93,22 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         tempNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
         tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? currentNetwork[ "enabled" ] : null;
         tempNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? currentNetwork[ "dhcp" ] : false;
+
+        // Determine Internet Protcol version
+        if (!status[ "aliases" ][1]) {
+          tempNetwork[ "ip_version" ] = "IP";
+        } else {
+          switch (status[ "aliases" ][1][ "family" ]) {
+            case "INET":
+              tempNetwork[ "ip_version" ] = "IPv4";
+              break;
+            case "INET6":
+              tempNetwork[ "ip_version" ] = "IPv6";
+              break;
+            default:
+            // Nothing to do here.
+          }
+        }
         return tempNetwork;
       };
 
