@@ -374,6 +374,8 @@ that have occurred since 9.3-RELEASE.
 * The "Disable Physical Block Size Reporting" checkbox and "Available Space Threshold" field have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
+* The "Home share name" field has been added to :menuselection:`Services --> AFP`.
+
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
 * A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the

@@ -79,11 +79,11 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 
 **Figure 11.2a: Global AFP Configuration**
 
-|afp1.png|
+|afp1a.png|
 
-.. |afp1.png| image:: images/afp1.png
+.. |afp1a.png| image:: images/afp1a.png
     :width: 5.2in
-    :height: 4.2in
+    :height: 4.4in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -109,6 +109,9 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Home directories        | browse button  | select the volume or dataset which contains user home directories                                               |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Home share name         | string         | overrides default home folder name with the specified value                                                     |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Database Path           | browse button  | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
