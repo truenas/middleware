@@ -165,9 +165,14 @@ class DevdEventSource(EventSource):
 
     def __process_zfs(self, args):
         event_mapping = {
-            "misc.fs.zfs.scrub_start": ("fs.zfs.scrub.start", "Scrub on volume {0} started"),
-            "misc.fs.zfs.scrub_finish": ("fs.zfs.scrub.finish", "Scrub on volume {0} finished"),
-            "misc.fs.zfs.pool_destroy": ("fs.zfs.pool.destroy", "Pool {0} destroyed")
+            "misc.fs.zfs.scrub_start": ("fs.zfs.scrub.started", "Scrub on volume {0} started"),
+            "misc.fs.zfs.scrub_finish": ("fs.zfs.scrub.finished", "Scrub on volume {0} finished"),
+            "misc.fs.zfs.scrub_abort": ("fs.zfs.scrub.aborted", "Scrub on volume {0} aborted"),
+            "misc.fs.zfs.pool_create": ("fs.zfs.pool.created", "Pool {0} created"),
+            "misc.fs.zfs.pool_destroy": ("fs.zfs.pool.destroyed", "Pool {0} destroyed"),
+            "misc.fs.zfs.dataset_create": ("fs.zfs.dataset.created", "Dataset on pool {0} created"),
+            "misc.fs.zfs.dataset_delete": ("fs.zfs.dataset.deleted", "Dataset on pool {0} deleted"),
+            "misc.fs.zfs.dataset_rename": ("fs.zfs.dataset.created", "Dataset on pool {0} renamed"),
         }
 
         if args["type"] not in event_mapping:
@@ -178,6 +183,12 @@ class DevdEventSource(EventSource):
             "guid": args.get("pool_guid"),
             "description": event_mapping[args["type"]][1].format(args["pool_name"])
         }
+
+        if "ds" in args:
+            params["ds"] = args["ds"]
+
+        if "new_ds" in args:
+            params["new-ds"] = args["new_ds"]
 
         self.emit_event(event_mapping[args["type"]][0], **params)
 
