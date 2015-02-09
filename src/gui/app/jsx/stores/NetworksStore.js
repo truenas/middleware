@@ -91,7 +91,7 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         tempNetwork[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
         tempNetwork[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
         tempNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
-        tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? currentNetwork[ "enabled" ] : null;
+        tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? currentNetwork[ "enabled" ] : false;
         tempNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? currentNetwork[ "dhcp" ] : false;
 
         //Figure out interface type. Only knows about Ethernet right now.
