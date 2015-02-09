@@ -25,7 +25,8 @@
 #
 #####################################################################
 
-from task import Task, TaskException, Provider, RpcException, query
+import errno
+from task import Task, TaskException, VerifyException, Provider, RpcException, query
 
 
 class SharesProvider(Provider):
@@ -35,7 +36,7 @@ class SharesProvider(Provider):
 
     def supported_types(self):
         result = []
-        for p in self.dispatcher.plugins:
+        for p in self.dispatcher.plugins.values():
             if p.metadata and p.metadata.get('type') == 'sharing':
                 result.append(p.metadata['method'])
 
@@ -51,19 +52,29 @@ class CreateShareTask(Task):
 
 
 class UpdateShareTask(Task):
-    def verify(self, name, type, updated_fields):
+    def verify(self, name, updated_fields):
+        share = self.datastore.get_by_id('shares', name)
+        if not share:
+            raise VerifyException(errno.ENOENT, 'Share not found')
+
+        self.share_type = share['type']
         return ['system']
 
-    def run(self, name, type, updated_fields):
-        self.join_subtasks(self.run_subtask('share.{0}.update'.format(type), name, updated_fields))
+    def run(self, name, updated_fields):
+        self.join_subtasks(self.run_subtask('share.{0}.update'.format(self.share_type), name, updated_fields))
 
 
 class DeleteShareTask(Task):
-    def verify(self, name, type):
+    def verify(self, name):
+        share = self.datastore.get_by_id('shares', name)
+        if not share:
+            raise VerifyException(errno.ENOENT, 'Share not found')
+
+        self.share_type = share['type']
         return ['system']
 
-    def run(self, type, name):
-        self.join_subtasks(self.run_subtask('share.{0}.delete'.format(type), name))
+    def run(self, name):
+        self.join_subtasks(self.run_subtask('share.{0}.delete'.format(self.share_type), name))
 
 
 def _init(dispatcher):
