@@ -305,7 +305,7 @@ add_port security/gnutls \
        OPTIONS_FILE_UNSET+=TPM
 add_port_debug net/samba41 \
        WITH_DEBUG=yes \
-       CRAZY=yes \ 
+       CRAZY=yes \
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \
        OPTIONS_FILE_SET+=AD_DC \
