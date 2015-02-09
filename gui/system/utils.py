@@ -37,7 +37,6 @@ from lockfile import LockFile
 from freenasOS import Configuration
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('system.utils')
 
@@ -322,6 +321,7 @@ def parse_changelog(changelog, start = '', end = ''):
 
 
 def debug_get_settings():
+    from freenasUI.middleware.notifier import notifier
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
     if notifier().system_dataset_path() is not None:
