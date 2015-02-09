@@ -75,15 +75,16 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
 
     case ActionTypes.RECEIVE_RAW_NETWORKS:
 
-      //Re-map the complex network objects into flat ones.
+      // Re-map the complex network objects into flat ones.
+      // TODO: Account for multiple aliases and static configurations.
       var mapNetwork = function ( currentNetwork ) {
 
         var tempNetwork = {};
 
-        //Make the block below less absurdly wide
+        // Make the block below less absurdly wide
         var status  = currentNetwork.status;
 
-        //Initialize desired fields with existing ones.
+        // Initialize desired fields with existing ones.
         tempNetwork[ "name" ]         = currentNetwork[ "name" ] ? currentNetwork[ "name" ] : null;
         tempNetwork[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
         tempNetwork[ "link-state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
