@@ -241,12 +241,24 @@ class Client(object):
         self.pending_calls[str(call.id)] = call
         self.__call(call, call_type='auth', custom_payload={'username': username, 'password': password})
         call.completed.wait(timeout)
+        if call.error:
+            raise rpc.RpcException(
+                call.error['code'],
+                call.error['message'],
+                call.error['extra'] if 'extra' in call.error else None)
+
         self.token = call.result[0]
 
     def login_service(self, name, timeout=None):
         call = self.PendingCall(uuid.uuid4(), 'auth')
         self.pending_calls[str(call.id)] = call
         self.__call(call, call_type='auth_service', custom_payload={'name': name})
+        if call.error:
+            raise rpc.RpcException(
+                call.error['code'],
+                call.error['message'],
+                call.error['extra'] if 'extra' in call.error else None)
+        
         call.completed.wait(timeout)
 
     def login_token(self, token, timeout=None):
@@ -254,6 +266,12 @@ class Client(object):
         self.pending_calls[str(call.id)] = call
         self.__call(call, call_type='auth_token', custom_payload={'token': token})
         call.completed.wait(timeout)
+        if call.error:
+            raise rpc.RpcException(
+                call.error['code'],
+                call.error['message'],
+                call.error['extra'] if 'extra' in call.error else None)
+
         self.token = call.result[0]
 
     def disconnect(self):
