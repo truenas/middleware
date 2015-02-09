@@ -48,7 +48,7 @@ from django.http import (
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
@@ -1150,9 +1150,9 @@ def backup_abort(request):
         # User wants to abort a backup
         response = notifier().call_backupd({'cmd': 'ABORT'})
         if response['status'] != 'OK':
-            return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
+            return redirect('/system/backup')
 
-        return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
+        return redirect('/system/backup')
 
 class UnixTransport(xmlrpclib.Transport):
     def make_connection(self, addr):
