@@ -139,13 +139,17 @@ class TokenStore(object):
         return token_id
 
     def keepalive_token(self, token_id):
-        token = self.tokens[token_id]
+        token = self.lookup_token(token_id)
+        if not token:
+            raise TokenException('Token not found or expired')
+
         if token.lifetime:
             gevent.kill(token.timer)
             token.timer = gevent.spawn_later(token.lifetime, self.revoke_token, token_id)
 
     def lookup_token(self, token_id):
-        return self.tokens[token_id]
+        return self.tokens.get(token_id)
 
     def revoke_token(self, token_id):
-        del self.tokens[token_id]
+        if token_id in self.tokens:
+            del self.tokens[token_id]
