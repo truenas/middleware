@@ -38,6 +38,10 @@ class Resource(object):
         self.busy = False
 
 
+class ResourceError(RuntimeError):
+    pass
+
+
 class ResourceGraph(object):
     def __init__(self):
         self.logger = logging.getLogger('ResourceGraph')
@@ -57,6 +61,15 @@ class ResourceGraph(object):
         return self.resources.nodes()
 
     def add_resource(self, resource, parents=None):
+        self.lock()
+
+        if not resource:
+            raise ResourceError('Invalid resource')
+
+        if self.get_resource(resource.name):
+            self.unlock()
+            raise ResourceError('Resource already exists')
+
         self.resources.add_node(resource)
         if not parents:
             parents = ['root']
@@ -65,15 +78,25 @@ class ResourceGraph(object):
             node = self.get_resource(p)
             self.resources.add_edge(node, resource)
 
-    def remove_resource(self, resource):
-        pass
+        self.unlock()
+
+    def remove_resource(self, name):
+        self.lock()
+        resource = self.get_resource(name)
+
+        if not resource:
+            self.unlock()
+            return
+
+        for i in nx.descendants(self.resources, resource):
+            self.resources.remove_node(i)
+
+        self.resources.remove_node(resource)
+        self.unlock()
 
     def get_resource(self, name):
-        for i in self.resources.nodes():
-            if i.name == name:
-                return i
-
-        return None
+        f = filter(lambda i: i.name == name, self.resources.nodes())
+        return f[0] if len(f) > 0 else None
 
     def get_resource_dependencies(self, name):
         res = self.get_resource(name)
@@ -89,10 +112,13 @@ class ResourceGraph(object):
 
         for name in names:
             res = self.get_resource(name)
+            if not res:
+                raise ResourceError('Resource {0} not found'.format(name))
+
             for i in nx.ancestors(self.resources, res):
                 if i.busy:
                     self.unlock()
-                    raise Exception('Cannot acquire')
+                    raise ResourceError('Cannot acquire, some of dependent resources are busy')
 
             res.busy = True
 
@@ -106,6 +132,8 @@ class ResourceGraph(object):
             ','.join(names))
         for name in names:
             res = self.get_resource(name)
+            if not res:
+                return False
 
             if res.busy:
                 self.unlock()
