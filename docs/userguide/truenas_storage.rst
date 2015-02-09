@@ -213,9 +213,7 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 | Member disks  | list             | highlight desired number of disks from list of available disks                                 |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
-| Deduplication | drop-down menu   | choices are *Off*,                                                                             |
-|               |                  | *Verify*, and                                                                                  |
-|               |                  | *On*; carefully consider the section on `Deduplication`_ before changing this setting          |
+| Deduplication | drop-down menu   | do not change this setting unless instructed to do so by your iXsystems support engineer       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | ZFS Extra     | bullet selection | used to specify if disk is used for storage (*None*), a log device, a cache device, or a spare |
@@ -409,7 +407,7 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 | dataset and all children |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| ZFS Deduplication        | drop-down menu      | read the section on :ref:`Deduplication` before making a change to this setting                           |
+| ZFS Deduplication        | drop-down menu      | do not change this setting unless instructed to do so by your iXsystems support engineer                  |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Record Size              | drop-down menu      | only available in "Advanced Mode"; while ZFS automatically adapts the record size dynamically to adapt to |
@@ -420,38 +418,6 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 Once a dataset is created, you can click on that dataset and select "Create Dataset", thus creating a nested dataset, or a dataset within a dataset. You can
 also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
 If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
-
-.. index:: Deduplication
-.. _Deduplication:
-
-Deduplication
-^^^^^^^^^^^^^
-
-Deduplication is the process of not creating duplicate copies of data in order to save space. Depending upon the amount of duplicate data, deduplicaton can
-improve storage capacity as less data is written and stored. However, the process of deduplication is RAM intensive and a general rule of thumb is 5 GB RAM
-per TB of storage to be deduplicated.
-**In most cases, using compression instead of deduplication will provide a comparable storage gain with less impact on performance.**
-
-In TrueNAS®, deduplication can be enabled during dataset creation. Be forewarned that
-**there is no way to undedup the data within a dataset once deduplication is enabled** as disabling deduplication has
-**NO AFFECT** on existing data. The more data you write to a deduplicated dataset, the more RAM it requires and when the system starts storing the DDTs
-(dedup tables) on disk because they no longer fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per
-TB of deduped data, and if the system doesn't have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool.
-**Think carefully before enabling dedup!** This `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_ provides a good description of
-the value versus cost considerations for deduplication.
-
-**Unless you have a lot of RAM and a lot of duplicate data, do not change the default deduplication setting of "Off".** For performance reasons, consider
-using compression rather than turning this option on.
-
-If deduplication is changed to *On*, duplicate data blocks are removed synchronously. The result is that only unique data is stored and common components are
-shared among files. If deduplication is changed to *Verify*, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that
-the block contents are identical. Since hash collisions are extremely rare, *Verify* is usually not worth the performance hit.
-
-.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from :ref:`Shell`.
-   However, any data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be
-   deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data
-   back in again. Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original
-   dataset.
 
 .. index:: Compression
 .. _Compression:
