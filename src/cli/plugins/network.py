@@ -281,7 +281,6 @@ class HostsNamespace(EntityNamespace):
 class GlobalConfigNamespace(ConfigNamespace):
     def __init__(self, name, context):
         super(GlobalConfigNamespace, self).__init__(name, context)
-        self.context = context
 
         self.add_property(
             descr='IPv4 gateway',
