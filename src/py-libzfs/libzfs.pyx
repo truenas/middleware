@@ -248,8 +248,8 @@ cdef class ZFS(object):
         for name, config in nv.items():
             yield ZFSImportablePool(self, name, config)
 
-    def import_pool(self, guid):
-        pass
+    def import_pool(self, ZFSImportablePool pool, newname, opts):
+        libzfs.zpool_import_props(self._root, pool.config, newname, opts)
 
     def get_dataset(self, name):
         cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
@@ -552,8 +552,8 @@ cdef class ZFSPool(object):
             'guid': self.guid,
             'hostname': self.hostname,
             'status': self.status,
-            'root_dataset': self.root_dataset.__getstate__(),
-            'properties': {k: p.__getstate__() for k, p in self.properties.items()},
+            'root_dataset': self.root_dataset.__getstate__() if self.root_dataset else None,
+            'properties': {k: p.__getstate__() for k, p in self.properties.items()} if self.properties else None,
             'groups': {
                 'data': [i.__getstate__() for i in self.data_vdevs],
                 'log': [i.__getstate__() for i in self.log_vdevs],
@@ -673,6 +673,14 @@ cdef class ZFSImportablePool(ZFSPool):
     property config:
         def __get__(self):
             return self._config
+
+    property properties:
+        def __get__(self):
+            return None
+
+    property root_dataset:
+        def __get__(self):
+            return None
 
     def create(self, name, fsopts):
         raise NotImplementedError()
