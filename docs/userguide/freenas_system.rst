@@ -391,8 +391,10 @@ button to open the configuration screen shown in Figure 5.4b. Table 5.4b summari
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
 
-**Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
-warning is provided and the tests should be run at a time that will least impact users.
+**Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
+this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
+that will least impact users. Once the tests are complete, which can take a few minutes, a pop-up message will prompt to save the results as a tarball.
+Uncompress the tar file and use the resources in :ref:`IOzone` to assist in interpreting the results of the file.
 
 **Figure 5.4b: Backup Configuration Screen**
 
