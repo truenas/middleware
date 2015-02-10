@@ -108,6 +108,10 @@ class PasswordAuthenticator(object):
         self.users.clear()
 
 
+class TokenException(RuntimeError):
+    pass
+
+
 class Token(object):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
