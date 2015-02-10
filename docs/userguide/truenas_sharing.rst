@@ -1039,7 +1039,8 @@ framework that enables certain storage tasks, such as large data moves, to be of
   errors.
 
 * **threshold warning:** the system reports a warning when a configurable capacity is reached. In TrueNAS®, this threshold can be configured both at the pool
-  level (see Table 10.5a) and the extent level (see Table 10.5f).
+  level when using zvols (see Table 10.5a) or at the extent level (see Table 10.5f) for both file- and device-based extents. Typically, the warning is set at
+  the pool level, unless file extents are used, in which case it must be set at the extent level.
 
 * **LUN reporting:** the LUN reports that it is thin provisioned.
 
@@ -1110,11 +1111,10 @@ Target Global Configuration
 |                                 |                              | system's iSCSI targets and portals with                                                   |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Pool Available Space Threshold  | integer                      | input the pool percentage; when the pool's specified capacity is reached, the system will |
-|                                 |                              | issue an alert if device extents are used                                                 |
+| Pool Available Space Threshold  | integer                      | input the percentage of free space that should remain in the pool; when this percentage   |
+|                                 |                              | is reached, the system will issue an alert, but only if zvols are used                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-
 .. _Portals:
 
 Portals
@@ -1408,8 +1408,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Available Space    | string         | when the specified capacity is reached, the system will issue an alert                                               |
-| Threshold          |                |                                                                                                                      |
+| Available Space    | string         | only appears if *File* or a zvol is selected; when the specified percentage of free space is reached, the system     |
+| Threshold          |                | will issue an alert                                                                                                  |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
