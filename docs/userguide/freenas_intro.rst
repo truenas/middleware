@@ -365,6 +365,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
 
+* The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
+
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
   

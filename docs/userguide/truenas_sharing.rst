@@ -755,6 +755,10 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               | 10.4b summarizes the available modules                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Periodic Snapshot Task       | drop-down     | used to configure home directory shadow copies on a per-share basis; select the pre-configured periodic     |
+|                              | menu          | snapshot task to use for the share's shadow copies                                                          |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters         | string        | only available in "Advanced Mode"; additional :file:`smb4.conf` parameters not covered by other option      |
 |                              |               | fields                                                                                                      |
 |                              |               |                                                                                                             |
@@ -930,15 +934,11 @@ Before using shadow copies with TrueNAS®, be aware of the following caveats:
 
 * Shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a directory.
 
-* Since directories can not be shadow copied at this time, if you configure "Enable home directories" on the CIFS service, any data stored in the
-  user's home directory will not be shadow copied.
-
 * Datasets are filesystems and shadow copies cannot traverse filesystems. If you want to be able to see the shadow copies in your child datasets, create
   separate shares for them.
 
-* shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
-  task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
-  work on the last executed task at the time the CIFS service started. A future version of TrueNAS® will address this limitation.
+* Shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
+  task for a parent dataset.
 
 * The periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
   first, restart the CIFS service in :menuselection:`Services --> Control Services`.
@@ -949,40 +949,26 @@ Before using shadow copies with TrueNAS®, be aware of the following caveats:
   administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
   CIFS share.
 
-In this configuration example, a Windows 7 computer has two users: *user1* and
-*user2*. To configure TrueNAS® to provide shadow copy support:
+To configure shadow copy support, use the instructions in :ref:`Configuring Authenticated Access Without a Domain Controller` to create the desired number of
+shares. In this configuration example, a Windows 7 computer has two users: *user1* and
+*user2*. For this example, two authenticated shares are created so that each user account has their own share. The first share is named
+*user1* and the second share is named
+*user2*. Then:
 
-#.  For the ZFS volume named :file:`/mnt/data`, create two ZFS datasets in :menuselection:`Storage --> Volumes --> /mnt/data --> Create ZFS Dataset`. The
-    first dataset is named :file:`/mnt/data/user1` and the second dataset is named :file:`/mnt/data/user2`.
+#. Use :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`, to create at least one periodic snapshot task. You can either create
+   a snapshot task for each user's dataset, in this example the dataset names are :file:`/mnt/volume1/user1` and :file:`/mnt/volume1/user2`, or you can create
+   one periodic snapshot task for the entire volume, in this case :file:`/mnt/volume1`.
+   **Before continuing to the next step,** confirm that at least one snapshot for each defined task is displayed in the :menuselection:`Storage --> Snapshots`
+   tab. When creating the schedule for the periodic snapshot tasks, keep in mind how often your users need to access modified files and during which days and
+   time of day they are likely to make changes.
 
-#.  If you are not using Active Directory or LDAP, create two users, *user1* and
-    *user2* in :menuselection:`Account --> Users --> Add User`. Each user has the following attributes:
+#. Go to :menuselection:`Sharing --> Windows (CIFS) Shares`. Highlight a share and click its "Edit" button then its "Advanced Mode" button. Click the 
+   "Periodic Snapshot Task" drop-down menu and select the periodic snapshot task to use for that share. Repeat for each share being configured as a shadow
+   copy. For this example, the share named "/mnt/volume1/user1" is configured to use a periodic snapshot task that was configured to take snapshots of the
+   "/mnt/volume1/user1" dataset and the share named "/mnt/volume1/user2" is configured to use a periodic snapshot task that was configured to take snapshots
+   of the "/mnt/volume1/user2" dataset.
 
-    * "Username" and "Password" match that user's username and password on the Windows system
-
-    * for the "Home Directory", browse to the dataset created for that user
-
-#.  Set the permissions on :file:`/mnt/data/user1` so that the Owner(user) and Owner(group) is *user1*. Set the permissions on :file:`/mnt/data/user2` so that
-    the "Owner(user)" and "Owner(group)" is *user2*. For each dataset's permissions, tighten the "Mode" so that "Other" can not read or execute the
-    information on the dataset.
-
-#.  Create two periodic snapshot tasks in :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`, one for each dataset. Alternatively,
-    you can create one periodic snapshot task for the entire :file:`data` volume. 
-    **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the "ZFS Snapshots" tab. When creating your
-    snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
-
-#.  Create two CIFS shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`. The first CIFS share is named *user1* and has a
-    Path of :file:`/mnt/data/user1`; the second CIFS share is named *user2* and has a "Path" of :file:`/mnt/data/user2`. When creating the first share, click
-    the "No" button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the "Yes" button when the pop-up
-    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
-
-#.  From a Windows system, login as *user1* and open :menuselection:`Windows Explorer --> Network --> FREENAS`. Two shares should appear, named
-    *user1* and
-    *user2*. Due to the permissions on the datasets,
-    *user1* should receive an error if they click on the
-    *user2* share. Due to the permissions on the datasets,
-    *user1* should be able to create, add, and delete files and folders from the
-    *user1* share.
+#. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 
 Figure 10.4e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
 *modified file* and selected "Restore previous versions" from the menu. This particular file has three versions: the current version, plus two previous
