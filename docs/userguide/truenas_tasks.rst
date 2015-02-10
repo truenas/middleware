@@ -428,7 +428,7 @@ Next, copy the host key of *PULL* using Shell on
 
       cat ~/.ssh/id_rsa.pub | ssh user@192.168.2.6 'cat >> .ssh/authorized_keys'
 
-You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
+You are now ready to create the rsync task on *PUSH*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
 
 * the "Path" points to :file:`/mnt/local/images`, the directory to be copied
