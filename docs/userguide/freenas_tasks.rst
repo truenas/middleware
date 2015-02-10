@@ -286,6 +286,9 @@ can be configured when creating an rsync task.
 If the rysnc server requires password authentication, input *--password-file=/PATHTO/FILENAME* in the "Extra options" box, replacing
 */PATHTO/FILENAME* with the appropriate path to the file containing the value of the password.
 
+Created rsync tasks will be listed in "View Rsync Tasks". If you highlight the entry for an rsync task, buttons will be displayed to "Edit", "Delete", or "Run
+Now".
+
 .. _Rsync Module Mode:
 
 Rsync Module Mode
