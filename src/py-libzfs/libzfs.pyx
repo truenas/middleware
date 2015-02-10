@@ -246,7 +246,7 @@ cdef class ZFS(object):
 
         nv = nvpair.NVList(nvlist=<uintptr_t>result)
         for name, config in nv.items():
-            yield (name, config['guid'])
+            yield ZFSImportablePool(self, name, config)
 
     def import_pool(self, guid):
         pass
@@ -661,6 +661,27 @@ cdef class ZFSPool(object):
     def stop_scrub(self):
         if libzfs.zpool_scan(self._zpool, zfs.POOL_SCAN_NONE) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
+
+
+cdef class ZFSImportablePool(ZFSPool):
+    cdef readonly object _config
+
+    def __init__(self, ZFS root, name, config):
+        self._config = config
+        self.name = name
+
+    property config:
+        def __get__(self):
+            return self._config
+
+    def create(self, name, fsopts):
+        raise NotImplementedError()
+
+    def destroy(self, name):
+        raise NotImplementedError()
+
+    def attach_vdev(self, vdev):
+        raise NotImplementedError()
 
 
 cdef class ZFSDataset(object):
