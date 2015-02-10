@@ -261,15 +261,15 @@ The buttons above the boot entries can be used to:
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
 
-Figure 5.3c shows a sample boot menu containing entries for the default, wizard generated, and a manually created boot environment named *prepatch*.
+Figure 5.3c shows a sample boot menu containing entries for the default, initial, and wizard generated boot environments.
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-|be3.png|
+|be3a.png|
 
-.. |be3.png| image:: images/be3.png
-    :width: 5.4in
-    :height: 4.0in
+.. |be3a.png| image:: images/be3a.png
+    :width: 6.0in
+    :height: 3.3in
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
