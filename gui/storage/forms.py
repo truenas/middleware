@@ -2064,6 +2064,9 @@ class ReplicationForm(ModelForm):
         super(ReplicationForm, self).__init__(*args, **kwargs)
         self.fields['repl_filesystem'] = forms.ChoiceField(
             label=self.fields['repl_filesystem'].label,
+            help_text=_(
+                "This field will be empty if you have not "
+                "setup a periodic snapshot task"),
         )
         fs = list(set([
             (task.task_filesystem, task.task_filesystem)
