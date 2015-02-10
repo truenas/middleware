@@ -263,7 +263,11 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
    *epair2a.* The physical interface
    *em0* will be added to the bridge, as well as each epair device. The other half of the epair will be placed inside the jail and will be assigned the IP
    address specified for that jail. The bridge interface will be assigned an alias of the default gateway for that jail, if configured, or the bridge IP, if
-   configured; either is correct.
+   configured; either is correct. 
+   
+   The only time you need to specify an address and mask for the bridge is when you need to configure the jail to be on a different network than the
+   FreeNAS® system. For example, if the FreeNAS® system is on the *10.0.0.0/24* network and the jail needs to be configured for the
+   *192.168.0.0/24* network, set the "IPv4 bridge address" and "IPv4 bridge netmask" fields for the jail.
 
 If you uncheck both the "VIMAGE" and "NAT" boxes, the jail must be configured with an IP address within the same network as the interface it is bound to, and
 that address will be assigned as an alias on that interface. To use a "VIMAGE" jail on the same subnet, uncheck "NAT" and configure an IP address within the
