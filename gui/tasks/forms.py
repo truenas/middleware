@@ -196,15 +196,16 @@ class RsyncForm(ModelForm):
         if '@' in rhost:
             remote = rhost
         else:
-            remote = '%s@%s' % (
+            remote = '"%s"@%s' % (
                 ruser,
                 rhost,
             )
         rport = str(self.cleaned_data.get("rsync_remoteport"))
         rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
         proc = subprocess.Popen(
-                   """su -m %s -c 'ssh -p %s -o "BatchMode yes" -o "ConnectTimeout=5" %s test -d \\""%s"\\"' """
-                   % (ruser, rport, remote, rpath), shell=True)
+            """su -m "%s" -c 'ssh -p %s -o "BatchMode yes" -o """
+            """"ConnectTimeout=5" %s test -d \\""%s"\\"' """
+            % (ruser, rport, remote, rpath), shell=True)
         proc.wait()
         return proc.returncode == 0
 
@@ -265,7 +266,7 @@ class RsyncForm(ModelForm):
                 search = os.path.join(home, ".ssh", "id_[edr]*.*")
                 if not glob.glob(search):
                     raise ValueError
-            except (KeyError, ValueError, AttributeError, TypeError):
+            except (KeyError, ValueError, AttributeError, TypeError) as e:
                 self._errors['rsync_user'] = self.error_class([
                     _("In order to use rsync over SSH you need a user<br />"
                       "with a public key (DSA/ECDSA/RSA) set up in home dir."),

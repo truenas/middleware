@@ -119,7 +119,8 @@ class CronJob(Model):
         if self.cron_minute == '*':
             return _(u'Every minute')
         elif self.cron_minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(self.cron_minute.split('*/')[1])
+            return _(u'Every {0} minute(s)').format(
+                self.cron_minute.split('*/')[1])
         else:
             return self.cron_minute
 
@@ -127,7 +128,8 @@ class CronJob(Model):
         if self.cron_hour == '*':
             return _(u'Every hour')
         elif self.cron_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(self.cron_hour.split('*/')[1])
+            return _(u'Every {0} hour(s)').format(
+                self.cron_hour.split('*/')[1])
         else:
             return self.cron_hour
 
@@ -135,7 +137,8 @@ class CronJob(Model):
         if self.cron_daymonth == '*':
             return _(u'Everyday')
         elif self.cron_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(self.cron_daymonth.split('*/')[1])
+            return _(u'Every {0} days').format(
+                self.cron_daymonth.split('*/')[1])
         else:
             return self.cron_daymonth
 
@@ -279,9 +282,10 @@ class Rsync(Model):
         max_length=120,
         verbose_name=_("Remote Host"),
         help_text=_("IP Address or hostname. "
-            "Specify user@hostname or user@ip-address "
-            "if your remote machine user and above rsync task user are different."
-        ),
+                    "Specify user@hostname or user@ip-address "
+                    "if your remote machine user and above rsync "
+                    "task user are different."
+                    ),
     )
     rsync_remoteport = models.SmallIntegerField(
         default=22,
@@ -335,16 +339,16 @@ class Rsync(Model):
         default="*",
         verbose_name=_("Hour"),
         help_text=_("Values allowed:"
-            "<br>Slider: 0-12 (as it is every Nth hour)."
-            "<br>Specific Hour: 0-23."),
+                    "<br>Slider: 0-12 (as it is every Nth hour)."
+                    "<br>Specific Hour: 0-23."),
     )
     rsync_daymonth = models.CharField(
         max_length=100,
         default="*",
         verbose_name=_("Day of month"),
         help_text=_("Values allowed:"
-            "<br>Slider: 0-15 (as its is every Nth day)."
-            "<br>Specific Day: 1-31."),
+                    "<br>Slider: 0-15 (as its is every Nth day)."
+                    "<br>Specific Day: 1-31."),
     )
     rsync_month = models.CharField(
         max_length=100,
@@ -442,7 +446,8 @@ class Rsync(Model):
         if self.rsync_minute == '*':
             return _(u'Every minute')
         elif self.rsync_minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(self.rsync_minute.split('*/')[1])
+            return _(u'Every {0} minute(s)').format(
+                self.rsync_minute.split('*/')[1])
         else:
             return self.rsync_minute
 
@@ -450,7 +455,8 @@ class Rsync(Model):
         if self.rsync_hour == '*':
             return _(u'Every hour')
         elif self.rsync_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(self.rsync_hour.split('*/')[1])
+            return _(u'Every {0} hour(s)').format(
+                self.rsync_hour.split('*/')[1])
         else:
             return self.rsync_hour
 
@@ -458,7 +464,8 @@ class Rsync(Model):
         if self.rsync_daymonth == '*':
             return _(u'Everyday')
         elif self.rsync_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(self.rsync_daymonth.split('*/')[1])
+            return _(u'Every {0} days').format(
+                self.rsync_daymonth.split('*/')[1])
         else:
             return self.rsync_daymonth
 
@@ -506,27 +513,28 @@ class Rsync(Model):
             line += ' --delete-delay'
         if self.rsync_delayupdates:
             line += ' --delay-updates'
-        line += ' %s' % self.rsync_extra
+        if self.rsync_extra:
+            line += ' %s' % self.rsync_extra
 
         # Do not use username if one is specified in host field
         # See #5096 for more details
         if '@' in self.rsync_remotehost:
             remote = self.rsync_remotehost
         else:
-            remote = '%s@%s' % (
+            remote = '"%s"@%s' % (
                 self.rsync_user,
                 self.rsync_remotehost,
             )
 
         if self.rsync_mode == 'module':
             if self.rsync_direction == 'push':
-                line += ' "%s" %s::%s' % (
+                line += ' "%s" %s::"%s"' % (
                     self.rsync_path,
                     remote,
                     self.rsync_remotemodule,
                 )
             else:
-                line += ' %s::%s "%s"' % (
+                line += ' %s::"%s" "%s"' % (
                     remote,
                     self.rsync_remotemodule,
                     self.rsync_path,
@@ -556,7 +564,7 @@ class Rsync(Model):
 
     def run(self):
         subprocess.Popen(
-            'su -m %s -c \'%s\' 2>&1 | logger -t rsync' % (
+            'su -m "%s" -c \'%s\' 2>&1 | logger -t rsync' % (
                 self.rsync_user,
                 self.commandline(),
             ),
@@ -614,7 +622,8 @@ class SMARTTest(Model):
         if self.smarttest_hour in ('..', '*'):
             return _(u'Every hour')
         elif self.smarttest_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(self.smarttest_hour.split('*/')[1])
+            return _(u'Every {0} hour(s)').format(
+                self.smarttest_hour.split('*/')[1])
         else:
             return self.smarttest_hour
 
@@ -622,7 +631,8 @@ class SMARTTest(Model):
         if self.smarttest_daymonth in ('..', '*'):
             return _(u'Everyday')
         elif self.smarttest_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(self.smarttest_daymonth.split('*/')[1])
+            return _(u'Every {0} days').format(
+                self.smarttest_daymonth.split('*/')[1])
         else:
             return self.smarttest_daymonth
 
