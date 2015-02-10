@@ -511,6 +511,8 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 |                   |                           |                                                                                                            |
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
 
+An example configuration is to schedule a "Short Self-Test" once a week and a "Long Self-Test" once a month. These tests should not have a performance impact,
+as the disks prioritize normal I/O over the tests. If a disk fails a test, even if the overall status is "Passed", start to think about replacing that disk.
 
 You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
 
