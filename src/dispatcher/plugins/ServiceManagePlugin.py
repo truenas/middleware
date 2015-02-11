@@ -36,9 +36,6 @@ from lib.system import system, SubprocessException
 
 @description("Provides info about available services and their state")
 class ServiceInfoProvider(Provider):
-    def initialize(self, context):
-        self.datastore = context.dispatcher.datastore
-
     @description("Lists available services")
     @returns({
         'type': 'array',
