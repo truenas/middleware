@@ -95,7 +95,7 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         tempNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? currentNetwork[ "dhcp" ] : false;
 
         //Figure out interface type. Only knows about Ethernet right now.
-        tempNetwork[ "type"]          = currentNetwork[ "type" ] == "ETHER" ? "Ethernet" : "Unknown";
+        tempNetwork[ "type"]          = currentNetwork[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
 
         // Determine Internet Protcol version
         if (!status[ "aliases" ][1]) {
@@ -113,13 +113,13 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
           }
         }
 
-        // Map the interface type and/or status to and appropirate icon.
+        // Map the interface type and/or status to an appropirate icon.
         switch (tempNetwork[ "type"]) {
           // Ethernet gets the FontAwesome "exchange" icon for now.
           // TODO: Other conditions, such as different icons for connected and
           // disconnected interfaces of different types.
           case "Ethernet":
-          tempNetwork[ "icon" ] = "exchange";
+          tempNetwork[ "font_icon" ] = "exchange";
           break;
           default:
           tempNetwork[ "icon" ] = null;

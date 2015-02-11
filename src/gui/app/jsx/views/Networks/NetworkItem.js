@@ -8,13 +8,15 @@
 
 var _     = require("lodash");
 var React = require("react");
-var TWBS  = require("react-bootstrap");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 var editorUtil = require("../../components/Viewer/Editor/editorUtil");
 
 var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");
+
+var TWBS  = require("react-bootstrap");
+var Icon   = require("../../components/Icon");
 
 var NetworksView = React.createClass({
 
@@ -44,7 +46,8 @@ var NetworksView = React.createClass({
           <TWBS.Row>
             <TWBS.Col xs={3}
                       className="text-center">
-              <viewerUtil.ItemIcon primaryString  = { this.props.item["ip"] }
+              <viewerUtil.ItemIcon fontIcon       = { this.props.item["font_icon"] }
+                                   primaryString  = { this.props.item["ip"] }
                                    fallbackString = { this.props.item["name"] } />
             </TWBS.Col>
             <TWBS.Col xs={9}>
