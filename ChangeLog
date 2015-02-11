@@ -8,3 +8,4 @@
 #7867	Feature	Normal	Update netatalk to 3.1.7
 #7881	Feature	Normal	Annotate Vmware Sync Snapshot
 #7890	Bug	Normal	UPS Service; possible issue with Unicode in some configuration text field
+#7943	Feature	Normal	Add Domain Controller debugging info to freenas-debug
