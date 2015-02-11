@@ -26,45 +26,121 @@
 #####################################################################
 
 
-from namespace import Namespace, Command, IndexCommand, description
-from output import Column, ValueType, output_dict, output_table
+import copy
+from namespace import Namespace, ConfigNamespace, Command, IndexCommand, description
+from output import Column, ValueType, output_dict, output_table, output_object
 from descriptions import events
 from utils import parse_query_args
 
 
 @description("Provides status information about the server")
 class StatusCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         output_dict(context.connection.call_sync('management.status'))
+
+
+@description("Provides information about running system")
+class InfoCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        pass
+
+
+@description("Prints FreeNAS version information")
+class VersionCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        output_object(
+            ('FreeNAS version', 'freenas-version', context.connection.call_sync('system.info.version')),
+            ('System version', 'system-version', context.connection.call_sync('system.info.uname_full'))
+        )
 
 
 @description("Logs in to the server")
 class LoginCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         context.connection.login_user(args[0], args[1])
         context.connection.subscribe_events('*')
         context.login_plugins()
 
 
-@description("Prints events history")
+@description("Prints session history")
+class SessionsCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
+        output_table(items, [
+            Column('Session ID', '/id', ValueType.NUMBER),
+            Column('User name', '/user', ValueType.STRING),
+            Column('Started at', '/started-at', ValueType.TIME),
+            Column('Ended at', '/ended-at', ValueType.TIME)
+        ])
+
+
+@description("Prints event history")
 class EventsCommand(Command):
-    def run(self, context, args, kwargs):
-        items = context.connection.call_sync('event.query', *parse_query_args(args, kwargs))
+    def run(self, context, args, kwargs, opargs):
+        items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
             Column('Event name', lambda t: events.translate(context, t['name'], t['args'])),
-            Column('Occurred at', '/timestamp', ValueType.TIME)
+            Column('Time', '/timestamp', ValueType.TIME)
         ])
+
+
+@description("Time namespace")
+class TimeNamespace(ConfigNamespace):
+    def __init__(self, name, context):
+        super(TimeNamespace, self).__init__(name, context)
+
+        self.add_property(
+            descr='System time',
+            name='system_time',
+            get='/system-time',
+            list=True
+        )
+
+        self.add_property(
+            descr='Bootup time',
+            name='boot_time',
+            get='/boot-time',
+            set=None,
+            list=True
+        )
+
+        self.add_property(
+            descr='Time zone',
+            name='timezone',
+            get='/timezone',
+            list=True
+        )
+
+    def load(self):
+        self.entity = self.context.connection.call_sync('system.info.time')
+        self.orig_entity = copy.deepcopy(self.entity)
+
+    def save(self, entity, diff, new):
+        self.context.submit_task('system.time.configure', diff)
+
 
 @description("System namespace")
 class SystemNamespace(Namespace):
+    def __init__(self, name, context):
+        super(SystemNamespace, self).__init__(name)
+        self.context = context
+
     def commands(self):
         return {
             '?': IndexCommand(self),
             'login': LoginCommand(),
             'status': StatusCommand(),
-            'events': EventsCommand()
+            'version': VersionCommand(),
+            'info': InfoCommand(),
+            'events': EventsCommand(),
+            'sessions': SessionsCommand()
         }
+
+    def namespaces(self):
+        return [
+            TimeNamespace('time', self.context)
+        ]
 
 
 def _init(context):
-    context.attach_namespace('/', SystemNamespace('system'))
+    context.attach_namespace('/', SystemNamespace('system', context))
