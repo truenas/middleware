@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -26,15 +26,14 @@
 #####################################################################
 
 
-import time
 from descriptions import tasks
 from namespace import Namespace, IndexCommand, Command, description
-from output import Column, ValueType, output_msg, output_table
+from output import Column, ValueType, output_table
 
 
 @description("Lists system services")
 class ListCommand(Command):
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         self.context = context
         tasks = context.connection.call_sync('task.query')
         output_table(tasks, [
@@ -47,11 +46,13 @@ class ListCommand(Command):
 
     def describe_state(self, task):
         if task['state'] == 'EXECUTING':
-            state = self.context.connection.call_sync('task.status', task['id'])
+            state = self.context.connection.call_sync(
+                'task.status', task['id'])
             if 'progress' not in state:
                 return task['state']
 
-            return '{0:2.0f}% ({1})'.format(state['progress']['percentage'], state['progress']['message'])
+            return '{0:2.0f}% ({1})'.format(
+                state['progress']['percentage'], state['progress']['message'])
 
         return task['state']
 

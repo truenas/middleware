@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -30,7 +30,8 @@ import copy
 import collections
 from texttable import Texttable
 from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
-from output import Column, ValueType, output_dict, output_table, output_msg, output_is_ascii, read_value, format_value
+from output import (Column, ValueType, output_dict, output_table,
+                    output_msg, output_is_ascii, read_value, format_value)
 
 
 def description(descr):
@@ -55,7 +56,7 @@ class Namespace(object):
     def commands(self):
         return {
             '?': IndexCommand(self),
-            'help': IndexCommand(self)
+            'help': IndexCommand(self),
         }
 
     def namespaces(self):
@@ -89,6 +90,14 @@ class IndexCommand(Command):
         self.target = target
 
     def run(self, context, args, kwargs, opargs):
+        # btable corresponds to built-in commands
+        btable = Texttable()
+        btable.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
+        btable.add_rows([['Builtin Global Commands', 'Description']],
+                        header=True)
+        for name, cmd in context.ml.builtin_commands.items():
+            btable.add_row([name, cmd.description])
+
         table = Texttable()
         table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
         table.add_rows([['Command', 'Description']], header=True)
@@ -102,6 +111,7 @@ class IndexCommand(Command):
             table.add_row([name, cmds[name].description])
 
         print table.draw()
+        print btable.draw()
 
 
 class RootNamespace(Namespace):
@@ -109,7 +119,8 @@ class RootNamespace(Namespace):
 
 
 class PropertyMapping(object):
-    def __init__(self, name, descr, get, set=None, list=False, type=ValueType.STRING):
+    def __init__(self, name, descr, get,
+                 set=None, list=False, type=ValueType.STRING):
         self.name = name
         self.descr = descr
         self.get = get
@@ -209,7 +220,8 @@ class ItemNamespace(Namespace):
 
             for k, op, v in opargs:
                 if op not in ('+=', '-='):
-                    raise CommandException("Syntax error, invalid operator used")
+                    raise CommandException(
+                        "Syntax error, invalid operator used")
 
                 prop = self.parent.get_mapping(k)
 
@@ -259,7 +271,8 @@ class ItemNamespace(Namespace):
 
     def on_leave(self):
         if self.modified:
-            output_msg('Object was modified. Type either "save" or "discard" to leave')
+            output_msg('Object was modified.'
+                       ' Type either "save" or "discard" to leave')
             return False
 
         return True

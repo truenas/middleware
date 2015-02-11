@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-from dispatcher.rpc import description, returns
+from dispatcher.rpc import description
 from task import Provider, Task
 from lib.system import system
 from lib.freebsd import get_sysctl
@@ -76,4 +76,9 @@ class SystemHaltTask(Task):
 
 
 def _init(dispatcher):
+    # Register providers
     dispatcher.register_provider("system.info", SystemInfoProvider)
+
+    # Register task handlers
+    dispatcher.register_task_handler("system.shutdown", SystemHaltTask)
+    dispatcher.register_task_handler("system.reboot", SystemRebootTask)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#+
+# +
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -44,13 +44,13 @@ import gettext
 import getpass
 import traceback
 import Queue
-import signal
 import threading
-from descriptions import events, tasks
+from descriptions import events
 from namespace import Namespace, RootNamespace, Command
 from output import ValueType, ProgressBar, output_lock, output_msg, read_value
 from dispatcher.client import Client, ClientError
-from commands import ExitCommand, PrintenvCommand, SetenvCommand, ShellCommand
+from commands import (ExitCommand, PrintenvCommand, SetenvCommand,
+                      ShellCommand, ShutdownCommand, RebootCommand)
 
 
 if platform.system() == 'Darwin':
@@ -89,15 +89,18 @@ class VariableStore(object):
         def set(self, value):
             value = read_value(value, self.type)
             if self.choices is not None and value not in self.choices:
-                raise ValueError(_("Value not on the list of possible choices"))
+                raise ValueError(_(
+                    "Value not on the list of possible choices"))
 
             self.value = value
 
     def __init__(self):
         self.variables = {
-            'output-format': self.Variable('ascii', ValueType.STRING, ['ascii', 'json']),
+            'output-format': self.Variable('ascii', ValueType.STRING,
+                                           ['ascii', 'json']),
             'datetime-format': self.Variable('natural', ValueType.STRING),
-            'language': self.Variable(os.getenv('LANG', 'C'), ValueType.STRING),
+            'language': self.Variable(os.getenv('LANG', 'C'),
+                                      ValueType.STRING),
             'prompt': self.Variable('{host}:{path}>', ValueType.STRING),
             'timeout': self.Variable(10, ValueType.NUMBER),
             'tasks-blocking': self.Variable(False, ValueType.BOOLEAN),
@@ -267,7 +270,8 @@ class Context(object):
                 event, data = self.event_queue.get()
 
                 if event == 'task.progress' and data['id'] == tid:
-                    progress.update(percentage=data['percentage'], message=data['message'])
+                    progress.update(percentage=data['percentage'],
+                                    message=data['message'])
 
                 if event == 'task.updated' and data['id'] == tid:
                     progress.update(message=data['state'])
@@ -284,7 +288,9 @@ class MainLoop(object):
         'exit': ExitCommand(),
         'setenv': SetenvCommand(),
         'printenv': PrintenvCommand(),
-        'shell': ShellCommand()
+        'shell': ShellCommand(),
+        'shutdown': ShutdownCommand(),
+        'reboot': RebootCommand()
     }
 
     def __init__(self, context):
@@ -377,7 +383,8 @@ class MainLoop(object):
             return
 
         if line[0] == '!':
-            self.builtin_commands['shell'].run(self.context, [line[1:]], {}, {})
+            self.builtin_commands['shell'].run(
+                self.context, [line[1:]], {}, {})
             return
 
         if line[0] == '/':
@@ -399,7 +406,8 @@ class MainLoop(object):
 
             try:
                 if token in self.builtin_commands.keys():
-                    self.builtin_commands[token].run(self.context, tokens, kwargs, opargs)
+                    self.builtin_commands[token].run(
+                        self.context, tokens, kwargs, opargs)
                     break
 
                 for ns in self.cwd.namespaces():
@@ -414,10 +422,10 @@ class MainLoop(object):
                         try:
                             cmd.run(self.context, tokens, kwargs, opargs)
                         except Exception, e:
-                            output_msg('Command {0} failed: {1}'.format(name, str(e)))
+                            output_msg(
+                                'Command {0} failed: {1}'.format(name, str(e)))
                             if self.context.variables.get('debug'):
                                 traceback.print_exc()
-
 
                         cmdfound = True
                         output_lock.release()
@@ -443,7 +451,7 @@ class MainLoop(object):
 
             if issubclass(type(ptr), Namespace):
                 nss = ptr.namespaces()
-                for ns in ptr.namespaces():
+                for ns in nss:
                     if ns.get_name() == token:
                         ptr = ns
                         break
@@ -462,7 +470,9 @@ class MainLoop(object):
         obj = self.get_relative_object(self.cwd, tokens)
 
         if issubclass(type(obj), Namespace):
-            choices = [x.get_name() for x in obj.namespaces()] + obj.commands().keys() + self.builtin_commands.keys()
+            choices = [x.get_name() for x in obj.namespaces()] + \
+                obj.commands().keys() + \
+                self.builtin_commands.keys()
             choices = [i + ' ' for i in choices]
 
         elif issubclass(type(obj), Command):
@@ -481,20 +491,23 @@ class MainLoop(object):
         pass
 
     def blank_readline(self):
-        rows, cols = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, '1234'))
+        rows, cols = struct.unpack('hh', fcntl.ioctl(
+            sys.stdout, termios.TIOCGWINSZ, '1234'))
         text_len = len(readline.get_line_buffer()) + 2
         sys.stdout.write('\x1b[2K')
         sys.stdout.write('\x1b[1A\x1b[2K' * (text_len / cols))
         sys.stdout.write('\x1b[0G')
 
     def restore_readline(self):
-        sys.stdout.write(self.__get_prompt() + readline.get_line_buffer().rstrip())
+        sys.stdout.write(self.__get_prompt() +
+                         readline.get_line_buffer().rstrip())
         sys.stdout.flush()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('hostname', metavar='HOSTNAME', nargs='?', default='127.0.0.1')
+    parser.add_argument('hostname', metavar='HOSTNAME', nargs='?',
+                        default='127.0.0.1')
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE)
     parser.add_argument('-e', metavar='COMMANDS')
     parser.add_argument('-l', metavar='LOGIN')

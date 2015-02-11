@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -31,7 +31,7 @@ import termios
 import sys
 import select
 from namespace import Command, CommandException, description
-from output import Column, ValueType, output_value, output_table, format_value
+from output import Column, output_value, output_table, format_value
 from dispatcher.shell import ShellClient
 
 
@@ -52,7 +52,8 @@ class EvalCommand(Command):
     def run(self, context, args, kwargs, opargs):
         pass
 
-@description("Spawns shell")
+
+@description("Spawns shell, enter \"!shell\" (example: \"!sh\")")
 class ShellCommand(Command):
     def __init__(self):
         super(ShellCommand, self).__init__()
@@ -87,14 +88,14 @@ class ShellCommand(Command):
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
-
 @description("Prints variable value")
 class PrintenvCommand(Command):
     def run(self, context, args, kwargs, opargs):
         if len(args) == 0:
             output_table(context.variables.get_all(), [
                 Column('Name', lambda (name, var): name),
-                Column('Value', lambda (name, var): format_value(var.value, var.type))
+                Column('Value', lambda (name, var):
+                       format_value(var.value, var.type))
             ])
             return
 
@@ -103,7 +104,21 @@ class PrintenvCommand(Command):
             return
 
 
-@description("Exits the CLI")
+@description("Shuts the system down")
+class ShutdownCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        print "System going for a shutdown..."
+        context.submit_task('system.shutdown')
+
+
+@description("Reboots the system")
+class RebootCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        print "System going for a reboot..."
+        context.submit_task('system.reboot')
+
+
+@description("Exits the CLI, enter \"^D\" (ctrl+D)")
 class ExitCommand(Command):
     def run(self, context, args, kwargs, opargs):
         sys.exit(0)
