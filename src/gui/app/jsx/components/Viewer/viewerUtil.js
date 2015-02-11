@@ -63,6 +63,13 @@ viewerUtil.ItemIcon = React.createClass({
       , seedNumber      : React.PropTypes.number
     }
 
+  , getDefaultProps: function() {
+      return {
+          size     : null
+        , fontSize : 1
+      };
+    }
+
   , componentWillMount: function() {
       this.setIcon( this.props );
   }
@@ -115,8 +122,8 @@ viewerUtil.ItemIcon = React.createClass({
         // TODO: BASE64 encoded user images from middleware
         return (
           <div className = "icon"
-               style     = { { height : this.props.size ? this.props.size : null
-                             , width  : this.props.size ? this.props.size : null } }>
+               style     = { { height : this.props.size
+                             , width  : this.props.size } }>
             <img className="image-icon" src={ "data:image/jpg;base64," + this.props.iconImage } />
           </div>
         );
@@ -124,10 +131,10 @@ viewerUtil.ItemIcon = React.createClass({
         return (
           <div className = "icon"
                style     = { { background : this.state.userColor ? this.state.userColor : null
-                             , height     : this.props.size ? this.props.size : null
-                             , width      : this.props.size ? this.props.size : null } }>
+                             , height     : this.props.size
+                             , width      : this.props.size } }>
             <span className = "initials-icon"
-                  style     = { { fontSize   : this.props.fontSize ? this.props.fontSize + "em" : null } } >
+                  style     = { { fontSize : this.props.fontSize + "em"} } >
               { this.state.initials }
             </span>
           </div>
