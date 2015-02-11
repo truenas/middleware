@@ -153,11 +153,13 @@ def wait_server(server=DEFAULT_SERVER, timeout=DEFAULT_TIMEOUT):
             c = Client()
             c.connect(server)
             c.login_service('dispatcherctl', timeout)
-            break
+            sys.exit(0)
         except socket.error, err:
             time.sleep(1)
             timeout -= 1
             continue
+
+    sys.exit(1)
 
 
 def create_client(server):
