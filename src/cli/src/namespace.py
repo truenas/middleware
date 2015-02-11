@@ -367,10 +367,12 @@ class EntityNamespace(Namespace):
         self.context = context
         self.property_mappings = []
         self.primary_key = None
+        self.extra_commands = None
         self.entity_commands = None
         self.entity_namespaces = None
         self.allow_edit = True
         self.allow_create = True
+        self.skeleton_entity = {}
         self.create_command = self.CreateEntityCommand
         self.delete_command = self.DeleteEntityCommand
 
@@ -404,7 +406,7 @@ class EntityNamespace(Namespace):
             self.parent = parent
 
         def run(self, context, args, kwargs, opargs):
-            entity = {}
+            entity = copy.deepcopy(self.parent.skeleton_entity)
 
             if len(args) > 0:
                 prop = self.parent.primary_key
@@ -459,6 +461,9 @@ class EntityNamespace(Namespace):
             '?': IndexCommand(self),
             'list': self.ListCommand(self)
         }
+
+        if self.extra_commands:
+            base.update(self.extra_commands)
 
         if self.allow_create:
             base.update({

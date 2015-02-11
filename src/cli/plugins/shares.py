@@ -25,26 +25,41 @@
 #
 #####################################################################
 
-from namespace import Namespace, EntityNamespace, Command, description
+from namespace import Namespace, EntityNamespace, Command, IndexCommand, description
+from output import ValueType
 
 
-@description("System namespace")
-class SharesNamespace(EntityNamespace):
+@description("Shares")
+class SharesNamespace(Namespace):
     def __init__(self, name, context):
-        super(SharesNamespace, self).__init__(name, context)
+        super(SharesNamespace, self).__init__(name)
+        self.context = context
+
+    def commands(self):
+        return {
+            '?': IndexCommand(self)
+        }
+
+    def namespaces(self):
+        return [
+            NFSSharesNamespace('nfs', self.context)
+        ]
+
+
+@description("NFS shares")
+class NFSSharesNamespace(EntityNamespace):
+    def __init__(self, name, context):
+        super(NFSSharesNamespace, self).__init__(name, context)
+
+        self.skeleton_entity = {
+            'type': 'nfs',
+            'properties': {}
+        }
 
         self.add_property(
             descr='Share name',
             name='name',
             get='/id',
-            list=True
-        )
-
-        self.add_property(
-            descr='Share type',
-            name='type',
-            get='/type',
-            set=None,
             list=True
         )
 
@@ -56,9 +71,40 @@ class SharesNamespace(EntityNamespace):
             list=True
         )
 
+        self.add_property(
+            descr='All directories',
+            name='alldirs',
+            get='/properties/alldirs',
+            list=True,
+            type=ValueType.BOOLEAN
+        )
+
+        self.add_property(
+            descr='Root user',
+            name='root_user',
+            get='/properties/maproot-user',
+            list=True
+        )
+
+        self.add_property(
+            descr='Root group',
+            name='root_group',
+            get='/properties/maproot-group',
+            list=True
+        )
+
+        self.add_property(
+            descr='Allowed hosts/networks',
+            name='hosts',
+            get='/properties/hosts',
+            list=True,
+            type=ValueType.SET
+        )
+
         self.primary_key = self.get_mapping('name')
 
     def query(self, params):
+        params.append(('type', '=', 'nfs'))
         return self.context.connection.call_sync('shares.query', params)
 
     def get_one(self, name):
