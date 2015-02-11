@@ -25,7 +25,13 @@
 #
 #####################################################################
 
-from dispatcher.rpc import description
+import os
+import sys
+import psutil
+import time
+from datetime import datetime
+from dateutil import tz
+from dispatcher.rpc import description, returns
 from task import Provider, Task
 from lib.system import system
 from lib.freebsd import get_sysctl
@@ -38,25 +44,38 @@ class SystemInfoProvider(Provider):
         out, _ = system('uname', '-a')
         return out
 
-    def memory_size(self):
-        return get_sysctl("hw.realmem")
+    def version(self):
+        with open('/etc/version') as fd:
+            return fd.read().strip()
 
-    def cpu_model(self):
-        return get_sysctl("hw.model")
+    def hardware(self):
+        return {
+            'cpu-model': get_sysctl("hw.model"),
+            'memory-size': get_sysctl("hw.realmem")
+        }
 
-    def logged_users(self):
+    def time(self):
+        return {
+            'system-time': datetime.now(tz=tz.tzlocal()),
+            'boot-time': datetime.fromtimestamp(psutil.BOOT_TIME, tz=tz.tzlocal()).isoformat(),
+            'timezone': time.tzname[time.daylight],
+        }
+
+    def timezones(self):
         result = []
-        out, err = system('w')
-        for line in out.split('\n'):
-            parts = line.split(None, 6)
-            result.append({
-                'username': parts[0],
-                'tty': parts[1],
-                'host': parts[2],
-                'login-at': parts[3],
-                'idle': parts[4],
-                'command': parts[5]
-            })
+        for root, _, files in os.walk(sys.argv[1]):
+            for f in files:
+                result.append(os.path.join(root, f))
+
+        return result
+
+
+class ConfigureTimeTask(Task):
+    def verify(self):
+        return ['system']
+
+    def run(self, updated_props):
+        pass
 
 
 class SystemRebootTask(Task):
