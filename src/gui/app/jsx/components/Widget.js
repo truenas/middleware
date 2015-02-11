@@ -17,9 +17,6 @@ var Widget = React.createClass({
 
     return (
       <div className={"widget " + this.props.size} style={divStyle}>
-        <header>
-          <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
-        </header>
         <div className="widget-content">
           { this.props.children }
         </div>
@@ -29,3 +26,8 @@ var Widget = React.createClass({
 });
 
 module.exports = Widget;
+
+      // Widget header removed for now
+      //  <header>
+      //    <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
+      //  </header>

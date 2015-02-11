@@ -10,8 +10,15 @@ var Widget  = 	require("../Widget");
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
+var SystemMiddleware = require("../../middleware/SystemMiddleware");
+var SystemStore      = require("../../stores/SystemStore");
+
 function getWidgetDataFromStore( name ) {
  return StatdStore.getWidgetData( name );
+ }
+
+ function getSystemInfoFromStore( name ) {
+ return SystemStore.getSystemInfo( name );
  }
 
 var DummyWidgetContent = React.createClass({
@@ -28,6 +35,10 @@ var DummyWidgetContent = React.createClass({
     StatdStore.addChangeListener( this.handleStatdChange );
     StatdMiddleware.subscribe( "localhost.memory.memory-wired.value" );
     StatdMiddleware.subscribe( "localhost.memory.memory-cache.value" );
+    StatdMiddleware.subscribe( "localhost.memory.memory-active.value" );
+    StatdMiddleware.subscribe( "localhost.memory.memory-free.value" );
+    StatdMiddleware.subscribe( "localhost.memory.memory-inactive.value" );
+
 
     this.setState({
       element:    this.refs.svg.getDOMNode()
@@ -57,10 +68,14 @@ var DummyWidgetContent = React.createClass({
  , handleStatdChange: function() {
     if ( this.state.initialData === false )
     {
-      this.setState({  wiredData    :   getWidgetDataFromStore( "localhost.memory.memory-wired.value" )
-                      ,cacheData    :   getWidgetDataFromStore( "localhost.memory.memory-cache.value" )
+      this.setState({  wiredData      :   getWidgetDataFromStore( "localhost.memory.memory-wired.value" )
+                      ,cacheData      :   getWidgetDataFromStore( "localhost.memory.memory-cache.value" )
+                      ,activeData     :   getWidgetDataFromStore( "localhost.memory.memory-active.value" )
+                      ,freeData       :   getWidgetDataFromStore( "localhost.memory.memory-free.value" )
+                      ,inactiveData   :   getWidgetDataFromStore( "localhost.memory.memory-inactive.value" )
+                      ,memorySize     :   getSystemInfoFromStore( "memory_size" )
                     });
-      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined)
+      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined && this.state.activeData !== undefined && this.state.freeData !== undefined && this.state.inactiveData !== undefined && this.state.memorySize !== undefined )
       {
         this.setState({  initialData  : true
                       });
@@ -80,6 +95,15 @@ var DummyWidgetContent = React.createClass({
         case "statd.localhost.memory.memory-cache.value.pulse":
           this.updateData("cacheData", updateArray);
         break;
+        case "statd.localhost.memory.memory-active.value.pulse":
+          this.updateData("activeData", updateArray);
+        break;
+        case "statd.localhost.memory.memory-free.value.pulse":
+          this.updateData("freeData", updateArray);
+        break;
+        case "statd.localhost.memory.memory-inactive.value.pulse":
+          this.updateData("inactiveData", updateArray);
+        break;
 
         default:
           // Do nothing
@@ -98,29 +122,55 @@ var DummyWidgetContent = React.createClass({
     //console.log(stop.format());
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", start.format(),  stop.format(), "10S");
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-cache.value", start.format(),  stop.format(), "10S");
+    StatdMiddleware.requestWidgetData( "localhost.memory.memory-active.value", start.format(),  stop.format(), "10S");
+    StatdMiddleware.requestWidgetData( "localhost.memory.memory-free.value", start.format(),  stop.format(), "10S");
+    StatdMiddleware.requestWidgetData( "localhost.memory.memory-inactive.value", start.format(),  stop.format(), "10S");
+
+    SystemMiddleware.requestSystemInfo( "memory_size" );
+
   }
 
   , drawChart: function() {
     var chart;
+    var memorySize = this.state.memorySize;
 
-    chart = nv.models.lineChart()
-    .options({
-      margin: {left: 100, right: 30, bottom: 50},
-      x: function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } },
-      y: function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } },
-      showXAxis: true,
-      showYAxis: true,
-      transitionDuration: 250
-    });
+    if (this.props.stacked)
+    {
+      chart = nv.models.stackedAreaChart()
+          .margin({top: 15, right: 50, bottom: 60, left: 50})
+          .x(function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } })   //We can modify the data accessor functions...
+          .y(function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } })   //...in case your data is formatted differently.
+          .useInteractiveGuideline(true)    //Tooltips which show all data points. Very nice!
+          .transitionDuration(500)
+          .style("expand")
+          .showControls(false)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+          .clipEdge(false);
+    }
+    else
+    {
+      chart = nv.models.lineChart()
+      .options({
+        margin: {top: 15, right: 50, bottom: 60, left: 50},
+        x: function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } },
+        y: function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } },
+        showXAxis: true,
+        showYAxis: true,
+        transitionDuration: 250,
+        forceY: [0, 100]
+      });
+    }
 
   // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
   chart.xAxis
-    .axisLabel("Time (s)")
-    .tickFormat(d3.format(',.1f'));
+    .axisLabel("Time")
+    .tickFormat(function(d) {
+          //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+          return moment.unix(d).format("HH:mm:ss");
+    });
 
   chart.yAxis
-    .axisLabel("")
-    .tickFormat(d3.format(',.2f'));
+    .axisLabel("%")
+    .tickFormat(d3.format(',.0f'));
 
   d3.select(this.state.element)
     .datum(this.chartData())
@@ -140,7 +190,7 @@ var DummyWidgetContent = React.createClass({
         area: false,
         values: this.state.wiredData,
         key: "Wired Memory",
-        color: "#ff7f0e"
+        color: "#f39400"
       }
      ,{
         area: false,
@@ -148,24 +198,44 @@ var DummyWidgetContent = React.createClass({
         key: "Cached Memory",
         color: "#8ac007"
       }
+     ,{
+        area: false,
+        values: this.state.activeData,
+        key: "Active Memory",
+        color: "#c9d200"
+      }
+     ,{
+        area: false,
+        values: this.state.freeData,
+        key: "Free Memory",
+        color: "#5186ab"
+      }
+     ,{
+        area: false,
+        values: this.state.inactiveData,
+        key: "Inactive Memory",
+        color: "#b6d5e9"
+      }
+
     ];
   }
 
   , render: function() {
     //console.log(this.state.widgetData);
     // <h3 style={elementStyle}>{"It works! "}{this.state.widgetData}</h3>
-    var elementStyle = {
-      margin: "0px",
-      padding: "0px"
+    var divStyle = {
+      width: "100%",
+      height: "100%"
     };
     return (
       <Widget
-    	   positionX  =  {this.props.positionX}
-    	   positionY  =  {this.props.positionY}
-    	   title      =  {this.props.title}
-    	   size       =  {this.props.size} >
+        positionX  =  {this.props.positionX}
+        positionY  =  {this.props.positionY}
+        title      =  {this.props.title}
+        size       =  {this.props.size} >
 
-        <svg ref="svg" width={450} height={350}></svg>
+        <svg ref="svg" style={divStyle}></svg>
+
       </Widget>
     );
   }

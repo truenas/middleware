@@ -12,6 +12,8 @@ var React 		        = 	require("react");
 
 var Widget   	        = 	require("../components/Widget");
 var DummyWidgetContent 	= 	require("../components/Widgets/DummyWidgetContent");
+var SystemInfo         =   require("../components/Widgets/SystemInfo");
+
 var DriveInfo 	        = 	require("../components/Widgets/DriveInfo");
 var DriveInfo2 	        = 	require("../components/Widgets/DriveInfo2");
 var ProcessesPie 	    = 	require("../components/Widgets/ProcessesPie");
@@ -28,14 +30,9 @@ var Dashboard = React.createClass({
       <main>
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widget-wrapper">
-          <DummyWidgetContent positionX="735" positionY="100" title="Wired Memory Value" size="l-rect" />
-          <DriveInfo positionX="375" positionY="100" title="Drive Info 1" size="s-square" sn="WC-C4NFLDU8RP" />
-          <DriveInfo2 positionX="555" positionY="100" title="Drive Info 2a" size="s-square" diskData={{sn:"WC-AWZ0927810", name:"da2", size:"6 TB"}} />
-          <DriveInfo2 positionX="735" positionY="460" title="Drive Info 2b" size="s-square" diskData={{sn:"SSD-0543TG812", name:"da3", size:"1 TB", type:"ssd"}} />
-          <ProcessesPie positionX="15" positionY="100" title="Processes Pie" size="l-square" />
-          <SwapUsage positionX="375" positionY="280" title="Swap Usage" size="sl-rect" />
-          <NetworkChart positionX="15" positionY="1000" title="Networ Chart" size="xl-rect" />
-          <PoolIOs positionX="15" positionY="460" title="Pool IOs" size="xl-rect" />
+          <DummyWidgetContent positionX="15" positionY="100" title="Memory Value" size="l-rect" />
+          <DummyWidgetContent positionX="15" positionY="460" stacked="true" title="Stacked Memory Value" size="l-rect" />
+          <SystemInfo positionX="555" positionY="100" stacked="true" title="System Info" size="m-square" />
         </div>
       </main>
     );
@@ -43,3 +40,13 @@ var Dashboard = React.createClass({
 });
 
 module.exports = Dashboard;
+
+
+//Dead Widgets
+//          <DriveInfo positionX="375" positionY="100" title="Drive Info 1" size="s-square" sn="WC-C4NFLDU8RP" />
+//          <DriveInfo2 positionX="555" positionY="100" title="Drive Info 2a" size="s-square" diskData={{sn:"WC-AWZ0927810", name:"da2", size:"6 TB"}} />
+//          <DriveInfo2 positionX="735" positionY="820" title="Drive Info 2b" size="s-square" diskData={{sn:"SSD-0543TG812", name:"da3", size:"1 TB", type:"ssd"}} />
+//          <ProcessesPie positionX="15" positionY="100" title="Processes Pie" size="l-square" />
+//          <SwapUsage positionX="375" positionY="280" title="Swap Usage" size="sl-rect" />
+//          <NetworkChart positionX="15" positionY="1000" title="Networ Chart" size="xl-rect" />
+//          <PoolIOs positionX="15" positionY="460" title="Pool IOs" size="xl-rect" />
