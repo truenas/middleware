@@ -55,6 +55,15 @@ class ZpoolProvider(Provider):
             **(params or {})
         )
 
+    def find(self):
+        zfs = libzfs.ZFS()
+        return list(map(lambda p: p.__getstate__(), zfs.find_import()))
+
+    def get_boot_pool(self):
+        name = self.configstore.get('system.boot_pool_name')
+        zfs = libzfs.ZFS()
+        return zfs.get(name).__getstate__()
+
     def get_disks(self, name):
         try:
             zfs = libzfs.ZFS()
@@ -101,11 +110,7 @@ class ZpoolProvider(Provider):
 
 
 class ZfsProvider(Provider):
-    def list_datasets(self, pool):
-        zfs.list_datasets(pool, recursive=True, include_root=True)
-
-    def list_snapshots(self, pool):
-        return []
+    pass
 
 
 @description("Scrubs ZFS pool")
@@ -202,7 +207,7 @@ class ZpoolCreateTask(Task):
                 if 'children' in vdev:
                     result += [self.__partition_to_disk(i['path']) for i in vdev['children']]
 
-        return result
+        return map(lambda d: 'disk:{0}'.format(d), result)
 
     def verify(self, name, topology, params=None):
         zfs = libzfs.ZFS()
@@ -260,9 +265,11 @@ class ZpoolCreateTask(Task):
                 nvroot[group].append(vdev)
 
         try:
-            zfs.create(name, nvroot, opts, fsopts)
+            pool = zfs.create(name, nvroot, opts, fsopts)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
+
+        zpool_create_resources(self.dispatcher, pool)
 
 
 class ZpoolBaseTask(Task):
@@ -298,6 +305,8 @@ class ZpoolDestroyTask(ZpoolBaseTask):
             zfs.destroy(name)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
+
+        self.dispatcher.unregister_resource('zpool:{0}'.format(name))
 
 
 class ZpoolExtendTask(Task):
@@ -361,18 +370,37 @@ class ZfsDatasetCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
+        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+
 
 class ZfsVolumeCreateTask(Task):
-    def verify(self, pool, path, size, params=None):
-        return ['zpool:{0}'.format(pool)]
+    def verify(self, pool_name, path, size, params=None):
+        return ['zpool:{0}'.format(pool_name)]
 
-    def run(self, pool, path, size, params=None):
+    def run(self, pool_name, path, size, params=None):
         try:
             zfs = libzfs.ZFS()
-            pool = zfs.get(pool)
+            pool = zfs.get(pool_name)
             pool.create(path, nvpair.NVList(otherdict=params))
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
+
+        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+
+
+class ZfsSnapshotCreateTask(Task):
+    def verify(self, pool_name, path, size, params=None):
+        return ['zpool:{0}'.format(pool_name)]
+
+    def run(self, pool_name, path, size, params=None):
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool_name)
+            pool.create(path, nvpair.NVList(otherdict=params))
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
 
 
 class ZfsConfigureTask(ZfsBaseTask):
@@ -387,10 +415,32 @@ class ZfsConfigureTask(ZfsBaseTask):
 
 
 class ZfsDestroyTask(ZfsBaseTask):
-    def run(self, name):
+    def run(self, path):
         try:
             zfs = libzfs.ZFS()
-            dataset = zfs.get_dataset(name)
+            dataset = zfs.get_dataset(path)
+            dataset.delete()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+        self.dispatcher.unregister_resource('zfs:{0}'.format(path))
+
+
+class ZfsRenameTask(ZfsBaseTask):
+    def run(self, path):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(path)
+            dataset.delete()
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
+
+
+class ZfsCloneTask(ZfsBaseTask):
+    def run(self, path):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(path)
             dataset.delete()
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
@@ -402,16 +452,22 @@ def get_disk_names(dispatcher, pool):
 
 def zpool_create_resources(dispatcher, pool):
     def iter_dataset(ds):
-        dispatcher.register_resource('zfs:{0}'.format(ds.name), parents=[])
+        dispatcher.register_resource(
+            Resource('zfs:{0}'.format(ds.name)),
+            parents=['zpool:{0}'.format(pool.name)])
+
         for i in ds.children:
             iter_dataset(i)
 
-    dispatcher.register_resource('zpool:{0}'.format(pool.name), parents=get_disk_names(dispatcher, pool))
+    dispatcher.register_resource(
+        Resource('zpool:{0}'.format(pool.name)),
+        parents=get_disk_names(dispatcher, pool))
+
     iter_dataset(pool.root_dataset)
 
 
 def zpool_remove_resources(dispatcher, pool):
-    dispatcher.unregister_resource('zpool:{0}'.format(pool.name))
+    dispatcher.unregister_resource(Resource('zpool:{0}'.format(pool.name)))
 
 
 def _depends():
@@ -419,6 +475,43 @@ def _depends():
 
 
 def _init(dispatcher):
+    def on_pool_create(args):
+        guid = args['guid']
+        dispatcher.dispatch_event('zfs.pool.changed', {
+            'operation': 'create',
+            'ids': [guid]
+        })
+
+    def on_pool_destroy(args):
+        guid = args['guid']
+        dispatcher.dispatch_event('zfs.pool.changed', {
+            'operation': 'delete',
+            'ids': [guid]
+        })
+
+    def on_dataset_create(args):
+        guid = args['guid']
+        dispatcher.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=[])
+        dispatcher.dispatch_event('zfs.pool.changed', {
+            'operation': 'create',
+            'ids': [guid]
+        })
+
+    def on_dataset_delete(args):
+        guid = args['guid']
+        dispatcher.unregister_resource('zfs:{0}'.format(args['ds']))
+        dispatcher.dispatch_event('zfs.pool.changed', {
+            'operation': 'update',
+            'ids': [guid]
+        })
+
+    def on_dataset_rename(args):
+        guid = args['guid']
+        dispatcher.dispatch_event('zfs.pool.changed', {
+            'operation': 'update',
+            'ids': [guid]
+        })
+
     dispatcher.register_schema_definition('zfs-vdev', {
         'type': 'object',
         'properties': {
@@ -456,6 +549,12 @@ def _init(dispatcher):
         }
     })
 
+    dispatcher.register_event_handler('fs.zfs.pool.created', on_pool_create)
+    dispatcher.register_event_handler('fs.zfs.pool.destroyed', on_pool_destroy)
+    dispatcher.register_event_handler('fs.zfs.dataset.created', on_dataset_create)
+    dispatcher.register_event_handler('fs.zfs.dataset.deleted', on_dataset_delete)
+    dispatcher.register_event_handler('fs.zfs.dataset.renamed', on_dataset_rename)
+
     dispatcher.register_provider('zfs.pool', ZpoolProvider)
     dispatcher.register_task_handler('zfs.pool.create', ZpoolCreateTask)
     dispatcher.register_task_handler('zfs.pool.configure', ZpoolConfigureTask)
@@ -468,13 +567,16 @@ def _init(dispatcher):
     dispatcher.register_task_handler('zfs.mount', ZfsDatasetMountTask)
     dispatcher.register_task_handler('zfs.umount', ZfsDatasetUmountTask)
     dispatcher.register_task_handler('zfs.create_dataset', ZfsDatasetCreateTask)
+    dispatcher.register_task_handler('zfs.create_snapshot', ZfsSnapshotCreateTask)
     dispatcher.register_task_handler('zfs.create_zvol', ZfsVolumeCreateTask)
     dispatcher.register_task_handler('zfs.configure', ZfsConfigureTask)
     dispatcher.register_task_handler('zfs.destroy', ZfsDestroyTask)
+    dispatcher.register_task_handler('zfs.rename', ZfsRenameTask)
+    dispatcher.register_task_handler('zfs.clone', ZfsCloneTask)
 
     try:
         zfs = libzfs.ZFS()
         for pool in zfs.pools:
-            dispatcher.register_resource(Resource('zpool:{0}'.format(pool.name)), get_disk_names(dispatcher, pool))
+            zpool_create_resources(dispatcher, pool)
     except libzfs.ZFSException:
         pass
