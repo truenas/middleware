@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Dokument bez názvu</title>
+<link rel="stylesheet" type="text/css" href="view.css" media="all">
+<script src="jquery-2.1.3.min.js"></script>
+
+</head>
+<body>
+<script>
+
+(function($) {
+  $.fn.toggleRotate = function(classes) {
+    
+    $(this).toggleClass(function() {
+      var l = classes.length;
+      for (var i = 0; i < l; i++) {
+        if ($(this).hasClass(classes[i])) {
+          var next = i + 1 >= l ? 0 : i + 1;
+          return classes[i] + ' ' + classes[next];
+        }        
+      }
+      // If it makes it here return the first current value
+      return classes[0];
+    });
+  };
+})(jQuery);
+
+
+
+$( document ).ready(function() {
+
+	$('#but1').click(function() {
+	  $('#lay1').toggleRotate(['lay1_1', 'lay1_0', 'lay1_2']);
+	  $('#button1').toggleRotate(['b1_1', 'b1_2', 'b1_0']);
+	});
+
+	$('#but2').click(function() {
+	  $('#lay2').toggleRotate(['lay2_1', 'lay2_0', 'lay2_2']);
+	  $('#button2').toggleRotate(['b2_1', 'b2_2', 'b2_0']);
+	});
+
+	$('#but3').click(function() {
+	  $('#lay3').toggleRotate(['lay3_1', 'lay3_0', 'lay3_2']);
+	  $('#button3').toggleRotate(['b3_1', 'b3_2', 'b3_0']);
+	});
+});
+</script>
+
+
+
+
+
+<div class="container">
+
+	<a id="but1" href="#" class="button"> </a>
+	<a id="but2" href="#" class="button"> </a>
+	<a id="but3" href="#" class="button"> </a>
+
+
+	<div id="lay1" class="basic lay1_2"></div>
+	<div id="button1" class="basic b1_0"></div>
+	<div id="lay2" class="basic lay2_2"></div>
+	<div id="button2" class="basic b2_0"></div>
+	<div id="lay3" class="basic lay3_2"></div>
+	<div id="button3" class="basic b3_0"></div>
+
+
+</div>
+
+
+
+
+
+</body>
+</html>

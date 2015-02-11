@@ -1,0 +1,93 @@
+
+.button{
+	width: 43px;
+	height: 22px;	
+	
+	position: absolute;
+	z-index: 10000;
+}
+#but1{
+	top: 37px;
+	left: 477px;
+}
+#but2{
+	top: 37px;
+	left: 527px;
+}
+#but3{
+	top: 37px;
+	left: 576px;
+}
+
+
+.container{
+	width: 670px;
+	height: 450px;
+	background-image: url('background.png');
+	position: relative;
+}
+.basic{
+	width: 670px;
+	height: 450px;	
+	position: absolute;
+
+}
+
+.lay1_2{
+	background-image: url('lay1_2.png');
+}
+.lay1_1{
+	background-image: url('lay1_1.png');
+}
+.lay1_0{
+	background-image: url('lay1_0.png');
+}
+.b1_0{
+	background-image: url('b1_0.png');
+}
+.b1_1{
+	background-image: url('b1_1.png');
+}
+.b1_2{
+	background-image: url('b1_2.png');
+}
+
+
+.lay2_2{
+	background-image: url('lay2_2.png');
+}
+.lay2_1{
+	background-image: url('lay2_1.png');
+}
+.lay2_0{
+	background-image: url('lay2_0.png');
+}
+.b2_0{
+	background-image: url('b2_0.png');
+}
+.b2_1{
+	background-image: url('b2_1.png');
+}
+.b2_2{
+	background-image: url('b2_2.png');
+}
+
+
+.lay3_2{
+	background-image: url('lay3_2.png');
+}
+.lay3_1{
+	background-image: url('lay3_1.png');
+}
+.lay3_0{
+	background-image: url('lay3_0.png');
+}
+.b3_0{
+	background-image: url('b3_0.png');
+}
+.b3_1{
+	background-image: url('b3_1.png');
+}
+.b3_2{
+	background-image: url('b3_2.png');
+}
