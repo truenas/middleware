@@ -66,7 +66,7 @@ viewerUtil.ItemIcon = React.createClass({
   , getDefaultProps: function() {
       return {
           size     : null
-        , fontSize : 1
+        , fontSize : null
       };
     }
 
