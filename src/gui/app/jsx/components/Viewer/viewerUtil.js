@@ -56,6 +56,7 @@ viewerUtil.ItemIcon = React.createClass({
 
     propTypes: {
         iconImage       : React.PropTypes.string
+      , fontIcon        : React.PropTypes.string
       , size            : React.PropTypes.number
       , fontSize        : React.PropTypes.number
       , primaryString   : React.PropTypes.string
@@ -81,7 +82,12 @@ viewerUtil.ItemIcon = React.createClass({
   , setIcon: function( props ) {
       // If there's a profile picture already, don't bother with an icon.
       if ( !props.iconImage ) {
-        this.setInitialsIcon( this.props );
+        // Font Icon overrides initials icon, but only needs a color.
+        if ( props.fontIcon ) {
+          this.setIconColor ( this.props );
+        } else {
+          this.setInitialsIcon( this.props );
+        }
       }
     }
 
@@ -127,7 +133,21 @@ viewerUtil.ItemIcon = React.createClass({
             <img className="image-icon" src={ "data:image/jpg;base64," + this.props.iconImage } />
           </div>
         );
+      } else if ( this.props.fontIcon ) {
+        // Use a Font Icon, but only if there isn't a specific image specified.
+        return (
+          <div className = "icon"
+               style     = { { background : this.state.userColor ? this.state.userColor : null
+                             , height     : this.props.size
+                             , width      : this.props.size } }>
+            <span className = "font-icon"
+                  style     = { { fontSize : this.props.fontSize + "em" } } >
+              <Icon glyph     = { this.props.fontIcon } />
+            </span>
+          </div>
+        );
       } else {
+        // Using the Initials icon is a last resort.
         return (
           <div className = "icon"
                style     = { { background : this.state.userColor ? this.state.userColor : null

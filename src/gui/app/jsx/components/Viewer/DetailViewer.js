@@ -57,6 +57,7 @@ var DetailNavSection = React.createClass({
             <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
                                  fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
                                  iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
+                                 fontIcon       = { rawItem[ this.props.viewData.format["fontIconKey"] ] }
                                  seedNumber     = { rawItem[ this.props.viewData.format["uniqueKey"] ] }
                                  fontSize       = { 1 } />
             <div className="viewer-detail-nav-item-text">
