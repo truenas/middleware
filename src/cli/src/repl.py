@@ -33,6 +33,7 @@ import argparse
 import shlex
 import imp
 import logging
+import errno
 import struct
 import fcntl
 import platform
@@ -49,9 +50,9 @@ from descriptions import events
 from namespace import Namespace, RootNamespace, Command
 from output import ValueType, ProgressBar, output_lock, output_msg, read_value
 from dispatcher.client import Client, ClientError
+from dispatcher.rpc import RpcException
 from commands import (ExitCommand, PrintenvCommand, SetenvCommand,
                       ShellCommand, ShutdownCommand, RebootCommand)
-
 
 if platform.system() == 'Darwin':
     import gnureadline as readline
@@ -147,13 +148,24 @@ class Context(object):
     def start(self):
         self.discover_plugins()
         self.connect()
-        self.keepalive_timer = threading.Timer(60.0, self.keepalive)
-        self.keepalive_timer.start()
 
     def connect(self):
-        self.connection.on_event(self.print_event)
-        self.connection.on_error(self.connection_error)
         self.connection.connect(self.hostname)
+
+    def login(self, user, password):
+        try:
+            self.connection.login_user(user, password)
+            self.connection.subscribe_events(*EVENT_MASKS)
+            self.connection.on_event(self.print_event)
+            self.connection.on_error(self.connection_error)
+
+        except RpcException, e:
+            if e.code == errno.EACCES:
+                self.connection.disconnect()
+                output_msg(_("Wrong username od password"))
+                sys.exit(1)
+
+        self.login_plugins()
 
     def keepalive(self):
         if self.connection.opened:
@@ -205,20 +217,28 @@ class Context(object):
             self.plugins[path] = plugin
 
     def __try_reconnect(self):
+        output_lock.acquire()
+        self.ml.blank_readline()
+
         output_msg('Connection lost! Trying to reconnect...')
         retries = 0
         while True:
             retries += 1
-            sys.stdout.write('.')
-            sys.stdout.flush()
             try:
-                time.sleep(1)
+                time.sleep(5)
                 self.connect()
-                self.connection.login_token(self.connection.token)
-                self.connection.subscribe_events(*EVENT_MASKS)
+                try:
+                    self.connection.login_token(self.connection.token)
+                    self.connection.subscribe_events(*EVENT_MASKS)
+                except RpcException:
+                    output_msg('Reauthentication using token failed (most likely token expired or server was restarted)')
+                    sys.exit(1)
                 break
-            except:
-                pass
+            except Exception, e:
+                output_msg('Cannot reconnect: {0}'.format(str(e)))
+
+        self.ml.restore_readline()
+        output_lock.release()
 
     def attach_namespace(self, path, ns):
         splitpath = path.split('/')
@@ -519,17 +539,13 @@ def main():
     context.read_config_file(args.c)
     context.start()
 
-    if args.l:
-        context.connection.login_user(args.l, args.p)
-        context.connection.subscribe_events(*EVENT_MASKS)
-        context.login_plugins()
-    elif args.l is None and args.p is None and args.hostname == '127.0.0.1':
-        context.connection.login_user(getpass.getuser(), '')
-        context.connection.subscribe_events(*EVENT_MASKS)
-        context.login_plugins()
-
     ml = MainLoop(context)
     context.ml = ml
+
+    if args.l:
+        context.login(args.l, args.p)
+    elif args.l is None and args.p is None and args.hostname == '127.0.0.1':
+        context.login(getpass.getuser(), '')
 
     if args.D:
         for i in args.D:
