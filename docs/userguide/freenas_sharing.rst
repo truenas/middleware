@@ -1564,11 +1564,11 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 
 **Figure 10.5j: Editing an Existing Zvol**
 
-|grow.png|
+|grow1.png|
 
-.. |grow.png| image:: images/grow.png
-    :width: 5.3in
-    :height: 4.0in
+.. |grow1.png| image:: images/grow1.png
+    :width: 4.8in
+    :height: 4.5in
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.

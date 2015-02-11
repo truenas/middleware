@@ -851,20 +851,8 @@ support on systems containing hardware that is capable of multipath. An example 
 Multipath hardware adds fault tolerance to a NAS as the data is still available even if one disk I/O path has a failure.
 
 FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in
-multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`, as seen in
-the example in Figure 8.1p. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
-multipath-capable hardware.
-
-**Figure 8.1p: Viewing Multipaths**
-
-|multipath.png|
-
-.. |multipath.png| image:: images/multipath.png
-    :width: 6.9252in
-    :height: 1.6736in
-
-Figure 8.1p provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
-capable of active/read.
+multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`. Note that
+this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain multipath-capable hardware.
 
 .. index:: Replace Failed Drive
 .. _Replacing a Failed Drive:
@@ -897,9 +885,9 @@ the failed device in the GUI, perform the following steps:
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-In the example shown in Figure 8.1q, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
+In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
-**Figure 8.1q: Replacing a Failed Disk**
+**Figure 8.1p: Replacing a Failed Disk**
 
 |replace.png|
 
@@ -907,10 +895,10 @@ In the example shown in Figure 8.1q, a failed disk is being replaced by disk *ad
     :width: 4.9in
     :height: 4.5in
 
-Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1r indicates that the
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1q indicates that the
 disk replacement was successful for this example.
 
-**Figure 8.1r: Disk Replacement is Complete**
+**Figure 8.1q: Disk Replacement is Complete**
 
 |replace2.png|
 
