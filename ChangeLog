@@ -1,4 +1,10 @@
-#7718	Feature	Normal	Add custom "home name" for netatalk
-#7601	Bug	Normal	Reporting History Data is lost when system data set is moved to a different pool
-#7582	Bug	Normal	Created in Web GUI lagg interface does not show in shell or CLI
 #6998	Bug	Normal	Enabling DHCP for existing jails created before upgrade to 9.3 does not work.
+#7582	Bug	Normal	Created in Web GUI lagg interface does not show in shell or CLI
+#7601	Bug	Normal	Reporting History Data is lost when system data set is moved to a different pool
+#7718	Feature	Normal	Add custom "home name" for netatalk
+#7842	Bug	Normal	rsync task with domain user fails
+#7864	Bug	Normal	solaris_acl_rights - Function not implemented
+#7866	Bug	Normal	Backup dialog gets stuck in a loop
+#7867	Feature	Normal	Update netatalk to 3.1.7
+#7881	Feature	Normal	Annotate Vmware Sync Snapshot
+#7890	Bug	Normal	UPS Service; possible issue with Unicode in some configuration text field
