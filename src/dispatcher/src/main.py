@@ -487,10 +487,11 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 self.dispatcher.token_store.keepalive_token(self.token)
             except TokenException:
                 # Token expired, logout user
-                self.token = None
-                self.user = None
-                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
-                return
+                #self.token = None
+                #self.user = None
+                #self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                #return
+                pass
 
         # Increment reference count for any newly subscribed event
         for mask in set.difference(set(event_masks), self.event_masks):
@@ -510,10 +511,11 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 self.dispatcher.token_store.keepalive_token(self.token)
             except TokenException:
                 # Token expired, logout user
-                self.token = None
-                self.user = None
-                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
-                return
+                #self.token = None
+                #self.user = None
+                #self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                #return
+                pass
 
         # Decrement reference count for any unsubscribed, previously subscribed event
         for mask in set.union(set(event_masks), self.event_masks):
@@ -533,10 +535,11 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 self.dispatcher.token_store.keepalive_token(self.token)
             except TokenException:
                 # Token expired, logout user
-                self.token = None
-                self.user = None
-                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
-                return
+                #self.token = None
+                #self.user = None
+                #self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                #return
+                pass
 
         self.dispatcher.dispatch_event(data['name'], data['args'])
 
@@ -686,10 +689,11 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                 self.dispatcher.token_store.keepalive_token(self.token)
             except TokenException:
                 # Token expired, logout user
-                self.token = None
-                self.user = None
-                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
-                return
+                #self.token = None
+                #self.user = None
+                #self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                #return
+                pass
 
         method = data["method"]
         args = data["args"]
@@ -781,7 +785,14 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         return self.send_json(payload)
 
     def send_json(self, obj):
-        self.ws.send(dumps(obj))
+        try:
+            data = dumps(obj)
+        except UnicodeDecodeError, e:
+            self.dispatcher.logger.error('Error encoding following payload to JSON:')
+            self.dispatcher.logger.error(repr(obj))
+            return
+
+        self.ws.send(data)
 
 
 class ShellConnection(WebSocketApplication, EventEmitter):
