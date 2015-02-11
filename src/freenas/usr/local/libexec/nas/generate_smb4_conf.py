@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import socket
 import string
 import tempfile
 import time
@@ -41,6 +42,7 @@ from freenasUI.common.system import (
     ldap_has_samba_schema,
     nt4_enabled
 )
+from freenasUI.choices import IPChoices
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
@@ -422,6 +424,7 @@ def add_nt4_conf(smb4_conf):
     except:
         return
 
+    dc_ip = None 
     try:
         answers = resolver.query(nt4.nt4_dcname, 'A')
         dc_ip = answers[0]
@@ -601,6 +604,29 @@ def add_domaincontroller_conf(smb4_conf):
     #confset2(smb4_conf, "dcerpc endpoint servers = %s",
     #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
 
+    ipv4_addrs = []
+    if cifs.cifs_srv_bindip:
+        interfaces = cifs.cifs_srv_bindip.split(',')
+        for i in interfaces:
+            try:
+                socket.inet_aton(i)
+                ipv4_addrs.append(i)
+            except:
+                pass
+
+    else: 
+        interfaces = IPChoices(ipv6=False)
+        for i in interfaces:
+            try:
+                socket.inet_aton(i[0])
+                ipv4_addrs.append(i[0])
+            except:
+                pass
+
+    with open("/usr/local/etc/lmhosts", "w") as f:
+        for ipv4 in ipv4_addrs:
+            f.write("%s\t%s\n" % (ipv4, dc.dc_domain.upper()))
+        f.close()
 
 def generate_smb4_tdb(smb4_tdb):
     try:
