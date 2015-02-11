@@ -29,10 +29,8 @@ import os
 import errno
 from gevent import Timeout
 from watchdog import events
-from task import Task, TaskStatus, Provider, TaskException
+from task import Task, Provider, TaskException, VerifyException
 from dispatcher.rpc import RpcException, description, accepts, returns, private
-from balancer import TaskState
-from event import EventSource
 from lib.system import system, SubprocessException
 
 
@@ -114,24 +112,57 @@ class ServiceInfoProvider(Provider):
     @private
     def ensure_started(self, service):
         # XXX launchd!
+        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        if not svc:
+            raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
+
+        rc_scripts = svc['rcng']['rc-scripts']
+
         try:
-            system("/usr/sbin/service", service, "onestart")
+            if type(rc_scripts) is unicode:
+                system("/usr/sbin/service", rc_scripts, 'onestart')
+
+            if type(rc_scripts) is list:
+                for i in rc_scripts:
+                    system("/usr/sbin/service", i, 'onestart')
         except SubprocessException, e:
             pass
 
     @private
     def ensure_stopped(self, service):
         # XXX launchd!
+        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        if not svc:
+            raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
+
+        rc_scripts = svc['rcng']['rc-scripts']
+
         try:
-            system("/usr/sbin/service", service, "onestop")
+            if type(rc_scripts) is unicode:
+                system("/usr/sbin/service", rc_scripts, 'onestop')
+
+            if type(rc_scripts) is list:
+                for i in rc_scripts:
+                    system("/usr/sbin/service", i, 'onestop')
         except SubprocessException, e:
             pass
 
     @private
     def reload(self, service):
-        # XXX launchd!
+        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        if not svc:
+            raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
+
+        rc_scripts = svc['rcng']['rc-scripts']
+        self.ensure_started(service)
+
         try:
-            system("/usr/sbin/service", service, "onereload")
+            if type(rc_scripts) is unicode:
+                system("/usr/sbin/service", rc_scripts, 'onereload')
+
+            if type(rc_scripts) is list:
+                for i in rc_scripts:
+                    system("/usr/sbin/service", i, 'onereload')
         except SubprocessException, e:
             pass
 
@@ -150,22 +181,22 @@ class ServiceManageTask(Task):
         return "{0}ing service {1}".format(action.title(), name)
 
     def verify(self, name, action):
-        if action not in ('start', 'stop', 'restart', 'reload'):
-            raise TaskException(errno.EINVAL, "Invalid action")
-
-        try:
-            out, err = system("/usr/sbin/service", "-l")
-        except SubprocessException, e:
-            raise TaskException(errno.ENXIO, e.err)
-
-        if name not in out.split():
-            raise TaskException(errno.ENOENT, "No such service")
+        if not self.datastore.exists('service_definitions', ('name', '=', name)):
+            raise VerifyException(errno.ENOENT, 'Service {0} not found'.format(name))
 
         return ['system']
 
     def run(self, name, action):
+        service = self.datastore.get_one('service_definitions', ('name', '=', name))
+        rc_scripts = service['rcng'].get('rc-scripts')
         try:
-            system("/usr/sbin/service", name, action)
+            if type(rc_scripts) is unicode:
+                system("/usr/sbin/service", rc_scripts, 'one' + action)
+
+            if type(rc_scripts) is list:
+                for i in rc_scripts:
+                    system("/usr/sbin/service", i, 'one' + action)
+
         except SubprocessException, e:
             raise TaskException(errno.EBUSY, e.err)
 
@@ -197,7 +228,7 @@ def _init(dispatcher):
     def on_rc_command(args):
         cmd = args['action']
         name = args['name']
-        svc = dispatcher.datastore.get_one('service_definitions', ('service-name', '=', name))
+        svc = dispatcher.datastore.get_one('service_definitions', ('rc-scripts', '=', name))
 
         if svc is None:
             # ignore unknown rc scripts
