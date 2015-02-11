@@ -339,6 +339,8 @@ that have occurred since 9.3-RELEASE.
 
 * Samba was updated to `4.1.16 <https://www.samba.org/samba/history/samba-4.1.16.html>`_ which fixes several security vulnerabilities.
 
+* Netatalk was updated to `3.1.7 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.7.html>`_.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
