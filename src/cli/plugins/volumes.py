@@ -260,7 +260,7 @@ class VolumesNamespace(EntityNamespace):
         return self.context.connection.call_sync(
             'volumes.query',
             [('name', '=', name)],
-            {'single': 'true'}
+            {'single': True}
         )
 
     def delete(self, name):
