@@ -60,6 +60,50 @@ get_bindip()
 	" | sed 's|,| |g'
 }
 
+get_domain()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		dc_domain
+	FROM
+		services_domaincontroller
+	ORDER BY
+		-id
+	LIMIT
+		1
+	"
+}
+
+get_cifs_homedir()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "\
+	SELECT
+		cifs_path
+	FROM
+		sharing_cifs_share
+	WHERE
+		cifs_home = 1
+	ORDER BY
+		-sharing_cifs_share.id
+	LIMIT
+		1
+	"
+}
+
+setup_homedirs()
+{
+	local cifs_home="$(get_cifs_homedir)"
+
+	if [ -n "${cifs_home}" ]
+	then
+		local domain="$(get_domain)"
+		local homedir="/var/home/${domain}"
+
+		ln -sfh "${cifs_home}" "/var/home"
+		mkdir -p "${homedir}"
+	fi
+}
+
 dcctl_start()
 {
 	local cifs_started=0	
@@ -87,9 +131,8 @@ dcctl_start()
 	dcctl_cmd ${service} ix-nsswitch quietstart
 	dcctl_cmd ${service} ix-pam quietstart
 
+	setup_homedirs
 	cifs_start
-
-	dcctl_cmd "${service} ix-cache quietstart &"
 
 	return 0
 }
