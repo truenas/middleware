@@ -1472,9 +1472,9 @@ The "Snapshots" tab can be used to review the listing of available snapshots. An
 
 **Figure 8.5a: Viewing Available Snapshots**
 
-|periodic3a.png|
+|tn_periodic3a.png|
 
-.. |periodic3a.png| image:: images/periodic3a.png
+.. |tn_periodic3a.png| image:: images/tn_periodic3a.png
     :width: 11.1in
     :height: 4.5in
 
