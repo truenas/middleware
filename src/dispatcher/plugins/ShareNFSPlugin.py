@@ -117,27 +117,21 @@ def _metadata():
 
 
 def _init(dispatcher):
-#    dispatcher.register_schema_definition('nfs-share', {
-#        'type': 'object',
-#        'properties': {
-#            'id': {'type': 'string'},
-#            'comment': {'type': 'string'},
-#            'alldirs': {'type': 'boolean'},
-#            'read-only': {'type': 'boolean'},
-#            'maproot-user': {'type': 'string'},
-#            'maproot-group': {'type': 'string'},
-#            'mapall-user': {'type': 'string'},
-#            'mapall-group': {'type': 'string'},
-#            'hosts': {
-#                'type': 'array',
-#                'items': {'type': 'string'}
-#            },
-#            'paths': {
-#                'type': 'array',
-#                'items': {'type': 'string'}
-#            }
-#        }
-#    })
+    dispatcher.register_schema_definition('nfs-share-properties', {
+        'type': 'object',
+        'properties': {
+            'alldirs': {'type': 'boolean'},
+            'read-only': {'type': 'boolean'},
+            'maproot-user': {'type': 'string'},
+            'maproot-group': {'type': 'string'},
+            'mapall-user': {'type': 'string'},
+            'mapall-group': {'type': 'string'},
+            'hosts': {
+                'type': 'array',
+                'items': {'type': 'string'}
+            },
+        }
+    })
 
     dispatcher.register_task_handler("share.nfs.create", CreateNFSShareTask)
     dispatcher.register_task_handler("share.nfs.update", UpdateNFSShareTask)
@@ -146,5 +140,5 @@ def _init(dispatcher):
     dispatcher.register_resource(Resource('service:nfs'), ['system'])
 
     # Start NFS server if there are any configured shares
-    if dispatcher.datastore.exist('shares', [('type', '=', 'nfs')]):
+    if dispatcher.datastore.exists('shares', [('type', '=', 'nfs')]):
         dispatcher.call_sync('service.ensure_started', 'nfs')
