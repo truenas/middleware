@@ -114,19 +114,19 @@ viewerUtil.ItemIcon = React.createClass({
       if ( this.props.iconImage ) {
         // TODO: BASE64 encoded user images from middleware
         return (
-          <div className = "user-icon"
+          <div className = "icon"
                style     = { { height : this.props.size ? this.props.size : null
                              , width  : this.props.size ? this.props.size : null } }>
-            <img className="user-icon-image" src={ "data:image/jpg;base64," + this.props.iconImage } />
+            <img className="image-icon" src={ "data:image/jpg;base64," + this.props.iconImage } />
           </div>
         );
       } else {
         return (
-          <div className = "user-icon"
+          <div className = "icon"
                style     = { { background : this.state.userColor ? this.state.userColor : null
                              , height     : this.props.size ? this.props.size : null
                              , width      : this.props.size ? this.props.size : null } }>
-            <span className = "user-initials"
+            <span className = "initials-icon"
                   style     = { { fontSize   : this.props.fontSize ? this.props.fontSize + "em" : null } } >
               { this.state.initials }
             </span>
