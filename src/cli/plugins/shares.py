@@ -74,7 +74,7 @@ class SharesNamespace(EntityNamespace):
             return
 
     def delete(self, name):
-        pass
+        self.context.submit_task('share.delete', name)
 
 
 def _init(context):

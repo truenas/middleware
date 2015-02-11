@@ -51,8 +51,7 @@ from pyee import EventEmitter
 from gevent.os import tp_read, tp_write
 from gevent import monkey, Greenlet
 from gevent.queue import Queue
-from gevent.event import Event
-from gevent.subprocess import Popen, PIPE
+from gevent.subprocess import Popen
 from gevent.event import AsyncResult
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
@@ -65,7 +64,7 @@ from resources import ResourceGraph
 from services import ManagementService, EventService, TaskService, PluginService, ShellService
 from api.handler import ApiHandler
 from balancer import Balancer
-from auth import PasswordAuthenticator, TokenStore, Token
+from auth import PasswordAuthenticator, TokenStore, Token, TokenException
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
@@ -82,6 +81,7 @@ class Plugin(object):
         self.dependencies = set()
         self.module = None
         self.state = self.UNLOADED
+        self.metadata = None
 
     def assign_module(self, module):
         if not hasattr(module, '_init'):
@@ -89,6 +89,9 @@ class Plugin(object):
 
         if hasattr(module, '_depends'):
             self.dependencies = set(module._depends())
+
+        if hasattr(module, '_metadata'):
+            self.metadata = module._metadata()
 
         self.module = module
 
@@ -290,7 +293,6 @@ class Dispatcher(object):
             # If there's no timestamp, assume event fired right now
             args['timestamp'] = time.time()
 
-        self.logger.debug("New event of type %s. Params: %s", name, args)
         self.ws_server.broadcast_event(name, args)
 
         if name in self.event_handlers:
@@ -318,6 +320,7 @@ class Dispatcher(object):
             self.event_handlers[name] = []
 
         self.event_handlers[name].append(handler)
+        return handler
 
     def unregister_event_handler(self, name, handler):
         self.event_handlers[name].remove(handler)
@@ -354,9 +357,11 @@ class Dispatcher(object):
             self.datastore.collection_create(collection, pkey_type, {'type': type})
 
     def register_resource(self, res, parents=None):
+        self.logger.debug('Resource added: {0}'.format(res.name))
         self.resource_graph.add_resource(res, parents)
 
     def unregister_resource(self, name):
+        self.logger.debug('Resource removed: {0}'.format(name))
         self.resource_graph.remove_resource(name)
 
     def die(self):
@@ -442,7 +447,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         for mask in self.event_masks:
             for name, ev in self.dispatcher.event_types.items():
-                if fnmatch.fnmatch(ev, mask):
+                if fnmatch.fnmatch(name, mask):
                     ev.decref()
 
         self.dispatcher.dispatch_event('server.client_disconnected', {
@@ -478,7 +483,14 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         # Keep session alive
         if self.token:
-            self.dispatcher.token_store.keepalive_token(self.token)
+            try:
+                self.dispatcher.token_store.keepalive_token(self.token)
+            except TokenException:
+                # Token expired, logout user
+                self.token = None
+                self.user = None
+                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                return
 
         # Increment reference count for any newly subscribed event
         for mask in set.difference(set(event_masks), self.event_masks):
@@ -494,12 +506,19 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         # Keep session alive
         if self.token:
-            self.dispatcher.token_store.keepalive_token(self.token)
+            try:
+                self.dispatcher.token_store.keepalive_token(self.token)
+            except TokenException:
+                # Token expired, logout user
+                self.token = None
+                self.user = None
+                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                return
 
         # Decrement reference count for any unsubscribed, previously subscribed event
         for mask in set.union(set(event_masks), self.event_masks):
             for name, ev in self.dispatcher.event_types.items():
-                if fnmatch.fnmatch(ev, mask):
+                if fnmatch.fnmatch(name, mask):
                     ev.decref()
 
         self.event_masks = set.difference(self.event_masks, event_masks)
@@ -510,7 +529,14 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         # Keep session alive
         if self.token:
-            self.dispatcher.token_store.keepalive_token(self.token)
+            try:
+                self.dispatcher.token_store.keepalive_token(self.token)
+            except TokenException:
+                # Token expired, logout user
+                self.token = None
+                self.user = None
+                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                return
 
         self.dispatcher.dispatch_event(data['name'], data['args'])
 
@@ -656,7 +682,14 @@ class ServerConnection(WebSocketApplication, EventEmitter):
 
         # Keep session alive
         if self.token:
-            self.dispatcher.token_store.keepalive_token(self.token)
+            try:
+                self.dispatcher.token_store.keepalive_token(self.token)
+            except TokenException:
+                # Token expired, logout user
+                self.token = None
+                self.user = None
+                self.emit_rpc_error(id, errno.EACCES, 'Logged out due to inactivity period')
+                return
 
         method = data["method"]
         args = data["args"]
@@ -849,6 +882,39 @@ class ShellConnection(WebSocketApplication, EventEmitter):
             if i == '\r':
                 i = '\n'
             self.inq.put(i)
+
+
+class FileConnection(WebSocketApplication, EventEmitter):
+    def __init__(self, ws, dispatcher):
+        super(FileConnection, self).__init__(ws)
+        self.dispatcher = dispatcher
+        self.token = None
+        self.authenticated = False
+        self.logger = logging.getLogger('FileConnection')
+
+    def on_open(self, *args, **kwargs):
+        pass
+
+    def on_close(self, *args, **kwargs):
+        pass
+
+    def on_message(self, message, *args, **kwargs):
+        if message is None:
+            return
+
+        if not self.authenticated:
+            message = loads(message)
+
+            if type(message) is not dict:
+                retur
+
+            if 'token' not in message:
+                return
+
+            self.token = self.dispatcher.token_store.lookup_token(message['token'])
+            self.authenticated = True
+            self.ws.send(dumps({'status': 'ok'}))
+            return
 
 
 def run(d, args):

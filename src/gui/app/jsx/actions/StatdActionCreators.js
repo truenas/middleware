@@ -10,10 +10,11 @@ var ActionTypes = FreeNASConstants.ActionTypes;
 
 module.exports = {
 
-    receiveWidgetData: function( rawWidgetData ) {
+    receiveWidgetData: function( rawWidgetData, dataSourceName ) {
       FreeNASDispatcher.handleMiddlewareAction({
           type        : ActionTypes.RECEIVE_RAW_WIDGET_DATA
         , rawWidgetData : rawWidgetData
+        , dataSourceName : dataSourceName
       });
     }
 

@@ -189,10 +189,15 @@ class MongodbDatastore(object):
         elif type(obj) is not dict:
             obj = {'value': obj}
         else:
-            obj = copy.copy(obj)
+            obj = copy.deepcopy(obj)
 
         if 'id' in obj:
-            del obj['id']
+            # We gonna remove the document and reinsert it to change the id...
+            full_obj = self.get_by_id(collection, pkey)
+            full_obj.update(obj)
+            self.delete(collection, pkey)
+            self.insert(collection, full_obj)
+            return
 
         self.db[collection].update({'_id': pkey}, obj, upsert=upsert)
 

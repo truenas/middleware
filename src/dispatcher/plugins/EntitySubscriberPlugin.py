@@ -35,6 +35,7 @@ from dispatcher.rpc import RpcException
 class EntitySubscriberEventSource(EventSource):
     def __init__(self, dispatcher):
         super(EntitySubscriberEventSource, self).__init__(dispatcher)
+        self.handles = {}
         self.services = []
 
     def changed(self, service, event):
@@ -67,11 +68,13 @@ class EntitySubscriberEventSource(EventSource):
 
     def enable(self, event):
         service = re.match(r'^entity-subscriber\.([\.\w]+)\.changed$', event).group(1)
-        self.dispatcher.register_event_handler('{0}.changed'.format(service), lambda e: self.changed(service, e))
+        self.handles[service] = self.dispatcher.register_event_handler(
+            '{0}.changed'.format(service),
+            lambda e: self.changed(service, e))
 
     def disable(self, event):
         service = re.match(r'^entity-subscriber\.([\.\w]+)\.changed$', event).group(1)
-        self.dispatcher.unregister_event_handler('{0}.changed'.format(service), lambda e: self.changed(service, e))
+        self.dispatcher.unregister_event_handler('{0}.changed'.format(service), self.handles[service])
 
     def run(self):
         # Scan through registered events for those ending with .changed
