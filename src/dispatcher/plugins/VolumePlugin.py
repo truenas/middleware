@@ -50,14 +50,17 @@ class VolumeProvider(Provider):
         single = params.pop('single', False) if params else False
         for vol in self.datastore.query('volumes', *(filter or []), **(params or {})):
             config = self.get_config(vol['name'])
-            topology = config['groups']
-            for vdev, _ in iterate_vdevs(topology):
-                vdev['path'] = self.dispatcher.call_sync('disk.partition_to_disk', vdev['path'])
+            if not config:
+                vol['status'] = 'UNKNOWN'
+            else:
+                topology = config['groups']
+                for vdev, _ in iterate_vdevs(topology):
+                    vdev['path'] = self.dispatcher.call_sync('disk.partition_to_disk', vdev['path'])
 
-            vol['topology'] = topology
-            vol['status'] = config['status']
-            vol['properties'] = config['properties']
-            vol['datasets'] = list(flatten_datasets(config['root_dataset']))
+                vol['topology'] = topology
+                vol['status'] = config['status']
+                vol['properties'] = config['properties']
+                vol['datasets'] = list(flatten_datasets(config['root_dataset']))
 
             if single:
                 return vol
@@ -74,13 +77,33 @@ class VolumeProvider(Provider):
 
         return os.path.join(volume['mountpoint'], rest)
 
+    def decode_path(self, path):
+        path = os.path.normpath(path)[1:]
+        tokens = path.split(os.sep)
+
+        if tokens[0] != 'volumes':
+            raise RpcException(errno.EINVAL, 'Invalid path')
+
+        volname = tokens[1]
+        config = self.get_config(volname)
+        datasets = map(lambda d: d['name'], flatten_datasets(config['root_dataset']))
+        n = len(tokens)
+
+        while n > 0:
+            fragment = '/'.join(tokens[1:n])
+            if fragment in datasets:
+                return volname, fragment, '/'.join(tokens[n:])
+
+            n -= 1
+
+        raise RpcException(errno.ENOENT, 'Cannot look up path')
+
     def get_volume_disks(self, name):
         result = []
         for dev in self.dispatcher.call_sync('zfs.pool.get_disks', name):
             result.append(self.dispatcher.call_sync('disk.partition_to_disk', dev))
 
         return result
-
 
     def get_available_disks(self):
         disks = set([d['path'] for d in self.dispatcher.call_sync('disk.query')])
@@ -251,6 +274,7 @@ class DatasetCreateTask(Task):
 
     def run(self, pool_name, path, params=None):
         self.join_subtasks(self.run_subtask('zfs.create_dataset', pool_name, path, params))
+        self.join_subtasks(self.run_subtask('zfs.mount', path))
 
 
 class DatasetDeleteTask(Task):
@@ -261,7 +285,8 @@ class DatasetDeleteTask(Task):
         return ['zpool:{0}'.format(pool_name)]
 
     def run(self, pool_name, path):
-        self.join_subtasks(self.run_subtask('zfs.destroy', pool_name, path, params))
+        self.join_subtasks(self.run_subtask('zfs.umount', path))
+        self.join_subtasks(self.run_subtask('zfs.destroy', pool_name, path))
 
 
 class DatasetConfigureTask(Task):
@@ -272,7 +297,7 @@ class DatasetConfigureTask(Task):
         return ['zpool:{0}'.format(pool_name)]
 
     def run(self, pool_name, path, updated_params):
-        self.join_subtasks(self.run_subtask('zfs.destroy', pool_name, path, params))
+        pass
 
 
 def iterate_vdevs(topology):
@@ -292,13 +317,18 @@ def _depends():
 
 
 def _init(dispatcher):
-    def on_pool_destroy(args):
-        guid = args['guid']
-        dispatcher.datastore.delete('volumes', guid)
+    boot_pool = dispatcher.call_sync('zfs.pool.get_boot_pool')
+
+    def on_pool_change(args):
+        ids = filter(lambda i: i != boot_pool['id'], args['ids'])
+
+        if args['operation'] == 'delete':
+            for i in args['ids']:
+                dispatcher.datastore.delete('volumes', i)
 
         dispatcher.dispatch_event('volumes.changed', {
-            'operation': 'delete',
-            'ids': [guid]
+            'operation': args['operation'],
+            'ids': ids
         })
 
     dispatcher.register_schema_definition('volume', {
@@ -311,7 +341,6 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_event_handler('fs.zfs.pool.destroy', on_pool_destroy)
     dispatcher.require_collection('volumes')
     dispatcher.register_provider('volumes', VolumeProvider)
     dispatcher.register_task_handler('volume.create', VolumeCreateTask)
@@ -322,4 +351,5 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
     dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
 
+    dispatcher.register_event_handler('zfs.pool.changed', on_pool_change)
     dispatcher.register_event_type('volumes.changed')
