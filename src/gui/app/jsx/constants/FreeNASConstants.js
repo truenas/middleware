@@ -28,6 +28,9 @@ module.exports = {
 
       //Widget Data
       , RECEIVE_RAW_WIDGET_DATA : null
+
+      //SystemInfo Data
+      , RECEIVE_SYSTEM_INFO_DATA : null
     })
 
   , PayloadSources: keyMirror({
