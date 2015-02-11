@@ -95,7 +95,7 @@ class ServiceInfoProvider(Provider):
         return result
 
     def get_service_config(self, service):
-        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
             raise RpcException(errno.EINVAL, 'Invalid service name')
 
@@ -109,7 +109,7 @@ class ServiceInfoProvider(Provider):
     @private
     def ensure_started(self, service):
         # XXX launchd!
-        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
             raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
 
@@ -128,7 +128,7 @@ class ServiceInfoProvider(Provider):
     @private
     def ensure_stopped(self, service):
         # XXX launchd!
-        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
             raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
 
@@ -146,7 +146,7 @@ class ServiceInfoProvider(Provider):
 
     @private
     def reload(self, service):
-        svc = self.dispatcher.get_one('service_definitions', ('name', '=', service))
+        svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
             raise RpcException(errno.ENOENT, 'Service {0} not found'.format(service))
 
