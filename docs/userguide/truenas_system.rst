@@ -762,9 +762,83 @@ case, this screen will close once the updates are downloaded and the downloaded 
 in Figure 5.9a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
-necessary updates to upgrade the operating system.
+While the "Manual Update" button can be used to manually upgrade the operating system, beginning with 9.3 this button is only included for backwards
+compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the necessary updates to upgrade the
+operating system.
+
+.. _If Something Goes Wrong:
+
+If Something Goes Wrong
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
+
+To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
+boot menu. In the example shown in Figure 5.9c, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
+applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
+is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
+entries include a date and timestamp, indicating when that boot environment was created.
+
+**Figure 5.9c: Boot Menu**
+
+|tn_boot1.png|
+
+.. |tn_boot1.png| image:: images/tn_boot1.png
+    :width: 5.7in
+    :height: 4.1in
+
+To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
+
+Should a boot device fail and the system no longer boots, don't panic. The data is still on your disks and you still have a copy of your saved configuration.
+You can always:
+
+#.  Perform a fresh installation on a new boot device.
+
+#.  Import your volumes in :menuselection:`Storage --> Auto Import Volume`.
+
+#.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
+
+.. note:: you cannot restore a saved configuration which is newer than the installed version. For example, if you reboot into an older version of the
+          operating system, you cannot restore a configuration that was created in a later version.
+
+.. index:: Upgrade ZFS Pool
+.. _Upgrading a ZFS Pool:
+
+Upgrading a ZFS Pool
+~~~~~~~~~~~~~~~~~~~~
+
+Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical administrative interface.
+
+Before upgrading an existing ZFS pool, be aware of the following caveats first:
+
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
+  of FreeNAS® that does not support those feature flags.**
+
+* before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
+  While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
+
+* upgrading a ZFS pool is **optional**. You do not need to upgrade the pool if you do not need newer feature flags or if you want to keep the possibility of
+  reverting to an earlier version of FreeNAS® or repurposing the disks in another operating system that supports ZFS. If you do decide to upgrade the pool to
+  the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
+
+To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
+"Upgrade" button as seen in Figure 5.9dg.
+
+.. note:: if the "Upgrade" button does not appear, the pool is already at the latest feature flags and does not need to be upgraded.
+
+**Figure 5.9d: Upgrading a ZFS Pool**
+
+|tn_pool1.png|
+
+.. |tn_pool1.png| image:: images/tn_pool1.png
+    :width: 5.5in
+    :height: 3.2in
+
+The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
+
+The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the
+pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
+nearly instantaneous on a quiet pool.
 
 .. index:: CA, Certificate Authority
 .. _CAs:

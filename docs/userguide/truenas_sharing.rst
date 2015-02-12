@@ -298,6 +298,9 @@ you do not want to perform another complete backup or lose past backups, follow 
 `post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_. Note that this can occur after performing a
 scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
 
+.. index:: NFS, Network File System
+.. _Unix (NFS) Shares:
+
 Unix (NFS) Shares
 -----------------
 
@@ -845,11 +848,11 @@ Configuring Authenticated Access Without a Domain Controller
 Most configuration scenarios require each user to have their own user account and to authenticate before accessing the share. This allows the administrator to
 control access to data, provide appropriate permissions to that data, and to determine who accesses and modifies stored data. A Windows domain controller is
 not needed for authenticated CIFS shares, which means that additional licensing costs are not required. However, since there is no domain controller to
-provide authentication for the network, each user account needs to be created on the TrueNAS® system. This type of configuration scenario is often used in
+provide authentication for the network, each user account needs to be created on the TrueNASÂ® system. This type of configuration scenario is often used in
 small networks as it does not scale well if many users accounts are needed.
 
 Before configuring this scenario, determine which users will need authenticated access. While not required for the configuration, it eases troubleshooting if
-the username and password that will be created on the TrueNAS® system matches that information on the client system. Next, determine if each user should have
+the username and password that will be created on the TrueNASÂ® system matches that information on the client system. Next, determine if each user should have
 their own share to store their own data or if several users will be using the same share. The simpler configuration is to make one share per user as it does
 not require the creation of groups, adding the correct users to the groups, and ensuring that group permissions are set correctly.
 
@@ -1115,6 +1118,7 @@ Target Global Configuration
 |                                 |                              | is reached, the system will issue an alert, but only if zvols are used                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
+
 .. _Portals:
 
 Portals

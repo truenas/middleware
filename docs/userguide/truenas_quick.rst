@@ -42,7 +42,7 @@ need to go to :menuselection:`Storage --> Volumes --> Import Volume` to re-impor
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
 **10) System Update:** if any system updates are available, they will automatically be downloaded and applied. The functionality is the same as described in
-:ref:`Updating Between Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not required.
+:ref:`Update`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not required.
 
 **11) Create backup:** used to backup the TrueNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection.
 The only requirement for the remote system is that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system
