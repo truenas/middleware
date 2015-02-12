@@ -4,12 +4,11 @@
 Using the FreeNAS® API
 =======================
 
-FreeNAS® provides a
-`reST <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_
-API which can be used as an alternate mechanism for remotely controlling a TrueNAS® system.
+FreeNAS® provides a `REST <http://en.wikipedia.org/wiki/Representational_state_transfer>`_ API which can be used as an alternate mechanism for remotely
+controlling a TrueNAS® system.
 
-reStructuredText is an easy-to-read, lightweight markup language that provides an HTTP implementation of functions, known as resources, which are available
-beneath a specified base URL. Each resource is manipulated using the HTTP methods defined in :rfc:`2616`, such as GET, PUT, POST, or DELETE.
+REST provides an easy-to-read, HTTP implementation of functions, known as resources, which are available beneath a specified base URL. Each resource is
+manipulated using the HTTP methods defined in :rfc:`2616`, such as GET, PUT, POST, or DELETE.
 
 As seen in Figure 16.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
 
