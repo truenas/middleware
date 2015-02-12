@@ -201,11 +201,14 @@ viewerUtil.writeBool = function( entry ) {
 };
 
 // A simple data cell whose title is a string, and whose value is represented
-// based on its type (eg. check mark for boolean)
+// based on its type (eg. check mark for boolean). colNum is used to scale the
+// output to the number of columns desired. Only 2, 3, and 4 should be used.
+// On small screens, the number of columns is always 2.
 viewerUtil.DataCell = React.createClass({
     propTypes: {
-        title: React.PropTypes.string.isRequired
-      , entry: React.PropTypes.oneOfType([
+        title  : React.PropTypes.string.isRequired
+      , colNum : React.PropTypes.number.isRequired
+      , entry  : React.PropTypes.oneOfType([
             React.PropTypes.string
           , React.PropTypes.bool
           , React.PropTypes.number
@@ -215,7 +218,7 @@ viewerUtil.DataCell = React.createClass({
       if ( typeof this.props.entry !== "undefined" ) {
         return (
           <TWBS.Col className="text-center"
-                    xs={6} sm={4}>
+                    xs={6} sm={12/this.props.colNum}>
             <h4 className="text-muted">{ this.props.title }</h4>
             <h4>{ viewerUtil.identifyAndWrite( this.props.entry ) }</h4>
           </TWBS.Col>

@@ -59,16 +59,20 @@ var NetworksView = React.createClass({
           </TWBS.Row>
 
           <TWBS.Row>
-            <viewerUtil.DataCell title = { this.props.item["ip_version"] + " Address" }
-                                 entry = { this.props.item["ip"] } />
-            <viewerUtil.DataCell title = { "DHCP" }
-                                 entry = { this.props.item["dhcp"] ? "Enabled" : "Disabled" } />
+            <viewerUtil.DataCell title  = { this.props.item["ip_version"] + " Address" }
+                                 colNum = { 2 }
+                                 entry  = { this.props.item["ip"] } />
+            <viewerUtil.DataCell title  = { "DHCP" }
+                                 colNum = { 2 }
+                                 entry  = { this.props.item["dhcp"] ? "Enabled" : "Disabled" } />
           </TWBS.Row>
           <TWBS.Row>
-            <viewerUtil.DataCell title = { "Netmask" }
-                                 entry = {  this.props.item["netmask"] ? "/" + this.props.item["netmask"] : "N/A" } />
-            <viewerUtil.DataCell title = { "IPv6 Address" }
-                                 entry = { "--" } />
+            <viewerUtil.DataCell title  = { "Netmask" }
+                                 colNum = { 2 }
+                                 entry  = {  this.props.item["netmask"] ? "/" + this.props.item["netmask"] : "N/A" } />
+            <viewerUtil.DataCell title  = { "IPv6 Address" }
+                                 colNum = { 2 }
+                                 entry  = { "--" } />
           </TWBS.Row>
         </TWBS.Grid>
       );
