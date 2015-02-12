@@ -132,19 +132,12 @@ class servicesForm(ModelForm):
 
         else:
             """
-            Using rc.d restart verb and depend on rc_var service_enable
-            does not see the best way to handle service start/stop process
-
-            For now lets handle it properly just for ssh and snmp that seems
-            to be the most affected for randomly not starting
+            For now on, lets handle it properly for all services!
             """
-            if obj.srv_service in ('snmp', 'ssh'):
-                if obj.srv_enable:
-                    started = _notifier.start(obj.srv_service)
-                else:
-                    started = _notifier.stop(obj.srv_service)
+            if obj.srv_enable:
+                started = _notifier.start(obj.srv_service)
             else:
-                started = _notifier.restart(obj.srv_service)
+                started = _notifier.stop(obj.srv_service)
 
         self.started = started
         if started is True:
