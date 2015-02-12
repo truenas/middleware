@@ -2458,7 +2458,7 @@ class UnlockPassphraseForm(Form):
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
-        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs'],
+        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs', 'webdav'],
         required=False,
     )
 
@@ -2471,6 +2471,7 @@ class UnlockPassphraseForm(Form):
             ('ftp', _('FTP')),
             ('iscsitarget', _('iSCSI')),
             ('nfs', _('NFS')),
+            ('webdav', _('WebDAV')),
         ]
         if getattr(app, 'unlock_restart', False):
             choices.append(
