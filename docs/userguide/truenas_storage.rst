@@ -392,18 +392,21 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 |                          |                     | avoids producing log traffic when reading files and can result in significant performance gains           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of 0 is off; e.g. *20GiB* for 20 GB                            |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* disables quotas; specifying a value means to use no     |
+|                          |                     | more than the specified size and is suitable for user datasets to prevent users from hogging available    |
+|                          |                     | space                                                                                                     |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* is off; e.g. *20GiB* for 20 GB                          |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; a specified value applies to both this dataset and any child datasets  |
 | and all children         |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB |
-| dataset                  |                     |                                                                                                           |
+| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited; specifying a value                        |
+| dataset                  |                     | means to keep at least this much space free and is suitable for datasets containing logs which could      |
+|                          |                     | take up all available free space                                                                          |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in Advanced Mode; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB   |
+| Reserved space for this  | integer             | only available in Advanced Mode; a specified value applies to both this dataset and any child datasets    |
 | dataset and all children |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
