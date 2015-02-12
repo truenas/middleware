@@ -196,7 +196,8 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use syslog                       | checkbox       | logs most events to syslog instead of the samba log files                                             |
+| Use syslog                       | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
+|                                  |                | of :file:`/var/log/samba4/log.smbd`                                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Local Master                     | checkbox       | determines whether or not the system participates in a browser election; should be disabled           |
