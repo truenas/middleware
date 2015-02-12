@@ -1223,7 +1223,7 @@ Table 10.5c summarizes the settings that can be configured when adding an initia
 | **Setting**        | **Value** | **Description**                                                                      |
 |                    |           |                                                                                      |
 +====================+===========+======================================================================================+
-| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas or spaces     |
+| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by spaces               |
 |                    |           |                                                                                      |
 +--------------------+-----------+--------------------------------------------------------------------------------------+
 | Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
