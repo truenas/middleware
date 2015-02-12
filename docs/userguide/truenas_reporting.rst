@@ -35,7 +35,7 @@ to provide reporting statistics. The following collectd plugins are enabled in :
     interface.
 
 *   `disk space <https://collectd.org/wiki/index.php/Plugin:DF>`_: displays free and used space for each volume and dataset. However, the disk space used by
-    an individual `zvol`_ is not displayed as it is a block device.
+    an individual zvol is not displayed as it is a block device.
 
 *   `processes <https://collectd.org/wiki/index.php/Plugin:Processes>`_: displays the number of processes, grouped by state.
 
