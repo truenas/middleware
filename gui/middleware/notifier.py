@@ -49,7 +49,6 @@ import pipes
 import platform
 import pwd
 import re
-import select
 import shutil
 import signal
 import socket
@@ -88,7 +87,8 @@ cache.get_apps()
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE, ACL_MAC_FILE
+from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
+                                  ACL_MAC_FILE)
 from freenasUI.common.freenasacl import ACL
 from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
@@ -110,7 +110,8 @@ from freenasUI.common.system import (
     domaincontroller_enabled
 )
 from freenasUI.common.warden import (Warden, WardenJail,
-    WARDEN_TYPE_PLUGINJAIL, WARDEN_STATUS_RUNNING)
+                                     WARDEN_TYPE_PLUGINJAIL,
+                                     WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
@@ -123,10 +124,6 @@ log = logging.getLogger('middleware.notifier')
 
 
 class StartNotify(threading.Thread):
-    """
-    Use kqueue to watch for an event before actually calling start/stop
-    This should help against synchronization and more responsive notify.
-    """
 
     def __init__(self, pidfile, verb, *args, **kwargs):
         self._pidfile = pidfile
@@ -134,52 +131,30 @@ class StartNotify(threading.Thread):
         super(StartNotify, self).__init__(*args, **kwargs)
 
     def run(self):
-
+        """
+        If we are using start or restart we expect that a .pid file will
+        exists at the end of the process, so we wait for said pid file to
+        be created and check if its contents are non-zero.
+        Otherwise we will be stopping and expect the .pid to be deleted,
+        so wait for it to be removed
+        """
         if not self._pidfile:
             return None
 
-        """
-        If we are using start or restart we expect that a .pid file will
-        exists at the end of the process, so attach to the directory waiting
-        for that file.
-        Otherwise we will be stopping and expect the .pid to be deleted, so
-        attach to the .pid file and wait for it to be removed
-        """
-        if self._verb in ('start', 'restart'):
-            fflags = select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
-            _file = os.path.dirname(self._pidfile)
-        else:
-            fflags = select.KQ_NOTE_WRITE | select.KQ_NOTE_DELETE
-            if os.path.exists(self._pidfile):
-                _file = self._pidfile
-            else:
-                _file = os.path.dirname(self._pidfile)
-        fd = os.open(_file, os.O_RDONLY)
-        evts = [
-            select.kevent(fd,
-                filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
-                fflags=fflags,
-            )
-        ]
-        kq = select.kqueue()
-        kq.control(evts, 0, 0)
-
         tries = 1
-        while tries < 4:
-            kq.control(None, 2, 1)
+        while tries < 6:
+            time.sleep(1)
             if self._verb in ('start', 'restart'):
                 if os.path.exists(self._pidfile):
-                    # The file might have been created but it may take a little bit
-                    # for the daemon to write the PID
+                    # The file might have been created but it may take a
+                    # little bit for the daemon to write the PID
                     time.sleep(0.1)
-                if os.path.exists(self._pidfile) and os.stat(self._pidfile).st_size > 0:
+                if (os.path.exists(self._pidfile)
+                    and os.stat(self._pidfile).st_size > 0):
                     break
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
                 break
             tries += 1
-        kq.close()
-        os.close(fd)
 
 
 class notifier:
@@ -263,7 +238,7 @@ class notifier:
             'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
             'smartd': ('smartd', '/var/run/smartd.pid'),
             'webshell': (None, '/var/run/webshell.pid'),
-            'webdav': ('httpd', None),
+            'webdav': ('httpd', '/var/run/httpd.pid'),
             'backup': (None, '/var/run/backup.pid')
         }
 
