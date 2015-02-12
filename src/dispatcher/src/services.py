@@ -30,6 +30,7 @@ import subprocess
 from gevent.event import Event
 from dispatcher.rpc import RpcService, RpcException, pass_sender
 from auth import ShellToken
+from utils import first_or_default
 
 
 class ManagementService(RpcService):
@@ -57,6 +58,17 @@ class ManagementService(RpcService):
 
     def get_connected_clients(self):
         return self.dispatcher.ws_server.clients.keys()
+
+    @pass_sender
+    def kick_session(self, session_id, sender):
+        session = first_or_default(
+            lambda s: s.session_id == session_id,
+            self.dispatcher.ws_server.connections)
+
+        if not session:
+            raise RpcException(errno.ENOENT, 'Session {0} not found'.format(session_id))
+
+        session.logout('Kicked out by {0}'.format(sender.user.name))
 
     def die_you_gravy_sucking_pig_dog(self):
         self.dispatcher.die()

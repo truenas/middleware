@@ -41,7 +41,8 @@ class ClientError(enum.Enum):
     RPC_CALL_TIMEOUT = 4
     RPC_CALL_ERROR = 5
     SPURIOUS_RPC_RESPONSE = 6
-    OTHER = 7
+    LOGOUT = 7
+    OTHER = 8
 
 
 class ClientType(enum.Enum):
@@ -183,6 +184,10 @@ class Client(object):
             t.start()
             return
 
+        if msg['namespace'] == 'events' and msg['name'] == 'logout':
+            self.error_callback(ClientError.LOGOUT)
+            return
+
         if msg['namespace'] == 'rpc':
             if msg['name'] == 'call':
                 if self.rpc is None:
@@ -258,7 +263,7 @@ class Client(object):
                 call.error['code'],
                 call.error['message'],
                 call.error['extra'] if 'extra' in call.error else None)
-        
+
         call.completed.wait(timeout)
 
     def login_token(self, token, timeout=None):

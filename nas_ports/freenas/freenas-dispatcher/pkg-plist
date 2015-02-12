@@ -27,6 +27,7 @@
 /usr/local/lib/dispatcher/src/auth.py
 /usr/local/lib/dispatcher/src/services.py
 /usr/local/lib/dispatcher/src/resources.py
+/usr/local/lib/dispatcher/src/utils.py
 /usr/local/lib/dispatcher/src/frontend/templates/nav.html
 /usr/local/lib/dispatcher/src/frontend/templates/tasks.html
 /usr/local/lib/dispatcher/src/frontend/templates/events.html

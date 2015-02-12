@@ -735,6 +735,18 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.emit_rpc_call(id, method, args)
         return event
 
+    def logout(self, reason):
+        self.send_json({
+            "namespace": "events",
+            "name": "logout",
+            "id": None,
+            "args": {
+                "reason": reason
+            }
+        })
+
+        self.ws.close()
+
     def call_client_sync(self, method, *args, **kwargs):
         timeout = kwargs.pop('timeout', None)
         event = self.call_client(method, None, *args)
