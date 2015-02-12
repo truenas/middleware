@@ -50,6 +50,13 @@ LoadModule dir_module libexec/apache24/mod_dir.so
 IncludeOptional etc/apache24/modules.d/[0-9][0-9][0-9]_*.conf
 ServerName localhost
 
+# Limiting the number of idle threads
+# see: http://httpd.apache.org/docs/current/mod/prefork.html#MinSpareServers
+<IfModule mpm_itk_module>
+        StartServers 1
+        MinSpareServers 1
+</IfModule>
+
 <IfModule unixd_module>
 User www
 Group www
