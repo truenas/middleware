@@ -372,7 +372,7 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 | **Setting**              | **Value**           | **Description**                                                                                           |
 |                          |                     |                                                                                                           |
 +==========================+=====================+===========================================================================================================+
-| Dataset Name             | string              | mandatory; input a name for the dataset                                                                   |
+| Dataset Name             | string              | mandatory; input a unique name for the dataset                                                            |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Compression Level        | drop-down menu      | see the section on :ref:`Compression` for a description of the available algorithms                       |
