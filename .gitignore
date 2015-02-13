@@ -38,13 +38,16 @@ $RECYCLE.BIN/
 *.swp
 *.mo
 *.o
-/docs/api/_build/
 /gui/local_settings.py
 /FreeBSD/
 /filtered-patches/
 /os-base/
 /pbi/
 /sbin/
+
+# Exlude compiled Sphinx docs
+/docs/*/_build/
+
 
 # Any and all logs
 *.log
