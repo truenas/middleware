@@ -32,7 +32,7 @@ from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from freenasUI.common.system import get_sw_name, get_sw_login_version
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.support import utils
 from freenasUI.system.utils import debug_get_settings, debug_run
@@ -70,14 +70,27 @@ def ticket(request):
             f.write(json.dumps({'indeterminate': True, 'step': step}))
         step += 1
 
-        success, msg, tid = utils.new_ticket({
-            'user': request.POST.get('username'),
-            'password': request.POST.get('password'),
-            'type': request.POST.get('type'),
+        data = {
             'title': request.POST.get('subject'),
             'body': request.POST.get('desc'),
-            'version': get_sw_login_version(),
-        })
+            'version': get_sw_version().split('-', 1)[-1],
+        }
+
+        if get_sw_name().lower() == 'freenas':
+            data.update({
+                'user': request.POST.get('username'),
+                'password': request.POST.get('password'),
+                'type': request.POST.get('type'),
+            })
+        else:
+            data.update({
+                'phone': request.POST.get('phone', '555'),
+                'name': request.POST.get('name', 'John'),
+                'company': request.POST.get('company', 'iXsystems'),
+                'email': request.POST.get('email', 'william88@gmail.com'),
+            })
+
+        success, msg, tid = utils.new_ticket(data)
 
         with open(TICKET_PROGRESS, 'w') as f:
             f.write(json.dumps({'indeterminate': True, 'step': step}))
