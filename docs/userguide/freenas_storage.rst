@@ -1317,11 +1317,11 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-|replication2.png|
+|replication2a.png|
 
-.. |replication2.png| image:: images/replication2.png
-    :width: 6.2in
-    :height: 3.6in
+.. |replication2a.png| image:: images/replication2a.png
+    :width: 6.6in
+    :height: 4.4in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
