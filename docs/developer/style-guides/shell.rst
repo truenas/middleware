@@ -1,9 +1,5 @@
 :Author: Garrett Cooper
 :Date: $Date: 2012-01-13 09:18:22 -0800 (Fri, 13 Jan 2012) $
-:Revision: $Rev: 9519 $
-:Copyright: Shell Style Guide
-
-.. contents:: :depth: 2
 
 ============
 Introduction
@@ -78,7 +74,7 @@ Command substitution
 * The $() format of command substitution is the preferred method.
 
 =========
-Functions 
+Functions
 =========
 
 Functions should be composed in this format::

@@ -3,20 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to FreeNAS Developer Guide's documentation!
-===================================================
+FreeNAS 10 Developer's Guide
+============================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   Frontend GUI Development <frontend/index>
+   Code Style Guides <style-guides/index>
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+Welcome!
+========
+There is literally nothing wrong with this index being empty in this commit.

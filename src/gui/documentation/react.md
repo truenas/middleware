@@ -1,4 +1,0 @@
-React Components
-================
-
-Coming soon.
