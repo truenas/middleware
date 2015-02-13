@@ -1,3 +1,6 @@
+.. highlight:: javascript
+   :linenothreshold: 5
+
 Developing for FreeNAS 10
 =========================
 

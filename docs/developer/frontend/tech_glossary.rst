@@ -1,3 +1,6 @@
+.. highlight:: javascript
+   :linenothreshold: 5
+
 Glossary of Technologies
 ========================
 
