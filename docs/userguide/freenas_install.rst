@@ -828,3 +828,13 @@ the amount of storage disks needed to meet your requirements.
     :width: 6.7925in
     :height: 5.3339in
 
+If you are running ESX 5.0, Workstation 8.0, or Fusion 4.0 or higher, additional configuration is needed so that the virtual HPET setting does not prevent the
+virtual machine from booting.
+
+If you are running ESX, while in "Edit Settings", click :menuselection:`Options --> Advanced --> General --> Configuration Parameters`. Change "hpet0.present"
+from *true* to
+*false*, then click "OK" twice to save the setting.
+
+If you are running Workstation or Player, while in "Edit Settings", click :menuselection:`Options --> Advanced --> File Locations`. Locate the path for
+the Configuration file named :file:`filename.vmx`. Open that file in a text editor, change "hpet0.present" from *true* to
+*false*, and save the change. 
