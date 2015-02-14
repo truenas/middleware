@@ -1,3 +1,5 @@
-#7884	Bug	Urgent	Update failed error
-#7882	Feature	Normal	Add option to restart WebDAV when unlocking encrypted pool
 #7675	Bug	Normal	upsmon.conf and rc.shutdown missing functionality to actually shutoff the UPS
+#7775	Bug	Normal	Can't get NFSv4/kerberos to work
+#7881	Feature	Normal	Annotate Vmware Sync Snapshot
+#7882	Feature	Normal	Add option to restart WebDAV when unlocking encrypted pool
+#7884	Bug	Urgent	Update failed error
