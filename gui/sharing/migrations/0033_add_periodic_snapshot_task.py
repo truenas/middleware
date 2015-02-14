@@ -3,16 +3,14 @@ from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from django.db.models import Q
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        import sys  
 
         for share in orm.CIFS_Share.objects.all():
-            if not share.cifs_path: 
-                continue 
+            if not share.cifs_path:
+                continue
 
             for task in orm['storage.Task'].objects.all():
                 zfs_ds = task.task_filesystem
@@ -22,10 +20,14 @@ class Migration(DataMigration):
                     if share.cifs_path == zfs_mp:
                         pass
                     else:
-                        task = orm['storage.Task'].objects.filter(
-                            Q(task_filesystem=zfs_ds) &
-                            Q(task_recursive=True)
-                        )[0]
+                        qs = orm['storage.Task'].objects.filter(
+                            task_filesystem=zfs_ds,
+                            task_recursive=True,
+                        )
+                        if qs.exists():
+                            task = qs[0]
+                        else:
+                            continue
 
                     share.cifs_storage_task = task
                     share.save()
