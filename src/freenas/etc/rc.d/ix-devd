@@ -23,7 +23,7 @@ ix_devd_gen()
 
 	local failovers=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM system_failover;"`
 	local peerip=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ipaddress FROM system_failover LIMIT 1;"`
-	local volumenames=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS';" | tr "\n" " "`
+	local volumenames=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS' AND vol_encrypt < 2;" | tr "\n" " "`
 
 	if [ ${failovers} -gt 0 ]; then
 		cp /conf/base/etc/devd.conf /etc/devd.conf
@@ -218,6 +218,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
     fi
 
     echo "Beginning volume imports." | logger
+    /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py attachall
     for volumename in ${volumenames}; do
         echo "importing \${volumename}" | logger
 	[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f \${volumename} || /sbin/zpool import -o cachefile=none -R /mnt -f \${volumename}
@@ -334,6 +335,8 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 
     echo "Syncing enclosure" | logger
     /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync
+    echo "Setting passphrase from master" | logger
+    /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py syncfrompeer
 fi
 
 E*O*F
