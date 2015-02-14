@@ -16,10 +16,10 @@ one of the ten following sizes.
 -  345px × 255px - m-rect
 -  435px × 255px - ml-rect
 -  345px × 345px - l-square
+-  525px × 345px - l-rect
 -  705px × 525px - xl-rect
 
 .. figure:: images/widgets/widget_sizes.png
    :alt: Example of widget ordering
 
    Example of widget ordering
-

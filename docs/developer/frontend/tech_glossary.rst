@@ -200,6 +200,35 @@ as a simpler development process.
 
 --------------
 
+|Moment|
+~~~~~~~~~~~
+
++-----------------------------------------+------------------------------------------------+----------------+--------------------------------------------------------+
+| Homepage                                | Source Code                                    | License Type   | Author                                                 |
++=========================================+================================================+================+========================================================+
+| `momentjs.com <http://momentjs.com/>`__ | `GitHub <https://github.com/moment/moment/>`__ | MIT            | `Tim Wood <http://timwoodcreates.com/>`__              |
+|                                         |                                                |                | `Iskren Ivov Chernev <https://github.com/ichernev>`__  |
++-----------------------------------------+------------------------------------------------+----------------+--------------------------------------------------------+
+
+Parse, validate, manipulate, and display dates in JavaScript.
+
+Moment.js is a community effort. With a hundred committers and many more
+contributing bug reports, plugins, and ideas, it has grown much bigger than
+the author ever thought it would when he started writing it over 3 years ago.
+
+It is extensively documented and well tested.
+
+It has inspired people to write ports in Python, PHP, and Objective-C.
+
+With over 17000 stars on GitHub, it is one of the top 10 most popular JavaScript
+libraries.
+
+In early 2013, Tim Woods handed off the Project Lead role to Iskren Ivov Chernev.
+
+
+
+--------------
+
 |Node|
 ~~~~~~
 
@@ -291,6 +320,7 @@ and complexity.
 .. |D3| image:: images/glossary/D3.png
 .. |Grunt| image:: images/glossary/Grunt.png
 .. |LESS| image:: images/glossary/LESS.png
+.. |Moment| image:: images/glossary/Moment.png
 .. |Node| image:: images/glossary/Node.png
 .. |NPM| image:: images/glossary/NPM.png
 .. |React| image:: images/glossary/React.png
