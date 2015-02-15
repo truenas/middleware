@@ -249,8 +249,15 @@ cdef class ZFS(object):
             yield ZFSImportablePool(self, name, config)
 
     def import_pool(self, ZFSImportablePool pool, newname, opts):
-        #libzfs.zpool_import_props(self._root, pool.config, newname, opts)
-        pass
+        cdef uintptr_t config = pool.config.handle()
+        cdef uintptr_t options = opts.handle()
+
+        libzfs.zpool_import_props(
+            self._root,
+            <nvpair.nvlist_t*>config,
+            newname,
+            <nvpair.nvlist_t*>options,
+            False)
 
     def get_dataset(self, name):
         cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
