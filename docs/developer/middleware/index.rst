@@ -5,11 +5,11 @@ FreeNAS 10 middleware development guide
    :maxdepth: 1
 
    General architecture <architecture>
+   Dispatcher plugin system <dispatcher>
    Task processing <tasks>
-   dispatcher protocol specification <protocol>
+   Protocol specification <protocol>
+   Debugging middleware <debugging>
    Database abstraction layer <datastore>
-   File generation service <etcd>
-   Network configuration service <networkd>
-   Statistics collection service <statd>
+   Services <services>
    Supporting libraries <libraries>
 

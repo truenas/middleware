@@ -46,7 +46,7 @@ same name):
    :alt: Partially busy resource tree
 
    Partially busy resource tree
-"dataset:tank" resource and all dependent resources are locked, which
+"zfs:tank" resource and all dependent resources are locked, which
 means that no other task can acquire any of them until currently
 executed finishes. Also, it's not possible to acquire resource which has
 any busy resources in it's dependency subtree. For example, given
@@ -62,23 +62,20 @@ All tasks should derive from base class ``tasks.Task``.
 Mandatory methods:
 ~~~~~~~~~~~~~~~~~~
 
-``describe(self, args...)``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: describe(self, args...)
 
-Return human readable task description as string. That doesn't need to
-be localizable, it's used by debugging purposes only.
+    Return human readable task description as string. That doesn't need to
+    be localizable, it's used by debugging purposes only.
 
-``verify(self, args...)``
-^^^^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: verify(self, args...)
 
-Verify whether provided task parameters are sane and compute list of
-resources needed for that task. Should return list of resources, eg.
-``["disk:/dev/da0", "disk:/dev/da1"]``
+    Verify whether provided task parameters are sane and compute list of
+    resources needed for that task. Should return list of resources, eg.
+    ``["disk:/dev/da0", "disk:/dev/da1"]``
 
-``run(self, args...)``
-^^^^^^^^^^^^^^^^^^^^^^
+.. py:function:: run(self, args...)
 
-Run actual task.
+    Run actual task.
 
 Optional methods:
 ~~~~~~~~~~~~~~~~~
@@ -87,16 +84,14 @@ Long-running tasks can implement following methods to provide user with
 task progress and possibility to abort a task in the middle (by default,
 task can't be aborted once started):
 
-``get_status(self)``
-^^^^^^^^^^^^^^^^^^^^
+.. py:function:: get_status(self)
 
-Return progress information from a task.
+    Return progress information from a task.
 
-``abort(self)``
-^^^^^^^^^^^^^^^
+.. py:function:: abort(self)
 
-Try to abort a task. If that succeeds, return ``True``. If aborting
-failed, return ``False``.
+    Try to abort a task. If that succeeds, return ``True``. If aborting
+    failed, return ``False``.
 
 Reporting failures
 ~~~~~~~~~~~~~~~~~~
