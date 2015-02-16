@@ -81,7 +81,7 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
 
         var newNetwork = {};
 
-        // Make the block below less absurdly wide
+        // Make the block below less absurdly wide.
         var status  = currentNetwork.status;
 
         // Initialize desired fields with existing ones.
@@ -94,7 +94,12 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         newNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? true : false;
         newNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? true : false;
 
-        //Figure out interface type. Only knows about Ethernet right now.
+        // Figure out interface type. Only knows about Ethernet right now.
+        // TODO: There are tons more types that could show up. See:
+        // http://fxr.watson.org/fxr/source/net/if_types.h?v=FREEBSD10
+        // ETHER and FIBRECHANNEL will definitely have different logos.
+        // Many of the others, such as LAPD and CARP will be discarded and only
+        // used by other parts of the UI. The vast majority of that list doesn't matter.
         newNetwork[ "type"]          = currentNetwork[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
 
         // Determine Internet Protocol version
@@ -113,7 +118,8 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
           }
         }
 
-        // Map the interface type and/or status to an appropirate icon.
+        // Map the interface type and/or status to an appropriate icon.
+        // TODO: This also needs to handle other interface types.
         switch (newNetwork[ "type"]) {
           // Ethernet gets the FontAwesome "exchange" icon for now.
           // TODO: Other conditions, such as different icons for connected and
