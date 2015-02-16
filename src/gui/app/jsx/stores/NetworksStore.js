@@ -43,13 +43,13 @@ var NetworksStore = _.assign( {}, EventEmitter.prototype, {
 
 // Returns true if the selected network is in the
 // list of networks with pending updates.
-  , isLocalTaskPending: function( id ) {
-      return _.values(_localUpdatePending ).indexof( id ) > -1;
+  , isLocalTaskPending: function( linkAddress ) {
+      return _.values(_localUpdatePending ).indexof( linkAddress ) > -1;
     }
 
 // Returns true if selected network is in the list of updated networks.
-  , isNetworkUpdatePending: function( id ) {
-      return _updatedOnServer.indexof( id ) > -1;
+  , isNetworkUpdatePending: function( linkAddress ) {
+      return _updatedOnServer.indexof( linkAddress ) > -1;
     }
 
   , findNetworkByKeyValue: function ( key, value ) {
@@ -58,8 +58,8 @@ var NetworksStore = _.assign( {}, EventEmitter.prototype, {
       });
   }
 
-  , getNetwork: function ( id ) {
-      return _networks[ id ];
+  , getNetwork: function ( linkAddress ) {
+      return _networks[ linkAddress ];
   }
 
   ,  getAllNetworks: function() {
@@ -79,34 +79,34 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
       // TODO: Account for multiple aliases and static configurations.
       var mapNetwork = function ( currentNetwork ) {
 
-        var tempNetwork = {};
+        var newNetwork = {};
 
         // Make the block below less absurdly wide
         var status  = currentNetwork.status;
 
         // Initialize desired fields with existing ones.
-        tempNetwork[ "name" ]         = currentNetwork[ "name" ] ? currentNetwork[ "name" ] : null;
-        tempNetwork[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
-        tempNetwork[ "link_state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
-        tempNetwork[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
-        tempNetwork[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
-        tempNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
-        tempNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? true : false;
-        tempNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? true : false;
+        newNetwork[ "name" ]         = currentNetwork[ "name" ] ? currentNetwork[ "name" ] : null;
+        newNetwork[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
+        newNetwork[ "link_state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
+        newNetwork[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
+        newNetwork[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
+        newNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
+        newNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? true : false;
+        newNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? true : false;
 
         //Figure out interface type. Only knows about Ethernet right now.
-        tempNetwork[ "type"]          = currentNetwork[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
+        newNetwork[ "type"]          = currentNetwork[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
 
         // Determine Internet Protocol version
         if (!status[ "aliases" ][1]) {
-          tempNetwork[ "ip_version" ] = "IP";
+          newNetwork[ "ip_version" ] = "IP";
         } else {
           switch (status[ "aliases" ][1][ "family" ]) {
             case "INET":
-              tempNetwork[ "ip_version" ] = "IPv4";
+              newNetwork[ "ip_version" ] = "IPv4";
               break;
             case "INET6":
-              tempNetwork[ "ip_version" ] = "IPv6";
+              newNetwork[ "ip_version" ] = "IPv6";
               break;
             default:
             // Nothing to do here.
@@ -114,19 +114,19 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         }
 
         // Map the interface type and/or status to an appropirate icon.
-        switch (tempNetwork[ "type"]) {
+        switch (newNetwork[ "type"]) {
           // Ethernet gets the FontAwesome "exchange" icon for now.
           // TODO: Other conditions, such as different icons for connected and
           // disconnected interfaces of different types.
           case "Ethernet":
-          tempNetwork[ "font_icon" ] = "exchange";
+          newNetwork[ "font_icon" ] = "exchange";
           break;
           default:
-          tempNetwork[ "icon" ] = null;
+          newNetwork[ "icon" ] = null;
           break;
         }
 
-        return tempNetwork;
+        return newNetwork;
       };
 
       _networks = action.rawNetworksList.map( mapNetwork );
