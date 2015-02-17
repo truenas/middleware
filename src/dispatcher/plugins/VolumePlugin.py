@@ -28,9 +28,8 @@
 import errno
 import os
 from task import Provider, Task, ProgressTask, TaskException, VerifyException, query
-from lib.system import system
-from lib import zfs
 from dispatcher.rpc import RpcException, description, accepts, returns
+from utils import first_or_default
 
 
 def flatten_datasets(root):
@@ -66,6 +65,22 @@ class VolumeProvider(Provider):
                 return vol
 
             result.append(vol)
+
+        return result
+
+    def find(self):
+        result = []
+        for pool in self.dispatcher.call_sync('zfs.pool.find'):
+            topology = pool['groups']
+            for vdev, _ in iterate_vdevs(topology):
+                vdev['path'] = self.dispatcher.call_sync('disk.partition_to_disk', vdev['path'])
+
+            result.append({
+                'id': pool['guid'],
+                'name': pool['name'],
+                'topology': topology,
+                'status': pool['status']
+            })
 
         return result
 
@@ -258,7 +273,17 @@ class VolumeUpdateTask(Task):
 
 
 class VolumeImportTask(Task):
-    pass
+    def verify(self, id, new_name=None, params=None):
+        if self.datastore.exists('volumes', ('id', '=', id)):
+            raise VerifyException(errno.ENOENT, 'Volume with id {0} already exists'.format(id))
+
+        if self.datastore.exists('volumes', ('name', '=', new_name)):
+            raise VerifyException(errno.ENOENT, 'Volume with name {0} already exists'.format(new_name))
+
+        return self.verify_subtask('zfs.pool.import', id)
+
+    def run(self, id, new_name=None, params=None):
+        self.join_subtasks(self.run_subtask('zfs.pool.import'))
 
 
 class VolumeDetachTask(Task):
