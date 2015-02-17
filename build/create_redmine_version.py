@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 import sys, getopt
-from redmine import Redmine
+from redmine import Redmine, exceptions
 
 def main(argv):
     key = ''
@@ -36,7 +36,13 @@ def main(argv):
     version.description = descrpt
     version.status = 'closed'
     version.sharing = 'none'
-    result = version.save()
+    result = ''
+    try:
+        result = version.save()
+    except exceptions.ValidationError:
+        print "Could not create version"
+    except exceptions.AuthError:
+	print "Error authenticating with server"
     if result:
          print "Version %s successfully created" % vers
     else:
