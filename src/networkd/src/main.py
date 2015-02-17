@@ -239,7 +239,7 @@ class RoutingSocketEventSource(threading.Thread):
                 addresses = get_addresses(entity)
 
                 # Ignore aliases added by dhclient
-                if not entity.get('dhcp') and not self.context.config.get('network.autoconfigure'):
+                if not entity.get('dhcp') and not self.context.configstore.get('network.autoconfigure'):
                     if message.type == netif.RoutingMessageType.NEWADDR:
                         if addr.address in addresses:
                             continue

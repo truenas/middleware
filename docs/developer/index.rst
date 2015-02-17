@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
 
    Frontend GUI Development <frontend/index>
+   CLI development <cli/index>
+   Middleware architecture <middleware/index>
    Code Style Guides <style-guides/index>
 
 Welcome!
