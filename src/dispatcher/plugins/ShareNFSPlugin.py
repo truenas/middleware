@@ -140,5 +140,5 @@ def _init(dispatcher):
     dispatcher.register_resource(Resource('service:nfs'), ['system'])
 
     # Start NFS server if there are any configured shares
-    if dispatcher.datastore.exists('shares', [('type', '=', 'nfs')]):
+    if dispatcher.datastore.exists('shares', ('type', '=', 'nfs')):
         dispatcher.call_sync('service.ensure_started', 'nfs')
