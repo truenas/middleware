@@ -42,11 +42,11 @@ def main(argv):
     except exceptions.ValidationError:
         print "Could not create version"
     except exceptions.AuthError:
-	print "Error authenticating with server"
+        print "Error authenticating with server"
     if result:
-         print "Version %s successfully created" % vers
+        print "Version %s successfully created" % vers
     else:
-         print "Error creating version %s" % vers
+        print "Error creating version %s" % vers
 
 if __name__ == "__main__":
    main(sys.argv[1:])
