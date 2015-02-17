@@ -63,6 +63,7 @@ customize_cmd hack_nsswitch_conf
 customize_cmd move_data
 
 if is_truenas ; then
+	customize_cmd add_escrowd
 	customize_cmd afpd_conf_symlink
 fi
 
