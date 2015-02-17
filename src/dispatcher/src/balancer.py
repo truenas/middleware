@@ -212,6 +212,11 @@ class Balancer(object):
         self.logger.info("Task %d submitted (type: %s, class: %s)", task.id, name, task.clazz)
         return task.id
 
+    def verify_subtask(self, parent, name, args):
+        clazz = self.dispatcher.tasks[name]
+        instance = clazz(self.dispatcher)
+        return instance.verify(*args)
+
     def run_subtask(self, parent, name, args):
         task = Task(self.dispatcher, name)
         task.created_at = time.time()
