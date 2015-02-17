@@ -49,6 +49,6 @@ An alert will also be generated when the LSI HBA firmware version does not match
 target) firmware, not the IR (integrated RAID) firmware, from the LSI website. Then, specify the name of the firmware image and bios as well as the
 controller to flash::
 
- sas2flash -f firmwareimagename -v biosname -c controllernumber
+ sas2flash -f firmwareimagename -b biosname -c controllernumber
 
 When finished, reboot the system. The new firmware version should appear in the system messages and the alert will be cleared.
