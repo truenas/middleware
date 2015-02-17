@@ -26,10 +26,7 @@
 #
 
 import argparse
-import datetime
-import logging
 import os
-import subprocess
 import sys
 
 sys.path.extend([
@@ -46,6 +43,7 @@ cache.get_apps()
 from freenasUI.middleware.notifier import notifier
 _not = notifier()
 
+
 def main(command):
     if command == "status":
         ret = _not.failover_status()
@@ -55,7 +53,7 @@ def main(command):
             print "Node status: Passive"
         elif ret == "ELECTING":
             print "Node status: Electing master node"
-        elif ret == "iIMPORTING":
+        elif ret == "IMPORTING":
             print "Node status: Transitioning to Active"
         elif ret == "ERROR":
             print "Node status: Faulted"
@@ -68,8 +66,17 @@ def main(command):
         # TODO: Impliment disable method here
         print "Currently unimplimented"
     elif command == "takeover":
-        # TODO: Impliment takeover method here
-        print "Currently unimplimented"
+        print "This will likely cause the active node to reboot."
+        while True:
+            ret = raw_input("Are you sure you wish to proceed with making this node active? (y/n): ")
+            if ret.lower() == "y":
+                break
+            elif ret.lower() == "n":
+                print "Takeover cancelled."
+                sys.exit(1)
+            else:
+                continue
+        _not.failover_force_master()
     elif command == "giveback":
         # TODO: Impliment giveback method here
         print "Currently unimplimented"
@@ -79,9 +86,9 @@ if __name__ == "__main__":
     parser.add_argument('command',
                         default="status",
                         nargs='?',
-                        help="""subcommand: enable disable status takeover giveback""",
+                        help="subcommand: enable disable status takeover giveback",
                         choices=['enable', 'disable', 'status', 'takeover', 'giveback'],
                         )
-                        
+
     args = parser.parse_args()
     main(args.command)
