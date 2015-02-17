@@ -36,6 +36,7 @@ from task import Provider, Task, TaskStatus, TaskException, VerifyException
 from dispatcher.rpc import RpcException, accepts, returns, description
 from balancer import TaskState
 from resources import Resource
+from utils import first_or_default
 
 
 @description("Provides information about ZFS pools")
@@ -318,7 +319,22 @@ class ZpoolExtendTask(Task):
 
 
 class ZpoolImportTask(Task):
-    pass
+    def verify(self, guid, name, properties=None):
+        zfs = libzfs.ZFS()
+        pool = first_or_default(lambda p: str(p.guid) == guid, zfs.find_import())
+        if not pool:
+            raise VerifyException(errno.ENOENT, 'Pool with GUID {0} not found'.format(guid))
+
+        return get_disk_names(self.dispatcher, pool)
+
+    def run(self, guid, name, properties=None):
+        zfs = libzfs.ZFS()
+        opts = nvpair.NVList(otherdict=(properties or {}))
+        try:
+            pool = first_or_default(lambda p: str(p.guid) == guid, zfs.find_import())
+            zfs.import_pool(pool, name, opts)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 class ZpoolExportTask(Task):
