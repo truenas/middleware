@@ -607,7 +607,7 @@
                 "pidfile": "/var/run/nginx.pid",
                 "builtin": true,
 				"rcng": {
-					"sc-scripts": "nginx"
+					"rc-scripts": "nginx"
 				},
                 "settings": [
                     "service.nginx.*"
@@ -618,11 +618,8 @@
                 "etcd-group": "nfs",
                 "rcng": {
                     "rc-scripts": [
-                        "nfs_server",
-                        "rpc_lockd",
-                        "rpc_statd",
-                        "mountd",
-                        "nfsd"
+                        "nfsd",
+						"mountd"
                     ]
                 },
                 "settings": [

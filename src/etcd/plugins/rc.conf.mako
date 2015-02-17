@@ -16,7 +16,7 @@ etcd_flags="/etc"
 performance_cpu_freq="HIGH"
 
 % for svc in ds.query("service_definitions"):
-% if config.get("service.{0}.enable".format(svc['name'])):
-${svc['service-name']}_enable="YES"
-% endif
+    % if config.get("service.{0}.enable".format(svc["name"])):
+        ${svc['rcng']['rc-scripts']}_enable="YES"
+    % endif
 % endfor
