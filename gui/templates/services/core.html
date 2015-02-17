@@ -65,7 +65,7 @@
        <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="istgt_settings"
+           <img id="ctl_settings"
            src="{{ STATIC_URL }}images/ui/buttons/settings.png"
            onClick="Menu.openISCSI();" title="{% trans "ISCSI Settings" %}">
        </td>

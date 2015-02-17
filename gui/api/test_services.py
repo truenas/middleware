@@ -926,7 +926,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
     def setUp(self):
         super(iSCSITargetGlobalConfigurationResourceTest, self).setUp()
         self._obj = models.iSCSITargetGlobalConfiguration.objects.create(
-            iscsi_basename='iqn.2011-03.org.example.istgt',
+            iscsi_basename='iqn.2005-10.org.freenas.ctl',
         )
         models.services.objects.create(
             srv_service='iscsitarget',
@@ -953,7 +953,7 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             u'id': self._obj.id,
-            u'iscsi_basename': u'iqn.2011-03.org.example.istgt',
+            u'iscsi_basename': u'iqn.2005-10.org.freenas.ctl',
             u'iscsi_discoveryauthgroup': None,
             u'iscsi_discoveryauthmethod': u'Auto'
         })
@@ -963,13 +963,13 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
             '%s%d/' % (self.get_api_url(), self._obj.id),
             format='json',
             data={
-                'iscsi_basename': "iqn.2011-03.com.ixsystems.istgt",
+                'iscsi_basename': "iqn.2005-10.org.freenas.ctl",
             }
         )
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data['id'], self._obj.id)
-        self.assertEqual(data['iscsi_basename'], "iqn.2011-03.com.ixsystems.istgt")
+        self.assertEqual(data['iscsi_basename'], "iqn.2005-10.org.freenas.ctl")
 
     def test_Delete(self):
         resp = self.api_client.delete(
