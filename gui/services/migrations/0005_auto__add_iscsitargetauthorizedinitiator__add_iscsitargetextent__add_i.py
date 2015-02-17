@@ -104,7 +104,7 @@ class Migration(DataMigration):
         db.send_create_signal('services', ['iSCSITargetPortal'])
 
         gc = orm.iSCSITargetGlobalConfiguration()
-        gc.iscsi_basename='iqn.2011-03.org.example.istgt'
+        gc.iscsi_basename='iqn.2005-10.org.freenas.ctl'
         gc.iscsi_discoveryauthgroup=''
         gc.save()
 

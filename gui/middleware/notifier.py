@@ -232,7 +232,6 @@ class notifier:
             'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
-            'iscsitarget': ('istgt', '/var/run/istgt.pid'),
             'ctld': ('ctld', '/var/run/ctld.pid'),
             'lldp': ('ladvd', '/var/run/ladvd.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),

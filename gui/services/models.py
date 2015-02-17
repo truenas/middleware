@@ -430,7 +430,7 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_basename = models.CharField(
             max_length=120,
             verbose_name=_("Base Name"),
-            help_text=_("The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, "
+            help_text=_("The base name (e.g. iqn.2005-10.org.freenas.ctl, "
                 "see RFC 3720 and 3721 for details) will append the target "
                 "name that is not starting with 'iqn.'")
             )
