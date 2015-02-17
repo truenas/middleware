@@ -110,7 +110,7 @@ add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client
 add_port net/smbldap-tools
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UNSET+=FLAGS
-add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
+add_port lang/python27 OPTIONS_FILE_UNSET+=NLS OPTIONS_FILE_SET+=DEBUG
 add_port lang/python2
 add_port lang/python
 add_port lang/cython
@@ -209,10 +209,8 @@ if [ "${REPORTING}" = 1 ]; then
 				OPTIONS_FILE_SET+=JSON
 	add_port net/liboping
 	add_port net-mgmt/collectd5 OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
-				   OPTIONS_FILE_SET+=DISK OPTIONS_FILE_SET+=PYTHON \
-				   OPTIONS_FILE_SET+=RRDTOOL \
-				   OPTIONS_FILE_SET+=STATGRAB \
-				   OPTIONS_FILE_SET+=MONGODB
+				   OPTIONS_FILE_SET+=DISK \
+				   OPTIONS_FILE_SET+=STATGRAB
 fi
 
 #FIXME: gobject now requires cairo as build dependency
