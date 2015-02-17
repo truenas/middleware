@@ -57,6 +57,9 @@ class Task(object):
     def get_status(self):
         return TaskStatus(50, 'Executing...')
 
+    def verify_subtask(self, classname, *args):
+        return self.dispatcher.balancer.verify_subtask(self, classname, args)
+
     def run_subtask(self, classname, *args):
         return self.dispatcher.balancer.run_subtask(self, classname, args)
 
