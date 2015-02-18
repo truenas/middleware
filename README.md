@@ -4,7 +4,7 @@ To build the system (experts only):
 
 ## Requirements:
 
-* Your build environment must be FreeBSD 10.0-RELEASE (building on
+* Your build environment must be FreeBSD 10.0-RELEASE/FreeBSD 10.1-STABLE (building on
   FreeBSD 9 or 11 is not supported at this time).
 
 * an amd64 capable processor.  8GB of memory, or an equal/greater amount
@@ -17,7 +17,6 @@ To build the system (experts only):
   * sysutils/cdrtools
   * archivers/pxz
   * lang/python (2.7 or later, with THREADS support)
-  * emulators/virtualbox-ose
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
   * www/npm
@@ -30,7 +29,7 @@ To build the system (experts only):
 
 ```
 % cd /path/to/your-build-filesystem
-% git clone git://github.com/freenas/freenas.git
+% git clone git://github.com/freenas/freenas.git --branch freenas10/development
 % cd freenas
 ```
 
