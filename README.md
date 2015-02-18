@@ -21,6 +21,10 @@ To build the system (experts only):
   * sysutils/xorriso
   * www/npm
   * devel/gmake
+  * py-sphinx
+  * py-sphinx_rtd_theme
+  * py-sphinxcontrib-httpdomain
+
   (and all the dependencies that these ports/pkgs install, of course)
 
 ## Building the System Quickstart Flow:
