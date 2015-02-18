@@ -103,6 +103,16 @@ class Failover(Model):
     )
     ipaddress = IPAddressField(verbose_name=_("IP Address"))
 
+    disabled = models.BooleanField(
+        default=False,
+        blank=True,
+    )
+
+    master = models.BooleanField(
+        default=False,
+        blank=True,
+    )
+
     def __unicode__(self):
         return u"%s[%s]" % (self.volume, self.carp)
 
