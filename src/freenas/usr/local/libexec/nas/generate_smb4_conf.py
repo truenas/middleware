@@ -1139,6 +1139,9 @@ def smb4_import_groups():
 
 
 def smb4_group_mapped(groupmap, group):
+    if not groupmap:
+        return False
+
     for gm in groupmap:
         unixgroup = gm['unixgroup']
         if group == unixgroup:
