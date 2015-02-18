@@ -7,21 +7,21 @@ Includes functional outline + Schedule
 ---------------
 Accounts (*M1*)
 ---------------
-- User / Group Create, Edit, Delete (local) in middlware, CLI and GUI
+- User / Group Create, Edit, Delete (local) in middlware, CLI and GUI (*M1*)
 
-- Bind to Directory Service (Active Directory, LDAP, NIS, NT4)
+- Bind to Directory Service (Active Directory, LDAP, NIS, NT4) (*M2*)
   This will also require a unified code path for looking up data in directory services and a mechanism for
   setting the search order such that the order of local, AD, LDAP, NIS, NT4 can be explicit.
 
 - Extended User Properties (UI preferences, avatar, etc) possibly with the ability to either store them on
   a Directory Service or, when that is not possible, create a "slave" record locally that augments the DS record
   transparently.  If the DS record is deleted or updated, the slave record will also need to either be deleted or
-  marked inactive.
+  marked inactive. (*M2*)
 
 - Authentication:  Both local users and DS users should be able to log into FreeNAS, either via the GUI or via
-  SSH (PAM plugin to talk to our Directory Services shim will be necessary).
+  SSH (PAM plugin to talk to our Directory Services shim will be necessary). (*M1*)
 
-  + Integration with passwd(1), chsh(1), chfn(1) and so on; commands like adduser will be deleted or shimmed.
+  + Integration with passwd(1), chsh(1), chfn(1) and so on; commands like adduser will be deleted or shimmed. (*M1*)
 
   +  Privileges: For *M1*, the only privilege will be "admin" - all Users with Admin privilege will be able
      to access all features of the UI and CLI, as well as being able to sudo from ssh.
