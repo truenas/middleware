@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -40,15 +40,15 @@ from django.utils.translation import ugettext_lazy as _
 log = logging.getLogger('choices')
 
 HTAUTH_CHOICES = (
-	('basic', _('Basic Authentication')),
-	('digest', _('Digest Authentication')),
-	)
+    ('basic', _('Basic Authentication')),
+    ('digest', _('Digest Authentication')),
+)
 
 SMTPAUTH_CHOICES = (
-        ('plain', _('Plain')),
-        ('ssl', _('SSL')),
-        ('tls', _('TLS')),
-        )
+    ('plain', _('Plain')),
+    ('ssl', _('SSL')),
+    ('tls', _('TLS')),
+)
 
 # GUI protocol choice
 PROTOCOL_CHOICES = (
@@ -58,37 +58,37 @@ PROTOCOL_CHOICES = (
 )
 
 TRANSFERMODE_CHOICES = (
-        ('Auto', _('Auto')),
-        ('PIO0', _('PIO0')),
-        ('PIO1', _('PIO1')),
-        ('PIO2', _('PIO2')),
-        ('PIO3', _('PIO3')),
-        ('PIO4', _('PIO4')),
-        ('WDMA0', _('WDMA0')),
-        ('WDMA1', _('WDMA1')),
-        ('WDMA2', _('WDMA2')),
-        ('UDMA16', _('UDMA-16')),
-        ('UDMA33', _('UDMA-33')),
-        ('UDMA66', _('UDMA-66')),
-        ('UDMA100', _('UDMA-100')),
-        ('UDMA133', _('UDMA-133')),
-        ('SATA150', _('SATA 1.5Gbit/s')),
-        ('SATA300', _('SATA 3.0Gbit/s')),
-        )
+    ('Auto', _('Auto')),
+    ('PIO0', _('PIO0')),
+    ('PIO1', _('PIO1')),
+    ('PIO2', _('PIO2')),
+    ('PIO3', _('PIO3')),
+    ('PIO4', _('PIO4')),
+    ('WDMA0', _('WDMA0')),
+    ('WDMA1', _('WDMA1')),
+    ('WDMA2', _('WDMA2')),
+    ('UDMA16', _('UDMA-16')),
+    ('UDMA33', _('UDMA-33')),
+    ('UDMA66', _('UDMA-66')),
+    ('UDMA100', _('UDMA-100')),
+    ('UDMA133', _('UDMA-133')),
+    ('SATA150', _('SATA 1.5Gbit/s')),
+    ('SATA300', _('SATA 3.0Gbit/s')),
+)
 
 HDDSTANDBY_CHOICES = (
-        ('Always On', _('Always On')),
-        ('5', '5'),
-        ('10', '10'),
-        ('20', '20'),
-        ('30', '30'),
-        ('60', '60'),
-        ('120', '120'),
-        ('180', '180'),
-        ('240', '240'),
-        ('300', '300'),
-        ('330', '330'),
-        )
+    ('Always On', _('Always On')),
+    ('5', '5'),
+    ('10', '10'),
+    ('20', '20'),
+    ('30', '30'),
+    ('60', '60'),
+    ('120', '120'),
+    ('180', '180'),
+    ('240', '240'),
+    ('300', '300'),
+    ('330', '330'),
+)
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
@@ -101,11 +101,11 @@ ADVPOWERMGMT_CHOICES = (
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
     )
 ACOUSTICLVL_CHOICES = (
-        ('Disabled', _('Disabled')),
-        ('Minimum', _('Minimum')),
-        ('Medium', _('Medium')),
-        ('Maximum', _('Maximum')),
-        )
+    ('Disabled', _('Disabled')),
+    ('Minimum', _('Minimum')),
+    ('Medium', _('Medium')),
+    ('Maximum', _('Maximum')),
+)
 
 temp = [str(x) for x in xrange(0, 12)]
 MINUTES1_CHOICES = tuple(zip(temp, temp))
@@ -138,107 +138,109 @@ temp = [str(x) for x in xrange(25, 32)]
 DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (
-        ('1', _('January')),
-        ('2', _('February')),
-        ('3', _('March')),
-        ('4', _('April')),
-        ('5', _('May')),
-        ('6', _('June')),
-        ('7', _('July')),
-        ('8', _('August')),
-        ('9', _('September')),
-        ('10', _('October')),
-        ('11', _('November')),
-        ('12', _('December')),
-        )
+    ('1', _('January')),
+    ('2', _('February')),
+    ('3', _('March')),
+    ('4', _('April')),
+    ('5', _('May')),
+    ('6', _('June')),
+    ('7', _('July')),
+    ('8', _('August')),
+    ('9', _('September')),
+    ('10', _('October')),
+    ('11', _('November')),
+    ('12', _('December')),
+)
+
 WEEKDAYS_CHOICES = (
-        ('1', _('Monday')),
-        ('2', _('Tuesday')),
-        ('3', _('Wednesday')),
-        ('4', _('Thursday')),
-        ('5', _('Friday')),
-        ('6', _('Saturday')),
-        ('7', _('Sunday')),
-        )
+    ('1', _('Monday')),
+    ('2', _('Tuesday')),
+    ('3', _('Wednesday')),
+    ('4', _('Thursday')),
+    ('5', _('Friday')),
+    ('6', _('Saturday')),
+    ('7', _('Sunday')),
+)
 
 VolumeType_Choices = (
     ('ZFS', 'ZFS'),
 )
 
 VolumeEncrypt_Choices = (
-        (0, _('Unencrypted')),
-        (1, _('Encrypted, no passphrase')),
-        (2, _('Encrypted, with passphrase')),
-        )
+    (0, _('Unencrypted')),
+    (1, _('Encrypted, no passphrase')),
+    (2, _('Encrypted, with passphrase')),
+)
 
 CIFS_SMB_PROTO_CHOICES = (
-       ('CORE', _('CORE')),
-       ('COREPLUS', _('COREPLUS')),
-       ('LANMAN1', _('LANMAN1')),
-       ('LANMAN2', _('LANMAN2')),
-       ('NT1', _('NT1')),
-       ('SMB2', _('SMB2')),
-       ('SMB2_02', _('SMB2_02')),
-       ('SMB2_10', _('SMB2_10')),
-       ('SMB2_22', _('SMB2_22')),
-       ('SMB2_24', _('SMB2_24')),
-       ('SMB3', _('SMB3')),
-       ('SMB3_00', _('SMB3_00')),
-        )
+    ('CORE', _('CORE')),
+    ('COREPLUS', _('COREPLUS')),
+    ('LANMAN1', _('LANMAN1')),
+    ('LANMAN2', _('LANMAN2')),
+    ('NT1', _('NT1')),
+    ('SMB2', _('SMB2')),
+    ('SMB2_02', _('SMB2_02')),
+    ('SMB2_10', _('SMB2_10')),
+    ('SMB2_22', _('SMB2_22')),
+    ('SMB2_24', _('SMB2_24')),
+    ('SMB3', _('SMB3')),
+    ('SMB3_00', _('SMB3_00')),
+)
 
 DOSCHARSET_CHOICES = (
-        ('CP437', 'CP437'),
-        ('CP850', 'CP850'),
-        ('CP852', 'CP852'),
-        ('CP866', 'CP866'),
-        ('CP932', 'CP932'),
-        ('CP949', 'CP949'),
-        ('CP950', 'CP950'),
-        ('CP1026', 'CP1026'),
-        ('CP1251', 'CP1251'),
-        ('ASCII', 'ASCII'),
-        )
+    ('CP437', 'CP437'),
+    ('CP850', 'CP850'),
+    ('CP852', 'CP852'),
+    ('CP866', 'CP866'),
+    ('CP932', 'CP932'),
+    ('CP949', 'CP949'),
+    ('CP950', 'CP950'),
+    ('CP1026', 'CP1026'),
+    ('CP1251', 'CP1251'),
+    ('ASCII', 'ASCII'),
+)
 
 UNIXCHARSET_CHOICES = (
-        ('UTF-8', 'UTF-8'),
-        ('iso-8859-1', 'iso-8859-1'),
-        ('iso-8859-15', 'iso-8859-15'),
-        ('gb2312', 'gb2312'),
-        ('EUC-JP', 'EUC-JP'),
-        ('ASCII', 'ASCII'),
-        )
+    ('UTF-8', 'UTF-8'),
+    ('iso-8859-1', 'iso-8859-1'),
+    ('iso-8859-15', 'iso-8859-15'),
+    ('gb2312', 'gb2312'),
+    ('EUC-JP', 'EUC-JP'),
+    ('ASCII', 'ASCII'),
+)
 
 LOGLEVEL_CHOICES = (
-        ('0',  _('None')),
-        ('1',  _('Minimum')),
-        ('2',  _('Normal')),
-        ('3',  _('Full')),
-        ('10', _('Debug')),
-        )
+    ('0',  _('None')),
+    ('1',  _('Minimum')),
+    ('2',  _('Normal')),
+    ('3',  _('Full')),
+    ('10', _('Debug')),
+)
 
 CASEFOLDING_CHOICES = (
-        ('none',            _('No case folding')),
-        ('lowercaseboth',   _('Lowercase names in both directions')),
-        ('uppercaseboth',   _('Lowercase names in both directions')),
-        ('lowercaseclient', _('Client sees lowercase, server sees uppercase')),
-        ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
-        )
+    ('none',            _('No case folding')),
+    ('lowercaseboth',   _('Lowercase names in both directions')),
+    ('uppercaseboth',   _('Lowercase names in both directions')),
+    ('lowercaseclient', _('Client sees lowercase, server sees uppercase')),
+    ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
+)
 
 TARGET_BLOCKSIZE_CHOICES = (
-        (512, '512'),
-        (1024, '1024'),
-        (2048, '2048'),
-        (4096, '4096'),
-        )
+    (512, '512'),
+    (1024, '1024'),
+    (2048, '2048'),
+    (4096, '4096'),
+)
 
 AUTHMETHOD_CHOICES = (
-        ('None',  _('None')),
-        ('CHAP',  _('CHAP')),
-        ('CHAP Mutual', _('Mutual CHAP')),
-        )
+    ('None',  _('None')),
+    ('CHAP',  _('CHAP')),
+    ('CHAP Mutual', _('Mutual CHAP')),
+)
+
 AUTHGROUP_CHOICES = (
-        ('None', _('None')),
-        )
+    ('None', _('None')),
+)
 
 
 DYNDNSPROVIDER_CHOICES = (
@@ -259,62 +261,66 @@ DYNDNSPROVIDER_CHOICES = (
 )
 
 SNMP_CHOICES = (
-        ('mibll', 'Mibll'),
-        ('netgraph', 'Netgraph'),
-        ('hostresources', 'Host resources'),
-        ('UCD-SNMP-MIB ', 'UCD-SNMP-MIB'),
-        )
+    ('mibll', 'Mibll'),
+    ('netgraph', 'Netgraph'),
+    ('hostresources', 'Host resources'),
+    ('UCD-SNMP-MIB ', 'UCD-SNMP-MIB'),
+)
+
 UPS_CHOICES = (
-        ('lowbatt', _('UPS reaches low battery')),
-        ('batt', _('UPS goes on battery')),
-        )
+    ('lowbatt', _('UPS reaches low battery')),
+    ('batt', _('UPS goes on battery')),
+)
+
 BTENCRYPT_CHOICES = (
-        ('preferred', _('Preferred')),
-        ('tolerated', _('Tolerated')),
-        ('required',  _('Required')),
-        )
+    ('preferred', _('Preferred')),
+    ('tolerated', _('Tolerated')),
+    ('required',  _('Required')),
+)
 
 PWEncryptionChoices = (
-        ('clear', 'clear'),
-        ('crypt', 'crypt'),
-        ('md5', 'md5'),
-        ('nds', 'nds'),
-        ('racf', 'racf'),
-        ('ad', 'ad'),
-        ('exop', 'exop'),
-        )
+    ('clear', 'clear'),
+    ('crypt', 'crypt'),
+    ('md5', 'md5'),
+    ('nds', 'nds'),
+    ('racf', 'racf'),
+    ('ad', 'ad'),
+    ('exop', 'exop'),
+)
+
 LAGGType = (
-        ('failover',    'Failover'),
-        ('fec',         'FEC'),
-        ('lacp',        'LACP'),
-        ('loadbalance', 'Load Balance'),
-        ('roundrobin',  'Round Robin'),
-        ('none',        'None'),
-        )
+    ('failover',    'Failover'),
+    ('fec',         'FEC'),
+    ('lacp',        'LACP'),
+    ('loadbalance', 'Load Balance'),
+    ('roundrobin',  'Round Robin'),
+    ('none',        'None'),
+)
 
 ZFS_AtimeChoices = (
-        ('inherit', _('Inherit')),
-        ('on',      _('On')),
-        ('off',     _('Off')),
-        )
+    ('inherit', _('Inherit')),
+    ('on',      _('On')),
+    ('off',     _('Off')),
+)
 
 ZFS_CompressionChoices = (
-        ('inherit', _('Inherit')),
-        ('off',     _('Off')),
-        ('lz4',     _('lz4 (recommended)')),
-        ('gzip',    _('gzip (default level, 6)')),
-        ('gzip-1',  _('gzip (fastest)')),
-        ('gzip-9',  _('gzip (maximum, slow)')),
-        ('zle',     _('zle (runs of zeros)')),
-        ('lzjb',    _('lzjb (legacy, not recommended)')),
-        )
+    ('inherit', _('Inherit')),
+    ('off',     _('Off')),
+    ('lz4',     _('lz4 (recommended)')),
+    ('gzip',    _('gzip (default level, 6)')),
+    ('gzip-1',  _('gzip (fastest)')),
+    ('gzip-9',  _('gzip (maximum, slow)')),
+    ('zle',     _('zle (runs of zeros)')),
+    ('lzjb',    _('lzjb (legacy, not recommended)')),
+)
 
 Repl_CompressionChoices = (
-        ('off',     _('Off')),
-        ('lz4',     _('lz4 (fastest)')),
-        ('pigz',    _('pigz (all rounder)')),
-        ('plzip',   _('plzip (best compression)')),
-        )
+    ('off',     _('Off')),
+    ('lz4',     _('lz4 (fastest)')),
+    ('pigz',    _('pigz (all rounder)')),
+    ('plzip',   _('plzip (best compression)')),
+)
+
 
 class whoChoices:
     """Populate a list of system user choices"""
@@ -328,12 +334,12 @@ class whoChoices:
         return iter((i, i) for i in self._wholist)
 
 
-## Network|Interface Management
+# Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
     def __init__(self, nolagg=False, novlan=False,
-            exclude_configured=True, include_vlan_parent=False,
-            with_alias=False, nobridge=True, noepair=True):
+                 exclude_configured=True, include_vlan_parent=False,
+                 with_alias=False, nobridge=True, noepair=True):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -434,7 +440,6 @@ class NICChoices(object):
                 if nic.startswith('epair'):
                     self._NIClist.remove(nic)
 
-
         self.max_choices = len(self._NIClist)
 
     def remove(self, nic):
@@ -487,7 +492,7 @@ class TimeZoneChoices:
     """Populate timezone from /usr/share/zoneinfo choices"""
     def __init__(self):
         pipe = popen('find /usr/share/zoneinfo/ -type f -not -name '
-            'zone.tab -not -regex \'.*/Etc/GMT.*\'')
+                     'zone.tab -not -regex \'.*/Etc/GMT.*\'')
         self._TimeZoneList = pipe.read().strip().split('\n')
         self._TimeZoneList = [x[20:] for x in self._TimeZoneList]
         self._TimeZoneList.sort()
@@ -497,56 +502,56 @@ class TimeZoneChoices:
         return iter((i, i) for i in self._TimeZoneList)
 
 v4NetmaskBitList = (
-        ('32', '/32 (255.255.255.255)'),
-        ('31', '/31 (255.255.255.254)'),
-        ('30', '/30 (255.255.255.252)'),
-        ('29', '/29 (255.255.255.248)'),
-        ('28', '/28 (255.255.255.240)'),
-        ('27', '/27 (255.255.255.224)'),
-        ('26', '/26 (255.255.255.192)'),
-        ('25', '/25 (255.255.255.128)'),
-        ('24', '/24 (255.255.255.0)'),
-        ('23', '/23 (255.255.254.0)'),
-        ('22', '/22 (255.255.252.0)'),
-        ('21', '/21 (255.255.248.0)'),
-        ('20', '/20 (255.255.240.0)'),
-        ('19', '/19 (255.255.224.0)'),
-        ('18', '/18 (255.255.192.0)'),
-        ('17', '/17 (255.255.128.0)'),
-        ('16', '/16 (255.255.0.0)'),
-        ('15', '/15 (255.254.0.0)'),
-        ('14', '/14 (255.252.0.0)'),
-        ('13', '/13 (255.248.0.0)'),
-        ('12', '/12 (255.240.0.0)'),
-        ('11', '/11 (255.224.0.0)'),
-        ('10', '/10 (255.192.0.0)'),
-        ('9', '/9 (255.128.0.0)'),
-        ('8', '/8 (255.0.0.0)'),
-        ('7', '/7 (254.0.0.0)'),
-        ('6', '/6 (252.0.0.0)'),
-        ('5', '/5 (248.0.0.0)'),
-        ('4', '/4 (240.0.0.0)'),
-        ('3', '/3 (224.0.0.0)'),
-        ('2', '/2 (192.0.0.0)'),
-        ('1', '/1 (128.0.0.0)'),
-        )
+    ('32', '/32 (255.255.255.255)'),
+    ('31', '/31 (255.255.255.254)'),
+    ('30', '/30 (255.255.255.252)'),
+    ('29', '/29 (255.255.255.248)'),
+    ('28', '/28 (255.255.255.240)'),
+    ('27', '/27 (255.255.255.224)'),
+    ('26', '/26 (255.255.255.192)'),
+    ('25', '/25 (255.255.255.128)'),
+    ('24', '/24 (255.255.255.0)'),
+    ('23', '/23 (255.255.254.0)'),
+    ('22', '/22 (255.255.252.0)'),
+    ('21', '/21 (255.255.248.0)'),
+    ('20', '/20 (255.255.240.0)'),
+    ('19', '/19 (255.255.224.0)'),
+    ('18', '/18 (255.255.192.0)'),
+    ('17', '/17 (255.255.128.0)'),
+    ('16', '/16 (255.255.0.0)'),
+    ('15', '/15 (255.254.0.0)'),
+    ('14', '/14 (255.252.0.0)'),
+    ('13', '/13 (255.248.0.0)'),
+    ('12', '/12 (255.240.0.0)'),
+    ('11', '/11 (255.224.0.0)'),
+    ('10', '/10 (255.192.0.0)'),
+    ('9', '/9 (255.128.0.0)'),
+    ('8', '/8 (255.0.0.0)'),
+    ('7', '/7 (254.0.0.0)'),
+    ('6', '/6 (252.0.0.0)'),
+    ('5', '/5 (248.0.0.0)'),
+    ('4', '/4 (240.0.0.0)'),
+    ('3', '/3 (224.0.0.0)'),
+    ('2', '/2 (192.0.0.0)'),
+    ('1', '/1 (128.0.0.0)'),
+)
 
 v6NetmaskBitList = tuple([(str(i), '/' + str(i)) for i in range(0, 132, 4)])
 
 RetentionUnit_Choices = (
-        ('hour', _('Hour(s)')),
-        ('day', _('Day(s)')),
-        ('week', _('Week(s)')),
-        ('month', _('Month(s)')),
-        ('year', _('Year(s)')),
-        )
+    ('hour', _('Hour(s)')),
+    ('day', _('Day(s)')),
+    ('week', _('Week(s)')),
+    ('month', _('Month(s)')),
+    ('year', _('Year(s)')),
+)
 
 RepeatUnit_Choices = (
-        ('daily', _('Everyday')),
-        ('weekly', _('Every selected weekday')),
-        #('monthly', _('Every these days of month')),
-        #('yearly', _('Every these days of specified months')),
-        )
+    ('daily', _('Everyday')),
+    ('weekly', _('Every selected weekday')),
+    # ('monthly', _('Every these days of month')),
+    # ('yearly', _('Every these days of specified months')),
+)
 
 ACCESS_MODE = (
     ('ro', _('Read-only')),
@@ -585,9 +590,9 @@ SMART_POWERMODE = (
     ('never', _("Never - Check the device regardless of its power mode")),
     ('sleep', _("Sleep - Check the device unless it is in SLEEP mode")),
     ('standby', _("Standby - Check the device unless it is in SLEEP or STANDBY"
-        " mode")),
+                  " mode")),
     ('idle', _("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE"
-        " mode")),
+               " mode")),
     )
 
 SMART_TEST = (
@@ -604,6 +609,7 @@ SERIAL_SPEED = (
     ('57600', _('57600')),
     ('115200', _('115200')),
     )
+
 
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
@@ -627,23 +633,24 @@ class UPSDRIVER_CHOICES(object):
                     row[last] = row[last].replace(' (experimental)', '').strip()
                 for i, field in enumerate(list(row)):
                     row[i] = field.decode('utf8')
-                yield (u"$".join([row[last], row[3]]), u"%s (%s)" % (u" ".join(row[0:last]), row[last]))
+                yield (u"$".join([row[last], row[3]]), u"%s (%s)" %
+                       (u" ".join(row[0:last]), row[last]))
 
 
 LDAP_SSL_CHOICES = (
-        ('off', _('Off')),
-        ('on', _('SSL')),
-        ('start_tls', _('TLS')),
-        )
+    ('off', _('Off')),
+    ('on', _('SSL')),
+    ('start_tls', _('TLS')),
+)
 
 RSYNC_MODE_CHOICES = (
-        ('module', _('Rsync module')),
-        ('ssh', _('Rsync over SSH')),
+    ('module', _('Rsync module')),
+    ('ssh', _('Rsync over SSH')),
 )
 
 RSYNC_DIRECTION = (
-        ('push', _('Push')),
-        ('pull', _('Pull')),
+    ('push', _('Push')),
+    ('pull', _('Pull')),
 )
 
 
@@ -736,13 +743,13 @@ JAIL_TEMPLATE_ARCH_CHOICES = (
     ('x86', 'x86')
 )
 
+
 class JAIL_TEMPLATE_CHOICES(object):
     def __iter__(self):
         from freenasUI.jails.models import JailTemplate
         yield ('', '-----')
         for jt in JailTemplate.objects.exclude(jt_system=True):
             yield (jt.jt_name, jt.jt_name)
-     
 
 REPL_CIPHER = (
     ('standard', _('Standard')),
@@ -751,13 +758,13 @@ REPL_CIPHER = (
 )
 
 SAMBA4_ROLE_CHOICES = (
-#    ('auto', 'auto'),
-#    ('classic', 'classic primary domain controller'),
-#    ('netbios', 'netbios backup domain controller'),
+    # ('auto', 'auto'),
+    # ('classic', 'classic primary domain controller'),
+    # ('netbios', 'netbios backup domain controller'),
     ('dc', 'active directory domain controller'),
-#    ('sdc', 'active directory secondary domain controller'),
-#    ('member', 'member server'),
-#    ('standalone', 'standalone')
+    # ('sdc', 'active directory secondary domain controller'),
+    # ('member', 'member server'),
+    # ('standalone', 'standalone')
 )
 
 SAMBA4_DNS_BACKEND_CHOICES = (
@@ -781,16 +788,17 @@ SHARE_TYPE_CHOICES = (
 )
 
 CASE_SENSITIVITY_CHOICES = (
-   ('sensitive',  _('Sensitive')),
-   ('insensitive',  _('Insensitive')),
-   ('mixed',  _('Mixed'))
+    ('sensitive',  _('Sensitive')),
+    ('insensitive',  _('Insensitive')),
+    ('mixed',  _('Mixed'))
 )
+
 
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
         pipe = popen("/usr/sbin/devinfo -u | grep uart | grep 0x | cut -d- -f 1 | "
-              "awk '{print $1}'")
+                     "awk '{print $1}'")
         ports = filter(
             lambda y: True if y else False,
             pipe.read().strip().strip('\n').split('\n')
@@ -838,6 +846,12 @@ CERT_KEY_LENGTH_CHOICES = (
     (4096, '4096')
 )
 
+CERT_KEY_LENGTH_ECDSA_CHOICES = (
+    (256, '256'),
+    (384, '384'),
+    (521, '521'),
+)
+
 CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA1', _('SHA1')),
     ('SHA224', _('SHA224')),
@@ -845,6 +859,7 @@ CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA384', _('SHA384')),
     ('SHA512', _('SHA512'))
 )
+
 
 class COUNTRY_CHOICES(object):
     import csv
@@ -862,11 +877,11 @@ class COUNTRY_CHOICES(object):
             for row in reader:
                 if i != 0:
                     if row[self.__soi] and row[self.__cni] and \
-                        row[self.__2li] and row[self.__3li]:
+                       row[self.__2li] and row[self.__3li]:
                         self.__country_list.append(row)
 
                 else:
-                    self.__country_columns = row 
+                    self.__country_columns = row
                     self.__soi = self.__get_sort_order_index()
                     self.__cni = self.__get_common_name_index()
                     self.__fni = self.__get_formal_name_index()
@@ -875,17 +890,17 @@ class COUNTRY_CHOICES(object):
 
                 i += 1
 
-        self.__country_list = sorted(self.__country_list, \
-            key=lambda x: x[self.__cni])
+        self.__country_list = sorted(self.__country_list,
+                                     key=lambda x: x[self.__cni])
 
     def __get_index(self, column):
         index = -1
 
         i = 0
-        for c in self.__country_columns: 
+        for c in self.__country_columns:
             if c.lower() == column.lower():
                 index = i
-                break 
+                break
 
             i += 1
 
@@ -908,11 +923,11 @@ class COUNTRY_CHOICES(object):
 
     def __iter__(self):
         return iter((c[self.__2li], c[self.__cni]) \
-            for c in self.__country_list)
+                    for c in self.__country_list)
 
 
 NSS_INFO_CHOICES = (
-    ('sfu', 'sfu'), 
+    ('sfu', 'sfu'),
     ('sfu20', 'sfu20'),
     ('rfc2307', 'rfc2307')
 )
@@ -926,6 +941,6 @@ LDAP_SASL_WRAPPING_CHOICES = (
 LDAP_SCHEMA_CHOICES = (
     ('rfc2307', 'rfc2307'),
     ('rfc2307bis', 'rfc2307bis'),
-#    ('IPA', 'IPA'),
-#    ('AD', 'AD')
+    # ('IPA', 'IPA'),
+    # ('AD', 'AD')
 )
