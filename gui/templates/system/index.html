@@ -32,9 +32,11 @@
 
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Support" %}', doLayout:false, refreshOnShow: true{% if focus_form == "system.Support" %}, selected:true{% endif %}, href: '{% url "support_home" %}'" tab="system.Support" class="objrefresh data_system_Support">
     </div>
-
-    <!--
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Registration" %}', doLayout:false {% if focus_form == "registration" %}, selected:true{% endif %}, href: '{% if registration %}{% url "freeadmin_system_registration_edit" oid=registration.id %}{% else %}{% url "freeadmin_system_registration_add" %}{% endif %}?inline=true', refreshOnShow: true" class="objrefresh">
+{% for tab in hook_tabs %}
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.name|escapejs }}'
+    {% if focus_form == tab.focus %}, selected: true{% endif %},
+    href: '{{ tab.url }}',
+    refreshOnShow: true" class="objrefresh data_system_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
     </div>
-    -->
+{% endfor %}
 </div>
