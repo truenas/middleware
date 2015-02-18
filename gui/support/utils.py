@@ -47,7 +47,7 @@ def ticket_attach(data, file_handler):
 
     try:
         r = requests.post(
-            'https://%s:d/api/v1.0/ticket/attachment' % (ADDRESS, get_port()),
+            'https://%s:%d/api/v1.0/ticket/attachment' % (ADDRESS, get_port()),
             data=data,
             timeout=10,
             files={'file': (file_handler.name, file_handler.file)},
