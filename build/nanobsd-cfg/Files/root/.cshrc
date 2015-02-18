@@ -46,7 +46,3 @@ bindkey "\e[3~" delete-char # Delete
 bindkey "\e[4~" end-of-line # End
 bindkey "\e[8~" end-of-line # End rxvt
 endif
-
-if ( -f /usr/local/sbin/hactl) then
-        /usr/local/sbin/hactl status
-endif
