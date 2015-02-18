@@ -1609,9 +1609,14 @@ class FreeNAS_ActiveDirectory_Base(object):
                     nic_ipv4_st = sipcalc_type(i['inet'], i['netmask'])
 
                     for s in subnets:
-                        dn = s[1]['distinguishedName'][0]
-                        network = s[1]['cn'][0]
-                        site_dn = s[1]['siteObject'][0]
+                        if not s or len(s) < 2:
+                            continue
+
+                        network = site_dn = None
+                        if 'cn' in s[1]:
+                            network = s[1]['cn'][0]
+                        if 'siteObject' in s[1]:
+                            site_dn = s[1]['siteObject'][0]
 
                         st = sipcalc_type(network)
                         if st.is_ipv4():
@@ -1625,9 +1630,14 @@ class FreeNAS_ActiveDirectory_Base(object):
                     nic_ipv6_st = sipcalc_type("%s/%s" % (i['inet6'], i['prefixlen']))
 
                     for s in subnets:
-                        dn = s[1]['distinguishedName'][0]
-                        network = s[1]['cn'][0]
-                        site_dn = s[1]['siteObject'][0]
+                        if not s or len(s) < 2:
+                            continue
+                        network = site_dn = None
+
+                        if 'cn' in s[1]:
+                            network = s[1]['cn'][0]
+                        if 'siteObject' in s[1]:
+                            site_dn = s[1]['siteObject'][0]
 
                         st = sipcalc_type(network)
                         if st.is_ipv6():
@@ -1641,16 +1651,18 @@ class FreeNAS_ActiveDirectory_Base(object):
         for c in ipv4_candidates:
             (site_dn, s, iinfo) = ipv4_candidates[c]
             sinfo = self.get_sites(distinguishedname=site_dn)[0]
-            if sinfo:
+            if sinfo and len(sinfo) > 1:
                 ipv4_site = sinfo[1]['cn'][0]
                 break
 
         for c in ipv6_candidates:
             (site_dn, s, iinfo) = ipv6_candidates[c]
             sinfo = self.get_sites(distinguishedname=site_dn)[0]
-            if sinfo:
+            if sinfo and len(sinfo) > 1:
                 ipv6_site = sinfo[1]['cn'][0]
                 break
+
+        print ipv4_site
 
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
             return ipv4_site 
