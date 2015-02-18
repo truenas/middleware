@@ -74,6 +74,7 @@ def ticket(request):
             'title': request.POST.get('subject'),
             'body': request.POST.get('desc'),
             'version': get_sw_version().split('-', 1)[-1],
+            'category': request.POST.get('category'),
         }
 
         if get_sw_name().lower() == 'freenas':
