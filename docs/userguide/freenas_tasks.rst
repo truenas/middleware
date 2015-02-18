@@ -1,3 +1,4 @@
+.. index:: Tasks
 .. _Tasks:
 
 Tasks
@@ -15,6 +16,7 @@ The Tasks section of the administrative GUI can be used to configure the followi
 
 Each of these tasks is described in more detail in this section.
 
+.. index:: Cron Jobs
 .. _Cron Jobs:
 
 Cron Jobs
@@ -129,6 +131,7 @@ When scheduling a script, make sure that the script is executable and has been f
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
 
+.. index:: Rsync Tasks
 .. _Rsync Tasks:
 
 Rsync Tasks
@@ -163,14 +166,14 @@ operation.
 
 .. note:: if there is a firewall between the two systems or if the other system has a built-in firewall, make sure that TCP port 873 is allowed.
 
-Figure 6.3a shows the screen that appears when you click :menuselection:`System --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options that
+Figure 6.3a shows the screen that appears when you click :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options that
 can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
 
-|rsync1.png|
+|rsync1a.png|
 
-.. |rsync1.png| image:: images/rsync1.png
+.. |rsync1a.png| image:: images/rsync1a.png
     :width: 11.1in
     :height: 4.4in
 
@@ -211,7 +214,7 @@ can be configured when creating an rsync task.
 |                                  |                             | host to sync with (e.g. */mnt/volume*); note that maximum path length is 255 characters   |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Rsync Create                     | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
+| Validate Remote Path             | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |
@@ -267,6 +270,10 @@ can be configured when creating an rsync task.
 |                                  |                             | `extended attributes <http://en.wikipedia.org/wiki/Xattr>`_                               |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
+| Delay Updates                    | checkbox                    | when checked, the temporary file from each updated file is saved to a holding directory   |
+|                                  |                             | until the end of the transfer, when all transferred files are renamed into place          |
+|                                  |                             |                                                                                           |
++----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Extra options                    | string                      | `rsync(1) <http://rsync.samba.org/ftp/rsync/rsync.html>`_                                 |
 |                                  |                             | options not covered by the GUI; note that if the "*" character is used, it must be        |
 |                                  |                             | escaped between single quotes (e.g. '\*.txt')                                             |
@@ -278,6 +285,9 @@ can be configured when creating an rsync task.
 
 If the rysnc server requires password authentication, input *--password-file=/PATHTO/FILENAME* in the "Extra options" box, replacing
 */PATHTO/FILENAME* with the appropriate path to the file containing the value of the password.
+
+Created rsync tasks will be listed in "View Rsync Tasks". If you highlight the entry for an rsync task, buttons will be displayed to "Edit", "Delete", or "Run
+Now".
 
 .. _Rsync Module Mode:
 
@@ -292,7 +302,7 @@ This configuration example will configure rsync module mode between the two foll
 * *192.168.2.6* has an existing volume named :file:`/mnt/remote`. It will be the rsync server, meaning that it will receive the contents of
   :file:`/mnt/local/images`. An rsync module needs to be defined on this system and the rsyncd service needs to be started. It will be referred to as *PULL.*
 
-On *PUSH*, an rsync task is defined in :menuselection:`System --> Rsync Tasks --> Add Rsync Task`. In this example:
+On *PUSH*, an rsync task is defined in :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. In this example:
 
 * the "Path" points to :file:`/usr/local/images`, the directory to be copied
 
@@ -345,8 +355,6 @@ configured before creating the rsync task:
 To create the public/private key pair for the rsync user account, open Shell_on *PUSH*. The :file:`/` filesystem must first be mounted as read-write. The
 following example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is
 meant to be used for an automated task.::
-
- mount -o rw /
 
  ssh-keygen -t rsa
  Generating public/private rsa key pair.
@@ -402,7 +410,7 @@ breaks.
 |rsync2.png|
 
 .. |rsync2.png| image:: images/rsync2.png
-    :width: 7.9in
+    :width: 6.2in
     :height: 4.5in
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
@@ -410,7 +418,7 @@ While on *PULL*, verify that the SSH service is running in :menuselection:`Servi
 Next, copy the host key of *PULL* using Shell on
 *PUSH*. The following command copies the RSA host key of the
 *PULL* server used in our previous example. Be sure to include the double bracket
-*>>* to prevent overwriting any existing entries in the :file:`known_hosts` file.::
+*>>* to prevent overwriting any existing entries in the :file:`known_hosts` file::
 
  ssh-keyscan -t rsa 192.168.2.6 >> /root/.ssh/known_hosts
 
@@ -420,7 +428,7 @@ Next, copy the host key of *PULL* using Shell on
 
       cat ~/.ssh/id_rsa.pub | ssh user@192.168.2.6 'cat >> .ssh/authorized_keys'
 
-You are now ready to create the rsync task on *PULL*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
+You are now ready to create the rsync task on *PUSH*. To configure rsync SSH mode using the systems in our previous example, the configuration would be as
 follows:
 
 * the "Path" points to :file:`/mnt/local/images`, the directory to be copied
@@ -442,6 +450,7 @@ automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the con
 If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
 
+.. index:: S.M.A.R.T. Tests
 .. _S.M.A.R.T. Tests:
 
 S.M.A.R.T. Tests
@@ -452,7 +461,7 @@ S.M.A.R.T. Tests
 reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE, and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
 
-Figure 6.4a shows the configuration screen that appears when you click :menuselection:`System --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
+Figure 6.4a shows the configuration screen that appears when you click :menuselection:`Tasks --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
 you create will be listed under "View S.M.A.R.T. Tests". After creating your tests, check the configuration in :menuselection:`Services --> S.M.A.R.T.`, then
 click the slider to "ON" for the S.M.A.R.T. service in :menuselection:`Services --> Control Services`. The S.M.A.R.T. service will not start if you have not
 created any volumes.
@@ -502,6 +511,8 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 |                   |                           |                                                                                                            |
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
 
+An example configuration is to schedule a "Short Self-Test" once a week and a "Long Self-Test" once a month. These tests should not have a performance impact,
+as the disks prioritize normal I/O over the tests. If a disk fails a test, even if the overall status is "Passed", start to think about replacing that disk.
 
 You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
 
@@ -512,5 +523,4 @@ type::
 
 If you enter an email address in the "Email to report" field of :menuselection:`Services --> S.M.A.R.T.`, the system will email the specified address when a
 test fails. 
-
 

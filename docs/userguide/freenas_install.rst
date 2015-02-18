@@ -22,6 +22,7 @@ This section describes the following:
 
 * :ref:`Virtualization`
 
+.. index:: Getting Freenas, Download
 .. _Getting FreeNAS®:
 
 Getting FreeNAS®
@@ -39,20 +40,25 @@ The download page contains the following types of files:
 * **.GUI_Upgrade.txz:** this is a compressed firmware upgrade image. If your intent is to upgrade FreeNAS®, download this file and see the section on
   :ref:`Upgrading`.
 
-Each file has an associated *sha256.txt* file which should be used to verify the integrity of the downloaded file before writing it to the installation media.
-The command you use to verify the checksum varies by operating system:
+.. index:: Checksum
 
-* on a BSD system use the command :command:`sha256 name_of_file.sha256.txt`
+Each file has an associated :file:`sha256.txt` file which should be used to verify the integrity of the downloaded file. The command you use to verify the
+checksum varies by operating system:
 
-* on a Linux system use the command :command:`sha256sum name_of_file.sha256.txt`
+* on a BSD system use the command :command:`sha256 name_of_file`
 
-* on a Mac system use the command :command:`shasum -a 256 name_of_file.sha256.txt`
+* on a Linux system use the command :command:`sha256sum name_of_file`
+
+* on a Mac system use the command :command:`shasum -a 256 name_of_file`
 
 * on a Windows or Mac system, you can also install a utility such as
   `HashCalc <http://www.slavasoft.com/hashcalc/>`_
   or
   `HashTab <http://implbits.com/HashTab.aspx>`_
 
+The value produced by running the command should match the value of the :file:`sha256.txt` file.
+
+.. index:: Burn ISO, ISO, USB Stick
 .. _Preparing the Media:
 
 Preparing the Media
@@ -65,6 +71,11 @@ To burn the :file:`.iso` file to CD, use a CD burning utility.
 
 The command which is used to burn the :file:`.iso` file to a compact flash card or USB thumbdrive depends upon the operating system. This section demonstrates
 utilities for several operating systems.
+
+.. note:: if you will be burning the installation file to a USB stick, you will need **two** USB slots, each with an inserted USB device, where one USB stick
+          contains the installer and the other USB stick is selected to install into. When performing the installation, be sure to select the correct USB
+          device to install to. In other words, you can **not** install FreeNAS® into the same USB stick that you boot the installer from. After
+          installation, remove the USB stick containing the installer, and if necessary, configure the BIOS to boot from the remaining USB stick.
 
 Once you have written the :file:`.iso` file to the installation media, make sure the boot order in the BIOS is set to boot from that device and boot the
 system to start the installation.
@@ -160,6 +171,7 @@ executable.
 Once installed, launch Win32DiskImager and use its "browse" button to browse to the location of the :file:`.iso` file. Insert a USB thumb drive and select its
 drive letter from the "Device" drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
 
+.. index:: Install
 .. _Performing the Installation:
 
 Performing the Installation
@@ -273,6 +285,8 @@ If the system does not boot into FreeNAS®, there are several things that you ca
 First, check the system BIOS and see if there is an option to change the USB emulation from CD/DVD/floppy to hard drive. If it still will not boot, check to
 see if the card/drive is UDMA compliant.
 
+If the system BIOS does not support EFI with BIOS emulation, see if it has an option to boot using legacy BIOS mode.
+
 Some users have found that some brands of 4 GB USB sticks do not work as they are not really 4 GB in size, but changing to a 8 GB stick fixes the problem.
 
 If you are writing the image to a compact flash card, make sure that it is MSDOS formatted.
@@ -283,10 +297,14 @@ If the system starts to boot but hangs with this repeated error message::
 
 go into the system BIOS and see if there is an onboard device configuration for a 1394 Controller. If so, disable the device and try booting again.
 
+If the system starts to boot but hangs at a *mountroot>* prompt, follow the instructions in
+`Workaround/Semi-Fix for Mountroot Issues with 9.3 <https://forums.freenas.org/index.php?threads/workaround-semi-fix-for-mountroot-issues-with-9-3.26071/>`_.
+
 If the burned image fails to boot and the image was burned using a Windows system, wipe the USB stick before trying a second burn using a utility such as
 `Active@ KillDisk <http://how-to-erase-hard-drive.com/>`_. Otherwise, the second burn attempt will fail as Windows does not understand the partition which was
 written from the image file. Be very careful that you specify the USB stick when using a wipe utility!
 
+.. index:: Upgrade
 .. _Upgrading:
 
 Upgrading
@@ -445,6 +463,7 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 * Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
   the system.
 
+.. index:: Update
 .. _Updating Between Releases:
 
 Updating Between Releases
@@ -464,12 +483,12 @@ In the screen shown in Figure 2.5e, use the drop-down menu to select which "Trai
 
 .. |update1.png| image:: images/update1.png
     :width: 6.2in
-    :height: 3.2in
+    :height: 3.4in
 
-In this example, this system has the option to track *FreeNAS-10-Nightlies* (the upcoming 10.0 release),
-*FreeNAS-9.3-Nightlies* which represents the latest nightly build of the upcoming 9.3 release, and
-*FreeNAS-9.3-BETA* which includes all new features, drivers, and bug fixes since 9.3-BETA was released. The administrator has selected to track the
-*FreeNAS-9.3-Nightlies*. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
+In this example, this system has the option to track *FreeNAS-9.3-Nightlies*, (the latest nightly build of 9.3 which may contain untested fixes),
+*FreeNAS-9.3-STABLE* (all new and tested features, drivers, and bug fixes since 9.3 was released), and
+*FreeNAS-10-Nightlies* (the latest, pre-alpha build of the upcoming 10 version). The administrator has selected to track the recommended
+*FreeNAS-9.3-STABLE* train. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
 
 To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
 button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
@@ -486,11 +505,13 @@ will automatically be rebooted immediately after the update is applied.
 If Something Goes Wrong
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If an upgrade or update fails, or you wish to return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS®
-console. Reboot the system and watch for the boot menu. In the example shown in Figure 2.5f, the first boot menu entry, *FreeNAS (default)*, refers to the
-initial installation, before the update was applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after
-the update was applied. This second entry is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless
-another entry is manually selected. Both entries include a date and timestamp, indicating when that boot environment was created.
+If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
+
+To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
+boot menu. In the example shown in Figure 2.5f, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
+applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
+is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
+entries include a date and timestamp, indicating when that boot environment was created.
 
 **Figure 2.5f: Boot Menu**
 
@@ -511,6 +532,10 @@ You can always:
 
 #.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
 
+.. note:: you cannot restore a saved configuration which is newer than the installed version. For example, if you reboot into an older version of the
+          operating system, you cannot restore a configuration that was created in a later version.
+
+.. index:: Upgrade ZFS Pool
 .. _Upgrading a ZFS Pool:
 
 Upgrading a ZFS Pool
@@ -520,7 +545,8 @@ Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical admin
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
-* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version of FreeNAS® that does not support those feature flags.**
+* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
+  of FreeNAS® that does not support those feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
@@ -548,6 +574,7 @@ The upgrade itself should only take a seconds and is non-disruptive. This means 
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
 nearly instantaneous on a quiet pool.
 
+.. index:: Virtualization, VM
 .. _Virtualization:
 
 Virtualization
@@ -801,3 +828,13 @@ the amount of storage disks needed to meet your requirements.
     :width: 6.7925in
     :height: 5.3339in
 
+If you are running ESX 5.0, Workstation 8.0, or Fusion 4.0 or higher, additional configuration is needed so that the virtual HPET setting does not prevent the
+virtual machine from booting.
+
+If you are running ESX, while in "Edit Settings", click :menuselection:`Options --> Advanced --> General --> Configuration Parameters`. Change "hpet0.present"
+from *true* to
+*false*, then click "OK" twice to save the setting.
+
+If you are running Workstation or Player, while in "Edit Settings", click :menuselection:`Options --> Advanced --> File Locations`. Locate the path for
+the Configuration file named :file:`filename.vmx`. Open that file in a text editor, change "hpet0.present" from *true* to
+*false*, and save the change. 

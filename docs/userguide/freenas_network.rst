@@ -1,3 +1,4 @@
+.. index:: Network Settings
 .. _Network:
 
 Network
@@ -115,8 +116,8 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 8.0in
-    :height: 4.5in
+    :width: 3.2in
+    :height: 4.2in
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -231,6 +232,7 @@ prompt for a username and the password that you configured. Refer to the documen
 Once you have logged into the management interface, you can change the default administrative username as well as create additional users. The appearance of
 the utility and the functions that are available within the IPMI management utility will vary depending upon the hardware.
 
+.. index:: Link Aggregation, LAGG, LACP, EtherChannel
 .. _Link Aggregations:
 
 Link Aggregations
@@ -273,8 +275,6 @@ aggregation.
 mode can cause unordered packet arrival at the client. This has a side effect of limiting throughput as reordering packets can be CPU intensive on the client. Requires a switch which supports IEEE 802.3ad static link aggregation.
 
 **None:** this protocol disables any traffic without disabling the lagg interface itself.
-
-.. note:: the FreeNAS® system must be rebooted after configuring the lagg device and TCP access will be lost during reboot.
 
 **Do not** configure the interfaces used in the lagg device before creating the lagg device.
 
@@ -333,10 +333,10 @@ Once the lagg device has been created, click its entry to enable its "Edit", "De
 
 If you click the "Edit" button for a lagg, you will see the configuration screen shown in Figure 7.4b. Table 7.4a describes the options in this screen.
 
-After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be lost at this point, and if
-so, the system must be rebooted from the console setup menu. You may also have to change your switch settings to communicate through the new lagg interface.
-After reboot, if the IP address was set manually, you may also have to manually enter a default gateway from the console setup menu option in order to get
-access into the GUI through the new lagg interface.
+After creating the lagg interface, set the IP address manually or with DHCP and save. The connection to the web interface may be temporarily lost at this
+point, as the network is restarted. You may also have to change your switch settings to communicate through the new lagg interface, and, if the IP address was
+set manually, you may have to manually enter a default gateway from the console setup menu option in order to get access into the GUI through the new lagg
+interface.
 
 **Figure 7.4b: Editing a lagg**
 
@@ -444,6 +444,7 @@ Network Summary
 :menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
 configured IPv4 and IPv6 address(es), DNS server(s), and default gateway will be displayed.
 
+.. index:: Route, Static Route
 .. _Static Routes:
 
 Static Routes
@@ -457,8 +458,8 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 |static.png|
 
 .. |static.png| image:: images/static.png
-    :width: 5.6in
-    :height: 2.5in
+    :width: 3.0in
+    :height: 1.8in
 
 The available options are summarized in Table 7.6a.
 
@@ -483,6 +484,7 @@ The available options are summarized in Table 7.6a.
 
 If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
 
+.. index:: VLAN, Trunking, 802.1Q
 .. _VLANs:
 
 VLANs
@@ -506,8 +508,8 @@ If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the s
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 5.1in
-    :height: 2.6in
+    :width: 3.0in
+    :height: 2.1in
 
 Table 7.7a summarizes the configurable fields.
 
@@ -535,5 +537,6 @@ Table 7.7a summarizes the configurable fields.
 
 The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
 configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to
-:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type *up*.
-This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add Interface" screen.
+:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type
+:command:`up`. This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add
+Interface" screen.

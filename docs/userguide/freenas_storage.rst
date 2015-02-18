@@ -15,10 +15,11 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`Snapshots`: used to manage local snapshots.
 
-* :ref:`VMWare Snapshots`: are used to coordinate ZFS snapshots with a VWware datastore.
+* :ref:`VMware-Snapshot`: is used to coordinate ZFS snapshots with a VWware datastore.
 
 These configurations are described in more detail in this section.
 
+.. index:: Volumes
 .. _Volumes:
 
 Volumes
@@ -45,11 +46,11 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 
 **Figure 8.1a: Creating a ZFS Pool Using Volume Manager**
 
-|zfs1.png|
+|zfs1a.png|
 
-.. |zfs1.png| image:: images/zfs1.png
-    :width: 8.3in
-    :height: 4.12in
+.. |zfs1a.png| image:: images/zfs1a.png
+    :width: 8.2in
+    :height: 4.2in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -123,6 +124,7 @@ Depending upon the size and number of disks, the type of controller, and whether
 the volume is created, the screen will refresh and the new volume will be listed in the tree under :menuselection:`Storage --> Volumes`. Click the *+* next to
 the volume name to access its :ref:`Change Permissions`, :ref:`Create Dataset`, and :ref:`Create zvol` options.
 
+.. index:: Encryption
 .. _Encryption:
 
 Encryption
@@ -289,8 +291,8 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |perms1.png|
 
 .. |perms1.png| image:: images/perms1.png
-    :width: 5.6in
-    :height: 4.9in
+    :width: 3.3in
+    :height: 4.2in
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -350,6 +352,7 @@ If you change your mind about the "Permission Type", you do not have to recreate
 When you select the *Windows* "Permission Type", the ACLs are set to what Windows sets on new files and directories by default. The Windows client should then
 be used to fine-tune the permissions as required.
 
+.. index:: Create Dataset
 .. _Create Dataset:
 
 Create Dataset
@@ -382,7 +385,7 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 | **Setting**              | **Value**           | **Description**                                                                                           |
 |                          |                     |                                                                                                           |
 +==========================+=====================+===========================================================================================================+
-| Dataset Name             | string              | mandatory; input a name for the dataset                                                                   |
+| Dataset Name             | string              | mandatory; input a unique name for the dataset                                                            |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
 | Compression Level        | drop-down menu      | see the section on :ref:`Compression` for a description of the available algorithms                       |
@@ -402,18 +405,21 @@ the dataset name and clicking its "Edit Options" button in :menuselection:`Stora
 |                          |                     | avoids producing log traffic when reading files and can result in significant performance gains           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of 0 is off; e.g. *20GiB* for 20 GB                            |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* disables quotas; specifying a value means to use no     |
+|                          |                     | more than the specified size and is suitable for user datasets to prevent users from hogging available    |
+|                          |                     | space                                                                                                     |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Quota for this dataset   | integer             | only available in "Advanced Mode"; default of *0* is off; e.g. *20GiB* for 20 GB                          |
+| Quota for this dataset   | integer             | only available in "Advanced Mode"; a specified value applies to both this dataset and any child datasets  |
 | and all children         |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB |
-| dataset                  |                     |                                                                                                           |
+| Reserved space for this  | integer             | only available in "Advanced Mode"; default of *0* is unlimited; specifying a value                        |
+| dataset                  |                     | means to keep at least this much space free and is suitable for datasets containing logs which could      |
+|                          |                     | take up all available free space                                                                          |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
-| Reserved space for this  | integer             | only available in Advanced Mode; default of *0* is unlimited (besides hardware); e.g. *20GiB* for 20 GB   |
+| Reserved space for this  | integer             | only available in Advanced Mode; a specified value applies to both this dataset and any child datasets    |
 | dataset and all children |                     |                                                                                                           |
 |                          |                     |                                                                                                           |
 +--------------------------+---------------------+-----------------------------------------------------------------------------------------------------------+
@@ -429,6 +435,7 @@ Once a dataset is created, you can click on that dataset and select "Create Data
 also create a zvol within a dataset. When creating datasets, double-check that you are using the "Create Dataset" option for the intended volume or dataset.
 If you get confused when creating a dataset on a volume, click all existing datasets to close them--the remaining "Create Dataset" will be for the volume.
 
+.. index:: Deduplication
 .. _Deduplication:
 
 Deduplication
@@ -460,6 +467,7 @@ the block contents are identical. Since hash collisions are extremely rare, *Ver
    back in again. Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original
    dataset.
 
+.. index:: Compression
 .. _Compression:
 
 Compression
@@ -484,6 +492,7 @@ is read. The following compression algorithms are supported:
 If you select *Off* as the "Compression level" when creating a dataset or zvol, compression will not be used on the dataset/zvol. This is not recommended as
 using *lz4* has a negligible performance impact and allows for more storage capacity.
 
+.. index:: ZVOL
 .. _Create zvol:
 
 Create zvol
@@ -515,7 +524,8 @@ Mode" button or configure the system to always display these settings by checkin
 | zvol Name          | string         | mandatory; input a name for the zvol                                                                                 |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Size for this zvol | integer        | specify size and value such as *10Gib*                                                                               |
+| Size for this zvol | integer        | specify size and value such as *10Gib*; if the size is more than 80% of the available capacity, the creation will    |
+|                    |                | fail with an "out of space" error unless the "Force size" box is checked                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Force size         | checkbox       | by default, the system will not let you create a zvol if that operation will bring the pool to over 80% capacity;    |
@@ -540,29 +550,21 @@ Mode" button or configure the system to always display these settings by checkin
 Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk or partition that has been formatted with a
-supported filesystem. FreeNAS® supports the import of disks that have been formatted with UFS, NTFS, MSDOS, or EXT2. The import is meant to be a temporary
-measure in order to copy the data from a disk to an existing ZFS pool. Only one disk can be imported at a time.
+The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk that has been formatted with the UFS, NTFS,
+MSDOS, or EXT2/3 filesystem. The import is meant to be a temporary measure in order to copy the data from a disk to an existing ZFS dataset. Only one disk can
+be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
-|import.png|
+|import1.png|
 
-.. |import.png| image:: images/import.png
-    :width: 4.2in
-    :height: 3.5in
+.. |import1.png| image:: images/import1.png
+    :width: 4.99in
+    :height: 4.2in
 
-Input a name for the volume, use the drop-down menu to select the disk or partition that you wish to import, and select the type of filesystem on the disk.
-
-Before importing a disk, be aware of the following caveats:
-
-* FreeNAS® will not import a dirty filesystem. If a supported filesystem does not show in the drop-down menu, you will need to :command:`fsck` or run a disk
-  check on the filesystem.
-
-* FreeNAS® can not import dynamic NTFS volumes.
-
-* If an NTFS volume will not import, try ejecting the volume safely from a Windows system. This will fix some journal files that are required to mount the
-  drive.
+Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
+When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
+automatically unmount once the copy operation completes.
 
 .. _Import Volume:
 
@@ -580,8 +582,8 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 4.9in
-    :height: 3.4in
+    :width: 2.9in
+    :height: 1.7in
 
 If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
@@ -590,8 +592,8 @@ If you are importing an unencrypted ZFS pool, select "No: Skip to import" to ope
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 4.9in
-    :height: 3.1in
+    :width: 2.9in
+    :height: 1.7in
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
@@ -617,8 +619,8 @@ access the screen shown in Figure 8.1i.
 |decrypt.png|
 
 .. |decrypt.png| image:: images/decrypt.png
-    :width: 5.2in
-    :height: 3.9in
+    :width: 3.5in
+    :height: 2.4in
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
@@ -708,9 +710,9 @@ space is "Available", the type of "Compression", the "Compression Ratio", and th
 
 **Figure 8.1k: Viewing Volumes**
 
-|volume1.png|
+|volume1a.png|
 
-.. |volume1.png| image:: images/volume1.png
+.. |volume1a.png| image:: images/volume1a.png
     :width: 4.9in
     :height: 4.5in
 
@@ -728,9 +730,9 @@ disk, writes data to the disk indicating that the export was done, and removes a
 
 **Figure 8.1l: Detaching or Deleting a Volume**
 
-|detach.png|
+|detach1.png|
 
-.. |detach.png| image:: images/detach.png
+.. |detach1.png| image:: images/detach1.png
     :width: 4.9in
     :height: 4.5in
 
@@ -799,9 +801,9 @@ If you check the "Encryption" box during the creation of a pool, five additional
 
 **Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
 
-|encrypt.png|
+|encrypt1.png|
 
-.. |encrypt.png| image:: images/encrypt.png
+.. |encrypt1.png| image:: images/encrypt1.png
     :width: 4.8in
     :height: 4.5in
 
@@ -852,21 +854,10 @@ support on systems containing hardware that is capable of multipath. An example 
 Multipath hardware adds fault tolerance to a NAS as the data is still available even if one disk I/O path has a failure.
 
 FreeNAS® automatically detects active/active and active/passive multipath-capable hardware. Any multipath-capable devices that are detected will be placed in
-multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`, as seen in
-the example in Figure 8.1p. Note that this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain
-multipath-capable hardware.
+multipath units with the parent devices hidden. The configuration will be displayed in :menuselection:`Storage --> Volumes --> View Multipaths`. Note that
+this option will not be displayed in the :menuselection:`Storage --> Volumes` tree on systems that do not contain multipath-capable hardware.
 
-**Figure 8.1p: Viewing Multipaths**
-
-|multipath.png|
-
-.. |multipath.png| image:: images/multipath.png
-    :width: 6.9252in
-    :height: 1.6736in
-
-Figure 8.1p provides an example of a system with a SAS ZIL and a SAS hard drive. The ZIL device is capable of active/active writes, whereas the hard drive is
-capable of active/read.
-
+.. index:: Replace Failed Drive
 .. _Replacing a Failed Drive:
 
 Replacing a Failed Drive
@@ -877,8 +868,9 @@ the capability of your hardware, you may or may not need to reboot in order to r
 
 .. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
 
-Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status` and locate the failed disk. Once
-you have located the failed device in the GUI, perform the following steps:
+Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes`. Next, select your volume's name. At the bottom of
+the interface you will see several icons, one of which is "Volume Status". Click the "Volume Status" icon and locate the failed disk. Once you have located
+the failed device in the GUI, perform the following steps:
 
 #.  If the disk is formatted with ZFS, click the disk's entry then its "Offline" button in order to change that disk's status to OFFLINE. This step is
     needed to properly remove the device from the ZFS pool and to prevent swap issues. If your hardware supports hot-pluggable disks, click the disk's
@@ -896,9 +888,9 @@ you have located the failed device in the GUI, perform the following steps:
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-In the example shown in Figure 8.1q, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
+In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
-**Figure 8.1q: Replacing a Failed Disk**
+**Figure 8.1p: Replacing a Failed Disk**
 
 |replace.png|
 
@@ -906,10 +898,10 @@ In the example shown in Figure 8.1q, a failed disk is being replaced by disk *ad
     :width: 4.9in
     :height: 4.5in
 
-Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1r indicates that the
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1q indicates that the
 disk replacement was successful for this example.
 
-**Figure 8.1r: Disk Replacement is Complete**
+**Figure 8.1q: Disk Replacement is Complete**
 
 |replace2.png|
 
@@ -1090,10 +1082,8 @@ In this example, a ZFS mirror named :file:`test` contains three drives::
  da0		ONLINE  0    0     0
  da4		ONLINE  0    0     0
 
-The following command splits from the existing three disk mirror :file:`test` a new ZFS volume named :file:`migrant` containing one disk,
-*da4*. Disks
-*da0* and
-*da1* remain in :file:`test`.::
+The following command splits from the existing three disk mirror :file:`test` a new ZFS volume named :file:`migrant` containing one disk, *da4*. Disks *da0* and
+*da1* remain in :file:`test`::
 
  zpool split test migrant da4
 
@@ -1168,6 +1158,7 @@ Should you ever need to create a new clone, remember to remove the old clone fir
 
  zpool destroy migrant
 
+.. index:: Periodic Snapshot, Snapshot
 .. _Periodic Snapshot Tasks:
 
 Periodic Snapshot Tasks
@@ -1192,9 +1183,9 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-|periodic1.png|
+|periodic1a.png|
 
-.. |periodic1.png| image:: images/periodic1.png
+.. |periodic1a.png| image:: images/periodic1a.png
     :width: 8.3in
     :height: 4.5in
 
@@ -1237,17 +1228,10 @@ that there is no way to exclude certain datasets from being included in a recurs
 
 Once you click the "OK" button, a snapshot will be taken and this task will be repeated according to your settings.
 
-After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks", as seen in the example in Figure 8.2b.
-Click an entry to access its "Edit" and "Delete" buttons.
+After creating a periodic snapshot task, an entry for the snapshot task will be added to "View Periodic Snapshot Tasks". Click an entry to access its "Edit"
+and "Delete" buttons.
 
-**Figure 8.2b: View Periodic Snapshot Tasks**
-
-|periodic2.png|
-
-.. |periodic2.png| image:: images/periodic2.png
-    :width: 4.9in
-    :height: 4.5in
-
+.. index:: Replication
 .. _Replication Tasks:
 
 Replication Tasks
@@ -1297,11 +1281,11 @@ Key" button and copy its contents. An example is shown in Figure 8.3a.
 
 **Figure 8.3a: Copy the Replication Key**
 
-|replication1.png|
+|replication1a.png|
 
-.. |replication1.png| image:: images/replication1.png
-    :width: 5.8in
-    :height: 3.0in
+.. |replication1a.png| image:: images/replication1a.png
+    :width: 5.4in
+    :height: 2.7in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1333,11 +1317,11 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-|replication2.png|
+|replication2a.png|
 
-.. |replication2.png| image:: images/replication2.png
-    :width: 7.98in
-    :height: 5.2in
+.. |replication2a.png| image:: images/replication2a.png
+    :width: 6.6in
+    :height: 4.4in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
@@ -1450,13 +1434,9 @@ If the key is correct and replication is still not working, try deleting all sna
 :menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
-Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the
-*local/data* dataset of
-*PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of
-*PULL* is
-*192.168.2.6*, and the ZFS volume on
-*PULL* is :file:`remote`. Note that the
-**@** is used to separate the volume/dataset name from the snapshot name.::
+Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the *local/data*
+dataset of *PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of *PULL* is *192.168.2.6*, and the ZFS volume on *PULL* is :file:`remote`. Note that
+the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
@@ -1470,6 +1450,7 @@ transmitted. If it is still not working, you can manually send the specified sna
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
  
+.. index:: Scrub
 .. _Scrubs:
 
 Scrubs
@@ -1492,9 +1473,9 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
-|scrub.png|
+|scrub1.png|
 
-.. |scrub.png| image:: images/scrub.png
+.. |scrub1.png| image:: images/scrub1.png
     :width: 8.8in
     :height: 4.4in
 
@@ -1545,6 +1526,7 @@ While a "Delete" button is provided,
 **deleting a scrub is not recommended as a scrub provides an early indication of disk issues that could lead to a disk failure.** If you find that a scrub is
 too intensive for your hardware, consider unchecking the "Enabled" button for the scrub as a temporary measure until the hardware can be upgraded.
 
+.. index:: Snapshots
 .. _Snapshots:
 
 Snapshots
@@ -1558,9 +1540,9 @@ The "Snapshots" tab can be used to review the listing of available snapshots. An
 
 **Figure 8.5a: Viewing Available Snapshots**
 
-|periodic3.png|
+|periodic3a.png|
 
-.. |periodic3.png| image:: images/periodic3.png
+.. |periodic3a.png| image:: images/periodic3a.png
     :width: 11.1in
     :height: 4.5in
 
@@ -1624,12 +1606,13 @@ If you create multiple filters, select the filter you wish to use before leaving
 applied" text will change to "Clear filter". If you click "Clear filter", a pop-up message will indicate that this will remove the filter and all
 available snapshots will be listed.
 
-.. _VMWare Snapshots:
+.. index:: VMware Snapshot
+.. _VMware-Snapshot:
 
-VMWare Snapshots
-----------------
+VMware-Snapshot
+---------------
 
-:menuselection:`Storage --> VMWare Snapshots` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once a "VMWare Snapshot" is created,
+:menuselection:`Storage --> VMware-Snapshot` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once this type of snapshot is created,
 FreeNAS® will automatically snapshot any running VMware virtual machines before taking a scheduled or manual ZFS snapshot of the dataset or zvol backing that
 VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
 resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
@@ -1638,13 +1621,13 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 
 **Figure 8.6a: Adding a VMware Snapshot**
 
-|vmware1.png|
+|vmware1a.png|
 
-.. |vmware1.png| image:: images/vmware1.png
-    :width: 5.1in
-    :height: 3.8in
+.. |vmware1a.png| image:: images/vmware1a.png
+    :width: 3.2in
+    :height: 2.5in
 
-**Table 8.6a: VMWare Snapshot Options**
+**Table 8.6a: VMware Snapshot Options**
 
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | **Setting**    | **Value**                   | **Description**                                                                                             |

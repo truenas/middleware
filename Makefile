@@ -8,9 +8,8 @@ TRAIN?=${NANO_LABEL}-9.3-STABLE
 FREENAS_KEYFILE?=/dev/null
 COMPANY?="iXsystems"
 _TIMESTAMP!=date -u '+%Y%m%d%H%M'
-_P_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
+PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 BUILD_TIMESTAMP="${_TIMESTAMP}"
-PRINTABLE_TIMESTAMP="${_P_TIMESTAMP}"
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"

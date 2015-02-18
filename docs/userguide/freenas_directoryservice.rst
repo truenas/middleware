@@ -31,8 +31,8 @@ can import the account information and imported users can be authorized to acces
 .. note:: if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
    :ref:`NT4` instead.
 
-Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running FreeNAS® 9.3-RELEASE, it is strongly
-recommended that you upgrade before attempting Active Directory integration.
+Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running the latest FreeNAS® 9.3-STABLE, it is
+strongly recommended that you update the system before attempting Active Directory integration.
 
 **Before configuring the Active Directory service**, ensure name resolution is properly configured by
 :command:`ping` ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the
@@ -88,10 +88,13 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use keytab               | checkbox      | only available in "Advanced Mode"; if selected, browse to the keytab with "Kerberos keytab"                                                |
+| Encryption Mode          | drop-down     | only available in "Advanced Mode"; choices are *Off*,                                                                                      |
+|                          | menu          | *SSL*, or                                                                                                                                  |
+|                          |               | *TLS*                                                                                                                                      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | browse button | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
+| Certificate              | browse button | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if                                         |
+|                          |               | SSL connections are used                                                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
@@ -125,7 +128,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                              |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
+| Kerberos keytab          | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
+|                          | menu          |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -137,9 +143,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Windbind NSS Info        | drop-down     | only available in "Advanced Mode" and defines the schema to use when querying AD for user/group info; *rfc2307* uses the RFC2307 schema    |
-|                          |               | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
+|                          | menu          | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
 |                          |               | *sfu* is for Services For Unix 2.0                                                                                                         |
-|                          | menu          |                                                                                                                                            |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | SASL wrapping            | drop-down     | only available in "Advanced Mode" and defines how LDAP traffic is transmitted; choices are *plain* (plain text),                           |
@@ -205,8 +210,8 @@ automatically once a day as a cron job.
    realm,
    `verify <http://support.microsoft.com/kb/909264>`_
    that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
-   *$* exists in the domain administrator's password, kinit will report a "Password Incorrect" error and ldap_bind will report an "Invalid credentials
-   (49)" error.
+   *$* exists in the domain administrator's password, :command:`kinit` will report a "Password Incorrect" error and :command:`ldap_bind` will report an
+   "Invalid credentials (49)" error.
 
 Once you have configured the Active Directory service, it may take a few minutes for the Active Directory information to be populated to the FreeNAS® system.
 Once populated, the AD users and groups will be available in the drop-down menus of the "Permissions" screen of a volume/dataset. For performance reasons,
@@ -238,10 +243,10 @@ If no users or groups are listed in the output of those commands, these commands
 If the :command:`wbinfo` commands display the network's users, but they do not show up in the drop-down menu of a Permissions screen, it may be because it is
 taking longer then the default 10 seconds for the FreeNAS® system to join Active Directory. Try bumping up the value of "AD timeout" to 60 seconds.
 
-.. _Troubleshooting AD:
+.. _Troubleshooting Tips:
 
-Troubleshooting AD
-~~~~~~~~~~~~~~~~~~
+Troubleshooting Tips
+~~~~~~~~~~~~~~~~~~~~
 
 If you are running AD in a 2003/2008 mixed domain, see this
 `forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
@@ -264,10 +269,46 @@ If the cache becomes out of sync due to an AD server being taken off and back on
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
 
-Try creating a Computer entry on the Windows server's OU. When creating this entry, enter the FreeNAS® hostname in the "name" field. Make sure that it is
-under 15 characters and that it is the same name as the one set in the "Hostname" field in :menuselection:`Network --> Global Configuration` and the
-"NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the hostname of the domain controller is set in the "Domain
-Controller" field of :menuselection:`Directory Service --> Active Directory`.
+If the Windows server version is lower than 2008 R2, try creating a "Computer" entry on the Windows server's OU. When creating this entry, enter the FreeNAS®
+hostname in the "name" field. Make sure that it is under 15 characters and that it is the same name as the one set in the "Hostname" field in
+:menuselection:`Network --> Global Configuration` and the "NetBIOS Name" in :menuselection:`Directory Service --> Active Directory` settings. Make sure the
+hostname of the domain controller is set in the "Domain Controller" field of :menuselection:`Directory Service --> Active Directory`.
+
+.. _If the System Will not Join the Domain:
+
+If the System Will not Join the Domain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the system will not join the active directory domain, try running the following commands in the order listed. If any of the commands fail or result in a
+traceback, create a bug report at `bugs.freenas.org <http://bugs.freenas.org>`_ that includes the commands in the order which they were run and the exact
+wording of the error message or traceback.
+
+Start with these commands, where the :command:`echo` commands should return a value of *0* and the :command:`klist` command should show a Kerberos ticket:
+::
+ sqlite3 /data/freenas-v1.db "update directoryservice_activedirectory set ad_enable=1;"
+ echo $?
+ service ix-kerberos start
+ service ix-nsswitch start
+ service ix-kinit start
+ service ix-kinit status
+ echo $?
+ klist
+
+Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode"::
+
+ service ix-sssd start
+ service sssd start
+
+Finally, run these commands. Again, the :command:`echo` command should return a *0*:
+::
+ python /usr/local/www/freenasUI/middleware/notifier.py start cifs
+ service ix-activedirectory start
+ service ix-activedirectory status
+ echo $?
+ python /usr/local/www/freenasUI/middleware/notifier.py restart cifs
+ service ix-pam start
+ service ix-cache start &
+
 
 .. _LDAP:
 
@@ -353,11 +394,19 @@ If you are new to LDAP terminology, skim through the
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Encryption Mode         | drop-down menu | only available in "Advanced Mode"; choices are *Off*,                                                          |
 |                         |                | *SSL*, or                                                                                                      |
-|                         |                | *TLS*                                                                                                          |
+|                         |                | *TLS*; note that either                                                                                        |
+|                         |                | *SSL* or                                                                                                       |
+|                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if             |
-|                         |                | SSL connections are used                                                                                       |
+|                         |                | SSL or TLS connections are used (required if authentication is used)                                           |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| DNS timeout             | integer        | increase this value (in seconds) if DNS queries timeout                                                        |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Idmap backend           | drop-down menu | only available in "Advanced Mode";  select the backend to use to map Windows security identifiers (SIDs) to    |
@@ -370,6 +419,10 @@ If you are new to LDAP terminology, skim through the
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters    | string         | additional options for `sssd.conf(5) <https://jhrozek.fedorapeople.org/sssd/1.11.6/man/sssd.conf.5.html>`_     |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| Schema                  | drop-down menu | if "Samba Schema" is checked, select the schema to use; choices are *rfc2307* and                              |
+|                         |                | *rfc2307bis*                                                                                                   |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
@@ -504,7 +557,7 @@ Beginning with FreeNAS® 9.3, a default Kerberos realm is created for the local 
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
 shown in Figure 9.5a.
 
-**Figure 9.5a: Viewing Kerberos Realms**
+**Figure 9.5a: Adding a Kerberos Realm**
 
 |realm1.png|
 
@@ -565,8 +618,8 @@ This will create a keytab with sufficient privileges to grant tickets.
 
 Once the keytab is generated, use :menuselection:`Directory Service --> Kerberos Keytabs --> Add kerberos keytab` to add it to the FreeNAS® system. 
 
-Then, to instruct the Active Directory service to use the keytab, check the "Use keytab" box and select the installed keytab using the drop-down "Kerberos
-keytab" menu in :menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and
-"userpass" in the keytab matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
+Then, to instruct the Active Directory service to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in
+:menuselection:`Directory Service --> Active Directory`. When using a keytab with Active Directory, make sure that the "username" and "userpass" in the keytab
+matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
 
 To instruct LDAP to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in :menuselection:`Directory Service --> LDAP`.

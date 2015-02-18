@@ -1,3 +1,4 @@
+.. index:: Reporting
 .. _Reporting:
 
 Reporting
@@ -10,7 +11,7 @@ Reporting displays several graphs, as seen in the example in Figure 14a. Click t
 |reporting.png|
 
 .. |reporting.png| image:: images/reporting.png
-    :width: 4.7in
+    :width: 4.8in
     :height: 4.3in
 
 FreeNAS® uses

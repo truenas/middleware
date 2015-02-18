@@ -203,17 +203,18 @@ system to go back to that system state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in Figure 5.3a, a *default* boot environment is created when FreeNAS® is installed. If you used the initial configuration wizard, a second boot
-environment called *Wizard-date* is also created indicating the date and time the wizard was run. In this example, an update was applied from the
-*FreeNAS-9.3-Nightlies* train.
+As seen in Figure 5.3a, two boot environments are created when FreeNAS® is installed. The system will boot into the *default* boot environment and users can
+make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
+a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
+created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1.png|
+|be1b.png|
 
-.. |be1.png| image:: images/be1.png
-    :width: 6.3in
-    :height: 1.9in
+.. |be1b.png| image:: images/be1b.png
+    :width: 6.2in
+    :height: 4.5in
 
 Each boot environment entry contains the following information:
 
@@ -225,7 +226,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment.
+* **Rename:** used to change the name of the boot environment. Note that you cannot rename any boot environment which has an entry under the "Active" column.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
@@ -243,8 +244,9 @@ The buttons above the boot entries can be used to:
 * **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
   underscores, and dashes are allowed.
 
-* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed after every installation or upgrade
-  and every 30 days. The date and results of the last scrub are listed in this screen. The condition of the boot device should be listed as *HEALTHY*.
+* **Scrub Boot:** can be used to perform a manual scrub of the boot device(s). By default, the boot device is scrubbed every 35 days. To change the default
+  interval, input a different number in the "Automatic scrub interval (in days)" field. The date and results of the last scrub are also listed in this screen.
+  The condition of the boot device should be listed as *HEALTHY*.
 
 * **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, there is only one boot device and it is *ONLINE*.
 
@@ -259,23 +261,24 @@ The buttons above the boot entries can be used to:
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
 
-Figure 5.3c shows a sample boot menu containing entries for the default, wizard generated, and a manually created boot environment named *prepatch*.
+Figure 5.3c shows a sample boot menu containing entries for the default, initial, and wizard generated boot environments.
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-|be3.png|
+|be3a.png|
 
-.. |be3.png| image:: images/be3.png
-    :width: 5.4in
-    :height: 4.0in
+.. |be3a.png| image:: images/be3a.png
+    :width: 6.0in
+    :height: 3.3in
 
+.. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
 
 Mirroring the Boot Device
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
-can still boot from the remaining device in the mirror.
+still has a copy of the boot file system and can be configured to boot from the remaining device in the mirror.
 
 In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
 example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
@@ -383,9 +386,60 @@ This tab also contains the following buttons:
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
-**Performance Test:** runs a series of performance tests and prompts to saves the results as a tarball. Since running the tests can affect performance, a
-warning is provided and the tests should be run at a time that will least impact users.
+**Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
+button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
+that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
+backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
 
+**Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
+this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
+that will least impact users. Once the tests are complete, which can take a few minutes, a pop-up message will prompt to save the results as a tarball.
+Uncompress the tar file and use the resources in :ref:`IOzone` to assist in interpreting the results of the file.
+
+**Figure 5.4b: Backup Configuration Screen**
+
+|backup1.png|
+
+.. |backup1.png| image:: images/backup1.png
+    :width: 3.24in
+    :height: 3.3in
+
+**Table 5.4b: Backup Configuration Settings**
+
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Setting                                 | Value          | Description                                                                                    |
+|                                         |                |                                                                                                |
++=========================================+================+================================================================================================+
+| Hostname or IP address                  | string         | input the IP address of the remote system, or the hostname if DNS is properly configured       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| User name                               | string         | the user account must exist on the remote system and have permissions to write to the "Remote  |
+|                                         |                | directory"                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Password                                | string         | input and confirm the password associated with the user account                                |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Remote directory                        | string         | the full path to the directory to save the backup to                                           |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Backup data                             | checkbox       | by default, the backup is very quick as only the configuration database and the ZFS pool and   |
+|                                         |                | database layout are saved; check this box to also save the data (which may take some time,     |
+|                                         |                | depending upon the size of the pool and speed of the network)                                  |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Compress backup                         | checkbox       | if checked, gzip will be used to compress the backup which reduces the transmission size when  |
+|                                         |                | "Backup data" is checked                                                                       |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+| Use key authentication                  | checkbox       | if checked, the public key of the *root* user must be stored in                                |
+|                                         |                | :file:`~root/.ssh/authorized_keys` on the remote system and that key should **not** be         |
+|                                         |                | protected by a passphrase; see :ref:`Rsync over SSH Mode` for instructions on how to generate  |
+|                                         |                | a key pair                                                                                     |
+|                                         |                |                                                                                                |
++-----------------------------------------+----------------+------------------------------------------------------------------------------------------------+
+
+.. index:: Autotune
 .. _Autotune:
 
 Autotune
@@ -409,6 +463,7 @@ autotune.
 
 If you wish to read the script to see which checks are performed, the script is located in :file:`/usr/local/bin/autotune`.
 
+.. index:: Email
 .. _Email:
 
 Email
@@ -422,11 +477,11 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4.png|
+|system4a.png|
 
-.. |system4.png| image:: images/system4.png
-    :width: 6.2in
-    :height: 3.8in
+.. |system4a.png| image:: images/system4a.png
+    :width: 6.3in
+    :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -497,6 +552,7 @@ If you make any changes, click the "Save" button to save them.
 If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
 location.
 
+.. index:: Tunables
 .. _Tunables:
 
 Tunables
@@ -512,7 +568,8 @@ Tunables
 
 #. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ is used to
    pass system configuration options to the system startup scripts as the system boots. Since FreeNAS® has been optimized for storage, not all of the
-   services mentioned in rc.conf(5) are available for configuration.
+   services mentioned in rc.conf(5) are available for configuration. Note that in FreeNAS®, customized rc.conf options are stored in
+   :file:`/tmp/rc.conf.freenas`.
 
 .. warning:: adding a sysctl, loader, or rc.conf option is an advanced feature. A sysctl immediately affects the kernel running the FreeNAS® system and a
    loader could adversely affect the ability of the FreeNAS® system to successfully boot.
@@ -529,8 +586,8 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 6.2in
-    :height: 2.9in
+    :width: 2.5in
+    :height: 2.4in
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -581,6 +638,7 @@ The GUI does not display the sysctls that are pre-set when FreeNAS® is installe
  kern.coredump=1
  kern.sugid_coredump=1
  net.inet.tcp.delayed_ack=0
+ vfs.timestamp_precision=3
 
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
@@ -605,6 +663,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
  module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
  vfs.zfs.vol.mode=2
+ hw.usb.no_shutdown_wait=1
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
@@ -638,28 +697,42 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.2in
-    :height: 3.2in
+    :width: 6.25in
+    :height: 3.38in
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
 
-This screen also shows which software branch, or train, the system is currently tracking updates for. To change the train, use the drop-down menu to make
-a different selection. It also lists the URL of the official update server should that information be needed in a network with outbound firewall restrictions.
+This screen also shows which software branch, or train, the system is currently tracking updates for. The following trains are available:
+
+* **FreeNAS-10-Nightlies:** this train should
+  **not be used in production**. It represents the experimental branch for the future 10 version and is meant only for bleeding edge testers and developers.
+
+* **FreeNAS-9.3-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
+  run this train in production.
+
+* **FreeNAS-9.3-STABLE:** this is the
+  **recommended train for production use**. Once new fixes and features have been tested, they are added to this train. It is recommended to follow this train
+  and to apply any of its pending updates.
+
+To change the train, use the drop-down menu to make a different selection. It also lists the URL of the official update server should that information be
+needed in a network with outbound firewall restrictions.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
 
-To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. In the example shown in Figure 5.8b, three
-updates are available.
+To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
+be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
+`bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
+of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9.3 Release Notes in your web browser.
 
 **Figure 5.8b: Reviewing Updates**
 
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.6in
-    :height: 2.1in
+    :width: 6.95in
+    :height: 3.4in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -670,9 +743,10 @@ in Figure 5.8a. When you are ready to apply the previously downloaded updates, c
 reboot after the updates are applied.
 
 The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the only way to upgrade. If you prefer, you can instead apply the necessary
-updates to upgrade the operating system.
+is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
+necessary updates to upgrade the operating system.
 
+.. index:: CA, Certificate Authority
 .. _CAs:
 
 CAs
@@ -697,11 +771,11 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Figure 5.9b: Importing a CA**
 
-|ca2.png|
+|ca2a.png|
 
-.. |ca2.png| image:: images/ca2.png
-    :width: 3.7in
-    :height: 2.8in
+.. |ca2a.png| image:: images/ca2a.png
+    :width: 4.1in
+    :height: 3.1in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -718,7 +792,8 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 | Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                    |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm      |
+|                      |                      | Passphrase" field                                                                                 |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | Serial               | string               | mandatory; input the serial number for the certificate                                            |
@@ -798,6 +873,7 @@ If you click the entry for a CA, the following buttons become available:
 
 * **Delete:** will prompt to confirm before deleting the CA.
 
+.. index:: Certificates
 .. _Certificates:
 
 Certificates
@@ -821,11 +897,11 @@ summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a Certificate**
 
-|cert2.png|
+|cert2a.png|
 
-.. |cert2.png| image:: images/cert2.png
-    :width: 3.7in
-    :height: 2.5in
+.. |cert2a.png| image:: images/cert2a.png
+    :width: 4.2in
+    :height: 2.8in
 
 **Table 5.10a: Certificate Import Options**
 
@@ -833,7 +909,7 @@ summarized in Table 5.10a.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               | mandatory; input a descriptive name for the certificate                                         |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Certificate          | string               | mandatory; paste the contents of the certificate                                                |
@@ -842,7 +918,8 @@ summarized in Table 5.10a.
 | Private Key          | string               | mandatory; paste the private key associated with the certificate                                |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here                                  |
+| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm    |
+|                      |                      | Passphrase" field                                                                               |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -867,7 +944,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Signing Certificate  | drop-down menu       | mandatory; select the CA which was previously imported or created using :ref:`CAs`              |
 | Authority            |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               | mandatory; input a descriptive name for the CA                                                  |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |

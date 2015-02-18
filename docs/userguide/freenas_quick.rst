@@ -3,7 +3,7 @@
 Booting Into FreeNAS®
 ----------------------
 
-When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the the FreeNAS®
+When you boot into FreeNAS®, the Console Setup, shown in Figure 3a, will appear at the end of the boot process. If you have access to the FreeNAS®
 system's keyboard and monitor, this Console Setup menu can be used to administer the system should the administrative GUI become inaccessible.
 
 .. note:: you can access the Console Setup menu from within the FreeNAS® GUI by typing
@@ -11,11 +11,11 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 
 **Figure 3a: FreeNAS® Console Setup Menu**
 
-|console1.png|
+|console1a.png|
 
-.. |console1.png| image:: images/console1.png
-    :width: 6.4in
-    :height: 3.1in
+.. |console1a.png| image:: images/console1a.png
+    :width: 5.4in
+    :height: 3.2in
 
 This menu provides the following options:
 
@@ -37,17 +37,38 @@ password.
 
 **8) Reset to factory defaults:** if you wish to delete
 **all** of the configuration changes made in the administrative GUI, select this option. Once the configuration is reset, the system will reboot. You will
-need to go to :menuselection:`Storage --> Volumes --> Auto Import Volume` to re-import your volume.
+need to go to :menuselection:`Storage --> Volumes --> Import Volume` to re-import your volume.
 
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
 **10) System Update:** if any system updates are available, they will automatically be downloaded and applied. The functionality is the same as described in
-:ref:`Updating Between Major Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
+:ref:`Updating Between Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
 required.
 
-**11) Reboot:** reboots the system.
+**11) Create backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection.
+The only requirement for the remote system is that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system
+does not have to be formatted with ZFS as the backup will be saved as a binary file. When this option is selected, it will prompt for the hostname or IP
+address of the remote system, the name of a user account on the remote system, the password for that user account, the full path to a directory on the remote
+system to save the backup, whether or not to also backup all of the data, whether or not to compress the data, and a confirmation to save the values, where
+"y" will start the backup, "n" will repeat the configuration, and "q" will quit the backup wizard. If you leave the password empty, key-based authentication
+will be used instead. This requires that the public key of the *root* user is stored in :file:`~root/.ssh/authorized_keys` on the remote system and that key
+should **not** be protected by a passphrase. Refer to :ref:`Rsync over SSH Mode` for instructions on how to generate a key pair.
 
-**12) Shutdown:** halts the system.
+**12) Restore from a backup:** if a backup has already been created using "11) Create backup" or :menuselection:`System --> Advanced --> Backup`, it can be
+restored using this option. Once selected, it will prompt for the hostname or IP address of the remote system holding the backup, the username that was used,
+the password (leave empty if key-based authentication was used), the full path of the remote directory storing the backup, and a confirmation that the values
+are correct, where "y" will start the restore, "n" will repeat the configuration, and "q" will quit the restore wizard. The restore will indicate if it could
+log into the remote system, find the backup, and indicate whether or not the backup contains data. It will then prompt to restore FreeNAS® from that backup.
+Note that if you press "y" to perform the restore, the system will be returned to the database configuration, ZFS layout, and optionally the data, at the
+point when the backup was created. The system will reboot once the restore is complete.
+
+.. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
+             was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
+             option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
+
+**13) Reboot:** reboots the system.
+
+**14) Shutdown:** halts the system.
 
 During boot, FreeNAS® will automatically try to connect to a DHCP server from all live interfaces. If it successfully receives an IP address, it will display
 the IP address which can be used to access the graphical console. In the example seen in Figure 2.5b, the FreeNAS® system is accessible from
@@ -59,7 +80,7 @@ seen in Example 3a. In this example, the FreeNAS® system has one network interf
 **Example 3a: Manually Setting an IP Address from the Console Menu**
 ::
 
- Enter an option from 1-11: 1
+ Enter an option from 1-14: 1
  1) em0
  Select an interface (q to quit): 1
  Delete existing config? (y/n) n
@@ -118,6 +139,7 @@ This
 `blog post <http://fortysomethinggeek.blogspot.com/2012/10/ipad-iphone-connect-with-freenas-or-any.html>`_
 describes some applications which can be used to access the FreeNAS® system from an iPad or iPhone.
 
+.. index:: Initial Configuration Wizard, Configuration Wizard, Wizard
 .. _Initial Configuration Wizard:
 
 Initial Configuration Wizard

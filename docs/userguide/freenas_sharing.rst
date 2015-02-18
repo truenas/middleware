@@ -6,6 +6,11 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
+Beginning with version 9.3, FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
+type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
+recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
+the default permissions from the client operating system to meet the requirements of the network.
+
 .. note:: shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
    that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the
    stored data, and whether or not these users should authenticate before accessing the data. This information can help you determine which type of share(s)
@@ -32,12 +37,12 @@ The following types of shares and services are available:
 * :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
   as VMware.
 
-If you are looking for a solution that allows fast access from any operating system, consider configuring the FTP service instead of a share and use a
+If you are looking for a solution that allows fast access from any operating system, consider configuring the :ref:`FTP` service instead of a share and use a
 cross-platform FTP and file manager client application such as
 `Filezilla <http://filezilla-project.org/>`_. Secure FTP can be configured if the data needs to be encrypted.
 
 If data security is a concern and your network's users are familiar with SSH command line utilities or
-`WinSCP <http://winscp.net/>`_, consider configuring the SSH service instead of a share. It will be slower than unencrypted FTP due to the overhead of
+`WinSCP <http://winscp.net/>`_, consider configuring the :ref:`SSH` service instead of a share. It will be slower than unencrypted FTP due to the overhead of
 encryption, but the data passing through the network will be encrypted.
 
 .. note:: while the GUI will let you do it, it is a bad idea to share the same volume or dataset using multiple types of access methods. Different types of
@@ -48,9 +53,10 @@ encryption, but the data passing through the network will be encrypted.
    will access that volume, and configure that volume for that one type of share or service. If you need to support multiple types of shares, divide the
    volume into datasets and use one dataset per share.
 
-This section will demonstrate how to create AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
+This section will demonstrate how to fine-tune the configuration of AFP, NFS, CIFS, WebDAV, and iSCSI shares. FTP and SSH configurations are described in
 :ref:`Services Configuration`.
 
+.. index:: AFP, Apple Filing Protocol
 .. _Apple (AFP) Shares:
 
 Apple (AFP) Shares
@@ -58,30 +64,26 @@ Apple (AFP) Shares
 
 FreeNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
-AFP server to share data with Apple systems. Configuring AFP shares is a multi-step process that requires you to create or import users and groups, set
-volume/dataset permissions, create the AFP share(s), configure the AFP service, then enable the AFP service in :menuselection:`Services --> Control Services`.
+AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the
+:ref:`Initial Configuration Wizard`. It then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup
+to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-This section describes the configuration screen for creating the AFP share. It then provides configuration examples for creating a guest share, configuring
-Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
-
-If you click :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share`, you will see the screen shown in Figure 10.1a.
+To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
+the configuration options shown in Figure 10.1a. The values showing for these options will vary, depending upon the information given when the share was
+created.
 
 **Figure 10.1a: Creating an AFP Share**
 
 |afp2.png|
 
 .. |afp2.png| image:: images/afp2.png
-    :width: 5.3in
-    :height: 2.4in
+    :width: 3.7in
+    :height: 4.5in
 
-Table 10.1a summarizes the available options when creating an AFP share. Some settings are only available in "Advanced Mode". To see these settings, either
-click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`. Refer to
-`Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_
-for a more detailed explanation of the available options.
-
-Once you press the "OK" button when creating the AFP share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
-:menuselection:`Services --> Control Services` will open and indicate whether or not the AFP service successfully started.
+.. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
+          share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
+          advanced option unless you fully understand the function of that option. Refer to
+          `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_ for a more detailed explanation of the available options.
 
 **Table 10.1a: AFP Share Configuration Options**
 
@@ -151,49 +153,53 @@ Once you press the "OK" button when creating the AFP share, a pop-up menu will a
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
-.. _Connecting as Guest:
+.. _Creating AFP Guest Shares:
 
-Connecting as Guest
-~~~~~~~~~~~~~~~~~~~
+Creating AFP Guest Shares
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 AFP supports guest logins, meaning that all of your Mac OS X users can access the AFP share without requiring their user accounts to first be created on or
-imported into the the FreeNAS® system.
+imported into the FreeNAS® system.
 
 .. note:: if you create a guest share as well a share that requires authentication, AFP will only map users who login as guest to the guest share. This means
    that if a user logs in to the share that requires authentication, the permissions on the guest share may prevent that user from writing to the guest share.
    The only way to allow both guest and authenticated users to write to a guest share is to set the permissions on the guest share to 777 or to add the
    authenticated users to a guest group and set the permissions to 77x.
 
-In this configuration example, the AFP share has been configured for guest access as follows:
+Before creating a guest share, go to :menuselection:`Services --> AFP` and make sure that the "Guest Access" box is checked.
 
-#.  A ZFS volume named :file:`/mnt/data` has its permissions set to the built-in *nobody* user account and
-    *nobody* group.
+Then, to create the AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following
+fields in this screen:
 
-#.  An AFP share has been created with the following attributes:
+#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+   is named *afp_guest*.
 
-*   "Name": *freenas* (this is the name that will appear to Mac OS X clients)
+#. Click the button for "Mac OS X (AFP)".
 
-*   "Path": :file:`/mnt/data`
+#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
 
-*   "Allow List": set to *nobody*
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-*   "Read-write Access": set to *nobody*
+**Figure 10.1b: Creating a Guest AFP Share**
 
-#.  :menuselection:`Services --> AFP` has been configured as follows:
+|afp6.png|
 
-*   "Guest Access": checkbox is checked
+.. |afp6.png| image:: images/afp6.png
+    :width: 3.5in
+    :height: 3.4in
 
-*   *nobody* is selected in the "Guest account" drop-down menu
+Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
+correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
+:menuselection:`Sharing --> Apple (AFP)`.
 
-Once the AFP service has been started in :menuselection:`Services --> Control Services`, Mac OS X users can connect to the AFP share by clicking
-:menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1b, the user has input *afp://* followed by the IP address of the FreeNAS®
-system.
+Mac OS X users can connect to the guest AFP share by clicking :menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1c, the user has
+input *afp://* followed by the IP address of the FreeNAS® system.
 
 Click the "Connect" button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left
-frame and the contents of the share will be displayed in the right frame. In the example shown in Figure 10.1c, :file:`/mnt/data` has one folder named images.
-The user can now copy files to and from the share.
+frame and the contents of any data that has been saved in the share will be displayed in the right frame.
 
-**Figure 10.1b: Connect to Server Dialogue**
+**Figure 10.1c: Connect to Server Dialogue**
 
 |afp3.png|
 
@@ -201,60 +207,88 @@ The user can now copy files to and from the share.
     :width: 6.9252in
     :height: 3.4327in
 
-**Figure 10.1c: Viewing the Contents of the Share From a Mac System**
-
-|afp4.png|
-
-.. |afp4.png| image:: images/afp4.png
-    :width: 6.9272in
-    :height: 3.6102in
-
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
-.. _Using Time Machine:
+.. index:: Time Machine
+.. _Creating Authenticated and Time Machine Shares:
 
-Using Time Machine
-~~~~~~~~~~~~~~~~~~
+Creating Authenticated and Time Machine Shares
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Mac OS X includes the Time Machine application which can be used to schedule automatic backups. In this configuration example, Time Machine will be configured
-to backup to an AFP share on a FreeNAS® system. To configure the AFP share on the FreeNAS® system:
+Mac OS X includes the Time Machine application which can be used to schedule automatic backups.  In this configuration example, a Time Machine user will be
+configured to backup to an AFP share on a FreeNAS® system. It is recommended to create a separate Time Machine share for each user that will be using Time
+Machine to backup their Mac OS X system to FreeNAS®. The process for creating an authenticated share for a user is the same as creating a Time Machine share
+for that user.
 
-#.  A ZFS dataset named :file:`/mnt/data/backup_user1` with a "Quota" of *60G* and a "Share type" of
-    *Mac* was created in :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
+To use the Wizard to create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
 
-#.  A user account was created as follows:
+#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+   is named *backup_user1*.
 
-*   "Username": *user1*
+#. Click the button for "Mac OS X (AFP)" and check the box for "Time Machine". If the user will not be using Time Machine, leave the box unchecked.
 
-*   "Home Directory": :file:`/mnt/data/backup_user1`
+#. Click the "Ownership" button. If the user already exists on the FreeNAS® system, click the drop-down "User" menu to select their user account.  If the user
+   does not yet exist on the FreeNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
+   of a group that already exists on the FreeNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
+   used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
+   example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
+   *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
+   opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
 
-*   the "Full Name", "E-mail", and "Password" fields were set where the "Username" and "Password" match the values for the user on the Mac OS X system
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-#.  An AFP share with a "Name" of *backup_user1* has been created with the following attributes:
+If you wish to configure multiple authenticated or Time Machine shares, repeat for each user, giving each user their own "Share name" and "Ownership". When
+finished, click the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that
+contains the correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as
+entries to :menuselection:`Sharing --> Apple (AFP)`.
 
-*   "Path": :file:`/mnt/data/backup_user1`
+**Figure 10.1d: Creating a Time Machine Share**
 
-*   "Allow List": set to *user1*
+|afp7.png|
 
-*   "Read-write Access": set to *user1*
+.. |afp7.png| image:: images/afp7.png
+    :width: 3.5in
+    :height: 3.4in
 
-*   "Time Machine": checkbox is checked
+**Figure 10.1e: Creating an Authenticated User**
 
-#.  :menuselection:`Services --> AFP` has been configured as follows:
+|afp8.png|
 
-*   "Guest Access": checkbox is unchecked
+.. |afp8.png| image:: images/afp8.png
+    :width: 4.3in
+    :height: 2.8in
 
-#.  The AFP service has been started in :menuselection:`Services --> Control Services`.
+At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
+FreeNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
+incremental backup for the next 24 hours, and then one backup each day, each week and each month.
+**Since the oldest backups are deleted when a Time Machine share becomes full, make sure that the quota size you set is sufficient to hold the desired number of backups.**
+Note that a default installation of Mac OS X is ~21 GB in size.
 
-To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1d.
+To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in Figure 10.1f, the Time
+Machine share name is *backup_user1*. Click the "Edit Options" button for the share, then "Advanced Mode". Input a value in the "Quota for this dataset"
+field then click "Edit Dataset" to save the change. In this example, the Time Machine share is restricted to 200GB.
+
+**Figure 10.1f: Setting a Quota**
+
+|afp9.png|
+
+.. |afp9.png| image:: images/afp9.png
+    :width: 7.1in
+    :height: 4.6in
+
+To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
 entry representing the FreeNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the user account's password--in
-this example, the password for the *user1* account.
+this example, the password that was set for the *user1* account.
 
-Time Machine will create a full backup after waiting two minutes. It will then create a one hour incremental backup for the next 24 hours, and then one backup
-each day, each week and each month.
-**Since the oldest backups are deleted when the ZFS dataset becomes full, make sure that the quota size you set is sufficient to hold the backups.** Note that
-a default installation of Mac OS X is ~21 GB in size.
+**Figure 10.1g: Configuring Time Machine on Mac OS X Lion**
+
+|afp5.png|
+
+.. |afp5.png| image:: images/afp5.png
+    :width: 6.9252in
+    :height: 4.6055in
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the FreeNAS®
 system, you will need to create a sparsebundle image using
@@ -265,51 +299,47 @@ you do not want to perform another complete backup or lose past backups, follow 
 `post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_. Note that this can occur after performing a
 scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
 
-**Figure 10.1d: Configuring Time Machine on Mac OS X Lion**
-
-|afp5.png|
-
-.. |afp5.png| image:: images/afp5.png
-    :width: 6.9252in
-    :height: 4.6055in
-
+.. index:: NFS, Network File System
 .. _Unix (NFS) Shares:
 
 Unix (NFS) Shares
 -----------------
 
-FreeNAS® supports the Network File System (NFS) for sharing volumes over a network. Once the NFS share is configured, clients use the :command:`mount`
-command to mount the share. Once mounted, the share appears as just another directory on the client system. Some Linux distros require the installation of
-additional software in order to mount an NFS share. On Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS
-client application.
+FreeNAS® supports sharing over the Network File System (NFS). Clients use the :command:`mount` command to mount the share. Once mounted, the NFS share
+appears as just another directory on the client system. Some Linux distros require the installation of additional software in order to mount an NFS share. On
+Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client application.
 
 .. note:: for performance reasons, iSCSI is preferred to NFS shares when FreeNAS is installed on ESXi. If you are considering creating NFS shares on ESXi,
    read through the performance analysis at
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
-Configuring NFS is a multi-step process that requires you to create NFS share(s), configure NFS in :menuselection:`Services --> NFS`, then start NFS in
-:menuselection:`Services --> Control Services`. It does not require you to create users or groups as NFS uses IP addresses to determine which systems are
-allowed to access the NFS share.
+To create an NFS share using the Wizard, click the "Next" button twice to display the screen shown in Figure 10.2a. Input a "Share name" that makes sense to
+you, but which does not contain a space. Click the button for "Generic Unix (NFS)", then click "Add" so that the share's name appears in the "Name" frame.
+When finished, click the "Next" button twice, then the "Confirm" button to create the share. Creating an NFS share using the wizard will automatically create
+a new dataset for the share, start the services required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
+Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
+the permissions of the mounted share.
 
-This section demonstrates how to create an NFS share, provides a configuration example, demonstrates how to connect to the share from various operating
-systems, and provides some troubleshooting tips.
+**Figure 10.2a: NFS Share Settings**
 
-To create an NFS share, click :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`, shown in Figure 10.2a. 
+|nfs6.png|
 
-**Figure 10.2a: Creating an NFS Share**
+.. |nfs6.png| image:: images/nfs6.png
+    :width: 3.5in
+    :height: 3.4in
+
+To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
+Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
+
+**Figure 10.2b: NFS Share Settings**
 
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 5.5in
-    :height: 3.1in
+    :width: 3.7in
+    :height: 4.5in
 
-Once you press the "OK" button when creating the NFS share, a pop-up menu will ask "Would you like to enable this service?" Click "Yes" and
-:menuselection:`Services --> Control Services` will open and indicate whether or not the NFS service successfully started.
-
-Table 10.2a summarizes the options in this screen. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
-Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
+Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
 **Table 10.2a: NFS Share Options**
 
@@ -317,7 +347,7 @@ Mode" button or configure the system to always display these settings by checkin
 | **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
-| Path                | browse button  | browse to the volume/dataset/directory to share; click "Add extra path" to select multiple paths                   |
+| Path                | browse button  | the path that clients will use when mounting the share; click "Add extra path" to select multiple paths            |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
@@ -415,8 +445,8 @@ Note that this requires the creation of two shares as it can not be accomplished
 Example Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-By default the "Mapall" options shown in Figure 10.2a show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions
-associated with their user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
+By default the "Mapall" options show as *N/A*. This means that when a user connects to the NFS share, they connect with the permissions associated with their
+user account. This is a security risk if a user is able to connect as *root* as they will have complete access to the share.
 
 A better scenario is to do the following:
 
@@ -506,7 +536,7 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 * `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
 
-Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2b, the user has connected to the
+Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2c, the user has connected to the
 example :file:`/mnt/data` share of the FreeNAS® system at
 *192.168.2.2*.
 
@@ -514,7 +544,7 @@ example :file:`/mnt/data` share of the FreeNAS® system at
    `try this utility <http://www.citi.umich.edu/projects/nfsv4/windows/readme.html>`_
    instead.
 
-**Figure 10.2b: Using the Nekodrive NFSClient from Windows 7 Home Edition**
+**Figure 10.2c: Using the Nekodrive NFSClient from Windows 7 Home Edition**
 
 |nfs5.jpg|
 
@@ -528,14 +558,14 @@ From Mac OS X
 ^^^^^^^^^^^^^
 
 To mount the NFS volume from a Mac OS X client, click on :menuselection:`Go --> Connect to Server`. In the "Server Address" field, input *nfs://* followed by
-the IP address of the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 10.2c continues with our example of
+the IP address of the FreeNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 10.2d continues with our example of
 *192.168.2.2:/mnt/data*.
 
 Once connected, Finder will automatically open. The IP address of the FreeNAS® system will be displayed in the SHARED section in the left frame and the
-contents of the share will be displayed in the right frame. In the example shown in Figure 10.2d, :file:`/mnt/data` has one folder named :file:`images`. The
+contents of the share will be displayed in the right frame. In the example shown in Figure 10.2e, :file:`/mnt/data` has one folder named :file:`images`. The
 user can now copy files to and from the share.
 
-**Figure 10.2c: Mounting the NFS Share from Mac OS X**
+**Figure 10.2d: Mounting the NFS Share from Mac OS X**
 
 |nfs3.png|
 
@@ -543,7 +573,7 @@ user can now copy files to and from the share.
     :width: 6.9252in
     :height: 3.5618in
 
-**Figure 10.2d: Viewing the NFS Share in Finder**
+**Figure 10.2e: Viewing the NFS Share in Finder**
 
 |nfs4.png|
 
@@ -573,6 +603,7 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
+.. index:: WebDAV
 .. _WebDAV Shares:
 
 WebDAV Shares
@@ -642,23 +673,23 @@ Once you click "OK", a pop-up will ask if you would like to enable the service. 
 :menuselection:`Services --> WebDAV` as they are used to determine which URL is used to access the WebDAV share and whether or not authentication is required
 to access the share. These settings are described in :ref:`WebDAV`.
 
+.. index:: CIFS, Samba, Windows Shares, SMB
 .. _Windows (CIFS) Shares:
 
 Windows (CIFS) Shares
 ---------------------
 
-FreeNAS® uses
-`Samba <http://samba.org/>`_
-to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems and most Linux and BSD systems pre-install
-the Samba client which provides support for CIFS. If your distro did not, install the Samba client using your distro's software repository.
+FreeNAS® uses `Samba <http://samba.org/>`_ to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems
+and most Linux and BSD systems pre-install the Samba client in order to provide support for CIFS. If your distro did not, install the Samba client using your
+distro's software repository.
 
-Configuring CIFS shares is a multi-step process that requires you to set permissions, create CIFS share(s), configure the CIFS service in
-:menuselection:`Services --> CIFS`, then enable the CIFS service in :menuselection:`Services --> Control Services`. If your Windows network has a Windows
-server running Active Directory, you will also need to configure the Active Directory service in
-:menuselection:`Directory Services --> Active Directory`. Depending upon your authentication requirements, you may need to create or import users and groups.
+The CIFS protocol supports many different types of configuration scenarios, ranging from the very simple to quite complex. The complexity of your scenario
+depends upon the types and versions of the client operating systems that will connect to the share, whether or not the network has a Windows server, and
+whether or not Active Directory is running in the Windows network. Depending upon your authentication requirements, you may need to create or import users and groups.
 
-This section will demonstrate some common configuration scenarios. If you would like to use Shadow Copies, see :ref:`Configuring Shadow Copies`. If you are
-having problems accessing your CIFS share, see :ref:`Troubleshooting CIFS`.
+This chapter starts by summarizing the available configuration options. It will then demonstrate some common configuration scenarios as well as offer some
+troubleshooting tips. It is recommended to first read through this entire chapter before creating any CIFS shares so that you have a good idea of the best
+configuration scenario to meet your network's needs.
 
 Figure 10.4a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
@@ -670,14 +701,9 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
     :width: 3.9in
     :height: 2.4in
 
-Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available in "Advanced Mode". To see these settings, either click the
-"Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`.
-
-`smb.conf(5) <http://www.sloop.net/smb.conf.html>`_
-provides more details for each configurable option. Once you press the "OK" button when creating the CIFS share, a pop-up menu will ask "Would you like to
-enable this service?" Click "Yes" and :menuselection:`Services --> Control Services` will open and indicate whether or not the CIFS service successfully
-started.
+Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
+scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
+function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ provides more details for each configurable option.
 
 **Table 10.4a: Options for a CIFS Share**
 
@@ -737,6 +763,10 @@ started.
 |                              |               | 10.4b summarizes the available modules                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| Periodic Snapshot Task       | drop-down     | used to configure home directory shadow copies on a per-share basis; select the pre-configured periodic     |
+|                              | menu          | snapshot task to use for the share's shadow copies                                                          |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters         | string        | only available in "Advanced Mode"; additional :file:`smb4.conf` parameters not covered by other option      |
 |                              |               | fields                                                                                                      |
 |                              |               |                                                                                                             |
@@ -746,9 +776,14 @@ started.
 .. note:: hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in
    :menuselection:`Services --> CIFS`.
 
+.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
+         share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
+         this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
+         can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
+         password control.
+
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-this line and some examples can be found
-`here <http://www.samba.org/samba/docs/man/manpages-3/smb.conf.5.html#VETOFILES>`_.
+the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
 
 **Table 10.4b: Available VFS Modules**
 
@@ -772,94 +807,137 @@ this line and some examples can be found
 |               |                                                                                                                                            |
 +---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
+.. _Configuring Unauthenticated Access:
 
-.. _Share Configuration:
+Configuring Unauthenticated Access
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Share Configuration
-~~~~~~~~~~~~~~~~~~~
+CIFS supports guest logins, meaning that users can access the CIFS share without needing to provide a username or password. This type of share is convenient
+as it is easy to configure, easy to access, and does not require any users to be configured on the FreeNAS® system. This type of configuration is also the
+least secure as anyone on the network can access the contents of the share. Additionally, since all access is as the guest user, even if the user inputs a
+username or password, there is no way to differentiate which users accessed or modified the data on the share. This type of configuration is best suited for
+small networks where quick and easy access to the share is more important than the security of the data on the share.
 
-The process for configuring a share is as follows:
+To configure an unauthenticated CIFS share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.4b. Complete the
+following fields in this screen:
 
-#.  If you are not using Active Directory or LDAP, create a user account for each user in :menuselection:`Account --> Users --> Add User` with the following
-    attributes:
+#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
 
-    * "Username" and "Password": matches the username and password on the client system
+#. Click the button for "Windows (CIFS)" and check the box for "Allow Guest".
 
-    * "Home Directory": browse to the volume to be shared
+#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
 
-    * Repeat this process to create a user account for every user that will need access to the CIFS share
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-#.  If you are not using Active Directory or LDAP, create a group in :menuselection:`Account --> Groups --> Add Group`. Once the group is created, click its
-    "Members" button and add the user accounts that you created in step 1.
+**Figure 10.4b: Creating an Unauthenticated CIFS Share**
 
-#.  Give the group permission to the volume in :menuselection:`Storage --> View Volumes`. When setting the permissions:
+|cifs7.png|
 
-    * set "Owner(user)" to *nobody*
+.. |cifs7.png| image:: images/cifs7.png
+    :width: 3.5in
+    :height: 3.4in
 
-    * set the "Owner(group)" to the one you created in Step 2
+Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
+service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
 
-    * "Mode": check the "write" checkbox for the "Group" as it is unchecked by default
+Users can now access the share from any CIFS client and should not be prompted for their username or password. For example, to access the share from a Windows
+system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "insecure_cifs". The
+user should be able to copy data to and from the unauthenticated CIFS share.
 
-    
-#.  Create a CIFS share in :menuselection:`Sharing --> CIFS Shares --> Add CIFS Share` with the following attributes:
+.. _Configuring Authenticated Access Without a Domain Controller:
 
-    * "Name": input the name of the share
+Configuring Authenticated Access Without a Domain Controller
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    * "Path": browse to the volume to be shared
+Most configuration scenarios require each user to have their own user account and to authenticate before accessing the share. This allows the administrator
+to control access to data, provide appropriate permissions to that data, and to determine who accesses and modifies stored data. A Windows domain controller
+is not needed for authenticated CIFS shares, which means that additional licensing costs are not required. However, since there is no domain controller to
+provide authentication for the network, each user account needs to be created on the FreeNAS® system. This type of configuration scenario is often used
+in home and small networks as it does not scale well if many users accounts are needed.
 
-    * keep the "Browsable to Network Clients" box checked
+Before configuring this scenario, determine which users will need authenticated access. While not required for the configuration, it eases troubleshooting if
+the username and password that will be created on the FreeNAS® system matches that information on the client system. Next, determine if each user should have
+their own share to store their own data or if several users will be using the same share. The simpler configuration is to make one share per user as it does
+not require the creation of groups, adding the correct users to the groups, and ensuring that group permissions are set correctly.
 
-    .. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of
-       every share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
-       this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
-       can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
-       password control.
+To use the Wizard to create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
 
-#.  Configure the CIFS service in :menuselection:`Services --> CIFS` as follows:
+#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
 
-    * "Workgroup": if you are not using Active Directory or LDAP, set to the name being used on the Windows network; unless it has been changed, the default
-      Windows workgroup name is *WORKGROUP*
+#. Click the button for "Windows (CIFS)".
 
-#.  Start the CIFS service in :menuselection:`Services --> Control Services`. Click the click the red "OFF" button next to CIFS. After a second or so, it will
-    change to a blue "ON", indicating that the service has been enabled.
+#. Click the "Ownership" button. To create the user account on the FreeNAS® system, type their name into the "User" field and check the "Create User"
+   checkbox. This will prompt you to type in and confirm the user's password. **If the user will not be sharing this share with other users**, type their name
+   into the "Group" field and click the box "Create Group". **If, however, the share will be used by several users**, instead type in a group name and check
+   the "Create Group" box. In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
+   used by *user1*. When finished, click "Return" to return to the screen shown in Figure 10.1d.
 
-#.  Test the share.
+#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
+   the name that you typed into "Share name".
 
-To test the share from a Windows system, open Explorer and click on "Network". For this configuration example, a system named *FREENAS* should appear with a
-share named :file:`backups`. An example is seen in Figure 10.4b:
+If you wish to configure multiple authenticated shares, repeat for each user, giving each user their own "Share name" and "Ownership". When finished, click
+the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that contains the
+correct ownership and start the CIFS service for you, so that the share(s) are immediately available. The new share(s) will also be added as entries to
+:menuselection:`Sharing --> Windows (CIFS)`.
 
-**Figure 10.4b: Accessing the CIFS Share from a Windows Computer**
+**Figure 10.4c: Creating an Authenticated CIFS Share**
 
 |cifs3.png|
 
 .. |cifs3.png| image:: images/cifs3.png
-    :width: 6.9252in
-    :height: 5.5602in
+    :width: 3.5in
+    :height: 3.4in
 
-If you click on :file:`backups`, a Windows Security pop-up screen should prompt for the user's username and password. Once authenticated, the user can copy
-data to and from the CIFS share.
+**Figure 10.4d: Creating the User and Group**
+
+|cifs8.png|
+
+.. |cifs8.png| image:: images/cifs8.png
+    :width: 4.3in
+    :height: 2.9in
+
+You should now be able to test an authenticated share from any CIFS client. For example, to test an authenticated share from a Windows system, open Explorer
+and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "cifs_user1". If you click on
+"cifs_user1", a Windows Security pop-up screen should prompt for that user's username and password. Input the values that were configured for that share, in
+this case it is for the user *user1*. Once authenticated, that user can copy data to and from the CIFS share.
 
 To prevent Windows Explorer from hanging when accessing the share, map the share as a network drive. To do this, right-click the share and select "Map network
-drive..." as seen in Figure 10.4c:
+drive...". Choose a drive letter from the drop-down menu and click the "Finish" button.
 
-**Figure 10.4c: Mapping the Share as a Network Drive**
+Note that Windows systems cache a user's credentials which can cause issues when testing or accessing multiple authenticated shares as only one authentication
+is allowed at a time. If you are having problems authenticating to a share and are sure that you are inputting the correct username and password, type
+**cmd** in the "Search programs and files" box and use the following command to see if you are already authenticated to a share. In this example, the user has
+already authenticated to the *cifs_user1* share::
 
-|cifs4.png|
+ net use
+ New connections will be remembered.
+ 
+ Status		Local	Remote			Network
+ ------------------------------------------------------------------------
+ OK                     \\FREENAS\cifs_user1	Microsoft Windows Network
+ The command completed successfully.
 
-.. |cifs4.png| image:: images/cifs4.png
-    :width: 6.9252in
-    :height: 5.5272in
+To clear the cache::
 
-Choose a drive letter from the drop-down menu and click the "Finish" button as shown in Figure 10.4d:
+ net use * /DELETE
+ You have these remote connections:
+		\\FREENAS\cifs_user1
+ Continuing will cancel the connections.
+ 
+ Do you want to continue this operation? <Y/N> [N]: y
+ 
+You will get an additional warning if the share is currently open in Explorer::
 
-**Figure 10.4d: Selecting the Network Drive Letter**
+ There are open files and/or incomplete directory searches pending on the connection 
+ to \\FREENAS|cifs_user1.
+ 
+ Is it OK to continue disconnecting and force them closed? <Y/N> [N]: y
+ The command completed successfully.
 
-|cifs5.jpg|
+The next time you access a share using Explorer, you should be prompted to authenticate.
 
-.. |cifs5.jpg| image:: images/cifs5.jpg
-    :width: 6.9252in
-    :height: 5.5016in
-
+.. index:: Shadow Copies
 .. _Configuring Shadow Copies:
 
 Configuring Shadow Copies
@@ -880,15 +958,11 @@ Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
 * Shadow copy support only works for ZFS pools or datasets. This means that the CIFS share must be configured on a volume or dataset, not on a directory.
 
-* Since directories can not be shadow copied at this time, if you configure "Enable home directories" on the CIFS service, any data stored in the
-  user's home directory will not be shadow copied.
-
 * Datasets are filesystems and shadow copies cannot traverse filesystems. If you want to be able to see the shadow copies in your child datasets, create
   separate shares for them.
 
-* shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
-  task for a parent dataset. At this time, if multiple snapshot tasks are created for the same pool/dataset being shared by CIFS, shadow copies will only
-  work on the last executed task at the time the CIFS service started. A future version of FreeNAS® will address this limitation.
+* Shadow copies will not work with a manual snapshot, you must create a periodic snapshot task for the pool or dataset being shared by CIFS or a recursive
+  task for a parent dataset.
 
 * The periodic snapshot task should be created and at least one snapshot should exist **before** creating the CIFS share. If you created the CIFS share
   first, restart the CIFS service in :menuselection:`Services --> Control Services`.
@@ -899,42 +973,28 @@ Before using shadow copies with FreeNAS®, be aware of the following caveats:
   administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
   CIFS share.
 
-In this configuration example, a Windows 7 computer has two users: *user1* and
-*user2*. To configure FreeNAS® to provide shadow copy support:
+To configure shadow copy support, use the instructions in :ref:`Configuring Authenticated Access Without a Domain Controller` to create the desired number of
+shares. In this configuration example, a Windows 7 computer has two users: *user1* and
+*user2*. For this example, two authenticated shares are created so that each user account has their own share. The first share is named
+*user1* and the second share is named
+*user2*. Then:
 
-#.  For the ZFS volume named :file:`/mnt/data`, create two ZFS datasets in :menuselection:`Storage --> Volumes --> /mnt/data --> Create ZFS Dataset`. The
-    first dataset is named :file:`/mnt/data/user1` and the second dataset is named :file:`/mnt/data/user2`.
+#. Use :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`, to create at least one periodic snapshot task. You can either create
+   a snapshot task for each user's dataset, in this example the dataset names are :file:`/mnt/volume1/user1` and :file:`/mnt/volume1/user2`, or you can create
+   one periodic snapshot task for the entire volume, in this case :file:`/mnt/volume1`.
+   **Before continuing to the next step,** confirm that at least one snapshot for each defined task is displayed in the :menuselection:`Storage --> Snapshots`
+   tab. When creating the schedule for the periodic snapshot tasks, keep in mind how often your users need to access modified files and during which days and
+   time of day they are likely to make changes.
 
-#.  If you are not using Active Directory or LDAP, create two users, *user1* and
-    *user2* in :menuselection:`Account --> Users --> Add User`. Each user has the following attributes:
+#. Go to :menuselection:`Sharing --> Windows (CIFS) Shares`. Highlight a share and click its "Edit" button then its "Advanced Mode" button. Click the 
+   "Periodic Snapshot Task" drop-down menu and select the periodic snapshot task to use for that share. Repeat for each share being configured as a shadow
+   copy. For this example, the share named "/mnt/volume1/user1" is configured to use a periodic snapshot task that was configured to take snapshots of the
+   "/mnt/volume1/user1" dataset and the share named "/mnt/volume1/user2" is configured to use a periodic snapshot task that was configured to take snapshots
+   of the "/mnt/volume1/user2" dataset.
 
-    * "Username" and "Password" match that user's username and password on the Windows system
+#. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 
-    * for the "Home Directory", browse to the dataset created for that user
-
-#.  Set the permissions on :file:`/mnt/data/user1` so that the Owner(user) and Owner(group) is *user1*. Set the permissions on :file:`/mnt/data/user2` so that
-    the "Owner(user)" and "Owner(group)" is *user2*. For each dataset's permissions, tighten the "Mode" so that "Other" can not read or execute the
-    information on the dataset.
-
-#.  Create two periodic snapshot tasks in :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`, one for each dataset. Alternatively,
-    you can create one periodic snapshot task for the entire :file:`data` volume. 
-    **Before continuing to the next step,** confirm that at least one snapshot for each dataset is displayed in the "ZFS Snapshots" tab. When creating your
-    snapshots, keep in mind how often your users need to access modified files and during which days and time of day they are likely to make changes.
-
-#.  Create two CIFS shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`. The first CIFS share is named *user1* and has a
-    Path of :file:`/mnt/data/user1`; the second CIFS share is named *user2* and has a "Path" of :file:`/mnt/data/user2`. When creating the first share, click
-    the "No" button when the pop-up button asks if the CIFS service should be started. When the last share is created, click the "Yes" button when the pop-up
-    button prompts to start the CIFS service. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
-
-#.  From a Windows system, login as *user1* and open :menuselection:`Windows Explorer --> Network --> FREENAS`. Two shares should appear, named
-    *user1* and
-    *user2*. Due to the permissions on the datasets,
-    *user1* should receive an error if they click on the
-    *user2* share. Due to the permissions on the datasets,
-    *user1* should be able to create, add, and delete files and folders from the
-    *user1* share.
-
-Figure 10.4e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
+Figure 10.4e provides an example of using shadow copies while logged in as *user1* on the Windows system. In this example, the user right-clicked
 *modified file* and selected "Restore previous versions" from the menu. This particular file has three versions: the current version, plus two previous
 versions stored on the FreeNAS® system. The user can choose to open one of the previous versions, copy a previous version to the current folder, or restore
 one of the previous versions, which will overwrite the existing file on the Windows system.
@@ -947,6 +1007,7 @@ one of the previous versions, which will overwrite the existing file on the Wind
     :width: 6.9252in
     :height: 5.8945in
 
+.. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
 
 Block (iSCSI)
@@ -1001,8 +1062,9 @@ framework that enables certain storage tasks, such as large data moves, to be of
 * **stun:** if a volume runs out of space, this feature pauses any running virtual machines so that the space issue can be fixed, instead of reporting write
   errors.
 
-* **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS, this threshold can be configured both at the pool
-  level (see Table 10.5a) and the device extent level (see Table 10.5f).
+* **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS, this threshold can be configured at the pool
+  level when using zvols (see Table 10.5a) or at the extent level (see Table 10.5f) for both file- and device-based extents. Typically, the warning is set at
+  the pool level, unless file extents are used, in which case it must be set at the extent level.
 
 * **LUN reporting:** the LUN reports that it is thin provisioned.
 
@@ -1042,8 +1104,8 @@ Target Global Configuration
 |global.png|
 
 .. |global.png| image:: images/global.png
-    :width: 6.0in
-    :height: 3.1in
+    :width: 5.7in
+    :height: 3.14in
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1073,8 +1135,8 @@ Target Global Configuration
 |                                 |                              | system's iSCSI targets and portals with                                                   |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Pool Available Space Threshold  | integer                      | input the pool percentage; when the pool's specified capacity is reached, the system will |
-|                                 |                              | issue an alert                                                                            |
+| Pool Available Space Threshold  | integer                      | input the percentage of free space that should remain in the pool; when this percentage   |
+|                                 |                              | is reached, the system will issue an alert, but only if zvols are used                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 
@@ -1161,7 +1223,7 @@ Table 10.5c summarizes the settings that can be configured when adding an initia
 | **Setting**        | **Value** | **Description**                                                                      |
 |                    |           |                                                                                      |
 +====================+===========+======================================================================================+
-| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by commas or spaces     |
+| Initiators         | string    | use *ALL* keyword or a list of initiator hostnames separated by spaces               |
 |                    |           |                                                                                      |
 +--------------------+-----------+--------------------------------------------------------------------------------------+
 | Authorized network | string    | use *ALL* keyword or a network address with CIDR mask such as                        |
@@ -1270,7 +1332,7 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 
 .. |target1png| image:: images/target1.png
     :width: 3.7in
-    :height: 3.4in
+    :height: 3.0in
 
 **Table 10.5e: Target Settings**
 
@@ -1301,10 +1363,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Authentication Group number | drop-down menu | *None* or integer representing number of existing authorized access                                         |
-|                             |                |                                                                                                             |
-+-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Logical Block Size          | drop-down menu | should only be changed to emulate a physical disk's size or to increase the block size to allow for larger  |
-|                             |                | filesystems on an operating system limited by block count                                                   |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -1342,11 +1400,11 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent.png|
+|extent2.png|
 
-.. |extent.png| image:: images/extent.png
-    :width: 3.9in
-    :height: 3.2in
+.. |extent2.png| image:: images/extent2.png
+    :width: 4.5in
+    :height: 4.4in
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1375,8 +1433,17 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Available Size     | string         | only appears if a zvol is selected as the "Device"; when the specified capacity is reached, the system will issue an |
-| Threshold          |                | alert                                                                                                                |
+| Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
+|                    |                | the default if the initiator requires a different block size                                                         |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K, check this box                                 |
+| Block Size         |                |                                                                                                                      |
+| Reporting          |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Available Space    | string         | only appears if *File* or a zvol is selected; when the specified percentage of free space is reached, the system     |
+| Threshold          |                | will issue an alert                                                                                                  |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
@@ -1398,6 +1465,14 @@ Target/Extents
 
 The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
 shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
+
+**Figure 10.5i: Associating a Target With an Extent**
+
+|target2.png|
+
+.. |target2.png| image:: images/target2.png
+    :width: 2.5in
+    :height: 1.8in
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1489,11 +1564,11 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 
 **Figure 10.5j: Editing an Existing Zvol**
 
-|grow.png|
+|grow1.png|
 
-.. |grow.png| image:: images/grow.png
-    :width: 5.3in
-    :height: 4.0in
+.. |grow1.png| image:: images/grow1.png
+    :width: 4.8in
+    :height: 4.5in
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.

@@ -1,3 +1,4 @@
+.. index:: Plugin
 .. _Plugins:
 
 Plugins
@@ -207,6 +208,10 @@ The following plugins are available for FreeNAS® 9.3:
 * `SABnzbd <http://sabnzbd.org/>`_
 
 * `SickBeard <http://sickbeard.com/>`_
+
+* `SickRage <https://github.com/SiCKRAGETV/SickRage>`_
+
+* `Sonarr <https://sonarr.tv/>`_
 
 * `Subsonic <http://subsonic.org/>`_
 

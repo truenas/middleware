@@ -12,6 +12,7 @@ entries:
 
 Each of these entries are described in more detail in this section.
 
+.. index:: Groups
 .. _Groups:
 
 Groups
@@ -37,6 +38,8 @@ If you click :menuselection:`Groups --> View Groups`, you will see a screen simi
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with FreeNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
 button will appear. Click this button to view and modify that group's membership.
+
+.. index:: Add Group, New Group, Create Group
 
 If you click the "Add Group" button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
 
@@ -90,9 +93,12 @@ In the example shown in Figure 4.1c, the *data1* group has been created and the
     :width: 7.8in
     :height: 4.4in
 
+.. index:: Delete Group, Remove Group
+
 To delete a group, click its "Delete Group" button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
 that the built-in groups do not provide a "Delete Group" button.
 
+.. index:: Users
 .. _Users:
 
 Users
@@ -139,6 +145,8 @@ should not be available for use as a login account. For this reason, the default
 `nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_. For security reasons, and to prevent breakage of system services, you should not modify the
 system accounts.
 
+.. index:: Add User, Create User, New User
+
 To create a user account, click the "Add User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
 these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
 default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
@@ -163,7 +171,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | port number used by the service                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Username                   | string          | greyed out if user already created; maximum 32 characters though a maximum of 8 is recommended for interoperability; can not begin with a hyphen, if  |
+| Username                   | string          | greyed out if user already created; maximum 16 characters though a maximum of 8 is recommended for interoperability; can not begin with a hyphen, if  |
 |                            |                 | a *$* is used it can only be the last character, and it can not contain a space, tab, or the characters                                               |
 |                            |                 | *, : + & # % ^ \ & ( ) ! @ ~ * ? < > = "*                                                                                                             |
 |                            |                 |                                                                                                                                                       |
@@ -212,7 +220,10 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                                                 |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |   
+| Microsoft Account          | checkbox        | check this box if the user will be connecting from a Windows 8, 8.1, 10, or higher system                                                             |
+|                            |                 |                                                                                                                                                       |
++----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| SSH Public Key             | string          | paste the user's **public** key to be used for SSH key authentication                                                                                 |
 |                            |                 | (**do not paste the private key!**)                                                                                                                   |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+

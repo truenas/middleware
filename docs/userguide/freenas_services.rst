@@ -1,3 +1,4 @@
+.. index:: Services
 .. _Services Configuration:
 
 Services Configuration
@@ -38,6 +39,7 @@ following built-in services:
 
 This section demonstrates how to start a FreeNAS® service then describes the available configuration options for each FreeNAS® service.
 
+.. index:: Start Service, Stop Service
 .. _Control Services:
 
 Control Services
@@ -64,6 +66,7 @@ messages. Watch these messages for errors when you stop and start the problemati
 
 If you would like to read the system logs to get more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
 
+.. index:: AFP, Apple Filing Protocol
 .. _AFP:
 
 AFP
@@ -76,11 +79,11 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 
 **Figure 11.2a: Global AFP Configuration**
 
-|afp1.png|
+|afp1a.png|
 
-.. |afp1.png| image:: images/afp1.png
+.. |afp1a.png| image:: images/afp1a.png
     :width: 5.2in
-    :height: 4.2in
+    :height: 4.4in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -106,6 +109,9 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Home directories        | browse button  | select the volume or dataset which contains user home directories                                               |
+|                         |                |                                                                                                                 |
++-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
+| Home share name         | string         | overrides default home folder name with the specified value                                                     |
 |                         |                |                                                                                                                 |
 +-------------------------+----------------+-----------------------------------------------------------------------------------------------------------------+
 | Database Path           | browse button  | select the path to store the CNID databases used by AFP (default is the root of the volume); the path must be   |
@@ -136,6 +142,7 @@ AFP share::
 This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the
 CNIIDs stored in the AppleDouble files.
 
+.. index:: CIFS, Samba, Windows File Share, SMB
 .. _CIFS:
 
 CIFS
@@ -189,7 +196,8 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use syslog                       | checkbox       | logs most events to syslog instead of the samba log files                                             |
+| Use syslog                       | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
+|                                  |                | of :file:`/var/log/samba4/log.smbd`                                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Local Master                     | checkbox       | determines whether or not the system participates in a browser election; should be disabled           |
@@ -367,6 +375,7 @@ The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
 section of the Samba documentation contains additional troubleshooting tips.
 
+.. index:: Domain Controller, DC
 .. _Domain Controller:
 
 Domain Controller
@@ -383,11 +392,11 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 
 **Figure 11.4a: Domain Controller Settings**
 
-|directory1.png|
+|directory1a.png|
 
-.. |directory1.png| image:: images/directory1.png
+.. |directory1a.png| image:: images/directory1a.png
     :width: 3.9in
-    :height: 3.7in
+    :height: 3.3in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -403,14 +412,6 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Server Role            | drop-down menu | at this time, the only supported role is as the domain controller for a new domain                                                                                                        |
-|                        |                |                                                                                                                                                                                           |
-+------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DNS Backend            | drop-down menu | choices are *SAMBA_INTERNAL*,                                                                                                                                                             |
-|                        |                | *BIND9_FLATFILE*,                                                                                                                                                                         |
-|                        |                | *BIND9_DLZ*, or                                                                                                                                                                           |
-|                        |                | *NONE*; refer to                                                                                                                                                                          |
-|                        |                | `Which DNS backend should I choose? <https://wiki.samba.org/index.php/DNS>`_                                                                                                              |
-|                        |                | for details                                                                                                                                                                               |
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | DNS Forwarder          | string         | IP address of DNS forwarder; required for recursive queries when *SAMBA_INTERNAL* is selected                                                                                             |
@@ -431,6 +432,7 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |                        |                |                                                                                                                                                                                           |
 +------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
+.. index:: Dynamic DNS, DDNS
 .. _Dynamic DNS:
 
 Dynamic DNS
@@ -487,6 +489,10 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 
+If you are using freedns.afraid.org, see
+`this forum post <https://forums.freenas.org/index.php?threads/dynamic-dns-and-freeedns-afraid-org.24455/#post-151746>`_ for an example working configuration.
+
+.. index:: FTP, File Transfer Protocol
 .. _FTP:
 
 FTP
@@ -831,6 +837,10 @@ iSCSI
 
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
+.. note:: a warning message will occur if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
+          the connected initiators.
+
+.. index:: LLDP, Link Layer Discovery Protocol
 .. _LLDP:
 
 LLDP
@@ -866,6 +876,7 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
+.. index:: NFS, Network File System
 .. _NFS:
 
 NFS
@@ -922,6 +933,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
+.. index:: Rsync
 .. _Rsync:
 
 Rsync
@@ -1024,6 +1036,7 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
 
+.. index:: S.M.A.R.T.
 .. _S.M.A.R.T.:
 
 S.M.A.R.T.
@@ -1088,11 +1101,11 @@ Table 11.11a summarizes the options in the S.M.A.R.T configuration screen.
 |                 |                            | if the temperature is higher than specified degrees in Celsius                                              |
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
-| Email to report | string                     | email address of person to receive S.M.A.R.T. alert; separate multiple email recipients with a comma and no |
-|                 |                            | space                                                                                                       |
+| Email to report | string                     | email address of person or alias to receive S.M.A.R.T. alerts                                               |
 |                 |                            |                                                                                                             |
 +-----------------+----------------------------+-------------------------------------------------------------------------------------------------------------+
 
+.. index:: SNMP, Simple Network Management Protocol
 .. _SNMP:
 
 SNMP
@@ -1103,7 +1116,7 @@ SNMP (Simple Network Management Protocol) is used to monitor network-attached de
 
 * UDP 161 (listens here for SNMP requests)
 
-Available MIBS are located in :file:`/usr/share/snmp/mibs` and :file:`/usr/local/share/snmp/mibs`.
+Available MIBS are located in :file:`/usr/local/share/snmp/mibs`.
 
 Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
@@ -1137,6 +1150,7 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 +----------------------+------------+----------------------------------------------------------------+
 
 
+.. index:: SSH, Secure Shell
 .. _SSH:
 
 SSH
@@ -1218,6 +1232,7 @@ A few sshd_config(5) options that are useful to input in the "Extra Options" fie
 * *ClientMaxStartup* defaults to 
   *10*; increase this value if you need more concurrent SSH connections
 
+.. index:: SCP, Secure Copy
 .. _SCP Only:
 
 SCP Only
@@ -1235,6 +1250,9 @@ on the FreeNAS® system, while restricting them from logging into the system usi
 
 Test the configuration from another system by running the :command:`sftp`, :command:`ssh`, and :command:`scp` commands as the user. The :command:`sftp`
 and :command:`scp` commands should work but the :command:`ssh`  should fail.
+
+.. note:: some utilities such as WinSCP and Filezilla can bypass the scponly shell. This section assumes that users are accessing the system using the command
+   line versions of :command:`scp` and :command:`sftp`.
 
 .. _Troubleshooting SSH:
 
@@ -1256,6 +1274,7 @@ to what the problem is. Type the following command within :ref:`Shell` to read t
 
 Additional messages regarding authentication errors may be found in :file:`/var/log/auth.log`.
 
+.. index:: TFTP, Trivial File Transfer Protocol
 .. _TFTP:
 
 TFTP
@@ -1310,6 +1329,7 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |                 |               |                                                                                                                          |
 +-----------------+---------------+--------------------------------------------------------------------------------------------------------------------------+
 
+.. index:: UPS, Uninterruptible Power Supply
 .. _UPS:
 
 UPS
@@ -1411,6 +1431,7 @@ man page gives some other usage examples.
 can be used to send commands directly to the UPS, assuming that the hardware supports the command being sent. Only users with administrative rights can use
 this command. These users are created in the "Extra users" field.
 
+.. index:: WebDAV
 .. _WebDAV:
 
 WebDAV
@@ -1467,5 +1488,4 @@ options.
 | Webdav Password           | string         | default is *davtest*; this should be changed as it is a known value                                   |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-
 

@@ -1,3 +1,4 @@
+.. index:: Alert
 .. _Alert:
 
 Alert
@@ -19,17 +20,17 @@ Informational messages will have a green "OK" while messages requiring attention
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
 message.
 
-Behind the scenes, an alert script checks for various alert conditions, such as volume and disk status, and writes the current conditions to
-:file:`/var/tmp/alert`. A javascript retrieves the current alert status every 5 minutes and will change the solid green alert icon to flashing red if a new
-alert is detected. Some of the conditions that trigger an alert include:
+Behind the scenes, an alert daemon checks for various alert conditions, such as volume and disk status, and writes the current conditions to
+:file:`/var/tmp/alert`. The daemon retrieves the current alert status every minute and will change the solid green alert icon to flashing red if a new alert
+is detected. Some of the conditions that trigger an alert include:
 
 * a volume's capacity goes over 80%
 
 * new OpenZFS feature flags are available for the pool; this alert can be unchecked if you choose not to upgrade the pool at this time
 
-* non-optimal multipath states
+* a new update is available
 
-* a UPS "ONBATT" or "LOWBATT" event
+* non-optimal multipath states
 
 * ZFS pool status changes from "HEALTHY"
 
@@ -39,7 +40,7 @@ alert is detected. Some of the conditions that trigger an alert include:
 
 * a replication task fails
 
-* a VMware login or a :ref:`VMWare Snapshots` task fails
+* a VMware login or a :ref:`VMware-Snapshot` task fails
 
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_

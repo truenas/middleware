@@ -41,6 +41,7 @@ Users are welcome to network on the FreeNAS® social media sites:
 * `Twitter <http://twitter.com/freenasteam>`_
 
 
+.. index:: Forums
 .. _Forums:
 
 Forums
@@ -151,6 +152,7 @@ When asking a question on the forum, it is important that you:
   checked. If you want to be notified by email, also check the "and receive email notifications" box. That way you will be notified whenever anyone
   answers your question.
 
+.. index:: IRC
 .. _IRC:
 
 IRC
@@ -181,6 +183,7 @@ To get the most out of the IRC channel, keep the following points in mind:
   `pastebin <http://www.pastebin.com/>`_
   and paste the resulting URL into the IRC discussion.
 
+.. index:: Mailing Lists
 .. _Mailing Lists:
 
 Mailing Lists
@@ -219,37 +222,19 @@ The following mailing lists are available:
 Videos
 ------
 
-A series of instructional videos are available for FreeNAS® 9.x. They include:
-
-* `NASFeratu: Build Your Own NAS - FreeNAS Hardware Recommendations <https://www.youtube.com/watch?v=e1n3rHlUY3k>`_
-
-* `FreeNAS® 9.2.1: Plex Media Server Plugin (+ Initial Setup) <https://www.youtube.com/watch?v=3DnUWTliaOY>`_
-
-* `FreeNAS® 9.2.1.5 BitTorrent Sync Plugin (Btsync) <https://www.youtube.com/watch?v=9sb_9283BkA>`_
-
-* `FreeNAS 9.2.x with BT SYNC, transmission, Couchpotato, SickBeard and Plex  <https://www.youtube.com/watch?v=Vgh8VAR5iDU>`_
-
-* `Windows to FreeNAS backup <http://www.youtube.com/watch?v=vcmAAy-OVtI>`_
-
-* `Crashplan backup on Apple OS X with FreeNAS <http://www.youtube.com/watch?v=p7CHxFxlEU8>`_
-
-* `FreeNAS® 9.2.1.5: Volumes & Snapshots Overview <https://www.youtube.com/watch?v=yxnJH-8YvC8>`_
-
-* `FreeNAS® 9.2.1.5: Shares Overview (AFP, NFS, CIFS, Time Machine)  <https://www.youtube.com/watch?v=rOueRnMNZtY>`_
-
-* `FreeNAS® 9.2.1.7 FTP Configuration <https://www.youtube.com/watch?v=wySXaTMMLoA>`_
-
-* `FreeNAS® 9.2.1.8 Transmission Plugin <https://www.youtube.com/watch?v=lyW7BpKfBmk>`_
-
-* `MineOS (Minecraft) Plugin for FreeNAS <https://www.youtube.com/watch?v=3tP31M2EWU8>`_
+A series of instructional videos are available for FreeNAS® 9.3. They include:
 
 * `Changes in FreeNAS® 9.3 <https://www.youtube.com/watch?v=weKWqmbWdR4>`_
 
 * `FreeNAS 9.3 Updates <https://www.youtube.com/watch?v=lC7af_ahwSE>`_
 
-.. note:: videos are version-specific, meaning that some details of the tasks demonstrated may have changed in more recent versions of FreeNAS®. When in
-   doubt, refer to the documentation specific to your version of FreeNAS®. 
+* `How to Upgrade FreeNAS 9.3 <https://www.youtube.com/watch?v=L61IJF98eP8>`_
 
+* `How to Install FreeNAS 9.3 <https://www.youtube.com/watch?v=k-mRgeDS8rk>`_
+
+* `FreeNAS® 9.3 Shares Overview (AFP, NFS, CIFS, + New WebDAV) <https://www.youtube.com/watch?v=GVJQ0Vx_6i4>`_
+
+.. index:: Professional Support
 .. _Professional Support:
 
 Professional Support
