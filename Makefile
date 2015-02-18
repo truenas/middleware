@@ -9,6 +9,7 @@ BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+DEBUG=yes
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -26,6 +27,7 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export BUILD_TIMESTAMP
 .export TRAIN
 .export UPDATE_USER = sef	# For now, just use sef's account
+.export DEBUG
 
 .if defined(NANO_ARCH)
 .export NANO_ARCH
