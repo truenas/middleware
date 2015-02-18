@@ -576,6 +576,7 @@ def home(request):
     except:
         update = models.Update.objects.create()
 
+    tabs = appPool.hook_app_tabs('system', request)
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
@@ -585,6 +586,7 @@ def home(request):
         'systemdataset': systemdataset,
         'registration': registration,
         'update': update,
+        'hook_tabs': tabs,
     })
 
 
