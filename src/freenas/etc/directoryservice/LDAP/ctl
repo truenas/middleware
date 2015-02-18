@@ -60,6 +60,16 @@ cifs_restart()
 	return $?
 }
 
+cifs_reset()
+{
+	ldapctl ${service} ix-pre-samba start
+
+	if cifs_enabled;
+	then
+		cifs_restart
+	fi
+}
+
 ldapctl_start()
 {
 	local ldap_started=0
@@ -78,6 +88,7 @@ ldapctl_start()
 	if ! ldapctl_cmd ${service} ix-ldap quietstart
 	then
 		ldap_set 0
+		cifs_reset
 		return 1
 	fi
 
@@ -93,6 +104,7 @@ ldapctl_start()
 		if ! ldapctl_cmd ${service} ix-kinit status
 		then
 			ldap_set 0
+			cifs_reset
 			return 1
 		fi  
 	fi
@@ -108,6 +120,7 @@ ldapctl_start()
 	if ! ldapctl_cmd ${service} ix-ldap status
 	then
 		ldap_set 0
+		cifs_reset
 		return 1
 	fi
 
@@ -152,7 +165,7 @@ ldapctl_stop()
 
 	ldapctl_cmd ${service} ix-kinit quietstop
 	rm -f "${status_file}"
-
+	
 	return 0
 }
 
