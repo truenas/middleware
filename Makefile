@@ -49,6 +49,7 @@ build: git-verify
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
 	${ENV_SETUP} build/do_build.sh
+	@if [ "${NANO_LABEL}" = "FreeNAS" ]; then echo "Building FreeNAS documentation"; (cd docs/userguide && make html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs); fi
 
 checkout: git-verify
 	${ENV_SETUP} build/do_checkout.sh
@@ -95,7 +96,6 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
-	@if [ "${NANO_LABEL}" = "FreeNAS" ]; then echo "Building FreeNAS documentation"; (cd docs/userguide && make html && mv _build/html ../../objs/${STAGEDIR}/doc); fi
 
 release-push: release
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
