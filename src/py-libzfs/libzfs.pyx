@@ -554,6 +554,10 @@ cdef class ZFSPool(object):
             )
         )
 
+    def __dealloc__(self):
+        if self._zpool != NULL:
+            libzfs.zpool_close(self._zpool)
+
     def __getstate__(self):
         return {
             'name': self.name,
@@ -675,6 +679,7 @@ cdef class ZFSImportablePool(ZFSPool):
     cdef readonly object _config
 
     def __init__(self, ZFS root, name, config):
+        self._zpool = NULL
         self._config = config
         self.name = name
 
@@ -713,6 +718,9 @@ cdef class ZFSDataset(object):
         self._root_handle = <libzfs.libzfs_handle_t*>self.root.handle()
         self._handle = <libzfs.zfs_handle_t*>handle
         self.name = libzfs.zfs_get_name(self._handle)
+
+    def __dealloc__(self):
+        libzfs.zfs_close(self._handle)
 
     def __getstate__(self):
         return {
