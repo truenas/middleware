@@ -846,11 +846,6 @@ CERT_KEY_LENGTH_CHOICES = (
     (4096, '4096')
 )
 
-CERT_KEY_LENGTH_ECDSA_CHOICES = (
-    (256, '256'),
-    (384, '384'),
-    (521, '521'),
-)
 
 CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA1', _('SHA1')),
