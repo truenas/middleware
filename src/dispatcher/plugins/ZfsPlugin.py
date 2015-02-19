@@ -319,7 +319,7 @@ class ZpoolExtendTask(Task):
 
 
 class ZpoolImportTask(Task):
-    def verify(self, guid, name, properties=None):
+    def verify(self, guid, name=None, properties=None):
         zfs = libzfs.ZFS()
         pool = first_or_default(lambda p: str(p.guid) == guid, zfs.find_import())
         if not pool:
@@ -327,7 +327,7 @@ class ZpoolImportTask(Task):
 
         return get_disk_names(self.dispatcher, pool)
 
-    def run(self, guid, name, properties=None):
+    def run(self, guid, name=None, properties=None):
         zfs = libzfs.ZFS()
         opts = nvpair.NVList(otherdict=(properties or {}))
         try:
@@ -337,8 +337,17 @@ class ZpoolImportTask(Task):
             raise TaskException(errno.EFAULT, str(err))
 
 
-class ZpoolExportTask(Task):
-    pass
+class ZpoolExportTask(ZpoolBaseTask):
+    def verify(self, name):
+        super(ZpoolExportTask, self).verify(name)
+
+    def run(self, name):
+        zfs = libzfs.ZFS()
+        try:
+            pool = zfs.get(name)
+            zfs.export_pool(pool)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 class ZfsBaseTask(Task):
@@ -420,6 +429,9 @@ class ZfsSnapshotCreateTask(Task):
 
 
 class ZfsConfigureTask(ZfsBaseTask):
+    def verify(self, name, properties):
+        super(ZfsConfigureTask, self).verify(name)
+
     def run(self, name, properties):
         try:
             zfs = libzfs.ZFS()

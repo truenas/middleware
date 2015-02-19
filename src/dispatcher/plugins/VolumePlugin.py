@@ -32,6 +32,9 @@ from dispatcher.rpc import RpcException, description, accepts, returns
 from utils import first_or_default
 
 
+VOLUMES_ROOT = '/volumes'
+
+
 def flatten_datasets(root):
     for ds in root['children']:
         for c in flatten_datasets(ds):
@@ -76,7 +79,7 @@ class VolumeProvider(Provider):
                 vdev['path'] = self.dispatcher.call_sync('disk.partition_to_disk', vdev['path'])
 
             result.append({
-                'id': pool['guid'],
+                'id': str(pool['guid']),
                 'name': pool['name'],
                 'topology': topology,
                 'status': pool['status']
@@ -178,7 +181,7 @@ class VolumeCreateTask(ProgressTask):
     def run(self, name, type, topology, params=None):
         subtasks = []
         params = params or {}
-        mountpoint = params.pop('mountpoint', '/volumes/{0}'.format(name))
+        mountpoint = params.pop('mountpoint', os.path.join(VOLUMES_ROOT, name))
 
         for dname, dgroup in self.__get_disks(topology):
             subtasks.append(self.run_subtask('disk.format.gpt', dname, 'freebsd-zfs', {
@@ -273,7 +276,7 @@ class VolumeUpdateTask(Task):
 
 
 class VolumeImportTask(Task):
-    def verify(self, id, new_name=None, params=None):
+    def verify(self, id, new_name, params=None):
         if self.datastore.exists('volumes', ('id', '=', id)):
             raise VerifyException(errno.ENOENT, 'Volume with id {0} already exists'.format(id))
 
@@ -282,12 +285,42 @@ class VolumeImportTask(Task):
 
         return self.verify_subtask('zfs.pool.import', id)
 
-    def run(self, id, new_name=None, params=None):
-        self.join_subtasks(self.run_subtask('zfs.pool.import'))
+    def run(self, id, new_name, params=None):
+        mountpoint = os.path.join(VOLUMES_ROOT, new_name)
+        self.join_subtasks(self.run_subtask('zfs.pool.import', id, new_name, params))
+        self.join_subtasks(self.run_subtask('zfs.configure', new_name, {'mountpoint': mountpoint}))
+        self.join_subtasks(self.run_subtask('zfs.mount', new_name))
+
+        new_id = self.datastore.insert('volumes', {
+            'id': id,
+            'name': new_name,
+            'type': 'zfs',
+            'mountpoint': mountpoint
+        })
+
+        self.dispatcher.dispatch_event('volumes.changed', {
+            'operation': 'create',
+            'ids': [new_id]
+        })
 
 
 class VolumeDetachTask(Task):
-    pass
+    def verify(self, name):
+        if not self.datastore.exists('volumes', ('name', '=', name)):
+            raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(name))
+
+        return ['disk:{0}'.format(d) for d in self.dispatcher.call_sync('volumes.get_volume_disks', name)]
+
+    def run(self, name):
+        vol = self.datastore.get_one('volumes', ('name', '=', name))
+        self.join_subtasks(self.run_subtask('zfs.umount', name))
+        self.join_subtasks(self.run_subtask('zfs.pool.export', name))
+        self.datastore.delete('volumes', vol['id'])
+
+        self.dispatcher.dispatch_event('volumes.changed', {
+            'operation': 'delete',
+            'ids': [vol['id']]
+        })
 
 
 class DatasetCreateTask(Task):
@@ -372,6 +405,7 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.create_auto', VolumeAutoCreateTask)
     dispatcher.register_task_handler('volume.destroy', VolumeDestroyTask)
     dispatcher.register_task_handler('volume.import', VolumeImportTask)
+    dispatcher.register_task_handler('volume.detach', VolumeDetachTask)
     dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
     dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
     dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
