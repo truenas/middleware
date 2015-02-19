@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from collections import OrderedDict
 import json
 import logging
 import os
@@ -133,7 +134,9 @@ def ticket_categories(request):
     }
 
     if success:
-        data['categories'] = msg
+        data['categories'] = OrderedDict(
+            sorted(msg.items(), key=lambda y: y[0].lower())
+        )
     else:
         data['message'] = msg
 
