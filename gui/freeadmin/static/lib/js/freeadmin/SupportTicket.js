@@ -148,6 +148,16 @@ define([
             value: initial.username
           }, this.dapUsername);
 
+          on(this._username, 'change', function() {
+            if(!me._username.get('value') || !me._password.get('value')) {
+              return;
+            }
+            me.fetchCategories({
+              user: me._username.get('value'),
+              password: me._password.get('value')
+            });
+          });
+
           this._password = new TextBox({
             name: "password",
             type: "password",
@@ -155,6 +165,9 @@ define([
           }, this.dapPassword);
 
           on(this._password, 'change', function() {
+            if(!me._username.get('value') || !me._password.get('value')) {
+              return;
+            }
             me.fetchCategories({
               user: me._username.get('value'),
               password: me._password.get('value')
@@ -219,7 +232,13 @@ define([
           handleAs: 'json',
           query: query || ''
         }).then(function(data) {
-          if(data.error) return;
+          if(data.error) {
+            me.dapErrorMessage.innerHTML = data.message;
+            domStyle.set(me.dapErrorMessageRow, "display", "block");
+          } else {
+            me.dapErrorMessage.innerHTML = '';
+            domStyle.set(me.dapErrorMessageRow, "display", "nonw");
+          }
           var cats = [];
           for(var i in data.categories) {
             cats.push({label: i, value: data.categories[i]});
