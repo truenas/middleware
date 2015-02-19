@@ -122,6 +122,23 @@ def ticket(request):
     })
 
 
+def ticket_categories(request):
+    success, msg = utils.fetch_categories({
+        'user': request.GET.get('user'),
+        'password': request.GET.get('password'),
+    })
+    data = {
+        'error': not success,
+    }
+
+    if success:
+        data['categories'] = msg
+    else:
+        data['message'] = msg
+
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
 def ticket_progress(request):
     with open(TICKET_PROGRESS, 'r') as f:
         try:

@@ -18,9 +18,29 @@ def get_port():
         return 8081
 
 
+def fetch_categories(data):
+
+    try:
+        r = requests.post(
+            'https://%s:%d/api/v1.0/categories' % (ADDRESS, get_port()),
+            data=json.dumps(data),
+            headers={'Content-Type': 'application/json'},
+            timeout=10,
+        )
+        data = r.json()
+    except simplejson.JSONDecodeError, e:
+        log.debug("Failed to decode ticket attachment response: %s", r.text)
+        return False, r.text
+    except requests.ConnectionError, e:
+        return False, _('Connection failed: %s') % e
+    except requests.Timeout, e:
+        return False, _('Connection timed out: %s') % e
+
+    return True, data
+
+
 def new_ticket(data):
 
-    log.error("url %r", 'https://%s:%d/api/v1.0/ticket' % (ADDRESS, get_port()))
     try:
         r = requests.post(
             'https://%s:%d/api/v1.0/ticket' % (ADDRESS, get_port()),
