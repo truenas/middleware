@@ -23,7 +23,11 @@ prestart()
 poststart()
 {
     # ensure that dispatcher is up and accepting connections.
-    /usr/local/sbin/dispatcherctl wait-server --timeout 5
+    if ! /usr/local/sbin/dispatcherctl wait-server --timeout 5; then
+        echo "ERROR:"
+        echo "dispatcher failed to start"
+        exit 1
+    fi
 }
 
 load_rc_config $name
