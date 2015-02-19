@@ -32,11 +32,13 @@ import os
 from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.support import utils
+from freenasUI.freeadmin.views import JsonResp
+from freenasUI.support import forms, utils
 from freenasUI.system.utils import debug_get_settings, debug_run
 
 log = logging.getLogger("support.views")
@@ -53,6 +55,25 @@ def index(request):
         context.update(c)
 
     return render(request, 'support/home_%s.html' % sw_name, context)
+
+
+def license_update(request):
+
+    license, reason = utils.get_license()
+    if request.method == 'POST':
+        form = forms.LicenseUpdateForm(request.POST)
+        if form.is_valid():
+            with open(utils.LICENSE_FILE, 'wb+') as f:
+                f.write(form.cleaned_data.get('license').encode('ascii'))
+            return JsonResp(request, message=_('License updated.'))
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.LicenseUpdateForm()
+    return render(request, 'support/license_update.html', {
+        'form': form,
+        'license': license,
+    })
 
 
 @require_POST
