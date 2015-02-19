@@ -7,9 +7,8 @@ VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-9.3-STABLE
 FREENAS_KEYFILE?=/dev/null
 COMPANY?="iXsystems"
-_TIMESTAMP!=date -u '+%Y%m%d%H%M'
+BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
-BUILD_TIMESTAMP="${_TIMESTAMP}"
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
@@ -107,7 +106,7 @@ release-push: release
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
-		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILDTIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
+		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
 	fi
 	${MAKE} save-build-env
 	echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com
