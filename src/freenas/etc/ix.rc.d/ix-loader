@@ -133,6 +133,7 @@ generate_boot_loader_conf_local()
 {
 	local settings
 	local tmp
+	local first_install=0
 
 	settings="serial user debugkernel"
 
@@ -142,9 +143,23 @@ generate_boot_loader_conf_local()
 		eval "loader_${setting}" >> $tmp
 	done
 
+	# Using the ix-loader script to also do post-first-install stuff
+        # We should create a seperate ix-firstinstall script
+        # if we add more things later.
+        if [ -f $FIRST_INSTALL_SENTINEL ]; then
+	    first_install=1
+	    # Creating pristine boot environment from the "default"
+            echo "Creating 'Initial-Install' boot environment..."
+            /usr/local/sbin/beadm create -e default Initial-Install
+
+            # Done, delete sentinel file and exit
+            rm -rf $FIRST_INSTALL_SENTINEL
+        fi
+
 	update_persistent_file /boot/loader.conf.local $tmp
-	if [ $? = 0 ]; then
-		/usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+
+	if [ $? = 0 -o $first_install = 1 ]; then
+	    /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
 	fi
 }
 
