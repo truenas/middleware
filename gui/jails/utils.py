@@ -99,6 +99,9 @@ def get_ipv4_exclude_dict():
 
     w = warden.Warden()
     jails = w.list()
+    if not jails:
+        return ipv4_exclude_dict
+
     for j in jails:
         mask = 24
         if j['ipv4']:
@@ -162,6 +165,9 @@ def get_ipv6_exclude_dict():
 
     w = warden.Warden()
     jails = w.list()
+    if not jails:
+        return ipv6_exclude_dict
+
     for j in jails:
         prefix = 24
         if j['ipv6']:

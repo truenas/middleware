@@ -1030,7 +1030,11 @@ class Warden(warden_base):
 
     def __call(self, obj):
         if obj is not None:
-            tmp = obj.run()
+            tmp = None
+            try:
+                tmp = obj.run()
+            except Exception as e:
+                log.debug("Warden.__call: Failed with '%s'", e)
             if tmp is not None and len(tmp) > 1:
                 if hasattr(obj, "parse"):
                     return obj.parse(tmp)
