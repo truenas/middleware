@@ -2,7 +2,8 @@
 
 PORTNAME=	licenselib
 PORTVERSION=	1.0
-CATEGORIES=	devel
+CATEGORIES=	freenas
+VALID_CATEGORIES+=freenas
 MAINTAINER=	wg@FreeBSD.org
 COMMENT=	License library for FreeNAS/TrueNAS
 
