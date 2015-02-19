@@ -1,15 +1,32 @@
 import json
 import logging
+import os
 import requests
 import simplejson
 
 from django.utils.translation import ugettext as _
 
+from licenselib.license import License
 from freenasUI.common.system import get_sw_name
 
 log = logging.getLogger('support.utils')
 ADDRESS = 'support-proxy.ixsystems.com'
 LICENSE_FILE = '/data/license'
+
+
+def get_license():
+    if not os.path.exists(LICENSE_FILE):
+        return None, 'ENOFILE'
+
+    with open(LICENSE_FILE, 'r') as f:
+        license_file = f.read().strip('\n')
+
+    try:
+        license = License.load(license_file)
+    except Exception, e:
+        return None, unicode(e)
+
+    return license, None
 
 
 def get_port():

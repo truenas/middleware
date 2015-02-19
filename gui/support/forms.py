@@ -25,9 +25,11 @@
 #####################################################################
 import logging
 
-from dojango import forms
+from django.utils.translation import ugettext as _
 
-from freenasUI.common.forms import ModelForm
+from dojango import forms
+from licenselib.license import License
+from freenasUI.common.forms import Form, ModelForm
 from freenasUI.support import models
 
 log = logging.getLogger("support.forms")
@@ -39,3 +41,19 @@ class SupportForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SupportForm, self).__init__(*args, **kwargs)
+
+
+class LicenseUpdateForm(Form):
+
+    license = forms.CharField(
+        label='License',
+        widget=forms.widgets.Textarea,
+    )
+
+    def clean_license(self):
+        license = self.cleaned_data.get('license', '').strip()
+        try:
+            License.load(license)
+        except:
+            raise forms.ValidationError(_('This is not a valid license.'))
+        return license
