@@ -163,6 +163,7 @@ install_kernel
 run_customize
 setup_nanobsd
 prune_usr
+build_documentation
 run_late_customize
 # SEF
 # Build packages here.

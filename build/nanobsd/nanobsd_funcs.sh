@@ -459,6 +459,13 @@ prune_usr() (
 		done
 )
 
+build_documentation() {
+	if [ "${NANO_LABEL}" == "FreeNAS" ]; then
+		echo "Building documentation"
+		(cd docs/userguide && make html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs)
+	fi
+}
+
 newfs_part ( ) (
 	local dev mnt lbl
 	dev=$1
