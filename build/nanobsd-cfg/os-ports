@@ -44,7 +44,8 @@ add_port freenas/pcbsd-pbi PRODUCT_VERSION=${VERSION} \
 add_port freenas/freenas-ui PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
-add_port freenas/py-licenselib
+add_port freenas/py-licenselib PRODUCT_VERSION=${VERSION} \
+				REVISION=${SVNREVISION}
 
 if ! is_truenas ; then
 	add_port freenas/arcsas PRODUCT_VERSION=${VERSION} \
