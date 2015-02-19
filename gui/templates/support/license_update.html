@@ -1,0 +1,10 @@
+{% extends "freeadmin/generic_form.html" %}
+
+{% block form %}
+{% if license.expired %}
+<tr>
+  <td colspan="2">{% trans "Your license has expired, please place a new one." %}</td>
+</td>
+{% endif %}
+{{ block.super }}
+{% endblock %}
