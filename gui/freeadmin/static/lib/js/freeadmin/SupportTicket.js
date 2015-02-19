@@ -1,12 +1,15 @@
 define([
   "dojo/_base/declare",
+  "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/json",
   "dojo/mouse",
   "dojo/on",
   "dojo/query",
+  "dojo/request/iframe",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
+  "dijit/Dialog",
   "dijit/registry",
   "dijit/TooltipDialog",
   "dijit/form/Button",
@@ -16,17 +19,22 @@ define([
   "dijit/form/TextBox",
   "dijit/form/SimpleTextarea",
   "dijit/popup",
+  "dojox/uuid/generateRandomUuid",
+  "freeadmin/Progress",
   "dojo/text!freeadmin/templates/supportticket.html",
   "dojo/text!freeadmin/templates/supportticket_attachment.html"
   ], function(
   declare,
+  domConstruct,
   domStyle,
   json,
   mouse,
   on,
   query,
+  iframe,
   _Widget,
   _Templated,
+  Dialog,
   registry,
   TooltipDialog,
   Button,
@@ -36,6 +44,8 @@ define([
   TextBox,
   SimpleTextarea,
   popup,
+  generateRandomUuid,
+  Progress,
   template,
   templateAttachment) {
 
@@ -192,20 +202,12 @@ define([
           checked: initial.debug
         }, this.dapDebug);
 
-        submit = new Button({
+        this._submit = new Button({
           label: gettext("Submit")
         }, this.dapSubmit);
 
-        cancel = new Button({
-          label: gettext("Cancel")
-        }, this.dapCancel);
-
-        on(submit, 'click', function() {
+        on(this._submit, 'click', function() {
           me.submit();
-        });
-
-        on(cancel, 'click', function() {
-          cancelDialog(this);
         });
 
         attachment_add = new Button({
@@ -283,6 +285,7 @@ define([
       },
       submit: function() {
 
+        var me = this;
         var steps = [];
         var fileUpload = false;
 
@@ -312,18 +315,48 @@ define([
           });
         }
 
-        var progressbar = {
+        var uuid = generateRandomUuid();
+
+        var progressbar = new Progress({
           poolUrl: this.progressUrl,
           steps: steps,
-          fileUpload: fileUpload
-        };
+          fileUpload: fileUpload,
+          uuid: uuid
+        });
 
         if(!this.validate()) return false;
-        doSubmit({
-          url: this.url,
-          form: this._form,
-          progressbar: progressbar
+
+        this._submit.set('disabled', true);
+
+        var submitting = new Dialog({});
+        submitting.containerNode.appendChild(progressbar.domNode);
+
+        iframe.post(this.url + '?X-Progress-ID=' + uuid, {
+          form: this._form.id,
+          handleAs: 'json',
+          headers: {"X-CSRFToken": CSRFToken}
+        }).then(function(data) {
+
+          if(data.error) {
+            me.dapErrorMessage.innerHTML = data.message;
+            domStyle.set(me.dapErrorMessageRow, "display", "block");
+            submitting.destroyRecursive();
+          } else {
+            me.dapErrorMessage.innerHTML = '';
+            domStyle.set(me.dapErrorMessageRow, "display", "none");
+            progressbar.destroyRecursive();
+            var dom = domConstruct.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + message + '</a>')
+            submitting.containerNode.appendChild(dom);
+          }
+
+          me._submit.set('disabled', false);
+
+        }, function(evt, response) {
+           console.log("error", evt, response);
         });
+
+        submitting.show();
+
       }
     });
     return SupportTicket;
