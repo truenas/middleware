@@ -307,6 +307,12 @@ define([
         }
         return true;
       },
+      clear: function() {
+        this._subject.set('value', '');
+        this._desc.set('value', '');
+        domConstruct.empty(this.dapAttachments);
+        this.AddAttachment();
+      },
       submit: function() {
 
         var me = this;
@@ -371,6 +377,8 @@ define([
             progressbar.destroyRecursive();
             var dom = domConstruct.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + data.message + '</a>')
             submitting.containerNode.appendChild(dom);
+
+            me.clear();
           }
 
           me._submit.set('disabled', false);
