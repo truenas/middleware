@@ -1,16 +1,10 @@
 # $FreeBSD$
 
-PORTNAME=	keyserverlib
+PORTNAME=	licenselib
 PORTVERSION=	1.0
-CATEGORIES=	truenas
-VALID_CATEGORIES+=	truenas
-MASTER_SITES=	CHEESESHOP
-PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
-
+CATEGORIES=	devel
 MAINTAINER=	wg@FreeBSD.org
-COMMENT=	Code checking using pep8 and pyflakes
-
-LICENSE=	MIT
+COMMENT=	License library for FreeNAS/TrueNAS
 
 FETCH_DEPENDS=	git:${PORTSDIR}/devel/git
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}enum34>=:${PORTSDIR}/devel/py-enum34
@@ -19,7 +13,7 @@ USES=		python
 USE_PYTHON=	autoplist distutils
 
 EXTRACT_ONLY=
-WRKSRC?=/usr/nas_source/keyserver/keyserverlib
+WRKSRC?=/usr/nas_source/licenselib
 
 # no checksum, we just used git!
  #extract:

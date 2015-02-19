@@ -42,13 +42,14 @@ if is_truenas; then
 	if [ -d ${GIT_ZFSD_CHECKOUT_PATH} ]; then
 		cp -a ${GIT_ZFSD_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
 	fi
-	if [ -d ${GIT_KEYSERVER_CHECKOUT_PATH} ]; then
-		cp -a ${GIT_KEYSERVER_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
-	fi
 	if [ -d ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/gui ]; then
 		cp -a ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH}/gui/ ${NANO_OBJ}/_.j/usr/freenasUI
 	fi
 	(cd ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Files && find . -print | grep -Ev '/(CVS|\.git|\.svn)' | cpio -R root:wheel -dumpv ${NANO_OBJ}/_.j/usr/nas_source2/freenas)
+fi
+
+if [ -d ${GIT_LICENSELIB_CHECKOUT_PATH} ]; then
+	cp -a ${GIT_LICENSELIB_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
 fi
 
 for d in $EXTRA_PORT_DIRS; do
