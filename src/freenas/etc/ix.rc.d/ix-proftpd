@@ -135,7 +135,7 @@ generate_proftp()
 ServerName "$(hostname) FTP Server"
 ServerType standalone
 DefaultServer on
-#Default Address $(hostname)
+DefaultAddress localhost
 UseIPv6 on
 Port ${ftp_port}
 User nobody
