@@ -31,6 +31,7 @@ import os
 from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_GET, require_POST
 
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
@@ -44,84 +45,84 @@ TICKET_PROGRESS = '/tmp/.ticketprogress'
 def index(request):
     sw_name = get_sw_name().lower()
 
-    context = {}
+    context = {
+        'sw_name': sw_name,
+    }
     for c in appPool.hook_view_context('support.index', request):
         context.update(c)
 
     return render(request, 'support/home_%s.html' % sw_name, context)
 
 
+@require_POST
 def ticket(request):
-    if request.method == 'POST':
 
-        step = 2 if request.FILES.getlist('attachment') else 1
+    step = 2 if request.FILES.getlist('attachment') else 1
 
-        files = []
-        if request.POST.get('debug') == 'on':
-            with open(TICKET_PROGRESS, 'w') as f:
-                f.write(json.dumps({'indeterminate': True, 'step': step}))
-            step += 1
-
-            mntpt, direc, dump = debug_get_settings()
-            debug_run(direc)
-            files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
-
+    files = []
+    if request.POST.get('debug') == 'on':
         with open(TICKET_PROGRESS, 'w') as f:
             f.write(json.dumps({'indeterminate': True, 'step': step}))
         step += 1
 
-        data = {
-            'title': request.POST.get('subject'),
-            'body': request.POST.get('desc'),
-            'version': get_sw_version().split('-', 1)[-1],
-            'category': request.POST.get('category'),
-        }
+        mntpt, direc, dump = debug_get_settings()
+        debug_run(direc)
+        files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
 
-        if get_sw_name().lower() == 'freenas':
-            data.update({
+    with open(TICKET_PROGRESS, 'w') as f:
+        f.write(json.dumps({'indeterminate': True, 'step': step}))
+    step += 1
+
+    data = {
+        'title': request.POST.get('subject'),
+        'body': request.POST.get('desc'),
+        'version': get_sw_version().split('-', 1)[-1],
+        'category': request.POST.get('category'),
+    }
+
+    if get_sw_name().lower() == 'freenas':
+        data.update({
+            'user': request.POST.get('username'),
+            'password': request.POST.get('password'),
+            'type': request.POST.get('type'),
+        })
+    else:
+        data.update({
+            'phone': request.POST.get('phone', '555'),
+            'name': request.POST.get('name', 'John'),
+            'company': request.POST.get('company', 'iXsystems'),
+            'email': request.POST.get('email', 'william88@gmail.com'),
+        })
+
+    success, msg, tid = utils.new_ticket(data)
+
+    with open(TICKET_PROGRESS, 'w') as f:
+        f.write(json.dumps({'indeterminate': True, 'step': step}))
+    step += 1
+
+    data = {'message': msg, 'error': not success}
+
+    if not success:
+        pass
+    else:
+
+        files.extend(request.FILES.getlist('attachment'))
+        for f in files:
+            success, attachmsg = utils.ticket_attach({
                 'user': request.POST.get('username'),
                 'password': request.POST.get('password'),
-                'type': request.POST.get('type'),
-            })
-        else:
-            data.update({
-                'phone': request.POST.get('phone', '555'),
-                'name': request.POST.get('name', 'John'),
-                'company': request.POST.get('company', 'iXsystems'),
-                'email': request.POST.get('email', 'william88@gmail.com'),
-            })
+                'ticketnum': tid,
+            }, f)
 
-        success, msg, tid = utils.new_ticket(data)
-
-        with open(TICKET_PROGRESS, 'w') as f:
-            f.write(json.dumps({'indeterminate': True, 'step': step}))
-        step += 1
-
-        data = {'message': msg, 'error': not success}
-
-        if not success:
-            pass
-        else:
-
-            files.extend(request.FILES.getlist('attachment'))
-            for f in files:
-                success, attachmsg = utils.ticket_attach({
-                    'user': request.POST.get('username'),
-                    'password': request.POST.get('password'),
-                    'ticketnum': tid,
-                }, f)
-
-        data = (
-            '<html><body><textarea>%s</textarea></boby></html>' % (
-                json.dumps(data),
-            )
+    data = (
+        '<html><body><textarea>%s</textarea></boby></html>' % (
+            json.dumps(data),
         )
-        return HttpResponse(data)
-    return render(request, 'support/ticket.html', {
-        'sw_name': get_sw_name().lower(),
-    })
+    )
+    return HttpResponse(data)
 
 
+@require_GET
 def ticket_categories(request):
     success, msg = utils.fetch_categories({
         'user': request.GET.get('user'),
