@@ -27,8 +27,8 @@
 
 
 import time
-from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
-from output import output_msg, output_table, output_tree
+from namespace import Namespace, EntityNamespace, IndexCommand, Command, CommandException, description
+from output import Column, output_msg, output_table, output_tree
 from utils import first_or_default
 
 
@@ -49,6 +49,47 @@ class VolumeCreateCommand(Command):
             disks = context.connection.call_sync('volumes.get_available_disks')
 
         context.submit_task('volume.create_auto', name, 'zfs', disks)
+
+
+@description("Finds volumes available to import")
+class FindVolumesCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        vols = context.connection.call_sync('volumes.find')
+        output_table(vols, [
+            Column('ID', '/id'),
+            Column('Volume name', '/name'),
+            Column('Status', '/status')
+        ])
+
+
+@description("Imports given volume")
+class ImportVolumeCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        if len(args) < 1:
+            raise CommandException('Not enough arguments passed')
+
+        id = args[0]
+        oldname = args[0]
+
+        if not args[0].isdigit():
+            vols = context.connection.call_sync('volumes.find')
+            vol = first_or_default(lambda v: v['name'] == args[0], vols)
+            if not vol:
+                raise CommandException('Importable volume {0} not found'.format(args[0]))
+
+            id = vol['id']
+            oldname = vol['name']
+
+        context.submit_task('volume.import', id, kwargs.get('newname', oldname))
+
+
+@description("Detaches given volume")
+class DetachVolumeCommand(Command):
+    def run(self, context, args, kwargs, opargs):
+        if len(args) < 1:
+            raise CommandException('Not enough arguments passed')
+
+        context.submit_task('volume.detach', args[0])
 
 
 @description("Shows volume topology")
@@ -242,6 +283,12 @@ class VolumesNamespace(EntityNamespace):
             list=True)
 
         self.primary_key = self.get_mapping('name')
+        self.extra_commands = {
+            'find': FindVolumesCommand(),
+            'import': ImportVolumeCommand(),
+            'detach': DetachVolumeCommand()
+        }
+
         self.entity_commands = lambda vol: {
             'show-topology': ShowTopologyCommand(self, vol),
             'show-disks': ShowDisksCommand(self, vol),
