@@ -49,7 +49,6 @@ build: git-verify
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
 	${ENV_SETUP} build/do_build.sh
-	@if [ "${NANO_LABEL}" = "FreeNAS" ]; then echo "Building FreeNAS documentation"; (cd docs/userguide && make html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs); fi
 
 checkout: git-verify
 	${ENV_SETUP} build/do_checkout.sh
