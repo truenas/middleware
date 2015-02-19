@@ -48,13 +48,16 @@ TICKET_PROGRESS = '/tmp/.ticketprogress'
 def index(request):
     sw_name = get_sw_name().lower()
 
+    license, reason = utils.get_license()
+
     context = {
         'sw_name': sw_name,
+        'license': license,
     }
     for c in appPool.hook_view_context('support.index', request):
         context.update(c)
 
-    return render(request, 'support/home_%s.html' % sw_name, context)
+    return render(request, 'support/home.html', context)
 
 
 def license_update(request):
