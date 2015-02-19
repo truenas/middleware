@@ -369,7 +369,7 @@ define([
             me.dapErrorMessage.innerHTML = '';
             domStyle.set(me.dapErrorMessageRow, "display", "none");
             progressbar.destroyRecursive();
-            var dom = domConstruct.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + message + '</a>')
+            var dom = domConstruct.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + data.message + '</a>')
             submitting.containerNode.appendChild(dom);
           }
 
