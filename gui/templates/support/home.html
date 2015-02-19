@@ -1,0 +1,93 @@
+{% if sw_name != "freenas" or license %}
+<h1>
+{% trans "License Information" %}
+<div data-dojo-type="dijit/form/Button">
+  {% trans "Update License" %}
+  <script type="dojo/method" data-dojo-event="onClick">
+    editObject('{% trans "Update License"|escapejs %}', '{% url "support_license_update" %}', [this, ]);
+  </script>
+</div>
+</h1>
+<table class="form">
+{% if license %}
+  <tr>
+    <th>{% trans "Model" %}</th>
+    <td>{{ license.model }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "System Serial" %}</th>
+    <td>{{ license.system_serial }}{% if license.system_serial_ha %} / {{ license.system_serial_ha }}{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Contract Type" %}</th>
+    <td>
+      {% if license.contract_type == 0 %}
+        Hardware:
+        {% if license.contract_hardware == 0 %}Advanced Parts Replacement{% endif %}
+        {% if license.contract_hardware == 1 %}Next Business Day On-Site{% endif %}
+        {% if license.contract_hardware == 2 %}4-Hour On-Site{% endif %}
+        <br />
+        Software:
+        {% if license.contract_software == 0 %}None{% endif %}
+        {% if license.contract_software == 1 %}8x5 Help Desk{% endif %}
+        {% if license.contract_software == 2 %}24x7 Help Desk{% endif %}
+      {% endif %}
+      {% if license.contract_type == 1 %}{% trans "Standard" %}{% endif %}
+      {% if license.contract_type == 2 %}{% trans "Bronze" %}{% endif %}
+      {% if license.contract_type == 3 %}{% trans "Silver" %}{% endif %}
+      {% if license.contract_type == 4 %}{% trans "Gold" %}{% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>{% trans "Contract Start" %}</th>
+    <td>{{ license.contract_start }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Contract End" %}</th>
+    <td>{{ license.contract_end }}{% if license.expired %} <span style="color: red;">({% trans "Expired" %})</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Customer Name" %}</th>
+    <td>{{ license.customer_name }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Features" %}</th>
+    <td>
+      {% for f in license.features %}
+        {% if f.value == 1 %}{% trans "Deduplication" %}<br />{% endif %}
+        {% if f.value == 2 %}{% trans "Jails/Plugins" %}<br />{% endif %}
+      {% empty %}
+        {% trans "None" %}
+      {% endfor %}
+    </td>
+  </tr>
+  <tr>
+    <th>{% trans "Additional Hardware" %}</th>
+    <td>
+      {% for f in license.addhw %}
+        {% if f.1 == 1 %}{% trans "E16 Enclosure" %}{% endif %}
+        {% if f.1 == 2 %}{% trans "E24 Enclosure" %}{% endif %}
+        {% if f.1 == 3 %}{% trans "E60 Enclosure" %}{% endif %}: {{ f.0 }}<br />
+      {% empty %}
+        {% trans "None" %}
+      {% endfor %}
+    </td>
+  </tr>
+{% else %}
+  {% if license_invalid %}
+  <tr>
+    <td colspan="2">{% trans "License is not valid! Contact iXsystems support." %}</td>
+  </tr>
+  {% else %}
+  <tr>
+    <td colspan="2">{% trans "License not found! Contact iXsystems support." %}</td>
+  </tr>
+  {% endif %}
+{% endif %}
+</table>
+{% endif %}
+
+<p>{% trans "To file a bug on FreeNAS, please fill in the fields below or visit " %} <a href="http://bugs.freenas.org" target="_blank">http://bugs.freenas.org</a>.</p>
+<p>{% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
+
+<div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{% url "support_ticket" %}', softwareName: '{{ sw_name }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, categoriesUrl: '{% url "support_ticket_categories" %}', progressUrl: '{% url "support_ticket_progress" %}'"></div>
