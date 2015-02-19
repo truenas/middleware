@@ -355,6 +355,8 @@ define([
            console.log("error", evt, response);
         });
 
+        progressbar.update(uuid);
+
         submitting.show();
 
       }
