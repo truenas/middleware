@@ -51,7 +51,7 @@
 #
 #	OPENSSL settings
 #
-: ${OPENSSL:="/usr/bin/openssl"}
+: ${OPENSSL:="/usr/local/bin/openssl"}
 : ${SSLDIR:="/etc/certificates"}
 : ${SSLCADIR:="${SSLDIR}/CA"}
 
