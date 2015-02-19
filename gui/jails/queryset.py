@@ -50,6 +50,8 @@ class JailsQuerySet(QuerySet):
                 wlist = Warden().list()
             except:
                 wlist = []
+            if not wlist:
+                wlist = []
             self.__wcount_cache = len(wlist)
 
             tl = []
