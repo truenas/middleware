@@ -460,9 +460,11 @@ prune_usr() (
 )
 
 build_documentation() {
-	if [ "${NANO_LABEL}" == "FreeNAS" ]; then
 		echo "Building documentation"
+	if [ "${NANO_LABEL}" == "FreeNAS" ]; then
 		(cd docs/userguide && make html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs)
+	else
+		(cd docs/userguide && make SPHINXOPTS="-t truenas" html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs)
 	fi
 }
 
