@@ -59,6 +59,26 @@ check_for_command_from_port()
    fi 
 }
 
+check_for_pylib_from_port()
+{
+   local LIB=$1
+   local PACKAGE=$2
+   local FOUND
+   local MSG
+   local PYPATH="/usr/local/lib/python2.7/site-packages"
+
+   FOUND="$(ls $PYPATH/$LIB.py || echo '')"
+
+   if [ -z "$FOUND" ]; then
+       MSG="ERROR: Python 2.7 site package $LIB not found."
+       if [ -n "$PACKAGE" ]; then
+           MSG="$MSG.\nERROR: Please run 'pkg install $PACKAGE' or install from ports."
+       fi
+       printf "\n$MSG\n\n"
+       exit 1
+   fi 
+}
+
 check_build_tools()
 {
 	check_for_command_from_port git devel/git
@@ -66,10 +86,11 @@ check_build_tools()
 	check_for_command_from_port xz archivers/xz
 	check_for_command_from_port python lang/python
 	check_for_command_from_port python2 lang/python2
-#	check_for_command_from_port VBoxManage emulators/virtualbox-ose
 	check_for_command_from_port poudriere ports-mgmt/poudriere-devel
 	check_for_command_from_port grub-mkrescue sysutils/grub2-pcbsd
 	check_for_command_from_port xorriso sysutils/xorriso
+	check_for_command_from_port sphinx-build textproc/py-sphinx
+	check_for_pylib_from_port sphinxcontrib/httpdomain textproc/py-sphinxcontrib-httpdomain
 }
 
 main()
