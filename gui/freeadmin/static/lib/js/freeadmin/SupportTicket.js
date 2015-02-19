@@ -7,6 +7,7 @@ define([
   "dojo/on",
   "dojo/query",
   "dojo/request/iframe",
+  "dojo/request/xhr",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/Dialog",
@@ -32,6 +33,7 @@ define([
   on,
   query,
   iframe,
+  xhr,
   _Widget,
   _Templated,
   Dialog,
@@ -52,27 +54,6 @@ define([
     var TYPE_OPTIONS = [
       {label: "Bug", value: "bug"},
       {label: "Feature", value: "feature"}
-    ];
-
-    var CATEGORY_OPTIONS = [
-      {label: "AFP", value: "AFP"},
-      {label: "API", value: "API"},
-      {label: "Alerts", value: "Alerts"},
-      {label: "CIFS", value: "CIFS"},
-      {label: "Certs", value: "Certs"},
-      {label: "Directory Services", value: "Directory Services"},
-      {label: "Documentation", value: "Documentation"},
-      {label: "Drivers", value: "Drivers"},
-      {label: "Filesystems", value: "Filesystems"},
-      {label: "GUI", value: "GUI"},
-      {label: "Installation/Upgrades", value: "Installation/Upgrades"},
-      {label: "iSCSI", value: "iSCSI"},
-      {label: "Jails", value: "Jails"},
-      {label: "NFS", value: "NFS"},
-      {label: "Networking", value: "Networking"},
-      {label: "Plugins", value: "Plugins"},
-      {label: "Reporting", value: "Reporting"},
-      {label: "Security", value: "Security"}
     ];
 
     var TN_CATEGORY_OPTIONS = [
@@ -99,6 +80,7 @@ define([
     var SupportTicket = declare("freeadmin.SupportTicket", [ _Widget, _Templated ], {
       errorMessage: "",
       initial: "",
+      categoriesUrl: "",
       progressUrl: "",
       url: "",
       softwareName: "",
@@ -172,6 +154,13 @@ define([
             value: initial.password
           }, this.dapPassword);
 
+          on(this._password, 'change', function() {
+            me.fetchCategories({
+              user: me._username.get('value'),
+              password: me._password.get('value')
+            });
+          });
+
           this._type = new Select({
             name: "type",
             options: TYPE_OPTIONS
@@ -182,7 +171,7 @@ define([
 
         this._category = new Select({
           name: "category",
-          options: (this.softwareName == 'truenas') ? TN_CATEGORY_OPTIONS : CATEGORY_OPTIONS
+          options: (this.softwareName == 'truenas') ? TN_CATEGORY_OPTIONS : []
         }, this.dapCategory);
         if(initial.category) this._category.set('value', initial.category);
 
@@ -222,6 +211,22 @@ define([
 
         this.inherited(arguments);
 
+      },
+      fetchCategories: function(query) {
+        var me = this;
+
+        xhr.get(me.categoriesUrl, {
+          handleAs: 'json',
+          query: query || ''
+        }).then(function(data) {
+          if(data.error) return;
+          var cats = [];
+          for(var i in data.categories) {
+            cats.push({label: i, value: data.categories[i]});
+          }
+          me._category.removeOption(me._category.getOptions());
+          me._category.addOption(cats);
+        });
       },
       AddAttachment: function() {
 
