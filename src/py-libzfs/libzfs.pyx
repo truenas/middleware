@@ -252,12 +252,18 @@ cdef class ZFS(object):
         cdef uintptr_t config = pool.config.handle()
         cdef uintptr_t options = opts.handle()
 
-        libzfs.zpool_import_props(
+        if libzfs.zpool_import_props(
             self._root,
             <nvpair.nvlist_t*>config,
             newname,
             <nvpair.nvlist_t*>options,
-            False)
+            False
+        ) != 0:
+            raise ZFSException(self.errno, self.errstr)
+
+    def export_pool(self, ZFSPool pool):
+        if libzfs.zpool_export(pool._zpool, True, "export") != 0:
+            raise ZFSException(self.errno, self.errstr)
 
     def get_dataset(self, name):
         cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
@@ -265,7 +271,7 @@ cdef class ZFS(object):
         if handle == NULL:
             raise ZFSException(Error.NOENT, 'Dataset {0} not found'.format(name))
 
-        return ZFSDataset(self, ZFSPool(self, <uintptr_t>pool), <uintptr_t>handle)
+        return ZFSDataset(self, ZFSPool(self, <uintptr_t>pool, False), <uintptr_t>handle)
 
     def create(self, name, topology, opts, fsopts):
         root = self.__make_vdev_tree(topology)
@@ -536,11 +542,12 @@ cdef class ZPoolScrub(object):
 
 cdef class ZFSPool(object):
     cdef libzfs.zpool_handle_t *_zpool
+    cdef bint free
     cdef readonly ZFS root
     cdef readonly ZFSDataset root_dataset
     cdef readonly object name
 
-    def __init__(self, ZFS root, uintptr_t handle):
+    def __init__(self, ZFS root, uintptr_t handle, bint free=True):
         self.root = root
         self._zpool = <libzfs.zpool_handle_t*>handle
         self.name = libzfs.zpool_get_name(self._zpool)
@@ -555,7 +562,7 @@ cdef class ZFSPool(object):
         )
 
     def __dealloc__(self):
-        if self._zpool != NULL:
+        if self.free:
             libzfs.zpool_close(self._zpool)
 
     def __getstate__(self):
@@ -682,6 +689,7 @@ cdef class ZFSImportablePool(ZFSPool):
         self._zpool = NULL
         self._config = config
         self.name = name
+        self.free = False
 
     property config:
         def __get__(self):
