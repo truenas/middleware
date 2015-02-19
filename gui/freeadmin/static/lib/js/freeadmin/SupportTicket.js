@@ -201,7 +201,7 @@ define([
 
         this._debug = new CheckBox({
           name: "debug",
-          checked: initial.debug
+          checked: (initial.debug !== undefined) ? initial.debug : true
         }, this.dapDebug);
 
         this._submit = new Button({
