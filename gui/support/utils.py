@@ -9,6 +9,7 @@ from freenasUI.common.system import get_sw_name
 
 log = logging.getLogger('support.utils')
 ADDRESS = 'support-proxy.ixsystems.com'
+LICENSE_FILE = '/data/license'
 
 
 def get_port():
