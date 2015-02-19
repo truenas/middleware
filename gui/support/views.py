@@ -97,12 +97,10 @@ def ticket(request):
             f.write(json.dumps({'indeterminate': True, 'step': step}))
         step += 1
 
+        data = {'message': msg, 'error': not success}
+
         if not success:
-            response = render(request, 'support/ticket.html', {
-                'sw_name': get_sw_name().lower(),
-                'error_message': msg,
-                'initial': json.dumps(request.POST.dict()),
-            })
+            pass
         else:
 
             files.extend(request.FILES.getlist('attachment'))
@@ -113,17 +111,12 @@ def ticket(request):
                     'ticketnum': tid,
                 }, f)
 
-            response = render(request, 'support/ticket_response.html', {
-                'success': success,
-                'message': msg,
-            })
-        if not request.is_ajax():
-            response.content = (
-                '<html><body><textarea>%s</textarea></boby></html>' % (
-                    response.content,
-                )
+        data = (
+            '<html><body><textarea>%s</textarea></boby></html>' % (
+                json.dumps(data),
             )
-        return response
+        )
+        return HttpResponse(data)
     return render(request, 'support/ticket.html', {
         'sw_name': get_sw_name().lower(),
     })

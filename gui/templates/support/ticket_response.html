@@ -1,7 +1,0 @@
-{% if success %}
-<p>{% trans "Your ticket has been successfully submitted!" %}</p>
-<p>{% trans "URL" %}: <a href="{{ message }}" target="_blank">{{ message }}</a></p>
-{% else %}
-<p>{% trans "Ticket submission has failed" %}</p>
-<p>{{ message }}</p>
-{% endif %}
