@@ -1662,8 +1662,6 @@ class FreeNAS_ActiveDirectory_Base(object):
                 ipv6_site = sinfo[1]['cn'][0]
                 break
 
-        print ipv4_site
-
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
             return ipv4_site 
 
