@@ -60,11 +60,44 @@ def main(command):
         elif ret == "SINGLE":
             print "Node status: Not an HA node"
     elif command == "enable":
-        # TODO: Impliment enable method here
-        print "Currently unimplimented"
+        from freenasUI.failover.models import Failover
+        if Failover.objects.all()[0].disabled is False:
+            ip = Failover.objects.all()[0].ipaddress
+            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker enable" % ip)
+            if not ret:
+                for item in Failover.objects.all():
+                    item.disabled = False
+                    item.active = False
+                    item.save()
+                print "Failover enabled."
+            else:
+                print "Unable to contact remote node.  Failover not enabled."
+                sys.exit(2)
+        else:
+            print "Failover not disabled.  Cannot enable!"
+            sys.exit(3)
     elif command == "disable":
-        # TODO: Impliment disable method here
-        print "Currently unimplimented"
+        from freenasUI.failover.models import Failover
+        ip = Failover.objects.all()[0].ipaddress
+        if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
+            status = "master"
+            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable passive" % ip)
+        else:
+            status = "passive"
+            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable active" % ip)
+        if not ret:
+            for item in Failover.objects.all():
+                item.disabled = True
+                if status == "master":
+                    item.active = True
+                else:
+                    item.active = False
+                item.save()
+                print "Failover disabled."
+                sys.exit(0)
+        else:
+            print "Unable to contact remote node.  Failover not disabled."
+            sys.exit(3)
     elif command == "takeover":
         print "This will likely cause the active node to reboot."
         while True:
@@ -79,7 +112,17 @@ def main(command):
         _not.failover_force_master()
     elif command == "giveback":
         # TODO: Impliment giveback method here
-        print "Currently unimplimented"
+        print "Volume giveback will reboot this node."
+        while True:
+            ret = raw_input("Are you sure you wish to proceed with making the other node active? (y/n): ")
+            if ret.lower() == "y":
+                break
+            elif ret.lower() == "n":
+                print "Giveback cancelled."
+                sys.exit(1)
+            else:
+                continue
+        os.system("shutdown -r now")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='HA CLI control utility.')
