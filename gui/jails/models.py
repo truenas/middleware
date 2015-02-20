@@ -208,7 +208,7 @@ class Jails(Model):
     def jail_ipv4_dhcp(self):
         ret = False
         jail_ipv4 = self.jail_ipv4
-        if jail_ipv4 and jail_ivp4.startswith("DHCP:"):
+        if jail_ipv4 and jail_ipv4.startswith("DHCP:"):
             ret = True
         return ret
 
