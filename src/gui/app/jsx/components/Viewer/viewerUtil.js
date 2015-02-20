@@ -56,6 +56,7 @@ viewerUtil.ItemIcon = React.createClass({
 
     propTypes: {
         iconImage       : React.PropTypes.string
+      , fontIcon        : React.PropTypes.string
       , size            : React.PropTypes.number
       , fontSize        : React.PropTypes.number
       , primaryString   : React.PropTypes.string
@@ -63,61 +64,97 @@ viewerUtil.ItemIcon = React.createClass({
       , seedNumber      : React.PropTypes.number
     }
 
+  , getDefaultProps: function() {
+      return {
+          size     : null
+        , fontSize : null
+      };
+    }
+
   , componentWillMount: function() {
-      this.setFallbackIcon( this.props );
+      this.setIcon( this.props );
   }
 
   , componentWillReceiveProps: function( nextProps ) {
-      this.setFallbackIcon( nextProps );
+      this.setIcon( this.props );
   }
 
-  , setFallbackIcon: function( props ) {
-      // If there's a profile picture we can use, don't bother with setup
-      if ( props.iconImage ) {
-        return;
-      } else {
-        var initials = "";
-        var userRGB;
-
-        if ( typeof props.seedNumber === "number" ) {
-          userRGB = viewerUtil.getPastelColor( props.seedNumber );
+  , setIcon: function( props ) {
+      // If there's a profile picture already, don't bother with an icon.
+      if ( !props.iconImage ) {
+        // Font Icon overrides initials icon, but only needs a color.
+        if ( props.fontIcon ) {
+          this.setIconColor ( this.props );
         } else {
-          userRGB = viewerUtil.getPastelColor( props.primaryString.length + props.fallbackString.length );
+          this.setInitialsIcon( this.props );
         }
-
-        if ( props.primaryString ) {
-          initials = props.primaryString
-                       .split(" ")
-                       .map( function( word ) { return word[0]; } );
-        } else {
-          initials = props.fallbackString;
-        }
-
-        this.setState({
-            userColor : "rgb(" + userRGB.join(",") + ")"
-          , initials  : ( initials[0] + ( initials.length > 1 ? initials[ initials.length - 1 ] : "" ) ).toUpperCase()
-        });
       }
+    }
+
+  , setInitialsIcon: function( props ) {
+      var initials = "";
+
+      if ( props.primaryString ) {
+        initials = props.primaryString
+                     .split(" ")
+                     .map( function( word ) { return word[0]; } );
+      } else {
+        initials = props.fallbackString;
+      }
+
+      this.setState({
+        initials  : ( initials[0] + ( initials.length > 1 ? initials[ initials.length - 1 ] : "" ) ).toUpperCase()
+      });
+
+      this.setIconColor( this.props );
+    }
+
+  , setIconColor: function ( props ) {
+      var userRGB;
+
+      if ( typeof props.seedNumber === "number" ) {
+        userRGB = viewerUtil.getPastelColor( props.seedNumber );
+      } else {
+        userRGB = viewerUtil.getPastelColor( props.primaryString.length + props.fallbackString.length );
+      }
+
+      this.setState({
+        userColor : "rgb(" + userRGB.join(",") + ")"
+      });
     }
 
   , render: function() {
       if ( this.props.iconImage ) {
         // TODO: BASE64 encoded user images from middleware
         return (
-          <div className = "user-icon"
-               style     = { { height : this.props.size ? this.props.size : null
-                             , width  : this.props.size ? this.props.size : null } }>
-            <img className="user-icon-image" src={ "data:image/jpg;base64," + this.props.iconImage } />
+          <div className = "icon"
+               style     = { { height : this.props.size
+                             , width  : this.props.size } }>
+            <img className="image-icon" src={ "data:image/jpg;base64," + this.props.iconImage } />
+          </div>
+        );
+      } else if ( this.props.fontIcon ) {
+        // Use a Font Icon, but only if there isn't a specific image specified.
+        return (
+          <div className = "icon"
+               style     = { { background : this.state.userColor ? this.state.userColor : null
+                             , height     : this.props.size
+                             , width      : this.props.size } }>
+            <span className = "font-icon"
+                  style     = { { fontSize : this.props.fontSize + "em" } } >
+              <Icon glyph     = { this.props.fontIcon } />
+            </span>
           </div>
         );
       } else {
+        // Using the Initials icon is a last resort.
         return (
-          <div className = "user-icon"
+          <div className = "icon"
                style     = { { background : this.state.userColor ? this.state.userColor : null
-                             , height     : this.props.size ? this.props.size : null
-                             , width      : this.props.size ? this.props.size : null } }>
-            <span className = "user-initials"
-                  style     = { { fontSize   : this.props.fontSize ? this.props.fontSize + "em" : null } } >
+                             , height     : this.props.size
+                             , width      : this.props.size } }>
+            <span className = "initials-icon"
+                  style     = { { fontSize : this.props.fontSize + "em"} } >
               { this.state.initials }
             </span>
           </div>
@@ -164,11 +201,14 @@ viewerUtil.writeBool = function( entry ) {
 };
 
 // A simple data cell whose title is a string, and whose value is represented
-// based on its type (eg. check mark for boolean)
+// based on its type (eg. check mark for boolean). colNum is used to scale the
+// output to the number of columns desired. Only 2, 3, and 4 should be used.
+// On small screens, the number of columns is always 2.
 viewerUtil.DataCell = React.createClass({
     propTypes: {
-        title: React.PropTypes.string.isRequired
-      , entry: React.PropTypes.oneOfType([
+        title  : React.PropTypes.string.isRequired
+      , colNum : React.PropTypes.number.isRequired
+      , entry  : React.PropTypes.oneOfType([
             React.PropTypes.string
           , React.PropTypes.bool
           , React.PropTypes.number
@@ -178,7 +218,7 @@ viewerUtil.DataCell = React.createClass({
       if ( typeof this.props.entry !== "undefined" ) {
         return (
           <TWBS.Col className="text-center"
-                    xs={6} sm={4}>
+                    xs={6} sm={12/this.props.colNum}>
             <h4 className="text-muted">{ this.props.title }</h4>
             <h4>{ viewerUtil.identifyAndWrite( this.props.entry ) }</h4>
           </TWBS.Col>

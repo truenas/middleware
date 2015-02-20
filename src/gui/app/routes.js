@@ -30,7 +30,10 @@ var Root = require("./jsx/views/FreeNASWebApp");
     var Groups     = require("./jsx/views/Accounts/Groups");
 
   var Tasks        = require("./jsx/views/Tasks");
-  var Network      = require("./jsx/views/Network");
+
+  var Networks      = require("./jsx/views/Networks");
+    var NetworkItem = require("./jsx/views/Networks/NetworkItem");
+
   var Storage      = require("./jsx/views/Storage");
   var Sharing      = require("./jsx/views/Sharing");
   var Services     = require("./jsx/views/Services");
@@ -68,7 +71,15 @@ module.exports = (
       </Route>
 
       <Route name="tasks" handler={ Tasks } />
-      <Route name="network" handler={ Network } />
+
+      <Route name    = "networks"
+             path    = "networks"
+             handler = { Networks } >
+        <Route name    = "networks-editor"
+               path    = "/networks/:networksID"
+               handler = { NetworkItem } />
+      </Route>
+
       <Route name="storage" handler={ Storage } />
       <Route name="sharing" handler={ Sharing } />
 

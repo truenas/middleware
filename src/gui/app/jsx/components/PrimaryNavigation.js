@@ -29,7 +29,7 @@ var paths = [
     , label   : "Tasks"
     , status  : null
   },{
-      path    : "network"
+      path    : "networks"
     , icon    : "moon-o"
     , label   : "Networks"
     , status  : null

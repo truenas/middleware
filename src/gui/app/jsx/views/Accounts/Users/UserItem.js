@@ -76,18 +76,24 @@ var UserView = React.createClass({
 
           {/* Primary user data overview */}
           <TWBS.Row>
-            <viewerUtil.DataCell title = { "User ID" }
-                                 entry = { this.props.item["id"] } />
-            <viewerUtil.DataCell title = { "Primary Group" }
-                                 entry = { this.props.item["group"] } />
-            <viewerUtil.DataCell title = { "Shell" }
-                                 entry = { this.props.item["shell"] } />
-            <viewerUtil.DataCell title = { "Locked Account" }
-                                 entry = { this.props.item["locked"] } />
-            <viewerUtil.DataCell title = { "Sudo Access" }
-                                 entry = { this.props.item["sudo"] } />
-            <viewerUtil.DataCell title = { "Password Disabled" }
-                                 entry = { this.props.item["password_disabled"] } />
+            <viewerUtil.DataCell title  = { "User ID" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["id"] } />
+            <viewerUtil.DataCell title  = { "Primary Group" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["group"] } />
+            <viewerUtil.DataCell title  = { "Shell" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["shell"] } />
+            <viewerUtil.DataCell title  = { "Locked Account" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["locked"] } />
+            <viewerUtil.DataCell title  = { "Sudo Access" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["sudo"] } />
+            <viewerUtil.DataCell title  = { "Password Disabled" }
+                                 colNum = { 3 }
+                                 entry  = { this.props.item["password_disabled"] } />
           </TWBS.Row>
 
           {/* "Edit User" Button - Bottom */}

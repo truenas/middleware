@@ -31,6 +31,11 @@ module.exports = {
 
       //SystemInfo Data
       , RECEIVE_SYSTEM_INFO_DATA : null
+
+      //Networks
+      , RECEIVE_RAW_NETWORKS        : null
+      , RECEIVE_NETWORK_UPDATE_TASK : null
+      , RESOLVE_NETWORK_UPDATE_TASK : null
     })
 
   , PayloadSources: keyMirror({

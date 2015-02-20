@@ -1,0 +1,75 @@
+[{
+    "primaryKey"   : "name"
+  , "secondaryKey" : "ip"
+  , "selectionKey" : "name"
+  , "fontIconKey"  : "font_icon"
+  , "uniqueKey"    : "link_address"
+  , "dataKeys": [
+      {
+          "key"         : "name"
+        , "name"        : "Interface"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "ip"
+        , "name"        : "IP Address"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "ip_version"
+        , "name"        : "IP Version"
+        , "type"        : "string"
+        , "defaultCol"  : false
+     }
+    , {
+          "key"         : "link_state"
+        , "name"        : "Link State"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "link_address"
+        , "name"        : "MAC Address"
+        , "type"        : "string"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "flags"
+        , "name"        : "Interface Flags"
+        , "type"        : "array"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "netmask"
+        , "name"        : "Netmask"
+        , "type"        : "number"
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "enabled"
+        , "name"        : "Enabled"
+        , "type"        : "boolean"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "dhcp"
+        , "name"        : "DHCP Enabled"
+        , "type"        : "boolean"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "type"
+        , "name"        : "Interface Type"
+        , "type"        : "string"
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "font_icon"
+        , "name"        : "Font Icon Class"
+        , "type"        : "string"
+        , "defaultCol"  : null
+     }
+  ]
+}]
