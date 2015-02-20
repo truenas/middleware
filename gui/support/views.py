@@ -172,7 +172,7 @@ def ticket_categories(request):
             sorted(msg.items(), key=lambda y: y[0].lower())
         )
     else:
-        data['message'] = msg['message']
+        data['message'] = msg
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 

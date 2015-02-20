@@ -54,7 +54,10 @@ def fetch_categories(data):
     except requests.Timeout, e:
         return False, _('Connection timed out: %s') % e
 
-    return not data['error'], data
+    if 'error' in data:
+        return False, data['message']
+
+    return True, data
 
 
 def new_ticket(data):
