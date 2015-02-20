@@ -32,6 +32,10 @@ ipmi_help() { echo "Dump IPMI Configuration"; }
 ipmi_directory() { echo "IPMI"; }
 ipmi_func()
 {
+	section_header "ipmitool lan print"
+	ipmitool lan print
+	section_footer
+
 	section_header "ipmitool -I open sel list"
 	ipmitool -I open sel list
 	section_footer
