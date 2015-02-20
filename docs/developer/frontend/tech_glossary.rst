@@ -170,6 +170,8 @@ that includes simple React reimplementations of the TWBS components.
 |D3| Data Driven Documents
 --------------------------
 
+**Available on DevDocs**
+
 +--------------+---------------+-------------+-----------------------+---------------+
 | Homepage     | Documentation | Source Code | License               | Authors       |
 +==============+===============+=============+=======================+===============+
@@ -194,6 +196,8 @@ overview, providing realtime graphs of CPU, network, disk, etc.
 
 |React|
 -------
+
+**Available on DevDocs**
 
 +-------------------------------+---------------+-------------+------------+------------------------------------+
 | Homepage                      | Documentation | Source Code | License    | Authors                            |
@@ -302,6 +306,8 @@ final compiled "location".
 |Grunt|
 -------
 
+**Available on DevDocs**
+
 +-----------------+---------------+-------------+---------+--------------------+
 | Homepage        | Documentation | Source Code | License | Authors            |
 +=================+===============+=============+=========+====================+
@@ -333,6 +339,8 @@ target over ``ssh``.
 |LESS|
 ------
 
+**Available on DevDocs**
+
 +-----------------+---------------+-------------+---------+----------------+
 | Homepage        | Documentation | Source Code | License | Authors        |
 +=================+===============+=============+=========+================+
@@ -363,6 +371,8 @@ as a simpler development process.
 
 |Node|
 ------
+
+**Available on DevDocs**
 
 +----------------+---------------+-------------+---------+-------------+
 | Homepage       | Documentation | Source Code | License | Authors     |
