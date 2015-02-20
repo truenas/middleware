@@ -576,6 +576,11 @@ class JailsConfigurationForm(ModelForm):
                 _("Jail root must be on a volume or dataset!")
             )
 
+        if not os.path.exists(jc_path):
+            raise forms.ValidationError(
+                _("Jail root does not exist!")
+            )
+
         return jc_path
 
 
