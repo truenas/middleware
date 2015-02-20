@@ -660,10 +660,33 @@ def generate_smb4_conf(smb4_conf, role):
     confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
     confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
     if cifs.cifs_srv_bindip:
-        interfaces = cifs.cifs_srv_bindip.replace(',', ' ')
+        interfaces = []
+
+        bindips = cifs.cifs_srv_bindip.replace(',', ' ')
         if role != 'dc':
-            interfaces = "127.0.0.1 %s" % interfaces
-        confset2(smb4_conf, "interfaces = %s", interfaces)
+            bindips = "127.0.0.1 %s" % bindips
+
+        n = notifier()
+        bindips = bindips.split()
+        for bindip in bindips:
+            if not bindip:
+                continue
+            iface = n.get_interface(bindip)
+            if iface and n.is_carp_interface(iface):
+                parent_iface = n.get_parent_interface(iface)
+                if not parent_iface:
+                    continue
+
+                parent_iinfo = n.get_interface_info(parent_iface[0])
+                if not parent_iinfo:
+                    continue
+
+                interfaces.append("%s/%s" % (bindip, parent_iface[2]))
+            else:
+                interfaces.append(bindip)
+
+        if interfaces:
+            confset2(smb4_conf, "interfaces = %s", string.join(interfaces))
         confset1(smb4_conf, "bind interfaces only = yes")
 
     confset1(smb4_conf, "encrypt passwords = yes")
