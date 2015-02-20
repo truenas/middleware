@@ -3986,59 +3986,192 @@ class notifier:
             return None
 
         iface_info = { 'ether': None, 'ipv4': None, 'ipv6': None, 'status': None }
-        p = self._pipeopen("ifconfig '%s' ether|grep -w ether" % iface)
+        p = self._pipeopen("ifconfig '%s'" % iface)
         out = p.communicate()
-        if p.returncode == 0:
+        if p.returncode != 0:
+            return iface_info
+
+        try:
             out = out[0].strip()
-            m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out)
+        except:
+            return iface_info
+
+        m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out, re.MULTILINE)
+        if m != None:
+            iface_info['ether'] = m.group(1)
+
+        lines = out.splitlines()
+        for line in lines:
+            line = line.lstrip().rstrip()
+            m = re.search('inet (([0-9]{1,3}\.){3}[0-9]{1,3})' +
+                ' +netmask (0x[0-9a-fA-F]{8})' +
+                '( +broadcast (([0-9]{1,3}\.){3}[0-9]{1,3}))?',
+                line
+            )
+
             if m != None:
-                iface_info['ether'] = m.group(1)
+                if iface_info['ipv4'] == None:
+                    iface_info['ipv4'] = []
 
-        p = self._pipeopen("ifconfig '%s' inet|grep -w inet" % iface)
-        out = p.communicate()
-        if p.returncode == 0:
-            lines = out[0].splitlines()
-            for line in lines:
-                line = line.lstrip().rstrip()
-                m = re.search('inet (([0-9]{1,3}\.){3}[0-9]{1,3})' +
-                    ' +netmask (0x[0-9a-fA-F]{8})' +
-                    ' +broadcast (([0-9]{1,3}\.){3}[0-9]{1,3})',
-                    line
-                )
+                iface_info['ipv4'].append({
+                    'inet': m.group(1),
+                    'netmask': m.group(3),
+                    'broadcast': m.group(4)
+                })
 
-                if m != None:
-                    if iface_info['ipv4'] == None:
-                        iface_info['ipv4'] = []
+            m = re.search('inet6 ([0-9a-fA-F:]+) +prefixlen ([0-9]+)', line)
+            if m != None:
+                if iface_info['ipv6'] == None:
+                    iface_info['ipv6'] = []
 
-                    iface_info['ipv4'].append({
-                        'inet': m.group(1),
-                        'netmask': m.group(3),
-                        'broadcast': m.group(4)
-                    })
+                iface_info['ipv6'].append({
+                    'inet6': m.group(1),
+                    'prefixlen': m.group(2)
+                })
 
-        p = self._pipeopen("ifconfig '%s' inet6|grep -w inet6|grep -v scopeid" % iface)
-        out = p.communicate()
-        if p.returncode == 0:
-            lines = out[0].splitlines()
-            for line in lines:
-                line = line.lstrip().rstrip()
-                m = re.search('inet6 ([0-9a-fA-F:]+) +prefixlen ([0-9]+)', line)
-                if m != None:
-                    if iface_info['ipv6'] == None:
-                        iface_info['ipv6'] = []
-
-                    iface_info['ipv6'].append({
-                        'inet6': m.group(1),
-                        'prefixlen': m.group(2)
-                    })
-        p = self._pipeopen("ifconfig '%s'|grep -w status" % iface)
-        out = p.communicate()
-        if p.returncode == 0:
-            out = out[0].strip()
-            parts = out.split(':') 
-            iface_info['status'] = parts[1].strip()
+        m = re.search('status: (.+)$', out)
+        if m != None:
+            iface_info['status'] = m.group(1)
 
         return iface_info
+
+    def interface_is_ipv4(self, addr):
+        res = False
+
+        try:
+            socket.inet_aton(addr)
+            res = True
+
+        except:
+            res = False
+
+        return res
+
+    def interface_is_ipv6(self, addr):
+        res = False
+
+        try:
+            socket.inet_pton(socket.AF_INET6, addr)
+            res = True
+
+        except:
+            res = False
+
+        return res
+
+    def get_interface(self, addr):
+        from freenasUI import choices
+
+        if not addr:
+            return None
+
+        nic_choices = choices.NICChoices(exclude_configured=False)
+        for nic in nic_choices:
+            iface = str(nic[0])
+            iinfo = self.get_interface_info(iface)
+            if not iinfo:  
+                return None
+
+            if self.interface_is_ipv4(addr):
+                ipv4_info = iinfo['ipv4']
+                if ipv4_info: 
+                    for i in ipv4_info:
+                        if not 'inet' in i:
+                            continue
+                        ipv4_addr = i['inet']
+                        if ipv4_addr == addr:
+                            return nic[0]
+
+            elif self.interface_is_ipv6(addr):
+                ipv6_info = iinfo['ipv6']
+                if ipv6_info: 
+                    for i in ipv6_info:
+                        if not 'inet6' in i: 
+                            continue 
+                        ipv6_addr = i['inet6']
+                        if ipv6_addr == addr:
+                            return nic[0]
+
+        return None
+
+    def is_carp_interface(self, iface):
+        res = False
+
+        if not iface:
+            return res
+
+        if re.match('^carp[0-9]+$', iface):
+            res = True
+
+        return res
+
+    def get_parent_interface(self, iface):
+        from freenasUI import choices
+        from freenasUI.common.sipcalc import sipcalc_type
+
+        if not iface:
+            return None
+
+        child_iinfo = self.get_interface_info(iface)
+        if not child_iinfo:
+            return None
+
+        child_ipv4_info = child_iinfo['ipv4']
+        child_ipv6_info = child_iinfo['ipv6']
+        if not child_ipv4_info and not child_ipv6_info:
+            return None
+
+        parent_iface = None
+        interfaces = choices.NICChoices(exclude_configured=False)
+        for iface in interfaces:
+            iface = iface[0] 
+            if self.is_carp_interface(iface):
+                continue  
+
+            iinfo = self.get_interface_info(iface)
+            if not iinfo: 
+                continue
+
+            ipv4_info = iinfo['ipv4'] 
+            ipv6_info = iinfo['ipv6'] 
+
+            if not ipv4_info and not ipv6_info:
+                continue
+
+            if ipv4_info:
+                for i in ipv4_info:
+                    if not i or not 'inet' in i or not i['inet']:
+                        continue
+
+                    st_ipv4 = sipcalc_type(i['inet'], i['netmask'])
+                    if not st_ipv4:
+                        continue 
+
+                    for ci in child_ipv4_info:
+                        if not ci or not 'inet' in ci or not ci['inet']:
+                            continue
+
+                        if st_ipv4.in_network(ci['inet']):
+                            return (iface, st_ipv4.host_address, st_ipv4.network_mask_bits)
+                
+
+            if ipv6_info:
+                for i in ipv6_info:
+                    if not i or not 'inet6 ' in i or not i['inet6']:
+                        continue
+
+                    st_ipv6 = sipcalc_type("%s/%s" % (i['inet'], i['prefixlen']))
+                    if not st_ipv6:
+                        continue 
+
+                    for ci in child_ipv6_info:
+                        if not ci or not 'inet6' in ci or not ci['inet6']:
+                            continue
+
+                        if st_ipv6.in_network(ci['inet6']):
+                            return (iface, st_ipv6.compressed_address, st_ipv6.prefix_length)
+
+        return None
 
     def lagg_remove_port(self, lagg, iface):
         return self._system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
