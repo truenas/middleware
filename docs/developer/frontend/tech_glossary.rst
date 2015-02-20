@@ -1,24 +1,71 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
+************************
 Glossary of Technologies
-========================
+************************
 
-This guide aims to explain the name and function of technologies core to
-the new webapp architecture in FreeNAS 10.
+This document contains short descriptions of each of the web technologies used in FreeNAS 10. The isomorphic webapp architecture in FreeNAS 10 relies on a mixture of frontend and backend technology, and a functional understanding of both the component parts and the ways they interact is essential to GUI development. Each entry contains links to the source, license, documentation, and authors.
 
-FAQs
-----
+.. contents::
+   :local:
+   :depth: 2
 
-Is Node.js a webserver?
-~~~~~~~~~~~~~~~~~~~~~~~
 
-No. Node.js is a serverside JavaScript environment. It contains all of
-the component parts and APIs necessary to create a webserver, and many
-good ones have been created on top of Node.js.
+A Word on External Documentation
+================================
+
+This Developer's Guide doesn't aim to be an exhaustive resource for development documentation, nor does it attempt to replicate the efforts of original authors or full tutorials. Each section here should contain the original documentation (if available), and other resources such as guides and tutorials (where applicable).
+
+Quite a lot of these packages have their documentation available on `devdocs.io <http://devdocs.io>`__, which is always the recommended resource. It's searchable, available offline, and offers all of the documentation through a unified interface.
+
+.. figure:: images/glossary/DevDocs.png
+   :align: center
+   :figclass: align-center
+
+   The `DevDocs <http://devdocs.io>`__ interface
+
+
+Package Management
+==================
+
+|Bower| Bower
+-------------
+
+**Available on DevDocs**
+
++--------------+---------------+-------------+---------+---------------------------+
+| Homepage     | Documentation | Source Code | License | Authors                   |
++==============+===============+=============+=========+===========================+
+| `bower.io`__ |               | `GitHub`__  | MIT     | `@fat`__ and `@maccman`__ |
++--------------+---------------+-------------+---------+---------------------------+
+
+.. Homepage
+__ http://bower.io/
+
+.. Source Code
+__ https://github.com/bower/bower
+
+.. Author(s)
+__ https://github.com/fat
+__ https://github.com/maccman
+
+Bower is a package management system for frontend libraries and plugins. It focuses on compiled (and often minified) code which is ready to be redistributed as-is. It functions as a counterpart to npm, and provides packages like Twitter Bootstrap or Velocity.js.
+
+
+
+Frontend Packages
+=================
+
+In this document, "frontend packages" refer to the NPM modules and Bower components used by the FreeNAS WebApp running in a browser context. The isomorphic WebApp model can blur this line, since the entire application is rendered serverside in a Node environment before being delivered to the client.
+
+However, because many of the frontend packages rely either on user interaction, or methods in the React lifecycle that will not be called until the React component is mounted in the real browser DOM, this group of packages tends to behave much more like traditional web frameworks, and usually will not use the Node/Browserify ``require()`` syntax.
+
+Frontend FAQ
+------------
 
 Where is jQuery?
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 FreeNAS 10 does not use jQuery. jQuery was the savior of its time, but
 performs four core functions which have been deprecated by the adoption
@@ -26,47 +73,51 @@ of newer technologies and the creation of purpose-built libraries.
 
 1. DOM manipulation
 
-    As all views in the FreeNAS 10 WebApp are React components,
-    modifying React's in-browser representation of its virtual DOM can
-    create an un-reconcilable state, and presents other unneccessary
-    risks.
+   As all views in the FreeNAS 10 WebApp are React components,
+   modifying React's in-browser representation of its virtual DOM can
+   create an un-reconcilable state, and presents other unneccessary
+   risks.
 
 2. AJAX requests
 
-    The FreeNAS 10 Middleware uses a persistent WebSocket connection to
-    facilitate communication between client and server. For times when
-    this isn't the right course of action, the syntax and adoption of
-    `XMLHTTPRequest <https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest>`__
-    have stabilized enough that a dedicated library is unneccessary.
+   The FreeNAS 10 Middleware uses a persistent WebSocket connection to
+   facilitate communication between client and server. For times when
+   this isn't the right course of action, the syntax and adoption of
+   `XMLHTTPRequest <https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest>`__
+   have stabilized enough that a dedicated library is unneccessary.
 
 3. Animation
 
-    See Velocity.js below.
+   See Velocity.js below.
 
 4. Polyfills for old browsers
 
-    As React.js features a `synthetic event
-    system <http://facebook.github.io/react/docs/events.html>`__, many
-    of the most commonly needed polyfills are no longer required. Since
-    the target platforms for FreeNAS 10 must also support WebSockets,
-    the number of browsers that support WebSockets and yet still have a
-    need for polyfills for now-standard methods like ``map()`` is
-    negligible, at best.
+   As React.js features a `synthetic event
+   system <http://facebook.github.io/react/docs/events.html>`__, many
+   of the most commonly needed polyfills are no longer required. Since
+   the target platforms for FreeNAS 10 must also support WebSockets,
+   the number of browsers that support WebSockets and yet still have a
+   need for polyfills for now-standard methods like ``map()`` is
+   negligible, at best.
 
-Glossary
---------
+|Bootstrap| Twitter Bootstrap
+-----------------------------
 
-|Bootstrap|
-~~~~~~~~~~~
++----------------------+---------------+-------------+---------+-----------------------+
+| Homepage             | Documentation | Source Code | License | Authors               |
++======================+===============+=============+=========+=======================+
+| `getbootstrap.com`__ |               | `GitHub`__  | MIT     | `@mdo`__ and `@fat`__ |
++----------------------+---------------+-------------+---------+-----------------------+
 
-Twitter Bootstrap
-^^^^^^^^^^^^^^^^^
+.. Homepage
+__ http://getbootstrap.com/
 
-+---------------------------------------------------+---------------------------------------------------+----------------+---------------------------------------------------------------------+
-| Homepage                                          | Source Code                                       | License Type   | Author                                                              |
-+===================================================+===================================================+================+=====================================================================+
-| `getbootstrap.com <http://getbootstrap.com/>`__   | `GitHub <https://github.com/twbs/bootstrap/>`__   | MIT            | [@mdo](https://github.com/mdo) and [@fat](https://github.com/fat)   |
-+---------------------------------------------------+---------------------------------------------------+----------------+---------------------------------------------------------------------+
+.. Source Code
+__ https://github.com/twbs/bootstrap/
+
+.. Author(s)
+__ https://github.com/mdo
+__ https://github.com/fat
 
 Twitter Bootstrap (TWBS) is one of the most popular and well-known HTML,
 CSS, and JavaScript frameworks in use today. It has been widely adopted
@@ -89,33 +140,23 @@ that includes simple React reimplementations of the TWBS components.
 
 --------------
 
-|Bower|
-~~~~~~~
-
-Bower
-^^^^^
-
-+-----------------------------------+-----------------------------------------------+----------------+-----------------------------------------------------------------------------+
-| Homepage                          | Source Code                                   | License Type   | Author                                                                      |
-+===================================+===============================================+================+=============================================================================+
-| `bower.io <http://bower.io/>`__   | `GitHub <https://github.com/bower/bower>`__   | MIT            | [@fat](https://github.com/fat) and [@maccman](https://github.com/maccman)   |
-+-----------------------------------+-----------------------------------------------+----------------+-----------------------------------------------------------------------------+
-
-Bower is a package management system for frontend libraries and plugins.
-It focuses on compiled (and often minified) code which is ready to be
-redistributed as-is. It functions as a counterpart to npm, and provides
-packages like Twitter Bootstrap or Velocity.js.
-
---------------
-
 |Browserify|
-~~~~~~~~~~~~
+------------
 
-+-----------------------------------------------+------------------------------------------------------------+----------------+--------------------------------------------+
-| Homepage                                      | Source Code                                                | License Type   | Author                                     |
-+===============================================+============================================================+================+============================================+
-| `browserify.org <http://browserify.org/>`__   | `GitHub <https://github.com/substack/node-browserify>`__   | MIT            | [@substack](https://github.com/substack)   |
-+-----------------------------------------------+------------------------------------------------------------+----------------+--------------------------------------------+
++--------------------+---------------+-------------+--------------+---------------+
+| Homepage           | Documentation | Source Code | License Type | Authors       |
++====================+===============+=============+==============+===============+
+| `browserify.org`__ |               | `GitHub`__  | MIT          | `@substack`__ |
++--------------------+---------------+-------------+--------------+---------------+
+
+.. Homepage
+__ http://browserify.org
+
+.. Source Code
+__ https://github.com/substack/node-browserify
+
+.. Authors
+__ https://github.com/substack
 
 Browserify is a JavaScript bundler which concatenates and minifies a
 webapp's many individual JavaScript module files into a single, indexed
@@ -137,33 +178,51 @@ final compiled "location".
 
 --------------
 
-|D3|
-~~~~
+|D3| Data Driven Documents
+--------------------------
 
-Data Driven Documents
-^^^^^^^^^^^^^^^^^^^^^
++--------------+---------------+-------------+-----------------------+---------------+
+| Homepage     | Documentation | Source Code | License               | Authors       |
++==============+===============+=============+=======================+===============+
+| `d3js.org`__ |               | `GitHub`__  | Modified BSD 2-Clause | `@mbostock`__ |
++--------------+---------------+-------------+-----------------------+---------------+
 
-+-----------------------------------+-----------------------------------------------+-------------------------+--------------------------------------------+
-| Homepage                          | Source Code                                   | License Type            | Author                                     |
-+===================================+===============================================+=========================+============================================+
-| `d3js.org <http://d3js.org/>`__   | `GitHub <https://github.com/mbostock/d3>`__   | Modified BSD 2-Clause   | [@mbostock](https://github.com/mbostock)   |
-+-----------------------------------+-----------------------------------------------+-------------------------+--------------------------------------------+
+.. Homepage
+__ http://d3js.org/
+
+.. Source Code
+__ https://github.com/mbostock/d3
+
+.. Authors
+__ https://github.com/mbostock
 
 D3.js is a JavaScript library for manipulating documents based on data.
 It is capable of providing rich visualization in the form of charts,
 graphs, maps, and more. In particular, it's used for FreeNAS 10's system
 overview, providing realtime graphs of CPU, network, disk, etc.
 
---------------
+
+
+Server Environment
+==================
 
 |Grunt|
-~~~~~~~
+-------
 
-+-----------------------------------------+-------------------------------------------------------+----------------+------------------------------------------------------------+
-| Homepage                                | Source Code                                           | License Type   | Author                                                     |
-+=========================================+=======================================================+================+============================================================+
-| `gruntjs.com <http://gruntjs.com/>`__   | `Project on GitHub <https://github.com/gruntjs/>`__   | MIT            | `Grunt Dev Team <http://gruntjs.com/development-team>`__   |
-+-----------------------------------------+-------------------------------------------------------+----------------+------------------------------------------------------------+
++-----------------+---------------+-------------+---------+--------------------+
+| Homepage        | Documentation | Source Code | License | Authors            |
++=================+===============+=============+=========+====================+
+| `gruntjs.com`__ |               | `GitHub`__  | MIT     | `Grunt Dev Team`__ |
++-----------------+---------------+-------------+---------+--------------------+
+
+.. Homepage
+__ http://gruntjs.com
+
+.. Source Code
+__ https://github.com/gruntjs/
+
+.. Authors
+__ http://gruntjs.com/development-team
 
 Grunt is a JavaScript task runner, which allows developers to specify
 tasks and build pipelines. It can be used to automatically compile code,
@@ -179,13 +238,22 @@ target over ``ssh``.
 --------------
 
 |LESS|
-~~~~~~
+------
 
-+-----------------------------------------+------------------------------------------------+----------------+----------------------------------------------+
-| Homepage                                | Source Code                                    | License Type   | Author                                       |
-+=========================================+================================================+================+==============================================+
-| `lesscss.org <http://lesscss.org/>`__   | `GitHub <https://github.com/less/less.js>`__   | Apache         | [@cloudhead](https://github.com/cloudhead)   |
-+-----------------------------------------+------------------------------------------------+----------------+----------------------------------------------+
++-----------------+---------------+-------------+---------+----------------+
+| Homepage        | Documentation | Source Code | License | Authors        |
++=================+===============+=============+=========+================+
+| `lesscss.org`__ |               | `GitHub`__  | Apache  | `@cloudhead`__ |
++-----------------+---------------+-------------+---------+----------------+
+
+.. Homepage
+__ http://lesscss.org/
+
+.. Source Code
+__ https://github.com/less/less.js
+
+.. Authors
+__ https://github.com/cloudhead
 
 LESS is a CSS-like language which compiles to CSS. It features
 variables, mixins, and heirarchical class declarations which make
@@ -201,14 +269,25 @@ as a simpler development process.
 --------------
 
 |Moment|
-~~~~~~~~~~~
+-----------
 
-+-----------------------------------------+------------------------------------------------+----------------+--------------------------------------------------------+
-| Homepage                                | Source Code                                    | License Type   | Author                                                 |
-+=========================================+================================================+================+========================================================+
-| `momentjs.com <http://momentjs.com/>`__ | `GitHub <https://github.com/moment/moment/>`__ | MIT            | `Tim Wood <http://timwoodcreates.com/>`__              |
-|                                         |                                                |                | `Iskren Ivov Chernev <https://github.com/ichernev>`__  |
-+-----------------------------------------+------------------------------------------------+----------------+--------------------------------------------------------+
++------------------+---------------+-------------+---------+------------------------------------------+
+| Homepage         | Documentation | Source Code | License | Authors                                  |
++==================+===============+=============+=========+==========================================+
+| `momentjs.com`__ |               | `GitHub`__  | MIT     | `Tim Wood`__ and `Iskren Ivov Chernev`__ |
++------------------+---------------+-------------+---------+------------------------------------------+
+
+.. Homepage
+__ http://momentjs.com/
+
+
+.. Source Code
+__ https://github.com/moment/moment/
+
+
+.. Authors
+__ http://timwoodcreates.com/>
+__ https://github.com/ichernev
 
 Parse, validate, manipulate, and display dates in JavaScript.
 
@@ -226,19 +305,27 @@ libraries.
 In early 2013, Tim Woods handed off the Project Lead role to Iskren Ivov Chernev.
 
 
-
 --------------
 
 |Node|
-~~~~~~
+------
 
-+---------------------------------------+-----------------------------------------------+----------------+----------------------------------------+
-| Homepage                              | Source Code                                   | License Type   | Author                                 |
-+=======================================+===============================================+================+========================================+
-| `nodejs.org <http://nodejs.org/>`__   | `GitHub <https://github.com/joyent/node>`__   | MIT            | [@joyent](https://github.com/joyent)   |
-+---------------------------------------+-----------------------------------------------+----------------+----------------------------------------+
++----------------+---------------+-------------+---------+-------------+
+| Homepage       | Documentation | Source Code | License | Authors     |
++================+===============+=============+=========+=============+
+| `nodejs.org`__ |               | `GitHub`__  | MIT     | `@joyent`__ |
++----------------+---------------+-------------+---------+-------------+
 
-*Node.js is not a webserver.*
+.. Homepage
+__ http://nodejs.org/
+
+
+.. Source Code
+__ https://github.com/joyent/node
+
+
+.. Authors
+__ https://github.com/joyent
 
 Node.js is a serverside JavaScript environment based on Chromium's V8
 engine. It is used to build web applications, run webservers, operate
@@ -248,16 +335,28 @@ Running a Node.js process on FreeNAS allows for things like serverside
 rendering of JavaScript templates, prefetched state, and shared
 callbacks between client and server.
 
+Is Node.js a webserver?
+-----------------------
+
+No. It contains all of the component parts and APIs necessary to create a webserver, and many good webservers have been created on top of Node.js, but Node itself is not a webserver.
+
 --------------
 
 |NPM|
-~~~~~
+-----
 
-+-----------------------------------------+-------------------------------------------+------------------------+-------------+
-| Homepage                                | Source Code                               | License Type           | Author      |
-+=========================================+===========================================+========================+=============+
-| `npmjs.org <https://www.npmjs.org>`__   | `GitHub <https://github.com/npm/npm>`__   | Artistic License 2.0   | npm, Inc.   |
-+-----------------------------------------+-------------------------------------------+------------------------+-------------+
++---------------+---------------+-------------+----------------------+-----------+
+| Homepage      | Documentation | Source Code | License              | Authors   |
++===============+===============+=============+======================+===========+
+| `npmjs.org`__ |               | `GitHub`__  | Artistic License 2.0 | npm, Inc. |
++---------------+---------------+-------------+----------------------+-----------+
+
+.. Homepage
+__ http://npmjs.org/
+
+
+.. Source Code
+__ https://github.com/npm/npm
 
 npm is the package manager used by Node. It manages the libraries,
 dependencies, Grunt plugins, and other development tools used in the
@@ -268,13 +367,20 @@ such as React.
 --------------
 
 |React|
-~~~~~~~
+-------
 
-+--------------------------------------------------------------------+--------------------------------------------------+----------------+--------------------------------------+
-| Homepage                                                           | Source Code                                      | License Type   | Author                               |
-+====================================================================+==================================================+================+======================================+
-| `facebook.github.io/react/ <http://facebook.github.io/react/>`__   | `GitHub <https://github.com/facebook/react>`__   | Apache 2.0     | Facebook & Instagram collaboration   |
-+--------------------------------------------------------------------+--------------------------------------------------+----------------+--------------------------------------+
++-------------------------------+---------------+-------------+------------+------------------------------------+
+| Homepage                      | Documentation | Source Code | License    | Authors                            |
++===============================+===============+=============+============+====================================+
+| `facebook.github.io/react/`__ |               | `GitHub`__  | Apache 2.0 | Facebook & Instagram collaboration |
++-------------------------------+---------------+-------------+------------+------------------------------------+
+
+.. Homepage
+__ http://facebook.github.io/react/
+
+
+.. Source Code
+__ https://github.com/facebook/react
 
 React is a JavaScript library for creating user interfaces. It is unlike
 MVC frameworks like Ember, Backbone, or Angular. React aims only to
@@ -301,13 +407,24 @@ it represents.
 --------------
 
 |Velocity|
-~~~~~~~~~~
+----------
 
-+----------------------------------------------------------------------------+----------------------------------------------------------+----------------+------------------------------------------------------+
-| Homepage                                                                   | Source Code                                              | License Type   | Author                                               |
-+============================================================================+==========================================================+================+======================================================+
-| `julian.com/research/velocity/ <http://julian.com/research/velocity/>`__   | `GitHub <https://github.com/julianshapiro/velocity>`__   | MIT            | [@julianshapiro](https://github.com/julianshapiro)   |
-+----------------------------------------------------------------------------+----------------------------------------------------------+----------------+------------------------------------------------------+
++-----------------------------------+---------------+-------------+---------+--------------------+
+| Homepage                          | Documentation | Source Code | License | Authors            |
++===================================+===============+=============+=========+====================+
+| `julian.com/research/velocity/`__ |               | `GitHub`__  | MIT     | `@julianshapiro`__ |
++-----------------------------------+---------------+-------------+---------+--------------------+
+
+.. Homepage
+__ julian.com/research/velocity/
+
+
+.. Source Code
+__ https://github.com/julianshapiro/velocity
+
+
+.. Authors
+__ https://github.com/julianshapiro
 
 Velocity is a ground-up reimplementation of jQuery's ``$.animate()``
 function. It's lightweight, and more performant in all cases. It also
