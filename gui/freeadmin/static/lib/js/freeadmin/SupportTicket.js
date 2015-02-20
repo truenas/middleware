@@ -26,7 +26,7 @@ define([
   "dojo/text!freeadmin/templates/supportticket_attachment.html"
   ], function(
   declare,
-  domConstruct,
+  domConst,
   domStyle,
   json,
   mouse,
@@ -228,16 +228,25 @@ define([
       fetchCategories: function(query) {
         var me = this;
 
+        me.dapErrorMessage.innerHTML = '';
+        domStyle.set(me.dapErrorMessageRow, "display", "block");
+        domConst.empty(me.dapErrorMessage);
+        var loading = domConst.toDom('<div class="dijitInline dijitIconLoading"></div> <span style="color: black;">Validating credentials...</span>');
+        me.dapErrorMessage.appendChild(loading);
+
+
         xhr.get(me.categoriesUrl, {
           handleAs: 'json',
           query: query || ''
         }).then(function(data) {
           if(data.error) {
+            domConst.empty(me.dapErrorMessage);
             me.dapErrorMessage.innerHTML = data.message;
             domStyle.set(me.dapErrorMessageRow, "display", "block");
           } else {
             me.dapErrorMessage.innerHTML = '';
-            domStyle.set(me.dapErrorMessageRow, "display", "nonw");
+            domConst.empty(me.dapErrorMessage);
+            domStyle.set(me.dapErrorMessageRow, "display", "none");
           }
           var cats = [];
           for(var i in data.categories) {
@@ -310,7 +319,7 @@ define([
       clear: function() {
         this._subject.set('value', '');
         this._desc.set('value', '');
-        domConstruct.empty(this.dapAttachments);
+        domConst.empty(this.dapAttachments);
         this.AddAttachment();
       },
       submit: function() {
@@ -375,7 +384,7 @@ define([
             me.dapErrorMessage.innerHTML = '';
             domStyle.set(me.dapErrorMessageRow, "display", "none");
             progressbar.destroyRecursive();
-            var dom = domConstruct.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + data.message + '</a>')
+            var dom = domConst.toDom('<p>Your ticket has been successfully submitted!</p><p>URL: <a href="' + data.message + '" target="_blank">' + data.message + '</a>')
             submitting.containerNode.appendChild(dom);
 
             me.clear();
