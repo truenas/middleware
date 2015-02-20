@@ -53,6 +53,32 @@ __ https://github.com/maccman
 Bower is a package management system for frontend libraries and plugins. It focuses on compiled (and often minified) code which is ready to be redistributed as-is. It functions as a counterpart to npm, and provides packages like Twitter Bootstrap or Velocity.js.
 
 
+--------------
+
+|NPM|
+-----
+
++---------------+---------------+-------------+----------------------+-----------+
+| Homepage      | Documentation | Source Code | License              | Authors   |
++===============+===============+=============+======================+===========+
+| `npmjs.org`__ |               | `GitHub`__  | Artistic License 2.0 | npm, Inc. |
++---------------+---------------+-------------+----------------------+-----------+
+
+.. Homepage
+__ http://npmjs.org/
+
+
+.. Source Code
+__ https://github.com/npm/npm
+
+npm is the package manager used by Node. It manages the libraries,
+dependencies, Grunt plugins, and other development tools used in the
+creation of a Node webapp. npm is primarily used for libraries and
+modules which will be ``require()``'d inside of the application code,
+such as React.
+
+--------------
+
 
 Frontend Packages
 =================
@@ -140,43 +166,6 @@ that includes simple React reimplementations of the TWBS components.
 
 --------------
 
-|Browserify|
-------------
-
-+--------------------+---------------+-------------+--------------+---------------+
-| Homepage           | Documentation | Source Code | License Type | Authors       |
-+====================+===============+=============+==============+===============+
-| `browserify.org`__ |               | `GitHub`__  | MIT          | `@substack`__ |
-+--------------------+---------------+-------------+--------------+---------------+
-
-.. Homepage
-__ http://browserify.org
-
-.. Source Code
-__ https://github.com/substack/node-browserify
-
-.. Authors
-__ https://github.com/substack
-
-Browserify is a JavaScript bundler which concatenates and minifies a
-webapp's many individual JavaScript module files into a single, indexed
-bundle file. It uses a simple ``require()`` syntax (similar to the
-native Node.js method) to "export" each module as an indexed object.
-This has enormous benefits in a single-page webapp, as JavaScript
-objects are singletons, and thus every view, module et al. will have
-access to the same instance of each - conserving memory and simplifying
-state reconciliation between React components.
-
-.. code:: javascript
-
-    var unique = require('uniq');
-
-Browserify minimizes the number of requests that need to be made for
-resources, ensures that the initial load will include all of the
-application "run" code, and decouples source files' placement from their
-final compiled "location".
-
---------------
 
 |D3| Data Driven Documents
 --------------------------
@@ -200,169 +189,6 @@ D3.js is a JavaScript library for manipulating documents based on data.
 It is capable of providing rich visualization in the form of charts,
 graphs, maps, and more. In particular, it's used for FreeNAS 10's system
 overview, providing realtime graphs of CPU, network, disk, etc.
-
-
-
-Server Environment
-==================
-
-|Grunt|
--------
-
-+-----------------+---------------+-------------+---------+--------------------+
-| Homepage        | Documentation | Source Code | License | Authors            |
-+=================+===============+=============+=========+====================+
-| `gruntjs.com`__ |               | `GitHub`__  | MIT     | `Grunt Dev Team`__ |
-+-----------------+---------------+-------------+---------+--------------------+
-
-.. Homepage
-__ http://gruntjs.com
-
-.. Source Code
-__ https://github.com/gruntjs/
-
-.. Authors
-__ http://gruntjs.com/development-team
-
-Grunt is a JavaScript task runner, which allows developers to specify
-tasks and build pipelines. It can be used to automatically compile code,
-restart webservers, parallelize tasks, and can be extended to almost any
-functionality. Grunt runs the tasks that compile LESS to CSS, uglify and
-unit test JavaScript, create Browserify bundles, and more.
-
-FreeNAS 10 uses Grunt most visibily in the live development environment,
-where a series of concurrent file watchers are run, set up to trigger
-everything from CSS rebuilds to restarting the FreeNAS development
-target over ``ssh``.
-
---------------
-
-|LESS|
-------
-
-+-----------------+---------------+-------------+---------+----------------+
-| Homepage        | Documentation | Source Code | License | Authors        |
-+=================+===============+=============+=========+================+
-| `lesscss.org`__ |               | `GitHub`__  | Apache  | `@cloudhead`__ |
-+-----------------+---------------+-------------+---------+----------------+
-
-.. Homepage
-__ http://lesscss.org/
-
-.. Source Code
-__ https://github.com/less/less.js
-
-.. Authors
-__ https://github.com/cloudhead
-
-LESS is a CSS-like language which compiles to CSS. It features
-variables, mixins, and heirarchical class declarations which make
-development simpler. LESS can also be split into several different
-files, keeping projects neater and better organized.
-
-LESS is used in FreeNAS 10 primarily for its utility, and because
-Twitter Bootstrap is based on LESS. Compiling from LESS creates a
-single, unified file with less overwrites or complicated rules. The
-mixin architecture allows for powerful and dynamic expressions, as well
-as a simpler development process.
-
---------------
-
-|Moment|
------------
-
-+------------------+---------------+-------------+---------+------------------------------------------+
-| Homepage         | Documentation | Source Code | License | Authors                                  |
-+==================+===============+=============+=========+==========================================+
-| `momentjs.com`__ |               | `GitHub`__  | MIT     | `Tim Wood`__ and `Iskren Ivov Chernev`__ |
-+------------------+---------------+-------------+---------+------------------------------------------+
-
-.. Homepage
-__ http://momentjs.com/
-
-
-.. Source Code
-__ https://github.com/moment/moment/
-
-
-.. Authors
-__ http://timwoodcreates.com/>
-__ https://github.com/ichernev
-
-Parse, validate, manipulate, and display dates in JavaScript.
-
-Moment.js is a community effort. With a hundred committers and many more
-contributing bug reports, plugins, and ideas, it has grown much bigger than
-the author ever thought it would when he started writing it over 3 years ago.
-
-It is extensively documented and well tested.
-
-It has inspired people to write ports in Python, PHP, and Objective-C.
-
-With over 17000 stars on GitHub, it is one of the top 10 most popular JavaScript
-libraries.
-
-In early 2013, Tim Woods handed off the Project Lead role to Iskren Ivov Chernev.
-
-
---------------
-
-|Node|
-------
-
-+----------------+---------------+-------------+---------+-------------+
-| Homepage       | Documentation | Source Code | License | Authors     |
-+================+===============+=============+=========+=============+
-| `nodejs.org`__ |               | `GitHub`__  | MIT     | `@joyent`__ |
-+----------------+---------------+-------------+---------+-------------+
-
-.. Homepage
-__ http://nodejs.org/
-
-
-.. Source Code
-__ https://github.com/joyent/node
-
-
-.. Authors
-__ https://github.com/joyent
-
-Node.js is a serverside JavaScript environment based on Chromium's V8
-engine. It is used to build web applications, run webservers, operate
-task runners like Grunt, cross-compile code, and more.
-
-Running a Node.js process on FreeNAS allows for things like serverside
-rendering of JavaScript templates, prefetched state, and shared
-callbacks between client and server.
-
-Is Node.js a webserver?
------------------------
-
-No. It contains all of the component parts and APIs necessary to create a webserver, and many good webservers have been created on top of Node.js, but Node itself is not a webserver.
-
---------------
-
-|NPM|
------
-
-+---------------+---------------+-------------+----------------------+-----------+
-| Homepage      | Documentation | Source Code | License              | Authors   |
-+===============+===============+=============+======================+===========+
-| `npmjs.org`__ |               | `GitHub`__  | Artistic License 2.0 | npm, Inc. |
-+---------------+---------------+-------------+----------------------+-----------+
-
-.. Homepage
-__ http://npmjs.org/
-
-
-.. Source Code
-__ https://github.com/npm/npm
-
-npm is the package manager used by Node. It manages the libraries,
-dependencies, Grunt plugins, and other development tools used in the
-creation of a Node webapp. npm is primarily used for libraries and
-modules which will be ``require()``'d inside of the application code,
-such as React.
 
 --------------
 
@@ -430,6 +256,144 @@ Velocity is a ground-up reimplementation of jQuery's ``$.animate()``
 function. It's lightweight, and more performant in all cases. It also
 allows FreeNAS 10 to be completely free of jQuery, saving page weight
 and complexity.
+
+
+Server Environment
+==================
+
+|Browserify|
+------------
+
++--------------------+---------------+-------------+--------------+---------------+
+| Homepage           | Documentation | Source Code | License Type | Authors       |
++====================+===============+=============+==============+===============+
+| `browserify.org`__ |               | `GitHub`__  | MIT          | `@substack`__ |
++--------------------+---------------+-------------+--------------+---------------+
+
+.. Homepage
+__ http://browserify.org
+
+.. Source Code
+__ https://github.com/substack/node-browserify
+
+.. Authors
+__ https://github.com/substack
+
+Browserify is a JavaScript bundler which concatenates and minifies a
+webapp's many individual JavaScript module files into a single, indexed
+bundle file. It uses a simple ``require()`` syntax (similar to the
+native Node.js method) to "export" each module as an indexed object.
+This has enormous benefits in a single-page webapp, as JavaScript
+objects are singletons, and thus every view, module et al. will have
+access to the same instance of each - conserving memory and simplifying
+state reconciliation between React components.
+
+.. code:: javascript
+
+    var unique = require('uniq');
+
+Browserify minimizes the number of requests that need to be made for
+resources, ensures that the initial load will include all of the
+application "run" code, and decouples source files' placement from their
+final compiled "location".
+
+--------------
+
+|Grunt|
+-------
+
++-----------------+---------------+-------------+---------+--------------------+
+| Homepage        | Documentation | Source Code | License | Authors            |
++=================+===============+=============+=========+====================+
+| `gruntjs.com`__ |               | `GitHub`__  | MIT     | `Grunt Dev Team`__ |
++-----------------+---------------+-------------+---------+--------------------+
+
+.. Homepage
+__ http://gruntjs.com
+
+.. Source Code
+__ https://github.com/gruntjs/
+
+.. Authors
+__ http://gruntjs.com/development-team
+
+Grunt is a JavaScript task runner, which allows developers to specify
+tasks and build pipelines. It can be used to automatically compile code,
+restart webservers, parallelize tasks, and can be extended to almost any
+functionality. Grunt runs the tasks that compile LESS to CSS, uglify and
+unit test JavaScript, create Browserify bundles, and more.
+
+FreeNAS 10 uses Grunt most visibily in the live development environment,
+where a series of concurrent file watchers are run, set up to trigger
+everything from CSS rebuilds to restarting the FreeNAS development
+target over ``ssh``.
+
+--------------
+
+|LESS|
+------
+
++-----------------+---------------+-------------+---------+----------------+
+| Homepage        | Documentation | Source Code | License | Authors        |
++=================+===============+=============+=========+================+
+| `lesscss.org`__ |               | `GitHub`__  | Apache  | `@cloudhead`__ |
++-----------------+---------------+-------------+---------+----------------+
+
+.. Homepage
+__ http://lesscss.org/
+
+.. Source Code
+__ https://github.com/less/less.js
+
+.. Authors
+__ https://github.com/cloudhead
+
+LESS is a CSS-like language which compiles to CSS. It features
+variables, mixins, and heirarchical class declarations which make
+development simpler. LESS can also be split into several different
+files, keeping projects neater and better organized.
+
+LESS is used in FreeNAS 10 primarily for its utility, and because
+Twitter Bootstrap is based on LESS. Compiling from LESS creates a
+single, unified file with less overwrites or complicated rules. The
+mixin architecture allows for powerful and dynamic expressions, as well
+as a simpler development process.
+
+--------------
+
+|Node|
+------
+
++----------------+---------------+-------------+---------+-------------+
+| Homepage       | Documentation | Source Code | License | Authors     |
++================+===============+=============+=========+=============+
+| `nodejs.org`__ |               | `GitHub`__  | MIT     | `@joyent`__ |
++----------------+---------------+-------------+---------+-------------+
+
+.. Homepage
+__ http://nodejs.org/
+
+
+.. Source Code
+__ https://github.com/joyent/node
+
+
+.. Authors
+__ https://github.com/joyent
+
+Node.js is a serverside JavaScript environment based on Chromium's V8
+engine. It is used to build web applications, run webservers, operate
+task runners like Grunt, cross-compile code, and more.
+
+Running a Node.js process on FreeNAS allows for things like serverside
+rendering of JavaScript templates, prefetched state, and shared
+callbacks between client and server.
+
+Is Node.js a webserver?
+-----------------------
+
+No. It contains all of the component parts and APIs necessary to create a webserver, and many good webservers have been created on top of Node.js, but Node itself is not a webserver.
+
 
 .. |Bootstrap| image:: images/glossary/Bootstrap.png
 .. |Bower| image:: images/glossary/Bower.png
