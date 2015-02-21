@@ -1,4 +1,4 @@
-#+
+# +
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -224,7 +224,7 @@ class Jails(Model):
     def jail_ipv6_autoconf(self):
         ret = False
         jail_ipv6 = self.jail_ipv6
-        if jail_ipv6 and jail_ivp6.startswith("AUTOCONF:"):
+        if jail_ipv6 and jail_ipv6.startswith("AUTOCONF:"):
             ret = True
         return ret
 
@@ -242,7 +242,7 @@ class Jails(Model):
             return self.__jail_path
         else:
             try:
-                jc = JailsConfiguration.objects.order_by("-id")[0] 
+                jc = JailsConfiguration.objects.order_by("-id")[0]
                 self.__jail_path = "%s/%s" % (jc.jc_path, self.jail_host)
             except:
                 pass
@@ -255,8 +255,9 @@ class Jails(Model):
             return self.__jail_meta_path
         else:
             try:
-                jc = JailsConfiguration.objects.order_by("-id")[0] 
-                self.__jail_meta_path = "%s/.%s.meta" % (jc.jc_path, self.jail_host)
+                jc = JailsConfiguration.objects.order_by("-id")[0]
+                self.__jail_meta_path = "%s/.%s.meta" % (jc.jc_path,
+                                                         self.jail_host)
             except:
                 pass
 
@@ -294,7 +295,7 @@ class Jails(Model):
         # This should probably be done in forms.py.. but for some reason,
         # probably related to how this model fakes out django and doesn't
         # use a database table (just a guess), when changing the form instance
-        # variable, it does not reflect in the GUI. Will return to this 
+        # variable, it does not reflect in the GUI. Will return to this
         # particular issue some other time. For now, hacky hack hacks!
         #
         # Also note, the mask/prefix is stripped here for display in the GUI,
@@ -327,7 +328,7 @@ class Jails(Model):
                 self.jail_bridge_ipv6_prefix = parts[1]
 
     def delete(self, force=False):
-        #FIXME: Cyclic dependency
+        # FIXME: Cyclic dependency
         from freenasUI.plugins.models import Plugins
         if not force:
             qs = Plugins.objects.filter(plugin_jail=self.jail_host)
@@ -351,12 +352,12 @@ class Jails(Model):
             parts = out.split(',')
             line = parts[4]
             parts = line.split()
-            line = parts[1] 
+            line = parts[1]
             if re.match('(.+)?linux(.+)?', line, flags=re.I):
                 is_linux = True
 
         except:
-            is_linux = False 
+            is_linux = False
 
         return is_linux
 
@@ -376,7 +377,7 @@ class JailsConfiguration(Model):
         verbose_name=_("IPv4 DHCP"),
         default=False,
         help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
-            " as default router, etc.")
+                    " as default router, etc.")
     )
     jc_ipv4_network = Network4Field(
         blank=True,
@@ -664,7 +665,10 @@ class JailMountPoint(Model):
 
     def delete(self, *args, **kwargs):
         if self.mounted:
-            self.umount()
+            try:
+                self.umount()
+            except:
+                self.umount(force=True)
         super(JailMountPoint, self).delete(*args, **kwargs)
 
     @property
@@ -687,5 +691,5 @@ class JailMountPoint(Model):
             mntopts=mntopts,
         )
 
-    def umount(self):
-        return umount(self.destination_jail)
+    def umount(self, force=False):
+        return umount(self.destination_jail, force)
