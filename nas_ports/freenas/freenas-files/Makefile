@@ -164,6 +164,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-collectd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-collectd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-crontab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-crontab
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ctld ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ctld
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-device_hints ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-device_hints
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-fstab ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-fstab
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-hostname ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-hostname
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-inadyn ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-inadyn
@@ -193,7 +194,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pre-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pre-samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-post-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-post-samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-savehostid ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-savehostid
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-sercons ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-sercons
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-shutdown ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-shutdown
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smartd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smartd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-smbpasswd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-smbpasswd

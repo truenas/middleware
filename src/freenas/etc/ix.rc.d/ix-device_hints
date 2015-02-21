@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-device_hints
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.subr
+
+update_device_hints()
+{
+	dh="/boot/device.hints"
+	ser=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialconsole FROM system_advanced")
+        if [ ${ser} -eq 1 ]; then
+		sed -i "" -e '/uart.*flags="0x10"/d' ${dh}
+		port=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialport FROM system_advanced")
+		bps=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialspeed FROM system_advanced")
+		unit=$(/usr/sbin/devinfo -u | grep ${port} | awk '{print $2}' | sed -e 's/^(uart//' -e 's/)$//')
+		irq=$(/usr/sbin/devinfo -u | grep uart${unit} | head -1 | awk '{print $1}')
+		sed -i "" -e "/^hint.uart.${unit}/d" ${dh}
+		echo "hint.uart.${unit}.at=\"isa\"" >> ${dh}
+		echo "hint.uart.${unit}.port=\"${port}\"" >> ${dh}
+		echo "hint.uart.${unit}.flags=\"0x10\"" >> ${dh}
+		echo "hint.uart.${unit}.irq=\"${irq}\"" >> ${dh}
+		echo "hint.uart.${unit}.baud=\"${bps}\"" >> ${dh}
+	fi
+}
+
+name="ix-device_hints"
+start_cmd='update_device_hints'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
