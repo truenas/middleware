@@ -415,6 +415,35 @@ def configure_idmap_backend(smb4_conf, idmap, domain):
         pass 
 
 
+def set_netbiosname(conf, netbiosname):
+    if not netbiosname:
+        return False
+
+    parts = None
+    if ',' in netbiosname:
+        parts = netbiosname.split(',')
+    elif ' ' in netbiosname:
+        parts = netbiosname.split(' ')
+
+    if not parts:
+        confset2(conf, "netbios name = %s", netbiosname.upper())
+    else: 
+        netbiosname = parts[0].upper()
+        confset2(conf, "netbios name = %s", netbiosname)
+
+        if len(parts) > 1:
+            netbios_aliases = []
+            for p in parts[1:]:
+                if not p: 
+                    continue
+                netbios_aliases.append(p.upper()) 
+
+            if netbios_aliases:
+                confset2(conf, "netbios aliases = %s", string.join(netbios_aliases))
+
+    return True
+
+
 def add_nt4_conf(smb4_conf):
     rid_range_start = 20000
     rid_range_end = 20000000
@@ -438,7 +467,7 @@ def add_nt4_conf(smb4_conf):
 
     nt4_workgroup = nt4.nt4_workgroup.upper()
 
-    confset2(smb4_conf, "netbios name = %s", nt4.nt4_netbiosname.upper())
+    set_netbiosname(smb4_conf, nt4.nt4_netbiosname)
     confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
 
     confset1(smb4_conf, "security = domain")
@@ -512,7 +541,7 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldap passwd sync = yes")
     confset1(smb4_conf, "ldapsam:trusted = yes")
 
-    confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
+    set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
@@ -546,7 +575,7 @@ def add_activedirectory_conf(smb4_conf):
     except:
         return
 
-    confset2(smb4_conf, "netbios name = %s", ad.ad_netbiosname.upper())
+    set_netbiosname(smb4_conf, ad.ad_netbiosname)
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
@@ -593,7 +622,7 @@ def add_domaincontroller_conf(smb4_conf):
     #server_services = get_server_services()
     #dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
-    confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
+    set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
     confset2(smb4_conf, "realm = %s", dc.dc_realm)
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
@@ -772,7 +801,7 @@ def generate_smb4_conf(smb4_conf, role):
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
-        confset2(smb4_conf, "netbios name = %s", cifs.cifs_srv_netbiosname.upper())
+        set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
         confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
         confset1(smb4_conf, "security = user")
 
