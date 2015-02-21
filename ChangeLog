@@ -1,5 +1,12 @@
-#7675	Bug	Normal	upsmon.conf and rc.shutdown missing functionality to actually shutoff the UPS
-#7775	Bug	Normal	Can't get NFSv4/kerberos to work
-#7881	Feature	Normal	Annotate Vmware Sync Snapshot
-#7882	Feature	Normal	Add option to restart WebDAV when unlocking encrypted pool
-#7884	Bug	Urgent	Update failed error
+#7265	Bug	Normal	WebDAV cant stop
+#7787	Bug	Normal	Create tooltip for Volume/Dataset field of Add Replication Task
+#7894	Bug	Normal	Problem in webdav services script
+#7998	Feature	High	Add IPMI IP to debug info
+#8016	Bug	Normal	Jails; Storage not getting unmounted when removed through the UI
+#8055	Bug	Normal	error adding new jail
+#8062	Bug	Low	Minor (but confusing) error in Alert instructions on how to update LSI adapter firmware
+#8064	Bug	Normal	Incorrect sas2flash instructions
+#8066	Bug	Normal	Expunge istgt from my sight.
+#8073	Bug	Normal	FTP Service
+#8078	Bug	Normal	Disable Sendfile
+#8098	Bug	High	VMware snapshot name to long
