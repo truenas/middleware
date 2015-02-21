@@ -87,6 +87,7 @@ etc/ix.rc.d/ix-cache
 etc/ix.rc.d/ix-collectd
 etc/ix.rc.d/ix-crontab
 etc/ix.rc.d/ix-ctld
+etc/ix.rc.d/ix-device_hints
 etc/ix.rc.d/ix-fstab
 etc/ix.rc.d/ix-hostname
 etc/ix.rc.d/ix-inadyn
@@ -116,7 +117,6 @@ etc/ix.rc.d/ix-rsyncd
 etc/ix.rc.d/ix-pre-samba
 etc/ix.rc.d/ix-post-samba
 etc/ix.rc.d/ix-savehostid
-etc/ix.rc.d/ix-sercons
 etc/ix.rc.d/ix-shutdown
 etc/ix.rc.d/ix-smartd
 etc/ix.rc.d/ix-smbpasswd
