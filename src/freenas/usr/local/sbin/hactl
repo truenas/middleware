@@ -45,7 +45,7 @@ from freenasUI.failover.models import Failover
 _not = notifier()
 
 
-def main(command):
+def main(command, quiet):
     if command == "status":
         ret = _not.failover_status()
         if ret == "MASTER":
@@ -59,7 +59,9 @@ def main(command):
         elif ret == "ERROR":
             print "Node status: Faulted"
         elif ret == "SINGLE":
-            print "Node status: Not an HA node"
+            if not quiet:
+                print "Node status: Not an HA node"
+            sys.exit(0)
         if Failover.objects.all()[0].disabled is True:
             print "Failover status: Disabled"
         else:
@@ -142,6 +144,10 @@ if __name__ == "__main__":
                         help="subcommand: enable disable status takeover giveback",
                         choices=['enable', 'disable', 'status', 'takeover', 'giveback'],
                         )
+    parser.add_argument('-q',
+                        help="Be silent if this is a non HA node",
+                        action='store_true'
+                        )
 
     args = parser.parse_args()
-    main(args.command)
+    main(args.command, args.q)
