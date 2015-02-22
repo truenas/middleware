@@ -76,6 +76,8 @@ generate_crontab()
 	r2=$(($(head -1 /dev/urandom | od -D -N 1 | awk '{ print $2 }')%4+1))
 	echo "${r1}	${r2}	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/update_check.py > /dev/null 2>&1" >> /etc/crontab
 
+	# Update the smartctl database
+	echo "@weekly root /usr/local/sbin/update-smart-drivedb > /dev/null 2>&1" >> /etc/crontab
 	# Ugly and dirty custom crontab scripts
 	ls /etc/ix.rc.d/ix-crontab-custom-* 2> /dev/null | \
 	while read -r cron; do
