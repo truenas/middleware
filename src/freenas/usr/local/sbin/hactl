@@ -99,6 +99,10 @@ def main(command):
             print "Unable to contact remote node.  Failover not disabled."
             sys.exit(3)
     elif command == "takeover":
+        ret = _not.failover_status()
+        if ret != "BACKUP":
+            print "Cannot takeover volume, not passive"
+            sys.exit(5)
         print "This will likely cause the active node to reboot."
         while True:
             ret = raw_input("Are you sure you wish to proceed with making this node active? (y/n): ")
@@ -111,7 +115,10 @@ def main(command):
                 continue
         _not.failover_force_master()
     elif command == "giveback":
-        # TODO: Impliment giveback method here
+        ret = _not.failover_status()
+        if ret == "BACKUP":
+            print "Cannot giveback volume.  This unit is not Active!"
+            sys.exit(6)
         print "Volume giveback will reboot this node."
         while True:
             ret = raw_input("Are you sure you wish to proceed with making the other node active? (y/n): ")
