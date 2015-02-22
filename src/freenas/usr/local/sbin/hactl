@@ -41,6 +41,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.middleware.notifier import notifier
+from freenasUI.failover.models import Failover
 _not = notifier()
 
 
@@ -59,8 +60,11 @@ def main(command):
             print "Node status: Faulted"
         elif ret == "SINGLE":
             print "Node status: Not an HA node"
+        if Failover.objects.all()[0].disabled is True:
+            print "Failover status: Disabled"
+        else:
+            print "Failover status: Enabled"
     elif command == "enable":
-        from freenasUI.failover.models import Failover
         if Failover.objects.all()[0].disabled is False:
             ip = Failover.objects.all()[0].ipaddress
             ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker enable" % ip)
@@ -77,7 +81,6 @@ def main(command):
             print "Failover not disabled.  Cannot enable!"
             sys.exit(3)
     elif command == "disable":
-        from freenasUI.failover.models import Failover
         ip = Failover.objects.all()[0].ipaddress
         if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
             status = "master"
