@@ -1,15 +1,51 @@
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" class="helpIcon">
     <h2>{{ sw_version }}</h2>
     <div class="left">
-    <div class="float24">
-    <h3>{% trans "Support" %}</h3>
+    <h3>{% trans "Forum" %}</h3>
     <ul>
-        <li>iXsystems hardware products come with a three year, Return-to-Depot, limited warranty. Our limited warranty includes 30-day operating system installation and configuration technical support on the originally tested and installed operating system.</li>
-        <li>To open a ticket: <a href="http://support.ixsystems.com/index.php?/Tickets/Submit" target="_blank">http://support.ixsystems.com/index.php?/Tickets/Submit</a></li>
-        <li>To visit the TrueNAS knowledge base: <a href="http://support.ixsystems.com/index.php?/Knowledgebase/List" target="_blank">http://support.ixsystems.com/index.php?/Knowledgebase/List</a></li>
-        <li>Email support: <a href="mailto:support@iXsystems.com">support@iXsystems.com<a/></li>
+        <li><a href="http://forums.freenas.org/" title="FreeNAS Community Support Forum" target="_blank">{% trans "Community Forum" %}</a></li>
+    </ul>
+    </div>
+   
+    <div class="float36">
+    <h3>{% trans "IRC (Chat)" %}</h3>
+    <ul>
+        <li><a href="https://webchat.freenode.net/?channels=freenas" target="_blank" title="#freenas on freenode">{% trans "#freenas on freenode" %}</a></li>
+    </ul>
+    </div>
+    <div class="float24">
+    <h3>{% trans "Mailing Lists" %}</h3>
+    <ul>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-announce" title="FreeNAS Announce" target="_blank">{% trans "FreeNAS Announce" %}</a></li>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-commit" title="FreeNAS Commit" target="_blank">{% trans "FreeNAS Commit" %}</a></li>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-devel" title="FreeNAS Devel" target="_blank">{% trans "FreeNAS Devel" %}</a></li>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-testing" title="FreeNAS Testing" target="_blank">{% trans "FreeNAS Testing" %}</a></li>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-docs" title="FreeNAS Docs" target="_blank">{% trans "FreeNAS Docs" %}</a></li>
+        <li><a href="http://lists.freenas.org/mailman/listinfo/freenas-translations" title="FreeNAS Translations" target="_blank">{% trans "FreeNAS Translations" %}</a></li>
     </ul>
     </div>
 
-    <div class="clear"></div>
+    <div class="float24">
+    <h3>{% trans "Support Issues" %}</h3>
+    <ul>
+        <li><a href="https://bugs.freenas.org" title="FreeNAS Bug Tracker" target="_blank">{% trans "Bug Tracker" %}</a></li>
+    </ul>
     </div>
+
+    <div class="float24">
+    <h3>{% trans "Documentation" %}</h3>
+    <ul>
+        <li><a href="http://doc.freenas.org" target="_blank" title="FreeNAS Documentation">{% trans "FreeNAS Documentation" %}</a></li>
+        <li><a href="http://www.freebsd.org/cgi/man.cgi" target="_blank" title="FreeBSD Man Pages">{% trans "FreeBSD Man Pages" %}</a></li>
+    </ul>
+    </div>
+
+    <div class="float24">
+    <h3>{% trans "Professional Support" %}</h3>
+    <ul>
+        <li><a href="http://www.ixsystems.com/solutions/support/" title="Professionally-Supported FreeNAS-Based Storage Appliance" target="_blank">{% trans "Professionally-Supported FreeNAS-Based Storage Appliance" %}</a></li>
+    </ul>
+    </div>
+    <div class="clear"></div>
+
+    <br />
