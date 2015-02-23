@@ -1,12 +1,7 @@
-#7265	Bug	Normal	WebDAV cant stop
-#7787	Bug	Normal	Create tooltip for Volume/Dataset field of Add Replication Task
-#7894	Bug	Normal	Problem in webdav services script
-#7998	Feature	High	Add IPMI IP to debug info
-#8016	Bug	Normal	Jails; Storage not getting unmounted when removed through the UI
-#8055	Bug	Normal	error adding new jail
-#8062	Bug	Low	Minor (but confusing) error in Alert instructions on how to update LSI adapter firmware
-#8064	Bug	Normal	Incorrect sas2flash instructions
-#8066	Bug	Normal	Expunge istgt from my sight.
-#8073	Bug	Normal	FTP Service
-#8078	Bug	Normal	Disable Sendfile
-#8098	Bug	High	VMware snapshot name to long
+#6877	Bug	High	serial console does not show console messages
+#7520	Bug	High	Serial console stops emitting messages after kernel has been loaded by grub
+#7879	Bug	Low	Vmware Snapshot Failure leaves Orphan
+#8061	Feature	High	Please keep smartctl database up to date
+#8103	Bug	Normal	check_build_host.sh is broken
+#8149	Bug	High	TFTP service no longer starts on FreeNAS-9.3-STABLE-201502210408
+#8164	Bug	High	Samba CVE-2015-0240
