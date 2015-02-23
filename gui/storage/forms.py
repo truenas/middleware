@@ -1812,6 +1812,7 @@ class ManualSnapshotForm(Form):
 
     def commit(self, fs):
         vmsnapname = str(uuid.uuid4())
+        vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
             server = VIServer()
@@ -1823,17 +1824,18 @@ class ManualSnapshotForm(Form):
             for vm in vmlist:
                 if vm.startswith("[%s]" % obj.datastore):
                     vm1 = server.get_vm_by_path(vm)
-                    vm1.create_snapshot(vmsnapname, memory=False)
+                    vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
                     snapvms.append(vm1)
 
-        notifier().zfs_mksnap(
-            fs,
-            str(self.cleaned_data['ms_name']),
-            self.cleaned_data['ms_recursively'],
-            len(snapvms))
-
-        for vm in snapvms:
-            vm.delete_named_snapshot(vmsnapname)
+        try:
+            notifier().zfs_mksnap(
+                fs,
+                str(self.cleaned_data['ms_name']),
+                self.cleaned_data['ms_recursively'],
+                len(snapvms))
+        finally:
+            for vm in snapvms:
+                vm.delete_named_snapshot(vmsnapname)
 
 
 class CloneSnapshotForm(Form):
