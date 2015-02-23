@@ -13,12 +13,8 @@
   <tr>
     <th>{% trans "Model" %}</th>
     <td>{{ license.model }}</td>
-  </tr>
-  <tr>
     <th>{% trans "System Serial" %}</th>
     <td>{{ license.system_serial }}{% if license.system_serial_ha %} / {{ license.system_serial_ha }}{% endif %}</td>
-  </tr>
-  <tr>
     <th>{% trans "Contract Type" %}</th>
     <td>
       {% if license.contract_type == 0 %}
@@ -37,20 +33,12 @@
       {% if license.contract_type == 3 %}{% trans "Silver" %}{% endif %}
       {% if license.contract_type == 4 %}{% trans "Gold" %}{% endif %}
     </td>
-  </tr>
-  <tr>
-    <th>{% trans "Contract Start" %}</th>
-    <td>{{ license.contract_start }}</td>
-  </tr>
-  <tr>
-    <th>{% trans "Contract End" %}</th>
-    <td>{{ license.contract_end }}{% if license.expired %} <span style="color: red;">({% trans "Expired" %})</span>{% endif %}</td>
+    <th>{% trans "Contract Date" %}</th>
+    <td>{{ license.contract_start }} - {{ license.contract_end }}{% if license.expired %} <span style="color: red;">({% trans "Expired" %})</span>{% endif %}</td>
   </tr>
   <tr>
     <th>{% trans "Customer Name" %}</th>
     <td>{{ license.customer_name }}</td>
-  </tr>
-  <tr>
     <th>{% trans "Features" %}</th>
     <td>
       {% for f in license.features %}
@@ -60,8 +48,6 @@
         {% trans "None" %}
       {% endfor %}
     </td>
-  </tr>
-  <tr>
     <th>{% trans "Additional Hardware" %}</th>
     <td>
       {% for f in license.addhw %}
@@ -87,7 +73,7 @@
 </table>
 {% endif %}
 
-<p>{% trans "To file a bug on FreeNAS, please fill in the fields below or visit " %} <a href="http://bugs.freenas.org" target="_blank">http://bugs.freenas.org</a>.</p>
-<p>{% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
+<p style="margin-left: 15px;">{% trans "To file a bug on FreeNAS, please fill in the fields below or visit " %} <a href="http://bugs.freenas.org" target="_blank">http://bugs.freenas.org</a>.<br />
+{% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
 
 <div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{% url "support_ticket" %}', softwareName: '{{ sw_name }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, categoriesUrl: '{% url "support_ticket_categories" %}', progressUrl: '{% url "support_ticket_progress" %}'"></div>
