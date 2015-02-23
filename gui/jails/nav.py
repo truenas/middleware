@@ -30,6 +30,8 @@ from eventlet.green import urllib2
 
 from django.utils.translation import ugettext_lazy as _
 
+from licenselib.license import Features
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.jails.models import (
     Jails,
@@ -41,6 +43,7 @@ from freenasUI.common.warden import (
     WARDEN_TYPE_PLUGINJAIL,
     WARDEN_TYPE_PORTJAIL
 )
+from freenasUI.support.utils import get_license
 
 log = logging.getLogger('jails.nav')
 
@@ -163,6 +166,12 @@ def plugin_fetch(args):
 
 
 def init(tree_roots, nav, request):
+
+    license, reason = get_license()
+    sw_name = get_sw_name().lower()
+    if sw_name != 'freenas' and Features.jails not in license.features:
+        tree_roots.unregister(nav)
+
     global O_INDEX
     self = Base()
     jails = Jails.objects.all()

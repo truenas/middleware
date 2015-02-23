@@ -26,6 +26,10 @@
 #####################################################################
 from django.utils.translation import ugettext_lazy as _
 
+from licenselib.license import Features
+from freenasUI.common.system import get_sw_name
+from freenasUI.support.utils import get_license
+
 NAME = _('Plugins')
 ICON = u'PluginIcon'
 BLACKLIST = [
@@ -35,3 +39,11 @@ BLACKLIST = [
 ]
 TYPE = 'openplugins'
 ORDER = 60
+
+
+def init(tree_roots, nav, request):
+
+    license, reason = get_license()
+    sw_name = get_sw_name().lower()
+    if sw_name != 'freenas' and Features.jails not in license.features:
+        tree_roots.unregister(nav)
