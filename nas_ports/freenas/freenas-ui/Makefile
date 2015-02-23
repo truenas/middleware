@@ -34,6 +34,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django \
 	${PYTHON_PKGNAMEPREFIX}requests:${PORTSDIR}/www/py-requests \
 	${PYTHON_PKGNAMEPREFIX}openssl:${PORTSDIR}/security/py-openssl \
 	${PYTHON_PKGNAMEPREFIX}pycrypto>0:${PORTSDIR}/security/py-pycrypto \
+	${PYTHON_PKGNAMEPREFIX}simplejson>0:${PORTSDIR}/devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib
 
 EXTRACT_ONLY=
