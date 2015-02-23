@@ -32,6 +32,8 @@
       {% if license.contract_type == 2 %}{% trans "Bronze" %}{% endif %}
       {% if license.contract_type == 3 %}{% trans "Silver" %}{% endif %}
       {% if license.contract_type == 4 %}{% trans "Gold" %}{% endif %}
+      {% if license.contract_type == 5 %}{% trans "8x5 FreeNAS Support" %}{% endif %}
+      {% if license.contract_type == 6 %}{% trans "8x5 FreeNAS Support" %}<br />{% trans "Maximum of 6 incidents per year" %}{% endif %}
     </td>
     <th>{% trans "Contract Date" %}</th>
     <td>{{ license.contract_start }} - {{ license.contract_end }}{% if license.expired %} <span style="color: red;">({% trans "Expired" %})</span>{% endif %}</td>
