@@ -38,6 +38,7 @@ from django.views.decorators.http import require_GET, require_POST
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.notifier import notifier
 from freenasUI.support import forms, utils
 from freenasUI.system.utils import debug_get_settings, debug_run
 
@@ -49,10 +50,16 @@ def index(request):
     sw_name = get_sw_name().lower()
 
     license, reason = utils.get_license()
+    allow_update = True
+    if hasattr(notifier, 'failover_status'):
+        status = notifier().failover_status()
+        if status not in ('MASTER', 'SINGLE'):
+            allow_update = False
 
     context = {
         'sw_name': sw_name,
         'license': license,
+        'allow_update': allow_update,
     }
     for c in appPool.hook_view_context('support.index', request):
         context.update(c)

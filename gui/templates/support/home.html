@@ -1,12 +1,14 @@
 {% if sw_name != "freenas" or license %}
 <h1>
 {% trans "License Information" %}
+{% if allow_update %}
 <div data-dojo-type="dijit/form/Button">
   {% trans "Update License" %}
   <script type="dojo/method" data-dojo-event="onClick">
     editObject('{% trans "Update License"|escapejs %}', '{% url "support_license_update" %}', [this, ]);
   </script>
 </div>
+{% endif %}
 </h1>
 <table class="form">
 {% if license %}
