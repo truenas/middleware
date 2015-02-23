@@ -213,6 +213,9 @@ class notifier:
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
+            procname, pidfile = self.__service2daemon[what]
+            if procname:
+                what = procname
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     self._system("/usr/sbin/service " + what + " forcestop ")
@@ -223,24 +226,24 @@ class notifier:
         f()
 
     __service2daemon = {
-            'ssh': ('sshd', '/var/run/sshd.pid'),
-            'rsync': ('rsync', '/var/run/rsyncd.pid'),
-            'nfs': ('nfsd', None),
-            'afp': ('netatalk', None),
-            'cifs': ('smbd', '/var/run/samba/smbd.pid'),
-            'dynamicdns': ('inadyn-mt', None),
-            'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
-            'ftp': ('proftpd', '/var/run/proftpd.pid'),
-            'tftp': ('inetd', '/var/run/inetd.pid'),
-            'ctld': ('ctld', '/var/run/ctld.pid'),
-            'lldp': ('ladvd', '/var/run/ladvd.pid'),
-            'ups': ('upsd', '/var/db/nut/upsd.pid'),
-            'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
-            'smartd': ('smartd', '/var/run/smartd.pid'),
-            'webshell': (None, '/var/run/webshell.pid'),
-            'webdav': ('httpd', '/var/run/httpd.pid'),
-            'backup': (None, '/var/run/backup.pid')
-        }
+        'ssh': ('sshd', '/var/run/sshd.pid'),
+        'rsync': ('rsync', '/var/run/rsyncd.pid'),
+        'nfs': ('nfsd', None),
+        'afp': ('netatalk', None),
+        'cifs': ('smbd', '/var/run/samba/smbd.pid'),
+        'dynamicdns': ('inadyn-mt', None),
+        'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
+        'ftp': ('proftpd', '/var/run/proftpd.pid'),
+        'tftp': ('inetd', '/var/run/inetd.pid'),
+        'ctld': ('ctld', '/var/run/ctld.pid'),
+        'lldp': ('ladvd', '/var/run/ladvd.pid'),
+        'ups': ('upsd', '/var/db/nut/upsd.pid'),
+        'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
+        'smartd': ('smartd', '/var/run/smartd.pid'),
+        'webshell': (None, '/var/run/webshell.pid'),
+        'webdav': ('httpd', '/var/run/httpd.pid'),
+        'backup': (None, '/var/run/backup.pid')
+    }
 
     def _started_notify(self, verb, what):
         """
@@ -764,6 +767,10 @@ class notifier:
     def _reload_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
         self._system("/etc/local/rc.d/syslog-ng reload")
+
+    def _start_tftp(self):
+        self._system("/usr/sbin/service ix-inetd quietstart")
+        self._system("/usr/sbin/service inetd start")
 
     def _reload_tftp(self):
         self._system("/usr/sbin/service ix-inetd quietstart")
