@@ -197,6 +197,7 @@ build_world ( ) (
 
 	cd ${NANO_SRC}
 	env \
+		DEBUG= \
 		TARGET=${NANO_ARCH%:*} \
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
@@ -211,6 +212,7 @@ build_world ( ) (
 
 	cd ${NANO_SRC}
 	env \
+		DEBUG= \
 		TARGET=${NANO_ARCH%:*} \
 		TARGET_ARCH=${NANO_ARCH##*:} \
 		${NANO_PMAKE} \
