@@ -23,3 +23,4 @@ class PluginsHook(AppHook):
                     'weight': 0,
                 },
             ]
+        return []

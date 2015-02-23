@@ -22,3 +22,4 @@ class JailsHook(AppHook):
                     'weight': 5,
                 },
             ]
+        return []
