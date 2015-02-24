@@ -14,6 +14,16 @@ ADDRESS = 'support-proxy.ixsystems.com'
 LICENSE_FILE = '/data/license'
 
 
+def dedup_enabled():
+    license, reason = get_license()
+    sw_name = get_sw_name().lower()
+    if sw_name == 'freenas' or (
+        license and Features.dedup in license.features
+    ):
+        return True
+    return False
+
+
 def get_license():
     if not os.path.exists(LICENSE_FILE):
         return None, 'ENOFILE'

@@ -66,6 +66,7 @@ from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.system.alert import alertPlugins
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
+from freenasUI.support.utils import dedup_enabled
 from pysphere import VIServer
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
@@ -1393,6 +1394,17 @@ class ZFSDataset(Form):
             else:
                 self.fields['dataset_dedup'].initial = 'off'
 
+        if not dedup_enabled():
+            form.fields['dataset_dedup'].widget.attrs['readonly'] = True
+            form.fields['dataset_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            form.fields['dataset_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
+
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', name):
@@ -1482,6 +1494,17 @@ class ZVol_EditForm(Form):
             self.fields['volume_dedup'].initial = 'verify'
         else:
             self.fields['volume_dedup'].initial = 'off'
+
+        if not dedup_enabled():
+            form.fields['volume_dedup'].widget.attrs['readonly'] = True
+            form.fields['volume_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            form.fields['volume_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
 
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
