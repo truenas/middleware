@@ -1,0 +1,99 @@
+<mockup version="1.0" skin="wireframe" fontFace="Balsamiq Sans" measuredW="855" measuredH="308" mockupW="561" mockupH="221">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="294" y="87" w="250" h="96" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="-1"/>
+    <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="306" y="100" w="-1" h="-1" measuredW="226" measuredH="36" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>28</size>
+        <text>45d%2014h%2030m%2028s</text>
+      </controlProperties>
+    </control>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::Label" x="341" y="138" w="-1" h="-1" measuredW="157" measuredH="21" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>3355443</color>
+        <text>Since%2012/24/2014%206%3A30pm</text>
+      </controlProperties>
+    </control>
+    <control controlID="3" controlTypeID="com.balsamiq.mockups::Label" x="341" y="159" w="-1" h="-1" measuredW="148" measuredH="21" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>10066329</color>
+        <text>Last%3A%20%20120d%2023h%2059m%2050s</text>
+      </controlProperties>
+    </control>
+    <control controlID="4" controlTypeID="com.balsamiq.mockups::FieldSet" x="294" y="206" w="250" h="102" measuredW="200" measuredH="170" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Uptime</text>
+      </controlProperties>
+    </control>
+    <control controlID="5" controlTypeID="com.balsamiq.mockups::Canvas" x="560" y="87" w="133" h="127" measuredW="100" measuredH="70" zOrder="5" locked="false" isInGroup="-1"/>
+    <control controlID="6" controlTypeID="com.balsamiq.mockups::Label" x="575" y="100" w="-1" h="-1" measuredW="103" measuredH="36" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>28</size>
+        <text>45d%2014h</text>
+      </controlProperties>
+    </control>
+    <control controlID="7" controlTypeID="com.balsamiq.mockups::Label" x="575" y="172" w="-1" h="-1" measuredW="105" measuredH="19" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>3355443</color>
+        <size>11</size>
+        <text>%2012/24/2014%206%3A30pm</text>
+      </controlProperties>
+    </control>
+    <control controlID="8" controlTypeID="com.balsamiq.mockups::Label" x="583" y="191" w="-1" h="-1" measuredW="86" measuredH="18" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>10066329</color>
+        <size>10</size>
+        <text>120d%2023h%2059m%2050s</text>
+      </controlProperties>
+    </control>
+    <control controlID="9" controlTypeID="com.balsamiq.mockups::Label" x="306" y="221" w="-1" h="-1" measuredW="226" measuredH="36" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>28</size>
+        <text>45d%2014h%2030m%2028s</text>
+      </controlProperties>
+    </control>
+    <control controlID="10" controlTypeID="com.balsamiq.mockups::Label" x="341" y="259" w="-1" h="-1" measuredW="157" measuredH="21" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>3355443</color>
+        <text>Since%2012/24/2014%206%3A30pm</text>
+      </controlProperties>
+    </control>
+    <control controlID="11" controlTypeID="com.balsamiq.mockups::Label" x="341" y="280" w="-1" h="-1" measuredW="148" measuredH="21" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>10066329</color>
+        <text>Last%3A%20%20120d%2023h%2059m%2050s</text>
+      </controlProperties>
+    </control>
+    <control controlID="12" controlTypeID="com.balsamiq.mockups::Label" x="564" y="136" w="-1" h="-1" measuredW="124" measuredH="36" zOrder="12" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>28</size>
+        <text>%2030m%2028s</text>
+      </controlProperties>
+    </control>
+    <control controlID="13" controlTypeID="com.balsamiq.mockups::Canvas" x="722" y="87" w="133" h="127" measuredW="100" measuredH="70" zOrder="13" locked="false" isInGroup="-1"/>
+    <control controlID="14" controlTypeID="com.balsamiq.mockups::Label" x="734" y="96" w="-1" h="-1" measuredW="108" measuredH="68" zOrder="14" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>60</size>
+        <text>45d</text>
+      </controlProperties>
+    </control>
+    <control controlID="15" controlTypeID="com.balsamiq.mockups::Label" x="736" y="186" w="-1" h="-1" measuredW="105" measuredH="19" zOrder="15" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>3355443</color>
+        <size>11</size>
+        <text>%2012/24/2014%206%3A30pm</text>
+      </controlProperties>
+    </control>
+    <control controlID="17" controlTypeID="com.balsamiq.mockups::Label" x="734" y="162" w="-1" h="-1" measuredW="108" measuredH="26" zOrder="16" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>40463</color>
+        <size>18</size>
+        <text>14h%2030m%2028s</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
