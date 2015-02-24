@@ -26,9 +26,7 @@
 #####################################################################
 from django.utils.translation import ugettext_lazy as _
 
-from licenselib.license import Features
-from freenasUI.common.system import get_sw_name
-from freenasUI.support.utils import get_license
+from freenasUI.support.utils import jails_enabled
 
 NAME = _('Plugins')
 ICON = u'PluginIcon'
@@ -43,7 +41,5 @@ ORDER = 60
 
 def init(tree_roots, nav, request):
 
-    license, reason = get_license()
-    sw_name = get_sw_name().lower()
-    if sw_name != 'freenas' and Features.jails not in license.features:
+    if not jails_enabled():
         tree_roots.unregister(nav)
