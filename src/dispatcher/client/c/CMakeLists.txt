@@ -19,3 +19,6 @@ target_link_libraries(wstest dispatcherclient)
 
 add_executable(enum examples/enum.c)
 target_link_libraries(enum dispatcherclient)
+
+add_executable(listen examples/listen.c)
+target_link_libraries(listen dispatcherclient)
