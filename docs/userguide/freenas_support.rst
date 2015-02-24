@@ -21,6 +21,8 @@ The rest of this section discusses the following resources which are available t
 
 * :ref:`Professional Support`
 
+* :ref:`Training`
+
 .. _Website and Social Media:
 
 Website and Social Media
@@ -246,3 +248,13 @@ team can also configure your FreeNAS® hardware and software to deliver the high
 `iXsystems support page <http://www.ixsystems.com/solutions/support/>`_
 to request a quote.
 
+.. index:: Training
+.. _Training:
+
+Training
+--------
+
+iXsystems also offers professional training modules. Each module is designed to accelerate your FreeNAS® learning curve and to save you hours of learning by
+trial and error. FreeNAS® training classes are 1-4 hours in length, topic-specific, and provide the information you need to quickly get up to speed in
+FreeNAS® and ZFS. Refer to the `FreeNAS Training and Certification website <http://www.freenas.org/freenas-zfs-training/>`_ for more information about the
+courses, pricing, and availability.
