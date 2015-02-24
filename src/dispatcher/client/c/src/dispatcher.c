@@ -142,6 +142,22 @@ dispatcher_login_service(connection_t *conn, const char *name)
     return rpc_call_success(call);
 }
 
+int dispatcher_subscribe_event(connection_t *conn, const char *name)
+{
+    json_t *msg;
+
+    msg = dispatcher_pack_msg(conn, "events", "subscribe", json_null(), json_pack("[s]", name));
+    return (dispatcher_send_msg(conn, msg));
+}
+
+int dispatcher_unsubscribe_event(connection_t *conn, const char *name)
+{
+    json_t *msg;
+
+    msg = dispatcher_pack_msg(conn, "events", "unsubscribe", json_null(), json_pack("[s]", name));
+    return (dispatcher_send_msg(conn, msg));
+}
+
 int
 dispatcher_call_sync(connection_t *conn, const char *name, json_t *args, json_t **result)
 {
@@ -260,7 +276,9 @@ dispatcher_process_msg(ws_conn_t *ws, void *frame, size_t len, void *arg)
 
     msg = json_loads(framestr, 0, &err);
     if (msg == NULL) {
-        fprintf(stderr, "cannot deserialize json\n");
+        if (conn->conn_error_handler)
+            conn->conn_error_handler(conn, INVALID_JSON_RESPONSE, conn->conn_error_handler_arg);
+
         return;
     }
 
@@ -304,7 +322,19 @@ dispatcher_process_rpc(connection_t *conn, json_t *msg)
 static void
 dispatcher_process_events(connection_t *conn, json_t *msg)
 {
+    const char *name;
+    const char *evname;
+    json_t *args;
 
+    name = json_string_value(json_object_get(msg, "name"));
+    args = json_object_get(msg, "args");
+    evname = json_string_value(json_object_get(args, "name"));
+
+    if (strcmp(name, "event") != 0)
+        return;
+
+    if (conn->conn_event_handler)
+        conn->conn_event_handler(conn, evname, json_object_get(args, "args"), conn->conn_event_handler_arg);
 }
 
 #ifdef __FreeBSD__
