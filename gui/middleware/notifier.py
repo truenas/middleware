@@ -214,8 +214,9 @@ class notifier:
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
             procname, pidfile = self.__service2daemon[what]
-            if procname:
-                what = procname
+            if what in self.__service2daemon:
+                if procname:
+                    what = procname
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     self._system("/usr/sbin/service " + what + " forcestop ")
