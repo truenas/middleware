@@ -250,13 +250,13 @@ The buttons above the boot entries can be used to:
 If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
 device, and click "Replace Disk" to rebuild the boot mirror.
 
-Figure 5.3c shows a sample boot menu containing entries for the default, wizard generated, and a manually created boot environment named *prepatch*.
+Figure 5.3c shows a sample boot menu containing entries for the default and initial boot environments.
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-|be3.png|
+|tn_be3.png|
 
-.. |be3.png| image:: images/be3.png
+.. |tn_be3.png| image:: images/tn_be3.png
 
 .. _Advanced:
 
