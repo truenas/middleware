@@ -337,7 +337,7 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
-* Samba was updated to `4.1.16 <https://www.samba.org/samba/history/samba-4.1.16.html>`_ which fixes several security vulnerabilities.
+* Samba was updated to `4.1.17 <https://www.samba.org/samba/history/samba-4.1.17.html>`_ which fixes a security vulnerability.
 
 * Netatalk was updated to `3.1.7 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.7.html>`_.
 
