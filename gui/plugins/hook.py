@@ -14,7 +14,7 @@ class PluginsHook(AppHook):
     def top_menu(self, request):
         license, reason = get_license()
         sw_name = get_sw_name().lower()
-        if sw_name == 'freenas' or Features.jails in license.features:
+        if sw_name == 'freenas' or (license and Features.jails in license.features):
             return [
                 {
                     'name': _('Plugins'),
