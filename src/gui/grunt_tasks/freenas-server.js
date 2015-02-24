@@ -11,6 +11,7 @@ var path = require("path");
 var exec = require("child_process").exec;
 
 // NPM packages
+var _          = require("lodash");
 var chalk      = require("chalk");
 var SSH2Shell  = require("ssh2shell");
 var scpClient  = require("scp2").Client;
@@ -24,7 +25,6 @@ module.exports = function(grunt) {
   grunt.registerMultiTask( "freenas-server", function() {
     var asyncDone  = this.async();
 
-
     // Object will be assigned commands based on this.target
     var SSHOptions = function () {
       this.msg = {
@@ -32,11 +32,11 @@ module.exports = function(grunt) {
             console.log( message );
           }
       };
-      this.verbose           = false;
-      this.debug             = false;
-      this.idleTimeOut       = 1000000;
-      this.readyMessage      = "ssh: Connection ready";
-      this.closedMessage     = "ssh: Connection closed";
+      this.verbose       = false;
+      this.debug         = false;
+      this.idleTimeOut   = 1000000;
+      this.readyMessage  = "ssh: Connection ready";
+      this.closedMessage = "ssh: Connection closed";
       this.onCommandProcessing = function( command, response, sshObj, stream ) {
         // switch( command ), if needed
       };
@@ -54,6 +54,7 @@ module.exports = function(grunt) {
       };
       this.connectedMessage = chalk.green( "Successfully connected as root@" + grunt.config( ["freenasConfig"] )["remoteHost"] );
 
+      // TODO: Allow private key passphrase
       // Modify options object with keypair path or password
       if ( grunt.config( ["freenasConfig"] )["authType"] === "useKeypair" ) {
         this.server["privateKey"] = fs.readFileSync( grunt.config( ["freenasConfig"] )["keyPath"] );
@@ -88,16 +89,13 @@ module.exports = function(grunt) {
 
     // Open an SSH connection to FreeNAS and run requested commands
     function sshToFreeNAS( statusMsg, OptionsObj ) {
-      var ssh2shellOptions = {};
+      // Load the config defaults, now that the config file has been loaded
+      var ssh2shellOptions = _.assign( new SSHOptions(), new OptionsObj() );
 
       // Print status message, if provided
       if ( statusMsg ) {
         console.log( "STATUS: " + statusMsg );
       }
-
-      // Load the config defaults, now that the config file has been loaded
-      OptionsObj.prototype = new SSHOptions();
-      ssh2shellOptions     = new OptionsObj();
 
       // Connect to FreeNAS and perform the requested operation
       console.log( chalk.cyan( "Connecting to " + grunt.config( ["freenasConfig"] )["remoteHost"] ) );
@@ -161,10 +159,6 @@ module.exports = function(grunt) {
         sshToFreeNAS( "Checking FreeNAS 10 environment", this.data );
         break;
 
-      case "bootstrap-legacy":
-        sshToFreeNAS( "Sanity checking legacy FreeNAS environment", this.data );
-        break;
-
       case "headerfiles-copy":
         scpToFreeNAS(
             "Copying FreeBSD header files to FreeNAS"
@@ -179,10 +173,6 @@ module.exports = function(grunt) {
         break;
 
       case "start":
-        sshToFreeNAS( "Starting remote FreeNAS GUI server", this.data );
-        break;
-
-      case "start-legacy":
         sshToFreeNAS( "Starting remote FreeNAS GUI server", this.data );
         break;
     }

@@ -148,6 +148,6 @@ module.exports = function(grunt) {
   // and bootstrap the FreeNAS environment.
 
   // Options
-  // --local   Start a local dev server, ignore any config files.
+  // --local   Start a local dev server, ignore any config files. TODO: --local not working?
   grunt.registerTask( "default", [ "develop" ] );
 };

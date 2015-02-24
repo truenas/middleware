@@ -14,9 +14,26 @@ var pkgTranslations = {
 
 
 // SSH COMMAND HELPERS
+
+// Create a "msg:" string readable by ssh2shell
+function sshMsg( string, chalkClass ) {
+  return ( "msg:" + chalkClass ? chalk[ chalkClass ]( string ) : string );
+}
+
+// Test that a response was issued, and that it contains the provided string
+function responseContains( response, testString ) {
+  console.log( "response is string: " + typeof response === "string" );
+  console.log( "response contains '" + testString + "': " + response.indexOf( testString ) !== -1 );
+  if ( typeof response === "string" && response.indexOf( testString ) !== -1 ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // Install pkgng packages not found in path
 function checkAndInstall( command, response, sshObj ) {
-  if ( response.indexOf( "Command not found" ) !== -1 ) {
+  if ( responseContains( response, "Command not found" ) ) {
     if ( command === "g++" ) {
       // Need to symlink g++ generic to specific version
       sshObj.commands.unshift( "ln -s /usr/local/bin/g++48 /usr/local/bin/g++" );
@@ -26,25 +43,26 @@ function checkAndInstall( command, response, sshObj ) {
     }
 
     sshObj.commands.unshift(
-        "msg:" + chalk.bold( "Installing " + command + " (as " + pkgTranslations[command] + ")" )
+        sshMsg( "Installing " + command + " (as " + pkgTranslations[command] + ")", "bold" )
       , "env ASSUME_ALWAYS_YES=YES pkg install " + pkgTranslations[command]
-      , "msg:" + chalk.green( command + " is now installed" )
+      , sshMsg( command + " is now installed", "green" )
     );
   } else {
-    sshObj.commands.unshift( "msg:" + chalk.green( command + " is already installed" ) );
+    sshObj.commands.unshift( sshMsg( command + " is already installed", "green" ) );
   }
 }
 
 // Install any global NPM packages not found in path
+// TODO: This is currently not in use, and could be removed.
 function globalNPMInstall( command, response, sshObj ) {
-  if ( response.indexOf( "Command not found" ) !== -1 ) {
+  if ( responseContains( response, "Command not found" ) ) {
     sshObj.commands.unshift(
-        "msg:" + chalk.bold( "Installing the NPM package '" + command + "'' globally" )
+        sshMsg( "Installing the NPM package '" + command + "'' globally", "bold" )
       , "npm install " + command + " -g"
-      , "msg:" + chalk.green( command + " is now installed" )
+      , sshMsg( command + " is now installed", "green" )
     );
   } else {
-    sshObj.commands.unshift( "msg:" + chalk.green( "The NPM package '" + command + "' is already installed" ) );
+    sshObj.commands.unshift( sshMsg( "The NPM package '" + command + "' is already installed", "green" ) );
   }
 }
 
@@ -87,7 +105,7 @@ module.exports = function( grunt ) {
       return vert + new Array( innerstring.length + ( spacer.length * 2 ) + 1 ).join("/") + vert;
     };
 
-    if ( response.indexOf( "error" ) !== -1 ) {
+    if ( responseContains( response, "error" ) ) {
       var message = "Server did not start!";
 
       console.log( chalk.bgRed( horiz( message ) ) );
@@ -121,7 +139,7 @@ module.exports = function( grunt ) {
     this.onCommandComplete = function( command, response, sshObj ) {
       switch( command ) {
         case "npm install --production":
-          sshObj.commands.unshift( "msg:" + chalk.green( "npm packages are up to date" ) );
+          sshObj.commands.unshift( sshMsg( "npm packages are up to date", "green" ) );
           break;
 
         case "/usr/sbin/service gui restart":
@@ -132,84 +150,17 @@ module.exports = function( grunt ) {
     };
   };
 
-  this["start-legacy"] = function() {
-    this.commands = [
-        "mount -uw /"
-      , ( "setenv PORT " + grunt.config( ["env"] )["port"] )
-      , ( "setenv FOREVER_ROOT " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".forever" )
-      , ( "cd " + grunt.config( ["freenasConfig"] )["freeNASPath"] )
-      , ( "msg:" + chalk.cyan( "running `npm install --production`" ) )
-      , "npm install --production"
-      , ( "msg:" + chalk.cyan( "Checking status of FreeNAS GUI webserver" ) )
-      , "forever list"
-    ];
-
-    this.onCommandComplete = function( command, response, sshObj ) {
-      switch( command ) {
-        case "mount -uw /":
-          sshObj.commands.unshift( "msg:" + chalk.green( "filesystem mounted successfully" ) );
-          break;
-
-        case ( "setenv PORT " + grunt.config( ["env"] )["port"] ):
-          sshObj.commands.unshift( "msg:" + chalk.cyan( "Set $PORT environment variable to " + grunt.config( ["env"] )["port"]) );
-          break;
-
-        case ( "setenv FOREVER_ROOT " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".forever" ):
-          sshObj.commands.unshift( "msg:" + chalk.cyan( "Set $FOREVER_ROOT environment variable to " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".forever" ) );
-          break;
-
-        case ( "cd " + grunt.config( ["freenasConfig"] )["freeNASPath"] ):
-          sshObj.commands.unshift( "msg:" + chalk.cyan( "Changed directory to " + grunt.config( ["freenasConfig"] )["freeNASPath"] ) );
-          break;
-
-        case "npm install --production":
-          sshObj.commands.unshift( "msg:" + chalk.green( "npm packages are up to date" ) );
-          break;
-
-        case "forever list":
-          if ( response.indexOf( "No forever processes running" ) !== -1 ) {
-            sshObj.commands.push(
-                "killall node" // Make sure no orphan processes are running
-              , "msg:" + chalk.cyan( "Starting FreeNAS 10 GUI server" )
-              , commonCommands["startServer"]
-            );
-          } else {
-            sshObj.commands.push(
-                "msg:" + chalk.green( "FreeNAS 10 GUI was already running" )
-              , "msg:" + chalk.cyan( "Restarting server" )
-              , commonCommands["restartServer"]
-            );
-          }
-          ssh2DummyFunction( sshObj );
-          break;
-
-        case commonCommands["startServer"]:
-        case commonCommands["restartServer"]:
-            printServerAddress( sshObj, command, response );
-            ssh2DummyFunction( sshObj );
-          break;
-      }
-    };
-  };
-
   // Shut down the Forever server
   this["stop"] = function() {
     this.commands = [
-      , ( "msg:" + chalk.cyan( "Stopping FreeNAS GUI webserver" ) )
-      , commonCommands["stopServer"]
-    ];
-  };
-
-  this["stop-legacy"] = function() {
-    this.commands = [
-      , ( "msg:" + chalk.cyan( "Stopping FreeNAS GUI webserver" ) )
+      , ( sshMsg( "Stopping FreeNAS GUI webserver", "cyan" ) )
       , commonCommands["stopServer"]
     ];
   };
 
   this["bootstrap"] = function() {
     this.commands = [
-        "msg:" + chalk.cyan( "Now checking FreeNAS 10 environment and installing any required software" )
+        sshMsg( "Now checking FreeNAS 10 environment and installing any required software", "cyan" )
       , "rehash"         // Update path
       // Check if pkg(8) has been initialized
       , "cat /usr/local/etc/pkg/repos/FreeBSD.conf"
@@ -224,124 +175,20 @@ module.exports = function( grunt ) {
       , "npm config set cache /usr/local/www/gui/.npm-cache --global"
       , "cd /usr/include/"
     ];
+
     this.onCommandComplete = function( command, response, sshObj ) {
       switch ( command ) {
         case "cat /usr/local/etc/pkg/repos/FreeBSD.conf":
-          if ( response.indexOf( "enabled: no" ) !== -1 ) {
+          if ( responseContains( response, "enabled: no" ) ) {
             sshObj.commands.unshift(
-                "msg:" + chalk.cyan( "Enabling pkg(8)" )
+                sshMsg( "Enabling pkg(8)", "cyan" )
               , "sed -i -e 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf"
             );
           } else {
-            sshObj.commands.unshift( "msg:" + chalk.green( "pkg(8) is already enabled" ) );
-          }
-          break;
-
-        case "which gmake":
-          checkAndInstall( "gmake", response, sshObj );
-          break;
-
-        case "which g++":
-          checkAndInstall( "g++", response, sshObj );
-          break;
-
-        case "which npm":
-          checkAndInstall( "npm", response, sshObj );
-          break;
-
-        case "npm -v":
-          if ( response.search("2.") !== -1 ) {
-            sshObj.commands.unshift( "msg:" + chalk.green( "npm looks current" ) );
-          } else {
-            sshObj.commands.unshift(
-                "msg:Updating npm to latest version."
-              , "npm update -g npm"
-              , "npm -v"
-            );
-          }
-          break;
-
-        case "cd /usr/include/":
-          if ( response.search("No such file or directory") !== -1 ) {
-            sshObj.commands.push("msg:No header files were found in /usr/include");
-            sshObj.commands.push("mkdir -p ~/.tmp/headerfiles/");
-            grunt.task.run( "freenas-server:headerfiles-copy" );
-            grunt.task.run( "freenas-server:headerfiles-unpack" );
-          } else {
-            sshObj.commands.push("msg:" + chalk.green( "Header files found in /usr/include" ) );
+            sshObj.commands.unshift( sshMsg( "pkg(8) is already enabled", "green" ) );
             ssh2DummyFunction( sshObj );
           }
           break;
-      }
-    };
-  };
-
-  this["bootstrap-legacy"] = function() {
-    this.commands = [
-        "msg:" + chalk.cyan( "Now checking FreeNAS 9 environment and installing any required software" )
-      , "mount -uw /"    // Mount root filesystem as read-write
-      , "rehash"         // Update path
-      , "pkg -N"         // Check if pkg(8) has been initialized
-      // pkgng packages
-      , "which gmake"    // Check if gmake is installed
-      , "which g++"      // Check if g++ (or Clang) is installed
-      , "which node"     // Check if node is installed
-      , "which npm"      // Check if npm is installed
-      , "rehash"         // Update path
-      // npm pacakages
-      , "npm -v"         // Update npm to latest; port is usually out of date
-      , "which forever"  // Check if forever is installed
-      , "rehash"         // Update path
-      // Make any directories specified by user, guarantee path exists
-      , "mkdir -p " + grunt.config( ["freenasConfig"] )["freeNASPath"]
-      // Relocate npm cache to user dir; don't fill up / with caches
-      , "mkdir -p " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".npm-cache"
-      , "npm config set cache " + grunt.config( ["freenasConfig"] )["freeNASPath"] + ".npm-cache --global"
-      , "cd /usr/include/"
-    ];
-    this.onCommandComplete = function( command, response, sshObj ) {
-      switch ( command ) {
-        case "pkg -N":
-          if ( response.indexOf( "pkg is not installed" ) !== -1 ) {
-            sshObj.commands.unshift(
-                "msg:System predates FreeNAS 9.3"
-              , "msg:"+ chalk.bold( "Updating and bootstrapping pkg(8)" )
-              , "env ASSUME_ALWAYS_YES=YES pkg bootstrap"
-            );
-          } else {
-            // If FreeNAS 9.3 version of pkgng is being used, this directory
-            // should exist. Using that as a truth test for >9.2
-            sshObj.commands.unshift( "ls /usr/local/etc/pkg" );
-          }
-          break;
-
-        case "ls /usr/local/etc/pkg":
-          if ( response.indexOf( "repos" ) !== -1 ) {
-            sshObj.commands.unshift(
-                "msg:System is newer than FreeNAS 9.2"
-              , "msg:" + chalk.bold( "Converting iXsystems pkg system to bootstrapped pkg(8)" )
-              // Remove iXsystems-specific pkg files
-              , "msg:" + chalk.cyan( "Removing iXsystems package manger" )
-              , "rm -rf /usr/local/etc/pkg"
-              // Ensure key dirs exist
-              , "msg:" + chalk.cyan( "Getting current pkg keys" )
-              , "mkdir -p /usr/share/keys/pkg/trusted /usr/share/keys/pkg/revoked"
-              , "wget --no-check-certificate https://svn0.us-west.freebsd.org/base/head/share/keys/pkg/trusted/pkg.freebsd.org.2013102301 -O /usr/share/keys/pkg/trusted/pkg.freebsd.org.201310230"
-              // Manually install pkg(8)
-              , "msg:" + chalk.cyan( "Obtaining newest version of pkg(8)" )
-              , "cd /tmp && wget http://pkg.freebsd.org/freebsd:9:x86:64/latest/All/pkg-1.3.7.txz"
-              , "msg:" + chalk.cyan( "Installing pkg(8)" )
-              , "tar xf pkg-1.3.7.txz -C /"
-              // Remove existing db to clear the upgrade
-              , "msg:" + chalk.cyan( "Removing old pkg database" )
-              , "rm -rf /var/db/pkg"
-              , "msg:" + chalk.cyan( "Running pkg upgrade" )
-              , "pkg upgrade"
-            );
-          } else {
-            sshObj.commands.unshift( "msg:" + chalk.green( "pkg(8) has already been bootstrapped and is installed" ) );
-          }
-          break;
 
         case "which gmake":
           checkAndInstall( "gmake", response, sshObj );
@@ -351,38 +198,32 @@ module.exports = function( grunt ) {
           checkAndInstall( "g++", response, sshObj );
           break;
 
-        case "which node":
-          checkAndInstall( "node", response, sshObj );
-          break;
-
         case "which npm":
           checkAndInstall( "npm", response, sshObj );
           break;
 
         case "npm -v":
-          if ( response.search("2.1.") !== -1 ) {
-            sshObj.commands.unshift( "msg:" + chalk.green( "npm looks current" ) );
+          if ( responseContains( response,"2.") ) {
+            sshObj.commands.unshift( sshMsg( "npm is at least version 2.0", "green" ) );
           } else {
             sshObj.commands.unshift(
-                "msg:Updating npm to latest version."
+                sshMsg( "msg:Updating npm to latest version." )
               , "npm update -g npm"
               , "npm -v"
             );
           }
           break;
 
-        case "which forever":
-          globalNPMInstall( "forever", response, sshObj );
-          break;
-
         case "cd /usr/include/":
-          if ( response.search("No such file or directory") !== -1 ) {
-            sshObj.commands.push("msg:No header files were found in /usr/include");
-            sshObj.commands.push("mkdir -p ~/.tmp/headerfiles/");
+          if ( responseContains( response, "No such file or directory") ) {
+            sshObj.commands.push(
+                "msg:No header files were found in /usr/include"
+              , "mkdir -p ~/.tmp/headerfiles/"
+            );
             grunt.task.run( "freenas-server:headerfiles-copy" );
             grunt.task.run( "freenas-server:headerfiles-unpack" );
           } else {
-            sshObj.commands.push("msg:" + chalk.green( "Header files found in /usr/include" ) );
+            sshObj.commands.push( sshMsg( "Header files found in /usr/include", "green" ) );
             ssh2DummyFunction( sshObj );
           }
           break;
