@@ -42,8 +42,6 @@ To install a plugin, click "Plugins". As seen in Figure 12.1a, the list of avail
 |plugins1.png|
 
 .. |plugins1.png| image:: images/plugins1.png
-    :width: 5.975in
-    :height: 4.5in
 
 .. note:: if the list of available plugins is not displayed, open :ref:`Shell` and verify that the FreeNAS® system can :command:`ping` an address on the
    Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in :menuselection:`Network --> Global Configuration`.
@@ -56,8 +54,6 @@ installation.
 |plugins2.png|
 
 .. |plugins2.png| image:: images/plugins2.png
-    :width: 5.9in
-    :height: 4.5in
 
 The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the
 plugin and add it to the "Installed" tab as shown in Figure 12.1c.
@@ -70,8 +66,6 @@ plugin and add it to the "Installed" tab as shown in Figure 12.1c.
 |plugins3.png|
 
 .. |plugins3.png| image:: images/plugins3.png
-    :width: 6.7in
-    :height: 4.9in
 
 As seen in the example shown in Figure 12.1c, entries for the installed PBI will appear in the following locations:
 
@@ -116,8 +110,6 @@ In the example shown in Figure 12.2a, a newer version of Transmission is availab
 |plugins4.png|
 
 .. |plugins4.png| image:: images/plugins4.png
-    :width: 7.8in
-    :height: 1.9in
 
 Click the "OK" button to start the download and installation of the latest version of the plugin. Once the update is complete, the entry for the plugin will
 be refreshed to show the new version number and the "Update" button will disappear.
@@ -139,8 +131,6 @@ downloaded file. Once selected, click the "Upload" button to begin the installat
 |plugins5.png|
 
 .. |plugins5.png| image:: images/plugins5.png
-    :width: 5.2in
-    :height: 1.7in
 
 When the installation is complete, an entry for the plugin will be added to the "Installed" tab and its associated jail will be listed under "Jails". However,
 if it is not a FreeNAS® plugin, it will not be added to "Plugins" in the tree. In this case, if the application requires any configuration, you will have to
@@ -163,8 +153,6 @@ that they want to delete. **This is the one and only warning.** If the user clic
 |plugins6.png|
 
 .. |plugins6.png| image:: images/plugins6.png
-    :width: 4.7in
-    :height: 2.3in
 
 .. _Available Plugins:
 

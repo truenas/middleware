@@ -61,8 +61,6 @@ named *jail1*, it will be installed into its own dataset named :file:`/mnt/volum
 |jails1.png|
 
 .. |jails1.png| image:: images/jails1.png
-    :width: 4.2in
-    :height: 2.4in
 
 .. warning:: if you have already installed any :ref:`Plugins`, the "Jail Root", "IPv4 Network", "IPv4 Network Start Address", and "IPv4 Network End Address"
    will automatically be filled in. You should double-check that the pre-configured IP addressing values are appropriate for your jails and will not conflict
@@ -158,8 +156,6 @@ To create a jail, click :menuselection:`Jails --> Add Jails` to access the scree
 |jails3.png|
 
 .. |jails3.png| image:: images/jails3.png
-    :width: 3.5in
-    :height: 2.9in
 
 By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
@@ -296,8 +292,6 @@ system boot, whether or not it is currently running, and the type of jail (e.g. 
 |jails4.png|
 
 .. |jails4.png| image:: images/jails4.png
-    :width: 3.4in
-    :height: 4.5in
 
 In order, from left to right, the following configuration icons are available:
 
@@ -380,8 +374,6 @@ expanding the jail's name in the tree view and clicking :menuselection:`Storage 
 |jails5.png|
 
 .. |jails5.png| image:: images/jails5.png
-    :width: 7.2in
-    :height: 5.6in
 
 Browse to the "Source" and "Destination", where:
 
@@ -434,8 +426,6 @@ it was created as the "Create directory" box was left as checked. The resulting 
 |jails6.png|
 
 .. |jails6.png| image:: images/jails6.png
-    :width: 7.2in
-    :height: 5.2in
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -548,8 +538,6 @@ for audiotag.
 |ports1.png|
 
 .. |ports1.png| image:: images/ports1.png
-    :width: 6.9252in
-    :height: 4.5425in
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
@@ -582,8 +570,6 @@ Since this port has configurable options, the first time this command is run the
 |ports2.png|
 
 .. |ports2.png| image:: images/ports2.png
-    :width: 5.7701in
-    :height: 2.778in
 
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:`spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
@@ -690,8 +676,6 @@ the "OK" button to begin the installation.
 |jails7.png|
 
 .. |jails7.png| image:: images/jails7.png
-    :width: 4.5in
-    :height: 4.4in
 
 Once installed, input the IP address of the VirtualBox jail into a web browser and enter the username and password of *admin* into the login screen. Once
 authenticated, the screen shown in Figure 13.3b will appear in the web browser.
@@ -701,8 +685,6 @@ authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 |jails8.png|
 
 .. |jails8.png| image:: images/jails8.png
-    :width: 13.2in
-    :height: 6.3in
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
 
@@ -721,8 +703,6 @@ listing showing the default template is seen in Figure 13.4a.
 |jails9.png|
 
 .. |jails9.png| image:: images/jails9.png
-    :width: 5.6in
-    :height: 1.98in
 
 The listing contains the following columns:
 
@@ -752,8 +732,6 @@ To add the template, click :menuselection:`Jails --> Templates --> Add Jail Temp
 |jails11.png|
 
 .. |jails11.png| image:: images/jails11.png
-    :width: 2.6in
-    :height: 2.3in
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -795,8 +773,6 @@ it will open the configuration screen shown in the Figure 13.4c.
 |jails10.png|
 
 .. |jails10.png| image:: images/jails10.png
-    :width: 5.5in
-    :height: 4.5in
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.

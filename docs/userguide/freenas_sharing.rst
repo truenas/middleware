@@ -77,8 +77,6 @@ created.
 |afp2.png|
 
 .. |afp2.png| image:: images/afp2.png
-    :width: 3.7in
-    :height: 4.5in
 
 .. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
           share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
@@ -186,8 +184,6 @@ fields in this screen:
 |afp6.png|
 
 .. |afp6.png| image:: images/afp6.png
-    :width: 3.5in
-    :height: 3.4in
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
 correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
@@ -204,8 +200,6 @@ frame and the contents of any data that has been saved in the share will be disp
 |afp3.png|
 
 .. |afp3.png| image:: images/afp3.png
-    :width: 6.9252in
-    :height: 3.4327in
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -248,16 +242,12 @@ entries to :menuselection:`Sharing --> Apple (AFP)`.
 |afp7.png|
 
 .. |afp7.png| image:: images/afp7.png
-    :width: 3.5in
-    :height: 3.4in
 
 **Figure 10.1e: Creating an Authenticated User**
 
 |afp8.png|
 
 .. |afp8.png| image:: images/afp8.png
-    :width: 4.3in
-    :height: 2.8in
 
 At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
 FreeNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
@@ -274,8 +264,6 @@ field then click "Edit Dataset" to save the change. In this example, the Time Ma
 |afp9.png|
 
 .. |afp9.png| image:: images/afp9.png
-    :width: 7.1in
-    :height: 4.6in
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
@@ -287,8 +275,6 @@ this example, the password that was set for the *user1* account.
 |afp5.png|
 
 .. |afp5.png| image:: images/afp5.png
-    :width: 6.9252in
-    :height: 4.6055in
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the FreeNAS®
 system, you will need to create a sparsebundle image using
@@ -325,8 +311,6 @@ the permissions of the mounted share.
 |nfs6.png|
 
 .. |nfs6.png| image:: images/nfs6.png
-    :width: 3.5in
-    :height: 3.4in
 
 To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
 Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
@@ -336,8 +320,6 @@ Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 3.7in
-    :height: 4.5in
 
 Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
@@ -549,8 +531,6 @@ example :file:`/mnt/data` share of the FreeNAS® system at
 |nfs5.jpg|
 
 .. |nfs5.jpg| image:: images/nfs5.jpg
-    :width: 6.9252in
-    :height: 5.3736in
 
 .. _From Mac OS X:
 
@@ -570,16 +550,12 @@ user can now copy files to and from the share.
 |nfs3.png|
 
 .. |nfs3.png| image:: images/nfs3.png
-    :width: 6.9252in
-    :height: 3.5618in
 
 **Figure 10.2e: Viewing the NFS Share in Finder**
 
 |nfs4.png|
 
 .. |nfs4.png| image:: images/nfs4.png
-    :width: 6.2193in
-    :height: 4.5102in
 
 .. _Troubleshooting NFS:
 
@@ -642,8 +618,6 @@ To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Ad
 |webdav.png|
 
 .. |webdav.png| image:: images/webdav.png
-    :width: 4.2in
-    :height: 2.4in
 
 Table 10.3a summarizes the available options.
 
@@ -698,8 +672,6 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
 |cifs2.png|
 
 .. |cifs2.png| image:: images/cifs2.png
-    :width: 3.9in
-    :height: 2.4in
 
 Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
 scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
@@ -835,8 +807,6 @@ following fields in this screen:
 |cifs7.png|
 
 .. |cifs7.png| image:: images/cifs7.png
-    :width: 3.5in
-    :height: 3.4in
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
@@ -886,16 +856,12 @@ correct ownership and start the CIFS service for you, so that the share(s) are i
 |cifs3.png|
 
 .. |cifs3.png| image:: images/cifs3.png
-    :width: 3.5in
-    :height: 3.4in
 
 **Figure 10.4d: Creating the User and Group**
 
 |cifs8.png|
 
 .. |cifs8.png| image:: images/cifs8.png
-    :width: 4.3in
-    :height: 2.9in
 
 You should now be able to test an authenticated share from any CIFS client. For example, to test an authenticated share from a Windows system, open Explorer
 and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "cifs_user1". If you click on
@@ -1004,8 +970,6 @@ one of the previous versions, which will overwrite the existing file on the Wind
 |cifs6.png|
 
 .. |cifs6.png| image:: images/cifs6.png
-    :width: 6.9252in
-    :height: 5.8945in
 
 .. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
@@ -1104,8 +1068,6 @@ Target Global Configuration
 |global.png|
 
 .. |global.png| image:: images/global.png
-    :width: 5.7in
-    :height: 3.14in
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1156,8 +1118,6 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 |portal.png|
 
 .. |portal.png| image:: images/portal.png
-    :width: 6.0in
-    :height: 3.2in
 
 **Table 10.5b: Portal Configuration Settings**
 
@@ -1212,8 +1172,6 @@ which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Ini
 |initiator1.png|
 
 .. |initiator1.png| image:: images/initiator1.png
-    :width: 6.5in
-    :height: 2.5in
 
 Table 10.5c summarizes the settings that can be configured when adding an initiator.
 
@@ -1246,8 +1204,6 @@ from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to 
 |initiator2.png|
 
 .. |initiator2.png| image:: images/initiator2.png
-    :width: 6.1in
-    :height: 2.2in
 
 .. _Authorized Accesses:
 
@@ -1264,8 +1220,6 @@ If you will be using CHAP or mutual CHAP to provide authentication, you must cre
 |authorized1.png|
 
 .. |authorized1.png| image:: images/authorized1.png
-    :width: 3.989in
-    :height: 3.8429in
 
 Table 10.5d summarizes the settings that can be configured when adding an authorized access:
 
@@ -1309,8 +1263,6 @@ entry to display its "Edit" and "Delete" buttons.
 |authorized2.png|
 
 .. |authorized2.png| image:: images/authorized2.png
-    :width: 6.1in
-    :height: 2.2in
 
 .. _Targets:
 
@@ -1331,8 +1283,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |target1png|
 
 .. |target1png| image:: images/target1.png
-    :width: 3.7in
-    :height: 3.0in
 
 **Table 10.5e: Target Settings**
 
@@ -1403,8 +1353,6 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |extent2.png|
 
 .. |extent2.png| image:: images/extent2.png
-    :width: 4.5in
-    :height: 4.4in
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1471,8 +1419,6 @@ shown in Figure 10.5i. Use the drop-down menus to select the existing target and
 |target2.png|
 
 .. |target2.png| image:: images/target2.png
-    :width: 2.5in
-    :height: 1.8in
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1567,8 +1513,6 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 |grow1.png|
 
 .. |grow1.png| image:: images/grow1.png
-    :width: 4.8in
-    :height: 4.5in
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.

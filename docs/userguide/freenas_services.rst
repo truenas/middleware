@@ -53,8 +53,6 @@ services, and to configure services. By default, all services, except for the S.
 |services.png|
 
 .. |services.png| image:: images/services.png
-    :width: 3.8in
-    :height: 4.5in
 
 A service is stopped if its icon is a red "OFF". A service is running if its icon is a blue "ON". To start or stop a service, click its ON/OFF icon.
 
@@ -82,8 +80,6 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |afp1a.png|
 
 .. |afp1a.png| image:: images/afp1a.png
-    :width: 5.2in
-    :height: 4.4in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -163,8 +159,6 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |cifs1.png|
 
 .. |cifs1.png| image:: images/cifs1.png
-    :width: 4.9in
-    :height: 4.4in
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -395,8 +389,6 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |directory1a.png|
 
 .. |directory1a.png| image:: images/directory1a.png
-    :width: 3.9in
-    :height: 3.3in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -451,8 +443,6 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |ddns.png|
 
 .. |ddns.png| image:: images/ddns.png
-    :width: 4.2in
-    :height: 3.9in
 
 **Table 11.5a: DDNS Configuration Options**
 
@@ -517,8 +507,6 @@ either click the "Advanced Mode" button or configure the system to always displa
 |ftp1.png|
 
 .. |ftp1.png| image:: images/ftp1.png
-    :width: 4.7in
-    :height: 4.4in
 
 Table 11.6a summarizes the available options when configuring the FTP server:
 
@@ -742,8 +730,6 @@ In the example shown in Figure 11.6b, a user has input the following information
 |filezilla.png|
 
 .. |filezilla.png| image:: images/filezilla.png
-    :width: 6.9252in
-    :height: 2.2335in
 
 The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
 site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
@@ -857,8 +843,6 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 |lldp.png|
 
 .. |lldp.png| image:: images/lldp.png
-    :width: 3.2in
-    :height: 1.8in
 
 **Table 11.8a: LLDP Configuration Options**
 
@@ -958,8 +942,6 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 |rsyncd.png|
 
 .. |rsyncd.png| image:: images/rsyncd.png
-    :width: 6in
-    :height: 1.8in
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -992,8 +974,6 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 |rsync3.png|
 
 .. |rsync3.png| image:: images/rsync3.png
-    :width: 6.8in
-    :height: 4.2in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1064,8 +1044,6 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 |smart2.png|
 
 .. |smart2.png| image:: images/smart2.png
-    :width: 2.9in
-    :height: 2.7in
 
 .. note:: :command:`smartd` will wake up at every configured "Check Interval". It will check the times you configured in
    :menuselection:`System --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
@@ -1127,8 +1105,6 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 |snmp.png|
 
 .. |snmp.png| image:: images/snmp.png
-    :width: 4.2in
-    :height: 2.3in
 
 **Table 11.12a: SNMP Configuration Options**
 
@@ -1173,8 +1149,6 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 |ssh1.png|
 
 .. |ssh1.png| image:: images/ssh1.png
-    :width: 4.8in
-    :height: 2.7in
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1297,8 +1271,6 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |tftp.png|
 
 .. |tftp.png| image:: images/tftp.png
-    :width: 5.0in
-    :height: 3.1in
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1349,8 +1321,6 @@ Figure 11.15a shows the UPS configuration screen:
 |ups.png|
 
 .. |ups.png| image:: images/ups.png
-    :width: 4.8in
-    :height: 4.4in
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1451,8 +1421,6 @@ options.
 |webdav2.png|
 
 .. |webdav2.png| image:: images/webdav2.png
-    :width: 3.6in
-    :height: 2.4in
 
 **Table 11.16a: WebDAV Configuration Options**
 

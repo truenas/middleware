@@ -45,8 +45,6 @@ does not use a domain name add *.local* to the end of the hostname.
 |system1.png|
 
 .. |system1.png| image:: images/system1.png
-    :width: 6.9in
-    :height: 3.5in
 
 .. _General:
 
@@ -60,8 +58,6 @@ General
 |system2.png|
 
 .. |system2.png| image:: images/system2.png
-    :width: 6.2in
-    :height: 4.4in
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -152,8 +148,6 @@ explains these options in more detail.
 |ntp1.png|
 
 .. |ntp1.png| image:: images/ntp1.png
-    :width: 7.1in
-    :height: 3.9in
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -213,8 +207,6 @@ created indicating the date and time the wizard was run.
 |be1b.png|
 
 .. |be1b.png| image:: images/be1b.png
-    :width: 6.2in
-    :height: 4.5in
 
 Each boot environment entry contains the following information:
 
@@ -255,8 +247,6 @@ The buttons above the boot entries can be used to:
 |be2.png|
 
 .. |be2.png| image:: images/be2.png
-    :width: 3.2in
-    :height: 4.4in
 
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
@@ -268,8 +258,6 @@ Figure 5.3c shows a sample boot menu containing entries for the default, initial
 |be3a.png|
 
 .. |be3a.png| image:: images/be3a.png
-    :width: 6.0in
-    :height: 3.3in
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
@@ -292,8 +280,6 @@ click "Attach Disk".
 |mirror1.png|
 
 .. |mirror1.png| image:: images/mirror1.png
-    :width: 3.6in
-    :height: 4.5in
 
 Once the mirror is created, the "Status" screen will indicate that it is now a *mirror* and the number of devices in the mirror will be shown, as seen in the
 example in Figure 5.3e.
@@ -303,8 +289,6 @@ example in Figure 5.3e.
 |mirror2.png|
 
 .. |mirror2.png| image:: images/mirror2.png
-    :width: 3.8in
-    :height: 1.9in
 
 .. _Advanced:
 
@@ -318,8 +302,6 @@ Advanced
 |system3.png|
 
 .. |system3.png| image:: images/system3.png
-    :width: 9.4in
-    :height: 4.5in
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -401,8 +383,6 @@ Uncompress the tar file and use the resources in :ref:`IOzone` to assist in inte
 |backup1.png|
 
 .. |backup1.png| image:: images/backup1.png
-    :width: 3.24in
-    :height: 3.3in
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -480,8 +460,6 @@ that can be configured using the Email tab.
 |system4a.png|
 
 .. |system4a.png| image:: images/system4a.png
-    :width: 6.3in
-    :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -534,8 +512,6 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |system5.png|
 
 .. |system5.png| image:: images/system5.png
-    :width: 6.3in
-    :height: 1.8in
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -586,8 +562,6 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 2.5in
-    :height: 2.4in
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -697,8 +671,6 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.25in
-    :height: 3.38in
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -731,8 +703,6 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.95in
-    :height: 3.4in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -763,8 +733,6 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 |ca1.png|
 
 .. |ca1.png| image:: images/ca1.png
-    :width: 6.2in
-    :height: 1.9in
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
@@ -774,8 +742,6 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 |ca2a.png|
 
 .. |ca2a.png| image:: images/ca2a.png
-    :width: 4.1in
-    :height: 3.1in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -810,8 +776,6 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 |ca3.png|
 
 .. |ca3.png| image:: images/ca3.png
-    :width: 3.0in
-    :height: 3.96in
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -889,8 +853,6 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 |cert1.png|
 
 .. |cert1.png| image:: images/cert1.png
-    :width: 6.5in
-    :height: 1.8in
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
@@ -900,8 +862,6 @@ summarized in Table 5.10a.
 |cert2a.png|
 
 .. |cert2a.png| image:: images/cert2a.png
-    :width: 4.2in
-    :height: 2.8in
 
 **Table 5.10a: Certificate Import Options**
 
@@ -932,8 +892,6 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 |cert3.png|
 
 .. |cert3.png| image:: images/cert3.png
-    :width: 3.6in
-    :height: 4.3in
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -990,8 +948,6 @@ connections.
 |cert4.png|
 
 .. |cert4.png| image:: images/cert4.png
-    :width: 6.2in
-    :height: 4.5in
 
 If you click an entry, it will activate the following configuration buttons:
 

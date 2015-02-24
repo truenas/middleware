@@ -34,8 +34,6 @@ Global Configuration
 |network1.png|
 
 .. |network1.png| image:: images/network1.png
-    :width: 9.7in
-    :height: 3.2in
 
 Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
 Figure 7.1a, but can be changed to meet the local network's requirements.
@@ -116,8 +114,6 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 3.2in
-    :height: 4.2in
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -196,8 +192,6 @@ IPMI using the FreeNAS® GUI.
 |ipmi.png|
 
 .. |ipmi.png| image:: images/ipmi.png
-    :width: 5.7in
-    :height: 3.3in
 
 **Table 7.3a: IPMI Options**
 
@@ -321,8 +315,6 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 |lagg1.png|
 
 .. |lagg1.png| image:: images/lagg1.png
-    :width: 4.5in
-    :height: 3.25in
 
 .. note:: if interfaces are installed but do not appear in the "Physical NICs" list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_.
@@ -343,8 +335,6 @@ interface.
 |lagg2.png|
 
 .. |lagg2.png| image:: images/lagg2.png
-    :width: 5.1in
-    :height: 4.9in
 
 **Table 7.4a: Configurable Options for a lagg**
 
@@ -395,8 +385,6 @@ The configurable options are summarized in Table 7.4b.
 |lagg3.png|
 
 .. |lagg3.png| image:: images/lagg3.png
-    :width: 6.2in
-    :height: 4.5in
 
 **Table 7.4b: Configuring a Member Interface**
 
@@ -458,8 +446,6 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 |static.png|
 
 .. |static.png| image:: images/static.png
-    :width: 3.0in
-    :height: 1.8in
 
 The available options are summarized in Table 7.6a.
 
@@ -508,8 +494,6 @@ If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the s
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 3.0in
-    :height: 2.1in
 
 Table 7.7a summarizes the configurable fields.
 

@@ -12,8 +12,6 @@ The link to Shell is the fourth entry from the bottom of the menu tree. In Figur
 |shell.png|
 
 .. |shell.png| image:: images/shell.png
-    :width: 4.9in
-    :height: 4.7in
 
 The prompt indicates that the current user is *root*, the hostname is
 *freenas*, and the current working directory is :file:`~`

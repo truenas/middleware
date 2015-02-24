@@ -49,8 +49,6 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 |zfs1a.png|
 
 .. |zfs1a.png| image:: images/zfs1a.png
-    :width: 8.2in
-    :height: 4.2in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -202,8 +200,6 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 |manual.png|
 
 .. |manual.png| image:: images/manual.png
-    :width: 4.1in
-    :height: 3.5in
 
 **Table 8.1b: Manual Setup Options**
 
@@ -291,8 +287,6 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |perms1.png|
 
 .. |perms1.png| image:: images/perms1.png
-    :width: 3.3in
-    :height: 4.2in
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -371,8 +365,6 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 |dataset.png|
 
 .. |dataset.png| image:: images/dataset.png
-    :width: 7.6in
-    :height: 4.7in
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -507,8 +499,6 @@ To create a zvol, select an existing ZFS volume or dataset from the tree then cl
 |zvol.png|
 
 .. |zvol.png| image:: images/zvol.png
-    :width: 3.2in
-    :height: 2.5in
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -559,8 +549,6 @@ be imported at a time.
 |import1.png|
 
 .. |import1.png| image:: images/import1.png
-    :width: 4.99in
-    :height: 4.2in
 
 Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
 When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
@@ -582,8 +570,6 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 2.9in
-    :height: 1.7in
 
 If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
@@ -592,8 +578,6 @@ If you are importing an unencrypted ZFS pool, select "No: Skip to import" to ope
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 2.9in
-    :height: 1.7in
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
@@ -619,8 +603,6 @@ access the screen shown in Figure 8.1i.
 |decrypt.png|
 
 .. |decrypt.png| image:: images/decrypt.png
-    :width: 3.5in
-    :height: 2.4in
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
@@ -644,8 +626,6 @@ View Disks
 |view.png|
 
 .. |view.png| image:: images/view.png
-    :width: 7.6in
-    :height: 4.5in
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
 are described in Table 8.1f.
@@ -713,8 +693,6 @@ space is "Available", the type of "Compression", the "Compression Ratio", and th
 |volume1a.png|
 
 .. |volume1a.png| image:: images/volume1a.png
-    :width: 4.9in
-    :height: 4.5in
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
@@ -733,8 +711,6 @@ disk, writes data to the disk indicating that the export was done, and removes a
 |detach1.png|
 
 .. |detach1.png| image:: images/detach1.png
-    :width: 4.9in
-    :height: 4.5in
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
@@ -753,8 +729,6 @@ running the latest versions of feature flags.
 |volume2.png|
 
 .. |volume2.png| image:: images/volume2.png
-    :width: 3.2in
-    :height: 4.5in
 
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
 configurable options.
@@ -764,8 +738,6 @@ configurable options.
 |disk.png|
 
 .. |disk.png| image:: images/disk.png
-    :width: 3.5in
-    :height: 3.3in
 
 .. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the "HDD Standby", "Advanced Power Management", and "Acoustic
    Level" settings. As of 8.3.1, changes to these settings are applied immediately.
@@ -804,8 +776,6 @@ If you check the "Encryption" box during the creation of a pool, five additional
 |encrypt1.png|
 
 .. |encrypt1.png| image:: images/encrypt1.png
-    :width: 4.8in
-    :height: 4.5in
 
 In order from left to right, these additional encryption buttons are used to:
 
@@ -895,8 +865,6 @@ In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ad
 |replace.png|
 
 .. |replace.png| image:: images/replace.png
-    :width: 4.9in
-    :height: 4.5in
 
 Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1q indicates that the
 disk replacement was successful for this example.
@@ -906,8 +874,6 @@ disk replacement was successful for this example.
 |replace2.png|
 
 .. |replace2.png| image:: images/replace2.png
-    :width: 4.9in
-    :height: 2.4in
     
 .. _Replacing an Encrypted Drive:
 
@@ -1186,8 +1152,6 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 |periodic1a.png|
 
 .. |periodic1a.png| image:: images/periodic1a.png
-    :width: 8.3in
-    :height: 4.5in
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1284,8 +1248,6 @@ Key" button and copy its contents. An example is shown in Figure 8.3a.
 |replication1a.png|
 
 .. |replication1a.png| image:: images/replication1a.png
-    :width: 5.4in
-    :height: 2.7in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1320,8 +1282,6 @@ For this example, the required configuration is as follows:
 |replication2a.png|
 
 .. |replication2a.png| image:: images/replication2a.png
-    :width: 6.6in
-    :height: 4.4in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
@@ -1476,8 +1436,6 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 |scrub1.png|
 
 .. |scrub1.png| image:: images/scrub1.png
-    :width: 8.8in
-    :height: 4.4in
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1543,8 +1501,6 @@ The "Snapshots" tab can be used to review the listing of available snapshots. An
 |periodic3a.png|
 
 .. |periodic3a.png| image:: images/periodic3a.png
-    :width: 11.1in
-    :height: 4.5in
 
 The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
 
@@ -1624,8 +1580,6 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |vmware1a.png|
 
 .. |vmware1a.png| image:: images/vmware1a.png
-    :width: 3.2in
-    :height: 2.5in
 
 **Table 8.6a: VMware Snapshot Options**
 

@@ -184,8 +184,6 @@ With the installation media inserted, boot the system. This should load the Free
 |install1.png|
 
 .. |install1.png| image:: images/install1.png
-    :width: 6.04in
-    :height: 3.4in
 
 .. note:: if the installer does not boot, check that the installation device is listed first in the boot order in the BIOS. When booting from a CD, some
    motherboards may require you to connect the CD device to SATA0 (the first connector) in order to boot from CD. If the installer stalls during bootup,
@@ -200,8 +198,6 @@ console setup menu seen in Figure 2.3b.
 |install2.png|
 
 .. |install2.png| image:: images/install2.png
-    :width: 6.0in
-    :height: 3.3in
 
 Press :kbd:`Enter` to select the default option of "1 Install/Upgrade". The next menu, seen in Figure 2.3c, will list all available drives, including any
 inserted USB thumb drives which will begin with *da*. In this example, the user is performing a test installation using VirtualBox and has created a 8 GB
@@ -212,8 +208,6 @@ virtual disk to hold the operating system.
 |install3.png|
 
 .. |install3.png| image:: images/install3.png
-    :width: 6.0in
-    :height: 3.3in
 
 Use your arrow keys to highlight the USB, compact flash device, or virtual disk to install into and press the :kbd:`spacebar` to select it. If you wish to
 mirror the boot device, arrow to the second device and press :kbd:`spacebar` to select it as well. After making your selections, press :kbd:`Enter`.
@@ -225,8 +219,6 @@ FreeNAS® will issue the warning seen in Figure 2.3d, reminding you to not insta
 |cdrom3.png|
 
 .. |cdrom3.png| image:: images/cdrom3.png
-    :width: 6.0in
-    :height: 2.5in
 
 .. note:: at this time, the installer does not check the size of the install media before attempting an installation. A minimum of a 4 GB device is required,
    but the install will appear to complete successfully on smaller devices, only to fail at boot. If a 4 GB USB drive fails to boot, try using a 8 GB USB
@@ -241,8 +233,6 @@ press :kbd:`Enter` twice to advance to the screen shown in Figure 2.3f.
 |upgrade1.png|
 
 .. |upgrade1.png| image:: images/upgrade1.png
-    :width: 5.9327in
-    :height: 3.1917in
 
 The next screen, shown in Figure 2.3f, prompts for the *root* password which is used to log into the administrative graphical interface.
 
@@ -251,8 +241,6 @@ The next screen, shown in Figure 2.3f, prompts for the *root* password which is 
 |install4.png|
 
 .. |install4.png| image:: images/install4.png
-    :width: 6.1in
-    :height: 3.3in
 
 Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
 password. Input the password, press the down arrow key, and confirm the password. Then press :kbd:`Enter` to start the installation.
@@ -268,8 +256,6 @@ Once the installation is complete, you should see a message similar to Figure 2.
 |cdrom4.png|
 
 .. |cdrom4.png| image:: images/cdrom4.png
-    :width: 6.0in
-    :height: 1.9783in
 
 Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM.
 As the system reboots, make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from it.
@@ -406,8 +392,6 @@ see the menu shown in Figure 2.5b. The database file that is preserved and migra
 |upgrade2.png|
 
 .. |upgrade2.png| image:: images/upgrade2.png
-    :width: 6.9252in
-    :height: 3.8134in
 
 Press :kbd:`Enter` and FreeNAS® will indicate that the upgrade is complete and that you should reboot. Press "OK", highlight "3 Reboot System", and press
 :kbd:`Enter` to reboot the system. If booting from CD, remove the CDROM.
@@ -431,8 +415,6 @@ button to open the screen shown in Figure 2.5c.
 |upgrade3.png|
 
 .. |upgrade3.png| image:: images/upgrade3.png
-    :width: 6.5in
-    :height: 3.2in
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to allow
 the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "OK" button to see the screen shown in Figure
@@ -443,8 +425,6 @@ the system to create a temporary RAM disk to be used during the upgrade. After m
 |upgrade4.png|
 
 .. |upgrade4.png| image:: images/upgrade4.png
-    :width: 6.8in
-    :height: 3.4in
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
@@ -482,8 +462,6 @@ In the screen shown in Figure 2.5e, use the drop-down menu to select which "Trai
 |update1.png|
 
 .. |update1.png| image:: images/update1.png
-    :width: 6.2in
-    :height: 3.4in
 
 In this example, this system has the option to track *FreeNAS-9.3-Nightlies*, (the latest nightly build of 9.3 which may contain untested fixes),
 *FreeNAS-9.3-STABLE* (all new and tested features, drivers, and bug fixes since 9.3 was released), and
@@ -518,8 +496,6 @@ entries include a date and timestamp, indicating when that boot environment was 
 |boot1.png|
 
 .. |boot1.png| image:: images/boot1.png
-    :width: 5.7in
-    :height: 4.1in
 
 To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
 
@@ -565,8 +541,6 @@ To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> V
 |pool1.png|
 
 .. |pool1.png| image:: images/pool1.png
-    :width: 5.5in
-    :height: 3.2in
 
 The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
@@ -615,8 +589,6 @@ To create the virtual machine, start VirtualBox and click the "New" button, seen
 |virtualbox1.png|
 
 .. |virtualbox1.png| image:: images/virtualbox1.png
-    :width: 6.9252in
-    :height: 3.6335in
 
 Click the "Next" button to see the screen in Figure 2.6b. Enter a name for the virtual machine, click the "Operating System" drop-down menu and select BSD,
 and select "FreeBSD (64-bit)" from the "Version" dropdown.
@@ -626,8 +598,6 @@ and select "FreeBSD (64-bit)" from the "Version" dropdown.
 |virtualbox2.png|
 
 .. |virtualbox2.png| image:: images/virtualbox2.png
-    :width: 5.4626in
-    :height: 3.6665in
 
 Click "Next" to see the screen in Figure 2.6c. The base memory size must be changed to **at least 8192 MB**. When finished, click "Next" to see the screen in
 Figure 2.6d.
@@ -637,16 +607,12 @@ Figure 2.6d.
 |virtualbox3.png|
 
 .. |virtualbox3.png| image:: images/virtualbox3.png
-    :width: 5.4626in
-    :height: 3.6665in
 
 **Figure 2.6d: Select Whether to Use an Existing or Create a New Virtual Hard Drive**
 
 |virtualbox4.png|
 
 .. |virtualbox4.png| image:: images/virtualbox4.png
-    :width: 5.4626in
-    :height: 3.6665in
 
 Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 2.6e.
 
@@ -655,8 +621,6 @@ Click "Create" to launch the "Create Virtual Hard Drive Wizard" shown in Figure 
 |virtualbox5.png|
 
 .. |virtualbox5.png| image:: images/virtualbox5.png
-    :width: 6.361in
-    :height: 4.1417in
 
 Select "VDI" and click the "Next" button to see the screen in Figure 2.6f.
 
@@ -665,8 +629,6 @@ Select "VDI" and click the "Next" button to see the screen in Figure 2.6f.
 |virtualbox6.png|
 
 .. |virtualbox6.png| image:: images/virtualbox6.png
-    :width: 6.361in
-    :height: 4.1417in
 
 You can now choose whether you want "Dynamically allocated" or "Fixed-size" storage. The first option uses disk space as needed until it reaches the
 maximum size that you will set in the next screen. The second option creates a disk the same size as that specified amount of disk space, whether it is used
@@ -678,8 +640,6 @@ you select "Next", you will see the screen in Figure 2.6g.
 |virtualbox7.png|
 
 .. |virtualbox7.png| image:: images/virtualbox7.png
-    :width: 5.9783in
-    :height: 4.6035in
 
 This screen is used to set the size (or upper limit) of the virtual machine. **Increase the default size to 8 GB**. Use the folder icon to browse to a
 directory on disk with sufficient space to hold the virtual machine.
@@ -693,8 +653,6 @@ Figure 2.6h.
 |virtualbox8.png|
 
 .. |virtualbox8.png| image:: images/virtualbox8.png
-    :width: 6.361in
-    :height: 4.8083in
 
 Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyperlink in the right frame to access the storage screen seen in Figure
 2.6i.
@@ -704,8 +662,6 @@ Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyp
 |virtualbox9.png|
 
 .. |virtualbox9.png| image:: images/virtualbox9.png
-    :width: 6.9252in
-    :height: 4.3807in
 
 Click the "Add Attachment" button, select "Add Hard Disk" from the pop-up menu, then click the "Create New Disk" button. This will launch the Create New 
 Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will be used for storage, create a size appropriate to your needs, making sure that
@@ -719,8 +675,6 @@ Next, create the device for the installation media. Highlight the word "Empty", 
 |virtualbox10.png|
 
 .. |virtualbox10.png| image:: images/virtualbox10.png
-    :width: 6.9252in
-    :height: 3.6602in
 
 Click "Choose a virtual CD/DVD disk file..." to browse to the location of the :file:`.iso` file. Alternately, if you have burned the :file:`.iso` to disk,
 select the detected "Host Drive".
@@ -739,8 +693,6 @@ network and has a device name of *em0*.
 |virtualbox11.png|
 
 .. |virtualbox11.png| image:: images/virtualbox11.png
-    :width: 5.98in
-    :height: 3.74in
 
 Once your configuration is complete, click the "Start" arrow and install FreeNAS® as described in `Performing the Installation`_. Once FreeNAS® is
 installed, press "F12" to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by removing the
@@ -768,8 +720,6 @@ Virtual Machine`. The New Virtual Machine Wizard will launch as seen in Figure 2
 |esxi1.png|
 
 .. |esxi1.png| image:: images/esxi1.png
-    :width: 6.9252in
-    :height: 4.1in
 
 Click "Next" and input a name for the virtual machine. Click "Next" and highlight a datastore. An example is shown in Figure 2.6m. Click "Next". In the screen
 shown in Figure 2.6n, click "Other" then select a FreeBSD architecture that matches the FreeNAS® architecture.
@@ -779,16 +729,12 @@ shown in Figure 2.6n, click "Other" then select a FreeBSD architecture that matc
 |esxi2.png|
 
 .. |esxi2.png| image:: images/esxi2.png
-    :width: 6.9252in
-    :height: 4.1in
 
 **Figure 2.6n: Select the Operating System**
 
 |esxi3.png|
 
 .. |esxi3.png| image:: images/esxi3.png
-    :width: 6.9252in
-    :height: 4.1in
 
 Click "Next" and create a virtual disk file of **8 GB** to hold the FreeNAS® operating system, as shown in Figure 2.6o.
 
@@ -797,8 +743,6 @@ Click "Next" and create a virtual disk file of **8 GB** to hold the FreeNAS® op
 |esxi4.png|
 
 .. |esxi4.png| image:: images/esxi4.png
-    :width: 6.7957in
-    :height: 3.8472in
 
 Click "Next" then "Finish". Your virtual machine will be listed in the left frame. Right-click the virtual machine and select "Edit Settings" to access the
 screen shown in Figure 2.6p.
@@ -808,8 +752,6 @@ screen shown in Figure 2.6p.
 |esxi5.png|
 
 .. |esxi5.png| image:: images/esxi5.png
-    :width: 6.7346in
-    :height: 4.3146in
 
 Increase the "Memory Configuration" to **at least 8192 MB**.
 
@@ -825,8 +767,6 @@ the amount of storage disks needed to meet your requirements.
 |esxi6.png|
 
 .. |esxi6.png| image:: images/esxi6.png
-    :width: 6.7925in
-    :height: 5.3339in
 
 If you are running ESX 5.0, Workstation 8.0, or Fusion 4.0 or higher, additional configuration is needed so that the virtual HPET setting does not prevent the
 virtual machine from booting.

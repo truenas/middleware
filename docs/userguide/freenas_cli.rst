@@ -134,8 +134,6 @@ example of the client running on a Windows system while an SFTP transfer is occu
 |iperf.png|
 
 .. |iperf.png| image:: images/iperf.png
-    :width: 6.9252in
-    :height: 4.9965in
 
 Depending upon the traffic being tested (e.g. the type of share running on your network), you may need to test UDP instead of TCP. To start the iperf server
 in UDP mode, use :command:`iperf -sDu` as the **u** specifies UDP; the startup message should indicate that the server is listening for UDP datagrams. If you
@@ -996,8 +994,6 @@ screen. This line shows information on the current session and is used to enter 
 |tmux.png|
 
 .. |tmux.png| image:: images/tmux.png
-    :width: 4.5in
-    :height: 3.5in
 
 To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window, type :command:`exit` within the window.
 

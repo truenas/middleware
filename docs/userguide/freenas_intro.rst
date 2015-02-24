@@ -1,8 +1,6 @@
 |fn93cover.jpg|
 
 .. |fn93cover.jpg| image:: images/fn93cover.jpg
-    :width: 8.5in
-    :height: 11in
 
 .. centered:: FreeNAS® is © 2011-2015 iXsystems
 

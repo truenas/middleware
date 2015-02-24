@@ -14,8 +14,6 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 |console1a.png|
 
 .. |console1a.png| image:: images/console1a.png
-    :width: 5.4in
-    :height: 3.2in
 
 This menu provides the following options:
 
@@ -107,8 +105,6 @@ system. You should be prompted to input the password for the root user, as seen 
 |login.png|
 
 .. |login.png| image:: images/login.png
-    :width: 5.2in
-    :height: 3.8in
 
 Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
@@ -117,8 +113,6 @@ Enter the password created during the installation. You should then see the admi
 |initial.png|
 
 .. |initial.png| image:: images/initial.png
-    :width: 12.0in
-    :height: 4.5in
 
 If you are unable to access the IP address from a browser, check the following:
 
@@ -156,8 +150,6 @@ Figure 3.1a shows the initial wizard configuration screen.
 |wizard.png|
 
 .. |wizard.png| image:: images/wizard.png
-    :width: 2.7in
-    :height: 1.8in
 
 .. note:: you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections. You can always restart
    the wizard again by clicking the "Wizard" icon. Alternately, you can use the FreeNAS® GUI to configure the system, as described in the rest of this Guide.
@@ -172,8 +164,6 @@ Figure 3.1b shows the configuration screen that appears if the storage disks hav
 |wizard1.png|
 
 .. |wizard1.png| image:: images/wizard1.png
-    :width: 4.7in
-    :height: 2.4in
 
 .. note:: the initial configuration wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the
    instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard afterwards, if you wish to use it for
@@ -209,8 +199,6 @@ in Figure 3.1c.
 |wizard2.png|
 
 .. |wizard2.png| image:: images/wizard2.png
-    :width: 3.0in
-    :height: 1.2in
 
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
@@ -221,8 +209,6 @@ The next screen in the wizard is shown in Figure 3.1d.
 |wizard3.png|
 
 .. |wizard3.png| image:: images/wizard3.png
-    :width: 3.8in
-    :height: 2.1in
 
 If the FreeNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
 
@@ -323,8 +309,6 @@ The next configuration screen, shown in Figure 3.1e, can be used to create the n
 |wizard4.png|
 
 .. |wizard4.png| image:: images/wizard4.png
-    :width: 3.5in
-    :height: 3.4in
 
 FreeNAS® supports several types of shares for providing storage data to the clients in a network. The initial wizard can be used to quickly make shares using
 default permissions which should "just work" for common scenarios. If you wish to configure more complex scenarios, refer to the section on :ref:`Sharing`.
@@ -351,8 +335,6 @@ After selecting the "Purpose", click the "Ownership" button to see the screen sh
 |wizard5.png|
 
 .. |wizard5.png| image:: images/wizard5.png
-    :width: 3.2in
-    :height: 2.3in
 
 The default permissions for the share will be displayed. To create a user or group, input the desired name, then check the "Create User" box, to create that
 user, and the "Create Group" box, to create that group. Check or uncheck the boxes in the "Mode" section to set the initial access permissions for the share.
@@ -369,8 +351,6 @@ When you are finished making shares, click the "Next" button to advance to the s
 |wizard6.png|
 
 .. |wizard6.png| image:: images/wizard6.png
-    :width: 3.44in
-    :height: 3.99in
 
 This screen can be used to configure the following settings:
 

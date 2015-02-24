@@ -85,8 +85,6 @@ in your browser, as seen in Figure 24.2a:
 |translate.png|
 
 .. |translate.png| image:: images/translate.png
-    :width: 6.9252in
-    :height: 3.272in
 
 The localizations FreeNAS® users have requested are listed alphabetically on the left. If your language is missing and you would like to help in its
 translation, send an email to the
@@ -112,8 +110,6 @@ menu screens has been assigned a string number. If you click the number, an edit
 |translate2.png|
 
 .. |translate2.png| image:: images/translate2.png
-    :width: 6.9252in
-    :height: 3.3929in
 
 Simply type in the translated text and click the "Submit" button to save your change.
 

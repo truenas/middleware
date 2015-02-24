@@ -13,8 +13,6 @@ pool is offline which has degraded the state of the pool.
 |alert.png|
 
 .. |alert.png| image:: images/alert.png
-    :width: 3.6in
-    :height: 1.6in
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
