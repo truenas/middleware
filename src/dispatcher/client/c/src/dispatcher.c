@@ -80,6 +80,7 @@ static json_t *dispatcher_pack_msg(connection_t *conn, const char *ns,
 static int dispatcher_send_msg(connection_t *conn, json_t *msg);
 static void dispatcher_process_msg(ws_conn_t *conn, void *frame, size_t len, void *arg);
 static void dispatcher_process_rpc(connection_t *conn, json_t *msg);
+static void dispatcher_process_events(connection_t *conn, json_t *msg);
 
 connection_t *
 dispatcher_open(const char *hostname)
@@ -89,13 +90,20 @@ dispatcher_open(const char *hostname)
     asprintf(&uri, "http://%s:5000/socket", hostname);
     connection_t *conn = malloc(sizeof(connection_t));
     TAILQ_INIT(&conn->conn_calls);
+
     conn->conn_ws = ws_connect(uri);
+    if (conn->conn_ws == NULL) {
+        free(conn);
+        return (NULL);
+    }
+
     conn->conn_ws->ws_message_handler = dispatcher_process_msg;
     conn->conn_ws->ws_message_handler_arg = conn;
 
     if (conn->conn_ws == NULL)
         return (NULL);
 
+    free(uri);
     return (conn);
 }
 
@@ -152,6 +160,7 @@ dispatcher_call_async(connection_t *conn, const char *name, json_t *args,
     json_t *msg;
 
     call = malloc(sizeof(struct rpc_call));
+    pthread_mutex_init(&call->rc_mtx, NULL);
     pthread_cond_init(&call->rc_completed, NULL);
     call->rc_id = id;
     call->rc_type = "call";
@@ -160,7 +169,7 @@ dispatcher_call_async(connection_t *conn, const char *name, json_t *args,
 
     TAILQ_INSERT_TAIL(&conn->conn_calls, call, rc_link);
 
-    json_object_set(call->rc_args, "name", json_string(name));
+    json_object_set(call->rc_args, "method", json_string(name));
     json_object_set(call->rc_args, "args", args);
     dispatcher_call_internal(conn, "call", call);
 
@@ -193,7 +202,7 @@ int rpc_call_success(rpc_call_t *call)
 
 json_t *rpc_call_result(rpc_call_t *call)
 {
-    return call->rc_status == 0 ? call->rc_result : call->rc_error;
+    return call->rc_status == RPC_CALL_DONE ? call->rc_result : call->rc_error;
 }
 
 static int
@@ -242,20 +251,26 @@ dispatcher_process_msg(ws_conn_t *ws, void *frame, size_t len, void *arg)
     connection_t *conn = (connection_t *)arg;
     json_t *msg;
     json_error_t err;
+    char *framestr;
     const char *ns;
 
-    msg = json_loads((char *)frame, 0, &err);
+    framestr = (char *)frame;
+    framestr = realloc(framestr, len + 1);
+    framestr[len] = '\0';
+
+    msg = json_loads(framestr, 0, &err);
     if (msg == NULL) {
         fprintf(stderr, "cannot deserialize json\n");
         return;
     }
 
-    fprintf(stderr, "received frame: %s\n", (char*)frame);
-
     ns = json_string_value(json_object_get(msg, "namespace"));
 
     if (!strcmp(ns, "rpc"))
         dispatcher_process_rpc(conn, msg);
+
+    if (!strcmp(ns, "events"))
+        dispatcher_process_events(conn, msg);
 
 }
 
@@ -273,9 +288,6 @@ dispatcher_process_rpc(connection_t *conn, json_t *msg)
 
     TAILQ_FOREACH(call, &conn->conn_calls, rc_link) {
         if (!strcmp(id, json_string_value(call->rc_id))) {
-
-            fprintf(stderr, "response to call %s\n", id);
-
             if (error) {
                 call->rc_status = RPC_CALL_ERROR;
                 call->rc_error = json_object_get(msg, "args");
@@ -287,6 +299,12 @@ dispatcher_process_rpc(connection_t *conn, json_t *msg)
             pthread_cond_broadcast(&call->rc_completed);
         }
     }
+}
+
+static void
+dispatcher_process_events(connection_t *conn, json_t *msg)
+{
+
 }
 
 #ifdef __FreeBSD__

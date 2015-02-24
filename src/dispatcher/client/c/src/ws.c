@@ -124,11 +124,15 @@ http_parse_uri(ws_conn_t *conn, char *uri)
     regex_t re;
     regmatch_t match[4];
 
-    if (regcomp(&re, "http://([^/:]+):([0-9]+)/(.*)", REG_EXTENDED|REG_ICASE) < 0)
+    if (regcomp(&re, "http://([^/:]+):([0-9]+)/(.*)", REG_EXTENDED|REG_ICASE) < 0) {
+        errno = EINVAL;
         return -1;
+    }
 
-    if ((status = regexec(&re, uri, re.re_nsub + 1, match, 0)) < 0)
+    if (regexec(&re, uri, re.re_nsub + 1, match, 0) != 0) {
+        errno = EINVAL;
         return -1;
+    }
 
     struct addrinfo hints = {
             .ai_family = AF_INET,
@@ -139,8 +143,10 @@ http_parse_uri(ws_conn_t *conn, char *uri)
     conn->ws_port = xsubstrdup(uri, match[2].rm_so, match[2].rm_eo);
     conn->ws_path = xsubstrdup(uri, match[3].rm_so, match[3].rm_eo);
 
-    if ((status = getaddrinfo(conn->ws_host, conn->ws_port, &hints, &conn->ws_addrinfo)))
+    if (getaddrinfo(conn->ws_host, conn->ws_port, &hints, &conn->ws_addrinfo) != 0) {
+        errno = EHOSTUNREACH;
         return -1;
+    }
 
     return 0;
 }
@@ -232,7 +238,7 @@ ws_handshake(ws_conn_t *conn)
         shutdown(conn->ws_fd, SHUT_RDWR);
     }
 
-    /*hdr = json_object_get(conn->ws_headers, "Upgrade");
+    hdr = json_object_get(conn->ws_headers, "Upgrade");
     if (hdr == NULL)
         goto fail;
 
@@ -244,9 +250,8 @@ ws_handshake(ws_conn_t *conn)
         goto fail;
 
     if (strcmp(json_string_value(hdr), "Upgrade"))
-        goto fail;*/
+        goto fail;
 
-    //fclose(f);
     return (0);
 
 fail:
@@ -278,12 +283,12 @@ ws_send_msg(ws_conn_t *conn, void *msg, size_t len, uint8_t opcode)
 
     if (len > 65535) {
         header = WS_FIN | WS_MASK | opcode | WS_PAYLOAD_LEN(127);
-        len64 = (uint64_t)len;
+        len64 = (uint64_t)htonll(len);
         xwrite(conn->ws_fd, &header, sizeof(uint16_t));
         xwrite(conn->ws_fd, &len64, sizeof(uint64_t));
     } else if (len > 125) {
         header = WS_FIN | WS_MASK | opcode | WS_PAYLOAD_LEN(126);
-        len64 = (uint16_t)len;
+        len16 = (uint16_t)htons(len);
         xwrite(conn->ws_fd, &header, sizeof(uint16_t));
         xwrite(conn->ws_fd, &len16, sizeof(uint16_t));
     } else {

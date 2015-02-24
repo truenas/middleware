@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <readline/readline.h>
 #include <jansson.h>
 #include "dispatcher.h"
 
@@ -52,20 +51,25 @@ int main(int argc, char *argv[])
 
     conn = dispatcher_open(argv[1]);
     if (conn == NULL) {
-
+        perror("cannot open dispatcher connection");
+        return (1);
     }
 
     if (dispatcher_login_service(conn, "enumerator") < 0) {
-
+        perror("cannot login to dispatcher");
+        return (1);
     }
 
     if (dispatcher_call_sync(conn, "discovery.get_services", json_null(), &services) < 0) {
-
+        perror("cannot call get.services");
+        return (1);
     }
 
     json_array_foreach(services, idx, i) {
+        printf("Service: %s\n", json_string_value(i));
         if (dispatcher_call_sync(conn, "discovery.get_methods", json_pack("[o]", i), &methods) < 0) {
-
+            perror("cannot call get.methods");
+            return (1);
         }
 
         print_methods(methods);
