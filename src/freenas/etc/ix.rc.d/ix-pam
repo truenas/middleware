@@ -207,6 +207,12 @@ generate_pam_files()
 	return 0
 }
 
+set_pam_permissions()
+{
+	chmod 755 "${PAM_DIR}"
+	chmod 644 "${PAM_DIR}"/*
+}
+
 pam_start()
 {
 	local ad=0
@@ -242,11 +248,13 @@ pam_start()
 	fi
 
 	generate_pam_files "${ad}" "${nt4}" "${ldap}" "${nis}"
+	set_pam_permissions
 }
 
 pam_stop()
 {
 	generate_pam_files
+	set_pam_permissions
 }
 
 name="ix-pam"
