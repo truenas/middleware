@@ -16,6 +16,7 @@ Contents:
    Middleware architecture <middleware/index>
    Code Style Guides <style-guides/index>
    Roadmap <roadmap>
+   Notes <notes>
 
 Welcome!
 ========
