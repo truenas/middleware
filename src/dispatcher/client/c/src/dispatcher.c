@@ -73,10 +73,10 @@ struct connection
     TAILQ_HEAD(rpc_calls_head, rpc_call) conn_calls;
 };
 
+static rpc_call_t *rpc_call_alloc();
 static json_t *dispatcher_new_id();
 static int dispatcher_call_internal(connection_t *conn, const char *type, struct rpc_call *call);
-static json_t *dispatcher_pack_msg(connection_t *conn, const char *ns,
-    const char *name, json_t *id, json_t *args);
+static json_t *dispatcher_pack_msg(const char *ns, const char *name, json_t *id, json_t *args);
 static int dispatcher_send_msg(connection_t *conn, json_t *msg);
 static void dispatcher_process_msg(ws_conn_t *conn, void *frame, size_t len, void *arg);
 static void dispatcher_process_rpc(connection_t *conn, json_t *msg);
@@ -110,7 +110,19 @@ dispatcher_open(const char *hostname)
 void
 dispatcher_close(connection_t *conn)
 {
+    rpc_call_t *call, *tmp;
+    ws_close(conn->conn_ws);
 
+    TAILQ_FOREACH_SAFE(call, &conn->conn_calls, rc_link, tmp) {
+        json_decref(call->rc_args);
+        json_decref(call->rc_id);
+        json_decref(call->rc_error);
+        json_decref(call->rc_result);
+        TAILQ_REMOVE(&conn->conn_calls, call, rc_link);
+        free(call);
+    }
+
+    free(conn);
 }
 
 int
@@ -126,9 +138,7 @@ dispatcher_login_service(connection_t *conn, const char *name)
     json_t *id = dispatcher_new_id();
     json_t *msg;
 
-    call = malloc(sizeof(struct rpc_call));
-    pthread_cond_init(&call->rc_completed, NULL);
-    pthread_mutex_init(&call->rc_mtx, NULL);
+    call = rpc_call_alloc();
     call->rc_id = id;
     call->rc_type = "auth";
     call->rc_args = json_object();
@@ -146,7 +156,7 @@ int dispatcher_subscribe_event(connection_t *conn, const char *name)
 {
     json_t *msg;
 
-    msg = dispatcher_pack_msg(conn, "events", "subscribe", json_null(), json_pack("[s]", name));
+    msg = dispatcher_pack_msg("events", "subscribe", json_null(), json_pack("[s]", name));
     return (dispatcher_send_msg(conn, msg));
 }
 
@@ -154,7 +164,7 @@ int dispatcher_unsubscribe_event(connection_t *conn, const char *name)
 {
     json_t *msg;
 
-    msg = dispatcher_pack_msg(conn, "events", "unsubscribe", json_null(), json_pack("[s]", name));
+    msg = dispatcher_pack_msg("events", "unsubscribe", json_null(), json_pack("[s]", name));
     return (dispatcher_send_msg(conn, msg));
 }
 
@@ -175,9 +185,7 @@ dispatcher_call_async(connection_t *conn, const char *name, json_t *args,
     json_t *id = dispatcher_new_id();
     json_t *msg;
 
-    call = malloc(sizeof(struct rpc_call));
-    pthread_mutex_init(&call->rc_mtx, NULL);
-    pthread_cond_init(&call->rc_completed, NULL);
+    call = rpc_call_alloc();
     call->rc_id = id;
     call->rc_type = "call";
     call->rc_method = name;
@@ -206,19 +214,34 @@ dispatcher_on_event(connection_t *conn, event_callback_t *cb, void *arg)
     conn->conn_event_handler_arg = arg;
 }
 
-void rpc_call_wait(rpc_call_t *call)
+void
+rpc_call_wait(rpc_call_t *call)
 {
     pthread_cond_wait(&call->rc_completed, &call->rc_mtx);
 }
 
-int rpc_call_success(rpc_call_t *call)
+int
+rpc_call_success(rpc_call_t *call)
 {
     return call->rc_status;
 }
 
-json_t *rpc_call_result(rpc_call_t *call)
+json_t *
+rpc_call_result(rpc_call_t *call)
 {
     return call->rc_status == RPC_CALL_DONE ? call->rc_result : call->rc_error;
+}
+
+static rpc_call_t *
+rpc_call_alloc()
+{
+    rpc_call_t *call;
+
+    call = malloc(sizeof(rpc_call_t));
+    memset(call, 0, sizeof(rpc_call_t));
+    pthread_cond_init(&call->rc_completed, NULL);
+    pthread_mutex_init(&call->rc_mtx, NULL);
+    return (call);
 }
 
 static int
@@ -226,7 +249,7 @@ dispatcher_call_internal(connection_t *conn, const char *type, struct rpc_call *
 {
     json_t *msg;
 
-    msg = dispatcher_pack_msg(conn, "rpc", type, call->rc_id, call->rc_args);
+    msg = dispatcher_pack_msg("rpc", type, call->rc_id, call->rc_args);
     if (msg == NULL)
         return (-1);
 
@@ -241,7 +264,7 @@ dispatcher_call_internal(connection_t *conn, const char *type, struct rpc_call *
 }
 
 static json_t *
-dispatcher_pack_msg(connection_t *conn, const char *ns, const char *name, json_t *id, json_t *args)
+dispatcher_pack_msg(const char *ns, const char *name, json_t *id, json_t *args)
 {
     json_t *obj;
 
