@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/event.h>
-#include <sys/queue.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <regex.h>
@@ -44,9 +43,14 @@
 
 #define LINEMAX 1024
 
+#ifdef __FreeBSD__
+#include <sys/endian.h>
+#define htonll(x)   htonl((uint32_t)x)
+#endif
+
 static void *xmalloc(size_t nbytes);
-static int xread(int fd, void *buf, size_t nbytes);
-static int xwrite(int fd, void *buf, size_t nbytes);
+static ssize_t xread(int fd, void *buf, size_t nbytes);
+static ssize_t xwrite(int fd, void *buf, size_t nbytes);
 static char *xsubstrdup(char *str, int start, int end);
 static int ws_handshake(ws_conn_t *conn);
 static int http_parse_uri(ws_conn_t *conn, char *uri);
@@ -61,10 +65,10 @@ xmalloc(size_t nbytes)
     return ptr;
 }
 
-static int
+static ssize_t
 xread(int fd, void *buf, size_t nbytes)
 {
-    int ret, done = 0;
+    ssize_t ret, done = 0;
 
     while (done < nbytes) {
         ret = read(fd, (void *)(buf + done), nbytes - done);
@@ -81,10 +85,10 @@ xread(int fd, void *buf, size_t nbytes)
     return (done);
 }
 
-static int
+static ssize_t
 xwrite(int fd, void *buf, size_t nbytes)
 {
-    int ret, done = 0;
+    ssize_t ret, done = 0;
 
     while (done < nbytes) {
         ret = write(fd, (void *)(buf + done), nbytes - done);
