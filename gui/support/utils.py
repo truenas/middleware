@@ -15,6 +15,7 @@ LICENSE_FILE = '/data/license'
 
 
 def dedup_enabled():
+    return False
     license, reason = get_license()
     sw_name = get_sw_name().lower()
     if sw_name == 'freenas' or (

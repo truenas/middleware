@@ -1395,10 +1395,10 @@ class ZFSDataset(Form):
                 self.fields['dataset_dedup'].initial = 'off'
 
         if not dedup_enabled():
-            form.fields['dataset_dedup'].widget.attrs['readonly'] = True
-            form.fields['dataset_dedup'].widget.attrs['class'] = (
+            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
+            self.fields['dataset_dedup'].widget.attrs['class'] = (
                 'dijitSelectDisabled dijitDisabled')
-            form.fields['dataset_dedup'].widget.text = mark_safe(
+            self.fields['dataset_dedup'].widget.text = mark_safe(
                 '<span style="color: red;">Dedup feature not activated. '
                 'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
                 '=ZFS Deduplication Activation">TrueNAS Support</a> for '
@@ -1496,10 +1496,10 @@ class ZVol_EditForm(Form):
             self.fields['volume_dedup'].initial = 'off'
 
         if not dedup_enabled():
-            form.fields['volume_dedup'].widget.attrs['readonly'] = True
-            form.fields['volume_dedup'].widget.attrs['class'] = (
+            self.fields['volume_dedup'].widget.attrs['readonly'] = True
+            self.fields['volume_dedup'].widget.attrs['class'] = (
                 'dijitSelectDisabled dijitDisabled')
-            form.fields['volume_dedup'].widget.text = mark_safe(
+            self.fields['volume_dedup'].widget.text = mark_safe(
                 '<span style="color: red;">Dedup feature not activated. '
                 'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
                 '=ZFS Deduplication Activation">TrueNAS Support</a> for '
