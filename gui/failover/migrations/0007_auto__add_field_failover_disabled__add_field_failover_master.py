@@ -10,12 +10,12 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Failover.disabled'
         db.add_column('system_failover', 'disabled',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
 
         # Adding field 'Failover.master'
         db.add_column('system_failover', 'master',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
 
 

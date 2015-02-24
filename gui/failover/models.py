@@ -102,15 +102,16 @@ class Failover(Model):
         verbose_name=_("CARP"),
     )
     ipaddress = IPAddressField(verbose_name=_("IP Address"))
-
     disabled = models.BooleanField(
         default=False,
         blank=True,
     )
-
     master = models.BooleanField(
         default=False,
         blank=True,
+    )
+    timeout = models.IntegerField(
+        default=0
     )
 
     def __unicode__(self):
