@@ -14,8 +14,6 @@ system's keyboard and monitor, this Console Setup menu can be used to administer
 |console1a.png|
 
 .. |console1a.png| image:: images/console1a.png
-    :width: 5.4in
-    :height: 3.2in
 
 This menu provides the following options:
 
@@ -106,8 +104,6 @@ system. You should be prompted to input the password for the *root* user, as see
 |tn_login.png|
 
 .. |tn_login.png| image:: images/tn_login.png
-    :width: 5.6in
-    :height: 2.6in
 
 Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3c.
 
@@ -120,8 +116,6 @@ Enter the default password of *abcd1234*. You should then see the administrative
 |tn_initial.png|
 
 .. |tn_initial.png| image:: images/tn_initial.png
-    :width: 12.0in
-    :height: 4.5in
 
 If you are unable to access the IP address from a browser, check the following:
 

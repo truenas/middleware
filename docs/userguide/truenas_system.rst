@@ -49,8 +49,6 @@ does not use a domain name add *.local* to the end of the hostname.
 |tn_system1.png|
 
 .. |tn_system1.png| image:: images/tn_system1.png
-    :width: 6.9in
-    :height: 3.5in
 
 .. _General:
 
@@ -64,8 +62,6 @@ General
 |tn_system2.png|
 
 .. |tn_system2.png| image:: images/tn_system2.png
-    :width: 6.8in
-    :height: 4.5in
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -150,8 +146,6 @@ explains these options in more detail.
 |ntp1.png|
 
 .. |ntp1.png| image:: images/ntp1.png
-    :width: 7.1in
-    :height: 3.9in
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -212,8 +206,6 @@ created indicating the date and time the wizard was run.
 |tn_be.png|
 
 .. |tn_be.png| image:: images/tn_be.png
-    :width: 6.8in
-    :height: 4.5in
 
 Each boot environment entry contains the following information:
 
@@ -254,8 +246,6 @@ The buttons above the boot entries can be used to:
 |tn_be2.png|
 
 .. |tn_be2.png| image:: images/tn_be2.png
-    :width: 4.4in
-    :height: 3.4in
 
 If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
 device, and click "Replace Disk" to rebuild the boot mirror.
@@ -267,8 +257,6 @@ Figure 5.3c shows a sample boot menu containing entries for the default, wizard 
 |be3.png|
 
 .. |be3.png| image:: images/be3.png
-    :width: 5.4in
-    :height: 4.0in
 
 .. _Advanced:
 
@@ -282,8 +270,6 @@ Advanced
 |tn_system3.png|
 
 .. |tn_system3.png| image:: images/tn_system3.png
-    :width: 6.3in
-    :height: 4.2in
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -359,8 +345,6 @@ that will least impact users. Once the tests are complete, which can take a few 
 |backup1.png|
 
 .. |backup1.png| image:: images/backup1.png
-    :width: 3.24in
-    :height: 3.3in
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -437,8 +421,6 @@ that can be configured using the Email tab.
 |tn_system4.png|
 
 .. |tn_system4.png| image:: images/tn_system4.png
-    :width: 6.8in
-    :height: 3.7in
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -493,8 +475,6 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |tn_system5.png|
 
 .. |tn_system5.png| image:: images/tn_system5.png
-    :width: 6.3in
-    :height: 1.8in
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -538,8 +518,6 @@ The options available in :menuselection:`System --> Failovers --> View Failovers
 |failover1.png|
 
 .. |failover1.png| image:: images/failover1.png
-    :width: 2.6in
-    :height: 1.8in
 
 **Table 5.7a: Options When Creating a Failover**
 
@@ -605,8 +583,6 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 2.5in
-    :height: 2.4in
 
 Table 5.8a summarizes the options when adding a tunable.
 
@@ -725,8 +701,6 @@ Figure 5.9a shows an example of the :menuselection:`System --> Update` screen.
 |tn_update1.png|
 
 .. |tn_update1.png| image:: images/tn_update1.png
-    :width: 6.25in
-    :height: 3.38in
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -751,8 +725,6 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.95in
-    :height: 3.4in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the TrueNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -784,8 +756,6 @@ entries include a date and timestamp, indicating when that boot environment was 
 |tn_boot1.png|
 
 .. |tn_boot1.png| image:: images/tn_boot1.png
-    :width: 5.7in
-    :height: 4.1in
 
 To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
 
@@ -831,8 +801,6 @@ To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> V
 |tn_pool1.png|
 
 .. |tn_pool1.png| image:: images/tn_pool1.png
-    :width: 5.5in
-    :height: 3.2in
 
 The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
@@ -857,8 +825,6 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> CA
 |tn_ca1.png|
 
 .. |tn_ca1.png| image:: images/tn_ca1.png
-    :width: 6.98in
-    :height: 2.1in
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.10b. The configurable options are summarized in Table 5.10a.
@@ -868,8 +834,6 @@ Figure 5.10b. The configurable options are summarized in Table 5.10a.
 |ca2a.png|
 
 .. |ca2a.png| image:: images/ca2a.png
-    :width: 4.1in
-    :height: 3.1in
 
 **Table 5.10a: Importing a CA Options**
 
@@ -904,8 +868,6 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 |ca3.png|
 
 .. |ca3.png| image:: images/ca3.png
-    :width: 3.0in
-    :height: 3.96in
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -983,8 +945,6 @@ Figure 5.11a shows the initial screen if you click :menuselection:`System --> Ce
 |cert2a.png|
 
 .. |cert2a.png| image:: images/cert2a.png
-    :width: 4.2in
-    :height: 2.8in
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.11b. The configurable options are
 summarized in Table 5.11a.
@@ -994,8 +954,6 @@ summarized in Table 5.11a.
 |cert2.png|
 
 .. |cert2.png| image:: images/cert2.png
-    :width: 3.7in
-    :height: 2.5in
 
 **Table 5.11a: Certificate Import Options**
 
@@ -1026,8 +984,6 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 |cert3.png|
 
 .. |cert3.png| image:: images/cert3.png
-    :width: 3.6in
-    :height: 4.3in
 
 **Table 5.11b: Certificate Creation Options**
 
@@ -1084,8 +1040,6 @@ connections.
 |cert4.png|
 
 .. |cert4.png| image:: images/cert4.png
-    :width: 6.2in
-    :height: 4.5in
 
 If you click an entry, it will activate the following configuration buttons:
 

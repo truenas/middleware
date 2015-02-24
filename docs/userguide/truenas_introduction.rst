@@ -12,8 +12,6 @@
 
 
 .. |tn_cover.jpg| image:: images/tn_cover.jpg
-    :width: 8.5in
-    :height: 11.0in
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 

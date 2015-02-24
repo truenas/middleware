@@ -64,8 +64,6 @@ options.
 |carp.png|
 
 .. |carp.png| image:: images/carp.png
-    :width: 3.3in
-    :height: 2.7in
 
 **Table 7.1a: CARP Configuration Options**
 
@@ -118,8 +116,6 @@ TrueNAS® system in the "Host name database" field.
 |tn_network1.png|
 
 .. |tn_network1.png| image:: images/tn_network1.png
-    :width: 5.5in
-    :height: 4.2in
 
 **Table 7.2a: Global Configuration Settings**
 
@@ -194,8 +190,6 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 3.2in
-    :height: 4.2in
 
 **Table 7.3a: Interface Configuration Settings**
 
@@ -269,8 +263,6 @@ IPMI using the TrueNAS® GUI.
 |ipmi.png|
 
 .. |ipmi.png| image:: images/ipmi.png
-    :width: 5.3291in
-    :height: 3.6854in
 
 **Table 7.4a: IPMI Options**
 
@@ -388,8 +380,6 @@ Figure 7.5a shows the configuration options when adding a lagg interface using `
 |lagg.png|
 
 .. |lagg.png| image:: images/lagg.png
-    :width: 3.1in
-    :height: 2.7in
 
 Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
@@ -506,8 +496,6 @@ By default, no static routes are defined on the TrueNAS® system. Should you nee
 |static.png|
 
 .. |static.png| image:: images/static.png
-    :width: 3.0in
-    :height: 1.8in
 
 The available options are summarized in Table 7.7a.
 
@@ -552,8 +540,6 @@ tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen sho
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 3.0in
-    :height: 2.1in
 
 Table 7.8a summarizes the configurable fields.
 

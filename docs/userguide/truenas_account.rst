@@ -32,8 +32,6 @@ If you click :menuselection:`Groups --> View Groups`, you will see a screen simi
 |group1.png|
 
 .. |group1.png| image:: images/group1.png
-    :width: 4.2in
-    :height: 4.5in
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with TrueNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
@@ -48,8 +46,6 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 |group2.png|
 
 .. |group2.png| image:: images/group2.png
-    :width: 3.1in
-    :height: 2.1in
 
 **Table 4.1a: Options When Creating a Group**
 
@@ -90,8 +86,6 @@ In the example shown in Figure 4.1c, the *data1* group has been created and the
 |group3.png|
 
 .. |group3.png| image:: images/group3.png
-    :width: 7.8in
-    :height: 4.4in
 
 .. index:: Delete Group, Remove Group
 
@@ -122,8 +116,6 @@ shown in Figure 4.2a.
 |user1.png|
 
 .. |user1.png| image:: images/user1.png
-    :width: 7.8in
-    :height: 4.4in
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the TrueNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
@@ -156,8 +148,6 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |user2.png|
 
 .. |user2.png| image:: images/user2.png
-    :width: 5.8in
-    :height: 4.4in
 
 **Table 4.2a: User Account Configuration**
 

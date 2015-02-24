@@ -63,8 +63,6 @@ display these settings by checking the box "Show advanced fields by default" in 
 |ad1.png|
 
 .. |ad1.png| image:: images/ad1.png
-    :width: 4.5in
-    :height: 2.3in
 
 **Table 9.1a: Active Directory Configuration Options**
 
@@ -336,8 +334,6 @@ Figure 9.2a shows the LDAP Configuration screen that is seen when you click :men
 |ldap1.png|
 
 .. |ldap1.png| image:: images/ldap1.png
-    :width: 4.5in
-    :height: 2.6in
 
 Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -464,8 +460,6 @@ options.
 |nis1.png|
 
 .. |nis1.png| image:: images/nis1.png
-    :width: 4.5in
-    :height: 2.6in
 
 **Table 9.3a: NIS Configuration Options**
 
@@ -515,8 +509,6 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 |nt1.png|
 
 .. |nt1.png| image:: images/nt1.png
-    :width: 4.5in
-    :height: 3.3in
 
 **Table 9.4a: NT4 Configuration Options**
 
@@ -571,8 +563,6 @@ shown in Figure 9.5a.
 |realm1.png|
 
 .. |realm1.png| image:: images/realm1.png
-    :width: 4.5in
-    :height: 3.3in
 
 Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
 button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.

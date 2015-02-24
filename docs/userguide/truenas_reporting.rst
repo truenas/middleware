@@ -12,8 +12,6 @@ Reporting displays several graphs, as seen in the example in Figure 12a. Click t
 |reporting.png|
 
 .. |reporting.png| image:: images/reporting.png
-    :width: 6.9146in
-    :height: 5.2173in
 
 TrueNAS® uses
 `collectd <https://collectd.org/>`_
