@@ -831,6 +831,11 @@ menu_install()
     
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
+	# we still need the newer version we are upgrading to's
+	# factory-v1.db, else issuing a factory-restore on the
+	# newly upgraded system completely horks the system
+	cp /data/factory-v1.db /tmp/data/data/
+	chown www:www /tmp/data/data/factory-v1.db
     else
 	cp -R /data/* /tmp/data/data
 	chown -R www:www /tmp/data/data
