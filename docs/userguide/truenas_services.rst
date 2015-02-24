@@ -874,8 +874,6 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |nfs1a.png|
 
 .. |nfs1a.png| image:: images/nfs1a.png
-    :width: 3.6in
-    :height: 4.2in
 
 **Table 11.9a: NFS Configuration Options**
 

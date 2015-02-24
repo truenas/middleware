@@ -386,7 +386,7 @@ Table 10.2a summarizes the available configuration options in this screen. Some 
 | Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Security            | selection      | only available in "Advanced Mode"; choices are *sys* () or the following Kerberos options:                         |
+| Security            | selection      | only available in "Advanced Mode"; choices are *sys* or the following Kerberos options:                            |
 |                     |                | *krb5* (authentication only),                                                                                      |
 |                     |                | *krb5i* (authentication and integrity), or                                                                         |
 |                     |                | *krb5p* (authentication and privacy); if multiple security mechanisms are added to the "Selected" column using the |

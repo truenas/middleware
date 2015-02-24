@@ -382,6 +382,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
+* The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
 * A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
   connected initiators.
 

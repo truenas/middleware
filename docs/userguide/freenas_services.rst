@@ -889,11 +889,9 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Figure 11.9a: Configuring NFS**
 
-|nfs1.png|
+|nfs1a.png|
 
-.. |nfs1.png| image:: images/nfs1.png
-    :width: 3.3in
-    :height: 3.9in
+.. |nfs1a.png| image:: images/nfs1a.png
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -915,6 +913,10 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Require Kerberos for   | checkbox   | check this box when using Kerberos authentication with NFSv4                                                        |
+| NFSv4                  |            |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | mountd(8) bind port    | integer    | optional; specify port for                                                                                          |
