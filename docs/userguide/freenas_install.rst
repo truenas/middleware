@@ -107,7 +107,7 @@ When using the :command:`dd` command:
 * **if=** refers to the input file, or the name of the file to write to the device.
 
 * **of=** refers to the output file; in our case, the device name of the flash card or removable USB drive. You may have to increment the number in the name
-  if it is not the first USB device. On Linux, use */dev/sdX,* where *X* refers to the letter of the USB device.
+  if it is not the first USB device. On Linux, use :file:`/dev/sdX`, where *X* refers to the letter of the USB device.
 
 * **bs=** refers to the block size
 
@@ -138,8 +138,9 @@ Next, determine the device name of the inserted USB thumb drive. From TERMINAL, 
 
 This will show you which devices are available to the system. Locate your USB stick and record the path. If you are not sure which path is the correct one for
 the USB stick, remove the device, run the command again, and compare the difference. Once you are sure of the device name, navigate to the Desktop from
-TERMINAL, unmount the USB stick, and use the :command:`dd` command to write the image to the USB stick. In Example 2.2b, the USB thumb drive is */dev/disk1*.
-Substitute the name of your uncompressed file and the correct path to your USB thumb drive.
+TERMINAL, unmount the USB stick, and use the :command:`dd` command to write the image to the USB stick. In Example 2.2b, the USB thumb drive is 
+:file:`/dev/disk1`, which is first unmounted. The :command:`dd` command uses :file:`/dev/rdisk1` (note the extra *r*) in order to write to the raw device
+which is faster. When running these commands, substitute the name of the installation file and the correct path to the USB thumb drive.
 
 **Example 2.2b: Using dd on an OS X System**
 ::
@@ -147,11 +148,11 @@ Substitute the name of your uncompressed file and the correct path to your USB t
  diskutil unmountDisk /dev/disk1
  Unmount of all volumes on disk1 was successful
 
- dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/disk1 bs=64k
+ dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/rdisk1 bs=64k
 
 .. note:: if you get the error "Resource busy" when you run the :command:`dd` command, go to :menuselection:`Applications --> Utilities --> Disk Utility`,
    find your USB thumb drive, and click on its partitions to make sure all of them are unmounted. If you get the error "dd: /dev/disk1: Permission denied",
-   run the :command:`dd` command by typing :command:`sudo dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/disk1 bs=64k`, which will prompt for your password.
+   run the :command:`dd` command by typing :command:`sudo dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/rdisk1 bs=64k`, which will prompt for your password.
 
 The :command:`dd` command will take some minutes to complete. Wait until you get a prompt back and a message that displays how long it took to write the image
 to the USB drive.
