@@ -73,6 +73,12 @@
     <span>{% trans "Help" %}</span>
   </div>
 
+  <div id="menuBar_Support" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openSystem('system.Support');" class="menu_icon right">
+    <img src="{{ STATIC_URL }}images/ui/menu/support.png" />
+    <br />
+    <span>{% trans "Support" %}</span>
+  </div>
+
   {% else %}
   <div id="menuBar_Login" data-dojo-type="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
     <img src="{{ STATIC_URL }}images/ui/menu/login.png" />
