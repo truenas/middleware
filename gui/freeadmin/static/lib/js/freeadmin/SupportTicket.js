@@ -157,10 +157,10 @@ define([
 
         } else {
           domStyle.set(this.dapCritRow, "display", "none");
-          domStyle.set(this.dapEmail, "display", "none");
+          domStyle.set(this.dapEmailRow, "display", "none");
           domStyle.set(this.dapEnvRow, "display", "none");
-          domStyle.set(this.dapName, "display", "none");
-          domStyle.set(this.dapPhone, "display", "none");
+          domStyle.set(this.dapNameRow, "display", "none");
+          domStyle.set(this.dapPhoneRow, "display", "none");
           this._username = new TextBox({
             name: "username",
             value: initial.username
