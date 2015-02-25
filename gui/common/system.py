@@ -650,3 +650,26 @@ def get_dc_hostname():
             hostname = out[0].strip()
 
     return hostname
+
+def validate_netbios_name(netbiosname):
+    regex = re.compile(r"^[a-zA-Z][a-zA-Z0-9\.\-]{1,14}$")
+
+    if not regex.match(netbiosname):
+        raise Exception("Invalid NetBIOS name")
+
+def validate_netbios_names(netbiosname):
+    if not netbiosname:
+        raise Exception("NULL NetBIOS name")
+
+    parts = []
+    if ',' in netbiosname:
+        parts = netbiosname.split(',')
+    elif ' ' in netbiosname:
+        parts = netbiosname.split()
+    else:
+        validate_netbios_name(netbiosname)
+     
+    if parts:
+        for p in parts:
+            n = p.strip()
+            validate_netbios_name(n)

@@ -44,6 +44,10 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory_Exception,
 )
 from freenasUI.common.ssl import get_certificateauthority_path
+from freenasUI.common.system import (
+    validate_netbios_name,
+    validate_netbios_names
+)
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -209,6 +213,22 @@ class NT4Form(ModelForm):
         if not nt4_idmap_backend:
             nt4_idmap_backend = None
         return nt4_idmap_backend
+
+    def clean_nt4_netbiosname(self):
+        netbiosname = self.cleaned_data.get("nt4_netbiosname")
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(_("netbiosname: %s" % e))
+        return netbiosname
+
+    def clean_nt4_workgroup(self):
+        workgroup = self.cleaned_data.get("nt4_workgroup")
+        try:
+            validate_netbios_name(workgroup)
+        except Exception as e:
+            raise forms.ValidationError(_("workgroup: %s" % e))
+        return workgroup
 
     def clean(self):
         cdata = self.cleaned_data
@@ -376,6 +396,14 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError('%s.' % e)
 
         return self.cleaned_data.get('ad_gcname')
+
+    def clean_ad_netbiosname(self):
+        netbiosname = self.cleaned_data.get("ad_netbiosname")
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(e)
+        return netbiosname
 
     def clean(self):
         cdata = self.cleaned_data

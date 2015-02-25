@@ -48,6 +48,10 @@ from freenasUI.common.samba import (
     SAMBA_PROVISIONED_FILE,
     Samba4
 )
+from freenasUI.common.system import (
+    validate_netbios_name,
+    validate_netbios_names
+)
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -204,7 +208,19 @@ class CIFSForm(ModelForm):
         workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
         if netbios and netbios.lower() == workgroup.lower():
             raise forms.ValidationError("NetBIOS and Workgroup must be unique")
+        try: 
+            validate_netbios_name(workgroup)
+        except Exception as e:
+            raise forms.ValidationError(_("workgroup: %s" % e))
         return workgroup
+
+    def clean_cifs_srv_netbiosname(self):
+        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
+        try: 
+            validate_netbios_names(netbios)
+        except Exception as e:
+            raise forms.ValidationError(_("netbiosname: %s" % e))
+        return netbios
 
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()
