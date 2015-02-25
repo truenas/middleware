@@ -67,12 +67,13 @@ class bsdGroups(Model):
     def __unicode__(self):
         return self.bsdgrp_group
 
-    def delete(self, using=None, reload=True):
+    def delete(self, using=None, reload=True, pwdelete=True):
         if self.bsdgrp_builtin is True:
             raise ValueError(_(
                 "Group %s is built-in and can not be deleted!"
             ) % (self.bsdgrp_group))
-        notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
+        if pwdelete:
+            notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
         if domaincontroller_enabled():
             Samba4().group_delete(self.bsdgrp_group.encode('utf-8'))
         super(bsdGroups, self).delete(using)
@@ -253,7 +254,7 @@ class bsdUsers(Model):
             count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
                 id=self.id).count()
             if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
-                gobj.delete(reload=False)
+                gobj.delete(reload=False, pwdelete=False)
         except:
             pass
         super(bsdUsers, self).delete(using)
