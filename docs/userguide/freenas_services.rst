@@ -790,7 +790,7 @@ To configure any FTP scenario to use encrypted connections:
 #.  Import or create a certificate authority using the instructions in :ref:`CAs`. Then, import or create the certificate to use for encrypted connections
     using the instructions in :ref:`Certificates`.
 
-#.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate drop-down menu.
+#.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate" drop-down menu.
 
 #.  Specify secure FTP when accessing the FreeNAS® system. For example, in Filezilla input *ftps://IP_address* (for an implicit connection) or
     *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the
