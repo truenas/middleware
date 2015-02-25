@@ -25,7 +25,7 @@ module.exports = function( grunt ) {
         "<%= dirTree.bower.velocity %>/velocity.min.js"
       , "<%= dirTree.bower.velocity %>/velocity.ui.min.js"
       , "<%= dirTree.bower.d3 %>/d3.min.js"
-      , "<%= dirTree.bower.nvd3 %>/nv.d3.min.js"
+      , "<%= dirTree.internalScripts %>/nv.d3.js"
     ]
     , dest : "<%= dirTree.build.dist %>/libs.js"
   };

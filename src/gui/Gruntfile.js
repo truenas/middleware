@@ -63,7 +63,6 @@ module.exports = function(grunt) {
         , bower: {
               velocity : "./bower_components/velocity"
             , d3       : "./bower_components/d3"
-            , nvd3     : "./bower_components/nvd3"
             , openSans: {
                   less  : "./bower_components/lessfonts-open-sans/src/less"
                 , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
@@ -74,6 +73,9 @@ module.exports = function(grunt) {
               }
           }
 
+        // Folder with internaly managed JS libraries
+        , internalScripts : "app/source/internalScripts"
+
         // Sources
         , source: {
               root      : "app"
@@ -82,6 +84,7 @@ module.exports = function(grunt) {
             , jsx       : "app/jsx"
             , styles    : "app/source/styles"
             , templates : "app/templates"
+
           }
 
         // Build

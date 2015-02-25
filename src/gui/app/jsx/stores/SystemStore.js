@@ -14,8 +14,6 @@ var CHANGE_EVENT = "change";
 
 var _systemInfoData = {};
 
-
-
 var SystemStore = _.assign( {}, EventEmitter.prototype, {
 
     emitChange: function(changeType) {
