@@ -17,8 +17,8 @@ var SystemStore      = require("../../stores/SystemStore");
 var SystemInfo = React.createClass({
   getInitialState: function() {
     return {
-       cpuModel      :   ""
-      ,memorySize    :   ""
+        hardware   :   ""
+      , version    :   ""
     };
   }
   , componentDidMount: function() {
@@ -32,33 +32,33 @@ var SystemInfo = React.createClass({
   }
 
  , handleStatdChange: function() {
-      this.setState({  cpuModel       :   getSystemInfoFromStore( "cpu_model" )
-                      ,memorySize     :   getSystemInfoFromStore( "memory_size" )
+      this.setState({  hardware       :   getSystemInfoFromStore( "hardware" )
+                      ,version        :   getSystemInfoFromStore( "version" )
                     });
     }
 
 
  , requestData: function() {
 
-    SystemMiddleware.requestSystemInfo( "cpu_model" );
-    SystemMiddleware.requestSystemInfo( "memory_size" );
+    SystemMiddleware.requestSystemInfo( "hardware" );
+    SystemMiddleware.requestSystemInfo( "version" );
 
   }
 
   , render: function() {
     //console.log(this.state.widgetData);
     // <h3 style={elementStyle}>{"It works! "}{this.state.widgetData}</h3>
-    var memSize = (this.state.memorySize / 1024) / 1024;
+    var memSize = (this.state.hardware["memory-size"] / 1024) / 1024;
     return (
       <Widget
         positionX  =  {this.props.positionX}
         positionY  =  {this.props.positionY}
         title      =  {this.props.title}
         size       =  {this.props.size} >
-
         <dl>
-          <dt>CPU Model:</dt><dd>{this.state.cpuModel}</dd>
+          <dt>CPU Model:</dt><dd>{this.state.hardware["cpu-model"]}</dd>
           <dt>Memory Size:</dt><dd>{memSize}MB</dd>
+          <dt>Version:</dt><dd>{this.state.version}MB</dd>
         </dl>
 
       </Widget>

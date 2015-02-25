@@ -26,6 +26,7 @@ var DummyWidgetContent = React.createClass({
     return {
        element      :   ""
       ,initialData  :   false
+      ,chart        :   ""
     };
   }
 
@@ -73,9 +74,9 @@ var DummyWidgetContent = React.createClass({
                       ,activeData     :   getWidgetDataFromStore( "localhost.memory.memory-active.value" )
                       ,freeData       :   getWidgetDataFromStore( "localhost.memory.memory-free.value" )
                       ,inactiveData   :   getWidgetDataFromStore( "localhost.memory.memory-inactive.value" )
-                      ,memorySize     :   getSystemInfoFromStore( "memory_size" )
+                      ,hardware       :   getSystemInfoFromStore( "hardware" )
                     });
-      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined && this.state.activeData !== undefined && this.state.freeData !== undefined && this.state.inactiveData !== undefined && this.state.memorySize !== undefined )
+      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined && this.state.activeData !== undefined && this.state.freeData !== undefined && this.state.inactiveData !== undefined && this.state.hardware !== undefined )
       {
         this.setState({  initialData  : true
                       });
@@ -109,7 +110,7 @@ var DummyWidgetContent = React.createClass({
           // Do nothing
           console.log("This should not happened!");
       }
-      this.drawChart();
+      this.drawChart(true);
     }
 
  }
@@ -126,62 +127,72 @@ var DummyWidgetContent = React.createClass({
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-free.value", start.format(),  stop.format(), "10S");
     StatdMiddleware.requestWidgetData( "localhost.memory.memory-inactive.value", start.format(),  stop.format(), "10S");
 
-    SystemMiddleware.requestSystemInfo( "memory_size" );
+    SystemMiddleware.requestSystemInfo( "hardware" );
 
   }
 
-  , drawChart: function() {
-    var chart;
-    var memorySize = this.state.memorySize;
+  , drawChart: function(update) {
+      if (update === true) {
+          this.state.chart.update();
+      }
+      else {
+        var chart;
+        var memorySize = this.state.hardware["memory-size"];
 
-    if (this.props.stacked)
-    {
-      chart = nv.models.stackedAreaChart()
-          .margin({top: 15, right: 50, bottom: 60, left: 50})
-          .x(function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } })   //We can modify the data accessor functions...
-          .y(function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } })   //...in case your data is formatted differently.
-          .useInteractiveGuideline(true)    //Tooltips which show all data points. Very nice!
-          .transitionDuration(500)
-          .style("expand")
-          .showControls(false)       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-          .clipEdge(false);
+        if (this.props.stacked)
+        {
+          chart = nv.models.stackedAreaChart()
+            .options({
+               margin                     :    {top: 15, right: 50, bottom: 60, left: 80}
+              ,x                          :    function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
+              ,y                          :    function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }   //...in case your data is formatted differently.
+              ,useInteractiveGuideline    :    true    //Tooltips which show all data points. Very nice!
+              ,transitionDuration         :    500
+              ,style                      :    "Expanded"
+              ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+              ,clipEdge                   :    false
+            });
+        }
+        else
+        {
+          chart = nv.models.lineChart()
+          .options({
+             margin                       :   {top: 15, right: 50, bottom: 60, left: 50}
+            ,x                            :   function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
+            ,y                            :   function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } }
+            ,showXAxis                    :   true
+            ,showYAxis                    :   true
+            ,transitionDuration           :   250
+            ,forceY                       :   [0, 100]
+          });
+        }
+
+      // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
+      chart.xAxis
+        .axisLabel("Time")
+        .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return moment.unix(d).format("HH:mm:ss");
+        });
+
+      chart.yAxis
+        .axisLabel("")
+        .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return (d + "%");
+        });
+
+      d3.select(this.state.element)
+        .datum(this.chartData())
+        .call(chart);
+
+      //TODO: Figure out a good way to do this automatically
+      //nv.utils.windowResize(chart.update);
+      //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
+
+      chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
+      this.state.chart = chart;
     }
-    else
-    {
-      chart = nv.models.lineChart()
-      .options({
-        margin: {top: 15, right: 50, bottom: 60, left: 50},
-        x: function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } },
-        y: function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } },
-        showXAxis: true,
-        showYAxis: true,
-        transitionDuration: 250,
-        forceY: [0, 100]
-      });
-    }
-
-  // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
-  chart.xAxis
-    .axisLabel("Time")
-    .tickFormat(function(d) {
-          //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-          return moment.unix(d).format("HH:mm:ss");
-    });
-
-  chart.yAxis
-    .axisLabel("%")
-    .tickFormat(d3.format(',.0f'));
-
-  d3.select(this.state.element)
-    .datum(this.chartData())
-    .call(chart);
-
-  //TODO: Figure out a good way to do this automatically
-  //nv.utils.windowResize(chart.update);
-  //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
-
-  chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
-
   }
 
   , chartData: function() {
