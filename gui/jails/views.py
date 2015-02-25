@@ -179,6 +179,28 @@ def jail_stop(request, id):
         })
 
 
+def jail_restart(request, id):
+
+    jail = models.Jails.objects.get(id=id)
+
+    if request.method == 'POST':
+        try:
+            Warden().stop(jail=jail.jail_host)
+            Warden().start(jail=jail.jail_host)
+            return JsonResp(
+                request,
+                message=_("Jail successfully restarted.")
+            )
+
+        except Exception, e:
+            return JsonResp(request, error=True, message=repr(e))
+
+    else:
+        return render(request, "jails/restart.html", {
+            'name': jail.jail_host
+        })
+
+
 def jail_delete(request, id):
 
     jail = models.Jails.objects.get(id=id)
