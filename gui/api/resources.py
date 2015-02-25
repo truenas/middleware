@@ -1787,6 +1787,9 @@ class JailsResourceMixin(NestedMixin):
             bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
                 'id': bundle.obj.id
             })
+            bundle.data['_jail_restart_url'] = reverse('jail_restart', kwargs={
+                'id': bundle.obj.id
+            })
             bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
                 'id': bundle.obj.id
             })

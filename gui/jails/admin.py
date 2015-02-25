@@ -227,6 +227,9 @@ class JailsFAdmin(BaseFreeAdmin):
         #)
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
+        actions['restart'] = self._action_builder(
+            'jail_restart', label=_("Restart")
+        )
 
         shell_button = '<img src="%simages/ui/buttons/shell.png" width="18px" height="18px">' % settings.STATIC_URL
 
@@ -336,7 +339,6 @@ class JailTemplateFAdmin(BaseFreeAdmin):
         context = super(JailTemplateFAdmin, self).get_datagrid_context(request)
         context.update({'add_url': reverse('jail_template_create')})
         return context
-
 
 
 class JailMountPointFAdmin(BaseFreeAdmin):
