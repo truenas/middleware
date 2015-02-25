@@ -128,6 +128,21 @@ define([
           domStyle.set(this.dapPasswordRow, "display", "none");
           domStyle.set(this.dapTypeRow, "display", "none");
 
+          this._name = new TextBox({
+            name: "name",
+            value: initial.name || ''
+          }, this.dapName);
+
+          this._email = new TextBox({
+            name: "email",
+            value: initial.email || ''
+          }, this.dapEmail);
+
+          this._phone = new TextBox({
+            name: "phone",
+            value: initial.phone || ''
+          }, this.dapPhone);
+
           this._env = new Select({
             name: "environment",
             options: TN_ENV_OPTIONS
@@ -141,8 +156,11 @@ define([
           if(initial.criticality) this._crit.set('value', initial.criticality);
 
         } else {
-          domStyle.set(this.dapEnvRow, "display", "none");
           domStyle.set(this.dapCritRow, "display", "none");
+          domStyle.set(this.dapEmail, "display", "none");
+          domStyle.set(this.dapEnvRow, "display", "none");
+          domStyle.set(this.dapName, "display", "none");
+          domStyle.set(this.dapPhone, "display", "none");
           this._username = new TextBox({
             name: "username",
             value: initial.username
@@ -283,7 +301,10 @@ define([
         if(this.softwareName == 'truenas') {
           map = {
             1: this._subject,
-            2: this._desc
+            2: this._desc,
+            3: this._name,
+            4: this._email,
+            5: this._phone
           };
         } else {
           map = {

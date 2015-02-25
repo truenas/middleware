@@ -28,6 +28,7 @@ from collections import OrderedDict
 import json
 import logging
 import os
+import subprocess
 
 from django.core.files.base import File
 from django.http import HttpResponse
@@ -129,11 +130,26 @@ def ticket(request):
             'type': request.POST.get('type'),
         })
     else:
+
+        serial = subprocess.Popen(
+            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE
+        ).communicate()[0].split('\n')[0].upper()
+
+        license, reason = utils.get_license()
+        if license:
+            company = license.customer_name
+        else:
+            company = 'Unknown'
+
         data.update({
-            'phone': request.POST.get('phone', '555'),
-            'name': request.POST.get('name', 'John'),
-            'company': request.POST.get('company', 'iXsystems'),
-            'email': request.POST.get('email', 'william88@gmail.com'),
+            'phone': request.POST.get('phone'),
+            'name': request.POST.get('name'),
+            'company': company,
+            'email': request.POST.get('email'),
+            'criticality': request.POST.get('criticality'),
+            'environment': request.POST.get('environment'),
+            'serial': serial,
         })
 
     success, msg, tid = utils.new_ticket(data)
