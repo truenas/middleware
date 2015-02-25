@@ -267,10 +267,11 @@ cdef class ZFS(object):
 
     def get_dataset(self, name):
         cdef libzfs.zfs_handle_t *handle = libzfs.zfs_open(self._root, name, zfs.ZFS_TYPE_FILESYSTEM)
-        cdef libzfs.zpool_handle_t *pool = libzfs.zfs_get_pool_handle(handle)
+        cdef libzfs.zpool_handle_t *pool
         if handle == NULL:
             raise ZFSException(Error.NOENT, 'Dataset {0} not found'.format(name))
 
+        pool = libzfs.zfs_get_pool_handle(handle)
         return ZFSDataset(self, ZFSPool(self, <uintptr_t>pool, False), <uintptr_t>handle)
 
     def create(self, name, topology, opts, fsopts):
