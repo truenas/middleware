@@ -1319,14 +1319,11 @@ advantage of VAAI primitives and should be used when using virtualization softwa
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
-.. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of an extent below 50%. As required, you
-   can increase the capacity of an extent using the instructions in :ref:`Growing LUNs`.
+.. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of the pool below 50% when using iSCSI.
+   As required, you can increase the capacity of an existing extent using the instructions in :ref:`Growing LUNs`.
 
 To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 10.5h, the device extent is using the
 :file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
-
-.. note:: in TrueNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
-   the disk, resulting in data loss. This bug was fixed in 8.3.1.
 
 Table 10.5f summarizes the settings that can be configured when creating an extent. Note that
 **file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
