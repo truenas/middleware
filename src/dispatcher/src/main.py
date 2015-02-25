@@ -877,7 +877,10 @@ class ShellConnection(WebSocketApplication, EventEmitter):
         self.inq.put(StopIteration)
         self.logger.info('Terminating shell PID %d', self.proc.pid)
         if not self.proc.returncode:
-            self.proc.terminate()
+            try:
+                self.proc.terminate()
+            except OSError:
+                pass
 
         os.close(self.master)
 
