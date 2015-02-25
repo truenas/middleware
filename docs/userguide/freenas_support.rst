@@ -140,6 +140,8 @@ language:
 
 * `Spanish - Espanol <http://forums.freenas.org/forumdisplay.php?33-Spanish-Espanol>`_
 
+* `Swedish - Svenske <https://forums.freenas.org/index.php?forums/swedish-svenske.51/>`_
+
 * `Turkish - Türkçe <http://forums.freenas.org/forumdisplay.php?36-Turkish-T%FCrk%E7e>`_
 
 If you wish to ask a question on the forum, you will need to click the "Sign Up Now!" link to create an account and login using that account.
