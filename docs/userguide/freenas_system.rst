@@ -889,9 +889,9 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 
 **Figure 5.10c: Creating a New Certificate**
 
-|cert3.png|
+|cert3a.png|
 
-.. |cert3.png| image:: images/cert3.png
+.. |cert3a.png| image:: images/cert3a.png
 
 **Table 5.10b: Certificate Creation Options**
 

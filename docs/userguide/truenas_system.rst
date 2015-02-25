@@ -17,8 +17,6 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`System Dataset`: used to configure the location where logs and reporting graphs are stored
 
-* :ref:`Failovers`: used to configure high availability.
-
 * :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
 * :ref:`Update`: used to perform upgrades and to check for system updates
@@ -27,7 +25,9 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
 
-* :ref:`Support`: used to create a support ticket.
+* :ref:`Support`: used to view licensing information or create a support ticket.
+
+* :ref:`Failovers`: used to configure high availability.
 
 Each of these is described in more detail in this section.
 
@@ -186,10 +186,10 @@ explains these options in more detail.
 Boot
 ----
 
-Beginning with version 9.3, TrueNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
-the operating system becomes a low-risk operation as the updater automatically creates a snapshot of your current boot environment and adds it to the boot
-menu before applying the update. If the update fails, simply reboot the system and select the previous boot environment from the boot menu to instruct the
-system to go back to that system state.
+TrueNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating the operating system becomes
+a low-risk operation as the updater automatically creates a snapshot of your current boot environment and adds it to the boot menu before applying the update.
+If the update fails, simply reboot the system and select the previous boot environment from the boot menu to instruct the system to go back to that system
+state.
 
 .. note:: do not confuse boot environments with the configuration database. Boot environments are a snapshot of the
    *operating system* at a specified time. When a TrueNAS® system boots, it loads the specified boot environment, or operating system, then reads the
@@ -491,65 +491,6 @@ If you make any changes, click the "Save" button to save them.
 If you change the pool storing the system dataset at a later time, TrueNAS® will automatically migrate the existing data in the system dataset to the new
 location.
 
-.. index:: Failovers
-
-.. _Failovers:
-
-Failovers
----------
-
-Some TrueNAS® appliances use the Common Address Redundancy Protocol (
-`CARP <http://www.openbsd.org/faq/pf/carp.html>`_
-) to provide high availability and failover. CARP was originally developed by the OpenBSD project and provides an open source, non patent-encumbered
-alternative to the VRRP and HSRP protocols.
-
-Failover is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with the
-assistance of an iXsystems support engineer. At this time, failover can only be used with iSCSI or NFS. Contact your iXsystems representative if you wish to
-schedule a time to configure failover.
-
-This section provides an overview of the failover screen that is available in the graphical administrative interface. Your iXsystems support engineer will
-assist you in the configuration and testing of a failover that is suited to your specific environment.
-**Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
-
-The options available in :menuselection:`System --> Failovers --> View Failovers --> Add Failover` are shown in Figure 5.7a and described in Table 5.7a.
-
-**Figure 5.7a: Creating a Failover**
-
-|failover1.png|
-
-.. |failover1.png| image:: images/failover1.png
-
-**Table 5.7a: Options When Creating a Failover**
-
-+-------------+----------------+-----------------------------------------------------------------------------+
-| **Setting** | **Value**      | **Description**                                                             |
-|             |                |                                                                             |
-+=============+================+=============================================================================+
-| Volume      | drop-down menu | select the ZFS pool                                                         |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| CARP        | drop-down menu | select the CARP that was previously created in Network -> CARPs -> Add CARP |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| IP Address  | string         | input the IP address associated with the existing CARP                      |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-
-
-Once a failover configuration is working, a new icon will be added between the Log Out and Alert icons to each device in the failover configuration. The
-active device will have a green Active icon and the passive device will have a red Passive icon. An entry will be added to
-`System -> Failovers -> View Failovers` on each device. The available fields and actions are as follows:
-
-**Volume:** the volume to be monitored for failover.
-
-**CARP:** the shared virtual IP. This is the IP used for the high availability NFS mounts or iSCSI targets.
-
-**IP Address:** the IP of the other device in the high availability setup.
-
-**Sync From Peer:** used to copy the configurations from the other device to this one when setting up failover.
-
-**Sync To Peer:** used to copy this device's configurations to the other device when setting up failover.
-
 .. index:: Tunables
 .. _Tunables:
 
@@ -576,17 +517,17 @@ Since sysctl, loader, and rc.conf values are specific to the kernel parameter to
 and suggested values can be found in the man page for the specific driver and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_.
 
-To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.8a.
+To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
 
-**Figure 5.8a: Adding a Tunable**
+**Figure 5.7a: Adding a Tunable**
 
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
 
-Table 5.8a summarizes the options when adding a tunable.
+Table 5.7a summarizes the options when adding a tunable.
 
-**Table 5.8a: Adding a Tunable**
+**Table 5.7a: Adding a Tunable**
 
 +-------------+-------------------+-------------------------------------------------------------------------------------+
 | **Setting** | **Value**         | **Description**                                                                     |
@@ -688,15 +629,15 @@ tunables back.
 Update
 ------
 
-Beginning with version 9.3, TrueNAS® uses signed updates rather than point releases. This provides the TrueNAS® administrator more flexibility in deciding
-when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
-release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they can revert to a previous
-version of the operating system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to
-manually download the GUI upgrade file and its associated checksum in order to perform an upgrade.
+TrueNAS® uses signed updates rather than point releases. This provides the TrueNAS® administrator more flexibility in deciding when to upgrade the system in
+order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming release. Combined with boot
+environments, an administrator can try new features or apply system patches with the knowledge that they can revert to a previous version of the operating
+system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to manually download the GUI
+upgrade file and its associated checksum in order to perform an upgrade.
 
-Figure 5.9a shows an example of the :menuselection:`System --> Update` screen. 
+Figure 5.8a shows an example of the :menuselection:`System --> Update` screen. 
 
-**Figure 5.9a: Update Options**
+**Figure 5.8a: Update Options**
 
 |tn_update1.png|
 
@@ -705,22 +646,18 @@ Figure 5.9a shows an example of the :menuselection:`System --> Update` screen.
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
 
-This screen also shows which software branch, or train, the system is currently tracking updates for. The following trains are available:
-
-* **ADD ME:** 
-
-To change the train, use the drop-down menu to make a different selection. It also lists the URL of the official update server should that information be
-needed in a network with outbound firewall restrictions.
+This screen also indicates which software branch, or train, the system is currently tracking updates for and lists the URL of the official update server,
+should that information be needed in a network with outbound firewall restrictions.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
 
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
-be listed. In the example shown in Figure 5.9b, the numbers which begin with a *#* represent the bug report number from
+be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
 `bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
 of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9.3 Release Notes in your web browser.
 
-**Figure 5.9b: Reviewing Updates**
+**Figure 5.8b: Reviewing Updates**
 
 |update2.png|
 
@@ -731,12 +668,11 @@ button to download and apply the updates. Note that some updates will automatica
 
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
-in Figure 5.9a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
+in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-While the "Manual Update" button can be used to manually upgrade the operating system, beginning with 9.3 this button is only included for backwards
-compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the necessary updates to upgrade the
-operating system.
+While the "Manual Update" button can be used to manually upgrade the operating system, this button is only included for backwards compatibility as this method
+of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the necessary updates to upgrade the operating system.
 
 .. _If Something Goes Wrong:
 
@@ -746,12 +682,12 @@ If Something Goes Wrong
 If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
 
 To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
-boot menu. In the example shown in Figure 5.9c, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
+boot menu. In the example shown in Figure 5.8c, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
 applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
 is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
 entries include a date and timestamp, indicating when that boot environment was created.
 
-**Figure 5.9c: Boot Menu**
+**Figure 5.8c: Boot Menu**
 
 |tn_boot1.png|
 
@@ -759,25 +695,13 @@ entries include a date and timestamp, indicating when that boot environment was 
 
 To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
 
-Should a boot device fail and the system no longer boots, don't panic. The data is still on your disks and you still have a copy of your saved configuration.
-You can always:
-
-#.  Perform a fresh installation on a new boot device.
-
-#.  Import your volumes in :menuselection:`Storage --> Auto Import Volume`.
-
-#.  Restore the configuration in :menuselection:`System --> General --> Upload Config`.
-
-.. note:: you cannot restore a saved configuration which is newer than the installed version. For example, if you reboot into an older version of the
-          operating system, you cannot restore a configuration that was created in a later version.
-
 .. index:: Upgrade ZFS Pool
 .. _Upgrading a ZFS Pool:
 
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~
 
-Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical administrative interface.
+ZFS pools can be upgraded from the graphical administrative interface.
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
@@ -792,11 +716,11 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
   the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 5.9dg.
+"Upgrade" button as seen in Figure 5.8d.
 
 .. note:: if the "Upgrade" button does not appear, the pool is already at the latest feature flags and does not need to be upgraded.
 
-**Figure 5.9d: Upgrading a ZFS Pool**
+**Figure 5.8d: Upgrading a ZFS Pool**
 
 |tn_pool1.png|
 
@@ -814,28 +738,28 @@ nearly instantaneous on a quiet pool.
 CAs
 ---
 
-Beginning with version 9.3, TrueNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS to encrypt any of the connections to the
-TrueNAS® system, you will need to first create a CA, then either create or import the certificate to be used for encrypted connections. Once you do this,
-the certificate will appear in the drop-down menus for all the services that support SSL or TLS.
+TrueNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS to encrypt any of the connections to the TrueNAS® system, you will need to
+first create a CA, then either create or import the certificate to be used for encrypted connections. Once you do this, the certificate will appear in the
+drop-down menus for all the services that support SSL or TLS.
 
-Figure 5.10a shows the initial screen if you click :menuselection:`System --> CAs`.
+Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs`.
 
-**Figure 5.10a: Initial CA Screen**
+**Figure 5.9a: Initial CA Screen**
 
 |tn_ca1.png|
 
 .. |tn_ca1.png| image:: images/tn_ca1.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
-Figure 5.10b. The configurable options are summarized in Table 5.10a.
+Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
-**Figure 5.10b: Importing a CA**
+**Figure 5.9b: Importing a CA**
 
 |ca2a.png|
 
 .. |ca2a.png| image:: images/ca2a.png
 
-**Table 5.10a: Importing a CA Options**
+**Table 5.9a: Importing a CA Options**
 
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                   |
@@ -861,9 +785,9 @@ Figure 5.10b. The configurable options are summarized in Table 5.10a.
 To instead create a new CA, first decide if it will be the only CA which will sign certificates for internal use or if the CA will be part of a
 `certificate chain <https://en.wikipedia.org/wiki/Root_certificate>`_.
 
-To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.10c. 
+To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.9c. 
 
-**Figure 5.10c: Creating an Internal CA**
+**Figure 5.9c: Creating an Internal CA**
 
 |ca3.png|
 
@@ -871,7 +795,7 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
-**Table 5.10b: Internal CA Options**
+**Table 5.9b: Internal CA Options**
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
@@ -935,27 +859,27 @@ If you click the entry for a CA, the following buttons become available:
 Certificates
 ------------
 
-Beginning with version 9.3, TrueNAS® can import existing existing certificates, create new certificates, and issue certificate
-signing requests so that created certificates can be signed by the CA which was previously imported or created in :ref:`CAs`.
+TrueNAS® can import existing existing certificates, create new certificates, and issue certificate signing requests so that created certificates can be
+signed by the CA which was previously imported or created in :ref:`CAs`.
 
-Figure 5.11a shows the initial screen if you click :menuselection:`System --> Certificates`.
+Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
 
-**Figure 5.11a: Initial Certificates Screen**
+**Figure 5.10a: Initial Certificates Screen**
+
+|tn_cert.png|
+
+.. |tn_cert.png| image:: images/tn_cert.png
+
+To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
+summarized in Table 5.10a.
+
+**Figure 5.10b: Importing a Certificate**
 
 |cert2a.png|
 
 .. |cert2a.png| image:: images/cert2a.png
 
-To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.11b. The configurable options are
-summarized in Table 5.11a.
-
-**Figure 5.11b: Importing a Certificate**
-
-|cert2.png|
-
-.. |cert2.png| image:: images/cert2.png
-
-**Table 5.11a: Certificate Import Options**
+**Table 5.10a: Certificate Import Options**
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
@@ -975,17 +899,17 @@ summarized in Table 5.11a.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-To instead create a new self-signed certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.11c. The configurable
-options are summarized in Table 5.11b. When completing the fields for the certificate authority, use the information for your organization. Since this is a
+To instead create a new self-signed certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.10c. The configurable
+options are summarized in Table 5.10b. When completing the fields for the certificate authority, use the information for your organization. Since this is a
 self-signed certificate, use the CA that you imported or created using :ref:`CAs` as the signing authority.
 
-**Figure 5.11c: Creating a New Certificate**
+**Figure 5.10c: Creating a New Certificate**
 
-|cert3.png|
+|cert3a.png|
 
-.. |cert3.png| image:: images/cert3.png
+.. |cert3a.png| image:: images/cert3a.png
 
-**Table 5.11b: Certificate Creation Options**
+**Table 5.10b: Certificate Creation Options**
 
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**            | **Description**                                                                                 |
@@ -1026,16 +950,16 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
 If you need to use a certificate that is signed by an external CA, such as Verisign, instead create a certificate signing request. To do so, click the
-"Create Certificate Signing Request" button. This will open a screen similar to Figure 5.11c, but without the "Signing Certificate Authority" field.
+"Create Certificate Signing Request" button. This will open a screen similar to Figure 5.10c, but without the "Signing Certificate Authority" field.
 
 All certificates that you import, self-sign, or make a certificate signing request for will be added as entries to :menuselection:`System --> Certificates`.
-In the example shown in Figure 5.11d, a self-signed certificate and a certificate signing request have been created for the fictional organization
+In the example shown in Figure 5.10d, a self-signed certificate and a certificate signing request have been created for the fictional organization
 *My Company*. The self-signed certificate was issued by the internal CA named
 *My Company* and the administrator has not yet sent the certificate signing request to Verisign so that it can be signed. Once that certificate is signed and
 returned by the external CA, it should be imported using the "Import Certificate" button so that is available as a configurable option for encrypting
 connections.
 
-**Figure 5.11d: Managing Certificates**
+**Figure 5.10d: Managing Certificates**
 
 |cert4.png|
 
@@ -1059,3 +983,59 @@ If you click an entry, it will activate the following configuration buttons:
 
 Support
 -------
+
+.. index:: Failovers
+
+.. _Failovers:
+
+Failovers
+---------
+
+Some TrueNAS® appliances use the Common Address Redundancy Protocol (`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and
+failover. CARP was originally developed by the OpenBSD project and provides an open source, non patent-encumbered alternative to the VRRP and HSRP protocols.
+
+Failover is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with the
+assistance of an iXsystems support engineer. At this time, failover can only be used with iSCSI or NFS. Contact your iXsystems representative if you wish to
+schedule a time to configure failover.
+
+This section provides an overview of the failover screen that is available in the graphical administrative interface. Your iXsystems support engineer will
+assist you in the configuration and testing of a failover that is suited to your specific environment.
+**Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
+
+The options available in :menuselection:`System --> Failovers --> View Failovers --> Add Failover` are shown in Figure 5.11a and described in Table 5.11a.
+
+**Figure 5.11a: Creating a Failover**
+
+|failover1.png|
+
+.. |failover1.png| image:: images/failover1.png
+
+**Table 5.11a: Options When Creating a Failover**
+
++-------------+----------------+-----------------------------------------------------------------------------+
+| **Setting** | **Value**      | **Description**                                                             |
+|             |                |                                                                             |
++=============+================+=============================================================================+
+| Volume      | drop-down menu | select the ZFS pool                                                         |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+| CARP        | drop-down menu | select the CARP that was previously created in Network -> CARPs -> Add CARP |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+| IP Address  | string         | input the IP address associated with the existing CARP                      |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+| Disabled    | checkbox       | check to disable the failover without deleting the configuration            |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+| Master      | checkbox       | when checked, indicates that this is the master node                        |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+| Timeout     | integer        | seconds to wait before a network event will cause a failover                |
+|             |                |                                                                             |
++-------------+----------------+-----------------------------------------------------------------------------+
+
+
+Once a failover configuration is working, a new icon will be added between the Log Out and Alert icons to each device in the failover configuration. The
+active device will have a green Active icon and the passive device will have a red Passive icon. An entry will also be added to
+`System -> Failovers` on each device. 
