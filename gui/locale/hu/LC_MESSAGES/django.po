@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-12-25 21:52+0000\n"
-"Last-Translator: palpatrikattila <palpatrikattila@gmail.com>\n"
+"PO-Revision-Date: 2015-02-24 02:50+0000\n"
+"Last-Translator: Sracz <sracz66@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1388008374.0\n"
+"X-POOTLE-MTIME: 1424746229.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,7 +110,7 @@ msgstr "Mindig bekapcsolva"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Tiltva"
+msgstr "Kikapcsolva"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -118,7 +118,7 @@ msgstr "Szint 1 - Minimális energia felhasználás, készenléttel (leáll)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Szint 64 - Közepes energia elhasználás készenléttel"
+msgstr "Szint 64 - Közepes energia felhasználás készenléttel"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
@@ -238,7 +238,7 @@ msgstr "Helyi felhasználó"
 
 #: choices.py:189
 msgid "Normal"
-msgstr "Normális"
+msgstr "Szokásos"
 
 #: choices.py:190
 msgid "Full"
@@ -312,7 +312,7 @@ msgstr "Kölcsönös CHAP"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "UPS akkumulátor töltési szint alacsony"
+msgstr "UPS akkumulátor töltöttség alacsony"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -324,11 +324,11 @@ msgstr "Javasolt"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr "Tolerancia"
+msgstr "Tűrés"
 
 #: choices.py:257
 msgid "Required"
-msgstr "Kötelező"
+msgstr "Szükséges"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
@@ -359,23 +359,23 @@ msgstr "gzip (maximális, lassú)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr "Óra(s)"
+msgstr "Óra(ák)"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr "Nap(s)"
+msgstr "Nap(ok)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr "Hét(s)"
+msgstr "Hét(ek)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr "Hónap(s)"
+msgstr "Hónap(ok)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr "Év(s)"
+msgstr "Év(ek)"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
@@ -385,7 +385,7 @@ msgstr "Minden nap"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Minden kiválasztott hétköznapon"
+msgstr "Minden kiválasztott napon"
 
 #: choices.py:504
 msgid "Read-only"
@@ -426,25 +426,23 @@ msgstr "%(week)s hét"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
-"Soha - Ellenőrizze az eszközt függetlenül attól, hogy teljesítménycentrikus "
-"módban van"
+msgstr "Soha - Üzemmód független ellenőrzés"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Alvás - Ellenőrizze az eszközt amennyiben nincs SLEEP módban"
+msgstr "Alvás - Ellenőrizze az eszközt amennyiben nincs ALVÓ módban"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Készenlét - Ellenőrizze az eszközt amennyiben nincs SLEEP vagy STANDBY "
+"Készenlét - Ellenőrizze az eszközt amennyiben nincs ALVÓ vagy KÉSZENLÉTI "
 "módban"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Tétlen - Ellenőrizze az eszközt amennyiben az nincs SLEEP, STANDBY vagy IDLE "
-"módban"
+"Üresjárat - Ellenőrizze az eszközt amennyiben az nincs ALVÓ, KÉSZENLÉTIvagy "
+"ÜRESJÁRATI módban"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -456,7 +454,7 @@ msgstr "Rövid önellenőrzés"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Adatátviteli Önteszt (Csak  ATA)"
+msgstr "Adatátviteli Önteszt (Csak ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -6543,7 +6541,7 @@ msgstr "Titkosítatlan"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr "Titkosítás, nincs jelszó"
+msgstr "Titkosítás, jelszó nélkül"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
@@ -7196,19 +7194,19 @@ msgstr ""
 #: choices.py:175
 #, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (mindenes)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (legjobb tömörítés)"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -8162,19 +8160,19 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:317
 #, fuzzy
@@ -9141,19 +9139,19 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
@@ -10219,14 +10217,13 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Autentikácíó"
+msgstr "Egyszerű hitelesítés"
 
 #: choices.py:44
 #, fuzzy
 msgid "Digest Authentication"
-msgstr "Autentikácíó"
+msgstr "Kivonatoló Hitelesítés"
 
 #: choices.py:799
 msgid "adex"

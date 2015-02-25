@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-01-21 11:35+0000\n"
-"Last-Translator: ramagenoval <ramagenoval@gmail.com>\n"
+"PO-Revision-Date: 2015-02-22 18:50+0000\n"
+"Last-Translator: tuxspain24 <kargon3897@hispavista.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1421840155.0\n"
+"X-POOTLE-MTIME: 1424631005.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -939,8 +939,9 @@ msgid "You have to specify IPv6 address as well per alias"
 msgstr "Has de especificar la dirección IPv6 y también el alias"
 
 #: network/forms.py:443
+#, fuzzy
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "Has de elegir una mascara de red IPv6 y también el alias"
+msgstr "Información Winbind NSS"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
@@ -6945,7 +6946,7 @@ msgstr "La ruta no puede ser montada %(source)s: %(error)s"
 #: jails/models.py:103
 #, fuzzy
 msgid "IPv4 bridge address"
-msgstr "Dirección IPv4"
+msgstr "Dirección IPv4 del bridge"
 
 #: jails/models.py:110
 #, fuzzy
@@ -6989,7 +6990,7 @@ msgstr "Mascara IPv6"
 #: jails/models.py:362
 #, fuzzy
 msgid "IPv6 Network End Address"
-msgstr "Dirección IPv6"
+msgstr "Dirección Final de red IPv6"
 
 #: jails/models.py:363
 msgid "IPv6 network end address for jails and plugins"
@@ -7036,12 +7037,11 @@ msgstr ""
 #: jails/utils.py:714
 #, fuzzy
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "No puedo recuperar %(url)s: %(error)s"
+msgstr "Falló al crear conjunto de datos %(name)s: %(error)s"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "No puedo recuperar %(url)s: %(error)s"
+msgstr "Falló al crear el directorio %(name)s: %(error)s"
 
 #: jails/views.py:95
 msgid "Jail successfully edited."
@@ -7062,11 +7062,11 @@ msgstr "Sin Token RPC!"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "No hay portadora"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Abajo"
 
 #: middleware/zfs.py:623
 #: middleware/zfs.py:691
@@ -7936,7 +7936,6 @@ msgstr "Vimage"
 
 #: jails/forms.py:518
 #: jails/models.py:196
-#, fuzzy
 msgid "NAT"
 msgstr "NAT"
 
@@ -7971,7 +7970,7 @@ msgstr "Dirección de fin de red IPv4."
 #: jails/models.py:357
 #, fuzzy
 msgid "IPv6 Network Start Address"
-msgstr "Dirección IPv6"
+msgstr "Dirección Inicio de Red IPv6"
 
 #: jails/models.py:377
 #: jails/models.py:378
@@ -7984,7 +7983,7 @@ msgstr "Arquitectura"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
-msgstr ""
+msgstr "Falló al instalar el plugin: %s"
 
 #: jails/views.py:156
 msgid "Jail successfully stopped."
@@ -7995,8 +7994,9 @@ msgid "Backup"
 msgstr "Copia de Seguridad"
 
 #: middleware/notifier.py:3847
+#, fuzzy
 msgid "Degraded"
-msgstr ""
+msgstr "Degradado                "
 
 #: network/admin.py:44
 msgid "IPv4 Addresses"
@@ -8901,7 +8901,7 @@ msgstr "La ruta no existe!"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr ""
+msgstr "¡La jaula root debe estar en un volumen o conjunto de datos!"
 
 #: jails/forms.py:827
 msgid "This shouldn't happen, but the jail could not be found"
@@ -8934,7 +8934,7 @@ msgstr "Longitud del prefijo IPv6"
 #: jails/models.py:141
 #, fuzzy
 msgid "IPv6 aliases"
-msgstr "Alias"
+msgstr "Alias IPv6"
 
 #: jails/models.py:147
 #, fuzzy
@@ -8963,12 +8963,13 @@ msgid "IPv4 Network Start Address"
 msgstr "Dirección IPv4"
 
 #: jails/models.py:353
+#, fuzzy
 msgid "IPv6 network range for jails and plugins"
-msgstr ""
+msgstr "Rango de red IPv6 para jaulas y plugins"
 
 #: jails/models.py:358
 msgid "IPv6 network start address for jails and plugins"
-msgstr ""
+msgstr "Direccion de Inicio de red IPv6 para jaulas y plugins"
 
 #: jails/models.py:422
 msgid "OS"
@@ -9045,7 +9046,7 @@ msgstr "Canal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "Proxy HTTP"
 
 #: network/views.py:66
 msgid "IPMI successfully edited"
@@ -9755,7 +9756,7 @@ msgstr "enlace DN"
 #: directoryservice/models.py:302
 #, fuzzy
 msgid "Bind password"
-msgstr "Contraseña antigua"
+msgstr "Contraseña Bind"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -10002,7 +10003,7 @@ msgstr "AutoRID Idmap"
 #: directoryservice/models.py:229
 #, fuzzy
 msgid "Name Map"
-msgstr "Nombre"
+msgstr "Mapa de Nombres"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -10010,6 +10011,10 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
+"Especifica la ruta absoluta al fichero de mapeado de nombres utilizado por "
+"la API nss_info. Las entradas dentro de este fichero son del tipo \" nombre "
+"unix = nombre de dominio cualificado\". El mapeado de los nombres de usuario "
+"y de los nombres de grupo está soportado."
 
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
@@ -10056,22 +10061,24 @@ msgstr "LDAP Idmap"
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "Servidor NTP 1"
+msgstr "Servidor LDAP                "
 
 #: directoryservice/models.py:330
 msgid ""
 "Defines the type of LDAP server to use. This can either be the LDAP server "
 "provided by the Active Directory server (ad) or a stand-alone LDAP server."
 msgstr ""
+"Define el tipo de servidor LDAP a utilizar. Este puede ser tanto el servidor "
+"LDAP provisto por el servidor del Directorio Activo (ad) o un servidor LDAP "
+"local."
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "local"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
@@ -10140,6 +10147,8 @@ msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
+"Cuando utilizamos un servidor LDAP local, este parámetro especifica la URL "
+"ldap para poder acceder al servidor LDAP."
 
 #: directoryservice/models.py:391
 msgid "LDAP User DN"
@@ -10170,17 +10179,17 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr ""
+msgstr "RFC2307 Idmap"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "RID Idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "TDB Idmap"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -10220,8 +10229,9 @@ msgstr "Idmap backend"
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
+#, fuzzy
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "backend ldmap para winbind"
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -10346,7 +10356,7 @@ msgstr ""
 #: freeadmin/navtree.py:256
 #, fuzzy
 msgid "Wizard"
-msgstr "Iniciador"
+msgstr "Asistente"
 
 #: services/forms.py:302
 #, fuzzy
@@ -10378,8 +10388,9 @@ msgid "Kerberos Keytab"
 msgstr "keytab de Kerberos"
 
 #: directoryservice/forms.py:498
+#, fuzzy
 msgid "A keytab is required."
-msgstr ""
+msgstr "Es necesario una tabla de claves/un registro de claves."
 
 #: directoryservice/models.py:549
 msgid "Kerberos realm."
@@ -10408,7 +10419,7 @@ msgstr ""
 #: directoryservice/models.py:565
 #, fuzzy
 msgid "Password Server"
-msgstr "Contraseña"
+msgstr "Contraseña del Servidor"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10597,8 +10608,8 @@ msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Este parametro especifica el sufijo que será usado en los usuarios añadidos "
-"al directorio LDAP; Ej: ou=Users"
+"Este parámetro especifica el sufijo que será usado por la configuración SUDO "
+"en el directorio LDAP; Ej: ou=SUDOers"
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
@@ -11215,8 +11226,9 @@ msgid "Zvol successfully edited."
 msgstr "Jail importado satisfactoriamente."
 
 #: directoryservice/models.py:853
+#, fuzzy
 msgid "Winbind NSS Info"
-msgstr ""
+msgstr "Información Winbind NSS"
 
 #: directoryservice/models.py:854
 msgid ""
@@ -11716,7 +11728,7 @@ msgstr "Tiempo de espera agotado para consultas LDAP DNS."
 #: directoryservice/models.py:1108
 #, fuzzy
 msgid "These parameters are added to sssd.conf"
-msgstr "Estos parametros serán añadidos a ldap.conf"
+msgstr "Estos parámetros serán añadidos a sssd.conf"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
