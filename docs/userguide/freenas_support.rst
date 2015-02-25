@@ -238,6 +238,8 @@ A series of instructional videos are available for FreeNAS® 9.3. They include:
 
 * `FreeNAS® 9.3 Shares Overview (AFP, NFS, CIFS, + New WebDAV) <https://www.youtube.com/watch?v=GVJQ0Vx_6i4>`_
 
+* `How to Replace HDD in FreeNAS® 9.3 <https://www.youtube.com/watch?v=HxcvryDNasY>`_
+
 .. index:: Professional Support
 .. _Professional Support:
 
