@@ -30,7 +30,12 @@ from Cython.Build import cythonize
 
 
 extensions = [
-    Extension("launchd", ["launchd.pyx"])
+    Extension(
+       "launchd",
+       ["launchd.pyx"], 
+       include_dirs=["/usr/src/sys/apsl/include"],
+       extra_link_args=["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lcfxlite", "-lBlocksRuntime", "-licutu"]
+    )
 ]
 
 
