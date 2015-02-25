@@ -8,6 +8,10 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+
+        # Workaround sqlite3 reserved name bug #8184
+        db.delete_unique('system_failover', ['carp_id', 'volume_id'])
+
         # Adding field 'Failover.disabled'
         db.add_column('system_failover', 'disabled',
                       self.gf('django.db.models.fields.BooleanField')(default=0),
@@ -17,6 +21,9 @@ class Migration(SchemaMigration):
         db.add_column('system_failover', 'master',
                       self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+
+        # Workaround sqlite3 reserved name bug #8184
+        db.create_unique('system_failover', ['carp_id', 'volume_id'])
 
 
     def backwards(self, orm):
