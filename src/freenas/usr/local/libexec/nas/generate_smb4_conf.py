@@ -565,6 +565,7 @@ def add_activedirectory_conf(smb4_conf):
 
     try:
         os.makedirs(cachedir)
+        os.chmod(cachedir, 0755)
     except:
         pass
 
