@@ -332,6 +332,8 @@ add_port sysutils/grub2-pcbsd
 add_port sysutils/beadm-devel
 add_port net/py-pysphere
 add_port sysutils/throttle
+add_port misc/xtail
+add_port security/pam_google_authenticator
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
