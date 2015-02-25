@@ -362,7 +362,7 @@ class Jails(Model):
         return is_linux
 
     class Meta:
-        verbose_name = _("Jails")
+        verbose_name = _("Jail")
         verbose_name_plural = _("Jails")
 
 

@@ -68,7 +68,7 @@ class AddJail(TreeNode):
     global O_ADDJAIL
 
     gname = 'Jails.Add'
-    name = _(u'Add Jails')
+    name = _(u'Add Jail')
     icon = u'JailAddIcon'
     type = 'object'
     view = 'freeadmin_jails_jails_add'
