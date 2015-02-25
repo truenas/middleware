@@ -555,7 +555,7 @@ automatically once a day as a cron job.
 Kerberos Realms
 ---------------
 
-Beginning with TrueNAS® 9.3, a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
+TrueNAS® 9.3 creates a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
 shown in Figure 9.5a.
 

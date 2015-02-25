@@ -3,8 +3,8 @@
 Wizard
 ------
 
-Beginning with TrueNAS® 9.3, a wizard is available which walks you through the steps needed to quickly configure TrueNAS® to start serving data over a
-network. This section describes the configuration steps which are available from the wizard.
+TrueNAS® provides a wizard which walks you through the steps needed to quickly configure TrueNAS® to start serving data over a network. This section
+describes the configuration steps which are available from the wizard.
 
 Figure 13a shows the first wizard configuration screen.
 

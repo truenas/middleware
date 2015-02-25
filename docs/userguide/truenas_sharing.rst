@@ -6,10 +6,10 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-Beginning with version 9.3, TrueNAS® provides a :ref:`Wizard` for creating shares. The Wizard will automatically create the correct type of dataset and
-permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is recommended to use the
-Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune the default permissions
-from the client operating system to meet the requirements of the network.
+TrueNAS® provides a :ref:`Wizard` for creating shares. The Wizard will automatically create the correct type of dataset and permissions for the type of
+share, set the default permissions for the share type, and start the service needed by the share. It is recommended to use the Wizard to create shares,
+fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune the default permissions from the client operating
+system to meet the requirements of the network.
 
 .. note:: shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
    that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the
@@ -580,8 +580,8 @@ If the client receives timeout errors when trying to mount the share, add the IP
 WebDAV Shares
 ------------------
 
-Beginning with TrueNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory
-from a web browser.
+In TrueNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory from a web
+browser.
 
 Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
 by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
