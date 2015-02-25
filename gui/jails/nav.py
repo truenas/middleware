@@ -68,6 +68,8 @@ class AddJail(TreeNode):
     global O_ADDJAIL
 
     gname = 'Jails.Add'
+    app_name = 'jails'
+    model = 'Jails'
     name = _(u'Add Jail')
     icon = u'JailAddIcon'
     type = 'object'
