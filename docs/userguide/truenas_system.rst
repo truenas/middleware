@@ -984,6 +984,40 @@ If you click an entry, it will activate the following configuration buttons:
 Support
 -------
 
+The TrueNAS® "Support" tab is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
+requests. Figure 5.11a shows an example of...
+
+**Figure 5.11a: Support Tab**
+
+|tn_support1.png|
+
+.. |tn_support1.png| image:: images/tn_support1.png
+
+Describe licensing stuff here....
+
+To generate a support ticket, complete the following fields:
+
+* **Category:** use the drop-down menu to indicate whether the ticket is to report a software bug, report a hardware failure, ask for assistance in installing
+  or configuring the system, or request assistance in diagnosing a performance bottleneck.
+
+* **Environment:** use the drop-down menu to indicate the role of the affected system. Choices are "Production", "Staging", "Test", "Prototyping", or "Initial
+  Deployment/Setup".
+
+* **Criticality:** use the drop-down menu to indicate the critical level. Choices are "Inquiry", "Loss of Functionality", or "Total Down".
+
+* **Attach Debug Info:** it is recommended to leave this box checked so that an overview of the system's hardware and configuration is automatically generated
+  and included with the ticket.
+
+* **Subject:** input a descriptive title for the ticket.
+
+* **Description:** input a 1 to 3 paragraph summary of the issue that describes the problem, and if applicable, what steps one can do to reproduce it.
+
+* **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
+
+Once you have finished completing the fields, click the "Submit" button to generate and send the support ticket to iXsystems. You can view the status of
+and add additional information to existing support tickets by going to `support.ixsystems.com <https://support.ixsystems.com/>`_, logging in, and clicking
+"View Tickets".
+
 .. index:: Failovers
 
 .. _Failovers:
