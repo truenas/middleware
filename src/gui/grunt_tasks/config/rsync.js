@@ -16,10 +16,10 @@ module.exports = function( grunt ) {
   this.freenas = {
       options : {
           ssh        : true
-        , port       : "<%= freenasConfig.sshPort %>"
-        , privateKey : "<%= freenasConfig.keyPath %>"
+        , port       : "<%= freeNASConfig.sshPort %>"
+        , privateKey : "<%= freeNASConfig.keyPath %>"
         , src        : [ "./package.json", "./app" ]
-        , dest       : "root@<%= freenasConfig.remoteHost %>:<%= freenasConfig.freeNASPath %>"
+        , dest       : "root@<%= freeNASConfig.remoteHost %>:<%= guiDirectory %>"
     }
   };
 };

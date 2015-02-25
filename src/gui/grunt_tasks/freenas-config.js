@@ -10,8 +10,8 @@ var fs    = require("fs");
 var exec  = require("child_process").exec;
 
 // NPM packages
-var chalk     = require("chalk");
-var inquirer  = require("inquirer");
+var chalk    = require("chalk");
+var inquirer = require("inquirer");
 var resHome   = require("expand-home-dir");
 
 // Platform data
@@ -22,8 +22,7 @@ var isWindows       = ( currentPlatform === "win32" );
 module.exports = function(grunt) {
   grunt.registerTask( "freenas-config", function() {
     var asyncDone  = this.async();
-    // Temporary var to cache and test JSON before passing it to Grunt
-    var freenasConfig  = null;
+    var freeNASConfig = null;
 
     // Silent mode should be used to reload the config file, or if you really
     // don't want to be asked about it
@@ -39,23 +38,6 @@ module.exports = function(grunt) {
       // End state reached:
       // There is no configuration file, and the user has not created one
       asyncDone();
-    }
-
-    // SWITCH PATH BASED ON TARGET VERSION
-    function getConfigPath() {
-      if ( grunt.config( ["freenasVersion"] ) ) {
-        switch ( grunt.config( ["freenasVersion"] ) ) {
-          case 10:
-            return grunt.config( ["configFilePath"] )["freenasTen"];
-          case 9:
-            return grunt.config( ["configFilePath"] )["freenasNine"];
-          default:
-            grunt.fail.fatal( "Unrecognized FreeNAS version: " + grunt.config( ["freenasVersion"] ) );
-            return false;
-        }
-      } else {
-        grunt.fail.fatal( "No FreeNAS version flag was set when getConfigPath was called" );
-      }
     }
 
     // NO CONFIG FILE
@@ -102,54 +84,14 @@ module.exports = function(grunt) {
     }
 
 
-    // BOTH CONFIG FILES FOUND
-    // Prompt the user to delete all but one of their config files
-    function chooseConfigFile() {
-      var choosePrompts = [
-        {
-            type    : "list"
-          , name    : "chooseConfig"
-          , message : "Which config should be used? (All others will be deleted)"
-          , choices : [ "FreeNAS 10", "FreeNAS 9" ]
-          , default : 0
-        }
-      ];
-
-      inquirer.prompt( choosePrompts, function( answers ) {
-        if ( answers["chooseConfig"] === "FreeNAS 10" ) {
-          deleteConfigFile( grunt.config( ["configFilePath"] )["freenasNine"], "Deleting unused FreeNAS 9 config file" );
-        } else {
-          deleteConfigFile( grunt.config( ["configFilePath"] )["freenasTen"], "Deleting unused FreeNAS 10 config file" );
-        }
-
-        // Once files have been deleted, start over
-        checkAndSetConfig();
-      });
-    }
-
-
     // CREATE CONFIG FILE
     // Gather information from user about FreeNAS config
     function configInquiry() {
       var configPrompts = [
         {
-            name     : "freenasVersion"
-          , type     : "list"
-          , message  : "Which version of FreeNAS are you developing on?"
-          , choices  : [
-              {
-                  name  : "FreeNAS 10 (Recommended)"
-                , value : 10
-              },{
-                  name  : "FreeNAS 9"
-                , value : 9
-              }
-            ]
-          , default  : 0
-        },{
             name     : "remoteHost"
           , message  : "What is the IP address or hostname of your FreeNAS instance?"
-          , default  : freenasConfig ? freenasConfig["remoteHost"] : null
+          , default  : freeNASConfig ? freeNASConfig["remoteHost"] : null
           , validate : function(input) {
             var localDone = this.async();
 
@@ -170,12 +112,12 @@ module.exports = function(grunt) {
         },{
             name    : "sshPort"
           , message : "Which port should be used for the ssh connection?"
-          , default : freenasConfig ? freenasConfig["sshPort"] : 22
+          , default : freeNASConfig ? freeNASConfig["sshPort"] : 22
         },{
             name    : "authType"
           , message : "Please select the type of authorization you'd like to use for ssh and rsync"
           , type    : "list"
-          , default : freenasConfig ? freenasConfig["authType"] : "useKeypair"
+          , default : freeNASConfig ? freeNASConfig["authType"] : "useKeypair"
           , choices : [{
               name  : "I've given the root user my public key"
             , value : "useKeypair"
@@ -196,45 +138,24 @@ module.exports = function(grunt) {
           }
           , name    : "keyPath"
           , message : "Specify path to private key file"
-          , default : freenasConfig ? freenasConfig["keyPath"] : "~/.ssh/id_rsa"
-        },{
-          // FreeNAS 10 and up house the GUI in a static location
-          when: function( answers ) {
-            return answers["freenasVersion"] < 10;
-          }
-          , name    : "freeNASPath"
-          , message : "Provide a path to a writeable volume on FreeNAS with significant free space"
-          , default : freenasConfig ? freenasConfig["freeNASPath"] : null
+          , default : freeNASConfig ? freeNASConfig["keyPath"] : "~/.ssh/id_rsa"
         }
       ];
 
       // Run inquirer
       inquirer.prompt( configPrompts, function( answers ) {
-        // Normalize provided path to have leading and trailing slashes
-        if ( answers["freeNASPath"] ) {
-          var leadingSlash  = ( answers["freeNASPath"].indexOf( "/" ) === 0 );
-          var trailingSlash = ( answers["freeNASPath"].indexOf( "/", answers["freeNASPath"].length - 1 ) !== -1 );
-          answers["freeNASPath"] = ( ( leadingSlash ? "" : "/" ) + answers["freeNASPath"] + ( trailingSlash ? "" : "/" ) );
-        }
-
         // Resolve any tildes in path to key file, if provided
         if ( answers["keyPath"] && ( answers["keyPath"].indexOf("~") !== -1 ) ) {
           answers["keyPath"] = resHome( answers["keyPath"] );
         }
 
-        // Shim path into answers object for modern FreeNAS
-        if ( !answers["freeNASPath"] ) {
-          answers["freeNASPath"] = "/usr/local/www/gui";
-        }
-
         // Load version flag and config file into Grunt's globals
-        grunt.config.set( ["freenasConfig"], answers );
-        grunt.config.set( ["freenasVersion"], answers["freenasVersion"] );
+        grunt.config.set( ["freeNASConfig"], answers );
 
         // Save config file to JSON
         fs.writeFile(
-          getConfigPath(),
-          JSON.stringify( grunt.config( ["freenasConfig"] ), null, 2 ),
+          grunt.config( ["configFilePath"] ),
+          JSON.stringify( answers, null, 2 ),
           function( err ) {
             if ( err ) {
               grunt.fail.fatal( chalk.red( "ERROR: Could not save configuration file\n" ) );
@@ -264,58 +185,49 @@ module.exports = function(grunt) {
     // CHECK AND SET CONFIG FILE
     function checkAndSetConfig() {
       // Determine which config file(s) are present
-      var existsNine = fs.existsSync( grunt.config( ["configFilePath"] )["freenasNine"] );
-      var existsTen  = fs.existsSync( grunt.config( ["configFilePath"] )["freenasTen"] );
+      var configExists = fs.existsSync( grunt.config( ["configFilePath"] ) );
 
-      if ( existsTen && existsNine ) {
-        // Somehow, the user has both config files
-        console.log( chalk.yellow( "Detected both a FreeNAS 9 and a FreeNAS 10 config file. You can only keep one." ) );
-        chooseConfigFile();
-      } else if ( existsTen || existsNine ) {
-        // Set version flag
-        grunt.config.set( ["freenasVersion"], ( existsTen ? 10 : 9 ) );
-
+      if ( configExists ) {
         if ( silentMode ) {
           console.log( chalk.green( "Reloading config file." ) );
         } else {
-          console.log( chalk.green( "Existing FreeNAS " + grunt.config( ["freenasVersion"] ) + " development configuration file found." ) );
+          console.log( chalk.green( "Existing FreeNAS 10 development configuration file found." ) );
         }
 
         try {
-          freenasConfig = JSON.parse( fs.readFileSync( getConfigPath(), { encoding: "utf-8" } ) );
+          freeNASConfig = JSON.parse( fs.readFileSync( grunt.config( ["configFilePath"] ), { encoding: "utf-8" } ) );
+          freeNASConfig["isValid"] = true;
           // TODO: check typeOf for each line, make sure it looks right
         } catch ( err ) {
           // If the file wasn't parseable as JSON, delete it
           console.log( chalk.red( "Unfortunately, the config file is not formatted correctly." ) );
-          deleteConfigFile( getConfigPath(), "Deleting bad configuration file.\n" );
+          deleteConfigFile( grunt.config( ["configFilePath"] ), "Deleting bad configuration file.\n" );
         }
 
-        if ( freenasConfig ) {
-          grunt.config.set( ["freenasConfig"], freenasConfig );
+        if ( freeNASConfig["isValid"] ) {
+
+          grunt.config.set( ["freeNASConfig"], freeNASConfig );
 
           if ( silentMode ) {
-            if ( grunt.config( ["freenasConfig"] )["rootPass"] ) {
+            if ( freeNASConfig["rootPass"] ) {
               grunt.fail.warn( "Use of password authentication for live development is forbidden. Please create a new config file." );
             } else {
               asyncDone();
             }
           } else {
-            console.log( chalk.green( "Loaded FreeNAS" + grunt.config( ["freenasVersion"] ) + " configuration file." ) );
-            console.log( "\nFREENAS " + grunt.config( ["freenasVersion"] ) + " CONFIGURATION FILE:" );
-            console.log( "Remote host  : " + chalk.cyan( grunt.config( ["freenasConfig"] )["remoteHost"] ) );
-            console.log( "SSH port     : " + chalk.cyan( grunt.config( ["freenasConfig"] )["sshPort"] ) );
-            if ( grunt.config( ["freenasConfig"] )["authType"] === "useKeypair" ) {
-              console.log( "Private key  : " + chalk.cyan( grunt.config( ["freenasConfig"] )["keyPath"] ) );
+            console.log( chalk.green( "Loaded FreeNAS 10 configuration file." ) );
+            console.log( "\nFREENAS 10 CONFIGURATION FILE:" );
+            console.log( "Remote host  : " + chalk.cyan( freeNASConfig["remoteHost"] ) );
+            console.log( "SSH port     : " + chalk.cyan( freeNASConfig["sshPort"] ) );
+            if ( freeNASConfig["authType"] === "useKeypair" ) {
+              console.log( "Private key  : " + chalk.cyan( freeNASConfig["keyPath"] ) );
             } else {
-              console.log( "Password     : " + chalk.cyan( new Array( grunt.config( ["freenasConfig"] )["rootPass"].length ) ).join("*") );
-            }
-            if ( grunt.config( ["freenasVersion"] ) < 10 ) {
-              console.log( "FreeNAS path : " + chalk.cyan( grunt.config( ["freenasConfig"] )["freeNASPath"] ) );
+              console.log( "Password     : " + chalk.cyan( new Array( freeNASConfig["rootPass"].length ) ).join("*") );
             }
             console.log( "\n" );
 
             // Output a warning if the user is still using password auth
-            if ( grunt.config( ["freenasConfig"] )["rootPass"] ) {
+            if ( freeNASConfig["rootPass"] ) {
               console.log( chalk.yellow( "\nNOTE: Using password authentication will only work for configuration of the FreeNAS environment, and is not permitted for actual development.\n" ) );
             }
 

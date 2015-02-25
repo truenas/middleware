@@ -25,7 +25,6 @@ module.exports = function( grunt ) {
     , "less"
   ];
 
-  this["watchLocalServer"]          = serverCommon.concat( "watch:localServer" );
-  this["watchRemoteFreeNAS"]        = serverCommon.concat( "watch:freenasServer" );
-  this["watchRemoteFreeNAS-legacy"] = serverCommon.concat( "watch:freenasServer-legacy" );
+  this["watchLocalServer"]   = serverCommon.concat( "watch:localServer" );
+  this["watchRemoteFreeNAS"] = serverCommon.concat( "watch:freenasServer" );
 };

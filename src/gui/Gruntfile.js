@@ -61,63 +61,60 @@ module.exports = function(grunt) {
 
         // Bower components
         , bower: {
-            velocity     : "./bower_components/velocity"
-           ,d3           : "./bower_components/d3"
-           ,nvd3           : "./bower_components/nvd3"
-          , openSans: {
-              less  : "./bower_components/lessfonts-open-sans/src/less"
-            , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
+              velocity : "./bower_components/velocity"
+            , d3       : "./bower_components/d3"
+            , nvd3     : "./bower_components/nvd3"
+            , openSans: {
+                  less  : "./bower_components/lessfonts-open-sans/src/less"
+                , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
+              }
+            , fontawesome: {
+                  less  : "./bower_components/fontawesome/less"
+                , fonts : "./bower_components/fontawesome/fonts"
+              }
           }
-          , fontawesome: {
-              less  : "./bower_components/fontawesome/less"
-            , fonts : "./bower_components/fontawesome/fonts"
-          },
-        }
 
         // Sources
         , source: {
-            root      : "app"
-          , images    : "app/source/images"
-          , favicons  : "app/source/favicons"
-          , jsx       : "app/jsx"
-          , styles    : "app/source/styles"
-          , templates : "app/templates"
-        }
+              root      : "app"
+            , images    : "app/source/images"
+            , favicons  : "app/source/favicons"
+            , jsx       : "app/jsx"
+            , styles    : "app/source/styles"
+            , templates : "app/templates"
+          }
 
         // Build
         , build: {
-            root : "app/build/"
-          , app  : "app/build/js"
-          , img  : "app/build/img"
-          , css  : "app/build/css"
-          , font : "app/build/font"
-          , dist : "app/build/js"
-        }
+              root : "app/build/"
+            , app  : "app/build/js"
+            , img  : "app/build/img"
+            , css  : "app/build/css"
+            , font : "app/build/font"
+            , dist : "app/build/js"
+          }
 
         , deployment : "app-deploy"
-    }
+      }
 
     // Environment
     , env: {
         port   : 4000
-    }
+      }
 
     // FreeNAS remote config
-    , configFilePath : {
-        "freenasNine" : "./freenas9-conf.json"
-      , "freenasTen"  : "./freenas10-conf.json"
-    }
-    , freenasVersion : null
-    , freenasConfig  : {
-        "notConfigured" : true
-      , "remoteHost"    : null
-      , "sshPort"       : null
-      , "authType"      : null
-      , "keyPath"       : null
-      , "rootPass"      : null
-      , "freeNASPath"   : null
-    }
+    , guiDirectory   : "/usr/local/www/gui"
+    , configFilePath : "./freenas10-conf.json"
+    , freeNASConfig  : {
+          "notConfigured" : true
+        , "remoteHost"    : null
+        , "sshPort"       : null
+        , "authType"      : null
+        , "keyPath"       : null
+        , "rootPass"      : null
+      }
   };
+
 
   // Load external configuration files
   _.assign( gruntConfig, loadConfig( "./grunt_tasks/config/" ) );

@@ -53,10 +53,6 @@ module.exports = function( grunt ) {
   ];
   this["freenasServer"] = {
       files: serverWatchFiles
-    , tasks: [ "freenas-config:silent", "rsync", "freenas-server:start" ]
-  };
-  this["freenasServer-legacy"] = {
-      files: serverWatchFiles
-    , tasks: [ "freenas-config:silent", "rsync", "freenas-server:start-legacy" ]
+    , tasks: [ "freenas-config:silent", "rsync", "ssh-multi-exec:start-server" ]
   };
 };
