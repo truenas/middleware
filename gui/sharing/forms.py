@@ -50,6 +50,34 @@ log = logging.getLogger('sharing.forms')
 
 class CIFS_ShareForm(ModelForm):
 
+    def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
+        p = pipeopen("zfs list -H -o mountpoint,name")
+        zfsout = p.communicate()[0].split('\n')
+        if p.returncode != 0:
+            zfsout = []
+
+        task_list = []
+        if cifs_path:
+            for line in zfsout:
+                try:
+                    tasks = [] 
+                    zfs_mp, zfs_ds = line.split()
+                    if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
+                        if cifs_path == zfs_mp:
+                            tasks = Task.objects.filter(task_filesystem=zfs_ds)
+                        else: 
+                            tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
+                    for t in tasks:
+                        task_list.append(t)
+
+                except:
+                    pass
+
+        elif cifs_home:
+            task_list = Task.objects.filter(Q(task_recursive=True))
+
+        return task_list
+
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
@@ -69,31 +97,12 @@ class CIFS_ShareForm(ModelForm):
         )
 
         if self.instance:
-            p = pipeopen("zfs list -H -o mountpoint,name")
-            zfsout = p.communicate()[0].split('\n')
-            if p.returncode != 0:
-                zfsout = []
-
             task_list = []
             if self.instance.cifs_path:
-                cifs_path = self.instance.cifs_path
-                for line in zfsout:
-                    try:
-                        tasks = [] 
-                        zfs_mp, zfs_ds = line.split()
-                        if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
-                            if cifs_path == zfs_mp:
-                                tasks = Task.objects.filter(task_filesystem=zfs_ds)
-                            else: 
-                                tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
-                        for t in tasks:
-                            task_list.append(t)
-
-                    except:
-                        pass
+                task_list = self._get_storage_tasks(cifs_path=self.instance.cifs_path)
 
             elif self.instance.cifs_home:
-                task_list = Task.objects.filter(Q(task_recursive=True))
+                task_list = self._get_storage_tasks(cifs_home=self.instance.cifs_home)
 
             if task_list:
                 choices = [('', '-----')]
@@ -161,6 +170,20 @@ class CIFS_ShareForm(ModelForm):
                         'error': e,
                     }
                 ))
+
+        home = self.cleaned_data.get('cifs_home')
+        task = self.cleaned_data.get('cifs_storage_task')
+        if not task:
+            task_list = []
+            if path:
+                task_list = self._get_storage_tasks(cifs_path=path)
+
+            elif home:
+                task_list = self._get_storage_tasks(cifs_home=home)
+
+            if task_list:
+                obj.cifs_storage_task = task_list[0]
+
         obj.save()
         notifier().reload("cifs")
         return obj
