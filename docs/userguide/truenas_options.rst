@@ -120,20 +120,24 @@ process is complete. Once complete, the shutdown request can be re-issued.
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
 disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system.
 
-.. index:: Help
+.. index:: Support
 
-.. _Help:
+.. _Support Icon:
 
-Help
-----
+Support Icon
+------------
 
-The Help button in the upper right corner provides a pop-up menu containing hyperlinks to the following TrueNAS® support resources:
+The "Support" icon, located as the third icon from the left in the top menubar, provides a shortcut to :menuselection:`System --> Support`. This screen can be
+used to verify the system license or to create a support ticket. Refer to :ref:`Support` for detailed usage instructions.
 
-*   the link to open a support ticket
+.. index:: Documentation
 
-*   the link to the TrueNAS® knowledge base
+.. _Documentation:
 
-*   the email address of the support team
+Documentation
+-------------
+
+Some text here...
 
 .. index:: Alert
 
@@ -143,14 +147,14 @@ Alert
 -----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.7a. one of the disks in a ZFS pool is offline which has
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.8a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
-**Figure 14.7a: Example Alert Message**
+**Figure 14.8a: Example Alert Message**
 
-|alert.png|
+|alert1.png|
 
-.. |alert.png| image:: images/alert.png
+.. |alert1.png| image:: images/alert1.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
