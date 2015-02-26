@@ -682,16 +682,16 @@ If Something Goes Wrong
 If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
 
 To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
-boot menu. In the example shown in Figure 5.8c, the first boot menu entry, *FreeNAS (default)*, refers to the initial installation, before the update was
-applied. The second boot entry, *FreeNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
+boot menu. In the example shown in Figure 5.8c, the first boot menu entry, *TrueNAS (default)*, refers to the initial installation, before the update was
+applied. The second boot entry, *TrueNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
 is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
 entries include a date and timestamp, indicating when that boot environment was created.
 
 **Figure 5.8c: Boot Menu**
 
-|tn_boot1.png|
+|tn_boot.png|
 
-.. |tn_boot1.png| image:: images/tn_boot1.png
+.. |tn_boot.png| image:: images/tn_boot.png
 
 To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
 
