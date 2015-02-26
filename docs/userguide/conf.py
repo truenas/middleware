@@ -63,7 +63,7 @@ release = '9.3'
 if tags.has('truenas'):
     project = u'TrueNAS User Guide'
     master_doc = 'truenas'
-    exclude_patterns = ['_build', 'freenas*', 'errata']
+    exclude_patterns = ['_build', 'freenas*', 'errata', 'zfsprimer*']
 else:
     project = u'FreeNAS User Guide'
     master_doc = 'freenas'
