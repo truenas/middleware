@@ -13,6 +13,7 @@ module.exports = function( grunt ) {
   ];
   this.options = {
       logConcurrentOutput : true
+    , limit : 6
   };
 
   // Initial build of app
