@@ -112,30 +112,33 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
-        run("ifconfig -l | tr ' ' '\\n' | grep ^carp | grep -v '^carp[12]$' | "
-            "xargs -n 1 -J % ifconfig % advskew 1")
+        for group in fobj['groups']:
+            for interface in fobj['groups'][group]:
+                run("ifconfig %s advskew 1" % interface)
         try:
             os.unlink(state_file)
         except:
             pass
         sys.exit(0)
 
-    error, output = run("ifconfig -l | tr ' ' '\\n' | grep ^carp | "
-                        "grep -v '^carp[12]$' | xargs -n 1 ifconfig | "
-                        "grep 'carp: BACKUP' | wc -l")
-    if int(output) > 0:
-        log.warn(
-            'Ignoring UP state on %s because we still have interfaces that are'
-            ' BACKUP.', ifname
+    for group, carpint in fobj['groups'].items():
+        error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % (
+            ' '.join(carpint)
         )
-        run('echo "$(date), $(hostname), %s assumed master while other '
-            'interfaces are still in slave mode." | mail -s "Failover WARNING"'
-            ' root' % ifname)
-        try:
-            os.unlink(state_file)
-        except:
-            pass
-        sys.exit(1)
+
+        if not error and int(output) > 0:
+            log.warn(
+                'Ignoring UP state on %s because we still have interfaces that are'
+                ' BACKUP.', ifname
+            )
+            run('echo "$(date), $(hostname), %s assumed master while other '
+                'interfaces are still in slave mode." | mail -s "Failover WARNING"'
+                ' root' % ifname)
+            try:
+                os.unlink(state_file)
+            except:
+                pass
+            sys.exit(1)
 
     run('pkill -f fenced')
 
@@ -368,21 +371,26 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
                 '2 seconds.', ifname)
             sys.exit(1)
 
-    error, output = run("ifconfig -l | tr ' ' '\\n' | grep ^carp | grep -v '^carp[12]$' | xargs -n 1 ifconfig | grep 'carp: MASTER' | wc -l")
-    if len(output) > 0:
-        log.warn(
-            'Ignoring DOWN state on %s because we still have interfaces that '
-            'are UP.', ifname)
-        try:
-            os.unlink(state_file)
-        except:
-            pass
-        sys.exit(1)
+    for group, carpint in fobj['groups'].items():
+        error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % (
+            ' '.join(carpint)
+        )
+
+        if not error and int(output) > 0:
+            log.warn(
+                'Ignoring DOWN state on %s because we still have interfaces that '
+                'are UP.', ifname)
+            try:
+                os.unlink(state_file)
+            except:
+                pass
+            sys.exit(1)
 
     run('pkill -f fenced')
 
-    run("ifconfig -l | tr ' ' '\\n' | grep ^carp | grep -v '^carp[12]$' | "
-        "xargs -n 1 -J % ifconfig % advskew 100")
+    for group in fobj['groups']:
+        for interface in fobj['groups'][group]:
+            run("ifconfig %s advskew 100" % interface)
 
     with open('/etc/pf.conf.block', 'w+') as f:
         f.write('set block-policy drop\n')
