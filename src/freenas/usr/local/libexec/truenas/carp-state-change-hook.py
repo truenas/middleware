@@ -197,6 +197,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
         elif error == 3:
             log.warn('Can not reserve all disks!')
             run('ifconfig %s advskew 203' % ifname)
+        elif error == 5:
+            log.warn('Fencing daemon encountered an unexpected fatal error!')
+            run('ifconfig %s advskew 205' % ifname)
         else:
             log.warn('This should never happen: %d', error)
             run('ifconfig %s advskew 204' % ifname)
