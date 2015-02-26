@@ -28,10 +28,6 @@
 # FreeNAS ports
 #
 
-if is_truenas ; then
-	add_port truenas/zfsd
-fi
-
 add_port freenas/freenas-files PRODUCT_VERSION=${VERSION} \
                             BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
                             REVISION=${SVNREVISION}
