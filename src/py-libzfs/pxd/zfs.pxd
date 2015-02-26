@@ -25,6 +25,7 @@
 #
 
 from types cimport *
+
 cdef extern from "sys/fs/zfs.h":
     enum:
         ZIO_TYPES
@@ -161,14 +162,9 @@ cdef extern from "sys/fs/zfs.h":
         ZPOOL_PROP_MAXBLOCKSIZE
         ZPOOL_NUM_PROPS
 
-    #define	ZPROP_MAX_COMMENT	32
-
     enum:
         ZPROP_CONT = -2
         ZPROP_INVAL	= -1
-    
-    #define	ZPROP_VALUE		"value"
-    #define	ZPROP_SOURCE		"source"
     
     ctypedef enum zprop_source_t:
         ZPROP_SRC_NONE = 0x1
@@ -177,22 +173,13 @@ cdef extern from "sys/fs/zfs.h":
         ZPROP_SRC_LOCAL = 0x8
         ZPROP_SRC_INHERITED = 0x10
         ZPROP_SRC_RECEIVED = 0x20
-    
-    #define	ZPROP_SRC_ALL	0x3f
-    
-    #define	ZPROP_SOURCE_VAL_RECVD	"$recvd"
-    #define	ZPROP_N_MORE_ERRORS	"N_MORE_ERRORS"
-
-    #define	ZPROP_HAS_RECVD		"$hasrecvd"
+        ZPROP_SRC_ALL = 0x3f
     
     ctypedef enum zprop_errflags_t:
         ZPROP_ERR_NOCLEAR = 0x1, 
         ZPROP_ERR_NORESTORE = 0x2
     
     ctypedef int (*zprop_func)(int, void *);
-    
-
-    #define	ZPOOL_ROOTFS_PROPS	"root-props-nvl"
     
     const char *zfs_prop_default_string(zfs_prop_t);
     uint64_t zfs_prop_default_numeric(zfs_prop_t);

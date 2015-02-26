@@ -722,6 +722,7 @@ cdef class ZFSDataset(object):
     cdef readonly object name
 
     def __init__(self, ZFS root, ZFSPool pool, uintptr_t handle):
+        assert handle != 0
         self.root = root
         self.pool = pool
         self._root_handle = <libzfs.libzfs_handle_t*>self.root.handle()
@@ -788,6 +789,10 @@ cdef class ZFSDataset(object):
 
     def umount(self):
         if libzfs.zfs_unmountall(self._handle, 0) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
+
+    def send(self, fd):
+        if libzfs.zfs_send_one(self._handle, NULL, fd, 0) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
 
 
