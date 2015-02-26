@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 import sys, getopt, re
-from datetime import date
+from datetime import date, datetime
 from redmine import Redmine, exceptions
 
 def main(argv):
@@ -38,7 +38,10 @@ def main(argv):
     version.description = descrpt
     version.status = 'closed'
     version.sharing = 'none'
-    version.due_date = date(int(creation_date.group(1)), int(creation_date.group(2)), int(creation_date.group(3))) 
+    if creation_date:
+        version.due_date = date(int(creation_date.group(1)), int(creation_date.group(2)), int(creation_date.group(3))) 
+    else:
+        version.due_date = date(datetime.now().year, datetime.now().month, datetime.now().day)
     result = ''
     try:
         result = version.save()
