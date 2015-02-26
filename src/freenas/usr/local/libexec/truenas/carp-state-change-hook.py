@@ -93,7 +93,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
         if not error:
             if sleeper < 2:
                 sleeper = 2
-            log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             # FIXME
             time.sleep(sleeper)
             error, output = run(
@@ -103,7 +103,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
                 sys.exit(0)
         else:
-            log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             time.sleep(sleeper)
             error, output = run(
                 "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
@@ -363,7 +363,7 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
         if not error:
             if sleeper < 2:
                 sleeper = 2
-            log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             # FIXME
             time.sleep(sleeper)
             error, output = run(
@@ -371,17 +371,17 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             )
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
-                         "%s seconds." % (ifname, sleeper))
+                         "%s seconds.",  ifname, sleeper)
                 sys.exit(0)
         else:
-            log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
             time.sleep(sleeper)
             error, output = run(
                 "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
             )
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
-                     "%s seconds." % (ifname, sleeper))
+                     "%s seconds.", ifname, sleeper)
                 sys.exit(0)
 
     for group, carpint in fobj['groups'].items():
