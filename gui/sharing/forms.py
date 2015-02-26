@@ -74,28 +74,30 @@ class CIFS_ShareForm(ModelForm):
             if p.returncode != 0:
                 zfsout = []
 
-            tasks = []
+            task_list = []
             if self.instance.cifs_path:
                 cifs_path = self.instance.cifs_path
                 for line in zfsout:
                     try:
+                        tasks = [] 
                         zfs_mp, zfs_ds = line.split()
-                        if cifs_path == zfs_mp or cifs_path.startswith("/%s/" % zfs_mp):
+                        if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
                             if cifs_path == zfs_mp:
                                 tasks = Task.objects.filter(task_filesystem=zfs_ds)
                             else: 
                                 tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
-                            break
+                        for t in tasks:
+                            task_list.append(t)
 
                     except:
                         pass
 
             elif self.instance.cifs_home:
-                tasks = Task.objects.filter(Q(task_recursive=True))
+                task_list = Task.objects.filter(Q(task_recursive=True))
 
-            if tasks:
+            if task_list:
                 choices = [('', '-----')]
-                for task in tasks:
+                for task in task_list:
                     choices.append((task.id, task))
                 self.fields['cifs_storage_task'].choices = choices
 
