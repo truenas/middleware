@@ -47,8 +47,9 @@ def main(command, state):
         if Failover.objects.all()[0].disabled is True:
             for item in Failover.objects.all():
                 item.disabled = False
-                item.active = False
+                item.master = False
                 item.save()
+            os.system("/usr/sbin/service ix-devd start")
             sys.exit(0)
         else:
             sys.exit(1)
@@ -58,10 +59,11 @@ def main(command, state):
             for item in Failover.objects.all():
                 item.disabled = True
                 if state == "active":
-                    item.active = True
+                    item.master = True
                 elif state == "passive":
-                    item.active = False
+                    item.master = False
                 item.save()
+            os.system("/usr/sbin/service ix-devd start")
             sys.exit(0)
         else:
             sys.exit(2)

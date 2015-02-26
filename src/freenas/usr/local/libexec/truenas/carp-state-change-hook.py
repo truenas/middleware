@@ -44,6 +44,17 @@ def main(ifname, event):
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
 
+    if fobj['disabled']:
+        if not fobj['master']:
+            log.warn("Failover disabled.  Assuming backup.")
+            sys.exit()
+        else:
+            for group in fobj['groups']:
+                for interface in fobj['groups'][group]:
+                    run("ifconfig %s advskew 0" % interface)
+            log.warn("Failover disabled.  Assuming active.")
+            run("touch %s" % FAILOVER_OVERRIDE)
+
     open(HEARTBEAT_BARRIER, 'a+').close()
 
     now = int(time.time())
@@ -398,30 +409,56 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
 if __name__ == '__main__':
 
-    logging.config.dictConfig({
-        'version': 1,
-        #'disable_existing_loggers': True,
-        'formatters': {
-            'simple': {
-                'format': '[%(name)s:%(lineno)s] %(message)s',
+    if os.path.exists("/var/run/log"):
+        logging.config.dictConfig({
+            'version': 1,
+            #'disable_existing_loggers': True,
+            'formatters': {
+                'simple': {
+                    'format': '[%(name)s:%(lineno)s] %(message)s',
+                },
             },
-        },
-        'handlers': {
-            'syslog': {
-                'class': 'logging.handlers.SysLogHandler',
-                'address': '/var/run/log',
-                'formatter': 'simple',
-                'level': 'DEBUG',
+            'handlers': {
+                'syslog': {
+                    'class': 'logging.handlers.SysLogHandler',
+                    'address': '/var/run/log',
+                    'formatter': 'simple',
+                    'level': 'DEBUG',
+                },
             },
-        },
-        'loggers': {
-            '': {
-                'handlers': ['syslog'],
-                'level': 'DEBUG',
-                'propagate': True,
+            'loggers': {
+                '': {
+                    'handlers': ['syslog'],
+                    'level': 'DEBUG',
+                    'propagate': True,
+                },
             },
-        },
-    })
+        })
+    else:
+        logging.config.dictConfig({
+            'version': 1,
+            #'disable_existing_loggers': True,
+            'formatters': {
+                'simple': {
+                    'format': '[%(name)s:%(lineno)s] %(message)s',
+                },
+            },
+            'handlers': {
+                'console': {
+                    'class' : 'logging.StreamHandler',
+                    'formatter': 'simple',
+                    'level'   : 'INFO',
+                    'stream'  : 'ext://sys.stdout',
+                },
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': True,
+                },
+            },
+        })
     log = logging.getLogger('carp.state-change-hook')
 
     main(*sys.argv[1:])

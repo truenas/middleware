@@ -67,15 +67,17 @@ def main(command, quiet):
         else:
             print "Failover status: Enabled"
     elif command == "enable":
-        if Failover.objects.all()[0].disabled is False:
+        if Failover.objects.all()[0].disabled is True:
             ip = Failover.objects.all()[0].ipaddress
             ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker enable" % ip)
             if not ret:
                 for item in Failover.objects.all():
                     item.disabled = False
-                    item.active = False
+                    item.master = False
                     item.save()
+                os.system("/usr/sbin/service ix-devd start")
                 print "Failover enabled."
+                sys.exit(0)
             else:
                 print "Unable to contact remote node.  Failover not enabled."
                 sys.exit(2)
@@ -83,26 +85,31 @@ def main(command, quiet):
             print "Failover not disabled.  Cannot enable!"
             sys.exit(3)
     elif command == "disable":
-        ip = Failover.objects.all()[0].ipaddress
-        if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
-            status = "master"
-            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable passive" % ip)
+        if Failover.objects.all()[0].disabled is False:
+            ip = Failover.objects.all()[0].ipaddress
+            if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
+                status = "master"
+                ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable passive" % ip)
+            else:
+                status = "passive"
+                ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable active" % ip)
+            if not ret:
+                for item in Failover.objects.all():
+                    item.disabled = True
+                    if status == "master":
+                        item.master = True
+                    else:
+                        item.master = False
+                    item.save()
+                    print "Failover disabled."
+                    os.system("/usr/sbin/service ix-devd start")
+                    sys.exit(0)
+            else:
+                print "Unable to contact remote node.  Failover not disabled."
+                sys.exit(3)
         else:
-            status = "passive"
-            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable active" % ip)
-        if not ret:
-            for item in Failover.objects.all():
-                item.disabled = True
-                if status == "master":
-                    item.active = True
-                else:
-                    item.active = False
-                item.save()
-                print "Failover disabled."
-                sys.exit(0)
-        else:
-            print "Unable to contact remote node.  Failover not disabled."
-            sys.exit(3)
+            print "Failover not enabled.  Cannot disable!"
+
     elif command == "takeover":
         ret = _not.failover_status()
         if ret != "BACKUP":
