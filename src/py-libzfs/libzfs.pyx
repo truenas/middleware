@@ -31,6 +31,7 @@ import nvpair
 cimport nvpair
 cimport libzfs
 cimport zfs
+from libc.string cimport memset
 
 
 class Error(enum.IntEnum):
@@ -172,6 +173,13 @@ class ScanState(enum.IntEnum):
     SCANNING = zfs.DSS_SCANNING
     FINISHED = zfs.DSS_FINISHED
     CANCELED = zfs.DSS_CANCELED
+
+
+class SendFlags(enum.IntEnum):
+    EMBED_DATA = LZC_SEND_FLAG_EMBED_DATA
+    LARGE_BLOCK = LZC_SEND_FLAG_LARGE_BLOCK
+
+
 
 
 class ZFSException(RuntimeError):
@@ -793,6 +801,21 @@ cdef class ZFSDataset(object):
 
     def send(self, fd):
         if libzfs.zfs_send_one(self._handle, NULL, fd, 0) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
+
+    def receive(self, fd, force=False, nomount=False):
+        cdef libzfs.libzfs_handle_t *handle = <libzfs.libzfs_handle_t *>self.root.handle()
+        cdef libzfs.recvflags_t flags;
+
+        memset(&flags, 0, sizeof(libzfs.recvflags_t))
+
+        if force:
+            flags.force = True
+
+        if nomount:
+            flags.nomount = True
+
+        if libzfs.zfs_receive(handle, self.name, &flags, fd, NULL) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
 
 
