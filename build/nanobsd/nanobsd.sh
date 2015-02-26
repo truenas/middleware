@@ -174,19 +174,17 @@ if [ -f "${AVATAR_ROOT}/FreeBSD/repo-manifest" ]; then
 	/freenas.git/ { printf("VERSION_freenas=-%s\n", $2); }
 	/trueos.git/ { printf("VERSION_trueos=-%s\n", $2); }
 	/ports.git/ { printf("VERSION_ports=-%s\n", $2); }
-	/zfsd.git/ { printf("VERSION_zfsd=-%s\n", $2); }
 	/truenas.git/ { printf("VERSION_truenas=-%s\n", $2); }' \
 	    "${AVATAR_ROOT}/FreeBSD/repo-manifest")
 else
     VERSION_freenas="-${REVISION:-0}"
     VERSION_trueos=""
     VERSION_ports=""
-    VERSION_zfsd=""
     VERSION_truenas=""
 fi
 
 set -x
-pkg_version=${VERSION_freenas}${VERSION_trueos}${VERSION_ports}${VERSION_zfsd}${VERSION_truenas}
+pkg_version=${VERSION_freenas}${VERSION_trueos}${VERSION_ports}${VERSION_truenas}
 
 TOOLDIR=${NANO_OBJ}/_.pkgtools
 mkdir -p ${TOOLDIR}
