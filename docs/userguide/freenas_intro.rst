@@ -1,14 +1,8 @@
-|fn93cover.jpg|
-
-.. |fn93cover.jpg| image:: images/fn93cover.jpg
-
 .. centered:: FreeNAS® is © 2011-2015 iXsystems
 
 .. centered:: FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
    
 .. centered:: FreeBSD is a registered trademark of the FreeBSD Foundation
-   
-.. centered:: Cover art by Jenny Rosenberg
 
 Written by users of the FreeNAS® network-attached storage operating system.
 
@@ -16,7 +10,7 @@ Version 9.3
 
 Copyright © 2011-2015
 `iXsystems <http://www.ixsystems.com/>`_
-    
+
 This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,

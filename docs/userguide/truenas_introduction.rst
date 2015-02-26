@@ -1,15 +1,6 @@
-:orphan:
-
-|tn_cover.jpg|
-
 .. centered:: Copyright iXsystems 2011-2015
 
 .. centered:: TrueNAS® and the TrueNAS® logo are registered trademarks of iXsystems.
-
-.. centered:: Cover art by Jenny Rosenberg
-
-
-.. |tn_cover.jpg| image:: images/tn_cover.jpg
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 

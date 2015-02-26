@@ -18,8 +18,6 @@
    Additional Options <truenas_options>
    Using the FreeNAS® API <truenas_api>
 
-.. |tn_cover.jpg| image:: images/tn_cover.jpg
-
 .. only:: html
 
    Index
