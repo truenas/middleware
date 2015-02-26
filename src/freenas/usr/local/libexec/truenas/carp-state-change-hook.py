@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from lockfile import LockFile
+
 import json
 import logging
 import logging.config
@@ -14,6 +16,7 @@ FAILED_FILE = '/tmp/.failover_failed'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
 FAILOVER_FORCE_SEAL = '/tmp/force_seal'
 FAILOVER_JSON = '/tmp/failover.json'
+FAILOVER_MTX = '/tmp/.failover_mtx'
 FAILOVER_OVERRIDE = '/tmp/failover_override'
 FAILOVER_STATE = '/tmp/.failover_state'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
@@ -41,6 +44,14 @@ def main(ifname, event):
     if not os.path.exists(FAILOVER_JSON):
         sys.exit(1)
 
+    state_file = '%s%s' % (FAILOVER_STATE, event)
+
+    with LockFile(FAILOVER_MTX):
+        if not os.path.exists(state_file):
+            open(state_file, 'w').close()
+        else:
+            sys.exit(0)
+
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
 
@@ -67,16 +78,14 @@ def main(ifname, event):
     ) else False
 
     if event == 'LINK_UP':
-        link_up(fobj, ifname, event, forceseal, user_override)
+        link_up(fobj, state_file, ifname, event, forceseal, user_override)
     elif event == 'LINK_DOWN':
-        link_down(fobj, ifname, event, forceseal, user_override)
+        link_down(fobj, state_file, ifname, event, forceseal, user_override)
 
 
-def link_up(fobj, ifname, event, forceseal, user_override):
+def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 
     log.warn("Entering UP on %s", ifname)
-
-    state_file = '%s%s' % (FAILOVER_STATE, event)
 
     error, output = run("ifconfig lagg0")
     if not error:
@@ -328,10 +337,8 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     log.warn('Failover event complete.')
 
 
-def link_down(fobj, ifname, event, forceseal, user_override):
+def link_down(fobj, state_file, ifname, event, forceseal, user_override):
     log.warn('Entering DOWN!')
-
-    state_file = '%s%s' % (FAILOVER_STATE, event)
 
     error, output = run("ifconfig lagg0")
     if not error:
@@ -366,7 +373,6 @@ def link_down(fobj, ifname, event, forceseal, user_override):
 
     with open('/etc/pf.conf.block', 'w+') as f:
         f.write('set block-policy drop\n')
-        ips = []
         for ip in fobj['ips']:
             f.write('''
 pass in quick proto tcp from any to %(ip)s port {22, 80, 443}
