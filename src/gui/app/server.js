@@ -2,66 +2,60 @@
 
 "use strict";
 
-require("node-jsx").install();
-
-// Node
 var fs   = require("fs");
 var path = require("path");
+var mach = require("mach");
+var when = require("when");
 
-// Server
-var mach   = require("mach");
-var stack  = mach.stack();
-var when   = require("when");
-
-// Routing
+var React  = require("react");
 var Router = require("react-router");
-var routes = require("./routes");
+
+var routes = require("./ssrjs/routes");
 
 // Content
 var baseHTML = fs.readFileSync( __dirname + "/templates/mainlayout.html" ).toString();
 var jsBundle = fs.readFileSync( __dirname + "/build/js/app.js" );
 
+var app = mach.stack();
+
 
 // Mach server helpers
 function renderApp( path ) {
-  var htmlRegex = /¡HTML!/;
+  var bodyRegex = /¡HTML!/;
   var dataRegex = /¡DATA!/;
 
   return new when.Promise( function ( resolve, reject ) {
-    Router.renderRoutesToString( routes, path, function ( error, abortReason, html, data ) {
-      if ( abortReason ) {
-        reject({
-            redirect : true
-          , to       : "/" + abortReason.to + "/" + abortReason.params["id"]
-        });
+    Router.run( routes, path, function ( Handler, state ) {
+      var innerHTML = React.renderToString( React.createElement( Handler ) );
+      var output    = baseHTML.replace( bodyRegex, innerHTML )
+                              .replace( dataRegex, null );
+
+      if ( baseHTML && innerHTML && output ) {
+        resolve( output );
+        console.log( innerHTML );
+      } else {
+        reject( "Handler for " + path + " did not return any HTML when rendered to string" );
       }
-
-      var output = baseHTML.replace( htmlRegex, html )
-                           .replace( dataRegex, JSON.stringify( data ) );
-
-      resolve( output );
     });
   });
 }
 
 // Mach server config
 // TODO: production mode with different stack options:
-// stack.use(mach.gzip);      // Gzip-encode responses
-// stack.use(mach.logger);    // Log responses
-stack.use( mach.favicon );
-stack.use( mach.file, { root: path.join( __dirname, "build" ) } );
-stack.run( function ( req, res ) {
+// app.use(mach.gzip);      // Gzip-encode responses
+// app.use(mach.logger);    // Log responses
+app.use( mach.favicon );
+app.use( mach.file, { root: path.join( __dirname, "build" ) } );
+app.run( function ( req, res ) {
   switch ( req.path ) {
     case "/js/app.js":
       return jsBundle;
 
     default:
-      return renderApp( req.path ).then( null, function( redirect ) {
-        res.redirect( redirect.to );
-      });
+      return renderApp( req.path );
   }
 });
 
 
 // Start Mach server
-mach.serve( stack, ( process.env.PORT || 3000 ) );
+mach.serve( app, ( process.env.PORT || 3000 ) );

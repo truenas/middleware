@@ -305,20 +305,20 @@ var Viewer = React.createClass({
     }
 
   , createViewerContent: function () {
-      var viewerContent = null;
+      var ViewerContent = null;
 
       switch ( this.state.currentMode ) {
         default:
         case "detail":
-          viewerContent = DetailViewer;
+          ViewerContent = DetailViewer;
           break;
 
         case "icon":
-          viewerContent = IconViewer;
+          ViewerContent = IconViewer;
           break;
 
         case "table":
-          viewerContent = TableViewer;
+          ViewerContent = TableViewer;
           break;
 
         case "heir":
@@ -326,7 +326,7 @@ var Viewer = React.createClass({
           break;
       }
 
-      return <viewerContent viewData     = { this.props.viewData }
+      return <ViewerContent viewData     = { this.props.viewData }
                             inputData    = { this.props.inputData }
                             Editor       = { this.props.Editor }
                             ItemView     = { this.props.ItemView }

@@ -39,6 +39,7 @@ module.exports = function(grunt) {
     grunt.task.run([
         "clean:deployment"
       , "concurrent:buildWorld"
+      , "browserify"
       , "copy:deployment"
       , "deploy-npm"
     ]);

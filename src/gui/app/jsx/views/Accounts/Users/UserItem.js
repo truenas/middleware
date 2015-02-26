@@ -285,7 +285,7 @@ var UserItem = React.createClass({
 
   , render: function() {
 
-      var displayComponent = null;
+      var DisplayComponent = null;
       var processingText   = "";
 
       // PROCESSING OVERLAY
@@ -299,11 +299,11 @@ var UserItem = React.createClass({
       switch ( this.state.currentMode ) {
         default:
         case "view":
-          displayComponent = UserView;
+          DisplayComponent = UserView;
           break;
 
         case "edit":
-          displayComponent = UserEdit;
+          DisplayComponent = UserEdit;
           break;
       }
 
@@ -313,7 +313,7 @@ var UserItem = React.createClass({
           {/* Overlay to block interaction while tasks or updates are processing */}
           <editorUtil.updateOverlay updateString={ processingText } />
 
-          <displayComponent handleViewChange = { this.handleViewChange }
+          <DisplayComponent handleViewChange = { this.handleViewChange }
                             item             = { this.state.targetUser }
                             dataKeys         = { this.props.viewData.format["dataKeys"] } />
 

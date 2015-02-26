@@ -56,7 +56,7 @@ module.exports = function(grunt) {
     , dirTree: {
           client : "app/client"
         , server : "app/server"
-        , routes : "app/routes"
+        , routes : "app/server-js/routes"
         , data   : "app/data"
 
         // Bower components
@@ -89,13 +89,14 @@ module.exports = function(grunt) {
 
         // Build
         , build: {
-              root : "app/build/"
-            , app  : "app/build/js"
-            , img  : "app/build/img"
-            , css  : "app/build/css"
-            , font : "app/build/font"
-            , dist : "app/build/js"
-          }
+            root  : "app/build/"
+          , app   : "app/build/js"
+          , img   : "app/build/img"
+          , css   : "app/build/css"
+          , font  : "app/build/font"
+          , dist  : "app/build/js"
+          , ssrjs : "app/ssrjs"
+        }
 
         , deployment : "app-deploy"
       }

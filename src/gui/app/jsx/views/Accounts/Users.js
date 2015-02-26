@@ -6,7 +6,11 @@
 
 "use strict";
 
+
 var React = require("react");
+
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
 
 var Viewer = require("../../components/Viewer");
 
@@ -78,7 +82,7 @@ var Users = React.createClass({
       return <Viewer header    = { "Users" }
                      inputData = { this.state.usersList }
                      viewData  = { viewData }
-                     Editor    = { this.props.activeRouteHandler } />;
+                     Editor    = { RouteHandler } />;
     }
 
 });

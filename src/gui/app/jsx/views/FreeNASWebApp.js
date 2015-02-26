@@ -5,11 +5,10 @@
 // Top level controller-view for FreeNAS webapp
 "use strict";
 
-var _     = require("lodash");
 var React = require("react");
 
-// Twitter Bootstrap React components
-var TWBS = require("react-bootstrap");
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
 
 // WebApp Components
 var LoginBox          = require("../components/LoginBox");
@@ -36,7 +35,7 @@ var FreeNASWebApp = React.createClass({
         <PrimaryNavigation />
 
         {/* Primary view */}
-        <this.props.activeRouteHandler />
+        <RouteHandler />
 
         {/* User-customizable component showing system events */}
         <InformationBar />

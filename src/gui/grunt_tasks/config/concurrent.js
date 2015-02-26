@@ -6,11 +6,13 @@
 "use strict";
 
 module.exports = function( grunt ) {
+
   var serverCommon = [
       "watch:app"
     , "watch:less"
     , "watch:images"
   ];
+
   this.options = {
       logConcurrentOutput : true
     , limit : 6
@@ -18,7 +20,7 @@ module.exports = function( grunt ) {
 
   // Initial build of app
   this.buildWorld = [
-      "browserify"
+      "react"
     , "copy:images"
     , "copy:favicons"
     , "copy:openSans"

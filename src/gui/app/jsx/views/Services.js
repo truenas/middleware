@@ -9,6 +9,9 @@
 
 var React = require("react");
 
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
+
 var Viewer      = require("../components/Viewer");
 var ServiceView = require("./Services/ServiceView");
 
@@ -74,7 +77,7 @@ var Services = React.createClass({
         <Viewer header      = { "Services" }
                 inputData   = { this.state.servicesList }
                 viewData    = { viewData }
-                Editor      = { this.props.activeRouteHandler }
+                Editor      = { RouteHandler }
                 ItemView    = { ServiceView } />
       </main>
     );

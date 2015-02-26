@@ -7,7 +7,11 @@
 "use strict";
 
 
-var React  = require("react");
+var React = require("react");
+
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
+
 var Viewer = require("../../components/Viewer");
 
 var formatData = require("../../../data/middleware-keys/accounts-display.json")[0];
@@ -23,7 +27,7 @@ var Groups = React.createClass({
                 inputData  = { inputData }
                 formatData = { formatData }
                 itemData   = { itemData }
-                Editor     = { this.props.activeRouteHandler } >
+                Editor     = { RouteHandler } >
         </Viewer>
       );
     }

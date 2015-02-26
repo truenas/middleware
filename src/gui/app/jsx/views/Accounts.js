@@ -9,6 +9,9 @@
 
 var React = require("react");
 
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
+
 var SectionNav = require("../components/SectionNav");
 
 var sections = [{
@@ -24,7 +27,7 @@ var Accounts = React.createClass({
       return (
         <main>
           <SectionNav views = { sections } />
-          { this.props.activeRouteHandler() }
+          <RouteHandler />
         </main>
       );
     }

@@ -58,6 +58,8 @@ bower_components
 
 # Exclude compiled webapp
 src/gui/app/build/
+src/gui/app/public/
+src/gui/app/ssrjs/
 src/gui/app-deploy/
 
 # Exclude config files

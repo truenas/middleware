@@ -34,20 +34,18 @@ module.exports = function( grunt ) {
   // Run local express task, restart when
   this.localServer = {
       files: [
-          "<%= dirTree.client %>.js"
-        , "<%= dirTree.routes %>.js"
+          "<%= dirTree.routes %>.js"
         , "<%= dirTree.server %>.js"
-        , "<%= dirTree.source.templates %>/**"
       ]
     , tasks: [ "express:devServer" ]
   };
 
-  // Restarts Forever process on remote FreeNAS when server or client change
+  // Restarts Forever process on remote FreeNAS when server or app changes
   var serverWatchFiles = [
-      "<%= dirTree.client %>.js"
-    , "<%= dirTree.server %>.js"
+      "<%= dirTree.server %>.js"
     , "<%= dirTree.source.templates %>/**"
     , "<%= dirTree.build.root %>/**"
+    , "<%= dirTree.build.ssrjs %>/**"
     , "package.json"
     , "bower_components/**"
   ];

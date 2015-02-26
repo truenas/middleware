@@ -50,23 +50,23 @@ var Editor = React.createClass({
     }
 
   , render: function() {
-      var displayComponent;
+      var DisplayComponent;
 
       switch ( this.state.currentMode ) {
 
         default:
         case "view":
-          displayComponent = this.props.ItemView;
+          DisplayComponent = this.props.ItemView;
           break;
 
         case "edit":
-          displayComponent = this.props.EditView;
+          DisplayComponent = this.props.EditView;
           break;
 
       }
 
       return (
-        <displayComponent handleViewChange = { this.handleViewChange }
+        <DisplayComponent handleViewChange = { this.handleViewChange }
                           item             = { this.state.targetItem }
                           formatData       = { this.props.viewData.format } />
       );
