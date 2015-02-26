@@ -77,7 +77,6 @@ module.exports = (
                handler = { NetworkItem } />
       </Route>
 
-    <Route name="network" handler={ Network } />
     <Route name="storage" handler={ Storage } />
     <Route name="sharing" handler={ Sharing } />
 
