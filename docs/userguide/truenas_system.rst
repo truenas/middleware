@@ -997,6 +997,12 @@ Describe licensing stuff here....
 
 To generate a support ticket, complete the following fields:
 
+* **Name:** input the name of the person the iXsystems Support Representative should contact to assist with the issue.
+
+* **E-mail:** input the email address of the person to contact.
+
+* **Phone:** input the phone number of the person to contact.
+
 * **Category:** use the drop-down menu to indicate whether the ticket is to report a software bug, report a hardware failure, ask for assistance in installing
   or configuring the system, or request assistance in diagnosing a performance bottleneck.
 
@@ -1014,9 +1020,9 @@ To generate a support ticket, complete the following fields:
 
 * **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
 
-Once you have finished completing the fields, click the "Submit" button to generate and send the support ticket to iXsystems. You can view the status of
-and add additional information to existing support tickets by going to `support.ixsystems.com <https://support.ixsystems.com/>`_, logging in, and clicking
-"View Tickets".
+Once you have finished completing the fields, click the "Submit" button to generate and send the support ticket to iXsystems. A pop-up menu will provide a
+clickable URL so that you can view the status of or add additional information to that support ticket. Clicking this URL will prompt you to login, or register
+a new login, if you are not already logged into the `iXsystems Support page <https://support.ixsystems.com/>`_.
 
 .. index:: Failovers
 
