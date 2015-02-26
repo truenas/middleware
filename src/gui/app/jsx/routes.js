@@ -29,10 +29,9 @@ var Root = require("./views/FreeNASWebApp");
 
   var Tasks        = require("./views/Tasks");
 
-  var Networks      = require("./jsx/views/Networks");
-    var NetworkItem = require("./jsx/views/Networks/NetworkItem");
+  var Networks      = require("./views/Networks");
+    var NetworkItem = require("./views/Networks/NetworkItem");
 
-  var Network      = require("./views/Network");
   var Storage      = require("./views/Storage");
   var Sharing      = require("./views/Sharing");
   var Services     = require("./views/Services");
