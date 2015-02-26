@@ -87,7 +87,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 
     log.warn("Entering UP on %s", ifname)
 
-    sleeper = state_file['timeout']
+    sleeper = fobj['timeout']
     error, output = run("ifconfig lagg0")
     if not error:
         if sleeper < 2:
