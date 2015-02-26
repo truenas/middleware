@@ -1135,7 +1135,16 @@ def main_menu():
                 item[1](*sys.argv[2:])
                 sys.exit(0)
 
+    is_truenas = hasattr(notifier(), 'failover_status')
+
     while True:
+        if is_truenas and os.path.exists('/tmp/.failover_needop'):
+             yes = raw_input(_("Enter passphrase now? (y/n) "))
+             if yes.lower().startswith("y"):
+                 os.system("/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py interactive")
+                 time.sleep(5)
+                 continue
+
         print
         print _("Console setup")
         print "-------------"
