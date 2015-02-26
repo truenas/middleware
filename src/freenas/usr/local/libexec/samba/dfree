@@ -1,0 +1,11 @@
+#!/bin/sh
+
+BLOCKSIZE="1024"
+
+USED="$(/sbin/zfs get -o value -Hp used "${PWD}")"
+AVAIL="$(/sbin/zfs get -o value -Hp avail "${PWD}")"
+
+TOTAL="$(((USED+AVAIL)/BLOCKSIZE))"
+AVAIL="$((AVAIL/BLOCKSIZE))"
+
+/bin/echo "${TOTAL}" "${AVAIL}" "${BLOCKSIZE}"
