@@ -87,16 +87,29 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 
     log.warn("Entering UP on %s", ifname)
 
+    sleeper = state_file['timeout']
     error, output = run("ifconfig lagg0")
     if not error:
-        log.warn("Sleeping 2 seconds and rechecking %s", ifname)
+        if sleeper < 2:
+            sleeper = 2
+        log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
         # FIXME
-        time.sleep(2)
+        time.sleep(sleeper)
         error, output = run(
             "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
         )
         if output != 'MASTER':
             log.warn("%s became %s. Previous event ignored.", ifname, output)
+            sys.exit(0)
+    else:
+        log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+        time.sleep(sleeper)
+        error, output = run(
+            "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+        )
+        if output != 'MASTER':
+            log.warn("%s became %s. Previous event ignored.", ifname, output)
+            sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
         run("ifconfig -l | tr ' ' '\\n' | grep ^carp | grep -v '^carp[12]$' | "
