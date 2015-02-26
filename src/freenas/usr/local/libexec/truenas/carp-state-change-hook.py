@@ -354,22 +354,33 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
 
 def link_down(fobj, state_file, ifname, event, forceseal, user_override):
-    log.warn('Entering DOWN!')
+    log.warn("Entering DOWN on %s", ifname)
 
+    sleeper = fobj['timeout']
     error, output = run("ifconfig lagg0")
     if not error:
-        log.warn("Sleeping 2 seconds and rechecking %s", ifname)
+        if sleeper < 2:
+            sleeper = 2
+        log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
         # FIXME
-        time.sleep(2)
+        time.sleep(sleeper)
         error, output = run(
             "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
         )
-        log.warn('%s is now %s', ifname, output)
         if output == 'MASTER':
-            log.warn(
-                'Ignoring state on %s because it changed back to MASTER after '
-                '2 seconds.', ifname)
-            sys.exit(1)
+            log.warn("Ignoring state on %s because it changed back to MASTER after "
+                     "%s seconds." % (ifname, sleeper))
+            sys.exit(0)
+    else:
+        log.warn("Sleeping %s seconds and rechecking %s", (sleeper, ifname))
+        time.sleep(sleeper)
+        error, output = run(
+            "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+        )
+        if output == 'MASTER':
+            log.warn("Ignoring state on %s because it changed back to MASTER after "
+                     "%s seconds." % (ifname, sleeper))
+            sys.exit(0)
 
     for group, carpint in fobj['groups'].items():
         error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % (
