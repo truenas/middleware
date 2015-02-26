@@ -125,19 +125,19 @@ var NetworkItem = React.createClass({
 
   , render: function() {
 
-      var displayComponent = null;
+      var DisplayComponent = null;
 
         switch ( this.state.currentMode ) {
         default:
         case "view":
-          displayComponent = NetworksView;
+          DisplayComponent = NetworksView;
           break;
       }
 
       return (
         <div className="viewer-item-info">
 
-        <displayComponent handleViewChange = { this.handleViewChange }
+        <DisplayComponent handleViewChange = { this.handleViewChange }
                           item             = { this.state.targetNetwork }
                           dataKeys         = { this.props.viewData.format["dataKeys"] } />
 
