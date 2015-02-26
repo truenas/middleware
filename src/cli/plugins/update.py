@@ -49,7 +49,7 @@ class CheckNowCommand(Command):
 class UpdateNowCommand(Command):
     def run(self, context, args, kwargs, opargs):
         print "System going for an update now..."
-        context.submit_task('system.reboot')
+        context.submit_task('update.update')
 
 
 @description("Update namespace")

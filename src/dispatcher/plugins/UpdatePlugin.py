@@ -93,6 +93,7 @@ class UpdateProvider(Provider):
 
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
+@description("Runs a ghetto `freenas-update update`")
 class UpdateTask(Task):
     def verify(self):
         return ['root']
