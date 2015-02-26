@@ -4,7 +4,7 @@
 
    Introduction <truenas_introduction>
    ZFS Primer <truenas_zfsprimer>
-   Accessing TrueNAS® <truenas_quick>
+   Initial Setup <truenas_quick>
    Account <truenas_account>
    System <truenas_system>
    Tasks <truenas_tasks>
