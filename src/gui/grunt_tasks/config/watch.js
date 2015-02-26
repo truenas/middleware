@@ -9,11 +9,14 @@
 module.exports = function( grunt ) {
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
-  this.app = {
-      files: [
-          "<%= dirTree.source.jsx %>/**"
-        , "<%= dirTree.routes %>.js"
-      ]
+  this.jsx = {
+      files: ["<%= dirTree.source.jsx %>/**"]
+    , tasks: [ "react" ]
+  };
+
+  // Rebuild Browserify bundle from vanilla JS after it
+  this.ssrjs = {
+      files: ["<%= dirTree.build.ssrjs %>/**"]
     , tasks: [ "browserify:app" ]
   };
 
@@ -40,12 +43,11 @@ module.exports = function( grunt ) {
     , tasks: [ "express:devServer" ]
   };
 
-  // Restarts Forever process on remote FreeNAS when server or app changes
+  // Restarts GUI service on remote FreeNAS when server or app changes
   var serverWatchFiles = [
       "<%= dirTree.server %>.js"
     , "<%= dirTree.source.templates %>/**"
     , "<%= dirTree.build.root %>/**"
-    , "<%= dirTree.build.ssrjs %>/**"
     , "package.json"
     , "bower_components/**"
   ];

@@ -8,7 +8,8 @@
 module.exports = function( grunt ) {
 
   var serverCommon = [
-      "watch:app"
+      "watch:jsx"
+    , "watch:ssrjs"
     , "watch:less"
     , "watch:images"
   ];
