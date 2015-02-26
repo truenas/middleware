@@ -397,6 +397,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.DocumentationIcon{
+    background-image:url('/static/images/ui/tree/documentation.png');
+    width:16px;
+    height:16px;
+}
 .AddInterfaceIcon {
     background-image:url('/static/images/ui/tree/add_interfaces.png');
     width:16px;

@@ -236,6 +236,16 @@ class NavTree(object):
                     e)
                 log_traceback(log=log)
 
+        nav = TreeRoot(
+            'documentation',
+            name=_('Documentation'),
+            icon='DocumentationIcon',
+            action='opendocumentation',
+            view='documentation_home',
+            order=970,
+        )
+        tree_roots.register(nav)
+
         #nav = TreeRoot(
         #    'support',
         #    name=_('Request Support'),

@@ -2379,6 +2379,8 @@ require([
                 editObject(gettext("Wizard"), wizardUrl, []);
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
+            } else if(item.action == 'opendocumentation') {
+                Menu.openDocumentation(item.gname);
             } else if(item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
             } else if(item.type == 'openstorage') {
