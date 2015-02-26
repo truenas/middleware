@@ -2,8 +2,6 @@
 
 |tn_cover.jpg|
 
-.. centered:: Published XX, 2015
-
 .. centered:: Copyright iXsystems 2011-2015
 
 .. centered:: TrueNAS® and the TrueNAS® logo are registered trademarks of iXsystems.
