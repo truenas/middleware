@@ -63,11 +63,11 @@ release = '9.3'
 if tags.has('truenas'):
     project = u'TrueNAS User Guide'
     master_doc = 'truenas'
-    exclude_patterns = ['_build', 'freenas*']
+    exclude_patterns = ['_build', 'freenas*', 'errata']
 else:
     project = u'FreeNAS User Guide'
     master_doc = 'freenas'
-    exclude_patterns = ['_build', 'truenas*']
+    exclude_patterns = ['_build', 'truenas*', 'errata']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
