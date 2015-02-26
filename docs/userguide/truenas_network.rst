@@ -246,17 +246,14 @@ fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of t
 IPMI
 ----
 
-TrueNAS® provides a graphical screen for configuring the built-in IPMI interface.
+The TrueNAS® Storage Appliance provides a built-in out-of-band management port which can be used to provide side-band management should the system become
+unavailable through the graphical administrative interface. This allows for a few vital functions, such as checking the log, accessing the BIOS setup, and
+powering on the system without requiring physical access to the system. It can also be used to allow another person remote access to the system in order to
+assist with a configuration or troubleshooting issue.
 
-IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
-such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow
-another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the
-management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
-be a dedicated IPMI interface.
-
-IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.4a, provides a shortcut to the most basic
-IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.4a summarizes the options when configuring
-IPMI using the TrueNAS® GUI.
+The IP addressing information for the out-of-band management port can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen,
+shown in Figure 7.4a, provides a shortcut to the most basic IPMI configuration. Table 7.4a summarizes the options when configuring IPMI using the TrueNAS®
+GUI.
 
 **Figure 7.4a: IPMI Configuration**
 
@@ -292,8 +289,11 @@ IPMI using the TrueNAS® GUI.
 
 
 Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
-prompt for a username, where the default username is *ADMIN* (in all caps), and the password that you configured. Once you have logged into the management
-interface, you can change the administrative username as well as create additional users.
+prompt for a username, where the default username is *admin* and the password that you configured. Once you have logged into the management interface, you can
+change the administrative username as well as create additional users.
+
+Refer to Figures 3.5h through 3.5k in :ref:`Out-of-Band Management` for additional instructions on how to configure the Java KVM Client used by the IPMI
+management interface.
 
 .. index::Link Aggregations
 

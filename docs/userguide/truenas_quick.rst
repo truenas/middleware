@@ -3,7 +3,7 @@ Initial Setup
 
 Depending on the degree of pre-configuration you requested from iXsystems, much of the initial TrueNAS® setup may already be complete. 
 
-.. note:: Always perform the initial TrueNAS® setup in consultation with your iXsystems Support Representative. You can contact iXsystems Support at
+.. note:: always perform the initial TrueNAS® setup in consultation with your iXsystems Support Representative. You can contact iXsystems Support at
    truenas-support@ixsystems.com. Be sure to have all of your TrueNAS® hardware serial numbers on hand, which are located on the back of the chassis.
 
 This section covers these initial setup steps:
@@ -23,8 +23,8 @@ This section covers these initial setup steps:
 Packing List
 ------------
 
-The TrueNAS® Storage Appliance supports two expansion shelf models: the :ref:`TrueNAS E16 Expansion Shelf` and the :ref:`TrueNAS E24 Expansion Shelf`. Each
-is designed to be straightforward to set up.
+The TrueNAS® Storage Appliance supports two expansion shelf models: the :ref:`E16 Expansion Shelf` and the :ref:`E24 Expansion Shelf`. Each is designed to be
+straightforward to set up.
 
 The TrueNAS® Storage Appliance comes with a number of necessary accessories. If anything is missing or your TrueNAS® Storage Appliance arrived in less than pristine
 condition, immediately take pictures and contact iXsystems support.
@@ -93,10 +93,10 @@ The layout of the storage controller will vary by configuration. Figure 3.1a pro
 
 .. |tn_appliance_front_view.jpg| image:: images/tn_appliance_front_view.jpg
 
-Note the two control panels on either side of the front of the appliance. The one on the left controls the Primary Storage Controller, and the one on the
-right controls the Secondary Storage Controller in High Availability models.
+Note the two control panels on either side of the front of the appliance. The one on the left controls the primary storage controller, and the one on the
+right controls the secondary storage controller in High Availability models.
 
-Figure 3.1b provides an example layout of the front panel buttons and indicators.
+Figure 3.1b shows the layout of the front panel buttons and indicators.
 
 **Figure 3.1b: Front Panel Buttons and Indicators**
 
@@ -165,7 +165,7 @@ the rails with the end labeled "Front" toward the front of the rack. Refer to Fi
 
 You are now ready to install the TrueNAS® Storage Appliance into the rack.
 
-.. warning:: Two people are required to lift a TrueNAS® Storage Appliance.
+.. warning:: two people are required to lift a TrueNAS® Storage Appliance.
 
 Carefully align the TrueNAS® Storage Appliance inner rail with the notches in the outer rail. Once the rails are aligned, slide the appliance toward the rack. When
 the appliance stops moving, move the pin-lock laches to allow the appliance to slide the rest of the way into the rack. Refer to Figure 3.2d for a detailed
@@ -181,7 +181,7 @@ view.
 
 Next, install all of the populated drive trays into the front of the appliance. Refer to Figure 3.2e for a detailed view.
 
-.. note:: To avoid personal injury, do not install drives into the TrueNAS® Storage Appliance before racking.
+.. note:: to avoid personal injury, do not install drives into the TrueNAS® Storage Appliance before racking.
 
 **Figure 3.2e: Drive Installation Instructions**
 
@@ -198,7 +198,7 @@ install all ZIL devices starting from slot 0, followed by all L2ARC devices, fol
 
 .. |tn_drive_mapping.jpg| image:: images/tn_drive_mapping.jpg
 
-Both network and storage cabling should be connected before turning on the TrueNAS® Storage Appliance for the first time.
+Both network and storage cabling should be connected **before** turning on the TrueNAS® Storage Appliance for the first time.
 
 Network cabling is highly dependent on the exact TrueNAS® model and environment. If you need assistance connecting your TrueNAS® Storage Appliance to the network,
 contact your iXsystems Support Representative. 
@@ -212,8 +212,8 @@ Refer to Figure 3.2g or the sticker on the storage controller handle for the loc
 
 .. |tn_appliance_back_panel_left.jpg| image:: images/tn_appliance_back_panel_left.jpg
 
-For storage cabling instructions, refer to either :ref:`Connect E16 Expansion Shelf to TrueNAS Appliance` or
-:ref:`Connect E24 Expansion Shelf to TrueNAS Appliance`, depending upon the TrueNAS® Expansion Shelf.
+For storage cabling instructions, refer to the instructions in :ref:`E16 Expansion Shelf` or :ref:`E24 Expansion Shelf`, depending upon the TrueNAS®
+expansion shelf.
 
 .. index:: Attach the TrueNAS Bezel
 
@@ -231,15 +231,15 @@ Power on the TrueNAS® Storage Appliance by pressing the top left button on the 
 first storage controller before powering on the second storage controller. This will make it clear which controller will be the active controller in High
 Availability configurations.
 
-Once the TrueNAS® Storage Appliance is fully operational, the TrueNAS® Logo will act as a global fault light. By default it is backlit in white. If there are any
-issues that need to be addressed, the light will turn red. In this case, refer to the :ref:`Alert` section of the TrueNAS® administrative graphical interface
-for details.
+Once the TrueNAS® Storage Appliance is fully operational, the TrueNAS® logo will act as a global fault light. By default, it is backlit in white. If there
+are any issues that need to be addressed, the light will turn red. In this case, refer to the :ref:`Alert` section of the TrueNAS® administrative graphical
+interface for more details about the error condition.
 
-.. index:: TrueNAS E16 Expansion Shelf
+.. index:: E16 Expansion Shelf
 
-.. _TrueNAS E16 Expansion Shelf:
+.. _E16 Expansion Shelf:
 
-TrueNAS E16 Expansion Shelf
+E16 Expansion Shelf
 ---------------------------
 
 The TrueNAS® E16 expansion shelf is a 3U, 16-bay storage expansion unit designed specifically to work with the TrueNAS® Storage Appliance. This section will
@@ -250,7 +250,7 @@ cover setting up an E16 expansion shelf and connecting it to a TrueNAS® Storage
 The E16 expansion shelf comes with a number of necessary accessories. If anything is missing or your E16 expansion shelf arrived in less than pristine
 condition, immediately take pictures and contact iXsystems support.
 
-* TrueNAS E16 expansion shelf
+* TrueNAS® E16 expansion shelf
 
 |tn_e16shelf.jpg|
 
@@ -378,7 +378,7 @@ the rails with the end labeled "Front" toward the front of the rack. Refer to Fi
 
 You are now ready to install the E16 expansion shelf into the rack.
 
-.. warning:: Two people are required to lift a TrueNAS® E16 expansion shelf.
+.. warning:: two people are required to lift a TrueNAS® E16 expansion shelf.
 
 Carefully align the TrueNAS® E16 expansion shelf inner rail with the notches in the outer rail. Once the rails are aligned, slide the appliance toward the
 rack. When the appliance stops moving, move the pin-lock laches to allow the appliance to slide the rest of the way into the rack. Refer to Figure 3.3j for a
@@ -392,7 +392,7 @@ detailed view.
 
 Next, install all populated drive trays into the front of the expansion shelf as shown in Figure 3.3k.
 
-.. note:: To avoid personal injury, do not install drives into the E16 expansion shelf before racking.
+.. note:: to avoid personal injury, do not install drives into the E16 expansion shelf before racking.
 
 **Figure 3.3k: Drive Installation Instructions**
 
@@ -400,7 +400,7 @@ Next, install all populated drive trays into the front of the expansion shelf as
 
 .. |tn_install_drive_tray.jpg| image:: images/tn_install_drive_tray.jpg
 
-TrueNAS® Drive Bays are numbered for your convenience. Intall them in the order indicated in Figure 3.3l.
+TrueNAS® drive bays are numbered for your convenience. Intall them in the order indicated in Figure 3.3l.
 
 **Figure 3.3l: Drive Bay Ordering**
 
@@ -429,14 +429,14 @@ place with the wire locks. Power on the E16 expansion shelf by pressing the top 
 If you are setting up a TrueNAS® Storage Appliance for the first time, wait two minutes after powering on all expansion shelves before turning on the
 TrueNAS® Storage Appliance.
 
-.. index:: TrueNAS E24 Expansion Shelf
+.. index:: E24 Expansion Shelf
 
-.. _TrueNAS E24 Expansion Shelf:
+.. _E24 Expansion Shelf:
 
-TrueNAS E24 Expansion Shelf
+E24 Expansion Shelf
 ---------------------------
 
-The TrueNAS E24 expansion shelf is a 4U, 24-bay storage expansion unit designed specifically for use with the TrueNAS® Storage Appliance. This section will
+The TrueNAS® E24 expansion shelf is a 4U, 24-bay storage expansion unit designed specifically for use with the TrueNAS® Storage Appliance. This section will
 cover setting up an E24 expansion shelf and connecting it to a TrueNAS® Storage Appliance.
 
 .. index:: TrueNAS E24 Expansion Shelf Contents
@@ -498,7 +498,7 @@ Figures 3.4a and 3.4b show the front and rear views of the TrueNAS® E24 expansi
 
 .. |tn_e24_rear_view.jpg| image:: images/tn_e24_rear_view.jpg
 
-Figure 3.4c provides a detailed view of a drive tray and the possible statuses for the LED.
+Figure 3.4c provides a detailed view of a drive tray.
 
 **Figure 3.4c: 3.5" Drive Tray**
 
@@ -529,7 +529,7 @@ Figures 3.4d and 3.4e depict the front left and rear right attachments for an L-
 
 Next, install the E24 expansion shelf into the rack.
 
-.. note:: To avoid personal injury, do not install drives into the E24 Expansion Shelf before racking.
+.. note:: to avoid personal injury, do not install drives into the E24 expansion shelf before racking.
 
 With two people, place the back of the expansion shelf on the rack. Gently push it backwards until the front panels of the expansion shelf are pressed against
 the front of the rack.
@@ -562,7 +562,7 @@ shelf to the SAS port with the same letter on the TrueNAS® Storage Appliance's 
 storage controller, connect the left "In" SAS port of the right side expander to the port with the same letter on the secondary storage controller. Refer to
 Figure 3.4h for a detailed view.
 
-**Figure 3.4h: Example connection between E24 Expansion Shelf and TrueNAS Storage Appliance**
+**Figure 3.4h: Example connection between E24 Expansion Shelf and TrueNAS® Storage Appliance**
 
 |tn_e24_connect_storage.jpg|
 
@@ -597,89 +597,116 @@ Out-of-Band Management
 ----------------------
 
 Before attempting to configure TrueNAS® for out-of-band management, ensure that the out-of-band management port is connected to an appropriate network. Refer
-to the guide included with your TrueNAS® Storage Appliance for detailed instructions on how to connect to the network.
+to the guide included with your TrueNAS® Storage Appliance for detailed instructions on how to connect to a network.
 
 Make sure to connect the out-of-band management port **before** powering on the TrueNAS® Storage Appliance. 
 
-In most cases, the out-of-band management interface will have been pre-configured by iXsystems. The section contains the instructions for how to configure it
-yourself if necessary.
+In most cases, the out-of-band management interface will have been pre-configured by iXsystems. This section contains instructions for configuring it from the
+BIOS if needed. Alternately, if you have already have access to the TrueNAS® administrative graphical interface, the same settings can be configured using
+the instructions in :ref:`IPMI`.
 
-The initial out-of-band management configuration must be performed at the BIOS. To get into the BIOS, press "F2" at the splash screen when booting the
-TrueNAS® appliance.
+To access the system BIOS, press "F2" at the splash screen when booting the TrueNAS® Storage Appliance. This will open the menu shown in Figure 3.5a.
+
+**Figure 3.5a: Initial BIOS Screen**
 
 |tn_BIOS1.png|
 
 .. |tn_BIOS1.png| image:: images/tn_BIOS1.png
    
-Navigate to Server Mgmt along the top and then BMC LAN Configuration.
+Navigate to the "Server Mgmt" menu and then "BMC LAN Configuration", as shown in Figure 3.5b.
+
+**Figure 3.5b: Navigate to BMC LAN Configuration**
 
 |tn_BIOS2.png|
 
 .. |tn_BIOS2.png| image:: images/tn_BIOS2.png
    
-If you wish to use DCHP to assign the Out-of-Band Management IP address, leave Configuration Source set to ?Dynamic?. If an IP has been assigned by DHCP, it will be displayed. If you need to assign a static IP address for Out-of-Band Management, set Configuration Source to ?Static?.
+If you will be using DCHP to assign the out-of-band management IP address, leave the "Configuration Source" set to "Dynamic" in the screen shown in Figure
+3.5c. If an IP has been assigned by DHCP, it will be displayed.
+
+**Figure 3.5c: Configuring a Dynamic IP Address**
 
 |tn_BIOS3.png|
 
 .. |tn_BIOS3.png| image:: images/tn_BIOS3.png
-   
-Enter the Desired IP Address at the IP Address setting. Fill out all four octets completely, as seen in the example below.
+
+To instead assign a static IP address for out-of-band management, set the "Configuration Source" to "Static", as seen in the example shown in Figure 3.5d.
+Enter the desired IP Address into the "IP Address" setting, filling out all four octets completely.
+
+**Figure 3.5d: Configuring a Static IP Address**
 
 |tn_BIOS4.png|
 
 .. |tn_BIOS4.png| image:: images/tn_BIOS4.png
    
-Next, fill out the Subnet Mask of the subnet within which you wish to have access to Out-of-Band Management.
+Next, enter the "Subnet Mask" of the subnet within which you wish to have access to out-of-band management. An example is seen in Figure 3.5e.
+
+**Figure 3.5e: Entering the Subnet Mask**
 
 |tn_BIOS5.png|
 
 .. |tn_BIOS5.png| image:: images/tn_BIOS5.png
 
-Finally, set the default gateway for the network to which your Out-of-Band Management port is connected.
+Finally, set the "Default Gateway Address" for the network to which the out-of-band management port is connected. An example is seen in Figure 3.5f.
+
+**Figure 3.5f: Entering the Default Gateway Address**
 
 |tn_BIOS6.png|
 
 .. |tn_BIOS6.png| image:: images/tn_BIOS6.png
 
-Save the changes you have made, exit the BIOS, and allow the system to reboot.
-Now that you have set the Out-of-Band Management IP address, direct a browser to the IP address. Log in to the Web UI via any web-browser on the same network or wired directly.  
+Save the changes you have made, exit the BIOS, and allow the system to boot.
+
+To connect to the TrueNAS® Storage Appliance using the out-of-band management port, input the configured IP address into a web browser from a computer that
+is either within the same network or which is directly wired to the appliance. As seen in Figure 3.5g, a login prompt will appear.
+
+**Figure 3.5g: Connecting to the IPMI Graphical Interface**
 
 |tn_IPMIlogin.png|
 
 .. |tn_IPMIlogin.png| image:: images/tn_IPMIlogin.png
 
-Default Administrator Login: admin
-Password: password
+Login using the default "Username" of *admin* and the default "Password" of
+*password*.
 
-You may change the administrator password at your convenience.
+You can change the default administrative password using the instructions in :ref:`IPMI`.
 
-Click the "vKVM and Media" button at the top right to download the Java KVM Client. Run the client.
+Once logged in, click the "vKVM and Media" button at the top right to download the Java KVM Client. Run the client by clicking the "Launch Java KVM Client"
+button shown in Figure 3.5h.
+
+**Figure 3.5h: Launching the Java KVM Client**
 
 |tn_IPMIdownload.png|
 
 .. |tn_IPMIdownload.png| image:: images/tn_IPMIdownload.png
 
-When prompted for a program to open the file with, select Java.
+When prompted for a program to open the file with, select the Java Web Start Launcher shown in Figure 3.5i.
+
+**Figure 3.5i: Configure the Launch Program**
 
 |tn_IPMIjava.png|
 
 .. |tn_IPMIjava.png| image:: images/tn_IPMIjava.png
 
-When asked if you want to run a program by an Unknown publisher, check the box stating that you understand and press "Run". 
+When asked if you want to run a program by an unknown publisher, check the box indicating that you understand the risks and press "Run". An example is seen in
+Figure 3.5j.
+
+**Figure 3.5j: Respond to Warning**
 
 |tn_IPMIaccept.png|
 
 .. |tn_IPMIaccept.png| image:: images/tn_IPMIaccept.png
 
-When prompted that the connection is untrusted, press "Continue".
+When prompted that the connection is untrusted, as seen in Figure 3.5k, press "Continue".
+
+**Figure 3.5k: Continue Through this Screen**
 
 |tn_IPMIcontinue.png|
 
 .. |tn_IPMIcontinue.png| image:: images/tn_IPMIcontinue.png
 
-Once the Out-of-Band console opens, you can control your TrueNAS appliance as though you?re using a keyboard and monitor connected directly to it. You may now
-configure your network connection in order to access the TrueNAS Web User Interface.
-   
+Once the out-of-band console opens, you can control the TrueNAS® Storage Appliance as if you were using a directly-connected keyboard and monitor.
+
 .. index:: Console Setup Menu
 .. _Console Setup Menu:
 
@@ -690,7 +717,7 @@ Once you have completed setting up the hardware for the TrueNAS® Storage Applia
 appear at the end of the boot process. If you have access to the TrueNAS® system's keyboard and monitor, this Console Setup menu can be used to administer
 the system should the administrative GUI become inaccessible.
 
-.. note:: you can access the Console Setup menu from within the TrueNAS® GUI by typing :command:`/etc/netcli` from `Shell`. You can disable the Console
+.. note:: you can access the Console Setup menu from within the TrueNAS® GUI by typing :command:`/etc/netcli` from :ref:`Shell`. You can disable the Console
    Setup menu by unchecking the "Enable Console Menu" in `System --> Settings --> Advanced`.
 
 **Figure 3.6a: TrueNAS® Console Setup Menu**
@@ -781,7 +808,7 @@ seen in Example 3.6a. In this example, the TrueNAS® system has one network inte
  http://192.168.1.108
 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the TrueNAS®
-system. You should be prompted to input the password for the *root* user, as seen in Figure 3b.
+system. You should be prompted to input the password for the *root* user, as seen in Figure 3.6b.
 
 **Figure 3.6b: Input the Root Password**
 
@@ -789,7 +816,7 @@ system. You should be prompted to input the password for the *root* user, as see
 
 .. |tn_login.png| image:: images/tn_login.png
 
-Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3c.
+Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3.6c.
 
 .. note:: you can change the default *root* password to a more secure value by going to `Account --> Users --> View Users`. Highlight the entry for
           *root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new
