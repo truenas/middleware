@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
-import sys, getopt
+import sys, getopt, re
+from datetime import date
 from redmine import Redmine, exceptions
 
 def main(argv):
@@ -28,6 +29,7 @@ def main(argv):
     if vers == '':
         print '<version> cannot be blank'
         sys.exit(2)
+    creation_date = re.match(r".*(\d{4})(\d{2})(\d{2})\d{4}", vers)
     redmine = Redmine('https://bugs.freenas.org', key=key)
     rm_project = redmine.project.get('freenas')
     version = redmine.version.new()
@@ -36,6 +38,7 @@ def main(argv):
     version.description = descrpt
     version.status = 'closed'
     version.sharing = 'none'
+    version.due_date = date(int(creation_date.group(1)), int(creation_date.group(2)), int(creation_date.group(3))) 
     result = ''
     try:
         result = version.save()
