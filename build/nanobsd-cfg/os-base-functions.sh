@@ -275,7 +275,7 @@ freenas_custom()
 	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc
 
 	# strip binaries (saves spaces on non-debug images).
-	if [ "${DEBUG}" != 1 ]; then
+	if [ -z "${DEBUG}" ]; then
 		pprint 4 "Stripping binaries and libraries"
 		for dir in $(find ${NANO_WORLDDIR}/usr/local -name '*bin' -or -name 'libexec' -maxdepth 3); do
 			for f in $(find $dir -type f); do
