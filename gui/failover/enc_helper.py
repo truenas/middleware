@@ -33,6 +33,7 @@ import re
 import sys
 import tempfile
 import time
+import getpass
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
@@ -67,7 +68,7 @@ class LocalEscrowCtl:
             sock.connect(server)
             connected = True
         except:
-            proc = subprocess.Popen(["/usr/local/sbin/escrowd"])
+            proc = subprocess.Popen(["/usr/sbin/escrowd"])
             while retries > 0 and connected == False:
                 try:
                     retries = retries - 1
@@ -135,7 +136,7 @@ class LocalEscrowCtl:
         data = self.sock.recv(BUFSIZE)
         return (data == "200 keyd\n")
 
-cmdset = set(['setkey', 'clear', 'synctopeer', 'syncfrompeer', 'shutdown', 'status', 'attachall'])
+cmdset = set(['setkey', 'clear', 'synctopeer', 'syncfrompeer', 'shutdown', 'status', 'attachall', 'interactive'])
 
 # Parse command options
 if len(sys.argv) < 2 or not sys.argv[1] in cmdset or (sys.argv[1] == 'setkey' and len(sys.argv) != 3):
@@ -170,12 +171,12 @@ elif cmd == 'status':
         print "Escrow running without passphrase"
 elif cmd == 'attachall':
     with tempfile.NamedTemporaryFile() as tmp:
-        tmp.file.write(escrowctl.getkey())
+        tmp.file.write(escrowctl.getkey() or "")
         tmp.file.flush()
         procs = []
-        failed = 0
+        failed_drive = 0
+        failed_volume = 0
         for vol in Volume.objects.filter(vol_encrypt__exact=2):
-            failed = 0
             keyfile = vol.get_geli_keyfile()
             for ed in vol.encrypteddisk_set.all():
                 provider = ed.encrypted_provider
@@ -188,11 +189,27 @@ elif cmd == 'attachall':
                 if proc.returncode != 0:
                     print ("Unable to attach GELI provider: %s" % (msg))
                     log.warn("Unable to attach GELI provider: %s", (msg))
-                    failed += 1
+                    failed_drive += 1
             importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
             proc = pipeopen(importcmd)
             proc.communicate()
-        rv = (failed == 0)
+            if proc.returncode != 0:
+                failed_volume += 1
+        if failed_drive > 0:
+            print "ERROR: %d drives can not be attached" % (failed_drive)
+        rv = (failed_volume == 0)
+        try:
+            if rv:
+                os.unlink('/tmp/.failover_needop')
+            else:
+                file = open('/tmp/.failover_needop', 'w')
+        except:
+            pass
+elif cmd == 'interactive':
+    passphrase = getpass.getpass()
+    if passphrase:
+        rv = escrowctl.setkey(passphrase)
+        os.system("/bin/sh /etc/carp-state-change-hook carp0 LINK_UP")
 else:
     peer = str(Failover.objects.all()[0].ipaddress)
     sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=7 %s" % (peer)

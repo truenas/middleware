@@ -44,6 +44,7 @@ FAILOVER_MTX="/tmp/.failover_mtx"
 FAILOVER_STATE="/tmp/.failover_state"
 FAILOVER_RES_TMPL="/tmp/.failover_result.XXXXXXXX"
 FAILOVER_ASSUMED_MASTER="/tmp/.failover_master"
+FAILOVER_NEEDOP="/tmp/.failover_needop"
 
 		# Failover script
 		cat > /etc/carp-state-change-hook << E*O*F
@@ -229,7 +230,7 @@ if [ \${EVENT} = "LINK_UP" ]; then
 	fi
 	/sbin/zpool set cachefile=/data/zfs/zpool.cache \${volumename}
     done
-    touch ${FAILOVER_ASSUMED_MASTER}
+    [ -e ${FAILOVER_NEEDOP} ] || touch ${FAILOVER_ASSUMED_MASTER}
     rm -f /data/zfs/killcache
 
     [ ! -e ${FAILED_FILE} ] && cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved

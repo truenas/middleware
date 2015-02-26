@@ -19,6 +19,7 @@ FAILOVER_JSON = '/tmp/failover.json'
 FAILOVER_MTX = '/tmp/.failover_mtx'
 FAILOVER_OVERRIDE = '/tmp/failover_override'
 FAILOVER_STATE = '/tmp/.failover_state'
+FAILOVER_NEEDOP = '/tmp/.failover_needop'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
 
@@ -294,6 +295,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
             run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
     log.warn('Beginning volume imports.')
+    # TODO: now that we are all python, we should probably just absorb the code in.
     run(
         '/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py'
         ' attachall'
@@ -311,7 +313,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
             open(FAILED_FILE, 'w').close()
         run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
 
-    open(FAILOVER_ASSUMED_MASTER, 'w').close()
+    if not os.path.exists(FAILOVER_NEEDOP):
+        open(FAILOVER_ASSUMED_MASTER, 'w').close()
+
     try:
         os.unlink('/data/zfs/killcache')
     except:
