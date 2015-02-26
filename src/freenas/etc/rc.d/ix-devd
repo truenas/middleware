@@ -33,7 +33,7 @@ ix_devd_gen()
 notify 100 {
    match "system"   "IFNET";
    match "subsystem" "carp.*";
-   action "/bin/sh /etc/carp-state-change-hook \$subsystem \$type";
+   action "/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py \$subsystem \$type";
 };
 E*O*F
 
