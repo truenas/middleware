@@ -378,7 +378,7 @@ def _init(dispatcher):
     boot_pool = dispatcher.call_sync('zfs.pool.get_boot_pool')
 
     def on_pool_change(args):
-        ids = filter(lambda i: i != boot_pool['id'], args['ids'])
+        ids = filter(lambda i: i != boot_pool['guid'], args['ids'])
 
         if args['operation'] == 'delete':
             for i in args['ids']:
@@ -409,6 +409,11 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
     dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
     dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
+
+    dispatcher.register_hook('volume.pre-destroy')
+    dispatcher.register_hook('volume.pre-detach')
+    dispatcher.register_hook('volume.pre-create')
+    dispatcher.register_hook('volume.pre-attach')
 
     dispatcher.register_event_handler('zfs.pool.changed', on_pool_change)
     dispatcher.register_event_type('volumes.changed')
