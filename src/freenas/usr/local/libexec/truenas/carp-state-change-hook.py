@@ -253,6 +253,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
     # If we reached here, fenced is daemonized and have all drives reserved.
     # Bring up all carps we own.
+    for group in fobj['groups']:
+        for interface in fobj['groups'][group]:
+            run("ifconfig %s advskew 1" % interface)
 
     open(IMPORTING_FILE, 'w').close()
     try:
