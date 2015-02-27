@@ -178,10 +178,14 @@ module.exports = function( grunt ) {
           , force: true
           }
 
+        , { input: "rehash" }
+
         // Update npm to latest version, if necessary
         , { input: "<%= conditionalCommands.updateNpm %>"
           , force: true
           }
+
+        , { input: "rehash" }
       ]
   });
 
