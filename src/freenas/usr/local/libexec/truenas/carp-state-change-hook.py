@@ -207,10 +207,10 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     log.warn('Starting fenced')
     run('/sbin/camcontrol rescan all')
     if not user_override and not fasttrack:
-        error, output = run('/usr/local/bin/python /usr/local/sbin/fenced')
+        error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
     else:
         error, output = run(
-            '/usr/local/bin/python /usr/local/sbin/fenced force'
+            'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced force'
         )
 
     if error:
