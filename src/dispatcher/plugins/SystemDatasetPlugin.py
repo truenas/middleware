@@ -40,33 +40,47 @@ logger = logging.getLogger('SystemDataset')
 
 
 def create_system_dataset(dispatcher, pool):
+    logger.warning('Creating system dataset on pool {0}'.format(pool))
     zfs = libzfs.ZFS()
     dsid = dispatcher.configstore.get('system.dataset.id')
     pool = zfs.get(pool)
     try:
-        zfs.get_dataset('{0}/.system-{1}'.format(pool, dsid))
+        zfs.get_dataset('{0}/.system-{1}'.format(pool.name, dsid))
         return
     except libzfs.ZFSException:
         nv = nvpair.NVList()
-        nv['mountpoint'] = 'legacy'
-        pool.create('.system-{0}'.format(dsid), nv)
+        nv['mountpoint'] = 'none'
+        pool.create('{0}/.system-{1}'.format(pool.name, dsid), nv)
 
 
-def remove_system_dataset(pool):
-    pass
-
-
-def mount_system_dataset(dispatcher, pool, path):
+def remove_system_dataset(dispatcher, pool):
+    logger.warning('Removing system dataset from pool {0}'.format(pool))
     zfs = libzfs.ZFS()
     dsid = dispatcher.configstore.get('system.dataset.id')
     pool = zfs.get(pool)
     try:
-        ds = zfs.get_dataset('{0}/.system-{1}'.format(pool, dsid))
-        ds.properties['mountpoint'] = path
+        ds = zfs.get_dataset('{0}/.system-{1}'.format(pool.name, dsid))
+        ds.umount()
+        ds.delete()
+    except libzfs.ZFSException:
+        pass
+
+
+def mount_system_dataset(dispatcher, pool, path):
+    logger.warning('Mounting system dataset from pool {0} on {1}'.format(pool, path))
+    zfs = libzfs.ZFS()
+    dsid = dispatcher.configstore.get('system.dataset.id')
+    pool = zfs.get(pool)
+    try:
+        ds = zfs.get_dataset('{0}/.system-{1}'.format(pool.name, dsid))
+        if ds.mountpoint == path:
+            return
+
+        ds.properties['mountpoint'].value = path
         ds.mount()
         return
     except libzfs.ZFSException:
-        pass
+        raise
 
 
 def umount_system_dataset(dispatcher, pool):
@@ -75,14 +89,32 @@ def umount_system_dataset(dispatcher, pool):
     pool = zfs.get(pool)
     try:
         ds = zfs.get_dataset('{0}/.system-{1}'.format(pool, dsid))
+        ds.properties['mountpoint'].value = 'none'
         ds.umount()
         return
     except libzfs.ZFSException:
         pass
 
 
-def move_system_dataset(src, dest):
-    pass
+def move_system_dataset(dispatcher, src_pool, dst_pool):
+    logger.warning('Migrating system dataset from pool {0} to {1}'.format(src_pool, dst_pool))
+    zfs = libzfs.ZFS()
+    dsid = dispatcher.configstore.get('system.dataset.id')
+    tmpath = os.tempnam('/tmp')
+    src_ds = zfs.get_dataset('{0}/.system-{1}'.format(src_pool, dsid))
+    create_system_dataset(dispatcher, dst_pool)
+    mount_system_dataset(dispatcher, dst_pool, tmpath)
+
+    dst_ds = zfs.get_dataset('{0}/.system-{1}'.format(dst_pool, dsid))
+    pipe = os.pipe()
+    src_ds.send(pipe[0])
+    dst_ds.receive(pipe[1], force=True)
+    os.close(pipe[0])
+    os.close(pipe[1])
+
+    umount_system_dataset(dispatcher, src_pool)
+    mount_system_dataset(dispatcher, dst_pool, SYSTEM_DIR)
+    remove_system_dataset(dispatcher, src_pool)
 
 
 class SystemDatasetProvider(Provider):
@@ -118,12 +150,18 @@ class SystemDatasetConfigure(Task):
 
 
 def _depends():
-    return ['ZfsPlugin']
+    return ['ZfsPlugin', 'VolumePlugin']
 
 
 def _init(dispatcher):
     def on_volumes_changed(args):
-        pass
+        if args['operation'] == 'create':
+            pass
+
+    def volume_pre_destroy(args):
+        # Evacuate .system dataset from the pool
+        if dispatcher.configstore.get('system.dataset.pool') == args['name']:
+            pass
 
     if not dispatcher.configstore.get('system.dataset.id'):
         dsid = uuid.uuid4().hex[:8]
@@ -131,5 +169,10 @@ def _init(dispatcher):
         logger.info('New system dataset ID: {0}'.format(dsid))
 
     dispatcher.register_event_handler('volumes.changed', on_volumes_changed)
+    dispatcher.attach_hook('volume.pre-destroy', volume_pre_destroy)
+    dispatcher.attach_hook('volume.pre-detach', volume_pre_destroy)
     dispatcher.register_provider('system-dataset', SystemDatasetProvider)
     dispatcher.register_task_handler('system-dataset.configure', SystemDatasetConfigure)
+
+    dispatcher.register_hook('system-dataset.pre-detach')
+    dispatcher.register_hook('system-dataset.pre-attach')
