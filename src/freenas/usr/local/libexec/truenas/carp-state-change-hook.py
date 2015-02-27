@@ -79,11 +79,18 @@ def main(ifname, event):
             log.warn("Failover disabled.  Assuming backup.")
             sys.exit()
         else:
-            for group in fobj['groups']:
-                for interface in fobj['groups'][group]:
-                    run("ifconfig %s advskew 0" % interface)
-            log.warn("Failover disabled.  Assuming active.")
-            run("touch %s" % FAILOVER_OVERRIDE)
+            masterret = False
+            for vol in fobj['volumes']:
+                ret = os.system("zpool status %s" % vol)
+                if ret:
+                    masterret = True
+                    for group in fobj['groups']:
+                        for interface in fobj['groups'][group]:
+                            run("ifconfig %s advskew 0" % interface)
+                    log.warn("Failover disabled.  Assuming active.")
+                    run("touch %s" % FAILOVER_OVERRIDE)
+            if masterret is False:
+                sys.exit()
 
     open(HEARTBEAT_BARRIER, 'a+').close()
 
@@ -132,25 +139,28 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
                 sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
-        for group in fobj['groups']:
-            for interface in fobj['groups'][group]:
-                run("ifconfig %s advskew 1" % interface)
+        error, output = run("ifconfig -l")
+        for iface in output.split():
+            print iface
+            if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
+                run("ifconfig %s advskew 1" % iface)
         sys.exit(0)
 
+    totoutput = 0
     for group, carpint in fobj['groups'].items():
-        error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % (
-            ' '.join(carpint)
-        ))
+        for i in carpint:
+            error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
+            totoutput += int(output)
 
-        if not error and int(output) > 0:
-            log.warn(
-                'Ignoring UP state on %s because we still have interfaces that are'
-                ' BACKUP.', ifname
-            )
-            run('echo "$(date), $(hostname), %s assumed master while other '
-                'interfaces are still in slave mode." | mail -s "Failover WARNING"'
-                ' root' % ifname)
-            sys.exit(1)
+            if not error and totoutput > 0:
+                log.warn(
+                    'Ignoring UP state on %s because we still have interfaces that are'
+                    ' BACKUP.', ifname
+                )
+                run('echo "$(date), $(hostname), %s assumed master while other '
+                    'interfaces are still in slave mode." | mail -s "Failover WARNING"'
+                    ' root' % ifname)
+                sys.exit(1)
 
     run('pkill -f fenced')
 
@@ -244,9 +254,11 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
     # If we reached here, fenced is daemonized and have all drives reserved.
     # Bring up all carps we own.
-    for group in fobj['groups']:
-        for interface in fobj['groups'][group]:
-            run("ifconfig %s advskew 1" % interface)
+    error, output = run("ifconfig -l")
+    for iface in output.split():
+        print iface
+        if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
+            run("ifconfig %s advskew 1" % iface)
 
     open(IMPORTING_FILE, 'w').close()
     try:
@@ -389,16 +401,17 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
                      "%s seconds.", ifname, sleeper)
                 sys.exit(0)
 
+    totoutput = 0
     for group, carpint in fobj['groups'].items():
-        error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % (
-            ' '.join(carpint)
-        ))
+        for i in carpint:
+            error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
+            totoutput += int(output)
 
-        if not error and int(output) > 0:
-            log.warn(
-                'Ignoring DOWN state on %s because we still have interfaces that '
-                'are UP.', ifname)
-            sys.exit(1)
+            if not error and totoutput > 0:
+                log.warn(
+                    'Ignoring DOWN state on %s because we still have interfaces that '
+                    'are UP.', ifname)
+                sys.exit(1)
 
     run('pkill -f fenced')
 
