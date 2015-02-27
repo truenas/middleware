@@ -153,7 +153,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 | Domain Controller       | string         | hostname of domain controller                                                                         |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| NetBIOS Name            | string         | hostname of FreeNAS system                                                                            |
+| NetBIOS Name            | string         | hostname of FreeNAS system; cannot be greater than 15 characters                                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup Name          | string         | name of Windows server's workgroup                                                                    |

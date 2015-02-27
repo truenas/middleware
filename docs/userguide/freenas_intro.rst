@@ -378,6 +378,10 @@ that have occurred since 9.3-RELEASE.
 
 * The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The :menuselection:`Jails --> Add Jails` button has been renamed to "Add Jail".
+
+* A "Restart" button is now available when you click the entry for an installed jail.
+
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
 
 * The "Help" icon has been replaced by the :ref:`Documentation` icon, providing an offline version of the FreeNAS® User Guide (this documentation).

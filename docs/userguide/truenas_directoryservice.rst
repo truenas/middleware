@@ -521,7 +521,7 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 | Domain Controller      | string    | hostname of domain controller                                                                    |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS system                                                                       |
+| NetBIOS Name           | string    | hostname of FreeNAS system; cannot be greater than 15 characters                                 |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
 | Workgroup Name         | string    | name of Windows server's workgroup                                                               |
