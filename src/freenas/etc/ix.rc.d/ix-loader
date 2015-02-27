@@ -148,12 +148,13 @@ generate_boot_loader_conf_local()
         # if we add more things later.
         if [ -f $FIRST_INSTALL_SENTINEL ]; then
 	    first_install=1
+            # Delete sentinel file before making clone as we
+            # we do not want the clone to have the file in it.
+            rm -rf $FIRST_INSTALL_SENTINEL
+
 	    # Creating pristine boot environment from the "default"
             echo "Creating 'Initial-Install' boot environment..."
             /usr/local/sbin/beadm create -e default Initial-Install
-
-            # Done, delete sentinel file and exit
-            rm -rf $FIRST_INSTALL_SENTINEL
         fi
 
 	update_persistent_file /boot/loader.conf.local $tmp
