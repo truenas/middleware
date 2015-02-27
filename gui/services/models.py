@@ -1766,7 +1766,20 @@ class DomainController(Model):
         super(DomainController, self).__init__(*args, **kwargs)
         self.svc = 'domaincontroller'
 
+        if self.dc_passwd:
+            self.dc_passwd = notifier().pwenc_decrypt(
+                self.dc_passwd
+            )
+        self._dc_passwd_encrypted = False
+
     def save(self):
+
+        if self.dc_passwd and not self._dc_passwd_encrypted:
+            self.dc_passwd = notifier().pwenc_encrypt(
+                self.dc_passwd
+            )
+            self._dc_passwd_encrypted = True
+
         super(DomainController, self).save()
 
         if not self.dc_kerberos_realm:
