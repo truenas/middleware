@@ -58,6 +58,10 @@ def main(ifname, event):
     if fobj['disabled']:
         if not fobj['master']:
             log.warn("Failover disabled.  Assuming backup.")
+            try:
+                os.unlink(state_file)
+            except:
+                pass
             sys.exit()
         else:
             for group in fobj['groups']:
@@ -101,6 +105,10 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             )
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
+                try:
+                    os.unlink(state_file)
+                except:
+                    pass
                 sys.exit(0)
         else:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
@@ -110,6 +118,10 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             )
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
+                try:
+                    os.unlink(state_file)
+                except:
+                    pass
                 sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
@@ -372,6 +384,10 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
                          "%s seconds.",  ifname, sleeper)
+                try:
+                    os.unlink(state_file)
+                except:
+                    pass
                 sys.exit(0)
         else:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
@@ -382,6 +398,10 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
                      "%s seconds.", ifname, sleeper)
+                try:
+                    os.unlink(state_file)
+                except:
+                    pass
                 sys.exit(0)
 
     for group, carpint in fobj['groups'].items():
