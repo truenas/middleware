@@ -13,7 +13,7 @@ used to create a support ticket. Refer to :ref:`Support` for detailed usage inst
 .. _Documentation:
 
 Documentation
-=============
+-------------
 
 The "Documentation" icon, located as the second icon from the left in the top menubar, provides a built-in browser to the FreeNAS® User Guide (this
 documentation).
