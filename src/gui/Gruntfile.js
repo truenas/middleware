@@ -18,9 +18,6 @@ module.exports = function(grunt) {
   // Force use of Unix newlines
   grunt.util.linefeed = "\n";
 
-  // Show a breakdown of build times, useful for debugging
-  // require("time-grunt")(grunt);
-
   // GRUNT CONFIGURATION AND GLOBAL VARIABLES
   // Load task configurations from grunt_tasks/config
   function loadConfig( path ) {

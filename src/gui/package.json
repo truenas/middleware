@@ -7,12 +7,10 @@
     "lodash": "^2.4.x",
     "mach": "^0.12.0",
     "moment": "^2.9.0",
-    "node-jsx": "^0.12.4",
     "react": "0.12.x",
     "react-bootstrap": "0.15.x",
     "react-router": "0.11.x",
     "react-tools": "^0.12.2",
-    "velocity-animate": "0.1.x",
     "when": "^3.5.x"
   },
   "devDependencies": {
@@ -35,9 +33,7 @@
     "grunt-ssh-multi-exec": "^4.1.0",
     "inquirer": "^0.8.0",
     "load-grunt-tasks": "^0.6.0",
-    "reactify": "^1.0.0",
-    "scp2": "^0.1.4",
-    "time-grunt": "^0.4.0"
+    "scp2": "^0.1.4"
   },
   "private": true
 }
