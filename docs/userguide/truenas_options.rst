@@ -130,14 +130,15 @@ Support Icon
 The "Support" icon, located as the third icon from the left in the top menubar, provides a shortcut to :menuselection:`System --> Support`. This screen can be
 used to verify the system license or to create a support ticket. Refer to :ref:`Support` for detailed usage instructions.
 
-.. index:: Documentation
+.. index:: Guide
 
-.. _Documentation:
+.. _Guide:
 
-Documentation
--------------
+Guide
+-----
 
-Some text here...
+The "Guide" icon, located as the second icon from the left in the top menubar, provides a built-in browser to the TrueNAS® Administrator Guide (this
+documentation).
 
 .. index:: Alert
 

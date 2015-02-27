@@ -652,16 +652,7 @@ should that information be needed in a network with outbound firewall restrictio
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
 
-To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
-be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
-`bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
-of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9.3 Release Notes in your web browser.
-
-**Figure 5.8b: Reviewing Updates**
-
-|update2.png|
-
-.. |update2.png| image:: images/update2.png
+To see if any updates are available, click the "Check Now" button. If there are any updates available, they will be listed.
 
 To apply the updates now, make sure that there aren't any clients currently connected to the TrueNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -681,19 +672,9 @@ If Something Goes Wrong
 
 If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
 
-To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and watch for the
-boot menu. In the example shown in Figure 5.8c, the first boot menu entry, *TrueNAS (default)*, refers to the initial installation, before the update was
-applied. The second boot entry, *TrueNAS-1415259326*, refers to the current version of the operating system, after the update was applied. This second entry
-is highlighted and begins with a star, indicating that this is the environment the system will boot into, unless another entry is manually selected. Both
-entries include a date and timestamp, indicating when that boot environment was created.
-
-**Figure 5.8c: Boot Menu**
-
-|tn_boot.png|
-
-.. |tn_boot.png| image:: images/tn_boot.png
-
-To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
+To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and press any key
+(except :kbd:`Enter`) when the boot menu appears to pause the boot. Select an entry with a date prior to the update then press  :kbd:`Enter` in order to boot
+into that version of the operating system, before the update was applied.
 
 .. index:: Upgrade ZFS Pool
 .. _Upgrading a ZFS Pool:
