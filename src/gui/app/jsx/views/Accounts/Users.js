@@ -41,7 +41,7 @@ var viewData = {
     , defaultFilters   : [ ]
     , allowedGroups    : [ "current", "userCreated", "builtIn" ]
     , defaultGroups    : [ "current", "userCreated", "builtIn" ]
-    , defaultCollapsed : [ "builtIn" ]
+    , defaultCollapsed : [ ]
   }
 };
 
