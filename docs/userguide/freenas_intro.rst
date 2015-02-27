@@ -350,6 +350,8 @@ that have occurred since 9.3-RELEASE.
 * The "Confirm Passphrase" field has been added to :menuselection:`System --> CAs --> Import CA`
   and :menuselection:`System --> Certificates --> Import Certificate`.
 
+* The "Support" tab has been added to :menuselection:`System --> Support`, providing a convenient method for reporting a bug or requesting a new feature.
+
 * The "Rsync Create" checkbox has been renamed to "Validate Remote Path" and the "Delay Updates" checkbox has been added to
   :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
 
@@ -375,6 +377,10 @@ that have occurred since 9.3-RELEASE.
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
 * The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
+* A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
+
+* The "Help" icon has been replaced by the :ref:`Documentation` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
 
 * A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
   connected initiators.
@@ -542,7 +548,7 @@ the following command. In this example, the capabilities line indicates that WOL
  options=42098<VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,WOL_MAGIC,VLAN_HWTSO>
  capabilities=5399b<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,VLAN_HWCSUM,TSO4,WOL_UCAST,WOL_MCAST, WOL_MAGIC,VLAN_HWFILTER,VLAN_H WTSO>
 
-If you find that WOL support is indicated but not working for a particular interface, create a bug report using the instructions in :ref:`Report a Bug`.
+If you find that WOL support is indicated but not working for a particular interface, create a bug report using the instructions in :ref:`Support`.
 
 .. include:: zfsprimer.rst
 

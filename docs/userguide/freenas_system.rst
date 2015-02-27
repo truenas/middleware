@@ -25,6 +25,8 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
 
+* :ref:`Support`: used to report a bug or request a new feature.
+
 Each of these is described in more detail in this section.
 
 .. _Information:
@@ -962,3 +964,52 @@ If you click an entry, it will activate the following configuration buttons:
 
 * **Delete:** used to delete a certificate or certificate signing request.
 
+.. index:: Support
+.. _Support:
+
+Support
+-------
+
+The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketing system for generating bug reports and feature requests.
+
+**Figure 5.11a: Support Tab**
+
+|support1.png|
+
+.. |support1.png| image:: images/support1.png
+
+This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
+FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
+username and password which can be used to create bug reports and receive notifications as your reports are actioned.
+
+Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`_. If
+you find a similar issue that is not yet marked as "closed" or "resolved", add a comment to that issue if you have new information to provide that can assist
+in resolving the issue. If you find a similar issue that is marked as "closed" or "resolved", you can create a new issue and refer to the earlier issue
+number.
+
+.. note:: if you are not updated to the latest version of STABLE, do that first to see if it resolves your issue.
+
+To generate a report using the built-in "Support" screen, complete the following fields:
+
+* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`_.
+
+* **Password:** input the password associated with the registered login name.
+
+* **Type:** select "Bug" when reporting an issue or "Feature" when requesting a new feature.
+
+* **Category:** this drop-down menu will be empty until you input a registered "Username" and "Password" and an error message will display if either value is
+  incorrect. Once the "Username" and "Password" are validated, the possible categories will be populated to the drop-down menu. Select the one that best
+  describes the bug or feature that you are reporting.
+
+* **Attach Debug Info:** it is recommended to leave this box checked so that an overview of the system's hardware, build string, and configuration is
+  automatically generated and included with the ticket.
+
+* **Subject:** input a descriptive title for the ticket. A good "Subject" makes it easy for you and other users to find similar reports.
+
+* **Description:** input a 1 to 3 paragraph summary of the issue that describes the problem, and if applicable, what steps one can do to reproduce it.
+
+* **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
+
+Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to
+`bugs.freenas.org <https://bugs.freenas.org>`_. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to
+the report.
