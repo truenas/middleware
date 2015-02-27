@@ -1,7 +1,7 @@
 This is an x64 distribution for TrueNAS VERSION built on
 BUILD_TIMESTAMP (yyyymmddhhmm format, GMT timezone, 24-hour time).
 
-If you are seeing this README file, this is a TN-9.3-STABLE build which
-directly corresponds to an update on the TN-9.3-STABLE train.  You can
+If you are seeing this README file, this is a TN-9.3-STABLE branch build which
+directly corresponds to an update on the TrueNAS-9.3-STABLE train.  You can
 get the benefit of installing the latest and greatest (without having to
 apply any updates immediately afterward) by simply installing this release.
