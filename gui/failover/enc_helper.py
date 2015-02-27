@@ -182,6 +182,11 @@ elif cmd == 'attachall':
         try:
             if rv:
                 os.unlink('/tmp/.failover_needop')
+                passphrase = escrowctl.getkey()
+                peer = str(Failover.objects.all()[0].ipaddress)
+                sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=2 %s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (peer)
+                sshcmd = pipeopen(sshcmd, quiet=True)
+                sshcmd.communicate()
             else:
                 file = open('/tmp/.failover_needop', 'w')
         except:
