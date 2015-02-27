@@ -117,11 +117,12 @@ class LocalEscrowCtl:
         data = self.sock.recv(BUFSIZE)
         return (data == "200 keyd\n")
 
-cmdset = set(['setkey', 'clear', 'synctopeer', 'syncfrompeer', 'shutdown', 'status', 'attachall', 'interactive'])
+if __name__ == "__main__":
+    cmdset = set(['setkey', 'clear', 'synctopeer', 'syncfrompeer', 'shutdown', 'status', 'attachall', 'interactive'])
 
-# Parse command options
-if len(sys.argv) < 2 or not sys.argv[1] in cmdset or (sys.argv[1] == 'setkey' and len(sys.argv) != 3):
-    print """
+    # Parse command options
+    if len(sys.argv) < 2 or not sys.argv[1] in cmdset or (sys.argv[1] == 'setkey' and len(sys.argv) != 3):
+        print """
 Usage: %s command [args...]
 
 Available commands are:
@@ -132,88 +133,90 @@ Available commands are:
   shutdown            Shuts down escrow daemon
   status              Inquiry escrow daemon status
   attachall           Attach volumes with the escrowed passphrase
-          """ % sys.argv[0]
-    sys.exit(1)
+        """ % sys.argv[0]
+        sys.exit(1)
 
-escrowctl = LocalEscrowCtl()
-cmd = sys.argv[1]
-rv = "Unknown"
-if cmd == 'setkey':
-    rv = escrowctl.setkey(sys.argv[2])
-elif cmd == 'clear':
-    rv = escrowctl.clear()
-elif cmd == 'shutdown':
-    rv = escrowctl.shutdown()
-elif cmd == 'status':
-    rv = escrowctl.status()
-    if rv:
-        print "Escrow have the passphrase"
-    else:
-        print "Escrow running without passphrase"
-elif cmd == 'attachall':
-    with tempfile.NamedTemporaryFile() as tmp:
-        tmp.file.write(escrowctl.getkey() or "")
-        tmp.file.flush()
-        procs = []
-        failed_drive = 0
-        failed_volume = 0
-        for vol in Volume.objects.filter(vol_encrypt__exact=2):
-            keyfile = vol.get_geli_keyfile()
-            for ed in vol.encrypteddisk_set.all():
-                provider = ed.encrypted_provider
-                if not os.path.exists('/dev/%s.eli' % provider):
-                    proc = pipeopen("geli attach -j %s -k %s %s" % (
-                        tmp.name, keyfile, provider) , quiet=True)
-                    procs.append(proc)
-            for proc in procs:
-                msg = proc.communicate()[1]
-                if proc.returncode != 0:
-                    print ("Unable to attach GELI provider: %s" % (msg))
-                    log.warn("Unable to attach GELI provider: %s", (msg))
-                    failed_drive += 1
-            importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
-            proc = pipeopen(importcmd)
-            proc.communicate()
-            if proc.returncode != 0:
-                failed_volume += 1
-        if failed_drive > 0:
-            print "ERROR: %d drives can not be attached" % (failed_drive)
-        rv = (failed_volume == 0)
-        try:
-            if rv:
-                os.unlink('/tmp/.failover_needop')
-                passphrase = escrowctl.getkey()
-                peer = str(Failover.objects.all()[0].ipaddress)
-                sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=2 %s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (peer)
-                sshcmd = pipeopen(sshcmd, quiet=True)
-                sshcmd.communicate()
-            else:
-                file = open('/tmp/.failover_needop', 'w')
-        except:
-            pass
-elif cmd == 'interactive':
-    passphrase = getpass.getpass()
-    if passphrase:
-        rv = escrowctl.setkey(passphrase)
-        os.system("/bin/sh /etc/carp-state-change-hook carp0 LINK_UP")
-else:
-    peer = str(Failover.objects.all()[0].ipaddress)
-    sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=7 %s" % (peer)
-    if cmd == 'synctopeer':
-        passphrase = escrowctl.getkey()
-        if passphrase:
-            sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py setkey %s" % (sshcmd, passphrase)
+    escrowctl = LocalEscrowCtl()
+    cmd = sys.argv[1]
+    rv = "Unknown"
+    if cmd == 'setkey':
+        rv = escrowctl.setkey(sys.argv[2])
+    elif cmd == 'clear':
+        rv = escrowctl.clear()
+    elif cmd == 'shutdown':
+        rv = escrowctl.shutdown()
+    elif cmd == 'status':
+        rv = escrowctl.status()
+        if rv:
+            print "Escrow have the passphrase"
         else:
-            print "ERROR: passphrase unavailable."
-    elif cmd == 'syncfrompeer':
-        sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (sshcmd)
-    sshcmd = pipeopen(sshcmd, quiet=True)
-    msg = sshcmd.communicate()[1]
-    rv = (sshcmd.returncode == 0)
-    if not rv:
-        print msg
+            print "Escrow running without passphrase"
+    elif cmd == 'attachall':
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp.file.write(escrowctl.getkey() or "")
+            tmp.file.flush()
+            procs = []
+            failed_drive = 0
+            failed_volume = 0
+            for vol in Volume.objects.filter(vol_encrypt__exact=2):
+                keyfile = vol.get_geli_keyfile()
+                for ed in vol.encrypteddisk_set.all():
+                    provider = ed.encrypted_provider
+                    if not os.path.exists('/dev/%s.eli' % provider):
+                        proc = pipeopen("geli attach -j %s -k %s %s" % (
+                            tmp.name, keyfile, provider) , quiet=True)
+                        procs.append(proc)
+                for proc in procs:
+                    msg = proc.communicate()[1]
+                    if proc.returncode != 0:
+                        print ("Unable to attach GELI provider: %s" % (msg))
+                        log.warn("Unable to attach GELI provider: %s", (msg))
+                        failed_drive += 1
+                importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
+                proc = pipeopen(importcmd)
+                proc.communicate()
+                if proc.returncode != 0:
+                    failed_volume += 1
+            if failed_drive > 0:
+                print "ERROR: %d drives can not be attached" % (failed_drive)
+            rv = (failed_volume == 0)
+            try:
+                if rv:
+                    os.unlink('/tmp/.failover_needop')
+                    passphrase = escrowctl.getkey()
+                    peer = str(Failover.objects.all()[0].ipaddress)
+                    sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=2 %s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (peer)
+                    sshcmd = pipeopen(sshcmd, quiet=True)
+                    sshcmd.communicate()
+                else:
+                    file = open('/tmp/.failover_needop', 'w')
+            except:
+                pass
+    elif cmd == 'interactive':
+        passphrase = getpass.getpass()
+        if passphrase:
+            rv = escrowctl.setkey(passphrase)
+            os.system("/bin/sh /etc/carp-state-change-hook carp0 LINK_UP")
+    else:
+        peer = str(Failover.objects.all()[0].ipaddress)
+        sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=7 %s" % (peer)
+        if cmd == 'synctopeer':
+            passphrase = escrowctl.getkey()
+            if passphrase:
+                sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py setkey %s" % (sshcmd, passphrase)
+            else:
+                print "ERROR: passphrase unavailable."
+        elif cmd == 'syncfrompeer':
+            sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (sshcmd)
+        sshcmd = pipeopen(sshcmd, quiet=True)
+        msg = sshcmd.communicate()[1]
+        rv = (sshcmd.returncode == 0)
+        if not rv:
+            print msg
 
-if rv:
-    print "Succeeded."
-else:
-    print "Failed."
+    if rv:
+        print "Succeeded."
+        sys.exit(0)
+    else:
+        print "Failed."
+        sys.exit(1)
