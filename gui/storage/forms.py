@@ -1960,6 +1960,16 @@ class ZFSDiskReplacementForm(Form):
         # NOTE: This approach may fail if device nodes are not accessible.
         disks = notifier().get_disks()
 
+        pool = notifier().zpool_parse(self.volume.vol_name)
+        try:
+            if pool.spares:
+                for vdev in pool.spares:
+                    for dev in vdev:
+                        if dev.status != 'INUSE' and  dev.disk in used_disks:
+                            used_disks.remove(dev.disk)
+        except Exception as e:
+            log.debug("Failed to get spares: %s", e)
+
         for disk in disks:
             if disk in used_disks:
                 continue
