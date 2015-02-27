@@ -1,0 +1,20 @@
+#6825	Bug	Normal	Previous Versions not working completely while FreeNAS machine is a member of Active Directory through Directory Services
+#7823	Bug	Low	Boot device appears in main storage pool disk status
+#7995	Bug	Normal	Add training URL to FreeNAS userguide
+#7999	Feature	Normal	Embed the complete documentation in the UI
+#8000	Feature	Normal	Remove the "Help" button and replace it with dedicated "Support" and "Docs" buttons
+#8041	Bug	Normal	samba shouldn't listen on a /32
+#8050	Bug	Normal	Active directory integration problem
+#8053	Feature	Low	Add a restart button for jails
+#8059	Bug	Normal	User Management; Deleting a user succeeds but logs "Failed to delete group xyz: pw: unknown group 'xyz'"
+#8093	Bug	Normal	Changes desired for System->Support
+#8134	Bug	Normal	Have total disk space report itself properly
+#8148	Bug	Low	List of jails not updated after jail has been added
+#8149	Bug	Urgent	TFTP service no longer starts on FreeNAS-9.3-STABLE-201502210408
+#8150	Feature	Normal	Menubar Icons are needed for Support and Docs
+#8183	Bug	Low	"Add jails" button should be called "Add jail"
+#8188	Bug	Normal	WebGUI should limit the NETBIOS name field to 15 characters
+#8191	Bug	Normal	Apply FreeBSD security advisory batch of Feb 25
+#8195	Bug	Normal	update notification with multiple times the same updates
+#8201	Bug	Normal	Support UI in FreeNAS shows TrueNAS fields (that can't be edited or set or seen)
+#8221	Feature	Normal	Merge zfsd into trueos for hot-spare capability
