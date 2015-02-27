@@ -81,7 +81,7 @@ def main(ifname, event):
         else:
             masterret = False
             for vol in fobj['volumes']:
-                ret = os.system("zpool status %s" % vol)
+                ret = os.system("zpool status %s > /dev/null" % vol)
                 if ret:
                     masterret = True
                     for group in fobj['groups']:
