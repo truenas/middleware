@@ -43,10 +43,14 @@ def main(command, quiet):
             if not quiet:
                 print "Node status: Not an HA node"
             sys.exit(0)
+        elif ret == "UNKNOWN" and Failover.objects.all().exists():
+            print "Node status: Passive (Master mode unreachable)"
+
         if Failover.objects.all()[0].disabled is True:
             print "Failover status: Disabled"
         else:
             print "Failover status: Enabled"
+
     elif command == "enable":
         if Failover.objects.all()[0].disabled is True:
             ip = Failover.objects.all()[0].ipaddress
