@@ -920,12 +920,8 @@ menu_install()
 		# Set the root password
 		chroot /tmp/data /etc/netcli reset_root_pw ${_password}
 	fi
-	# only do this if not upgrading, because we use this sentinel file for
-	# creating the "Initial-Install" Boot Environment and if we do not
-	# have this 'else' here then it will result in multiple BEs with that name
-	# or some other hilarity will ensue!
-	: > /tmp/data/${FIRST_INSTALL_SENTINEL}
     fi
+    : > /tmp/data/${FIRST_INSTALL_SENTINEL}
     # Finally, before we unmount, start a srub.
     # zpool scrub freenas-boot || true
 

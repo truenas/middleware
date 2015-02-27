@@ -127,8 +127,12 @@ db_update()
 	rm -f $NEED_UPDATE_SENTINEL
 	rm -f $CD_UPGRADE_SENTINEL
 
+	# remove ${FIRST_INSTALL_SENTINEL} from this loader call
+	rm -f ${FIRST_INSTALL_SENTINEL}
 	# NOTE: this must be run via the rc.d script, not service(8).
 	env AUTOTUNE_REBOOT=false /etc/ix.rc.d/ix-loader start
+	# we need it for the ix-loader service call later on
+	touch ${FIRST_INSTALL_SENTINEL}
 
 	echo "Database upgrade complete.  Rebooting."
 	cd /
