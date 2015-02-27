@@ -138,6 +138,7 @@ class Dispatcher(object):
         self.event_types = {}
         self.event_sources = {}
         self.event_handlers = {}
+        self.hooks = {}
         self.plugins = {}
         self.threads = []
         self.queues = {}
@@ -363,6 +364,21 @@ class Dispatcher(object):
     def unregister_resource(self, name):
         self.logger.debug('Resource removed: {0}'.format(name))
         self.resource_graph.remove_resource(name)
+
+    def register_hook(self, name):
+        if name not in self.hooks:
+            self.hooks[name] = []
+
+    def unregister_hook(self, name):
+        del self.hooks[name]
+
+    def attach_hook(self, name, func):
+        self.register_hook(name)
+        self.hooks[name].append(func)
+        return func
+
+    def detach_hook(self, name, func):
+        self.hooks[name].remove(func)
 
     def die(self):
         self.logger.warning('Exiting from "die" command')
@@ -932,7 +948,7 @@ class FileConnection(WebSocketApplication, EventEmitter):
             message = loads(message)
 
             if type(message) is not dict:
-                retur
+                return
 
             if 'token' not in message:
                 return
