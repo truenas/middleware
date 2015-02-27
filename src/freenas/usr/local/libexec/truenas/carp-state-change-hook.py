@@ -55,6 +55,20 @@ def main(ifname, event):
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
 
+    SENTINEL = False
+    for group in fobj['groups']:
+        for interface in fobj['groups'][group]:
+            if ifname == interface:
+                SENTINEL = True
+
+    if not SENTINEL:
+        log.warn("Ignoring state change on non-critical interface %s.", ifname)
+        try:
+            os.unlink(state_file)
+        except:
+            pass
+        sys.exit()
+
     if fobj['disabled']:
         if not fobj['master']:
             log.warn("Failover disabled.  Assuming backup.")
