@@ -12,7 +12,7 @@ module.exports = function( grunt ) {
     grunt.log.writeln( chalk.green( "Beginning live development session for FreeNAS 10" ) );
 
     // Sanity check remote environment
-    grunt.task.run( "ssh-multi-exec:enableDevMode");
+    grunt.task.run( "ssh-multi-exec:verify-development-environment");
 
     // rsync initial payload
     grunt.task.run( "rsync" );

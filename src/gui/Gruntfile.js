@@ -108,7 +108,16 @@ module.exports = function(grunt) {
     // FreeNAS remote config
     , guiDirectory   : "/usr/local/www/gui"
     , configFilePath : "./freenas10-conf.json"
-    , freeNASConfig  : {
+    , conditionalCommands: {
+        enablePkg        : ""
+      , installGmake     : ""
+      , installGplusplus : ""
+      , symlinkGplusplus : ""
+      , symlinkCplusplus : ""
+      , installNpm       : ""
+      , updateNpm        : ""
+    }
+    , freeNASConfig: {
           "notConfigured" : true
         , "remoteHost"    : null
         , "sshPort"       : null

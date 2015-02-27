@@ -6,17 +6,10 @@
 var _     = require("lodash");
 var chalk = require("chalk");
 
-// SSH VARIABLES
-var pkgTranslations = {
-    "node"  : "www/node"
-  , "npm"   : "www/npm"
-  , "g++"   : "lang/gcc"
-  , "gmake" : "devel/gmake"
-};
-
 module.exports = function( grunt ) {
 
-  var testResults = {};
+  var conditionalCommands = {};
+  var actionsNeeded       = [];
 
   // SSH HELPERS
   // Test that a response was issued, and that it contains the provided string
@@ -67,51 +60,8 @@ module.exports = function( grunt ) {
     }
   }
 
+
   // SSH-MULTI-EXEC COMMAND CONSTRUCTORS
-  // A TestCommand will modify the testResults object with a key phrase string
-  // whose boolean value is used to determine whether additional commands should
-  // run next (ConditionalCommands).
-  var TestCommand = function( command, testString, resultParam, passMsg, actionMsg ) {
-    this.input = command;
-
-    // If a response DOES NOT contain the test string, no action needs to be
-    // taken. This is slightly counterintuitive, but necessary beacuse the null
-    // or negative case is much easier to test for, in most cases (eg "Command
-    // not found" vs the path of a command)
-
-    this.success = function( data, context, done ) {
-      if ( responseContains( data, testString ) ) {
-        testResults[ resultParam ] = true;
-        if ( typeof actionMsg === "string" && actionMsg.length ) {
-          logSshMsg( actionMsg, "bold" );
-        }
-      } else {
-        testResults[ resultParam ] = false;
-        if ( typeof passMsg === "string" && passMsg.length ) {
-          logSshMsg( passMsg, "green" );
-        }
-      }
-      done();
-    };
-  };
-
-  // A ConditionalCommand only runs if the key phrase provided for `shouldRun`
-  // comes back as true. This makes it easy to perform a command in response to
-  // the result of a TestCommand.
-  var ConditionalCommand = function( shouldRun, command, didRunMsg ) {
-    if ( shouldRun ) {
-      this.input = command;
-      if ( typeof didRunMsg === "string" && didRunMsg.length ) {
-        console.log("defining!");
-        this.success = function( data, context, done ) {
-          logSshMsg( didRunMsg, "cyan" );
-          done();
-        };
-      }
-    } else {
-      this.input = "";
-    }
-  };
 
   var SSHOptions = function() {
     this["hosts"]      = [ "<%= freeNASConfig.remoteHost %>:<%= freeNASConfig.sshPort %>" ];
@@ -120,117 +70,118 @@ module.exports = function( grunt ) {
     this["password"]   = "<%= freeNASConfig.rootPath %>";
   };
 
-  this["enableDevMode"] = _.assign( new SSHOptions(), {
+  this["verify-development-environment"] = _.assign( new SSHOptions(), {
       commands : [
 
           { input: "rehash" }
 
         // Check if pkg(8) is enabled
-        , new TestCommand( "cat /usr/local/etc/pkg/repos/FreeBSD.conf"
-                         , "enabled: no"
-                         , "pkg is not enabled"
-                         , "pkg(8) is already enabled"
-                         , "pkg(8) needs to be enabled" )
-
-        // Enable pkg(8), if necessary
-        , new ConditionalCommand( testResults["pkg is not enabled"]
-                                , "sed -i -e 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf"
-                                , "Successfully enabled pkg(8)" )
-
-        // Check if gmake is installed
-        , new TestCommand( "which gmake"
-                         , "Command not found"
-                         , "need gmake"
-                         , "gmake is installed (as " + pkgTranslations["gmake"] + ")"
-                         , "gmake needs to be installed" )
-
-        // Install gmake, if necessary
-        , new ConditionalCommand( testResults["need gmake"]
-                                , "env ASSUME_ALWAYS_YES=YES pkg install " + pkgTranslations["gmake"]
-                                , "Successfully installed (as " + pkgTranslations["gmake"] + ")" )
-
-        // Check if g++ (or Clang) is installed
-        , new TestCommand( "which g++"
-                         , "Command not found"
-                         , "need g++"
-                         , "g++ is installed (as " + pkgTranslations["g++"] + ")"
-                         , "g++ needs to be installed" )
-
-        // Install g++, if necessary
-        , new ConditionalCommand( testResults["need g++"]
-                                , "env ASSUME_ALWAYS_YES=YES pkg install " + pkgTranslations["g++"]
-                                , "Successfully installed (as " + pkgTranslations["g++"] + ")" )
-
-        // Symlink to generic term (g++)
-        , new ConditionalCommand( testResults["need g++"]
-                                , "ln -s /usr/local/bin/g++48 /usr/local/bin/g++"
-                                , "" )
-
-        // Sometimes your assumptions are wrong, node community.
-        , new ConditionalCommand( testResults["need g++"]
-                                , "ln -s /usr/local/bin/g++ /usr/local/bin/c++"
-                                , "" )
-
-        // Check if npm is installed
-        , new TestCommand( "which npm"
-                         , "Command not found"
-                         , "need npm"
-                         , "npm is installed (as " + pkgTranslations["npm"] + ")"
-                         , "npm needs to be installed" )
-
-        // Install npm, if necessary
-        , new ConditionalCommand( testResults["need npm"]
-                                , "env ASSUME_ALWAYS_YES=YES pkg install " + pkgTranslations["npm"]
-                                , "Successfully installed (as " + pkgTranslations["npm"] + ")" )
-
-        , { input: "rehash" }
-
-        // Check installed version of npm (pkg is usually out of date)
-        , new TestCommand( "npm -v"
-                         , "1."
-                         , "need to update npm"
-                         , "npm is at least v2.0"
-                         , "npm needs to be updated" )
-
-        // Update npm to latest version, if necessary
-        , new ConditionalCommand( testResults["need to update npm"]
-                                , "npm update -g npm"
-                                , "Successfully updated npm" )
-
-        // Update path
-        , { input: "rehash" }
-
-        // Check to see if header files are found in /usr/include/
-        , { input: "cd /usr/include/"
-          , force: true
+        , { input: "cat /usr/local/etc/pkg/repos/FreeBSD.conf"
           , success: function( data, context, done ) {
-              testResults["no header files"] = false;
-              logSshMsg("Header files seem to be present in /usr/include/", "green");
-              done();
-            }
-          , error: function( err, context, done ) {
-              if ( responseContains( err, "No such" ) ) {
-                testResults["no header files"] = true;
-                logSshMsg("Header files will need to be copied to /usr/include/", "cyan");
-                grunt.task.run("freenas-scp:header-files");
-                done();
-              } else {
-                grunt.fail.fatal("Something went badly wrong trying to cd into /usr/include/");
-                done();
+
+              if ( responseContains( data, "enabled: no" ) ) {
+                actionsNeeded.push( "pkg(8) needs to be enabled" );
+                conditionalCommands["enablePkg"] = "sed -i -e 's/no/yes/' /usr/local/etc/pkg/repos/FreeBSD.conf";
               }
+
+              done();
             }
           }
 
-        // Make sure /usr/include exists
-        , new ConditionalCommand( testResults["no header files"]
-                                , "mkdir -p /usr/include/"
-                                , "Created /usr/include directory (mkdir -p)" )
+        // Check if gmake is installed
+        , { input: "which gmake"
+          , success: function( data, context, done ) {
 
-        // Unpack header files into /usr/include
-        , new ConditionalCommand( testResults["no header files"]
-                                , "tar -C /usr/include/ -xvzf /root/.tmp/headerfiles/headerfiles.tar.gz"
-                                , "Header files were successfully unpacked" )
+              if ( responseContains( data, "Command not found" ) ) {
+                actionsNeeded.push( "gmake needs to be installed" );
+                conditionalCommands["installGmake"] = "env ASSUME_ALWAYS_YES=YES pkg install gmake";
+              }
 
+              done();
+            }
+          }
+
+        // Check if g++ (or Clang) is installed
+        , { input: "which g++"
+          , success: function( data, context, done ) {
+
+              if ( responseContains( data, "Command not found" ) ) {
+                actionsNeeded.push( "g++ needs to be installed" );
+                conditionalCommands["installGplusplus"] = "env ASSUME_ALWAYS_YES=YES pkg install g++";
+                conditionalCommands["symlinkGplusplus"] = "ln -s /usr/local/bin/g++48 /usr/local/bin/g++";
+                conditionalCommands["symlinkCplusplus"] = "ln -s /usr/local/bin/g++ /usr/local/bin/c++";
+              }
+
+              done();
+            }
+          }
+
+        // Check if npm is installed
+        , { input: "which npm"
+          , success: function( data, context, done ) {
+
+              if ( responseContains( data, "Command not found" ) ) {
+                actionsNeeded.push( "npm needs to be installed" );
+                conditionalCommands["installNpm"] = "env ASSUME_ALWAYS_YES=YES pkg install npm";
+                conditionalCommands["updateNpm"]  = "npm update -g npm";
+              }
+
+              done();
+            }
+          }
+
+        // Perform any conditional tasks that must be performed
+        , { input: "rehash"
+            , success: function( data, context, done ) {
+                if ( actionsNeeded.length ) {
+                  grunt.log.writeln( chalk.bold( "The following issues will need to be corrected:" ) );
+                  grunt.log.writeln( chalk.cyan( " * " + actionsNeeded.join("\n * ") ) );
+
+                  grunt.config.set( ["conditionalCommands"], conditionalCommands );
+
+                  grunt.task.run( "ssh-multi-exec:modify-development-environment" );
+                }
+
+                done();
+            }
+          }
+        ]
+  });
+
+  this["modify-development-environment"] = _.assign( new SSHOptions(), {
+      commands : [
+        // Enable pkg(8), if necessary
+          { input: "<%= conditionalCommands.enablePkg %>" }
+
+        // Install gmake, if necessary
+        , { input: "<%= conditionalCommands.installGmake %>"
+          , force: true
+          }
+
+        // Install g++, if necessary
+        , { input: "<%= conditionalCommands.installGplusplus %>"
+          , force: true
+          }
+
+        // Symlink to generic term (g++)
+        , { input: "<%= conditionalCommands.symlinkGplusplus %>"
+          , force: true
+          }
+
+        // Sometimes your assumptions are wrong, node community.
+        , { input: "<%= conditionalCommands.symlinkCplusplus %>"
+          , force: true
+          }
+
+        // Install npm, if necessary
+        , { input: "<%= conditionalCommands.installNpm %>"
+          , force: true
+          }
+
+        // Update npm to latest version, if necessary
+        , { input: "<%= conditionalCommands.updateNpm %>"
+          , force: true
+          }
       ]
   });
 
