@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from lockfile import LockFile
 
+import atexit
 import json
 import logging
 import logging.config
@@ -47,6 +48,13 @@ def main(ifname, event):
 
     state_file = '%s%s' % (FAILOVER_STATE, event)
 
+    @atexit.register
+    def cleanup():
+        try:
+            os.unlink(state_file)
+        except:
+            pass
+
     with LockFile(FAILOVER_MTX):
         if not os.path.exists(state_file):
             open(state_file, 'w').close()
@@ -64,19 +72,11 @@ def main(ifname, event):
 
     if not SENTINEL:
         log.warn("Ignoring state change on non-critical interface %s.", ifname)
-        try:
-            os.unlink(state_file)
-        except:
-            pass
         sys.exit()
 
     if fobj['disabled']:
         if not fobj['master']:
             log.warn("Failover disabled.  Assuming backup.")
-            try:
-                os.unlink(state_file)
-            except:
-                pass
             sys.exit()
         else:
             for group in fobj['groups']:
@@ -120,10 +120,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             )
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
-                try:
-                    os.unlink(state_file)
-                except:
-                    pass
                 sys.exit(0)
         else:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
@@ -133,20 +129,12 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             )
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
-                try:
-                    os.unlink(state_file)
-                except:
-                    pass
                 sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
         for group in fobj['groups']:
             for interface in fobj['groups'][group]:
                 run("ifconfig %s advskew 1" % interface)
-        try:
-            os.unlink(state_file)
-        except:
-            pass
         sys.exit(0)
 
     for group, carpint in fobj['groups'].items():
@@ -162,10 +150,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
             run('echo "$(date), $(hostname), %s assumed master while other '
                 'interfaces are still in slave mode." | mail -s "Failover WARNING"'
                 ' root' % ifname)
-            try:
-                os.unlink(state_file)
-            except:
-                pass
             sys.exit(1)
 
     run('pkill -f fenced')
@@ -219,10 +203,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
                 os.unlink(ELECTING_FILE)
             except:
                 pass
-            try:
-                os.unlink(state_file)
-            except:
-                pass
             sys.exit(0)
 
         if int(status1) == 2 and int(status2) == 0:
@@ -258,10 +238,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
             run('ifconfig %s advskew 204' % ifname)
         try:
             os.unlink(ELECTING_FILE)
-        except:
-            pass
-        try:
-            os.unlink(state_file)
         except:
             pass
         sys.exit(1)
@@ -370,10 +346,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
         pass
 
     run('/usr/sbin/service ix-crontab quietstart')
-    try:
-        os.unlink(state_file)
-    except:
-        pass
 
     log.warn('Syncing enclosure')
     run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
@@ -405,10 +377,6 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
                          "%s seconds.",  ifname, sleeper)
-                try:
-                    os.unlink(state_file)
-                except:
-                    pass
                 sys.exit(0)
         else:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
@@ -419,10 +387,6 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
                      "%s seconds.", ifname, sleeper)
-                try:
-                    os.unlink(state_file)
-                except:
-                    pass
                 sys.exit(0)
 
     for group, carpint in fobj['groups'].items():
@@ -434,10 +398,6 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
             log.warn(
                 'Ignoring DOWN state on %s because we still have interfaces that '
                 'are UP.', ifname)
-            try:
-                os.unlink(state_file)
-            except:
-                pass
             sys.exit(1)
 
     run('pkill -f fenced')
