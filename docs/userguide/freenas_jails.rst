@@ -147,15 +147,15 @@ Once you click the "Save" button to save the configuration, you are now ready to
 Adding Jails
 ------------
 
-To create a jail, click :menuselection:`Jails --> Add Jails` to access the screen shown in Figure 13.2a.
+To create a jail, click :menuselection:`Jails --> Add Jail` to access the screen shown in Figure 13.2a.
 
-.. note:: the "Add Jails" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
+.. note:: the "Add Jail" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
 
 **Figure 13.2a: Creating a Jail**
 
-|jails3.png|
+|jails3a.png|
 
-.. |jails3.png| image:: images/jails3.png
+.. |jails3a.png| image:: images/jails3a.png
 
 By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
@@ -289,9 +289,9 @@ system boot, whether or not it is currently running, and the type of jail (e.g. 
 
 **Figure 13.2b: Viewing Added Jails**
 
-|jails4.png|
+|jails4a.png|
 
-.. |jails4.png| image:: images/jails4.png
+.. |jails4a.png| image:: images/jails4a.png
 
 In order, from left to right, the following configuration icons are available:
 
@@ -303,15 +303,16 @@ changed so these fields will be greyed out.
 
 **Add Storage:** used to configure the jail to access an area of storage as described in :ref:`Add Storage`.
 
+**Upload Plugin:** used to manually upload a plugin previously downloaded from the `plugins repository <http://download.freenas.org/plugins/9/x64/>`_.
+
 **Start/Stop:** this icon will vary, depending upon the current "Status" of the jail. If the jail is currently stopped, the icon will be green and can be used
 to start the jail. If the jail is currently running, the icon will be red and can be used to stop the jail. A stopped jail and its applications are
 inaccessible until it is restarted.
 
-**Shell:** used to access a
-*root* command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close the shell.
+**Restart:** used to restart the jail.
 
-**Delete:** deleting the specified jail also deletes any software that was installed in that jail. The GUI will display a warning which requires you to click
-the "Yes" button, indicating that you are sure that you want to delete the jail, before this operation is performed.
+**Shell:** used to access a *root* command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close
+the shell.
 
 .. _Accessing a Jail Using SSH:
 
@@ -667,7 +668,7 @@ Using the phpVirtualBox Template
 --------------------------------
 
 If the software you need requires a different operating system or you wish to use a non-FreeBSD operating system to manage software, use the VirtualBox
-template to create an instance of phpVirtualBox. In the "Add Jails" screen, click the "Advanced Mode" button. As seen in the example in Figure 13.3a, input a
+template to create an instance of phpVirtualBox. In the "Add Jail" screen, click the "Advanced Mode" button. As seen in the example in Figure 13.3a, input a
 "Jail Name", verify that the "IPv4 address" is valid and not in use by another host or jail, and select *VirtualBox* from the "Template" drop-down menu. Press
 the "OK" button to begin the installation.
 
