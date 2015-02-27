@@ -9,7 +9,7 @@
     "moment": "^2.9.0",
     "node-jsx": "^0.12.4",
     "react": "0.12.x",
-    "react-bootstrap": "0.13.x",
+    "react-bootstrap": "0.15.x",
     "react-router": "0.11.x",
     "react-tools": "^0.12.2",
     "velocity-animate": "0.1.x",
