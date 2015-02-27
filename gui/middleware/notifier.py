@@ -1490,7 +1490,8 @@ class notifier:
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
 
-        mountpoint = path if path else ('/mnt/%s' % (z_name, ))
+        altroot = 'none' if path else '/mnt'
+        mountpoint = path if path else ('/%s' % (z_name, ))
 
         larger_ashift = 0
         try:
@@ -1505,7 +1506,7 @@ class notifier:
                       "-o autoexpand=on "
                       "-O compression=lz4 "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
-                      "-f -m %s %s %s" % (mountpoint, z_name, z_vdev))
+                      "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
         if p1.wait() != 0:
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
@@ -1522,6 +1523,8 @@ class notifier:
             volume.save()
         else:
             log.warn("The guid of the pool %s could not be retrieved", z_name)
+
+        self.zfs_inherit_option(z_name, 'mountpoint')
 
         self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
         # TODO: geli detach -l
