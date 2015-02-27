@@ -32,6 +32,7 @@ cimport nvpair
 cimport libzfs
 cimport zfs
 from libc.string cimport memset
+from libc.stdlib cimport free
 
 
 class Error(enum.IntEnum):
@@ -176,10 +177,8 @@ class ScanState(enum.IntEnum):
 
 
 class SendFlags(enum.IntEnum):
-    EMBED_DATA = LZC_SEND_FLAG_EMBED_DATA
-    LARGE_BLOCK = LZC_SEND_FLAG_LARGE_BLOCK
-
-
+    EMBED_DATA = libzfs.LZC_SEND_FLAG_EMBED_DATA
+    LARGE_BLOCK = libzfs.LZC_SEND_FLAG_LARGE_BLOCK
 
 
 class ZFSException(RuntimeError):
@@ -358,9 +357,11 @@ cdef class ZFSProperty(object):
     cdef libzfs.libzfs_handle_t* _root
     cdef libzfs.zfs_handle_t* _dataset
     cdef zfs.zfs_prop_t _propid
+    cdef readonly object parent
     cdef readonly object name
 
     def __init__(self, ZFS root, ZFSDataset dataset, zfs.zfs_prop_t propid):
+        self.parent = dataset
         self._root = <libzfs.libzfs_handle_t*>root.handle()
         self._dataset = <libzfs.zfs_handle_t*>dataset.handle()
         self._propid = propid
@@ -553,22 +554,13 @@ cdef class ZFSPool(object):
     cdef libzfs.zpool_handle_t *_zpool
     cdef bint free
     cdef readonly ZFS root
-    cdef readonly ZFSDataset root_dataset
     cdef readonly object name
 
     def __init__(self, ZFS root, uintptr_t handle, bint free=True):
         self.root = root
         self._zpool = <libzfs.zpool_handle_t*>handle
         self.name = libzfs.zpool_get_name(self._zpool)
-        self.root_dataset = ZFSDataset(
-            self.root,
-            self,
-            <uintptr_t>libzfs.zfs_open(
-                <libzfs.libzfs_handle_t*>self.root.handle(),
-                self.name,
-                zfs.ZFS_TYPE_FILESYSTEM
-            )
-        )
+        self.free = free
 
     def __dealloc__(self):
         if self.free:
@@ -597,6 +589,18 @@ cdef class ZFSPool(object):
         proptypes = <object>arg
         proptypes.append(proptype)
         return zfs.ZPROP_CONT
+
+    property root_dataset:
+        def __get__(self):
+            return ZFSDataset(
+                self.root,
+                self,
+                <uintptr_t>libzfs.zfs_open(
+                    <libzfs.libzfs_handle_t*>self.root.handle(),
+                    self.name,
+                    zfs.ZFS_TYPE_FILESYSTEM
+                )
+            )
 
     property data_vdevs:
         def __get__(self):
@@ -783,6 +787,16 @@ cdef class ZFSDataset(object):
             proptypes = []
             libzfs.zprop_iter(self.__iterate_props, <void*>proptypes, True, True, zfs.ZFS_TYPE_FILESYSTEM)
             return {p.name: p for p in [ZFSProperty(self.root, self, x) for x in proptypes]}
+
+    property mountpoint:
+        def __get__(self):
+            cdef char *mntpt
+            if libzfs.zfs_is_mounted(self._handle, &mntpt) == 0:
+                return None
+
+            result = mntpt
+            free(mntpt)
+            return result
 
     def rename(self, new_name):
         pass

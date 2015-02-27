@@ -28,6 +28,13 @@ cimport nvpair
 cimport zfs
 from types cimport *
 
+
+cdef extern from "libzfs_core.h":
+    enum lzc_send_flags:
+        LZC_SEND_FLAG_EMBED_DATA
+        LZC_SEND_FLAG_LARGE_BLOCK
+
+
 cdef extern from "libzfs.h":
     ctypedef int int
     cdef enum:
@@ -423,7 +430,7 @@ cdef extern from "libzfs.h":
 
     extern int zfs_send(zfs_handle_t *, const char *, const char *,
         sendflags_t *, int, snapfilter_cb_t, void *, nvpair.nvlist_t **)
-    extern int zfs_send_one(zfs_handle_t *, const char *, int, lzc_send_flags_t)
+    extern int zfs_send_one(zfs_handle_t *, const char *, int, int)
 
     extern int zfs_promote(zfs_handle_t *)
     extern int zfs_hold(zfs_handle_t *, const char *, const char *,
@@ -518,8 +525,3 @@ cdef extern from "libzfs.h":
     
     extern int zmount(const char *, const char *, int, char *, char *, int, char *,
         int)
-
-cdef extern from "libzfs_core.h":
-    ctypedef enum lzc_send_flags:
-        LZC_SEND_FLAG_EMBED_DATA
-        LZC_SEND_FLAG_LARGE_BLOCK
