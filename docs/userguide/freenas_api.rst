@@ -10,9 +10,9 @@ controlling a FreeNAS® system.
 REST provides an easy-to-read, HTTP implementation of functions, known as resources, which are available beneath a specified base URL. Each resource is
 manipulated using the HTTP methods defined in :rfc:`2616`, such as GET, PUT, POST, or DELETE.
 
-As seen in Figure 25.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
+As seen in Figure 26.1a, an online version of the API is available at `api.freenas.org <http://api.freenas.org>`_.
 
-**Figure 25.1a: FreeNAS® API Documentation**
+**Figure 26.1a: FreeNAS® API Documentation**
 
 |api.png|
 
@@ -82,11 +82,11 @@ to *http*.
 
 **Lines 8-16:** sets the values for the user being created. The `"Users" resource <http://api.freenas.org/resources/account.html#users>`_ describes this
 resource in more detail. The allowed parameters are listed in the "Json Parameters" section of that resource. Since this resource creates a FreeBSD user, the
-values that you input must be valid for a FreeBSD user account. Table 25.2a summarizes the valid values. Since this resource is using JSON, the possible
+values that you input must be valid for a FreeBSD user account. Table 26.1a summarizes the valid values. Since this resource is using JSON, the possible
 boolean values are *True*
 or *False*.
 
-**Table 25.2a: Valid JSON Parameters for Users Create Resource**
+**Table 26.1a: Valid JSON Parameters for Users Create Resource**
 
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+
 | **JSON Parameter**       | **Type** | **Description**                                                                                                      |
