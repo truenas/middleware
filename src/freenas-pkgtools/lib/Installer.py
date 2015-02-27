@@ -659,9 +659,12 @@ def install_file(pkgfile, dest):
         # the manifest may have relative or absolute paths,
         # and tar may remove a leading slash to make us secure.)
         # We also have to look in the directories hash
+        # print >> sys.stderr, "member = %s, prefix = %s" % (member.name, prefix)
         mFileHash = "-"
         if member.name in mfiles:
             mFileHash = mfiles[member.name]
+        elif member.name.startswith("/") == False and ("/" + member.name) in mfiles:
+            mFileHash = mfiles["/" + member.name]
         elif prefix + member.name in mfiles:
             mFileHash = mfiles[prefix + member.name]
         elif (prefix + member.name).startswith("/") == False:
@@ -671,6 +674,8 @@ def install_file(pkgfile, dest):
             # If it's not in the manifest, then ignore it
             # It may be a directory, however, so let's check
             if EntryInDictionary(member.name, mdirs, prefix) == False:
+                # If we don't skip it, we infinite loop.  That's bad.
+                member = t.next()
                 continue
         if pkgDeltaVersion is not None:
             if verbose or debug: log.debug("Extracting %s from delta package" % member.name)
@@ -678,7 +683,6 @@ def install_file(pkgfile, dest):
         if list is not None:
             pkgFiles.append((pkgName,) + list)
     
-#        print "prefix = %s, member = %s, hash = %s" % (prefix, member.name, mFileHash)
         member = t.next()
     
     if len(pkgFiles) > 0:
