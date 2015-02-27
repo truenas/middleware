@@ -44,9 +44,9 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|system1.png|
+|system1a.png|
 
-.. |system1.png| image:: images/system1.png
+.. |system1a.png| image:: images/system1a.png
 
 .. _General:
 
@@ -57,9 +57,9 @@ General
 
 **Figure 5.2a: General Screen**
 
-|system2.png|
+|system2a.png|
 
-.. |system2.png| image:: images/system2.png
+.. |system2a.png| image:: images/system2a.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -206,9 +206,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1b.png|
+|be1c.png|
 
-.. |be1b.png| image:: images/be1b.png
+.. |be1c.png| image:: images/be1c.png
 
 Each boot environment entry contains the following information:
 
@@ -301,9 +301,9 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-|system3.png|
+|system3a.png|
 
-.. |system3.png| image:: images/system3.png
+.. |system3a.png| image:: images/system3a.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -459,9 +459,9 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4a.png|
+|system4b.png|
 
-.. |system4a.png| image:: images/system4a.png
+.. |system4b.png| image:: images/system4b.png
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -511,9 +511,9 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.6a: System Dataset Screen**
 
-|system5.png|
+|system5a.png|
 
-.. |system5.png| image:: images/system5.png
+.. |system5a.png| image:: images/system5a.png
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -670,9 +670,9 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-|update1.png|
+|update1a.png|
 
-.. |update1.png| image:: images/update1.png
+.. |update1a.png| image:: images/update1a.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -732,9 +732,9 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 **Figure 5.9a: Initial CA Screen**
 
-|ca1.png|
+|ca1a.png|
 
-.. |ca1.png| image:: images/ca1.png
+.. |ca1a.png| image:: images/ca1a.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
@@ -852,9 +852,9 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 
 **Figure 5.10a: Initial Certificates Screen**
 
-|cert1.png|
+|cert1a.png|
 
-.. |cert1.png| image:: images/cert1.png
+.. |cert1a.png| image:: images/cert1a.png
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
