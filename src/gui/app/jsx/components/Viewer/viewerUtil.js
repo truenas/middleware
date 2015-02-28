@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Viewer Utilities
 // ================
 // A group of utility functions for the Viewer and associated content.

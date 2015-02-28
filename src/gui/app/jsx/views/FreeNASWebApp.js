@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Main App Wrapper
 // ================
 // Top level controller-view for FreeNAS webapp

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // User Item Template
 // ==================
 // Handles the viewing and editing of individual user items. Shows a non-editable

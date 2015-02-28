@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Tasks
 // =====
 // View containing information about all scheduled tasks, cronjobs, scrubs, etc

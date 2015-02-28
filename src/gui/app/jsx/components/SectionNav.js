@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Sections
 // ================
 // Component for managing multiple views side by side

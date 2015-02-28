@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Login Box
 // =========
 // Authentication window for FreeNAS. Displayed whenever the middleware is in a logged out state.

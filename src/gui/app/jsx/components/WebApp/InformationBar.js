@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Information Bar
 // ===============
 // Part of the main webapp's window chrome. Positioned on the right side of the

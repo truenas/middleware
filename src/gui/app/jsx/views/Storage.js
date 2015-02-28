@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Storage
 // =======
 // View showing files, snapshots, volumes, and disks. Provides utilities to

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Networks
 // ========
 // View showing network information, link state, VLANs, and other entities.

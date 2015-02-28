@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Page Not Found
 // ================
 // A basic 404 page

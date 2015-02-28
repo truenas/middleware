@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Notification Bar
 // ================
 // Part of the main webapp's window chrome. Positioned at the top of the page,

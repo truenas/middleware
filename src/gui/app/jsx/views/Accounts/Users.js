@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Users
 // =====
 // Viewer for FreeNAS user accounts and built-in system users.

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Groups
 // ======
 // Viewer for FreeNAS groups.

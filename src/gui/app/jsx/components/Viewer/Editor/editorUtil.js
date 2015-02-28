@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Editor Utilities
 // ================
 // A group of utility functions designed to make the creation of Editor/Viewer

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // FREENAS GUI ROUTES
 "use strict";
 

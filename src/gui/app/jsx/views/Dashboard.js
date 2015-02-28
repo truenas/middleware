@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Dashboard
 // =========
 // Default view for FreeNAS, shows overview of system and other general

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Control Panel
 // ================
 // Consolidated view containing global options for all other parts of FreeNAS.

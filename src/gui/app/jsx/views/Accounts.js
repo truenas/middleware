@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Users and Groups
 // ================
 // View showing all users and groups.

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // Networks Item Template
 // ======================
 // Handles viewing and and changing of network interfaces.
