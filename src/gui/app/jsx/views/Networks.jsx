@@ -7,6 +7,9 @@
 
 var React  = require("react");
 
+var Router       = require("react-router");
+var RouteHandler = Router.RouteHandler;
+
 var Viewer      = require("../components/Viewer");
 
 var NetworksMiddleware = require("../middleware/NetworksMiddleware");
@@ -72,9 +75,9 @@ var Networks = React.createClass({
 
   , render: function() {
       return <Viewer header      = { "Networks" }
-                inputData   = { this.state.networksList }
-                viewData    = { viewData }
-                Editor      = { this.props.activeRouteHandler } />;
+                     inputData   = { this.state.networksList }
+                     viewData    = { viewData }
+                     Editor      = { RouteHandler } />;
     }
 
 });
