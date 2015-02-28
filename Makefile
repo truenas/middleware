@@ -5,7 +5,7 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.3-CURRENT
 TRAIN?=${NANO_LABEL}-9.3-Nightlies
-FREENAS_KEYFILE?=/dev/null
+FREENAS_KEYFILE?=Keys/ix-nightly-key.key
 COMPANY?="iXsystems"
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 
