@@ -77,7 +77,9 @@
 </table>
 {% endif %}
 
+{% if sw_name == "freenas" %}
 <p style="margin-left: 15px;">{% trans "To file a bug on FreeNAS, please fill in the fields below or visit " %} <a href="http://bugs.freenas.org" target="_blank">http://bugs.freenas.org</a>.<br />
 {% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
+{% endif %}
 
 <div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{% url "support_ticket" %}', softwareName: '{{ sw_name }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, categoriesUrl: '{% url "support_ticket_categories" %}', progressUrl: '{% url "support_ticket_progress" %}'"></div>
