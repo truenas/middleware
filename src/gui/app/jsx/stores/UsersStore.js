@@ -81,7 +81,9 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         _updatedOnServer = _.difference( _updatedOnServer, updatedUserIDs );
       }
 
-      _users = action.rawUsers;
+      action.rawUsers.map( function ( user ) {
+          _users[ user [ PRIMARY_KEY ] ] = user;
+      });
 
       UsersStore.emitChange();
       break;
