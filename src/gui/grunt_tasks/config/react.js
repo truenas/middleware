@@ -10,7 +10,7 @@ module.exports = function( grunt ) {
       {
           expand : true
         , cwd    : "<%= dirTree.source.jsx %>"
-        , src    : ["**/*.js"]
+        , src    : [ "**/*.jsx", "**/*.js" ]
         , dest   : "<%= dirTree.build.ssrjs %>"
         , ext    : ".js"
       }
