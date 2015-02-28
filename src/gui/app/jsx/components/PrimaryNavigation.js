@@ -156,10 +156,11 @@ var PrimaryNavigation = React.createClass({
         );
       };
 
+      // TODO: Revert changes made for #7908 once externally resolved.
       return (
         <TWBS.Nav stacked
                   ref       = "navRoot"
-                  className = "app-sidebar primary-nav">
+                  className = "primary-nav">
           <div className= "primary-nav-label-toggle"
                onClick  = { this.handleMenuToggle }>
             {"…"}
