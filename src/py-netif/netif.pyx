@@ -1180,6 +1180,7 @@ class RoutingSocket(object):
 
 def list_interfaces(name=None):
     cdef defs.ifaddrs* ifa
+    cdef defs.ifaddrs* orig
     cdef defs.sockaddr_in* sin
     cdef defs.sockaddr_in6* sin6
     cdef defs.sockaddr_dl* sdl
@@ -1188,6 +1189,7 @@ def list_interfaces(name=None):
     if defs.getifaddrs(&ifa) != 0:
         return None
 
+    orig = ifa
     result = {}
 
     while ifa:
@@ -1246,7 +1248,7 @@ def list_interfaces(name=None):
         else:
             break
 
-    defs.freeifaddrs(ifa)
+    defs.freeifaddrs(orig)
     return result
 
 
