@@ -51,7 +51,7 @@ from ringbuffer import MemoryRingBuffer, PersistentRingBuffer
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
-DEFAULT_DBFILE = '/var/db/system/statd/stats.hdf'
+DEFAULT_DBFILE = 'stats.hdf'
 gevent.monkey.patch_all()
 thread_type = ClientType.GEVENT
 
@@ -291,13 +291,8 @@ class Main(object):
             sys.exit(1)
 
     def init_database(self):
-        if not os.path.isdir('/var/db/system/statd'):
-            try:
-                os.makedirs('/var/db/system/statd')
-            except OSError:
-                pass
-
-        self.hdf = tables.open_file(DEFAULT_DBFILE, mode='a')
+        directory = self.client.call_sync('system-dataset.request_directory', 'statd')
+        self.hdf = tables.open_file(os.path.join(directory, DEFAULT_DBFILE), mode='a')
         if not hasattr(self.hdf.root, 'stats'):
             self.hdf.create_group('/', 'stats')
 
@@ -354,11 +349,12 @@ class Main(object):
         self.server = InputServer(self)
         self.parse_config(args.c)
         self.init_datastore()
-        self.init_database()
         self.init_dispatcher()
+        self.init_database()
         self.client.enable_server()
         self.client.register_service('statd.output', OutputService(self))
         self.server.start()
+        self.client.call_sync('service.ensure_started', 'collectd')
         self.logger.info('Started')
         self.client.wait_forever()
 
