@@ -33,7 +33,7 @@ from datetime import datetime
 from dateutil import tz
 from dispatcher.rpc import description, returns
 from task import Provider, Task
-from lib.system import system
+from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
 
 
@@ -78,21 +78,35 @@ class ConfigureTimeTask(Task):
     def run(self, updated_props):
         pass
 
-
+@description("Reboots the System after a delay of 10 seconds")
 class SystemRebootTask(Task):
+    def describe(self):
+        return "System Reboot"
+
     def verify(self):
         return ['root']
 
-    def run(self):
-        system('/sbin/shutdown', '-r', 'now')
+    def run(self, delay=10):
+        self.dispatcher.dispatch_event('power.changed', {
+            'operation': 'reboot',
+            })
+        system_bg("/bin/sleep %s && /sbin/shutdown -r now &" % delay,
+                  shell=True)
 
-
+@description("Shuts the system down after a delay of 10 seconds")
 class SystemHaltTask(Task):
+    def describe(self):
+        return "System Shutdown"
+
     def verify(self):
         return ['root']
 
-    def run(self):
-        system('/sbin/shutdown', '-p', 'now')
+    def run(self, delay=10):
+        self.dispatcher.dispatch_event('power.changed', {
+            'operation': 'shutdown',
+            })
+        system_bg("/bin/sleep %s && /sbin/shutdown -p now &" % delay,
+                  shell=True)
 
 
 def _init(dispatcher):

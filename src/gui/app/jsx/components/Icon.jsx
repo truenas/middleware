@@ -38,9 +38,9 @@ var Icon = React.createClass({
                           "fa"
                         , ( "fa-" + this.props.glyph )
                         , this.props.className
-                        , this.props.icoSize
                         , ( "badge-" + this.props.bsBadgeStyle )
-                        , this.props.icoClass ], null ).join(" ") }>
+                        , this.props.icoClass ], null ).join(" ") }
+         style     = { { fontSize : this.props.icoSize } }>
         { iconBadge }
       </i>
     );

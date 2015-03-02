@@ -95,13 +95,16 @@ class UpdateProvider(Provider):
 # Fix this when the fn10 freenas-pkg tools is updated by sef
 @description("Runs a ghetto `freenas-update update`")
 class UpdateTask(Task):
+    def describe(self):
+        return "FreeNAS Update"
+
     def verify(self):
         return ['root']
 
     def run(self):
         try:
             system('/usr/local/bin/freenas-update', 'update')
-            system('/sbin/shutdown', '-r', 'now')
+            self.run_subtask('system.reboot')
         except Exception as e:
             raise TaskException(errno.EAGAIN, 'Update Process Failed!')
 
