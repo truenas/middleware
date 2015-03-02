@@ -25,6 +25,14 @@ class Migration(DataMigration):
     )
 
     def forwards(self, orm):
+        # Workaround stupid bug in sqlite3/django/south #8286
+        for obj in orm['services.DomainController'].objects.all():
+            try:
+                if obj.dc_kerberos_realm is None:
+                    raise ValueError("!")
+            except ValueError:
+                db.execute('UPDATE services_domaincontroller SET dc_kerberos_realm_id = null WHERE id = %s', [obj.id])
+
         do_encrypt(orm['services.DomainController'], 'dc_passwd')
 
     def backwards(self, orm):
