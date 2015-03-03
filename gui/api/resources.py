@@ -71,6 +71,7 @@ from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
+    CloneSnapshotForm,
     MountPointAccessForm,
     ReKeyForm,
     UnlockPassphraseForm,
@@ -1898,6 +1899,41 @@ class SnapshotResource(DojoResource):
         object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
         max_limit = 0
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>.+?)/clone%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('clone')
+            ),
+        ]
+
+    def clone(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        form = CloneSnapshotForm(
+            initial={'cs_snapshot': kwargs['pk']},
+            data={
+                'cs_snapshot': kwargs['pk'],
+                'cs_name': deserialized.get('name'),
+            },
+        )
+        if form.is_valid():
+            form.commit()
+        else:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+
+        return HttpResponse('Snapshot cloned.', status=202)
 
     def get_list(self, request, **kwargs):
 
