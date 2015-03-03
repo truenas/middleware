@@ -52,7 +52,7 @@ from gevent.os import tp_read, tp_write
 from gevent import monkey, Greenlet
 from gevent.queue import Queue
 from gevent.subprocess import Popen
-from gevent.event import AsyncResult
+from gevent.event import AsyncResult, Event
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
@@ -157,6 +157,7 @@ class Dispatcher(object):
         self.use_tls = False
         self.certfile = None
         self.keyfile = None
+        self.ready = Event()
         self.port = 0
 
     def init(self):
@@ -1008,6 +1009,7 @@ def run(d, args):
     d.discover_plugins()
     d.load_plugins()
     d.start()
+    d.ready.set()
     gevent.joinall(d.threads + [serv_thread])
 
 

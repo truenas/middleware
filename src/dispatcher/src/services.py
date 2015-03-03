@@ -59,6 +59,9 @@ class ManagementService(RpcService):
     def get_connected_clients(self):
         return self.dispatcher.ws_server.clients.keys()
 
+    def wait_ready(self):
+        return self.dispatcher.ready.wait()
+
     @pass_sender
     def kick_session(self, session_id, sender):
         session = first_or_default(
