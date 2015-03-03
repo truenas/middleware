@@ -35,8 +35,17 @@ from resources import Resource
 
 @description("Provides info about configured NFS shares")
 class NFSSharesProvider(Provider):
-    def get_connected_users(self, share):
-        pass
+    def get_connected_users(self, share_name):
+        share = self.datastore.get_one('shares', ('type', '=', 'nfs'), ('id', '=', share_name))
+        result = []
+        f = open('/var/db/mountdtab')
+        for line in f:
+            host, path = line.split()
+            if share['taget'] in path:
+                result.append(host)
+
+        f.close()
+        return result
 
 
 @description("Adds new NFS share")
@@ -54,6 +63,7 @@ class CreateNFSShareTask(Task):
     def run(self, share):
         self.datastore.insert('shares', share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
+        self.dispatcher.call_sync('service.ensure_started', 'nfs')
         self.dispatcher.call_sync('service.reload', 'nfs')
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'create',
