@@ -118,34 +118,10 @@ class ShowDisksCommand(Command):
 
     def run(self, context, args, kwargs, opargs):
         volume = self.parent.get_one(self.name)
-        result = []
-
-        for i in iterate_vdevs(volume['topology']):
-            disk = context.connection.call_sync('disk.query', [('name', '=', i['path'])])
-            result.append({
-                'name': i['path'],
-                'status': i['status'],
-                'size': disk['mediasize'],
-                'serial': disk['serial']
-            })
-
-        output_table(result, [
-            ('Name', '/path'),
-            ('Status', '/status')
-        ])
-
-@description("Shows volume disks status")
-class ShowDisksCommand(Command):
-    def __init__(self, parent, name):
-        self.parent = parent
-        self.name = name
-
-    def run(self, context, args, kwargs, opargs):
-        volume = self.parent.get_one(self.name)
         result = list(iterate_vdevs(volume['topology']))
         output_table(result, [
-            ('Name', '/path'),
-            ('Status', '/status')
+            Column('Name', '/path'),
+            Column('Status', '/status')
         ])
 
 
