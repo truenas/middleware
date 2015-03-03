@@ -254,6 +254,11 @@ class Context(object):
         ptr.register_namespace(ns)
 
     def connection_error(self, event):
+        if event == ClientError.LOGOUT:
+            output_msg('Logged out from server.')
+            self.connection.disconnect()
+            sys.exit(0)
+
         if event == ClientError.CONNECTION_CLOSED:
             time.sleep(1)
             self.__try_reconnect()
