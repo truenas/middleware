@@ -1,6 +1,6 @@
 {% load freeadmin %}<div data-dojo-type="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
   <script type="dojo/method">
-  var sizes = '{{ wizard.form.choices_size|escapejs }}';
+  var diskssizes = '{{ wizard.form.choices|escapejs }}';
   require([
     "dojo/dom-style",
     "dojo/json",
@@ -14,12 +14,13 @@
     query,
     registry
   ) {
-    sizes = json.parse(sizes);
+    diskssizes = json.parse(diskssizes);
 
     var estimatedSize = function(value) {
-      if(sizes[value]) {
+      if(diskssizes[value]) {
         domStyle.set(query(".wizardTotalSizeRow")[0], "display", "");
-        query(".wizardTotalSize")[0].innerHTML = sizes[value];
+        query(".wizardTotalSize")[0].innerHTML = diskssizes[value][1];
+        query(".wizardDisksFormat")[0].innerHTML = diskssizes[value][0].join(', ');
       } else {
         domStyle.set(query(".wizardTotalSizeRow")[0], "display", "none");
       }
@@ -74,7 +75,8 @@
     </tr>
     <tr class="wizardTotalSizeRow">
       <td colspan="2">
-        {% trans "Estimated Total Size" %}: <span class="wizardTotalSize"></span>
+        {% trans "Estimated Total Size" %}: <span class="wizardTotalSize"></span><br />
+        <span style="color: red;">{% trans "Disks to be formatted" %}: <span class="wizardDisksFormat"></span></span>
       </td>
     </tr>
     <tr>
