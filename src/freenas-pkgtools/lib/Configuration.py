@@ -22,7 +22,7 @@ from stat import (
     S_IMODE
 )
 
-VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h']
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h', '/boot/device.hints']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 
