@@ -958,7 +958,10 @@ class AutoImportChoiceForm(Form):
         # This makes sure do not import pools without proper key
         _notifier = notifier()
         for dev, name in notifier().geli_get_all_providers():
-            _notifier.geli_detach(dev)
+            try:
+                _notifier.geli_detach(dev)
+            except Exception as ee:
+                log.warn(str(ee))
 
 
 class AutoImportDecryptForm(Form):
@@ -1012,11 +1015,13 @@ class AutoImportDecryptForm(Form):
         _notifier = notifier()
         failed = []
         for disk in disks:
-            if not _notifier.geli_attach_single(
-                disk,
-                keyfile,
-                passphrase=passphrase
-            ):
+            try:
+                _notifier.geli_attach_single(
+                    disk,
+                    keyfile,
+                    passphrase=passphrase
+                )
+            except:
                 failed.append(disk)
         if failed:
             self._errors['__all__'] = self.error_class([
@@ -2393,7 +2398,7 @@ class CreatePassphraseForm(Form):
                 f.write(passphrase)
         else:
             passfile = None
-        notifier().geli_passphrase(volume, passfile, rmrecovery=True)
+        notifier().geli_passphrase(volume, passfile)
         if passfile is not None:
             os.unlink(passfile)
         volume.vol_encrypt = 2
