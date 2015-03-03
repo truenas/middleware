@@ -668,6 +668,40 @@ Delete resource
    :statuscode 204: no error
 
 
+Clone snapshot
+++++++++++++++
+
+.. http:post:: /api/v1.0/storage/snapshot/tank%2Ftest/clone/
+
+   Creates a clone from a snapshot.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/snapshot/tank%2Ftest/clone/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "name": "tank/testclone"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Snapshot cloned.
+
+   :json string name: name/path of the clone
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Task
 ----------
 
