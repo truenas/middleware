@@ -161,7 +161,7 @@ class AsciiOutputFormatter(object):
         table = Texttable(max_width=get_terminal_size()[1])
         table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
         table.header([label])
-        table.add_rows([[i] for i in data])
+        table.add_rows([[i] for i in data], False)
         print table.draw()
 
     @staticmethod
