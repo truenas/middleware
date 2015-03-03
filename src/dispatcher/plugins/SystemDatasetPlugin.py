@@ -176,3 +176,5 @@ def _init(dispatcher):
 
     dispatcher.register_hook('system-dataset.pre-detach')
     dispatcher.register_hook('system-dataset.pre-attach')
+
+    dispatcher.call_sync('system-dataset.init')
