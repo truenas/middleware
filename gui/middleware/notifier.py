@@ -67,6 +67,8 @@ FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
 VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
+GELI_KEY_SLOT = 0
+GELI_RECOVERY_SLOT = 1
 SYSTEMPATH = '/var/db/system'
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
@@ -177,11 +179,12 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            self.__system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
-                           % (self.IDENTIFIER, ))
+            ret = self.__system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
+                                % (self.IDENTIFIER, ))
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        log.debug("Executed: %s", command)
+        log.debug("Executed: %s -> %s", command, ret)
+        return ret
 
     def _system_nolog(self, command):
         log.debug("Executing: %s", command)
@@ -204,6 +207,15 @@ class notifier:
     def _pipeopen(self, command):
         log.debug("Popen()ing: %s", command)
         return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
+
+    def _pipeerr(self, command, good_status=0):
+        proc = self._pipeopen(command)
+        err = proc.communicate()[1]
+        if proc.returncode != good_status:
+            log.debug("%s -> %s (%s)", command, proc.returncode, err)
+            return err
+        log.debug("%s -> %s", command, proc.returncode)
+        return None
 
     def _do_nada(self):
         pass
@@ -597,7 +609,7 @@ class notifier:
         res = False
         if not self._system_nolog("/etc/directoryservice/NIS/ctl status"):
             res = True
-        return res 
+        return res
 
     def _start_nis(self):
         res = False
@@ -1112,21 +1124,11 @@ class notifier:
     def __encrypt_device(self, devname, diskname, volume, passphrase=None):
         from freenasUI.storage.models import Disk, EncryptedDisk
 
-        geli_keyfile = volume.get_geli_keyfile()
-        if not os.path.exists(geli_keyfile):
-            if not os.path.exists(GELI_KEYPATH):
-                self._system("mkdir -p %s" % (GELI_KEYPATH, ))
-            self._system("dd if=/dev/random of=%s bs=64 count=1" % (geli_keyfile, ))
+        _geli_keyfile = volume.get_geli_keyfile()
 
-        if passphrase is not None:
-            _passphrase = " -J %s" % passphrase
-            _passphrase2 = "-j %s" % passphrase
-        else:
-            _passphrase = "-P"
-            _passphrase2 = "-p"
+        self.__geli_setmetadata(devname, _geli_keyfile, passphrase)
+        self.geli_attach_single(devname, _geli_keyfile, passphrase)
 
-        self._system("geli init -s 4096 -B none %s -K %s /dev/%s" % (_passphrase, geli_keyfile, devname))
-        self._system("geli attach %s -k %s /dev/%s" % (_passphrase2, geli_keyfile, devname))
         # TODO: initialize the provider in background (wipe with random data)
 
         if diskname.startswith('multipath/'):
@@ -1144,17 +1146,41 @@ class notifier:
 
         return ("/dev/%s.eli" % devname)
 
-    def geli_setkey(self, dev, key, passphrase=None, slot=0):
-        command = ["geli", "setkey", "-n", str(slot)]
-        if passphrase:
-            command.extend(["-J", passphrase])
+    def __create_keyfile(self, keyfile, size=64, force=False):
+        if force or not os.path.exists(keyfile):
+            keypath = os.path.dirname(keyfile)
+            if not os.path.exists(keypath):
+                self._system("mkdir -p %s" % keypath)
+            self._system("dd if=/dev/random of=%s bs=%d count=1" % (keyfile, size))
+            if not os.path.exists(keyfile):
+                raise MiddlewareError("Unable to create key file: %s" % keyfile)
         else:
-            command.append("-P")
-        command.extend(["-K", key, dev])
-        proc = self._pipeopen(' '.join(command))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+            log.debug("key file %s already exists" % keyfile)
+
+    def __geli_setmetadata(self, dev, keyfile, passphrase=None):
+        self.__create_keyfile(keyfile)
+        _passphrase = "-J %s" % passphrase if passphrase else "-P"
+        command = "geli init -s 4096 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
+        err = self._pipeerr(command)
+        if err:
+            raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
+
+    def __geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
+        command = "geli delkey -n %s %s %s" % (slot, '-f' if force else '', dev)
+        err = self._pipeerr(command)
+        if err:
+            raise MiddlewareError("Unable to delete key %s on %s: %s" % (slot, dev, err))
+
+    def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
+        command = ("geli setkey -n %s %s -K %s %s %s"
+                   % (slot,
+                      "-J %s" % passphrase if passphrase else "-P",
+                      key,
+                      "-k %s" % oldkey if oldkey else "",
+                      dev))
+        err = self._pipeerr(command)
+        if err:
+            raise MiddlewareError("Unable to set passphrase on %s: %s" % (dev, err))
 
     def geli_passphrase(self, volume, passphrase, rmrecovery=False):
         """
@@ -1165,29 +1191,13 @@ class notifier:
             MiddlewareError
         """
         geli_keyfile = volume.get_geli_keyfile()
-        if passphrase:
-            _passphrase = "-J %s" % (passphrase, )
-        else:
-            _passphrase = "-P"
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            """
-            A new passphrase cannot be set without destroying the recovery key
-            """
-            if rmrecovery is True:
-                proc = self._pipeopen("geli delkey -n 1 %s" % (dev, ))
-                proc.communicate()
-            proc = self._pipeopen("geli setkey -n 0 %s -K %s %s" % (
-                _passphrase,
-                geli_keyfile,
-                dev,
-                )
-            )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Unable to set passphrase: %s" % (err, ))
+            if rmrecovery:
+                self.__geli_delkey(dev, GELI_RECOVERY_SLOT, force=True)
+            self.geli_setkey(dev, geli_keyfile, GELI_KEY_SLOT, passphrase)
 
-    def geli_rekey(self, volume, slot=0):
+    def geli_rekey(self, volume, slot=GELI_KEY_SLOT):
         """
         Regenerates the geli global key and set it to devs
         Removes the passphrase if it was present
@@ -1197,69 +1207,69 @@ class notifier:
         """
 
         geli_keyfile = volume.get_geli_keyfile()
+        geli_keyfile_tmp = "%s.tmp" % geli_keyfile
+        devs = [ed.encrypted_provider for ed in volume.encrypteddisk_set.all()]
+
+        # keep track of which device has which key in case something goes wrong
+        dev_to_keyfile = dict((dev, geli_keyfile) for dev in devs)
 
         # Generate new key as .tmp
-        self._system("dd if=/dev/random of=%s.tmp bs=64 count=1" % (geli_keyfile, ))
-        error = False
+        log.debug("Creating new key file: %s", geli_keyfile_tmp)
+        self.__create_keyfile(geli_keyfile_tmp, force=True)
+        error = None
         applied = []
-        for ed in volume.encrypteddisk_set.all():
-            dev = ed.encrypted_provider
-            proc = self._pipeopen("geli setkey -P -n %d -K %s.tmp %s" % (
-                slot,
-                geli_keyfile,
-                dev,
-                )
-            )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                error = True
+        for dev in devs:
+            try:
+                self.geli_setkey(dev, geli_keyfile_tmp, slot)
+                dev_to_keyfile[dev] = geli_keyfile_tmp
+                applied.append(dev)
+            except Exception as ee:
+                error = str(ee)
+                log.error(error)
                 break
-            applied.append(dev)
 
         # Try to be atomic in a certain way
         # If rekey failed for one of the devs, revert for the ones already applied
         if error:
+            could_not_restore = False
             for dev in applied:
-                proc = self._pipeopen("geli setkey -P -n %d -k %s.tmp -K %s %s" % (
-                    slot,
-                    geli_keyfile,
-                    geli_keyfile,
-                    dev,
-                    )
-                )
-                proc.communicate()
-            raise MiddlewareError("Unable to set key: %s" % (err, ))
+                try:
+                    self.geli_setkey(dev, geli_keyfile, slot, oldkey=geli_keyfile_tmp)
+                    dev_to_keyfile[dev] = geli_keyfile
+                except Exception as ee:
+                    # this is very bad for the user, at the very least there
+                    # should be a notification that they will need to
+                    # manually rekey as they now have drives with different keys
+                    could_not_restore = True
+                    log.error(str(ee))
+            if could_not_restore:
+                log.error("Unable to rekey. Devices now have the following keys:%s%s",
+                          os.linesep,
+                          os.linesep.join(['%s: %s' % (dev, keyfile)
+                                           for dev, keyfile in dev_to_keyfile]))
+                raise MiddlewareError("Unable to rekey and devices have different "
+                                      "keys. See the log file.")
+            else:
+                raise MiddlewareError("Unable to set key: %s" % (error, ))
         else:
-            self._system("mv %s.tmp %s" % (geli_keyfile, geli_keyfile))
+            log.debug("%s -> %s", geli_keyfile_tmp, geli_keyfile)
+            os.rename(geli_keyfile_tmp, geli_keyfile)
             if volume.vol_encrypt != 1:
                 volume.vol_encrypt = 1
                 volume.save()
 
     def geli_recoverykey_add(self, volume, passphrase=None):
-
         reckey_file = tempfile.mktemp(dir='/tmp/')
-        self._system("dd if=/dev/random of=%s bs=64 count=1" % (reckey_file, ))
+        self.__create_keyfile(reckey_file, force=True)
 
         errors = []
 
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            if passphrase is not None:
-                proc = self._pipeopen("geli setkey -n 1 -K %s -J %s %s" % (
-                    reckey_file,
-                    passphrase,
-                    dev,
-                    )
-                )
-            else:
-                proc = self._pipeopen("geli setkey -n 1 -K %s -P %s" % (
-                    reckey_file,
-                    dev,
-                    )
-                )
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                errors.append(err)
+            try:
+                self.geli_setkey(dev, reckey_file, GELI_RECOVERY_SLOT, passphrase)
+            except Exception as ee:
+                errors.append(str(ee))
 
         if errors:
             raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
@@ -1269,18 +1279,10 @@ class notifier:
             )
         return reckey_file
 
-    def geli_delkey(self, volume, slot=1):
-
+    def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self._pipeopen("geli delkey -n %d %s" % (
-                slot,
-                dev,
-                ))
-
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                raise MiddlewareError("Unable to remove key: %s" % (err, ))
+            self.__geli_delkey(dev, slot, force)
 
     def geli_is_decrypted(self, dev):
         doc = self._geom_confxml()
@@ -1291,20 +1293,16 @@ class notifier:
             return True
         return False
 
-    def geli_attach_single(self, prov, key, passphrase=None):
-        if not passphrase:
-            _passphrase = "-p"
+    def geli_attach_single(self, dev, key, passphrase=None, skip_existing=False):
+        if skip_existing or not os.path.exists("/dev/%s.eli" % dev):
+            command = "geli attach %s -k %s %s" % ("-j %s" % passphrase if passphrase else "-p",
+                                                   key,
+                                                   dev)
+            err = self._pipeerr(command)
+            if err or not os.path.exists("/dev/%s.eli" % dev):
+                raise MiddlewareError("Unable to geli attach %s: %s" % (dev, err))
         else:
-            _passphrase = "-j %s" % passphrase
-        proc = self._pipeopen("geli attach %s -k %s %s" % (
-            _passphrase,
-            key,
-            prov,
-            ))
-        proc.communicate()
-        if os.path.exists("/dev/%s.eli" % prov):
-            return True
-        return False
+            log.debug("%s already attached", dev)
 
     def geli_attach(self, volume, passphrase=None, key=None):
         """
@@ -1313,24 +1311,13 @@ class notifier:
         Returns the number of providers that failed to attach
         """
         failed = 0
-        if key is None:
-            geli_keyfile = volume.get_geli_keyfile()
-        else:
-            geli_keyfile = key
-        if not passphrase:
-            _passphrase = "-p"
-        else:
-            _passphrase = "-j %s" % passphrase
+        geli_keyfile = key or volume.get_geli_keyfile()
         for ed in volume.encrypteddisk_set.all():
             dev = ed.encrypted_provider
-            proc = self._pipeopen("geli attach %s -k %s %s" % (
-                _passphrase,
-                geli_keyfile,
-                dev,
-            ))
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                log.warn("Failed to geli attach %s: %s", dev, err)
+            try:
+                self.geli_attach_single(dev, geli_keyfile, passphrase)
+            except Exception as ee:
+                log.warn(str(ee))
                 failed += 1
         return failed
 
@@ -1338,50 +1325,49 @@ class notifier:
         """
         Test key for geli providers of a given volume
         """
-
         assert volume.vol_fstype == 'ZFS'
 
         geli_keyfile = volume.get_geli_keyfile()
-        if not passphrase:
-            _passphrase = "-p"
-        else:
-            _passphrase = "-j %s" % passphrase
 
-        """
-        Parse zpool status to get encrypted providers
-        EncryptedDisk table might be out of sync for some reason,
-        this is much more reliable!
-        """
-        zpool = self.zpool_parse(volume.vol_name)
-        for dev in zpool.get_devs():
-            if not dev.name.endswith(".eli"):
-                continue
-            proc = self._pipeopen("geli attach %s -k %s %s" % (
-               _passphrase,
-               geli_keyfile,
-               dev.name.replace(".eli", ""),
-               ))
-            err = proc.communicate()[1]
-            if err.find('Wrong key') != -1:
-                return False
+        # Parse zpool status to get encrypted providers
+        # EncryptedDisk table might be out of sync for some reason,
+        # this is much more reliable!
+        devs = self.zpool_parse(volume.vol_name).get_devs()
+        for dev in devs:
+            name, ext = os.path.splitext(dev.name)
+            if ext == ".eli":
+                try:
+                    self.geli_attach_single(name,
+                                            geli_keyfile,
+                                            passphrase,
+                                            skip_existing=True)
+                except Exception as ee:
+                    if str(ee).find('Wrong key') != -1:
+                        return False
         return True
+
+    def geli_clear(self, dev):
+        """
+        Clears the geli metadata on a provider
+        """
+        command = "geli clear %s" % dev
+        err = self._pipeerr(command)
+        if err:
+            raise MiddlewareError("Unable to geli clear %s: %s" % (dev, err))
 
     def geli_detach(self, dev):
         """
         Detach geli provider
 
-        Returns false if a device suffixed with .eli exists at the end of
-        the operation and true otherwise
+        Throws MiddlewareError if the detach failed
         """
-        proc = self._pipeopen("geli detach %s" % (
-            dev,
-            ))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            log.warn("Failed to geli detach %s: %s", dev, err)
-        if os.path.exists("/dev/%s.eli"):
-            return False
-        return True
+        if os.path.exists("/dev/%s.eli" % dev):
+            command = "geli detach %s" % dev
+            err = self._pipeerr(command)
+            if err or os.path.exists("/dev/%s.eli" % dev):
+                raise MiddlewareError("Failed to geli detach %s: %s" % (dev, err))
+        else:
+            log.debug("%s already detached", dev)
 
     def geli_get_all_providers(self):
         """
@@ -1393,14 +1379,17 @@ class notifier:
         doc = self._geom_confxml()
         disks = self.get_disks()
         for disk in disks:
-            parts = [node.text for node in doc.xpath("//class[name = 'PART']/geom[name = '%s']/provider/config[type = 'freebsd-zfs']/../name" % disk)]
+            parts = [node.text
+                     for node in doc.xpath("//class[name = 'PART']/geom[name = '%s']"
+                                           "/provider/config[type = 'freebsd-zfs']"
+                                           "/../name" % disk)]
             if not parts:
                 parts = [disk]
             for part in parts:
                 proc = self._pipeopen("geli dump %s" % part)
-                proc.communicate()
-                if proc.returncode == 0:
-                    gptid = doc.xpath("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % part)
+                if proc.wait() == 0:
+                    gptid = doc.xpath("//class[name = 'LABEL']/geom[name = '%s']"
+                                      "/provider/name" % part)
                     if gptid:
                         providers.append((gptid[0].text, part))
                     else:
@@ -2057,7 +2046,7 @@ class notifier:
                              % (vol_fstype, ))
 
         self._reload_disk()
-        self._encvolume_detach(volume)
+        self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
 
     def _reload_disk(self):
@@ -2090,7 +2079,7 @@ class notifier:
 
         # For domaincontroller mode, rely on RSAT for user modification
         if domaincontroller_enabled():
-            return 0 
+            return 0
 
         command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
         smbpasswd = self._pipeopen(command)
@@ -2218,7 +2207,7 @@ class notifier:
             self.__issue_pwdchange(username, command, password)
             """
             Make sure to use -d 0 for pdbedit, otherwise it will bomb
-            if CIFS debug level is anything different than 'Minimum'. 
+            if CIFS debug level is anything different than 'Minimum'.
             If in domain controller mode, skip all together since it
             is expected that RSAT is used for user modifications.
             """
@@ -3512,12 +3501,25 @@ class notifier:
                 stderr)
         return False
 
-    def _encvolume_detach(self, volume):
+    def _encvolume_detach(self, volume, destroy=False):
         """Detach GELI providers after detaching volume."""
         """See bug: #3964"""
         if volume.vol_encrypt > 0:
             for ed in volume.encrypteddisk_set.all():
-                self.geli_detach(ed.encrypted_provider)
+                try:
+                    self.geli_detach(ed.encrypted_provider)
+                except Exception as ee:
+                    log.warn(str(ee))
+                if destroy:
+                    try:
+                        # bye bye data, it was nice knowing ya
+                        self.geli_clear(ed.encrypted_provider)
+                    except Exception as ee:
+                        log.warn(str(ee))
+                    try:
+                        os.remove(volume.get_geli_keyfile())
+                    except Exception as ee:
+                        log.warn(str(ee))
 
     def volume_detach(self, volume):
         """Detach a volume from the system
@@ -3983,7 +3985,7 @@ class notifier:
         return iface if iface else None
 
     def get_default_interface(self, ip_protocol='ipv4'):
-        iface = None 
+        iface = None
 
         if ip_protocol == 'ipv4':
             iface = self.get_default_ipv4_interface()
@@ -4080,12 +4082,12 @@ class notifier:
         for nic in nic_choices:
             iface = str(nic[0])
             iinfo = self.get_interface_info(iface)
-            if not iinfo:  
+            if not iinfo:
                 return None
 
             if self.interface_is_ipv4(addr):
                 ipv4_info = iinfo['ipv4']
-                if ipv4_info: 
+                if ipv4_info:
                     for i in ipv4_info:
                         if not 'inet' in i:
                             continue
@@ -4095,10 +4097,10 @@ class notifier:
 
             elif self.interface_is_ipv6(addr):
                 ipv6_info = iinfo['ipv6']
-                if ipv6_info: 
+                if ipv6_info:
                     for i in ipv6_info:
-                        if not 'inet6' in i: 
-                            continue 
+                        if not 'inet6' in i:
+                            continue
                         ipv6_addr = i['inet6']
                         if ipv6_addr == addr:
                             return nic[0]
@@ -4135,16 +4137,16 @@ class notifier:
         parent_iface = None
         interfaces = choices.NICChoices(exclude_configured=False)
         for iface in interfaces:
-            iface = iface[0] 
+            iface = iface[0]
             if self.is_carp_interface(iface):
-                continue  
-
-            iinfo = self.get_interface_info(iface)
-            if not iinfo: 
                 continue
 
-            ipv4_info = iinfo['ipv4'] 
-            ipv6_info = iinfo['ipv6'] 
+            iinfo = self.get_interface_info(iface)
+            if not iinfo:
+                continue
+
+            ipv4_info = iinfo['ipv4']
+            ipv6_info = iinfo['ipv6']
 
             if not ipv4_info and not ipv6_info:
                 continue
@@ -4156,7 +4158,7 @@ class notifier:
 
                     st_ipv4 = sipcalc_type(i['inet'], i['netmask'])
                     if not st_ipv4:
-                        continue 
+                        continue
 
                     for ci in child_ipv4_info:
                         if not ci or not 'inet' in ci or not ci['inet']:
@@ -4164,7 +4166,7 @@ class notifier:
 
                         if st_ipv4.in_network(ci['inet']):
                             return (iface, st_ipv4.host_address, st_ipv4.network_mask_bits)
-                
+
 
             if ipv6_info:
                 for i in ipv6_info:
@@ -4173,7 +4175,7 @@ class notifier:
 
                     st_ipv6 = sipcalc_type("%s/%s" % (i['inet'], i['prefixlen']))
                     if not st_ipv6:
-                        continue 
+                        continue
 
                     for ci in child_ipv6_info:
                         if not ci or not 'inet6' in ci or not ci['inet6']:
@@ -5218,13 +5220,13 @@ class notifier:
             "everyone@:rxaRc:fd:allow"
         ]
 
-        self.dataset_init_windows_meta_file(dataset) 
+        self.dataset_init_windows_meta_file(dataset)
 
         path = "/mnt/%s" % dataset
         for ace in acl:
             self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
 
-    def dataset_init_apple_meta_file(self, dataset):  
+    def dataset_init_apple_meta_file(self, dataset):
         path = "/mnt/%s" % dataset
         with open("%s/.apple" % path, "w") as f:
             f.close()
@@ -5254,10 +5256,10 @@ class notifier:
             self.dataset_init_apple_meta_file(dataset)
             self.zfs_set_option(dataset, "aclmode", "passthrough")
 
-        else:  
+        else:
             self.zfs_set_option(dataset, "aclmode", "passthrough")
 
-        path = None 
+        path = None
         if share_type == "mac":
             path = "/mnt/%s/.apple" % dataset
         elif share_type == "windows":
