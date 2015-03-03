@@ -177,17 +177,7 @@ for replication in replication_tasks:
     known_latest_snapshot = ''
     expected_local_snapshot = ''
 
-    localfs_split = localfs.split('/')
-
-    if len(localfs_split) > 1:
-        remotefs_final = "%s/%s" % (remotefs, "/".join(localfs_split[1:]))
-        if len(localfs_split) > 2:
-            remotefs_parent = "%s/%s" % (remotefs, "/".join(localfs_split[1:-1]))
-        else:
-            remotefs_parent = "%s/%s" % (remotefs, localfs_split[1])
-    else:
-        remotefs_final = remotefs
-        remotefs_parent = remotefs
+    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
 
     # Test if there is work to do, if so, own them
     MNTLOCK.lock()
