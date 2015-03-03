@@ -514,6 +514,8 @@ class Configuration(object):
 
     def TryGetNetworkFile(self, file=None, url=None, handler=None, pathname = None, reason = None):
         from . import DEFAULT_CA_FILE
+        from freenasUI.support.utils import LICENSE_FILE
+
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
         host_id = None
@@ -537,6 +539,13 @@ class Configuration(object):
         except:
             host_id = None
 
+        license_data = None
+        try:
+            if os.path.exists(LICENSE_FILE):
+                license_data = open(LICENSE_FILE, "r").read().rstrip()
+        except:
+            pass
+
         try:
             https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
             opener = urllib2.build_opener(https_handler)
@@ -547,6 +556,9 @@ class Configuration(object):
                 req.add_header("X-iXSystems-HostID", host_id)
             if reason:
                 req.add_header("X-iXSystems-Reason", reason)
+            if license_data:
+                req.add_header("X-iXSystems-License", license_data)
+
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
             furl = opener.open(req, timeout=30)
