@@ -1959,8 +1959,9 @@ class InitialWizardVolumeForm(Form):
                 break
         return size
 
-    def _groups_to_size(self, bysize, groups, swapsize):
+    def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
+        disks = []
         for group in groups.values():
             lower = None
             for disk in group['disks']:
@@ -1978,9 +1979,10 @@ class InitialWizardVolumeForm(Form):
                 size += lower * (len(group['disks']) - 2)
             elif group['type'] == 'stripe':
                 size += lower * len(group['disks'])
-        return humanize_size(size)
+            disks.extend(group['disks'])
+        return disks, humanize_size(size)
 
-    def choices_size(self):
+    def choices(self):
         swapsize = models.Advanced.objects.order_by('-id')[0].adv_swapondrive
         swapsize *= 1024 * 1024 * 1024
         types = defaultdict(dict)
@@ -1990,7 +1992,7 @@ class InitialWizardVolumeForm(Form):
                 groups = self._grp_autoselect(bysize)
             else:
                 groups = self._grp_predefined(bysize, _type)
-            types[_type] = self._groups_to_size(bysize, groups, swapsize)
+            types[_type] = self._groups_to_disks_size(bysize, groups, swapsize)
         return json.dumps(types)
 
     def clean_volume_name(self):
