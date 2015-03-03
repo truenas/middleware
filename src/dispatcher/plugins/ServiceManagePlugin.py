@@ -30,6 +30,7 @@ import errno
 from gevent import Timeout
 from watchdog import events
 from task import Task, Provider, TaskException, VerifyException
+from resources import Resource
 from dispatcher.rpc import RpcException, description, accepts, returns, private
 from lib.system import system, SubprocessException
 
@@ -246,3 +247,6 @@ def _init(dispatcher):
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
     dispatcher.register_task_handler("service.configure", UpdateServiceConfigTask)
     dispatcher.register_provider("service", ServiceInfoProvider)
+
+    for svc in dispatcher.datastore.query('service_defintions'):
+        dispatcher.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
