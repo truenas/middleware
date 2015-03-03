@@ -4,17 +4,17 @@
 
 "use strict";
 
-var _     = require("lodash");
+// var _     = require("lodash");
 var React = require("react");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
-var editorUtil = require("../../components/Viewer/Editor/editorUtil");
+// var editorUtil = require("../../components/Viewer/Editor/editorUtil");
 
-var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
+// var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");
 
 var TWBS  = require("react-bootstrap");
-var Icon   = require("../../components/Icon");
+// var Icon   = require("../../components/Icon");
 
 var NetworksView = React.createClass({
 
