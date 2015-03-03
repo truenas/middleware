@@ -42,6 +42,13 @@ class SharesProvider(Provider):
 
         return result
 
+    def get_connected_clients(self, share_name):
+        share = self.datastore.get_by_id('shares', share_name)
+        if not share:
+            raise RpcException(errno.ENOENT, 'Share not found')
+
+        return self.dispatcher.call_sync('shares.{0}.get_connected_clients'.format(share['type']), share_name)
+
 
 class CreateShareTask(Task):
     def verify(self, share):
