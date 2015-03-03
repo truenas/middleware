@@ -34,3 +34,6 @@ class ServiceFailed(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+    def __unicode__(self):
+        return unicode(self.value)
