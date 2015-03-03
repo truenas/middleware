@@ -75,7 +75,8 @@
 
             sock.on("login", function() {
                 sock.on("event", function(data) {
-                    update_chart(data.args);
+                    if (data.name == "statd." + $("#title").text() + ".pulse")
+                        update_chart(data.args);
                 });
 
                 sock.call("statd.output.get_data_sources", [], function(response) {
