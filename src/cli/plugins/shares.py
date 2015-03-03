@@ -25,8 +25,23 @@
 #
 #####################################################################
 
+import gettext
 from namespace import Namespace, EntityNamespace, Command, IndexCommand, description
-from output import ValueType
+from output import ValueType, output_list
+
+
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
+
+
+@description("Lists users connected to particular share")
+class ConnectedUsersCommand(Command):
+    def __init__(self, parent):
+        self.parent = parent
+
+    def run(self, context, args, kwargs, opargs):
+        result = context.connection.call_sync('shares.get_connected_clients', self.parent)
+        output_list(result, _("IP address"))
 
 
 @description("Shares")
@@ -42,17 +57,18 @@ class SharesNamespace(Namespace):
 
     def namespaces(self):
         return [
-            NFSSharesNamespace('nfs', self.context)
+            NFSSharesNamespace('nfs', self.context),
+            AFPSharesNamespace('afp', self.context)
         ]
 
 
-@description("NFS shares")
-class NFSSharesNamespace(EntityNamespace):
-    def __init__(self, name, context):
-        super(NFSSharesNamespace, self).__init__(name, context)
+class BaseSharesNamespace(EntityNamespace):
+    def __init__(self, name, type_name, context):
+        super(BaseSharesNamespace, self).__init__(name, context)
 
+        self.type_name = type_name
         self.skeleton_entity = {
-            'type': 'nfs',
+            'type': type_name,
             'properties': {}
         }
 
@@ -70,6 +86,36 @@ class NFSSharesNamespace(EntityNamespace):
             set=None,
             list=True
         )
+
+        self.primary_key = self.get_mapping('name')
+        self.entity_commands = lambda name: {
+            'clients': ConnectedUsersCommand(name)
+        }
+
+    def query(self, params):
+        params.append(('type', '=', self.type_name))
+        return self.context.connection.call_sync('shares.query', params)
+
+    def get_one(self, name):
+        return self.context.connection.call_sync(
+            'shares.query',
+            [('id', '=', name)],
+            {'single': True}
+        )
+
+    def save(self, entity, diff, new=False):
+        if new:
+            self.context.submit_task('share.create', entity)
+            return
+
+    def delete(self, name):
+        self.context.submit_task('share.delete', name)
+
+
+@description("NFS shares")
+class NFSSharesNamespace(BaseSharesNamespace):
+    def __init__(self, name, context):
+        super(NFSSharesNamespace, self).__init__(name, 'nfs', context)
 
         self.add_property(
             descr='All directories',
@@ -101,26 +147,27 @@ class NFSSharesNamespace(EntityNamespace):
             type=ValueType.SET
         )
 
-        self.primary_key = self.get_mapping('name')
 
-    def query(self, params):
-        params.append(('type', '=', 'nfs'))
-        return self.context.connection.call_sync('shares.query', params)
+@description("AFP shares")
+class AFPSharesNamespace(BaseSharesNamespace):
+    def __init__(self, name, context):
+        super(AFPSharesNamespace, self).__init__(name, 'afp', context)
 
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'shares.query',
-            [('id', '=', name)],
-            {'single': True}
+        self.add_property(
+            descr='Allowed hosts/networks',
+            name='hosts',
+            get='/properties/hosts',
+            list=True,
+            type=ValueType.SET
         )
 
-    def save(self, entity, diff, new=False):
-        if new:
-            self.context.submit_task('share.create', entity)
-            return
-
-    def delete(self, name):
-        self.context.submit_task('share.delete', name)
+        self.add_property(
+            descr='Time machine',
+            name='time-machine',
+            get='/properties/time-machine',
+            list=True,
+            type=ValueType.BOOLEAN
+        )
 
 
 def _init(context):
