@@ -1099,7 +1099,7 @@ class iSCSITargetExtentForm(ModelForm):
             else:
                 self.fields['iscsi_target_extent_type'].initial = 'Disk'
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
-            if self.instance.iscsi_target_extent_type == 'ZVOL':
+            if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
                 self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
             else:
                 self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
@@ -1273,6 +1273,9 @@ class iSCSITargetExtentForm(ModelForm):
                 diskobj = models.Disk.objects.get(disk_multipath_name=mp_name)
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
+            elif self.cleaned_data["iscsi_target_extent_disk"].startswith("hast"):
+                oExtent.iscsi_target_extent_type = 'HAST'
+                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
             else:
                 diskobj = models.Disk.objects.filter(
                     disk_name=self.cleaned_data["iscsi_target_extent_disk"],
