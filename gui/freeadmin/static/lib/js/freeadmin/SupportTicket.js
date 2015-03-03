@@ -304,12 +304,14 @@ define([
             2: this._desc,
             3: this._name,
             4: this._email,
+            2: this._category,
             5: this._phone
           };
         } else {
           map = {
             1: this._username,
             2: this._password,
+            2: this._category,
             3: this._subject,
             4: this._desc
           };
