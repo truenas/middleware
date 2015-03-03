@@ -17,6 +17,17 @@ should be placed in ``/usr/local/lib/etcd/plugins/local``
 
 Currently supported template formats:
 
-* .mako
-* .py
+Mako
+^^^^
+
+Global variables available inside template:
+
+* ``dispatcher`` - client connection to dispatcher
+* ``datastore`` - opened datastore handle
+* ``configstore`` - a ConfigStore instance tied to datastore handle
+
+Python
+^^^^^^
+
+
 

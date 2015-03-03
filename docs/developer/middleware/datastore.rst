@@ -4,7 +4,7 @@ Database abstraction layer
 Basic information
 -----------------
 
-FreeNAS 10 introduces database abstraction layer called "datastore".
+FreeNAS 10 introduces database abstraction layer called *datastore*.
 datastore is a Python module, installed globally (so it's possible to do
 ``import datastore`` anywhere inside FN10 system).
 
@@ -99,6 +99,9 @@ global configuration settings.
     Returns list of key-value pairs with path beginning with ``root``.
 
 .. py:class:: ConfigNode
+
+Class representing a branch on configuration store. Implements dictionary-like
+interface.
 
 Examples
 --------

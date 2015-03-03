@@ -6,6 +6,7 @@ FreeNAS 10 middleware development guide
 
    General architecture <architecture>
    Dispatcher plugin system <dispatcher>
+   Dispatcher client <dispatcher-client>
    Task processing <tasks>
    Protocol specification <protocol>
    Debugging middleware <debugging>

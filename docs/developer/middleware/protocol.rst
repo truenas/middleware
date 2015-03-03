@@ -344,20 +344,15 @@ Submitting tasks
 Interface for managing a task queue is called "tasks". It offers
 following methods:
 
-``task.submit(class_name, args)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: task.submit(class_name, args)
 
-``task.abort(task_id)``
-~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: task.abort(task_id)
 
-``task.status(task_id)``
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: task.status(task_id)
 
-``task.query(filter=null, params=null)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: task.query(filter=null, params=null)
 
-``task.list_resources()``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: task.list_resources()
 
 Interacting with external services (daemons)
 --------------------------------------------
@@ -367,20 +362,14 @@ dispatcher, so they can be consumed by the clients in uniform way. To do
 so, service should connect to dispatcher and then login itself as a
 service (see XXX).
 
-plugin.register\_service
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: plugin.register_service(interface_name)
 
-plugin.unregister\_service
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: plugin.unregister_service(interface_name)
 
-plugin.wait\_for\_service
-~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:function:: plugin.wait_for_service(name)
 
 Spawning shell on server
 ------------------------
-
-shell.execute
-~~~~~~~~~~~~~
 
 shell.spawn
 ~~~~~~~~~~~
