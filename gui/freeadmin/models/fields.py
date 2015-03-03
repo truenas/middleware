@@ -151,7 +151,7 @@ class MultiSelectField(models.Field):
     def to_python(self, value):
         if isinstance(value, list):
             return value
-        if value == '':
+        if value in ('', None):
             return []
         return value.split(',')
 
