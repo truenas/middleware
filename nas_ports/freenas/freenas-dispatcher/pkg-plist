@@ -20,7 +20,6 @@
 /usr/local/lib/dispatcher/src/query.py
 /usr/local/lib/dispatcher/src/lib/freebsd.py
 /usr/local/lib/dispatcher/src/lib/geom.py
-/usr/local/lib/dispatcher/src/lib/zfs.py
 /usr/local/lib/dispatcher/src/lib/__init__.py
 /usr/local/lib/dispatcher/src/lib/system.py
 /usr/local/lib/dispatcher/src/balancer.py
