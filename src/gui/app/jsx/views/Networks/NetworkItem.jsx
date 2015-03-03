@@ -5,10 +5,12 @@
 "use strict";
 
 // var _     = require("lodash");
-var React = require("react");
+var React  = require("react");
+var Router = require("react-router");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 // var editorUtil = require("../../components/Viewer/Editor/editorUtil");
+var activeRoute = require("../../components/Viewer/mixins/activeRoute");
 
 // var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");
@@ -82,21 +84,26 @@ var NetworkItem = React.createClass({
 
     propTypes: {
         viewData : React.PropTypes.object.isRequired
-      , params   : React.PropTypes.any
     }
+
+  , mixins: [ Router.State, activeRoute ]
 
   , getInitialState: function() {
-    return {
-        targetNetwork  : this.getNetworkFromStore()
-      , currentMode : "view"
-    };
+      return {
+          targetNetwork : this.getNetworkFromStore()
+        , currentMode   : "view"
+        , activeRoute   : this.getActiveRoute()
+      };
     }
 
-  , componentDidUpdate: function(prevProps, prevState) {
-      if ( this.props.params[ this.props.viewData.routing["param"] ] !== prevProps.params[ this.props.viewData.routing["param"] ] ) {
+  , componentDidUpdate: function( prevProps, prevState ) {
+      var activeRoute = this.getActiveRoute();
+
+      if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
-            targetNetwork  : this.getNetworkFromStore()
-          , currentMode : "view"
+            targetNetwork : this.getNetworkFromStore()
+          , currentMode   : "view"
+          , activeRoute   : activeRoute
         });
       }
     }
@@ -110,7 +117,7 @@ var NetworkItem = React.createClass({
     }
 
   , getNetworkFromStore: function() {
-      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.props.params[ this.props.viewData.routing["param"] ] );
+      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
     }
 
   , updateNetworkInState: function() {

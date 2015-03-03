@@ -6,12 +6,14 @@
 
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+var _      = require("lodash");
+var React  = require("react");
+var TWBS   = require("react-bootstrap");
+var Router = require("react-router");
 
-var viewerUtil = require("../../../components/Viewer/viewerUtil");
-var editorUtil = require("../../../components/Viewer/Editor/editorUtil");
+var viewerUtil  = require("../../../components/Viewer/viewerUtil");
+var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
+var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
@@ -240,23 +242,26 @@ var UserItem = React.createClass({
 
     propTypes: {
         viewData : React.PropTypes.object.isRequired
-      , params   : React.PropTypes.any // Provided as part of router's activeRouteHandler
     }
+
+  , mixins: [ Router.State, activeRoute ]
 
   , getInitialState: function() {
       return {
           targetUser  : this.getUserFromStore()
         , currentMode : "view"
+        , activeRoute : this.getActiveRoute()
       };
     }
 
-  , componentDidUpdate: function(prevProps, prevState) {
-      if ( this.props.params[ this.props.viewData.routing["param"] ] !== prevProps.params[ this.props.viewData.routing["param"] ] ) {
-        // For the param to be different, either the client has selected another user,
-        // or the server has updated the selectionKey.
+  , componentDidUpdate: function( prevProps, prevState ) {
+      var activeRoute = this.getActiveRoute();
+
+      if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
             targetUser  : this.getUserFromStore()
           , currentMode : "view"
+          , activeRoute : activeRoute
         });
       }
     }
@@ -270,7 +275,7 @@ var UserItem = React.createClass({
     }
 
   , getUserFromStore: function() {
-      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.props.params[ this.props.viewData.routing["param"] ] );
+      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
     }
 
   , updateUserInState: function() {
@@ -282,7 +287,6 @@ var UserItem = React.createClass({
     }
 
   , render: function() {
-
       var DisplayComponent = null;
       var processingText   = "";
 
