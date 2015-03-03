@@ -266,7 +266,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             '["id_bsdusr_password_disabled"], false);')
 
         if not self.instance.id:
-            self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+            try:
+                self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+            except:
+                pass
             self.fields['bsdusr_home'].label = _('Create Home Directory In')
             self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
                 'javascript:toggleGeneric("id_bsdusr_creategroup", '
