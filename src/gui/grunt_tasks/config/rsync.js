@@ -7,7 +7,8 @@
 module.exports = function( grunt ) {
   this.options = {
         exclude: [
-          "app/source"
+            "app/source"
+          , "app/jsx"
         ]
       , recursive : true
       , delete    : true

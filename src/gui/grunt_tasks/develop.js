@@ -15,8 +15,11 @@ module.exports = function(grunt) {
     // Clean the build directory
     grunt.task.run( "clean:build" );
 
-    // Build the app
+    // Compile app source into usable formats
     grunt.task.run( "concurrent:buildWorld" );
+
+    // Create the browserify bundle
+    grunt.task.run( "browserify" );
 
 
     // Development is remote by default

@@ -9,11 +9,14 @@
 module.exports = function( grunt ) {
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
-  this.app = {
-      files: [
-          "<%= dirTree.source.jsx %>/**"
-        , "<%= dirTree.routes %>.js"
-      ]
+  this.jsx = {
+      files: ["<%= dirTree.source.jsx %>/**"]
+    , tasks: [ "react" ]
+  };
+
+  // Rebuild Browserify bundle from vanilla JS after it
+  this.ssrjs = {
+      files: ["<%= dirTree.build.ssrjs %>/**"]
     , tasks: [ "browserify:app" ]
   };
 
@@ -34,18 +37,15 @@ module.exports = function( grunt ) {
   // Run local express task, restart when
   this.localServer = {
       files: [
-          "<%= dirTree.client %>.js"
-        , "<%= dirTree.routes %>.js"
+          "<%= dirTree.routes %>.js"
         , "<%= dirTree.server %>.js"
-        , "<%= dirTree.source.templates %>/**"
       ]
     , tasks: [ "express:devServer" ]
   };
 
-  // Restarts Forever process on remote FreeNAS when server or client change
+  // Restarts GUI service on remote FreeNAS when server or app changes
   var serverWatchFiles = [
-      "<%= dirTree.client %>.js"
-    , "<%= dirTree.server %>.js"
+      "<%= dirTree.server %>.js"
     , "<%= dirTree.source.templates %>/**"
     , "<%= dirTree.build.root %>/**"
     , "package.json"

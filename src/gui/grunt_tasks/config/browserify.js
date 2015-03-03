@@ -8,14 +8,10 @@
 "use strict";
 
 module.exports = function( grunt ) {
-  this.options = {
-    // Transform React JSX into vanilla JS
-    transform: [ require("grunt-react").browserify ]
-  };
 
   // WEBAPP
   this.app = {
-      src  : [ "<%= dirTree.client %>.js" ]
+      src  : [ "<%= dirTree.build.ssrjs %>/client.js" ]
     , dest : "<%= dirTree.build.app %>/app.js"
   };
 
