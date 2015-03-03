@@ -42,8 +42,8 @@ def _init(dispatcher):
                 'resource': args['service'],
                 'tty': args['tty'],
                 'active': True,
-                'started_at': time.time(),
-                'ended_at': None
+                'started-at': time.time(),
+                'ended-at': None
             })
 
         if args['type'] == 'close_session':
@@ -53,10 +53,10 @@ def _init(dispatcher):
                 ('resource', '=', args['service']),
                 ('tty', '=', args['tty']),
                 ('active', '=', True),
-                ('ended_at', '=', None)
+                ('ended-at', '=', None)
             )
 
-            session['ended_at'] = time.time()
+            session['ended-at'] = time.time()
             session['active'] = False
             dispatcher.datastore.update('session', session['id'], session)
 

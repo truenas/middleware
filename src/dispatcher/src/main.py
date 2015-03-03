@@ -443,6 +443,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.dispatcher = dispatcher
         self.server_pending_calls = {}
         self.client_pending_calls = {}
+        self.resource = None
         self.user = None
         self.session_id = None
         self.token = None
@@ -608,7 +609,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
     def on_rpc_auth(self, id, data):
         username = data['username']
         password = data['password']
-        resource = data.get('resource', None)
+        self.resource = data.get('resource', None)
         client_addr, client_port = self.ws.handler.client_address
 
         user = self.dispatcher.auth.get_user(username)
@@ -724,13 +725,19 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         greenlet.start()
 
     def open_session(self):
+        client_addr, client_port = self.ws.handler.client_address
         self.session_id = self.dispatcher.datastore.insert('sessions', {
             'started-at': time.time(),
-            'user': self.user.name
+            'address': client_addr,
+            'port': client_port,
+            'resource': self.resource,
+            'active': True,
+            'username': self.user.name
         })
 
     def close_session(self):
         session = self.dispatcher.datastore.get_by_id('sessions', self.session_id)
+        session['active'] = False
         session['ended-at'] = time.time()
         self.dispatcher.datastore.update('sessions', self.session_id, session)
 
