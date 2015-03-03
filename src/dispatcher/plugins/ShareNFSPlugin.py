@@ -35,13 +35,13 @@ from resources import Resource
 
 @description("Provides info about configured NFS shares")
 class NFSSharesProvider(Provider):
-    def get_connected_users(self, share_name):
+    def get_connected_clients(self, share_name):
         share = self.datastore.get_one('shares', ('type', '=', 'nfs'), ('id', '=', share_name))
         result = []
         f = open('/var/db/mountdtab')
         for line in f:
             host, path = line.split()
-            if share['taget'] in path:
+            if share['target'] in path:
                 result.append(host)
 
         f.close()
