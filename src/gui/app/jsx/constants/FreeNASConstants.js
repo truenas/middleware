@@ -32,6 +32,9 @@ module.exports = {
       //SystemInfo Data
       , RECEIVE_SYSTEM_INFO_DATA : null
 
+      //Update Data
+      , RECEIVE_UPDATE_DATA : null
+
       //Networks
       , RECEIVE_RAW_NETWORKS        : null
       , RECEIVE_NETWORK_UPDATE_TASK : null
