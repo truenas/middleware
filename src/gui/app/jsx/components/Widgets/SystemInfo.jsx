@@ -8,8 +8,15 @@ var Widget  = 	require("../Widget");
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
 
+var UpdateMiddleware = require("../../middleware/UpdateMiddleware");
+var UpdateStore      = require("../../stores/UpdateStore");
+
  function getSystemInfoFromStore( name ) {
  return SystemStore.getSystemInfo( name );
+ }
+
+ function getUpdateFromStore( name ) {
+ return UpdateStore.getUpdate( name );
  }
 
 var SystemInfo = React.createClass({
@@ -17,6 +24,8 @@ var SystemInfo = React.createClass({
     return {
         hardware   :   ""
       , version    :   ""
+      , updates    :   ""
+      , train      :   ""
     };
   }
   , componentDidMount: function() {
@@ -30,8 +39,10 @@ var SystemInfo = React.createClass({
   }
 
  , handleStatdChange: function() {
-      this.setState({  hardware       :   getSystemInfoFromStore( "hardware" )
-                      ,version        :   getSystemInfoFromStore( "version" )
+      this.setState({   hardware       :   getSystemInfoFromStore( "hardware" )
+                      , version        :   getSystemInfoFromStore( "version" )
+                      , updates        :   getUpdateFromStore( "check_now_for_updates" )
+                      , train          :   getUpdateFromStore( "get_current_train" )
                     });
     }
 
@@ -40,6 +51,8 @@ var SystemInfo = React.createClass({
 
     SystemMiddleware.requestSystemInfo( "hardware" );
     SystemMiddleware.requestSystemInfo( "version" );
+    UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
+    UpdateMiddleware.requestUpdateInfo( "get_current_train" );
 
   }
 
@@ -53,11 +66,26 @@ var SystemInfo = React.createClass({
         positionY  =  {this.props.positionY}
         title      =  {this.props.title}
         size       =  {this.props.size} >
-        <dl>
-          <dt>CPU Model:</dt><dd>{this.state.hardware["cpu-model"]}</dd>
-          <dt>Memory Size:</dt><dd>{memSize}MB</dd>
-          <dt>Version:</dt><dd>{this.state.version}MB</dd>
-        </dl>
+        <div className="wd-section wd-cpu-model">
+          <span className="wd-title">CPU Model:</span>
+          <span className="wd-value">{this.state.hardware["cpu-model"]}</span>
+        </div>
+        <div className="wd-section wd-memory-size">
+          <span className="wd-title">Memory Size:</span>
+          <span className="wd-value">{memSize}MB</span>
+        </div>
+        <div className="wd-section wd-version">
+          <span className="wd-title">Version:</span>
+          <span className="wd-value">{this.state.version}</span>
+        </div>
+        <div className="wd-section wd-train">
+          <span className="wd-title">Cureent Update Train:</span>
+          <span className="wd-value">{this.state.train}</span>
+        </div>
+        <div className="wd-section wd-update">
+          <span className="wd-title">Available updates:</span>
+          <span className="wd-value">{this.state.updates}</span>
+        </div>
 
       </Widget>
     );
