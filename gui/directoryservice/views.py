@@ -66,12 +66,19 @@ def directoryservice_home(request):
     except:
         nt4 = models.NT4.objects.create()
 
+    try:
+        ks = models.KerberosSettings.objects.order_by("-id")[0]
+    except:
+        ks = models.KerberosSettings.objects.create()
+    
+
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
         'activedirectory': activedirectory,
         'ldap': ldap,
         'nis': nis,
         'nt4': nt4,
+        'kerberossettings': ks,
     })
 
 def directoryservice_kerberosrealm(request, id):

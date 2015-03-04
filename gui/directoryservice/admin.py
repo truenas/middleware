@@ -32,7 +32,8 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
     KerberosRealmResourceMixin,
-    KerberosKeytabResourceMixin
+    KerberosKeytabResourceMixin,
+    KerberosSettingsResourceMixin
 )
 from freenasUI.directoryservice import models
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -122,9 +123,21 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
         context.update({'add_url': reverse('directoryservice_kerberoskeytab_add')})
         return context
 
+
+class KerberosSettingsFAdmin(BaseFreeAdmin):
+    create_modelform = "KerberosSettingsForm"
+    edit_modelform = "KerberosSettingsForm"
+    icon_object = u"SettingsIcon"
+    icon_model = u"SettingsIcon"
+    icon_add = u"SettingsIcon"
+    icon_view = u"SettingsIcon"
+
+    resource_mixin = KerberosSettingsResourceMixin
+
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
 site.register(models.NT4, NT4FAdmin)
 site.register(models.KerberosRealm, KerberosRealmFAdmin)
 site.register(models.KerberosKeytab, KerberosKeytabFAdmin)
+site.register(models.KerberosSettings, KerberosSettingsFAdmin)

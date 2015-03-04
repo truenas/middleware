@@ -124,3 +124,13 @@ class KerberosKeytabView(TreeNode):
     icon = u'KerberosKeytabIcon'
     append_to = 'directoryservice'
     order = 25
+
+class KerberosSettingsView(TreeNode):
+
+    gname = 'KerberosSettings'
+    name = _('Kerberos Settings')
+    app_name = 'kerberossettings'
+    type = 'opendirectoryservice'
+    icon = u'SettingsIcon'
+    append_to = 'directoryservice'
+    order = 30

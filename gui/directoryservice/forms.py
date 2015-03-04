@@ -712,3 +712,10 @@ class KerberosKeytabEditForm(ModelForm):
         self.fields['keytab_principal'].widget.attrs['class'] = (
             'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         )
+
+
+class KerberosSettingsForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.KerberosSettings
