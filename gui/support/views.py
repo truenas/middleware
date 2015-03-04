@@ -104,6 +104,7 @@ def ticket(request):
 
     files = []
     if request.POST.get('debug') == 'on':
+        debug = True
         with open(TICKET_PROGRESS, 'w') as f:
             f.write(json.dumps({'indeterminate': True, 'step': step}))
         step += 1
@@ -111,6 +112,8 @@ def ticket(request):
         mntpt, direc, dump = debug_get_settings()
         debug_run(direc)
         files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
+    else:
+        debug = False
 
     with open(TICKET_PROGRESS, 'w') as f:
         f.write(json.dumps({'indeterminate': True, 'step': step}))
@@ -121,6 +124,7 @@ def ticket(request):
         'body': request.POST.get('desc'),
         'version': get_sw_version().split('-', 1)[-1],
         'category': request.POST.get('category'),
+        'debug': debug,
     }
 
     if get_sw_name().lower() == 'freenas':
