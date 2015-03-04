@@ -4459,7 +4459,7 @@ class notifier:
         res, err = p1.communicate()
         if p1.returncode != 0:
             raise ValueError(err)
-        res = res[0].strip('\n')
+        res = res.rstrip('\n')
         try:
             return int(res)
         except:
