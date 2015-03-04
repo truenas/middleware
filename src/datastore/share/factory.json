@@ -669,11 +669,11 @@
 				}
 			},
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
-				"name": "afpd",
-				"etcd-group": "afpd",
+				"name": "afp",
+				"etcd-group": "afp",
 				"builtin": true,
 				"rcng": {
-					"rc-scripts": "afpd"
+					"rc-scripts": "netatalk"
 				}
 			}
         }

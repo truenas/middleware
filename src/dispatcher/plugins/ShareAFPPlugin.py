@@ -25,31 +25,16 @@
 #
 #####################################################################
 
-import os
+
 import errno
-from gevent import Timeout
-from watchdog import events
+import psutil
 from task import Task, TaskStatus, Provider, TaskException
 from dispatcher.rpc import RpcException, description, accepts, returns
-from balancer import TaskState
-from event import EventSource
-from lib.system import system, SubprocessException
 
 
 @description("Provides info about configured AFP shares")
 class AFPSharesProvider(Provider):
-    def initialize(self, context):
-        self.datastore = context.dispatcher.datastore
-
-    @description("Lists configured AFP shares")
-    @returns({
-        'type': 'array',
-        'items': {'$ref': 'definitions/afp-share'}
-    })
-    def query(self, filter=None, params=None):
-        return self.datastore.query('shares.afp', *(filter or []), **(params or {}))
-
-    def get_connected_users(self, share):
+    def get_connected_clients(self, share_name):
         pass
 
 
@@ -66,8 +51,9 @@ class CreateAFPShareTask(Task):
         return ['service:afp']
 
     def run(self, share):
-        self.datastore.insert('shares.afp', share)
+        self.datastore.insert('shares', share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
+        self.dispatcher.call_sync('service.ensure_started', 'afp')
         self.dispatcher.call_sync('service.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'create',
@@ -91,14 +77,13 @@ class UpdateAFPShareTask(Task):
         return ['service:afp']
 
     def run(self, name, updated_fields):
-        self.datastore.update('shares.afp', name, updated_fields)
+        self.datastore.update('shares', name, updated_fields)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
         self.dispatcher.call_sync('service.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'update',
             'ids': [name]
         })
-
 
 
 @description("Removes AFP share")
@@ -114,13 +99,20 @@ class DeleteAFPShareTask(Task):
         return ['service:afp']
 
     def run(self, name):
-        self.datastore.delete('shares.afp', name)
+        self.datastore.delete('shares', name)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
         self.dispatcher.call_sync('service.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'delete',
             'ids': [name]
         })
+
+
+def _metadata():
+    return {
+        'type': 'sharing',
+        'method': 'afp'
+    }
 
 
 def _init(dispatcher):
@@ -131,20 +123,28 @@ def _init(dispatcher):
             'comment': {'type': 'string'},
             'read-only': {'type': 'boolean'},
             'time-machine': {'type': 'boolean'},
-            'users-allow': {
+            'ro-list': {
                 'type': 'array',
+                'items': {'type': 'string'}
+            },
+            'rw-list': {
+                'type': ['array', 'null'],
+                'items': {'type': 'string'}
+            },
+            'users-allow': {
+                'type': ['array', 'null'],
                 'items': {'type': 'string'}
             },
             'users-deny': {
-                'type': 'array',
+                'type': ['array', 'null'],
                 'items': {'type': 'string'}
             },
             'hosts-allow': {
-                'type': 'array',
+                'type': ['array', 'null'],
                 'items': {'type': 'string'}
             },
             'hosts-deny': {
-                'type': 'array',
+                'type': ['array', 'null'],
                 'items': {'type': 'string'}
             },
         }
