@@ -609,5 +609,6 @@ def _init(dispatcher):
         zfs = libzfs.ZFS()
         for pool in zfs.pools:
             zpool_create_resources(dispatcher, pool)
+            pool.root_dataset.mount_recursive()
     except libzfs.ZFSException:
         pass

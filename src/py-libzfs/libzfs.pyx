@@ -809,6 +809,11 @@ cdef class ZFSDataset(object):
         if libzfs.zfs_mount(self._handle, NULL, 0) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
 
+    def mount_recursive(self):
+        self.mount()
+        for i in self.children:
+            i.mount_recursive()
+
     def umount(self):
         if libzfs.zfs_unmountall(self._handle, 0) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
