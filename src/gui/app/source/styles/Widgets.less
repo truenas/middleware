@@ -1,0 +1,135 @@
+/* Global Widget Styling */
+
+.widget {
+    background-color: #fcfcfc;
+    #gradient > .vertical(#ffffff, #f7f7f7);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px #ccc;
+    min-height: 75px;
+    min-width: 75px;
+}
+
+.widget-wrapper {
+  position: relative;
+}
+
+.widget header {
+    background-color: #e6e6e6;
+     #gradient > .vertical(#f7f7f7, #cdcdcd);
+    background-repeat: repeat-x;
+    box-shadow: 0 1px 2px #888;
+    cursor: pointer;
+    padding: 5px;
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.widget header:hover {
+    opacity: 1;
+}
+
+.widget header i.fa {
+    float: right;
+    margin-top: 3px;
+}
+
+.widget.xs-square .widget-content {
+    width: 75px;
+    height: 75px;
+}
+
+.widget.xs-rect .widget-content {
+    width: 165px;
+    height: 75px;
+}
+
+.widget.s-square .widget-content {
+    width: 165px;
+    height: 165px;
+}
+
+.widget.s-rect .widget-content {
+    width: 255px;
+    height: 165px;
+}
+
+.widget.sl-rect .widget-content {
+    width: 345px;
+    height: 165px;
+}
+
+.widget.m-square .widget-content {
+    width: 255px;
+    height: 255px;
+}
+
+.widget.m-rect .widget-content {
+    width: 345px;
+    height: 255px;
+}
+
+.widget.ml-rect .widget-content {
+    width: 435px;
+    height: 255px;
+}
+
+.widget.l-square .widget-content {
+    width: 345px;
+    height: 345px;
+}
+
+.widget.l-rect .widget-content {
+    width: 525px;
+    height: 345px;
+}
+.widget.xl-rect .widget-content {
+    width: 705px;
+    height: 525px;
+}
+
+
+
+//System Info Widget
+
+.wd-title {
+	font-weight: 700;
+	padding: 5px 0 0 42px;
+	display: block;
+}
+
+.wd-value {
+	text-align: right;
+	padding: 0 5px 3px 0;
+	display: block;
+}
+
+.wd-section {
+	#gradient > .directional( @gray-light, lighten( @gray-light, 25% ), @golden-angle );
+	border-bottom: 1px solid @gray-dark;
+	min-height: 32px;
+	background-repeat: no-repeat;
+	background-position: 5px center;
+}
+
+.wd-cpu-model {
+	background-image: url("../img/ico-cpu.png");
+}
+
+.wd-memory-size {
+	background-image: url("../img/ico-ram.png");
+}
+
+.wd-version {
+	background-image: url("../img/ico-freenas.png");
+}
+
+.wd-update {
+	background-image: url("../img/ico-update.png");
+}
+
+.wd-train {
+	background-image: url("../img/ico-train.png");
+}
