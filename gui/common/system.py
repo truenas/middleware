@@ -652,7 +652,7 @@ def get_dc_hostname():
     return hostname
 
 def validate_netbios_name(netbiosname):
-    regex = re.compile(r"^[a-zA-Z][a-zA-Z0-9\.\-]{1,14}$")
+    regex = re.compile(r"^[a-zA-Z][a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,14}$")
 
     if not regex.match(netbiosname):
         raise Exception("Invalid NetBIOS name")
