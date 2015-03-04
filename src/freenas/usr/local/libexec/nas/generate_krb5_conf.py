@@ -18,7 +18,10 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.directoryservice.models import KerberosRealm
+from freenasUI.directoryservice.models import (
+    KerberosRealm,
+    KerberosSettings
+)
 
 class KerberosConfigBinding(object):
     def __init__(self, name, value):
@@ -28,9 +31,32 @@ class KerberosConfigBinding(object):
     def __len__(self):
         return 0
 
+
 class KerberosConfigBindingCollection(list):
     def __init__(self, name=None):
+        super(KerberosConfigBindingCollection, self).__init__()
         self.name = name
+
+    def __append(self, item, item_list):
+        for i in item_list:
+            if isinstance(i , KerberosConfigBinding):
+                if i.name == item.name:
+                    i.value = item.value
+                    return False
+
+            elif isinstance(i, KerberosConfigBindingCollection):
+                self.__append(item, i)
+
+        return True
+
+    def append(self, item, item_list=None):
+        if self.__append(item, self):
+            super(KerberosConfigBindingCollection, self).append(item)
+
+    def merge(self, item_list=None):
+        for item in item_list:
+            self.append(item)
+
 
 class KerberosConfigSection(object):
     def __init__(self, section_name, bindings):
@@ -51,24 +77,102 @@ class KerberosConfigSectionCollection(list):
     pass
 
 class KerberosConfig(object):
+    def parse(self, section, code):
+        if not section or not code:
+            return
+
+        pair = []
+        stack = []
+
+        bindings = []
+        bindings = KerberosConfigBindingCollection()
+        ptr = bindings
+
+        parts = code.split()
+        for p in parts:
+            if not p:
+                continue
+
+            p = p.strip()
+            stack.append(p)
+
+            if p == '=':
+                try:
+                    stack.pop()
+                    pair.append(stack.pop())
+
+                except:
+                    print >> sys.stderr, "ERROR: syntax error near '='"
+                    sys.exit(1)
+
+            elif p == '{':
+                try:
+                    stack.pop()
+                    collection = KerberosConfigBindingCollection(
+                        name=pair[0]
+                    )
+
+                except:
+                    print >> sys.stderr, "ERROR: syntax error near '{'"
+                    sys.exit(1)
+
+                ptr.append(collection)
+                ptr = collection
+                pair = []
+
+            elif p == '}':
+                try:
+                    stack.pop()
+                    ptr = ptr[len(ptr) - 1]
+
+                except:
+                    print >> sys.stderr, "ERROR: syntax error near '}'"
+                    sys.exit(1)
+
+            else:
+                if len(pair) == 1:
+                    try:
+                        pair.append(stack.pop())
+                        ptr.append(
+                            KerberosConfigBinding(
+                                name=pair[0], value=pair[1]
+                            )
+                        )
+
+                    except:
+                        print >> sys.stderr, "ERROR: syntax error"
+                        sys.exit(1)
+
+                    pair = []
+
+             
+        if bindings:
+            section.merge(bindings)
+
     def create_default_config(self):
        sections = KerberosConfigSectionCollection()
 
-       appdefaults_bindings = KerberosConfigBindingCollection(name='pam')
-       appdefaults_bindings.append(
+       appdefaults_bindings = KerberosConfigBindingCollection()
+
+       pam_appdefaults_bindings = KerberosConfigBindingCollection(name='pam')
+       pam_appdefaults_bindings.append(
            KerberosConfigBinding(
                name='forwardable', value='true'
            )
        )
-       appdefaults_bindings.append(
+       pam_appdefaults_bindings.append(
            KerberosConfigBinding(
                name='ticket_lifetime', value='86400'
            )
        )
-       appdefaults_bindings.append(
+       pam_appdefaults_bindings.append(
            KerberosConfigBinding(
                name='renew_lifetime', value='86400'
            )
+       )
+
+       appdefaults_bindings.append(
+           pam_appdefaults_bindings
        )
      
        sections.append(
@@ -77,6 +181,8 @@ class KerberosConfig(object):
                bindings=appdefaults_bindings
            )
        )
+
+       self.parse(appdefaults_bindings, self.appdefaults_aux)
 
        libdefaults_bindings = KerberosConfigBindingCollection()
        libdefaults_bindings.append(
@@ -104,6 +210,8 @@ class KerberosConfig(object):
                name='forwardable', value='yes'
            ) 
        )
+
+       self.parse(libdefaults_bindings, self.libdefaults_aux)
 
        sections.append(
            KerberosConfigSection(
@@ -151,9 +259,21 @@ class KerberosConfig(object):
     def __init__(self, *args, **kwargs):
         self.sections = None
 
+ 
         self.krb5_conf = "/etc/krb5.conf"
         if 'krb5_conf' in kwargs:
             self.krb5_conf = kwargs['krb5_conf']
+
+        self.appdefaults_aux = None
+        self.libdefaults_aux = None
+
+        if 'settings' in kwargs:
+            settings = kwargs['settings']
+            if settings and settings.ks_appdefaults_aux:
+                self.appdefaults_aux = settings.ks_appdefaults_aux 
+            if settings and settings.ks_libdefaults_aux:
+                self.libdefaults_aux = settings.ks_libdefaults_aux
+            
 
     def get_section(self, section_name):
         if not section_name:
@@ -226,14 +346,14 @@ class KerberosConfig(object):
         else:
             section.bindings.append(bindings)
     
-    def generate_binding(self, bindings, tab=4, stdout=sys.stdout):
+    def generate_bindings(self, bindings, tab=4, stdout=sys.stdout):
         if len(bindings) != 0:
             if bindings.name != None:
                 print >> stdout, "%s%s = {" % (
                     "".rjust(tab), bindings.name
                 )
             for binding in bindings:
-                self.generate_binding(binding, tab + 4, stdout)
+                self.generate_bindings(binding, tab + 4, stdout)
             if bindings.name != None:
                 print >> stdout, "%s}" % "".rjust(tab)
 
@@ -246,7 +366,7 @@ class KerberosConfig(object):
         print >> stdout, "%s[%s]" % (
             "".rjust(tab), section.section_name
         )
-        self.generate_binding(section.bindings, tab + 4, stdout)
+        self.generate_bindings(section.bindings, tab + 4, stdout)
         print >> stdout, ""
 
     def generate_krb5_conf(self, stdout=sys.stdout):
@@ -258,7 +378,13 @@ class KerberosConfig(object):
 def main():
     realms = KerberosRealm.objects.all()
 
-    kc = KerberosConfig()
+    try:
+        settings = KerberosSettings.objects.all()[0]
+    except:
+        settings = None
+
+
+    kc = KerberosConfig(settings=settings)
     kc.create_default_config()
 
     for kr in realms:

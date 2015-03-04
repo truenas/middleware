@@ -2282,6 +2282,13 @@ class KerberosKeytabResourceMixin(object):
         return bundle
 
 
+class KerberosSettingsResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(KerberosSettingsResourceMixin, self).dehydrate(bundle)
+        return bundle
+
+
 class CertificateAuthorityResourceMixin(object):
 
     def dehydrate(self, bundle):

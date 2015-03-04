@@ -651,6 +651,21 @@ class KerberosKeytab(Model):
         return self.keytab_principal
 
 
+class KerberosSettings(Model):
+    ks_appdefaults_aux = models.TextField(
+        verbose_name=_("Appdefaults auxiliary parameters"),
+        blank=True
+    )
+    ks_libdefaults_aux = models.TextField(
+        verbose_name=_("Libdefaults auxiliary parameters"),
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Kerberos Settings")
+        verbose_name_plural = _("Kerberos Settings")
+
+
 class DirectoryServiceBase(Model):
     class Meta:
         abstract = True
