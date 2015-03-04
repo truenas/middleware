@@ -51,7 +51,8 @@ class SystemInfoProvider(Provider):
     def hardware(self):
         return {
             'cpu-model': get_sysctl("hw.model"),
-            'memory-size': get_sysctl("hw.realmem")
+            'cpu-cores': get_sysctl("hw.ncpu"),
+            'memory-size': get_sysctl("hw.physmem")
         }
 
     def time(self):
