@@ -1,4 +1,4 @@
- /* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-02-19 */
+/* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-03-04 */
 (function(){
 
 // set up main nv object on window
@@ -4416,7 +4416,10 @@ nv.models.ohlcBarChart = function() {
 
                 //position legend as far right as possible within the total width
                 if (rightAlign) {
-                    g.attr('transform', 'translate(' + (width - margin.right - legendWidth) + ',' + margin.top + ')');
+                    console.log("width: " + width);
+                    console.log("legendWidth: " + legendWidth);
+
+                    g.attr('transform', 'translate(' + (width/2 - legendWidth/2) + ',' + margin.top + ')');
                 }
                 else {
                     g.attr('transform', 'translate(0' + ',' + margin.top + ')');
@@ -4875,20 +4878,21 @@ nv.models.lineChart = function() {
 
             // Legend
             if (showLegend) {
-                legend.width(availableWidth);
+                legend.width(margin.left + availableWidth);
+                legend.margin({top: 25});
 
                 g.select('.nv-legendWrap')
                     .datum(data)
                     .call(legend);
 
-                if ( margin.top != legend.height()) {
-                    margin.top = legend.height();
+                if ( margin.bottom != legend.height() + 25) {
+                    margin.bottom = legend.height() + 25;
                     availableHeight = (height || parseInt(container.style('height')) || 400)
                         - margin.top - margin.bottom;
                 }
 
                 wrap.select('.nv-legendWrap')
-                    .attr('transform', 'translate(0,' + (-margin.top) +')')
+                    .attr('transform', 'translate(0,' + (availableHeight) +')')
             }
 
             wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
@@ -10996,17 +11000,20 @@ nv.models.stackedAreaChart = function() {
             if (showLegend) {
                 var legendWidth = (showControls) ? availableWidth - controlWidth : availableWidth;
 
-                legend.width(legendWidth);
+                legend.width(margin.left + legendWidth);
+                legend.margin({top: 25});
+
                 g.select('.nv-legendWrap').datum(data).call(legend);
 
-                if ( margin.top != legend.height()) {
-                    margin.top = legend.height();
+                if ( margin.bottom != legend.height() + 25) {
+                    margin.bottom = legend.height() + 25;
                     availableHeight = (height || parseInt(container.style('height')) || 400)
                         - margin.top - margin.bottom;
                 }
 
                 g.select('.nv-legendWrap')
-                    .attr('transform', 'translate(' + (availableWidth-legendWidth) + ',' + (-margin.top) +')');
+                    .attr('transform', 'translate(' + (availableWidth-legendWidth) + ',' + (availableHeight) +')');
+
             }
 
             // Controls
