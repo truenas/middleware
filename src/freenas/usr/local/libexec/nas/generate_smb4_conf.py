@@ -636,8 +636,7 @@ def add_domaincontroller_conf(smb4_conf):
 
     ipv4_addrs = []
     if cifs.cifs_srv_bindip:
-        interfaces = cifs.cifs_srv_bindip.split(',')
-        for i in interfaces:
+        for i in cifs.cifs_srv_bindip:
             try:
                 socket.inet_aton(i)
                 ipv4_addrs.append(i)
@@ -692,7 +691,7 @@ def generate_smb4_conf(smb4_conf, role):
     if cifs.cifs_srv_bindip:
         interfaces = []
 
-        bindips = cifs.cifs_srv_bindip.replace(',', ' ')
+        bindips = string.join(cifs.cifs_srv_bindip, ' ')
         if role != 'dc':
             bindips = "127.0.0.1 %s" % bindips
 
@@ -701,6 +700,7 @@ def generate_smb4_conf(smb4_conf, role):
         for bindip in bindips:
             if not bindip:
                 continue
+            bindip = bindip.strip()
             iface = n.get_interface(bindip)
             if iface and n.is_carp_interface(iface):
                 parent_iface = n.get_parent_interface(iface)
@@ -900,6 +900,7 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, "shadow:localtime = yes")
             confset1(smb4_shares, "shadow:format = auto-%%Y%%m%%d.%%H%%M-%s%s" % (
                 task.task_ret_count, task.task_ret_unit[0]))
+            confset1(smb4_shares, "shadow:snapdirseverywhere = yes")
 
         if vfs_objects:
             confset2(smb4_shares, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
