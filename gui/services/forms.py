@@ -190,11 +190,14 @@ class CIFSForm(ModelForm):
                     self.data['cifs_srv_bindip'].split(',')
                 )
         self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
-        self.fields['cifs_srv_bindip'].initial = (
-            self.instance.cifs_srv_bindip.encode('utf-8').split(',')
-            if self.instance.id and self.instance.cifs_srv_bindip
-            else ''
-        )
+        if self.instance.id and self.instance.cifs_srv_bindip:
+            bindips = []  
+            for ip in self.instance.cifs_srv_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['cifs_srv_bindip'].initial = (bindips)
+        else:
+            self.fields['cifs_srv_bindip'].initial = ('')
 
     def __check_octet(self, v):
         try:
