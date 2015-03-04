@@ -127,8 +127,13 @@ class ZpoolScrubTask(Task):
         self.finish_event = Event()
 
     def __scrub_finished(self, args):
-        self.state = TaskState.FINISHED
         if args["pool"] == self.pool:
+            self.state = TaskState.FINISHED
+            self.finish_event.set()
+
+    def __scrub_aborted(self, args):
+        if args["pool"] == self.pool:
+            self.state = TaskState.ABORTED
             self.finish_event.set()
 
     def describe(self, pool):
@@ -137,6 +142,7 @@ class ZpoolScrubTask(Task):
     def run(self, pool):
         self.pool = pool
         self.dispatcher.register_event_handler("fs.zfs.scrub.finish", self.__scrub_finished)
+        self.dispatcher.register_event_handler("fs.zfs.scrub.abort", self.__scrub_aborted)
         self.finish_event.clear()
 
         try:
@@ -148,7 +154,6 @@ class ZpoolScrubTask(Task):
             raise TaskException(errno.EFAULT, str(err))
 
         self.finish_event.wait()
-        return self.state
 
     def abort(self):
         try:
@@ -158,7 +163,6 @@ class ZpoolScrubTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.state = TaskState.ABORTED
         self.finish_event.set()
         return True
 
@@ -178,7 +182,6 @@ class ZpoolScrubTask(Task):
             return TaskStatus(self.progress, "In progress...")
 
         if scrub.state == libzfs.ScanState.CANCELED:
-            self.state = TaskState.ABORTED
             self.finish_event.set()
             return TaskStatus(self.progress, "Canceled")
 
