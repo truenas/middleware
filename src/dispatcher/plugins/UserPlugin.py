@@ -75,7 +75,7 @@ class GroupProvider(Provider):
     'title': 'user',
     'allOf': [
         {'$ref': 'definitions/user'},
-        {'required': ['username', 'group', 'shell', 'home']},
+        {'required': ['username', 'group']},
         {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
     ]
 })
@@ -371,6 +371,7 @@ def _init(dispatcher):
             'logged-in': {'type': 'boolean', 'readOnly': True},
             'sessions': {
                 'type': 'array',
+                'readOnly': True,
                 'items': {'$ref': 'definitions/user-session'}
             }
         }
