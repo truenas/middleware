@@ -22,9 +22,11 @@ function getWidgetDataFromStore( name ) {
 var DummyWidgetContent = React.createClass({
   getInitialState: function() {
     return {
-       element      :   ""
-      ,initialData  :   false
-      ,chart        :   ""
+       element        :   ""
+      ,initialData    :   false
+      ,chart          :   ""
+      ,updateCounter  :   0
+      ,graphType      :   "line"
     };
   }
 
@@ -40,7 +42,8 @@ var DummyWidgetContent = React.createClass({
 
 
     this.setState({
-      element:    this.refs.svg.getDOMNode()
+       element    :   this.refs.svg.getDOMNode()
+      ,graphType  :   this.props.graphType
     });
  }
 
@@ -61,7 +64,6 @@ var DummyWidgetContent = React.createClass({
         this.setState({
           target: updatedData
           });
-
   }
 
  , handleStatdChange: function() {
@@ -85,30 +87,43 @@ var DummyWidgetContent = React.createClass({
     else {
       console.log("2!");
       var ud = StatdStore.getWidgetDataUpdate();
-      var updateArray = [ud.args["timestamp"], ud.args["value"]];
-      switch( ud.name )
+      if (ud.name)
       {
-        case "statd.localhost.memory.memory-wired.value.pulse":
-          this.updateData("wiredData", updateArray);
-        break;
-        case "statd.localhost.memory.memory-cache.value.pulse":
-          this.updateData("cacheData", updateArray);
-        break;
-        case "statd.localhost.memory.memory-active.value.pulse":
-          this.updateData("activeData", updateArray);
-        break;
-        case "statd.localhost.memory.memory-free.value.pulse":
-          this.updateData("freeData", updateArray);
-        break;
-        case "statd.localhost.memory.memory-inactive.value.pulse":
-          this.updateData("inactiveData", updateArray);
-        break;
+        var updateArray = [ud.args["timestamp"], ud.args["value"]];
+        switch( ud.name )
+        {
+          case "statd.localhost.memory.memory-wired.value.pulse":
+            this.state.updateCounter++;
+            this.updateData("wiredData", updateArray);
+          break;
+          case "statd.localhost.memory.memory-cache.value.pulse":
+            this.state.updateCounter++;
+            this.updateData("cacheData", updateArray);
+          break;
+          case "statd.localhost.memory.memory-active.value.pulse":
+            this.state.updateCounter++;
+            this.updateData("activeData", updateArray);
+          break;
+          case "statd.localhost.memory.memory-free.value.pulse":
+            this.state.updateCounter++;
+            this.updateData("freeData", updateArray);
+          break;
+          case "statd.localhost.memory.memory-inactive.value.pulse":
+            this.state.updateCounter++;
+            this.updateData("inactiveData", updateArray);
+          break;
 
-        default:
-          // Do nothing
-          console.log("This should not happened!");
+          default:
+            // Do nothing
+            console.log("This should not happened!");
+        }
+        if (this.state.updateCounter >= 5)
+        {
+          console.log("update");
+          this.drawChart(true);
+          this.state.updateCounter = 0;
+        }
       }
-      this.drawChart(true);
     }
 
  }
@@ -129,7 +144,14 @@ var DummyWidgetContent = React.createClass({
 
   }
 
-  , drawChart: function(update) {
+  , drawChart: function(update, reload) {
+      if (reload === true)
+      {
+        this.state.element.innerHTML = null;
+        this.state.chart = null;
+
+        update = false;
+      }
       if (update === true) {
           this.state.chart.update();
       }
@@ -137,15 +159,15 @@ var DummyWidgetContent = React.createClass({
         var chart;
         var memorySize = this.state.hardware["memory-size"];
 
-        if (this.props.stacked)
+        if (this.state.graphType === "stacked")
         {
           chart = nv.models.stackedAreaChart()
             .options({
                margin                     :    {top: 15, right: 50, bottom: 60, left: 80}
               ,x                          :    function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
               ,y                          :    function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }   //...in case your data is formatted differently.
-              ,useInteractiveGuideline    :    true    //Tooltips which show all data points. Very nice!
-              ,transitionDuration         :    500
+              ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
+              ,transitionDuration         :    250
               ,style                      :    "Expanded"
               ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
               ,clipEdge                   :    false
@@ -190,6 +212,7 @@ var DummyWidgetContent = React.createClass({
 
       chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
       this.state.chart = chart;
+      this.state.fullUpdate = false;
     }
   }
 
@@ -229,12 +252,26 @@ var DummyWidgetContent = React.createClass({
     ];
   }
 
+  ,togleGraph: function(e) {
+    console.log(e.target.textContent);
+    this.state.graphType = e.target.textContent;
+    console.log(this.state.graphType);
+    this.drawChart(false, true);
+  }
+
   , render: function() {
     //console.log(this.state.widgetData);
     // <h3 style={elementStyle}>{"It works! "}{this.state.widgetData}</h3>
+    var svgStyle = {
+       width    : "calc(100% - 36px)"
+      ,height   : "100%"
+      ,"float"  : "left"
+    };
     var divStyle = {
-      width: "100%",
-      height: "100%"
+       width                : "36px"
+      ,height               : "100%"
+      ,"float"              : "right"
+      ,backgroundColor      : "lime"
     };
     return (
       <Widget
@@ -243,8 +280,11 @@ var DummyWidgetContent = React.createClass({
         title      =  {this.props.title}
         size       =  {this.props.size} >
 
-        <svg ref="svg" style={divStyle}></svg>
-
+        <svg ref="svg" style={svgStyle}></svg>
+        <div ref="controls" style={divStyle}>
+          <div onClick={this.togleGraph}>line</div>
+          <div onClick={this.togleGraph}>stacked</div>
+        </div>
       </Widget>
     );
   }

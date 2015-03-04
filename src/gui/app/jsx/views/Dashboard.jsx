@@ -29,8 +29,8 @@ var Dashboard = React.createClass({
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widget-wrapper">
           <DummyWidgetContent positionX="15" positionY="100" title="Memory Value" size="l-rect" />
-          <DummyWidgetContent positionX="15" positionY="460" stacked="true" title="Stacked Memory Value" size="l-rect" />
-          <SystemInfo positionX="555" positionY="100" stacked="true" title="System Info" size="m-square" />
+          <DummyWidgetContent positionX="15" positionY="460" graphType="stacked" title="Stacked Memory Value" size="l-rect" />
+          <SystemInfo positionX="555" positionY="100" stacked="true" title="System Info" size="m-rect" />
         </div>
       </main>
     );
