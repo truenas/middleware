@@ -110,7 +110,7 @@ release-push: release
 		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
 	fi
 	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`;
-	ln -sf "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'` "${IX_STABLE_DIR}/latest";
+	rm -f "${IX_STABLE_DIR}/latest"; ln -s "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'` "${IX_STABLE_DIR}/latest";
 	${MAKE} save-build-env
 
 update-push:	release
