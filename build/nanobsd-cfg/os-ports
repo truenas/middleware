@@ -279,7 +279,8 @@ add_port devel/ding-libs
 add_port devel/nspr
 add_port security/nss
 add_port security/krb5
-add_port security/sssd
+add_port security/sssd OPTIONS_FILE_SET+=SMB \
+       OPTIONS_FILE_UNSET+=DOCS
 
 add_port security/ca_root_nss OPTIONS_FILE_SET+=ETCSYMLINK
 add_port ftp/curl
