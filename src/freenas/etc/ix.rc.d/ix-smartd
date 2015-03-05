@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-smartd
-# REQUIRE: FILESYSTEMS
+# REQUIRE: FILESYSTEMS ix-syncdisks
 # BEFORE: smartd
 
 . /etc/rc.subr
