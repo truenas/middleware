@@ -228,6 +228,10 @@ LOGGING = {
         'simple': {
             'format': '[%(name)s:%(lineno)s] %(message)s'
         },
+        'journal': {
+            'format': ('[%(filename)s:%(line)s] sts=(%(status)d) '
+                       'cmd="%(message)s" err="%(error)s"')
+        },
     },
     'handlers': {
         'mail_admins': {
@@ -239,7 +243,12 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'freenasUI.freeadmin.handlers.SysLogHandler',
             'formatter': 'simple',
-        }
+        },
+        'journal': {
+            'level': 'DEBUG',
+            'class': 'freenasUI.freeadmin.handlers.SysLogHandler',
+            'formatter': 'journal',
+        },
     },
     'loggers': {
         'django.request': {
@@ -251,6 +260,11 @@ LOGGING = {
             'handlers': ['syslog'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'journal': {
+            'handlers': ['journal'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     }
 }
