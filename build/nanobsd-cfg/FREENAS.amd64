@@ -323,6 +323,7 @@ device		if_bridge	# network bridge device
 #  The `tap' device is a pty-like virtual Ethernet interface
 device		tap
 options		GEOM_MIRROR
+device		ucom
 
 options 	TMPFS			#Efficient memory filesystem
 
