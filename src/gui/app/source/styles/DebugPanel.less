@@ -1,7 +1,8 @@
 .debug-panel {
-  height : 350px;
   .flex-flow( column nowrap );
   .flex-display( flex );
+  height    : 350px;
+  font-size : 9.5pt;
 
   // TODO: #7908
   & > div {
@@ -20,11 +21,22 @@
     .flex-display( flex );
     padding : 5px;
   }
+
+  .panel-body {
+    padding: 10px 0;
+  }
 }
 
 .debug-content-flex-wrapper {
     .flex( 1 );
     .flex-display( flex );
+}
+
+.debug-heading {
+  text-transform : uppercase;
+  color          : rgb(175, 175, 175);
+  padding        : 0;
+  font-size      : 9pt;
 }
 
 .debug-column {
@@ -34,5 +46,26 @@
 
 .debug-column-content {
   .flex( 1 );
-  overflow: auto;
+  overflow : auto;
+  margin   : 0;
+}
+
+.debug-monospace-content {
+  background: rgb(62, 62, 62);
+  color: rgb(215, 215, 215);
+  font-weight: 200;
+  font-family: "Source Code Pro", "Menlo", monospace;
+}
+
+.debug-list-item {
+  display: block;
+  cursor: default;
+  padding: 4px 25px;
+  color: #333;
+
+  &:hover {
+    background: #F1F1F1;
+    text-decoration: none;
+    color: darken( @brand-info, 10% );
+  }
 }

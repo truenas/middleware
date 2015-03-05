@@ -53,25 +53,30 @@ var RPC = React.createClass({
       });
     }
 
+  , handleResultsChange: function( event ) {
+      this.setState({
+          results : this.state.results
+      });
+    }
+
   , createMethodPanel: function( service, index ) {
     if ( this.props.methods[ service ] ) {
         var methods = this.props.methods[ service ].map(
           function( method, index ) {
             var rpcString = service + "." + method["name"];
             return (
-              <TWBS.ListGroupItem key     = { index }
-                                  onClick = { this.handleMethodClick.bind( null, rpcString ) } >
+              <a key       = { index }
+                 className = "debug-list-item"
+                 onClick   = { this.handleMethodClick.bind( null, rpcString ) } >
                 { method["name"] }
-              </TWBS.ListGroupItem>
+              </a>
             );
           }.bind(this)
         );
 
         return (
           <TWBS.Panel bsStyle="info" header={ service } key={ index }>
-            <TWBS.ListGroup>
-              { methods }
-            </TWBS.ListGroup>
+            { methods }
           </TWBS.Panel>
         );
     } else {
@@ -85,7 +90,7 @@ var RPC = React.createClass({
 
           <TWBS.Col xs={6} className="debug-column" >
 
-            <h5>RPC Interface</h5>
+            <h5 className="debug-heading">RPC Interface</h5>
             <TWBS.Row>
               <TWBS.Col xs={5}>
                 <TWBS.Input type        = "text"
@@ -95,7 +100,7 @@ var RPC = React.createClass({
               </TWBS.Col>
               <TWBS.Col xs={5}>
                 <TWBS.Input type        = "textarea"
-                            style       = {{ resize: "vertical" }}
+                            style       = {{ resize: "vertical", height: "34px" }}
                             placeholder = "Arguments (JSON Array)"
                             onChange    = { this.handleArgsInputChange }
                             value       = { this.state.argsValue } />
@@ -109,19 +114,20 @@ var RPC = React.createClass({
               </TWBS.Col>
             </TWBS.Row>
 
-            <h5>Available Service Namespaces</h5>
-            <div className="debug-column-content well well-sm">
-              { this.props.services.map( this.createMethodPanel ) }
-            </div>
+            <h5 className="debug-heading">RPC Results</h5>
+            <textarea className = "form-control debug-column-content debug-monospace-content"
+                      value     = { JSON.stringify( this.state.results, null, 2 ) }
+                      style     = {{ resize: "vertical" }}
+                      onChange  = { this.handleResultsChange } />
 
           </TWBS.Col>
 
           <TWBS.Col xs={6} className="debug-column" >
 
-            <h5>RPC Results</h5>
-            <pre className="debug-column-content">
-              { JSON.stringify( this.state.results, null, 2 ) }
-            </pre>
+            <h5 className="debug-heading">Available Service Namespaces</h5>
+            <div className="debug-column-content well well-sm">
+              { this.props.services.map( this.createMethodPanel ) }
+            </div>
 
           </TWBS.Col>
 
