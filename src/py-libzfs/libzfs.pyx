@@ -773,7 +773,7 @@ cdef class ZFSDataset(object):
     property children:
         def __get__(self):
             datasets = []
-            libzfs.zfs_iter_children(self._handle, self.__iterate_children, <void*>datasets)
+            libzfs.zfs_iter_filesystems(self._handle, self.__iterate_children, <void*>datasets)
             return [ZFSDataset(self.root, self.pool, h) for h in datasets]
 
     property snapshots:
