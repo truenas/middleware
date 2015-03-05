@@ -306,6 +306,25 @@ function MiddlewareClient() {
   };
 
 
+// MIDDLEWARE DISCOVERY METHODS
+// These are public methods used to gather more information about the Middleware's
+// capabilities and overall state. These can be used to return a list of services
+// supported by your connection to the middleware, and methods supported by each
+// service. (These are helpful wrappers more than core functionality.)
+
+  this.getServices = function() {
+    this.request( "discovery.get_services", [], function( services ) {
+      MiddlewareActionCreators.recieveAvailableServices( services );
+    });
+  };
+
+  this.getMethods = function( service ) {
+    this.request( "discovery.get_methods", [ service ], function( methods ) {
+      MiddlewareActionCreators.recieveAvailableServiceMethods( service, methods );
+    });
+  };
+
+
 // SOCKET DATA HANDLERS
 // Private methods for handling data from the WebSocket connection
 

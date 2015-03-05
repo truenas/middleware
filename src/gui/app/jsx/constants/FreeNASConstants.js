@@ -18,6 +18,10 @@ module.exports = {
       , MIDDLEWARE_EVENT          : null
       , LOG_MIDDLEWARE_TASK_QUEUE : null
 
+      // RPC
+      , RECIEVE_RPC_SERVICES        : null
+      , RECIEVE_RPC_SERVICE_METHODS : null
+
       // Users
       , RECEIVE_RAW_USERS        : null
       , RECEIVE_USER_UPDATE_TASK : null

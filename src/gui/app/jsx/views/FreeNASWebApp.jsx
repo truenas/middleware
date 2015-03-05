@@ -13,11 +13,10 @@ var LoginBox          = require("../components/LoginBox");
 var NotificationBar   = require("../components/WebApp/NotificationBar");
 var InformationBar    = require("../components/WebApp/InformationBar");
 var PrimaryNavigation = require("../components/PrimaryNavigation");
+var DebugTools        = require("../components/DebugTools");
 
 
-var FreeNASWebApp = React.createClass({
-
-    render: function() {
+var FreeNASWebApp = React.createClass({render: function() {
 
     return (
       <div className="app-wrapper">
@@ -29,17 +28,21 @@ var FreeNASWebApp = React.createClass({
         {/* Header containing system status and information */}
         <NotificationBar />
 
-        {/* Primary navigation menu */}
-        <PrimaryNavigation />
+        <div className="app-content">
+          {/* Primary navigation menu */}
+          <PrimaryNavigation />
 
-        {/* Primary view */}
-        <RouteHandler />
+          {/* Primary view */}
+          <RouteHandler />
 
-        {/* User-customizable component showing system events */}
-        <InformationBar />
+          {/* User-customizable component showing system events */}
+          <InformationBar />
+        </div>
 
         <footer className="app-footer">
         </footer>
+
+        <DebugTools />
       </div>
     );
   }

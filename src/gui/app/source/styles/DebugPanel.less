@@ -1,0 +1,38 @@
+.debug-panel {
+  height : 350px;
+  .flex-flow( column nowrap );
+  .flex-display( flex );
+
+  // TODO: #7908
+  & > div {
+    .flex-flow( column nowrap );
+    .flex-display( flex );
+  }
+
+  .tab-content {
+    .flex( 1 );
+    .flex-flow( row nowrap );
+    .flex-display( flex );
+  }
+
+  .tab-pane {
+    .flex( 1 0 100% );
+    .flex-display( flex );
+    padding : 5px;
+  }
+}
+
+.debug-content-flex-wrapper {
+    .flex( 1 );
+    .flex-display( flex );
+}
+
+.debug-column {
+  .flex-flow( column nowrap );
+  .flex-display( flex );
+}
+
+.debug-column-content {
+  .flex( 1 );
+  overflow: auto;
+}

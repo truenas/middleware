@@ -16,14 +16,18 @@ var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _subscribed    = {};
+var _rpcServices   = [];
+var _rpcMethods    = {};
 var _events        = {};
+var _stats         = {};
+var _tasks         = {};
 var _authenticated = false;
 
 
 var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
-      this.emit( CHANGE_EVENT );
+    emitChange: function( namespace ) {
+      this.emit( CHANGE_EVENT, namespace );
     }
 
   , addChangeListener: function( callback ) {
@@ -40,6 +44,14 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
 
   , getNumberOfSubscriptions: function( masks ) {
       return _subscribed[ masks ];
+    }
+
+  , getAvailableRPCServices: function() {
+      return _rpcServices;
+    }
+
+  , getAvailableRPCMethods: function() {
+      return _rpcMethods;
     }
 
 });
@@ -95,6 +107,20 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
 
       MiddlewareStore.emitChange();
       break;
+
+    case ActionTypes.RECIEVE_RPC_SERVICES:
+      _rpcServices = action.services;
+
+      MiddlewareStore.emitChange("services");
+      break;
+
+    case ActionTypes.RECIEVE_RPC_SERVICE_METHODS:
+      _rpcMethods[ action.service ] = action.methods;
+
+      MiddlewareStore.emitChange("methods");
+      break;
+
+
 
     default:
       // No action
