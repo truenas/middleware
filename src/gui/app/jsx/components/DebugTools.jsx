@@ -6,6 +6,7 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
@@ -16,6 +17,9 @@ var MiddlewareStore  = require("../stores/MiddlewareStore");
 // Tabs
 var RPC = require("./DebugTools/RPC");
 
+// Local variables
+var initialPanelHeight;
+var initialY;
 
 var DebugTools = React.createClass({
 
@@ -24,7 +28,33 @@ var DebugTools = React.createClass({
           initialized : false
         , isVisible   : false
         , methods     : {}
+        , panelHeight : 350
       };
+    }
+
+  , handleResizeStart: function( event ) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      initialPanelHeight = this.state.panelHeight;
+      initialY           = event.nativeEvent.clientY;
+
+      window.addEventListener("mouseup", this.handleResizeStop);
+      window.addEventListener("mousemove", this.handleResizeProgress );
+    }
+
+  , handleResizeProgress: function( event, foo ) {
+      this.setState({
+        panelHeight: initialPanelHeight - ( event.clientY - initialY )
+      });
+    }
+
+  , handleResizeStop: function( event ) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      window.removeEventListener("mouseup", this.handleResizeStop);
+      window.removeEventListener("mousemove", this.handleResizeProgress);
     }
 
   , handleMiddlewareChange: function( namespace ) {
@@ -80,7 +110,8 @@ var DebugTools = React.createClass({
 
     if ( this.state.initialized ) {
       content = (
-        <TWBS.TabbedArea className = "debug-nav">
+        <TWBS.TabbedArea className   = "debug-nav"
+                         onMouseDown = { this.handleResizeStart } >
           <TWBS.TabPane eventKey={1} tab="RPC">
             <RPC services={ this.state.services } methods={ this.state.methods } />
           </TWBS.TabPane>
@@ -109,7 +140,8 @@ var DebugTools = React.createClass({
     }
     return (
       <div className = "debug-panel"
-           style     = { this.state.isVisible ? {} : { display: "none" } }>
+           style     = { _.assign({ height: this.state.panelHeight + "px" }
+                                  , ( this.state.isVisible ? {} : { display: "none" } ) ) } >
         { content }
       </div>
     );

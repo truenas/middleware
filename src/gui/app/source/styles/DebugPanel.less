@@ -1,3 +1,8 @@
+.debug-nav {
+  background : #F1F1F1;
+  cursor     : ns-resize;
+}
+
 .debug-panel {
   .flex-flow( column nowrap );
   .flex-display( flex );
@@ -22,8 +27,17 @@
     padding : 5px;
   }
 
-  .panel-body {
-    padding: 10px 0;
+  .panel-body { padding: 10px 0; }
+
+  .nav-tabs > li > a {
+    border-radius : 0;
+    padding       : 5px 15px;
+  }
+
+
+  .nav-tabs > li.active > a {
+    border-bottom : none;
+    background    : rgb(224, 224, 224)
   }
 }
 
