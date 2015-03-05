@@ -31,7 +31,7 @@ import errno
 import gevent
 from collections import defaultdict
 from cache import CacheStore
-from lib import zfs, geom
+from lib import geom
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
