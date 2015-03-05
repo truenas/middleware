@@ -367,11 +367,14 @@ class ZfsBaseTask(Task):
 
 
 class ZfsDatasetMountTask(ZfsBaseTask):
-    def run(self, name):
+    def run(self, name, recursive=False):
         try:
             zfs = libzfs.ZFS()
             dataset = zfs.get_dataset(name)
-            dataset.mount()
+            if recursive:
+                dataset.mount_recursive()
+            else:
+                dataset.mount()
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
