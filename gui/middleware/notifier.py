@@ -5343,7 +5343,10 @@ class notifier:
         systemdataset, volume, basename = self.system_dataset_settings()
         if not volume:
             if os.path.exists(SYSTEMPATH):
-                os.rmdir(SYSTEMPATH)
+                try:
+                    os.rmdir(SYSTEMPATH)
+                except Exception, e:
+                    log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
             return systemdataset
 
         if not volume.is_decrypted():
