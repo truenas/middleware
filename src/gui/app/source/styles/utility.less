@@ -1,12 +1,15 @@
+.all-positions-zero {
+  top      : 0;
+  right    : 0;
+  bottom   : 0;
+  left     : 0;
+}
 
 // Absolutely centers an element with a defined width and height
 .absolute-center {
   margin   : auto;
   position : absolute;
-  top      : 0;
-  right    : 0;
-  bottom   : 0;
-  left     : 0;
+  .all-positions-zero();
 }
 
 .overflow-ellipsis {
@@ -21,11 +24,8 @@
 .overlay,
 .overlay-dark,
 .overlay-light {
+  .all-positions-zero();
   position : absolute;
-  top      : 0;
-  right    : 0;
-  bottom   : 0;
-  left     : 0;
   z-index  : 1000;
 }
 .overlay-dark  { background-color: fade( black, 50% ); }

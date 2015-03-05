@@ -5,31 +5,27 @@
 // Single-page setup
 html, body { height: 100%; width: 100%; }
 
-@notification-bar-height   : 70px;
 @left-menu-width           : 230px;
 @collapsed-left-menu-width : 44px;
-@footer-height             : 20px;
 
 .app-wrapper {
   .flex-display(flex);
-  .flex-flow(row wrap);
-  .align-content(flex-start);
-  height  : inherit;
-  padding : @notification-bar-height
-            0
-            @footer-height
-            0;
-  margin  : -@notification-bar-height
-            0
-            0
-            0;
-  & > header,
-  & > footer {
-    .flex(0 0 100%);
-  }
+  .flex-flow(column nowrap);
+  .all-positions-zero();
+  position : absolute;
+  overflow : auto;
+}
+
+.app-content {
+  .flex(1);
+  .flex-display(flex);
+  .flex-flow(row nowrap);
+  .align-items(stretch);
+
   & > main {
     .flex(1);
-    height   : inherit;
+    .flex-display(flex);
+    .flex-flow(column nowrap);
     position : relative;
   }
 }
@@ -42,7 +38,7 @@ html, body { height: 100%; width: 100%; }
 }
 
 .app-footer {
-  height           : @footer-height;
+  height           : 20px;
   background-color : @freenas-dark-gray;
 }
 
