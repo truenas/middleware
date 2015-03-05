@@ -4549,7 +4549,7 @@ class notifier:
             return
 
         ident = self.device_to_identifier(devname)
-        qs = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
+        qs = Disk.objects.filter(disk_identifier=ident).order_by('-disk_enabled')
         if ident and qs.exists():
             disk = qs[0]
         else:
@@ -4583,7 +4583,7 @@ class notifier:
 
         in_disks = {}
         serials = []
-        for disk in Disk.objects.order_by('disk_enabled'):
+        for disk in Disk.objects.order_by('-disk_enabled'):
 
             dskname = self.identifier_to_device(disk.disk_identifier)
             if not dskname or dskname in in_disks:
