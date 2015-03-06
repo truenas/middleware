@@ -25,9 +25,7 @@ var DebugTools = React.createClass({
 
     getInitialState: function() {
       return {
-          initialized : false
-        , isVisible   : false
-        , methods     : {}
+          isVisible   : false
         , panelHeight : 350
       };
     }
@@ -57,41 +55,13 @@ var DebugTools = React.createClass({
       window.removeEventListener("mousemove", this.handleResizeProgress);
     }
 
-  , handleMiddlewareChange: function( namespace ) {
-      var newState = {};
-
-      switch ( namespace ) {
-        case "services":
-          var availableServices = MiddlewareStore.getAvailableRPCServices();
-          newState.services = availableServices;
-          if ( availableServices.length ) {
-            availableServices.forEach( function( service ) {
-              MiddlewareClient.getMethods( service );
-            });
-          }
-          break;
-
-        case "methods":
-          newState.methods = MiddlewareStore.getAvailableRPCMethods();
-          break;
-      }
-
-      this.setState( newState );
-    }
-
   , handleKeypress: function( event ) {
       if ( event.which === 192 && event.ctrlKey && event.shiftKey ) {
 
         if ( this.state.isVisible ) {
-          MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
           this.setState({ isVisible: false });
         } else {
-          MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-          MiddlewareClient.getServices();
-          this.setState({
-              initialized : true
-            , isVisible   : true
-          });
+          this.setState({ isVisible: true });
         }
 
       }
@@ -108,43 +78,56 @@ var DebugTools = React.createClass({
   , render: function() {
     var content = null;
 
-    if ( this.state.initialized ) {
+    if ( this.state.isVisible ) {
       content = (
-        <TWBS.TabbedArea className   = "debug-nav"
-                         onMouseDown = { this.handleResizeStart } >
-          <TWBS.TabPane eventKey={1} tab="RPC">
-            <RPC services={ this.state.services } methods={ this.state.methods } />
-          </TWBS.TabPane>
+        <div className = "debug-panel"
+             style     = {{ height: this.state.panelHeight + "px" }} >
 
-          <TWBS.TabPane eventKey={2} tab="Events">
+          <TWBS.TabbedArea className   = "debug-nav"
+                           onMouseDown = { this.handleResizeStart } >
 
-          </TWBS.TabPane>
+            {/* RPC Interface */}
+            <TWBS.TabPane eventKey={1} tab="RPC">
+              <RPC services={ this.state.services } methods={ this.state.methods } />
+            </TWBS.TabPane>
 
-          <TWBS.TabPane eventKey={3} tab="Tasks">
+            {/* Event Log */}
+            <TWBS.TabPane eventKey={2} tab="Events">
 
-          </TWBS.TabPane>
+            </TWBS.TabPane>
 
-          <TWBS.TabPane eventKey={4} tab="Stats">
+            {/* Subscriptions List */}
+            <TWBS.TabPane eventKey={2} tab="Events">
 
-          </TWBS.TabPane>
+            </TWBS.TabPane>
 
-          <TWBS.TabPane eventKey={5} tab="Options">
+            {/* Task Log and Queue */}
+            <TWBS.TabPane eventKey={3} tab="Tasks">
 
-          </TWBS.TabPane>
+            </TWBS.TabPane>
 
-          <TWBS.TabPane eventKey={6} tab="Terminal">
+            {/* Stats Interface */}
+            <TWBS.TabPane eventKey={4} tab="Stats">
 
-          </TWBS.TabPane>
-        </TWBS.TabbedArea>
+            </TWBS.TabPane>
+
+            {/* Debugging Options */}
+            <TWBS.TabPane eventKey={5} tab="Options">
+
+            </TWBS.TabPane>
+
+            {/* Web Console */}
+            <TWBS.TabPane eventKey={6} tab="Terminal">
+
+            </TWBS.TabPane>
+
+          </TWBS.TabbedArea>
+
+        </div>
       );
     }
-    return (
-      <div className = "debug-panel"
-           style     = { _.assign({ height: this.state.panelHeight + "px" }
-                                  , ( this.state.isVisible ? {} : { display: "none" } ) ) } >
-        { content }
-      </div>
-    );
+
+    return content;
   }
 
 });
