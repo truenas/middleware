@@ -13,6 +13,7 @@ if is_truenas ; then
     # Additional repos to checkout for build
     ADDL_REPOS="$ADDL_REPOS TRUENAS_COMPONENTS"
 
+    : ${GIT_TRUENAS_COMPONENTS_BRANCH=TN-9.3-STABLE}
     : ${GIT_TRUENAS_COMPONENTS_REPO=git@gitserver.ixsystems.com:/git/repos/truenas-build/truenas.git}
     : ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/truenas-components"}
 
