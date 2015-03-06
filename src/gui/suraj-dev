@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# silly quivalent of while 1
+while true; do
+	cd /usr/home/suraj/fn10/src/gui/
+	/usr/local/bin/grunt --silent &
+	sleep 13
+	pidfile=$!
+	pgrep -P "${pidfile}" > /dev/null 2>&1
+	retc=$?
+	echo "Pidfile is $pidfile and Return Code is $retc"
+	while [ $retc == 0 ]; do
+	    sleep 2
+	    pgrep -P "${pidfile}" > /dev/null 2>&1
+	    retc=$?
+	done
+	# Making sure there are no zombies
+	pkill -f grunt
+	echo "Grunt Just Quit.....Restarting Now..."
+done
