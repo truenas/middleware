@@ -3,28 +3,58 @@
 
 "use strict";
 
-var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
 // Middleware
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
+var MiddlewareStore  = require("../../stores/MiddlewareStore");
+
+var subscriptionMixin = require("./subscriptionMixin");
 
 var RPC = React.createClass({
 
-    getDefaultProps: function() {
-      return {
-          services : []
-        , methods  : {}
-      };
-    }
+    mixins: [ subscriptionMixin ]
 
   , getInitialState: function() {
       return {
-          results     : []
+          services    : []
+        , methods     : {}
+        , results     : []
         , methodValue : ""
         , argsValue   : "[]"
       };
+    }
+
+  , componentDidMount: function() {
+      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      MiddlewareClient.getServices();
+    }
+
+  , componentWillUnmount: function() {
+      MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
+    }
+
+  , handleMiddlewareChange: function( namespace ) {
+      var newState = {};
+
+      switch ( namespace ) {
+        case "services":
+          var availableServices = MiddlewareStore.getAvailableRPCServices();
+          newState.services = availableServices;
+          if ( availableServices.length ) {
+            availableServices.forEach( function( service ) {
+              MiddlewareClient.getMethods( service );
+            });
+          }
+          break;
+
+        case "methods":
+          newState.methods = MiddlewareStore.getAvailableRPCMethods();
+          break;
+      }
+
+      this.setState( newState );
     }
 
   , handleRPCSubmit: function() {
@@ -60,8 +90,8 @@ var RPC = React.createClass({
     }
 
   , createMethodPanel: function( service, index ) {
-    if ( this.props.methods[ service ] ) {
-        var methods = this.props.methods[ service ].map(
+    if ( this.state.methods[ service ] ) {
+        var methods = this.state.methods[ service ].map(
           function( method, index ) {
             var rpcString = service + "." + method["name"];
             return (
@@ -126,7 +156,7 @@ var RPC = React.createClass({
 
             <h5 className="debug-heading">Available Service Namespaces</h5>
             <div className="debug-column-content well well-sm">
-              { this.props.services.map( this.createMethodPanel ) }
+              { this.state.services.map( this.createMethodPanel ) }
             </div>
 
           </TWBS.Col>
