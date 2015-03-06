@@ -719,3 +719,7 @@ class KerberosSettingsForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.KerberosSettings
+
+    def save(self):
+        super(KerberosSettingsForm, self).save()
+        notifier().start("ix-kerberos")
