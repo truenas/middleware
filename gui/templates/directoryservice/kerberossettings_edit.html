@@ -1,0 +1,6 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{% block buttons %}
+{% with deletable=False %}
+{{ block.super }}
+{% endwith %}
+{% endblock%}
