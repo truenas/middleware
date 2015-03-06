@@ -39,18 +39,12 @@ def get_license():
     return license, None
 
 
-def get_port():
-    if get_sw_name().lower() == 'freenas':
-        return 8080
-    else:
-        return 8081
-
-
 def fetch_categories(data):
 
+    sw_name = get_sw_name().lower()
     try:
         r = requests.post(
-            'https://%s:%d/api/v1.0/categories' % (ADDRESS, get_port()),
+            'https://%s/%s/api/v1.0/categories' % (ADDRESS, sw_name),
             data=json.dumps(data),
             headers={'Content-Type': 'application/json'},
             timeout=10,
@@ -82,9 +76,10 @@ def jails_enabled():
 
 def new_ticket(data):
 
+    sw_name = get_sw_name().lower()
     try:
         r = requests.post(
-            'https://%s:%d/api/v1.0/ticket' % (ADDRESS, get_port()),
+            'https://%s/%s/api/v1.0/ticket' % (ADDRESS, sw_name),
             data=json.dumps(data),
             headers={'Content-Type': 'application/json'},
             timeout=10,
@@ -106,9 +101,10 @@ def new_ticket(data):
 
 def ticket_attach(data, file_handler):
 
+    sw_name = get_sw_name().lower()
     try:
         r = requests.post(
-            'https://%s:%d/api/v1.0/ticket/attachment' % (ADDRESS, get_port()),
+            'https://%s/%s/api/v1.0/ticket/attachment' % (ADDRESS, sw_name),
             data=data,
             timeout=10,
             files={'file': (file_handler.name, file_handler.file)},
