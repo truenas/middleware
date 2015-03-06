@@ -6,13 +6,8 @@
 
 "use strict";
 
-var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
-
-// Middleware
-var MiddlewareClient = require("../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../stores/MiddlewareStore");
 
 // Tabs
 var RPC = require("./DebugTools/RPC");
@@ -88,7 +83,7 @@ var DebugTools = React.createClass({
 
             {/* RPC Interface */}
             <TWBS.TabPane eventKey={1} tab="RPC">
-              <RPC services={ this.state.services } methods={ this.state.methods } />
+              <RPC />
             </TWBS.TabPane>
 
             {/* Event Log */}
@@ -97,27 +92,27 @@ var DebugTools = React.createClass({
             </TWBS.TabPane>
 
             {/* Subscriptions List */}
-            <TWBS.TabPane eventKey={2} tab="Events">
+            <TWBS.TabPane eventKey={3} tab="Subscriptions">
 
             </TWBS.TabPane>
 
             {/* Task Log and Queue */}
-            <TWBS.TabPane eventKey={3} tab="Tasks">
+            <TWBS.TabPane eventKey={4} tab="Tasks">
 
             </TWBS.TabPane>
 
             {/* Stats Interface */}
-            <TWBS.TabPane eventKey={4} tab="Stats">
+            <TWBS.TabPane eventKey={5} tab="Stats">
 
             </TWBS.TabPane>
 
             {/* Debugging Options */}
-            <TWBS.TabPane eventKey={5} tab="Options">
+            <TWBS.TabPane eventKey={6} tab="Options">
 
             </TWBS.TabPane>
 
             {/* Web Console */}
-            <TWBS.TabPane eventKey={6} tab="Terminal">
+            <TWBS.TabPane eventKey={7} tab="Terminal">
 
             </TWBS.TabPane>
 

@@ -362,7 +362,7 @@ function MiddlewareClient() {
   var handleMessage = function ( message ) {
     var data = JSON.parse( message.data );
 
-    if ( DEBUG.messages ) { console.log( "Message from Middleware:", message ); }
+    if ( DEBUG.messages ) { console.log( "Message from Middleware:", data.namespace, message ); }
 
     switch ( data.namespace ) {
 

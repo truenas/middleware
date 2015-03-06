@@ -10,16 +10,12 @@ var TWBS  = require("react-bootstrap");
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
 var MiddlewareStore  = require("../../stores/MiddlewareStore");
 
-var subscriptionMixin = require("./subscriptionMixin");
-
 var RPC = React.createClass({
 
-    mixins: [ subscriptionMixin ]
-
-  , getInitialState: function() {
+    getInitialState: function() {
       return {
-          services    : []
-        , methods     : {}
+          services    : MiddlewareStore.getAvailableRPCServices()
+        , methods     : MiddlewareStore.getAvailableRPCMethods()
         , results     : []
         , methodValue : ""
         , argsValue   : "[]"
