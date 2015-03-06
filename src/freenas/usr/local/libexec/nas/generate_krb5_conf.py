@@ -81,7 +81,10 @@ class KerberosConfig(object):
         token = ""
         tokens = []
 
-        for c in code:
+        i = 0
+        length = len(code)
+        while i < length:
+            c = code[i]
             if c == '=':
                 if token:
                     tokens.append(token)
@@ -104,6 +107,11 @@ class KerberosConfig(object):
                     token = ""
             else:
                 token += c
+                if (i + 1 == length):
+                    if token:
+                        tokens.append(token)
+                        token = ""
+            i += 1
 
         return tokens
 
