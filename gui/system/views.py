@@ -904,6 +904,11 @@ def perftest(request):
             'tests': tests,
         })
 
+    if volume and not volume.is_decrypted():
+        raise MiddlewareError(
+            _('Volume must be decrypted to perform this action.')
+        )
+
     if not basename:
         raise MiddlewareError(
             _('System dataset is required to perform this action.')
