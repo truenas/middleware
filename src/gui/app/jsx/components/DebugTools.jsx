@@ -10,7 +10,8 @@ var React = require("react");
 var TWBS  = require("react-bootstrap");
 
 // Tabs
-var RPC = require("./DebugTools/RPC");
+var RPC    = require("./DebugTools/RPC");
+var Events = require("./DebugTools/Events");
 
 // Local variables
 var initialPanelHeight;
@@ -88,7 +89,7 @@ var DebugTools = React.createClass({
 
             {/* Event Log */}
             <TWBS.TabPane eventKey={2} tab="Events">
-
+              <Events />
             </TWBS.TabPane>
 
             {/* Subscriptions List */}

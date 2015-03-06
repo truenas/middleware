@@ -86,29 +86,29 @@ var RPC = React.createClass({
     }
 
   , createMethodPanel: function( service, index ) {
-    if ( this.state.methods[ service ] ) {
-        var methods = this.state.methods[ service ].map(
-          function( method, index ) {
-            var rpcString = service + "." + method["name"];
-            return (
-              <a key       = { index }
-                 className = "debug-list-item"
-                 onClick   = { this.handleMethodClick.bind( null, rpcString ) } >
-                { method["name"] }
-              </a>
-            );
-          }.bind(this)
-        );
+      if ( this.state.methods[ service ] ) {
+          var methods = this.state.methods[ service ].map(
+            function( method, index ) {
+              var rpcString = service + "." + method["name"];
+              return (
+                <a key       = { index }
+                   className = "debug-list-item"
+                   onClick   = { this.handleMethodClick.bind( null, rpcString ) } >
+                  { method["name"] }
+                </a>
+              );
+            }.bind(this)
+          );
 
-        return (
-          <TWBS.Panel bsStyle="info" header={ service } key={ index }>
-            { methods }
-          </TWBS.Panel>
-        );
-    } else {
-      return null;
+          return (
+            <TWBS.Panel bsStyle="info" header={ service } key={ index }>
+              { methods }
+            </TWBS.Panel>
+          );
+      } else {
+        return null;
+      }
     }
-  }
 
   , render: function() {
       return (

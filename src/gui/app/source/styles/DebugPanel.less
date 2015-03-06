@@ -23,9 +23,14 @@
 
   .tab-pane {
     .flex( 1 0 100% );
-    .flex-display( flex );
+    display : none;
     padding : 5px;
+
+    &.active {
+      .flex-display( flex );
+    }
   }
+
 
   .panel-body { padding: 10px 0; }
 
@@ -81,5 +86,28 @@
     background: #F1F1F1;
     text-decoration: none;
     color: darken( @brand-info, 10% );
+  }
+}
+
+.debug-callout {
+  border     : 1px solid rgb(243, 243, 243);
+  box-shadow : -16px 0 0 0 @brand-info;
+  margin     : 0 0 8px 16px;
+  padding    : 2px 24px;
+  position   : relative;
+
+  & > label {
+    height         : 0;
+    width          : 16px;
+    position       : absolute;
+    top            : 0;
+    left           : -11px;
+    transform      : rotate(90deg);
+    padding        : 8px;
+    color          : white;
+    text-transform : uppercase;
+    letter-spacing : 5px;
+    font-weight    : 100;
+    font-size      : 10px;
   }
 }

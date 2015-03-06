@@ -18,7 +18,7 @@ var CHANGE_EVENT = "change";
 var _subscribed    = {};
 var _rpcServices   = [];
 var _rpcMethods    = {};
-var _events        = {};
+var _events        = [];
 var _stats         = {};
 var _tasks         = {};
 var _authenticated = false;
@@ -52,6 +52,10 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
 
   , getAvailableRPCMethods: function() {
       return _rpcMethods;
+    }
+
+  , getEventLog: function() {
+      return _events;
     }
 
 });
@@ -96,9 +100,10 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
 
     case ActionTypes.MIDDLEWARE_EVENT:
 
-      // TODO: handle events
+      // Prepend latest event to the front of the array
+      _events.unshift( action.eventData );
 
-      MiddlewareStore.emitChange();
+      MiddlewareStore.emitChange("events");
       break;
 
     case ActionTypes.LOG_MIDDLEWARE_TASK_QUEUE:
