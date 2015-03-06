@@ -956,14 +956,17 @@ def list_datasets(path="", recursive=False, hierarchical=False,
     )
 
 
-def zpool_list():
+def zpool_list(name=None):
     zfsproc = subprocess.Popen([
         'zpool',
         'list',
         '-o', 'name,size,alloc,free,cap',
         '-p',
         '-H',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ] + ([name] if name else []),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
     output = zfsproc.communicate()[0].strip('\n')
     if zfsproc.returncode != 0:
@@ -980,4 +983,7 @@ def zpool_list():
             'capacity': int(data[4]),
         }
         rv[attrs['name']] = attrs
+
+    if name:
+        return rv[name]
     return rv
